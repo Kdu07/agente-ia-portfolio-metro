@@ -144,3 +144,89 @@
 [Preencher]
 
 ## 2.5 Modelagem do Fluxo de Neg├│cio
+
+### 2.5.1 Cadeia de Valor
+
+A cadeia de valor do projeto est├í diretamente ligada ├á necessidade de o Metr├┤ de S├úo Paulo gerenciar, com efici├¬ncia e confiabilidade, um ambiente operacional de grande escala e alta complexidade. Como uma rede que movimenta milh├Áes de passageiros diariamente, a companhia depende de processos bem estruturados para garantir a continuidade e a qualidade dos servi├ºos prestados. Nesse contexto, a Linha 4-Amarela, operada pela ViaQuatro em regime de PPP, e a Linha 5-Lil├ís, operada pela Via Mobilidade em regime de concess├úo, ilustram a dimens├úo da opera├º├úo e a import├óncia de uma gest├úo integrada, ├ígil e orientada por dados.
+
+No ├ómbito do PMO Corporativo do Metr├┤, a cadeia de valor proposta para a solu├º├úo de IA passa a ser organizada em cinco blocos principais:
+
+1. Gera├º├úo e capta├º├úo de demandas
+   - O processo come├ºa a partir de solicita├º├Áes realizadas por gestores, equipes de projeto e stakeholders do portf├│lio, que buscam informa├º├Áes sobre status, riscos, marcos, prazos, ader├¬ncia a normativos e demais indicadores estrat├®gicos.
+
+2. Consolida├º├úo e organiza├º├úo de informa├º├Áes
+   - As informa├º├Áes contidas em documentos, planilhas, listas, relat├│rios e sistemas de apoio s├úo estruturadas e disponibilizadas para an├ílise, reduzindo a depend├¬ncia de consolida├º├úo manual e de confer├¬ncia repetitiva.
+
+3. Processamento inteligente e interpreta├º├úo da solicita├º├úo
+   - O agente de IA, apoiado por Processamento de Linguagem Natural, interpreta perguntas em linguagem natural, identifica a inten├º├úo do usu├írio e classifica a solicita├º├úo conforme o contexto do portf├│lio e as regras de seguran├ºa da organiza├º├úo.
+
+4. An├ílise, compara├º├úo e apoio ├á decis├úo
+   - A solu├º├úo gera respostas comparativas, identifica pend├¬ncias, destaca riscos e sinaliza pontos de aten├º├úo, permitindo uma an├ílise mais r├ípida e consistente entre projetos e subportf├│lios.
+
+5. Entrega, rastreabilidade e acompanhamento
+   - As respostas, alertas e relat├│rios produzidos s├úo disponibilizados de forma organizada, com rastreabilidade das intera├º├Áes e alinhamento com pol├¡ticas de confidencialidade, contribuindo para a tomada de decis├úo e para a melhoria cont├¡nua do processo.
+
+Essa cadeia de valor gera valor para o parceiro em diferentes n├¡veis. Ela reduz o esfor├ºo manual em tarefas repetitivas, aumenta a velocidade de acesso ├ás informa├º├Áes, melhora a qualidade e a consist├¬ncia dos dados, fortalece a rastreabilidade dos processos e oferece suporte mais estrat├®gico ├ás equipes do PMO. Em um ambiente como o do Metr├┤, onde a opera├º├úo ├® complexa e o volume de informa├º├úo ├® elevado, a automa├º├úo inteligente transforma a gest├úo de portf├│lio em um processo mais ├ígil, confi├ível e orientado para resultados.
+
+### 2.5.2 Fluxo de Neg├│cio (AS-IS e TO-BE)
+
+O mapeamento BPMN abaixo segue o modelo convencional de raias (pool/lane), com eventos de in├¡cio e fim, tarefas e gateway exclusivo, comparando o processo atual de consulta de portf├│lio com o comportamento proposto ap├│s a implanta├º├úo do agente de IA conversacional do Metr├┤ de S├úo Paulo.
+
+#### Fluxo AS-IS - cen├írio atual
+Raias: Gestor ┬À Equipe
+O processo come├ºa quando o gestor de portf├│lio precisa consultar o status de um projeto. Um gateway exclusivo decide o caminho seguido:
+
+- **Caminho "Sim"** - se o dado j├í est├í dispon├¡vel em planilha ou relat├│rio do PowerBI, o gestor faz a consulta manual diretamente e chega a uma decis├úo com informa├º├úo atualizada.
+- **Caminho "N├úo"** - se o dado n├úo est├í dispon├¡vel, o fluxo cruza para a raia da Equipe: o gestor aciona a equipe do projeto por e-mail ou reuni├úo, a equipe levanta os dados manualmente, e s├│ ent├úo a decis├úo ├® tomada - j├í com atraso.
+
+<div align="center">
+  <img src="../documentos/imagens/asis.png" width="80%" alt="3D Surface Plot"><br>
+  <sub>Figura X: fluxo as-is.</sub>
+</div>
+<br>
+
+N├úo existe, nesse cen├írio, um canal ├║nico de consulta em linguagem natural, nem verifica├º├úo autom├ítica de confidencialidade dos dados: tudo depende de onde a informa├º├úo est├í armazenada e da disponibilidade de terceiros para respond├¬-la.
+
+#### Fluxo TO-BE ÔÇö cen├írio proposto
+
+**Raias:** Gestor ┬À Pilar 1 (PLN) ┬À Pilar 2 (Copilot Studio/Power Platform)
+
+Com o agente de IA, o gestor passa a fazer a pergunta diretamente em linguagem natural. O fluxo ent├úo desce para a raia do Pilar 1, respons├ível pelo PLN b├ísico da equipe: reconhecimento de inten├º├úo, classifica├º├úo e checagem de confidencialidade do pedido.
+
+Um gateway exclusivo decide o caminho a partir dessa classifica├º├úo:
+
+- **Caminho "Sim" (dado sens├¡vel sem homologa├º├úo)** - a consulta ├® bloqueada dentro do pr├│prio Pilar 1, e o fluxo retorna ├á raia do Gestor com um evento de fim indicando que a solicita├º├úo foi bloqueada. Essa ├® a materializa├º├úo direta da restri├º├úo do projeto: nenhum dado sens├¡vel pode passar por servi├ºos externos n├úo homologados.
+- **Caminho "N├úo" (dado autorizado)** - o fluxo desce at├® a raia do Pilar 2, que consulta o ecossistema Microsoft do Metr├┤ (Copilot Studio/Power Platform) sobre a base de dados sint├®ticos usada no MVP. O resultado sobe de volta ├á raia do Gestor, encerrando o processo com uma resposta consolidada.
+
+<div align="center">
+  <img src="../documentos/imagens/tobe.png" width="80%" alt="3D Surface Plot"><br>
+  <sub>Figura X: fluxo to-be.</sub>
+</div>
+<br>
+
+Em ambos os desfechos, ├® o Gestor espec├¡fico quem recebe o resultado final - a diferen├ºa est├í em qual dos dois pilares processou o pedido e se ele foi autorizado a prosseguir.
+
+#### Leitura comparativa
+
+| Aspecto | AS-IS | TO-BE |
+|---|---|---|
+| Canal de entrada | Busca manual / e-mail / reuni├úo | Linguagem natural (texto ou voz) |
+| Decis├úo de roteamento | Dado est├í na planilha? | Dado ├® sens├¡vel e sem homologa├º├úo? |
+| Depend├¬ncia de terceiros | Equipe do projeto (resposta manual) | Nenhuma ÔÇö resposta pelo pr├│prio agente |
+| Resultado no caminho "problema" | Decis├úo tomada com atraso | Consulta bloqueada com aviso imediato |
+| Fonte de dados | Planilhas / relat├│rios est├íticos | Dados sint├®ticos (MVP), via Pilar 2 |
+
+## 2.6 Matriz de Risco do Projeto
+
+### 2.6.1 Crit├®rios de Classifica├º├úo
+
+[Preencher]
+
+### 2.6.2 Riscos Identificados
+
+[Preencher]
+
+### 2.6.3 Mapa de Calor
+
+[Preencher]
+
