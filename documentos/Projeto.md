@@ -230,3 +230,50 @@ Em ambos os desfechos, ├® o Gestor espec├¡fico quem recebe o resultado fin
 
 [Preencher]
 
+### 2.6.4 Riscos Priorit├írios
+
+[Preencher]
+
+## 2.7 Idea├º├úo
+
+[Descreva as ideias geradas, hip├│teses preliminares e dire├º├Áes de solu├º├úo.]
+
+## 2.8 Canvas do Projeto
+
+### 2.8.1 Proposta de Valor
+
+[Preencher]
+
+### 2.8.2 Segmentos de Clientes
+
+[Preencher]
+
+### 2.8.3 Canais
+
+[Preencher]
+
+### 2.8.4 Rela├º├úo com o Cliente
+
+[Preencher]
+
+### 2.8.5 Fontes de Receita
+
+[Preencher]
+
+### 2.8.6 Recursos-Chave
+
+[Preencher]
+
+### 2.8.7 Atividades-Chave
+
+[Preencher]
+
+### 2.8.8 Parcerias-Chave
+
+[Preencher]
+
+### 2.8.9 Estrutura de Custos
+
+[Preencher]
+
+## 2.9 Delimita├º├úo de Escopo: O que o Produto Faz e N├úo Faz
