@@ -277,3 +277,59 @@ Em ambos os desfechos, ├® o Gestor espec├¡fico quem recebe o resultado fin
 [Preencher]
 
 ## 2.9 Delimita├º├úo de Escopo: O que o Produto Faz e N├úo Faz
+
+### 2.9.1 O que o Produto Faz
+
+- [Preencher]
+- [Preencher]
+
+### 2.9.2 O que o Produto N├úo Faz
+
+- [Preencher]
+- [Preencher]
+
+# 3. Requisitos do Projeto
+
+## 3.1 Requisitos Funcionais (RFs)
+
+- RF01 ÔÇö [Descreva o requisito funcional]
+- RF02 ÔÇö [Descreva o requisito funcional]
+- RF03 ÔÇö [Descreva o requisito funcional]
+- RF04 ÔÇö [Descreva o requisito funcional]
+- RF05 ÔÇö [Descreva o requisito funcional]
+
+## 3.2 Requisitos N├úo Funcionais (RNFs)
+
+- RNF01 ÔÇö [Descreva o requisito n├úo funcional]
+- RNF02 ÔÇö [Descreva o requisito n├úo funcional]
+- RNF03 ÔÇö [Descreva o requisito n├úo funcional]
+- RNF04 ÔÇö [Descreva o requisito n├úo funcional]
+- RNF05 ÔÇö [Descreva o requisito n├úo funcional]
+
+## 3.3 Correla├º├úo RFs e RNFs
+
+[Descreva a rela├º├úo entre os requisitos funcionais e n├úo funcionais e sua import├óncia para a solu├º├úo.]
+
+## 3.4 Casos de Uso
+
+### 3.4.1 Diagrama de Casos de Uso
+
+[Inserir diagrama ou descri├º├úo]
+
+### 3.4.2 Atores do Sistema
+
+[Preencher]
+
+### 3.4.3 Descri├º├úo dos Casos de Uso
+
+[Preencher]
+
+### 3.4.4 Relacionamentos e Regras Representadas no Diagrama
+
+[Preencher]
+
+### 3.4.5 Coer├¬ncia com o Problema e com a Solu├º├úo Proposta
+
+[Preencher]
+
+## 3.5 Casos de Uso x Requisitos Funcionais
