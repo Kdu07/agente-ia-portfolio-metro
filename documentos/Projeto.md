@@ -1,4 +1,4 @@
-﻿<table>
+<table>
   <tr>
     <td><a href="https://www.btgpactual.com/"><img src="img/logo-btg.png" alt="Centro Paula Souza" border="0"></a></td>
     <td>
