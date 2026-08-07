@@ -174,3 +174,52 @@ No âmbito do PMO Corporativo do Metrô, a cadeia de valor proposta para a solu�
 
 Essa cadeia de valor gera valor para o parceiro em diferentes níveis. Ela reduz o esforço manual em tarefas repetitivas, aumenta a velocidade de acesso às informações, melhora a qualidade e a consistência dos dados, fortalece a rastreabilidade dos processos e oferece suporte mais estratégico às equipes do PMO. Em um ambiente como o do Metrô, onde a operação é complexa e o volume de informação é elevado, a automação inteligente transforma a gestão de portfólio em um processo mais ágil, confiável e orientado para resultados.
 
+### 2.5.2 Fluxo de Negócio (AS-IS e TO-BE)
+
+O mapeamento BPMN abaixo segue o modelo convencional de raias (pool/lane), com eventos de início e fim, tarefas e gateway exclusivo, comparando o processo atual de consulta de portfólio com o comportamento proposto após a implantação do agente de IA conversacional do Metrô de São Paulo.
+
+#### Fluxo AS-IS — cenário atual
+
+**Raias:** Gestor · Equipe
+
+O processo começa quando o gestor de portfólio precisa consultar o status de um projeto. Um gateway exclusivo decide o caminho seguido:
+
+- **Caminho "Sim"** — se o dado já está disponível em planilha ou relatório do Power BI, o gestor faz a consulta manual diretamente e chega a uma decisão com informação atualizada.
+- **Caminho "Não"** — se o dado não está disponível, o fluxo cruza para a raia da Equipe: o gestor aciona a equipe do projeto por e-mail ou reunião, a equipe levanta os dados manualmente, e só então a decisão é tomada — já com atraso.
+
+<div align="center">
+  <img src="../documentos/imagens/asis.png" width="80%" alt="Fluxo AS-IS">
+  <br>
+  <sub>Figura X: Fluxo AS-IS.</sub>
+</div>
+
+Não existe, nesse cenário, um canal único de consulta em linguagem natural, nem verificação automática de confidencialidade dos dados: tudo depende de onde a informação está armazenada e da disponibilidade de terceiros para respondê-la.
+
+#### Fluxo TO-BE — cenário proposto
+
+**Raias:** Gestor · Pilar 1 (PLN) · Pilar 2 (Copilot Studio/Power Platform)
+
+Com o agente de IA, o gestor passa a fazer a pergunta diretamente em linguagem natural. O fluxo então desce para a raia do Pilar 1, responsável pelo PLN básico da equipe: reconhecimento de intenção, classificação e checagem de confidencialidade do pedido.
+
+Um gateway exclusivo decide o caminho a partir dessa classificação:
+
+- **Caminho "Sim" (dado sensível sem homologação)** — a consulta é bloqueada dentro do próprio Pilar 1, e o fluxo retorna à raia do Gestor com um evento de fim indicando que a solicitação foi bloqueada. Essa é a materialização direta da restrição do projeto: nenhum dado sensível pode passar por serviços externos não homologados.
+- **Caminho "Não" (dado autorizado)** — o fluxo desce até a raia do Pilar 2, que consulta o ecossistema Microsoft do Metrô (Copilot Studio/Power Platform) sobre a base de dados sintéticos usada no MVP. O resultado sobe de volta à raia do Gestor, encerrando o processo com uma resposta consolidada.
+
+<div align="center">
+  <img src="../documentos/imagens/tobe.png" width="80%" alt="Fluxo TO-BE">
+  <br>
+  <sub>Figura X: Fluxo TO-BE.</sub>
+</div>
+
+Em ambos os desfechos, é o Gestor específico quem recebe o resultado final — a diferença está em qual dos dois pilares processou o pedido e se ele foi autorizado a prosseguir.
+
+#### Leitura comparativa
+
+| Aspecto | AS-IS | TO-BE |
+|---|---|---|
+| Canal de entrada | Busca manual / e-mail / reunião | Linguagem natural (texto ou voz) |
+| Decisão de roteamento | Dado está na planilha? | Dado é sensível e sem homologação? |
+| Dependência de terceiros | Equipe do projeto (resposta manual) | Nenhuma — resposta pelo próprio agente |
+| Resultado no caminho "problema" | Decisão tomada com atraso | Consulta bloqueada com aviso imediato |
+| Fonte de dados | Planilhas / relatórios estáticos | Dados sintéticos (MVP), via Pilar 2 |
