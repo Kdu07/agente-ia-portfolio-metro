@@ -223,3 +223,258 @@ Em ambos os desfechos, é o Gestor específico quem recebe o resultado final —
 | Dependência de terceiros | Equipe do projeto (resposta manual) | Nenhuma — resposta pelo próprio agente |
 | Resultado no caminho "problema" | Decisão tomada com atraso | Consulta bloqueada com aviso imediato |
 | Fonte de dados | Planilhas / relatórios estáticos | Dados sintéticos (MVP), via Pilar 2 |
+
+## 2.6 Matriz de Risco do Projeto
+
+### 2.6.1 Critérios de Classificação
+
+[Preencher]
+
+### 2.6.2 Riscos Identificados
+
+[Preencher]
+
+### 2.6.3 Mapa de Calor
+
+[Preencher]
+
+### 2.6.4 Riscos Prioritários
+
+[Preencher]
+
+## 2.7 Ideação
+
+[Descreva as ideias geradas, hipóteses preliminares e direções de solução.]
+
+## 2.8 Canvas do Projeto
+
+### 2.8.1 Proposta de Valor
+
+[Preencher]
+
+### 2.8.2 Segmentos de Clientes
+
+[Preencher]
+
+### 2.8.3 Canais
+
+[Preencher]
+
+### 2.8.4 Relação com o Cliente
+
+[Preencher]
+
+### 2.8.5 Fontes de Receita
+
+[Preencher]
+
+### 2.8.6 Recursos-Chave
+
+[Preencher]
+
+### 2.8.7 Atividades-Chave
+
+[Preencher]
+
+### 2.8.8 Parcerias-Chave
+
+[Preencher]
+
+### 2.8.9 Estrutura de Custos
+
+[Preencher]
+
+## 2.9 Delimitação de Escopo: O que o Produto Faz e Não Faz
+
+### 2.9.1 O que o Produto Faz
+
+- [Preencher]
+- [Preencher]
+
+### 2.9.2 O que o Produto Não Faz
+
+- [Preencher]
+- [Preencher]
+
+# 3. Requisitos do Projeto
+
+## 3.1 Requisitos Funcionais (RFs)
+
+- RF01 — [Descreva o requisito funcional]
+- RF02 — [Descreva o requisito funcional]
+- RF03 — [Descreva o requisito funcional]
+- RF04 — [Descreva o requisito funcional]
+- RF05 — [Descreva o requisito funcional]
+
+## 3.2 Requisitos Não Funcionais (RNFs)
+
+- RNF01 — [Descreva o requisito não funcional]
+- RNF02 — [Descreva o requisito não funcional]
+- RNF03 — [Descreva o requisito não funcional]
+- RNF04 — [Descreva o requisito não funcional]
+- RNF05 — [Descreva o requisito não funcional]
+
+## 3.3 Correlação RFs e RNFs
+
+[Descreva a relação entre os requisitos funcionais e não funcionais e sua importância para a solução.]
+
+## 3.4 Casos de Uso
+
+### 3.4.1 Diagrama de Casos de Uso
+
+[Inserir diagrama ou descrição]
+
+### 3.4.2 Atores do Sistema
+
+[Preencher]
+
+### 3.4.3 Descrição dos Casos de Uso
+
+[Preencher]
+
+### 3.4.4 Relacionamentos e Regras Representadas no Diagrama
+
+[Preencher]
+
+### 3.4.5 Coerência com o Problema e com a Solução Proposta
+
+[Preencher]
+
+## 3.5 Casos de Uso x Requisitos Funcionais
+
+[Preencher]
+
+# 4. Modelagem de Dados
+
+## 4.1 Especificação da Base de Dados
+
+[Descreva a proposta de estrutura de dados e o contexto de uso.]
+
+## 4.2 Modelo Conceitual de Dados
+
+[Preencher]
+
+## 4.3 Modelo Lógico de Dados
+
+[Preencher]
+
+## 4.4 Modelo Físico de Dados
+
+[Preencher]
+
+# 5. Solução Técnica (Design)
+
+## 5.1 Diagrama de Classes
+
+[Preencher]
+
+## 5.2 Diagrama de Componentes da UML
+
+[Preencher]
+
+## 5.3 Diagramas de Sequência da UML
+
+[Preencher]
+
+## 5.4 Linguagens e Tecnologias Utilizadas
+
+[Preencher]
+
+# 6. Mapeamento Técnico de Infraestrutura e Implantação
+
+## 6.1 Diagrama de Implantação da UML
+
+[Preencher]
+
+## 6.2 Justificativa das Escolhas de Implantação
+
+[Preencher]
+
+## 6.3 Considerações sobre Desempenho e Segurança
+
+[Preencher]
+
+## 6.4 Diagrama de Implantação de Infraestrutura
+
+[Preencher]
+
+# 7. Projeto Visual da Solução
+
+## 7.1 Desenvolvimento de Wireframes
+
+[Preencher]
+
+## 7.2 Desenvolvimento de Mockups
+
+[Preencher]
+
+## 7.3 Guia Visual
+
+[Preencher]
+
+# 8. Desenvolvimento do Projeto
+
+## 8.1 Arquitetura de Codificação e Estrutura de Diretórios
+
+[Preencher]
+
+## 8.2 Modelo de Recomendação
+
+[Preencher]
+
+## 8.3 Desenvolvimento de Features
+
+[Preencher]
+
+## 8.4 Testes Unitários e de Integração
+
+[Preencher]
+
+# 9. Planejamento e Execução de Testes
+
+[Descreva a estratégia de testes, cobertura e critérios de aceitação.]
+
+## 9.1 Testes Funcionais
+
+[Preencher]
+
+## 9.2 Testes de RNFs
+
+[Preencher]
+
+## 9.3 Testes de Usabilidade
+
+[Preencher]
+
+## 9.4 Testes de APIs Externas
+
+[Preencher]
+
+## 9.5 Testes de Integração
+
+[Preencher]
+
+## 9.6 Testes de Regras de Negócio
+
+[Preencher]
+
+## 9.7 Cobertura Consolidada do Artefato de Testes
+
+[Preencher]
+
+# 10. Procedimentos de Implantação
+
+[Descreva os passos para configuração, execução e implantação da solução.]
+
+## 10.1 Implantação e Configuração do Banco de Dados
+
+[Preencher]
+
+## 10.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento
+
+[Preencher]
+
+# Referências
+
+- [Inserir referências bibliográficas ou links relevantes]
+- [Inserir referências técnicas]
