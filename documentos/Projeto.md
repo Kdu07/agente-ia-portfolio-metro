@@ -333,3 +333,141 @@ Em ambos os desfechos, ├® o Gestor espec├¡fico quem recebe o resultado fin
 [Preencher]
 
 ## 3.5 Casos de Uso x Requisitos Funcionais
+
+[Preencher]
+
+# 4. Modelagem de Dados
+
+## 4.1 Especifica├º├úo da Base de Dados
+
+[Descreva a proposta de estrutura de dados e o contexto de uso.]
+
+## 4.2 Modelo Conceitual de Dados
+
+[Preencher]
+
+## 4.3 Modelo L├│gico de Dados
+
+[Preencher]
+
+## 4.4 Modelo F├¡sico de Dados
+
+[Preencher]
+
+# 5. Solu├º├úo T├®cnica (Design)
+
+## 5.1 Diagrama de Classes
+
+[Preencher]
+
+## 5.2 Diagrama de Componentes da UML
+
+[Preencher]
+
+## 5.3 Diagramas de Sequ├¬ncia da UML
+
+[Preencher]
+
+## 5.4 Linguagens e Tecnologias Utilizadas
+
+[Preencher]
+
+# 6. Mapeamento T├®cnico de Infraestrutura e Implanta├º├úo
+
+## 6.1 Diagrama de Implanta├º├úo da UML
+
+[Preencher]
+
+## 6.2 Justificativa das Escolhas de Implanta├º├úo
+
+[Preencher]
+
+## 6.3 Considera├º├Áes sobre Desempenho e Seguran├ºa
+
+[Preencher]
+
+## 6.4 Diagrama de Implanta├º├úo de Infraestrutura
+
+[Preencher]
+
+# 7. Projeto Visual da Solu├º├úo
+
+## 7.1 Desenvolvimento de Wireframes
+
+[Preencher]
+
+## 7.2 Desenvolvimento de Mockups
+
+[Preencher]
+
+## 7.3 Guia Visual
+
+[Preencher]
+
+# 8. Desenvolvimento do Projeto
+
+## 8.1 Arquitetura de Codifica├º├úo e Estrutura de Diret├│rios
+
+[Preencher]
+
+## 8.2 Modelo de Recomenda├º├úo
+
+[Preencher]
+
+## 8.3 Desenvolvimento de Features
+
+[Preencher]
+
+## 8.4 Testes Unit├írios e de Integra├º├úo
+
+[Preencher]
+
+# 9. Planejamento e Execu├º├úo de Testes
+
+[Descreva a estrat├®gia de testes, cobertura e crit├®rios de aceita├º├úo.]
+
+## 9.1 Testes Funcionais
+
+[Preencher]
+
+## 9.2 Testes de RNFs
+
+[Preencher]
+
+## 9.3 Testes de Usabilidade
+
+[Preencher]
+
+## 9.4 Testes de APIs Externas
+
+[Preencher]
+
+## 9.5 Testes de Integra├º├úo
+
+[Preencher]
+
+## 9.6 Testes de Regras de Neg├│cio
+
+[Preencher]
+
+## 9.7 Cobertura Consolidada do Artefato de Testes
+
+[Preencher]
+
+# 10. Procedimentos de Implanta├º├úo
+
+[Descreva os passos para configura├º├úo, execu├º├úo e implanta├º├úo da solu├º├úo.]
+
+## 10.1 Implanta├º├úo e Configura├º├úo do Banco de Dados
+
+[Preencher]
+
+## 10.2 Implanta├º├úo do Prot├│tipo para uso por equipe de desenvolvimento
+
+[Preencher]
+
+# Refer├¬ncias
+
+- [Inserir refer├¬ncias bibliogr├íficas ou links relevantes]
+- [Inserir refer├¬ncias t├®cnicas]
+
