@@ -149,3 +149,28 @@
 
 [Preencher]
 
+## 2.5 Modelagem do Fluxo de Negócio
+
+### 2.5.1 Cadeia de Valor
+
+A cadeia de valor do projeto está diretamente ligada à necessidade de o Metrô de São Paulo gerenciar, com eficiência e confiabilidade, um ambiente operacional de grande escala e alta complexidade. Como uma rede que movimenta milhões de passageiros diariamente, a companhia depende de processos bem estruturados para garantir a continuidade e a qualidade dos serviços prestados.
+
+No âmbito do PMO Corporativo do Metrô, a cadeia de valor proposta para a solução de IA passa a ser organizada em cinco blocos principais:
+
+1. **Geração e captação de demandas**
+   - O processo começa a partir de solicitações realizadas por gestores, equipes de projeto e stakeholders do portfólio, que buscam informações sobre status, riscos, marcos, prazos, aderência a normativos e demais indicadores estratégicos.
+
+2. **Consolidação e organização de informações**
+   - As informações contidas em documentos, planilhas, listas, relatórios e sistemas de apoio são estruturadas e disponibilizadas para análise, reduzindo a dependência de consolidação manual e de conferência repetitiva.
+
+3. **Processamento inteligente e interpretação da solicitação**
+   - O agente de IA, apoiado por Processamento de Linguagem Natural, interpreta perguntas em linguagem natural, identifica a intenção do usuário e classifica a solicitação conforme o contexto do portfólio e as regras de segurança da organização.
+
+4. **Análise, comparação e apoio à decisão**
+   - A solução gera respostas comparativas, identifica pendências, destaca riscos e sinaliza pontos de atenção, permitindo uma análise mais rápida e consistente entre projetos e subportfólios.
+
+5. **Entrega, rastreabilidade e acompanhamento**
+   - As respostas, alertas e relatórios produzidos são disponibilizados de forma organizada, com rastreabilidade das interações e alinhamento com políticas de confidencialidade, contribuindo para a tomada de decisão e para a melhoria contínua do processo.
+
+Essa cadeia de valor gera valor para o parceiro em diferentes níveis. Ela reduz o esforço manual em tarefas repetitivas, aumenta a velocidade de acesso às informações, melhora a qualidade e a consistência dos dados, fortalece a rastreabilidade dos processos e oferece suporte mais estratégico às equipes do PMO. Em um ambiente como o do Metrô, onde a operação é complexa e o volume de informação é elevado, a automação inteligente transforma a gestão de portfólio em um processo mais ágil, confiável e orientado para resultados.
+
