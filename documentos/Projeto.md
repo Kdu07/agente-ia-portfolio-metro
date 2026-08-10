@@ -601,6 +601,13 @@ Responsável pela identificação de intenções, classificação de solicitaç�
 - **Bibliotecas de NLP**: spaCy e/ou NLTK, para tarefas de pré-processamento textual, tokenização, classificação de intenções e extração de entidades.
 - **API de LLM**: modelo de linguagem via API (ex.: OpenAI ou Azure OpenAI), utilizado para tarefas de compreensão e geração de linguagem natural mais complexas, respeitando a restrição de que nenhum dado sensível real seja enviado a serviços externos não homologados — reforçando o uso de dados sintéticos no MVP.
 
+#### 5.1.2. Tecnologias do Pilar 2 — Integração com Ecossistema Microsoft
+
+Responsável por conectar o agente à infraestrutura corporativa já adotada pelo Metrô, garantindo aderência aos sistemas existentes.
+
+- **Copilot Studio**: construção e orquestração do agente conversacional dentro do ecossistema Microsoft.
+- **Power Platform**: integração com fluxos de automação (Power Automate) e possível consumo/exposição de dados via Power Apps/Power BI, conforme necessidade identificada ao longo do projeto.
+
 
 ## 5.2 Diagrama de Componentes da UML
 
