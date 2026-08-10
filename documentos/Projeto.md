@@ -608,6 +608,26 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 - **Copilot Studio**: construção e orquestração do agente conversacional dentro do ecossistema Microsoft.
 - **Power Platform**: integração com fluxos de automação (Power Automate) e possível consumo/exposição de dados via Power Apps/Power BI, conforme necessidade identificada ao longo do projeto.
 
+#### 5.1.3. Ferramentas de Apoio ao Desenvolvimento
+
+- **Controle de versão**: Git/GitLab, para versionamento do código e colaboração entre os integrantes do grupo.
+- **Ambiente de desenvolvimento**: ambiente Python (ex.: Jupyter Notebook ou IDE como VS Code) para prototipagem e testes do Pilar 1.
+- **Documentação e gestão do projeto**: ferramentas colaborativas (ex.: Gitlab) para organização de entregas e alinhamento entre a equipe e o parceiro.
+
+#### 5.1.4. Listagem Organizada dos Recursos
+
+| Categoria | Tecnologia/Ferramenta | Finalidade |
+|---|---|---|
+| Linguagem | Python | Desenvolvimento do Pilar 1 (PLN próprio) |
+| Biblioteca de NLP | spaCy / NLTK | Pré-processamento, tokenização e classificação de intenções |
+| API de LLM | OpenAI / Azure OpenAI | Compreensão e geração de linguagem natural |
+| Plataforma low-code | Copilot Studio | Construção do agente conversacional (Pilar 2) |
+| Automação | Power Platform (Power Automate) | Integração com sistemas corporativos do Metrô |
+| Versionamento | Git/GitLab | Controle de versão e colaboração |
+| Ambiente de desenvolvimento | VS Code / Jupyter Notebook | Prototipagem e testes |
+| Gestão e documentação | GitLab | Organização de entregas e alinhamento da equipe |
+
+> **Observação**: esta listagem representa uma visão inicial e poderá ser refinada conforme o projeto evolua, especialmente à medida que forem definidos com mais precisão os requisitos de integração com os sistemas homologados do Metrô.
 
 ## 5.2 Diagrama de Componentes da UML
 
