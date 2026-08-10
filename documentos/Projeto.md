@@ -109,7 +109,74 @@
 
 ## 2.2 Problema
 
-[Descreva o problema central identificado, suas causas e impactos para o negócio e para o usuário.]
+### 2.2.1 Contextualização
+
+O PMO do Metrô de São Paulo possui um processo estruturado para gerenciar seu portfólio de projetos, registrando informações como cronograma, entregas, riscos, benefícios, indicadores e demais documentos que apoiam o acompanhamento das iniciativas. Esse processo é apoiado pelo ecossistema Microsoft, utilizando ferramentas como SharePoint, Power BI e Copilot Studio. No SharePoint, as informações são organizadas em listas que também direcionam para documentos relacionados aos projetos, como planilhas e outros arquivos de apoio. Atualmente, o PMO já utiliza um agente desenvolvido no Copilot Studio para realizar consultas ao portfólio, porém ele funciona com fluxos previamente definidos, respondendo apenas a solicitações já mapeadas. Assim, consultas que exigem interpretar perguntas abertas, comparar projetos ou reunir informações distribuídas entre listas e documentos ainda dependem da busca e da conferência manual realizadas pela equipe. Esse processo consome tempo, aumenta a chance de inconsistências e dificulta o acesso rápido às informações, principalmente à medida que o portfólio cresce.
+
+### 2.2.2 Impactos para o parceiro
+
+Embora o PMO já conte com um agente para apoiar consultas ao portfólio, ele atende apenas a fluxos previamente definidos. Sempre que surge uma pergunta mais específica, uma comparação entre projetos ou uma consulta que exige interpretação de contexto, a equipe precisa navegar entre as listas do SharePoint e os documentos vinculados a elas para localizar, validar e consolidar as informações necessárias. Esse processo aumenta o tempo de resposta às solicitações, reduz a produtividade da equipe e torna as análises mais dependentes do conhecimento dos analistas. Além disso, a conferência manual das informações dificulta a identificação de inconsistências e o acompanhamento da conformidade dos projetos, impactando a confiabilidade dos dados utilizados pela gestão. À medida que novos projetos são incorporados ao portfólio, o volume de documentos e consultas cresce continuamente, tornando esse modelo cada vez menos escalável e exigindo um esforço operacional maior para manter a mesma qualidade das análises.
+
+### 2.2.3 Matriz SWOT
+
+![Descrição da imagem](/assets/swot.png)
+*Matriz SWOT do parceiro*
+
+#### 2.2.3.1 Forças
+
+##### Processo de gestão estruturado
+
+O PMO possui um processo consolidado para acompanhamento do portfólio de projetos, com responsabilidades e informações bem definidas ao longo do ciclo de vida das iniciativas. Essa padronização facilita a adoção de novas soluções sem exigir mudanças significativas na forma como a gestão é realizada.
+
+##### Ecossistema Microsoft consolidado
+
+Ferramentas como SharePoint, Power BI e Copilot Studio já fazem parte da rotina do PMO, reduzindo a necessidade de implantar uma nova infraestrutura. Isso favorece a integração da solução proposta ao ambiente já utilizado pela equipe.
+
+##### Base de informações organizada
+
+As listas do SharePoint concentram as informações dos projetos e mantêm a referência para documentos utilizados durante sua execução. Essa organização permite que o agente tenha uma fonte estruturada para localizar e consolidar informações relevantes.
+
+#### 2.2.3.2 Fraquezas
+
+##### Dependência de consultas manuais
+
+Consultas que exigem análise de contexto ainda dependem da navegação entre listas do SharePoint e documentos associados aos projetos. Esse processo aumenta o tempo gasto para localizar e consolidar informações.
+
+##### Limitação do agente atual
+
+O agente atualmente utilizado responde apenas a fluxos previamente configurados, sem interpretar perguntas abertas ou identificar a intenção do usuário. Isso restringe seu uso a cenários já previstos.
+
+##### Baixa escalabilidade das análises
+
+À medida que novos projetos são incorporados ao portfólio, cresce também o volume de documentos e informações a serem analisados. Como boa parte desse trabalho ainda é manual, a capacidade do PMO de responder rapidamente às demandas tende a diminuir.
+
+#### 2.2.3.3 Oportunidades
+
+##### Evolução do agente existente
+
+Em vez de substituir a solução atual, o projeto pode ampliar suas capacidades, permitindo consultas em linguagem natural e respostas mais contextualizadas, aproveitando a infraestrutura já existente.
+
+##### Redução de atividades operacionais
+
+Automatizar a busca e a consolidação de informações reduz o tempo gasto em tarefas repetitivas e permite que a equipe concentre seus esforços em atividades de maior valor para a gestão do portfólio.
+
+##### Apoio à tomada de decisão
+
+Ao disponibilizar informações consolidadas de forma mais rápida e contextualizada, a solução pode apoiar gestores na identificação de riscos, acompanhamento dos projetos e priorização de ações.
+
+#### 2.2.3.4 Ameaças
+
+##### Qualidade das informações
+
+A qualidade das respostas geradas pelo agente depende diretamente da consistência e da atualização das informações registradas nas listas e documentos utilizados pelo PMO.
+
+##### Restrições de segurança e governança
+
+Como a solução será utilizada em um ambiente corporativo, ela deverá atender às políticas de segurança, privacidade e governança definidas pelo Metrô, o que pode limitar determinadas integrações ou funcionalidades.
+
+##### Evolução do ambiente tecnológico
+
+Mudanças futuras na estrutura do SharePoint, nas listas do portfólio ou nas ferramentas do ecossistema Microsoft podem exigir adaptações para manter a solução compatível com o ambiente corporativo.
 
 ## 2.3 Visão do Projeto e do Produto
 
