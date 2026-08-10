@@ -588,6 +588,19 @@ A introdução de PLN modifica o negócio nas seguintes frentes:
 - **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
 - **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
 
+#### 3.6.3. Alinhamento com o Ecossistema Corporativo
+
+A solução se apoia em dois pilares complementares:
+
+1. **Pilar 1 — PLN próprio**: desenvolvido pela equipe do projeto, responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
+2. **Pilar 2 — Integração com o ecossistema Microsoft**: aproveitamento das ferramentas já adotadas pelo Metrô (Copilot Studio/Power Platform), garantindo aderência à infraestrutura corporativa existente e facilitando a adoção pelos usuários finais.
+
+Essa combinação assegura que a transformação proposta não exija a substituição de ferramentas já consolidadas na organização, mas sim a adição de uma camada inteligente de interação sobre elas.
+
+#### 3.6.4. Restrições de Negócio Relevantes
+
+Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
+
 
 
 # 4. Modelagem de Dados
