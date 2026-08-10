@@ -579,6 +579,15 @@ A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo
 
 Nesse contexto, identificou-se a oportunidade de introduzir um agente de inteligência artificial capaz de interagir em linguagem natural — por texto e voz — permitindo que gestores e demais stakeholders obtenham respostas diretas sobre o portfólio sem a necessidade de navegar manualmente por múltiplos sistemas ou relatórios.
 
+#### 3.6.2. Transformação do Negócio por meio do PLN
+
+A introdução de PLN modifica o negócio nas seguintes frentes:
+
+- **Redução de fricção no acesso à informação**: em vez de consultar relatórios estáticos ou navegar por múltiplas telas, o usuário formula perguntas em linguagem natural (ex.: "quais projetos estão em risco esta semana?") e recebe respostas objetivas e contextualizadas.
+- **Democratização do acompanhamento de portfólio**: usuários sem conhecimento técnico aprofundado sobre os sistemas de gestão passam a conseguir extrair informações relevantes, ampliando a base de pessoas capazes de monitorar o portfólio.
+- **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
+- **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
+
 
 
 # 4. Modelagem de Dados
