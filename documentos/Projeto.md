@@ -80,33 +80,57 @@
 
 ## 2.1 Contexto da Indústria do Parceiro
 
-[Descreva o cenário do parceiro, o setor em que atua e o contexto estratégico relevante.]
+O setor de transporte metropolitano caracteriza-se pela elevada complexidade operacional, pela necessidade de investimentos de longo prazo, pela participação de múltiplos stakeholders e pela integração entre diferentes modos e sistemas de transporte. No Brasil, o planejamento da mobilidade urbana envolve desafios relacionados à expansão e modernização da infraestrutura, à integração das redes, ao financiamento de projetos e à coordenação entre diferentes níveis de governo e organizações.
+
+O Estudo Nacional de Mobilidade Urbana (ENMU), coordenado pelo Banco Nacional de Desenvolvimento Econômico e Social (BNDES) e pelo Ministério das Cidades, identificou necessidades de investimentos e projetos de transporte público coletivo de média e alta capacidade em regiões metropolitanas brasileiras. O estudo também destaca a importância da integração e otimização das redes, do planejamento de longo prazo e da governança interfederativa para o desenvolvimento da mobilidade urbana.
+
+Nesse contexto, o Metrô de São Paulo possui papel estratégico na mobilidade da Região Metropolitana de São Paulo, atuando na operação e expansão da rede metroviária e no planejamento do transporte metropolitano de passageiros. A organização possui uma estrutura de grande escala e atua em um ambiente que demanda planejamento contínuo, acompanhamento de projetos, integração entre áreas e tomada de decisão baseada em informações.
+
+A complexidade desse cenário também se reflete na gestão de projetos e portfólios. O Metrô possui uma estrutura de PMO voltada à gestão de seu portfólio estratégico e demonstra maturidade nessa área, tendo conquistado o 3º lugar na categoria PMO do Ano Brasil no PMO Brazil Awards 2024. Dessa forma, o desafio do projeto não está na criação de uma estrutura de gestão de projetos, mas na ampliação da capacidade dessa estrutura por meio do uso de tecnologias de inteligência artificial.
+
+Paralelamente, a gestão de projetos, programas e portfólios passa por um processo de transformação digital. A inteligência artificial vem sendo incorporada de maneira mais estruturada ao gerenciamento de projetos, com aplicações relacionadas à automação de atividades, análise de informações, apoio à tomada de decisão e governança. Nesse cenário, técnicas de Processamento de Linguagem Natural (PLN) possibilitam novas formas de interação com informações de projetos, permitindo que usuários realizem consultas em linguagem natural e obtenham informações estruturadas a partir de grandes volumes de dados.
+
+Essa tendência é particularmente relevante para o contexto do Metrô, uma vez que o projeto busca utilizar IA e PLN para facilitar o acesso às informações do portfólio, permitindo consultas sobre aspectos como status, riscos, marcos e aderência a normativos. Assim, a transformação digital dos processos de gestão constitui uma oportunidade para aumentar a eficiência e a capacidade analítica do PMO.
 
 ### 2.1.1 Análise das 5 Forças de Porter
 
-#### 1. Rivalidade entre concorrentes
+#### Rivalidade entre concorrentes
 
-[Preencher]
+A rivalidade direta no setor metroviário é limitada pela natureza do serviço e pela atuação institucional do Metrô. A organização possui uma função específica dentro do sistema de transporte metropolitano e atua de forma integrada a outros modos de transporte, em vez de competir diretamente com eles como empresas em um mercado convencional. Entretanto, existe competição pela demanda dos passageiros entre diferentes alternativas de deslocamento, como transporte sobre trilhos, ônibus e transporte individual.
 
-#### 2. Poder de barganha dos fornecedores
+**Classificação: Baixa a moderada.**
 
-[Preencher]
+#### Poder de barganha dos fornecedores
 
-#### 3. Poder de barganha dos clientes
+A operação e expansão de sistemas metroviários dependem de fornecedores especializados em infraestrutura, equipamentos, tecnologia, manutenção e serviços técnicos. A complexidade e a especialização desses componentes podem aumentar a dependência de fornecedores com competências específicas, especialmente em projetos de modernização e expansão da infraestrutura.
 
-[Preencher]
+**Classificação: Moderada a alta.**
 
-#### 4. Ameaça de novos entrantes
+#### Poder de barganha dos clientes
 
-[Preencher]
+Os passageiros constituem os principais usuários do sistema, porém o transporte metroviário possui características de serviço público essencial e está inserido em um ambiente regulado, com políticas públicas, estrutura tarifária e integração com outros sistemas de transporte. Dessa forma, o poder de barganha dos usuários não ocorre da mesma maneira que em mercados privados convencionais.
 
-#### 5. Ameaça de produtos substitutos
+**Classificação: Moderada.**
 
-[Preencher]
+#### Ameaça de novos entrantes
+
+A entrada de novos operadores no transporte metroviário apresenta barreiras elevadas devido ao alto volume de investimentos necessários, à complexidade da infraestrutura, aos requisitos regulatórios e ao longo prazo necessário para implantação de sistemas de transporte de alta capacidade. Esses fatores dificultam a entrada de novos participantes capazes de oferecer infraestrutura metroviária equivalente.
+
+**Classificação: Baixa.**
+
+#### Ameaça de produtos substitutos
+
+O transporte metroviário está sujeito à existência de diferentes alternativas de mobilidade, como ônibus, automóveis, motocicletas, bicicletas e outros serviços de transporte. A existência desses modais representa uma alternativa para os usuários, embora a integração entre os diferentes modos seja também um elemento fundamental do planejamento da mobilidade metropolitana.
+
+**Classificação: Moderada a alta.**
 
 ### 2.1.2 Conclusão
 
-[Preencher]
+O setor de transporte metropolitano apresenta elevada complexidade devido à necessidade de investimentos de longo prazo, à integração entre diferentes sistemas, à participação de múltiplos stakeholders e à necessidade de planejamento contínuo. Nesse ambiente, organizações como o Metrô de São Paulo precisam administrar simultaneamente suas operações, projetos de expansão e modernização e seu portfólio estratégico.
+
+Ao mesmo tempo, a gestão de projetos, programas e portfólios passa por uma transformação digital, com a adoção crescente de inteligência artificial para automação, análise de informações, governança e suporte à tomada de decisão. A utilização de PLN amplia essa possibilidade ao permitir que informações estruturadas de projetos sejam acessadas por meio de linguagem natural.
+
+Dessa forma, o contexto da indústria apresenta uma oportunidade para aplicação de IA na gestão de portfólio do Metrô. A proposta do projeto está alinhada a essa tendência ao buscar reduzir a dependência de atividades manuais, facilitar o acesso às informações dos projetos e ampliar a capacidade analítica do PMO por meio de consultas em linguagem natural.
 
 ## 2.2 Problema
 
