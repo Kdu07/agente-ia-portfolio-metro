@@ -241,3 +241,63 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
   - Comunicar o grupo e, quando aplicável, o professor orientador sobre a reversão e o motivo.
 - Esses procedimentos devem permanecer registrados no repositório para consulta futura.
 
+# 8. Contrato de Convivência, SLA e Rituais do Grupo
+
+Esta seção documenta os acordos operacionais construídos coletivamente pelo grupo para reger a convivência, a comunicação e a rotina de trabalho ao longo de todo o módulo, complementando as políticas técnicas descritas nas seções anteriores.
+
+## 8.1 Regra de Ouro
+
+Tratar o board e o repositório como a fonte oficial da verdade do projeto: nenhum trabalho é considerado concluído até que esteja refletido no card correspondente e, quando aplicável, em um commit ou MR rastreável. Combinados feitos fora desses canais (em conversa informal, por exemplo) devem ser registrados assim que possível para não se perderem.
+
+## 8.2 Comunicação Oficial e Dailies
+
+- O canal oficial de comunicação do grupo é o [a definir — ex.: grupo de WhatsApp/Slack do time], usado para avisos, dúvidas e sinalização de impedimentos.
+- Dailies ocorrem em horário fixo combinado pelo grupo, com formato objetivo: o que foi feito, impedimentos e o que será feito a seguir.
+- Quem não puder comparecer deve enviar sua atualização pelo canal oficial antes ou durante o horário da daily.
+- Sempre que um MR for aberto, o autor deve avisar no canal oficial para agilizar a revisão.
+
+## 8.3 Resolução de Impasses e Gestão de Conflitos
+
+- Divergências técnicas devem ser primeiro discutidas entre as partes envolvidas, buscando uma solução por consenso.
+- Caso não haja consenso, o impasse é levado ao grupo como um todo na daily seguinte ou em uma reunião pontual.
+- Se ainda assim não houver acordo, o Scrum Master da Sprint tem a palavra final para destravar a decisão e permitir que o trabalho avance.
+- Conflitos interpessoais devem ser tratados com respeito e, se necessário, mediados por outro integrante do grupo antes de serem escalados ao professor orientador.
+
+## 8.4 SLA de Entregas
+
+- O grupo padronizou suas entregas internas (cards, MRs e artefatos de documentação) para o prazo fixo de **quinta-feira às 23h59**, independentemente do prazo formal de cada Sprint. Esse acordo dá previsibilidade à revisão por pares e evita concentração de entregas em cima da hora da avaliação.
+- Cards que não puderem ser concluídos até esse horário devem ser sinalizados no board e comunicados ao grupo com antecedência, para replanejamento.
+
+# 9. Registro de Variáveis de Ambiente
+
+- É obrigatório manter um arquivo `.env.example` documentando todas as variáveis de ambiente exigidas pela aplicação.
+- O arquivo deve listar todas as chaves (sem valores reais/sensíveis) com uma breve explicação de cada variável.
+- Todos os integrantes devem usar esse exemplo como base para criar seus próprios arquivos `.env` locais.
+
+Exemplo:
+
+```
+LLM_API_KEY=            # Chave da API de LLM utilizada no Pilar 1 (NUNCA commitar valor real)
+LLM_PROVIDER=            # Provedor do modelo de linguagem (ex.: openai, azure-openai)
+COPILOT_STUDIO_ENV_ID=   # Identificador do ambiente do Copilot Studio usado no Pilar 2
+POWER_AUTOMATE_FLOW_URL= # URL do fluxo do Power Automate consumido/exposto pela integração
+LOG_LEVEL=info            # Nível padrão de logs (info, warn, error)
+```
+
+# Referências
+
+- Conventional Commits: https://www.conventionalcommits.org/en/v1.0.0/
+- GitFlow: https://nvie.com/posts/a-successful-git-branching-model/
+- Gitihub/iuricode: https://github.com/iuricode/padroes-de-commits
+- Docker (documentação oficial): https://docs.docker.com/
+- Best Practices for Writing Dockerfiles: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
+- Docker Compose (documentação oficial): https://docs.docker.com/compose/
+- .dockerignore Reference: https://docs.docker.com/engine/reference/builder/#dockerignore-file
+- .gitignore (documentação oficial): https://git-scm.com/docs/gitignore
+- gitignore.io (gerador de .gitignore para diferentes stacks): https://www.toptal.com/developers/gitignore/
+- Handling secrets in Git repos (GitHub Guide): https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-and-storing-encrypted-secrets
+- Best Practices for Rollbacks (Atlassian): https://www.atlassian.com/continuous-delivery/principles/rollback-strategies
+- How to Use Git Revert and Git Reset: https://www.git-tower.com/learn/git/faq/git-reset-vs-revert/
+- 12 Factor App: Config: https://12factor.net/config
+- Dotenv (Exemplo e uso de arquivos .env): https://github.com/motdotla/dotenv#usage
+- Copilot Studio - Documentação oficial: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
