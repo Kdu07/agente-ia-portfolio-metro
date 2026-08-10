@@ -190,11 +190,16 @@ Mudanças futuras na estrutura do SharePoint, nas listas do portfólio ou nas fe
 
 ### Objetivos do Produto (SMART)
 
-- [O1] [Preencher]
-- [O2] [Preencher]
-- [O3] [Preencher]
-- [O4] [Preencher]
-- [O5] [Preencher]
+* **[O1] Eficiência:** reduzir em **80%** a necessidade de execução manual das consultas contempladas pelo MVP, permitindo que os usuários obtenham as informações previstas por meio de consultas em linguagem natural até a conclusão do projeto.
+
+* **[O2] Capacidade analítica:** possibilitar, até a conclusão do MVP, consultas em linguagem natural sobre **100% das categorias de informações definidas no escopo**, contemplando dados de projetos, status, riscos, marcos e demais informações previstas na solução, ampliando a capacidade de análise do portfólio.
+
+* **[O3] Rastreabilidade:** garantir que **100% das respostas factuais produzidas pelo MVP** possam ser relacionadas às informações disponíveis na base de conhecimento utilizada, permitindo verificar a origem dos dados apresentados ao usuário.
+
+* **[O4] Transparência:** alcançar **pelo menos 90% de respostas consideradas adequadas** em uma bateria de casos de teste definida pelo grupo, considerando a correspondência entre as informações disponíveis na base de conhecimento e as respostas apresentadas pelo agente.
+
+* **[O5] Precisão e confiabilidade:** alcançar **acurácia mínima de 85% na classificação das intenções** das consultas previstas no escopo, até a conclusão do MVP, permitindo direcionar corretamente as solicitações dos usuários e reduzir a necessidade de tratamento manual.
+
 
 ## 2.4 Personas e Jornadas do Usuário
 
