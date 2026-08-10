@@ -47,6 +47,7 @@
 - [3.3 Correlação RFs e RNFs](#33-correlação-rfs-e-rnfs)
 - [3.4 Casos de Uso](#34-casos-de-uso)
 - [3.5 Casos de Uso x Requisitos Funcionais](#35-casos-de-uso-x-requisitos-funcionais)
+- [3.6 Business Drivers](#36-business-drivers)
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
 - [5. Solução Técnica (Design)](#5-solução-técnica-design)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
@@ -567,6 +568,18 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 ## 3.5 Casos de Uso x Requisitos Funcionais
 
 [Preencher]
+
+### 3.6. Business Drivers
+
+Esta seção descreve o contexto de negócio que motiva a construção da aplicação computacional, alinhando-se aos documentos de entendimento de negócio produzidos junto à Companhia do Metropolitano de São Paulo (Metrô), e explica como o uso de Processamento de Linguagem Natural (PLN) transforma os processos atuais de gestão de portfólio de projetos.
+
+#### 3.6.1. Contexto de Negócio
+
+A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo de status, riscos, marcos (*milestones*) e aderência a normativos internos e externos. Atualmente, esse acompanhamento depende fortemente de consultas manuais a sistemas corporativos e da consolidação de informações dispersas, o que demanda tempo das equipes de gestão e aumenta o risco de decisões baseadas em dados desatualizados ou incompletos.
+
+Nesse contexto, identificou-se a oportunidade de introduzir um agente de inteligência artificial capaz de interagir em linguagem natural — por texto e voz — permitindo que gestores e demais stakeholders obtenham respostas diretas sobre o portfólio sem a necessidade de navegar manualmente por múltiplos sistemas ou relatórios.
+
+
 
 # 4. Modelagem de Dados
 
