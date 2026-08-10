@@ -131,23 +131,75 @@
 
 ## 2.4 Personas e Jornadas do Usuário
 
-[Descreva as personas principais e as jornadas de uso esperadas.]
+As personas foram elaboradas como instrumento de apoio às decisões de experiência do usuário (UX) e à definição dos requisitos do agente de IA. A seleção de três perfis busca representar níveis distintos da estrutura de gestão de projetos do Metrô de São Paulo: o estratégico, associado à Diretoria; o gerencial ou tático, representado pela liderança de projetos; e o operacional, correspondente aos integrantes das equipes de projeto. Essa diferenciação permite analisar como objetivos, responsabilidades e necessidades de informação alteram a forma de interação com uma mesma solução.
 
-### 2.4.1 Persona do Usuário
+As informações sobre o contexto do portfólio, as dificuldades do processo atual e o uso de componentes do ecossistema Microsoft — como SharePoint, Power Automate, Power BI e Copilot Studio — foram fornecidas pelo parceiro no TAPI e no *kick-off*. Os nomes, as idades e a composição dos perfis apresentados a seguir são construções representativas utilizadas para orientar o projeto e não correspondem necessariamente a funcionários reais do Metrô. Os comportamentos, critérios de sucesso e formas de interação descritos constituem hipóteses de modelagem derivadas das informações disponíveis e deverão ser validados ao longo do desenvolvimento.
 
-[Preencher]
+Embora o gestor do portfólio, associado ao PMO, seja um ator recorrente nas histórias de usuário — especialmente nos fluxos de Mapa de Benefícios, Termo de Abertura, Cronograma e Riscos —, ele não foi definido como uma quarta persona nesta primeira versão. Para fins desta modelagem, a atuação do PMO foi tratada de forma transversal às personas de Diretoria e Liderança de Projeto, pois exerce a função de consolidação, orientação e articulação entre os níveis estratégico e gerencial. Essa delimitação constitui uma decisão de escopo: com as informações atualmente disponíveis, não foram identificadas necessidades suficientemente distintas para justificar um perfil adicional, hipótese que deverá ser reavaliada quando o parceiro disponibilizar dados mais detalhados sobre prioridades e perfis de usuários.
 
-### 2.4.2 Persona de Negócio
+### 2.4.1 Roberto Nogueira — Diretoria
 
-[Preencher]
+<div align="center">
+  <img src="imagens/Roberto.png" width="35%" alt="Persona Roberto Nogueira">
+  <br>
+  <sub>Figura X: Persona Roberto Nogueira.</sub>
+</div>
 
-### 2.4.3 Jornada do Usuário 1
+Roberto Nogueira tem 48 anos, nível de familiaridade tecnológica intermediário e representa o usuário de nível estratégico. Em seu papel na Diretoria, utiliza as informações do portfólio como subsídio para decisões, priorizações e acompanhamento institucional. No cenário atual, não opera diretamente as ferramentas de gestão: recebe do PMO relatórios, indicadores e apresentações previamente consolidados. Assim, seu contato com o portfólio é orientado à leitura executiva, e não ao acompanhamento das atividades rotineiras de cada projeto.
 
-[Preencher]
+Sua principal dor é a dependência da consolidação realizada por terceiros para obter uma visão atualizada do portfólio. A quantidade e a dispersão das informações também podem dificultar a identificação rápida dos projetos ou subportfólios que demandam atenção. Seu comportamento esperado é consultar o agente em momentos de acompanhamento ou decisão, buscando sínteses, comparações, desvios relevantes e os principais riscos, sem precisar conhecer a organização técnica das fontes de dados.
 
-### 2.4.4 Jornada do Usuário 2
+Para esse perfil, o agente deve apresentar respostas objetivas, executivas e consolidadas, preferencialmente acompanhadas de indicadores, tendências e destaques de criticidade. A interação deve ocorrer em linguagem natural, por texto e, desejavelmente, por voz, permitindo perguntas como quais projetos requerem atenção ou quais riscos têm maior impacto no portfólio. Quando necessário, a solução pode oferecer aprofundamento progressivo, mas deve iniciar pela síntese e evitar detalhes operacionais que não contribuam para a decisão.
 
-[Preencher]
+O nível de informação disponibilizado deve ser compatível com as atribuições da Diretoria e com as políticas de acesso definidas pelo Metrô. Ainda que o perfil possa demandar uma visão abrangente, o sistema deve validar as permissões antes de consultar ou apresentar dados. Considera-se bem-sucedida a experiência em que Roberto obtém, de forma rápida e confiável, uma visão atual do portfólio, compreende os pontos críticos e reduz sua dependência de consolidações adicionais para formular uma decisão. Essa persona influencia requisitos de sumarização executiva, agregação por projeto e subportfólio, priorização de riscos, rastreabilidade das fontes e controle de acesso baseado no perfil do usuário.
+
+### 2.4.2 Fernanda Medina — Líder de Projeto
+
+<div align="center">
+  <img src="imagens/Fernanda.png" width="35%" alt="Persona Fernanda Medina">
+  <br>
+  <sub>Figura X: Persona Fernanda Medina.</sub>
+</div>
+
+Fernanda Medina tem 39 anos, nível de familiaridade tecnológica intermediário e representa o nível gerencial ou tático. Como líder de projeto, acompanha o avanço, o cronograma, as entregas, os riscos e as pendências, além de manter interlocução com o PMO. Diferentemente do perfil da Diretoria, sua atuação exige acesso recorrente a informações detalhadas dos projetos sob sua responsabilidade e participação ativa na atualização dos respectivos dados.
+
+Suas principais dores estão relacionadas ao esforço manual de acompanhamento e cobrança, à necessidade de manter as informações atualizadas e à consulta recorrente a normativos. Embora já exista um bot para apoiar a obtenção e a atualização do status dos projetos, o parceiro indicou limitações quanto à proatividade, à redução das cobranças manuais, ao apoio na consulta aos normativos e ao controle seguro do conteúdo exibido. Nesse contexto, Fernanda tende a interagir com a solução com frequência, alternando consultas, verificações de pendências e solicitações de atualização.
+
+O agente deve permitir que a líder consulte e atualize dados em linguagem natural, sem depender de programação ou de conhecimento sobre a estrutura técnica dos sistemas. Também deve oferecer apoio proativo, por exemplo, ao sinalizar prazos, informações desatualizadas, pendências, riscos ou possíveis inconformidades com normativos. Toda atualização precisa ser apresentada para confirmação quando aplicável e manter registro de sua origem, autoria e momento, evitando alterações ambíguas ou sem rastreabilidade.
+
+Fernanda deve visualizar informações suficientemente detalhadas sobre os projetos aos quais possui acesso, sem receber dados de outros contextos quando não houver autorização. O sucesso para essa persona corresponde à redução do esforço de cobrança e consolidação, à identificação antecipada de problemas, à facilidade para consultar normativos e à manutenção de dados confiáveis com menos etapas manuais. Suas características orientam requisitos de alertas e acompanhamento proativo, consultas contextuais, atualização conversacional, confirmação de ações, notificações de prazo, análise documental, rastreabilidade e aplicação consistente das permissões.
+
+### 2.4.3 Carlos Mendes — Membro da Equipe de Projeto
+
+<div align="center">
+  <img src="imagens/Carlos.png" width="35%" alt="Persona Carlos Mendes">
+  <br>
+  <sub>Figura X: Persona Carlos Mendes.</sub>
+</div>
+
+Carlos Mendes tem 34 anos, nível de familiaridade tecnológica básico e representa o nível operacional. Como membro de uma equipe de projeto, participa da execução das atividades e precisa compreender as informações que afetam diretamente seu trabalho. Sua interação com a gestão do portfólio é mais delimitada que a dos demais perfis: ele necessita consultar o projeto do qual participa, identificar pendências e contribuir com atualizações pertinentes, sem precisar conhecer a arquitetura dos sistemas ou a organização das bases de dados.
+
+As principais dores desse perfil são a dificuldade de localizar rapidamente informações relevantes, compreender o que está pendente e registrar contribuições sem enfrentar fluxos complexos ou terminologia técnica. Seu comportamento esperado é realizar consultas pontuais e orientadas à ação, como verificar tarefas, prazos, documentos ou pendências relacionadas ao próprio projeto. A baixa familiaridade tecnológica torna especialmente importante que o agente interprete solicitações expressas de diferentes formas e forneça orientações claras quando faltarem dados ou quando uma ação não puder ser executada.
+
+A interação deve ser simples, guiada e em linguagem natural, por texto e, desejavelmente, por voz. O agente deve responder com clareza, indicar próximos passos e solicitar confirmação antes de registrar atualizações relevantes. Também deve informar, em linguagem compreensível, quando uma solicitação estiver fora do escopo ou da permissão do usuário, sem expor a existência ou o conteúdo de informações restritas.
+
+O acesso de Carlos deve permanecer limitado às informações do projeto em que atua e às ações autorizadas para sua função. O critério de sucesso é que ele consiga localizar informações, compreender suas pendências e fornecer atualizações com autonomia, baixa curva de aprendizagem e segurança. Essa persona influencia requisitos de usabilidade, linguagem simples, orientação contextual, tolerância a variações na formulação das perguntas, confirmação de alterações e controle de acesso em nível de projeto.
+
+### 2.4.4 Análise comparativa e implicações para a solução
+
+Embora as três personas utilizem o mesmo agente, a resposta deve ser adaptada ao contexto, ao objetivo e à autorização de cada usuário. Para a Diretoria, a interação deve privilegiar respostas objetivas, executivas e consolidadas, com foco em indicadores, riscos e pontos de atenção do portfólio. Para a liderança, deve oferecer maior detalhamento sobre os projetos sob sua responsabilidade, apoiar consultas e atualizações e atuar de forma proativa no acompanhamento de prazos, pendências, riscos e normativos. Para a equipe de projeto, a experiência deve ser simples, orientada e restrita ao projeto em que o usuário atua.
+
+| Aspecto | Diretoria — Roberto | Liderança — Fernanda | Equipe de projeto — Carlos |
+|---|---|---|---|
+| Foco da interação | Decisão estratégica e visão do portfólio | Gestão e acompanhamento dos projetos | Execução e contribuição operacional |
+| Forma da resposta | Sintética, executiva e consolidada | Detalhada, contextual e proativa | Simples, guiada e orientada à ação |
+| Informações prioritárias | Indicadores, criticidades, riscos e comparações | Avanço, cronograma, entregas, riscos, pendências e normativos | Tarefas, prazos, documentos e pendências do próprio projeto |
+| Ações esperadas | Consultar e aprofundar pontos críticos | Consultar, acompanhar e atualizar | Consultar e contribuir com atualizações autorizadas |
+| Escopo de acesso | Visão ampla, conforme autorização institucional | Projetos sob sua responsabilidade | Projeto em que atua |
+
+A facilidade de uso e a baixa dependência de conhecimentos técnicos são requisitos transversais. Conforme indicado pelo parceiro, a solução precisa ser compreensível e sustentável por usuários que não sejam desenvolvedores. Isso implica reduzir a exposição da complexidade dos componentes Microsoft utilizados, adotar linguagem natural como principal meio de interação, apresentar retornos claros, preservar a rastreabilidade das informações e aplicar controles de acesso antes da recuperação, geração ou atualização de conteúdo.
+
+Esta versão das personas constitui uma primeira modelagem baseada nas informações disponíveis no TAPI e no *kick-off*. O parceiro informou que forneceria posteriormente um documento mais detalhado sobre prioridades e/ou perfis de usuários. Consequentemente, necessidades, comportamentos, critérios de sucesso e hipóteses de interação aqui registrados deverão ser revisados e refinados quando os novos dados forem disponibilizados, evitando que decisões definitivas de UX ou requisitos sejam sustentadas apenas por suposições ainda não validadas.
 
 ## 2.5 Modelagem do Fluxo de Negócio
 
