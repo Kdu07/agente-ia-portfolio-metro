@@ -554,11 +554,18 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 
 ## 3.1 Requisitos Funcionais (RFs)
 
-- RF01 — [Descreva o requisito funcional]
-- RF02 — [Descreva o requisito funcional]
-- RF03 — [Descreva o requisito funcional]
-- RF04 — [Descreva o requisito funcional]
-- RF05 — [Descreva o requisito funcional]
+Os requisitos funcionais representam as principais capacidades esperadas do agente de IA para apoiar a gestão do portfólio de projetos do Metrô de São Paulo. Sua definição foi realizada a partir dos *business drivers*, do escopo estabelecido no TAPI e das *features* priorizadas pela equipe, de modo a organizar as funções que deverão ser oferecidas pela solução.
+
+| ID | Requisito Funcional | Descrição |
+|---|---|---|
+| RF01 | Controle de acesso, permissões e perfil do usuário | O sistema deve identificar o perfil e as permissões do usuário, restringindo o acesso às informações e funcionalidades autorizadas e adequando o nível de detalhamento das respostas ao seu perfil. |
+| RF02 | Interação em linguagem natural por texto e voz | O sistema deve receber solicitações em linguagem natural por texto e áudio, realizando a conversão de voz em texto quando necessário para permitir seu processamento pelo agente. |
+| RF03 | Identificação e controle de intenções | O sistema deve identificar e classificar a intenção das solicitações recebidas, associando-as às funcionalidades disponíveis e verificando se pertencem ao catálogo de interações permitido. Solicitações fora do escopo devem ser recusadas de forma orientativa e registradas para análise futura. |
+| RF04 | Consulta e análise de informações dos projetos | O sistema deve consultar e analisar informações e documentos dos projetos para responder perguntas relacionadas ao portfólio, incluindo avanço, cronograma, status, marcos, riscos, problemas e aderência a normativos, apresentando, quando disponível, a referência da informação utilizada. |
+| RF05 | Apoio à criação e atualização de projetos | O sistema deve apoiar o usuário na entrada e atualização de informações dos projetos ao longo de seu ciclo de vida, incluindo termo de abertura, cronograma, avanço, entregas, marcos, riscos, problemas e demais informações previstas no portfólio. Quando aplicável, alterações devem ser apresentadas ao usuário para confirmação antes de sua efetivação e manter registro de sua origem, autoria e momento da realização. |
+| RF06 | Identificação, alertas e apoio proativo a pendências | O sistema deve identificar dados ausentes, inconsistentes ou pendentes nos projetos, alertar os usuários responsáveis e oferecer apoio proativo para que as informações necessárias sejam complementadas ou corrigidas. |
+| RF07 | Análise comparativa do portfólio | O sistema deve realizar análises entre projetos do portfólio, permitindo identificar relações e diferenças relevantes, como riscos que possam impactar outros projetos, avanço, desempenho e demais indicadores disponíveis. |
+| RF08 | Geração de relatórios e informações gerenciais | O sistema deve gerar prévias de relatórios e materiais gerenciais a partir das informações dos projetos, incluindo relatório de status, apresentação periódica para a diretoria e relatório de encerramento, adequando o nível de detalhamento ao perfil do usuário. |
 
 ## 3.2 Requisitos Não Funcionais (RNFs)
 
