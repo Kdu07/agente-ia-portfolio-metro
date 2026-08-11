@@ -665,15 +665,37 @@ Os requisitos funcionais representam as principais capacidades esperadas do agen
 
 ## 3.2 Requisitos Não Funcionais (RNFs)
 
-- RNF01 — [Descreva o requisito não funcional]
-- RNF02 — [Descreva o requisito não funcional]
-- RNF03 — [Descreva o requisito não funcional]
-- RNF04 — [Descreva o requisito não funcional]
-- RNF05 — [Descreva o requisito não funcional]
+Os requisitos não funcionais abaixo foram derivados dos *business drivers* do projeto - especialmente a exigência de confidencialidade no tratamento de dados sensíveis do Metrô e a necessidade de confiabilidade na operação do agente - e formulados como histórias de usuário, de modo a manter coerência com os RFs já modelados.
+
+**RNF01 — Confidencialidade dos dados**
+> Como responsável pela segurança da informação do Metrô, quero que nenhum dado sensível dos projetos seja processado, armazenado ou transmitido fora do ambiente Microsoft homologado, para que a confidencialidade das informações estratégicas do portfólio seja preservada e a organização permaneça em conformidade com suas políticas internas de segurança.
+
+**RNF02 — Rastreabilidade das alterações**
+> Como Líder de Projeto, quero que toda alteração realizada nos dados do projeto (avanço, cronograma, riscos, marcos) fique registrada com autor, origem e momento da ação, para que eu possa auditar o histórico de atualizações e confiar na integridade das informações do portfólio.
+
+**RNF03 — Precisão na classificação de intenções**
+> Como usuário do agente, quero que minhas solicitações em linguagem natural sejam corretamente interpretadas e associadas ao catálogo de funcionalidades permitidas, para que eu receba respostas relevantes e nenhuma ação indevida ou fora do escopo seja executada em meu nome.
+
+**RNF04 — Disponibilidade do agente**
+> Como Diretor, quero que o agente esteja disponível de forma confiável durante o horário de expediente, para que eu possa consultar o status consolidado dos projetos sempre que precisar embasar uma decisão.
+
+**RNF05 — Adequação da resposta ao perfil do usuário**
+> Como Membro da Equipe de Projeto, quero que o nível de detalhamento e a modalidade de interação (texto ou voz) se adaptem ao meu perfil de acesso, para que eu receba respostas no formato mais útil ao meu contexto de trabalho, sem sobrecarga de informação irrelevante.
+
 
 ## 3.3 Correlação RFs e RNFs
 
-[Descreva a relação entre os requisitos funcionais e não funcionais e sua importância para a solução.]
+Os RNFs especificados decorrem diretamente dos *business drivers* do projeto e sustentam a viabilidade dos RFs modelados, garantindo que as funcionalidades entregues operem de forma segura, confiável e adequada ao contexto do Metrô de São Paulo.
+
+O **RNF01 (confidencialidade)** é o requisito mais crítico do projeto, derivado da restrição de negócio de que nenhum dado sensível pode trafegar por serviços externos não homologados. Ele se relaciona diretamente ao **RF01** (controle de acesso e permissões) e ao **RF05** (apoio à criação e atualização de projetos), assegurando que tanto o acesso quanto a movimentação de dados sensíveis ocorram exclusivamente dentro do ecossistema Microsoft homologado (Pilar 2 da arquitetura).
+
+O **RNF02 (rastreabilidade)** sustenta o **RF05**, que já prevê manter registro de origem, autoria e momento das alterações, e também o **RF03** (identificação e controle de intenções), cujas solicitações fora do escopo devem ser registradas para análise futura — reforçando a exigência de auditabilidade em toda a solução.
+
+O **RNF03 (precisão na classificação de intenções)** está diretamente ligado ao **RF03**, responsável por identificar e classificar a intenção das solicitações, e ao **RF02** (interação em linguagem natural por texto e voz), já que a qualidade da interpretação da linguagem natural é pré-condição para que o agente direcione corretamente cada solicitação às funcionalidades do Pilar 1 (PLN próprio).
+
+O **RNF04 (disponibilidade)** impacta transversalmente o **RF04** (consulta e análise de informações), o **RF06** (alertas e apoio proativo a pendências) e o **RF08** (geração de relatórios), funcionalidades que dependem da operação contínua do agente para gerar valor no dia a dia da gestão do portfólio.
+
+Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**, garantindo que o controle de perfil de acesso já previsto nos RFs se reflita também na forma e no nível de detalhe das respostas entregues a cada persona (Diretor, Líder de Projeto, Membro de Equipe).
 
 ## 3.4 Casos de Uso
 
