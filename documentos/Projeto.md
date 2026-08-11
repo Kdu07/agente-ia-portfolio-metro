@@ -685,7 +685,17 @@ Os requisitos não funcionais abaixo foram derivados dos *business drivers* do p
 
 ## 3.3 Correlação RFs e RNFs
 
-[Descreva a relação entre os requisitos funcionais e não funcionais e sua importância para a solução.]
+Os RNFs especificados decorrem diretamente dos *business drivers* do projeto e sustentam a viabilidade dos RFs modelados, garantindo que as funcionalidades entregues operem de forma segura, confiável e adequada ao contexto do Metrô de São Paulo.
+
+O **RNF01 (confidencialidade)** é o requisito mais crítico do projeto, derivado da restrição de negócio de que nenhum dado sensível pode trafegar por serviços externos não homologados. Ele se relaciona diretamente ao **RF01** (controle de acesso e permissões) e ao **RF05** (apoio à criação e atualização de projetos), assegurando que tanto o acesso quanto a movimentação de dados sensíveis ocorram exclusivamente dentro do ecossistema Microsoft homologado (Pilar 2 da arquitetura).
+
+O **RNF02 (rastreabilidade)** sustenta o **RF05**, que já prevê manter registro de origem, autoria e momento das alterações, e também o **RF03** (identificação e controle de intenções), cujas solicitações fora do escopo devem ser registradas para análise futura — reforçando a exigência de auditabilidade em toda a solução.
+
+O **RNF03 (precisão na classificação de intenções)** está diretamente ligado ao **RF03**, responsável por identificar e classificar a intenção das solicitações, e ao **RF02** (interação em linguagem natural por texto e voz), já que a qualidade da interpretação da linguagem natural é pré-condição para que o agente direcione corretamente cada solicitação às funcionalidades do Pilar 1 (PLN próprio).
+
+O **RNF04 (disponibilidade)** impacta transversalmente o **RF04** (consulta e análise de informações), o **RF06** (alertas e apoio proativo a pendências) e o **RF08** (geração de relatórios), funcionalidades que dependem da operação contínua do agente para gerar valor no dia a dia da gestão do portfólio.
+
+Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**, garantindo que o controle de perfil de acesso já previsto nos RFs se reflita também na forma e no nível de detalhe das respostas entregues a cada persona (Diretor, Líder de Projeto, Membro de Equipe).
 
 ## 3.4 Casos de Uso
 
