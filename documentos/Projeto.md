@@ -665,11 +665,23 @@ Os requisitos funcionais representam as principais capacidades esperadas do agen
 
 ## 3.2 Requisitos Não Funcionais (RNFs)
 
-- RNF01 — [Descreva o requisito não funcional]
-- RNF02 — [Descreva o requisito não funcional]
-- RNF03 — [Descreva o requisito não funcional]
-- RNF04 — [Descreva o requisito não funcional]
-- RNF05 — [Descreva o requisito não funcional]
+Os requisitos não funcionais abaixo foram derivados dos *business drivers* do projeto - especialmente a exigência de confidencialidade no tratamento de dados sensíveis do Metrô e a necessidade de confiabilidade na operação do agente - e formulados como histórias de usuário, de modo a manter coerência com os RFs já modelados.
+
+**RNF01 — Confidencialidade dos dados**
+> Como responsável pela segurança da informação do Metrô, quero que nenhum dado sensível dos projetos seja processado, armazenado ou transmitido fora do ambiente Microsoft homologado, para que a confidencialidade das informações estratégicas do portfólio seja preservada e a organização permaneça em conformidade com suas políticas internas de segurança.
+
+**RNF02 — Rastreabilidade das alterações**
+> Como Líder de Projeto, quero que toda alteração realizada nos dados do projeto (avanço, cronograma, riscos, marcos) fique registrada com autor, origem e momento da ação, para que eu possa auditar o histórico de atualizações e confiar na integridade das informações do portfólio.
+
+**RNF03 — Precisão na classificação de intenções**
+> Como usuário do agente, quero que minhas solicitações em linguagem natural sejam corretamente interpretadas e associadas ao catálogo de funcionalidades permitidas, para que eu receba respostas relevantes e nenhuma ação indevida ou fora do escopo seja executada em meu nome.
+
+**RNF04 — Disponibilidade do agente**
+> Como Diretor, quero que o agente esteja disponível de forma confiável durante o horário de expediente, para que eu possa consultar o status consolidado dos projetos sempre que precisar embasar uma decisão.
+
+**RNF05 — Adequação da resposta ao perfil do usuário**
+> Como Membro da Equipe de Projeto, quero que o nível de detalhamento e a modalidade de interação (texto ou voz) se adaptem ao meu perfil de acesso, para que eu receba respostas no formato mais útil ao meu contexto de trabalho, sem sobrecarga de informação irrelevante.
+
 
 ## 3.3 Correlação RFs e RNFs
 
