@@ -47,6 +47,7 @@
 - [3.3 Correlação RFs e RNFs](#33-correlação-rfs-e-rnfs)
 - [3.4 Casos de Uso](#34-casos-de-uso)
 - [3.5 Casos de Uso x Requisitos Funcionais](#35-casos-de-uso-x-requisitos-funcionais)
+- [3.6 Business Drivers](#36-business-drivers)
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
 - [5. Solução Técnica (Design)](#5-solução-técnica-design)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
@@ -79,33 +80,57 @@
 
 ## 2.1 Contexto da Indústria do Parceiro
 
-[Descreva o cenário do parceiro, o setor em que atua e o contexto estratégico relevante.]
+O setor de transporte metropolitano caracteriza-se pela elevada complexidade operacional, pela necessidade de investimentos de longo prazo, pela participação de múltiplos stakeholders e pela integração entre diferentes modos e sistemas de transporte. No Brasil, o planejamento da mobilidade urbana envolve desafios relacionados à expansão e modernização da infraestrutura, à integração das redes, ao financiamento de projetos e à coordenação entre diferentes níveis de governo e organizações.
+
+O Estudo Nacional de Mobilidade Urbana (ENMU), coordenado pelo Banco Nacional de Desenvolvimento Econômico e Social (BNDES) e pelo Ministério das Cidades, identificou necessidades de investimentos e projetos de transporte público coletivo de média e alta capacidade em regiões metropolitanas brasileiras. O estudo também destaca a importância da integração e otimização das redes, do planejamento de longo prazo e da governança interfederativa para o desenvolvimento da mobilidade urbana.
+
+Nesse contexto, o Metrô de São Paulo possui papel estratégico na mobilidade da Região Metropolitana de São Paulo, atuando na operação e expansão da rede metroviária e no planejamento do transporte metropolitano de passageiros. A organização possui uma estrutura de grande escala e atua em um ambiente que demanda planejamento contínuo, acompanhamento de projetos, integração entre áreas e tomada de decisão baseada em informações.
+
+A complexidade desse cenário também se reflete na gestão de projetos e portfólios. O Metrô possui uma estrutura de PMO voltada à gestão de seu portfólio estratégico e demonstra maturidade nessa área, tendo conquistado o 3º lugar na categoria PMO do Ano Brasil no PMO Brazil Awards 2024. Dessa forma, o desafio do projeto não está na criação de uma estrutura de gestão de projetos, mas na ampliação da capacidade dessa estrutura por meio do uso de tecnologias de inteligência artificial.
+
+Paralelamente, a gestão de projetos, programas e portfólios passa por um processo de transformação digital. A inteligência artificial vem sendo incorporada de maneira mais estruturada ao gerenciamento de projetos, com aplicações relacionadas à automação de atividades, análise de informações, apoio à tomada de decisão e governança. Nesse cenário, técnicas de Processamento de Linguagem Natural (PLN) possibilitam novas formas de interação com informações de projetos, permitindo que usuários realizem consultas em linguagem natural e obtenham informações estruturadas a partir de grandes volumes de dados.
+
+Essa tendência é particularmente relevante para o contexto do Metrô, uma vez que o projeto busca utilizar IA e PLN para facilitar o acesso às informações do portfólio, permitindo consultas sobre aspectos como status, riscos, marcos e aderência a normativos. Assim, a transformação digital dos processos de gestão constitui uma oportunidade para aumentar a eficiência e a capacidade analítica do PMO.
 
 ### 2.1.1 Análise das 5 Forças de Porter
 
-#### 1. Rivalidade entre concorrentes
+#### Rivalidade entre concorrentes
 
-[Preencher]
+A rivalidade direta no setor metroviário é limitada pela natureza do serviço e pela atuação institucional do Metrô. A organização possui uma função específica dentro do sistema de transporte metropolitano e atua de forma integrada a outros modos de transporte, em vez de competir diretamente com eles como empresas em um mercado convencional. Entretanto, existe competição pela demanda dos passageiros entre diferentes alternativas de deslocamento, como transporte sobre trilhos, ônibus e transporte individual.
 
-#### 2. Poder de barganha dos fornecedores
+**Classificação: Baixa a moderada.**
 
-[Preencher]
+#### Poder de barganha dos fornecedores
 
-#### 3. Poder de barganha dos clientes
+A operação e expansão de sistemas metroviários dependem de fornecedores especializados em infraestrutura, equipamentos, tecnologia, manutenção e serviços técnicos. A complexidade e a especialização desses componentes podem aumentar a dependência de fornecedores com competências específicas, especialmente em projetos de modernização e expansão da infraestrutura.
 
-[Preencher]
+**Classificação: Moderada a alta.**
 
-#### 4. Ameaça de novos entrantes
+#### Poder de barganha dos clientes
 
-[Preencher]
+Os passageiros constituem os principais usuários do sistema, porém o transporte metroviário possui características de serviço público essencial e está inserido em um ambiente regulado, com políticas públicas, estrutura tarifária e integração com outros sistemas de transporte. Dessa forma, o poder de barganha dos usuários não ocorre da mesma maneira que em mercados privados convencionais.
 
-#### 5. Ameaça de produtos substitutos
+**Classificação: Moderada.**
 
-[Preencher]
+#### Ameaça de novos entrantes
+
+A entrada de novos operadores no transporte metroviário apresenta barreiras elevadas devido ao alto volume de investimentos necessários, à complexidade da infraestrutura, aos requisitos regulatórios e ao longo prazo necessário para implantação de sistemas de transporte de alta capacidade. Esses fatores dificultam a entrada de novos participantes capazes de oferecer infraestrutura metroviária equivalente.
+
+**Classificação: Baixa.**
+
+#### Ameaça de produtos substitutos
+
+O transporte metroviário está sujeito à existência de diferentes alternativas de mobilidade, como ônibus, automóveis, motocicletas, bicicletas e outros serviços de transporte. A existência desses modais representa uma alternativa para os usuários, embora a integração entre os diferentes modos seja também um elemento fundamental do planejamento da mobilidade metropolitana.
+
+**Classificação: Moderada a alta.**
 
 ### 2.1.2 Conclusão
 
-[Preencher]
+O setor de transporte metropolitano apresenta elevada complexidade devido à necessidade de investimentos de longo prazo, à integração entre diferentes sistemas, à participação de múltiplos stakeholders e à necessidade de planejamento contínuo. Nesse ambiente, organizações como o Metrô de São Paulo precisam administrar simultaneamente suas operações, projetos de expansão e modernização e seu portfólio estratégico.
+
+Ao mesmo tempo, a gestão de projetos, programas e portfólios passa por uma transformação digital, com a adoção crescente de inteligência artificial para automação, análise de informações, governança e suporte à tomada de decisão. A utilização de PLN amplia essa possibilidade ao permitir que informações estruturadas de projetos sejam acessadas por meio de linguagem natural.
+
+Dessa forma, o contexto da indústria apresenta uma oportunidade para aplicação de IA na gestão de portfólio do Metrô. A proposta do projeto está alinhada a essa tendência ao buscar reduzir a dependência de atividades manuais, facilitar o acesso às informações dos projetos e ampliar a capacidade analítica do PMO por meio de consultas em linguagem natural.
 
 ## 2.2 Problema
 
@@ -235,6 +260,18 @@ O produto não substitui os materiais e processos oficiais utilizados pelo PMO p
 #### Segurança e rastreabilidade
 
 O produto não processa dados sensíveis reais fora dos ambientes homologados pelo Metrô. No MVP, a validação deve utilizar dados sintéticos ou anonimizados, evitando o uso de informações reais em serviços externos não autorizados. A solução também deve respeitar os controles de acesso e os requisitos de segurança definidos para o ambiente corporativo.
+
+### 2.3.4 Objetivos do Produto (SMART)
+
+* **[O1] Eficiência:** reduzir em **80%** a necessidade de execução manual das consultas contempladas pelo MVP, permitindo que os usuários obtenham as informações previstas por meio de consultas em linguagem natural até a conclusão do projeto.
+
+* **[O2] Capacidade analítica:** possibilitar, até a conclusão do MVP, consultas em linguagem natural sobre **100% das categorias de informações definidas no escopo**, contemplando dados de projetos, status, riscos, marcos e demais informações previstas na solução, ampliando a capacidade de análise do portfólio.
+
+* **[O3] Rastreabilidade:** garantir que **100% das respostas factuais produzidas pelo MVP** possam ser relacionadas às informações disponíveis na base de conhecimento utilizada, permitindo verificar a origem dos dados apresentados ao usuário.
+
+* **[O4] Transparência:** alcançar **pelo menos 90% de respostas consideradas adequadas** em uma bateria de casos de teste definida pelo grupo, considerando a correspondência entre as informações disponíveis na base de conhecimento e as respostas apresentadas pelo agente.
+
+* **[O5] Precisão e confiabilidade:** alcançar **acurácia mínima de 85% na classificação das intenções** das consultas previstas no escopo, até a conclusão do MVP, permitindo direcionar corretamente as solicitações dos usuários e reduzir a necessidade de tratamento manual.
 
 ## 2.4 Personas e Jornadas do Usuário
 
@@ -564,11 +601,18 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 
 ## 3.1 Requisitos Funcionais (RFs)
 
-- RF01 — [Descreva o requisito funcional]
-- RF02 — [Descreva o requisito funcional]
-- RF03 — [Descreva o requisito funcional]
-- RF04 — [Descreva o requisito funcional]
-- RF05 — [Descreva o requisito funcional]
+Os requisitos funcionais representam as principais capacidades esperadas do agente de IA para apoiar a gestão do portfólio de projetos do Metrô de São Paulo. Sua definição foi realizada a partir dos *business drivers*, do escopo estabelecido no TAPI e das *features* priorizadas pela equipe, de modo a organizar as funções que deverão ser oferecidas pela solução.
+
+| ID | Requisito Funcional | Descrição |
+|---|---|---|
+| RF01 | Controle de acesso, permissões e perfil do usuário | O sistema deve identificar o perfil e as permissões do usuário, restringindo o acesso às informações e funcionalidades autorizadas e adequando o nível de detalhamento das respostas ao seu perfil. |
+| RF02 | Interação em linguagem natural por texto e voz | O sistema deve receber solicitações em linguagem natural por texto e áudio, realizando a conversão de voz em texto quando necessário para permitir seu processamento pelo agente. |
+| RF03 | Identificação e controle de intenções | O sistema deve identificar e classificar a intenção das solicitações recebidas, associando-as às funcionalidades disponíveis e verificando se pertencem ao catálogo de interações permitido. Solicitações fora do escopo devem ser recusadas de forma orientativa e registradas para análise futura. |
+| RF04 | Consulta e análise de informações dos projetos | O sistema deve consultar e analisar informações e documentos dos projetos para responder perguntas relacionadas ao portfólio, incluindo avanço, cronograma, status, marcos, riscos, problemas e aderência a normativos, apresentando, quando disponível, a referência da informação utilizada. |
+| RF05 | Apoio à criação e atualização de projetos | O sistema deve apoiar o usuário na entrada e atualização de informações dos projetos ao longo de seu ciclo de vida, incluindo termo de abertura, cronograma, avanço, entregas, marcos, riscos, problemas e demais informações previstas no portfólio. Quando aplicável, alterações devem ser apresentadas ao usuário para confirmação antes de sua efetivação e manter registro de sua origem, autoria e momento da realização. |
+| RF06 | Identificação, alertas e apoio proativo a pendências | O sistema deve identificar dados ausentes, inconsistentes ou pendentes nos projetos, alertar os usuários responsáveis e oferecer apoio proativo para que as informações necessárias sejam complementadas ou corrigidas. |
+| RF07 | Análise comparativa do portfólio | O sistema deve realizar análises entre projetos do portfólio, permitindo identificar relações e diferenças relevantes, como riscos que possam impactar outros projetos, avanço, desempenho e demais indicadores disponíveis. |
+| RF08 | Geração de relatórios e informações gerenciais | O sistema deve gerar prévias de relatórios e materiais gerenciais a partir das informações dos projetos, incluindo relatório de status, apresentação periódica para a diretoria e relatório de encerramento, adequando o nível de detalhamento ao perfil do usuário. |
 
 ## 3.2 Requisitos Não Funcionais (RNFs)
 
@@ -607,6 +651,40 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 ## 3.5 Casos de Uso x Requisitos Funcionais
 
 [Preencher]
+
+### 3.6. Business Drivers
+
+Esta seção descreve o contexto de negócio que motiva a construção da aplicação computacional, alinhando-se aos documentos de entendimento de negócio produzidos junto à Companhia do Metropolitano de São Paulo (Metrô), e explica como o uso de Processamento de Linguagem Natural (PLN) transforma os processos atuais de gestão de portfólio de projetos.
+
+#### 3.6.1. Contexto de Negócio
+
+A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo de status, riscos, marcos (*milestones*) e aderência a normativos internos e externos. Atualmente, esse acompanhamento depende fortemente de consultas manuais a sistemas corporativos e da consolidação de informações dispersas, o que demanda tempo das equipes de gestão e aumenta o risco de decisões baseadas em dados desatualizados ou incompletos.
+
+Nesse contexto, identificou-se a oportunidade de introduzir um agente de inteligência artificial capaz de interagir em linguagem natural — por texto e voz — permitindo que gestores e demais stakeholders obtenham respostas diretas sobre o portfólio sem a necessidade de navegar manualmente por múltiplos sistemas ou relatórios.
+
+#### 3.6.2. Transformação do Negócio por meio do PLN
+
+A introdução de PLN modifica o negócio nas seguintes frentes:
+
+- **Redução de fricção no acesso à informação**: em vez de consultar relatórios estáticos ou navegar por múltiplas telas, o usuário formula perguntas em linguagem natural (ex.: "quais projetos estão em risco esta semana?") e recebe respostas objetivas e contextualizadas.
+- **Democratização do acompanhamento de portfólio**: usuários sem conhecimento técnico aprofundado sobre os sistemas de gestão passam a conseguir extrair informações relevantes, ampliando a base de pessoas capazes de monitorar o portfólio.
+- **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
+- **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
+
+#### 3.6.3. Alinhamento com o Ecossistema Corporativo
+
+A solução se apoia em dois pilares complementares:
+
+1. **Pilar 1 — PLN próprio**: desenvolvido pela equipe do projeto, responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
+2. **Pilar 2 — Integração com o ecossistema Microsoft**: aproveitamento das ferramentas já adotadas pelo Metrô (Copilot Studio/Power Platform), garantindo aderência à infraestrutura corporativa existente e facilitando a adoção pelos usuários finais.
+
+Essa combinação assegura que a transformação proposta não exija a substituição de ferramentas já consolidadas na organização, mas sim a adição de uma camada inteligente de interação sobre elas.
+
+#### 3.6.4. Restrições de Negócio Relevantes
+
+Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
+
+
 
 # 4. Modelagem de Dados
 
