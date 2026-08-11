@@ -2,7 +2,7 @@
   <img src="documentos/imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
 </p>
 
-<table align="center">
+<table align="center" width="100%" style="table-layout: fixed;">
   <tr>
     <td align="center">
       <a href="https://www.linkedin.com/in/alexsander-dsbarbosa/">
@@ -43,7 +43,7 @@
   <img src="documentos/imagens/professores.png" alt="Professores">
 </p>
 
-<table align="center">
+<table align="center" width="100%" style="table-layout: fixed;">
   <tr>
     <td align="center">
       <a href="https://www.linkedin.com/in/vanunes/">
@@ -95,26 +95,9 @@ Este repositório reúne os artefatos do projeto do Módulo 7 de Engenharia de S
 
 A proposta explora capacidades de interação em linguagem natural, identificação e classificação de intenções, consulta e análise de informações de projetos e apoio à gestão do portfólio. As interações são previstas por texto e, dentro do escopo definido, por voz. Essas capacidades representam objetivos do projeto em desenvolvimento e não devem ser interpretadas como funcionalidades já concluídas.
 
-## 👥 Membros do grupo
 
-- Alexsander B. — [LinkedIn](https://www.linkedin.com/in/alexsander-dsbarbosa/)
-- Carlos Eduardo — [GitHub](https://github.com/CaduQuaglia)
-- Celso Rocha — [LinkedIn](https://www.linkedin.com/in/celsojwnior/)
-- Eduardo C. — [LinkedIn](https://www.linkedin.com/in/eduardo-casarini/)
-- Mariana Reis — [LinkedIn](https://www.linkedin.com/in/marianalacerdareis/)
-- Mirela Bianchi — [LinkedIn](https://www.linkedin.com/in/mirela-bianchi-608601254/)
 
-## 👨‍🏫 Professores
-
-- Vanessa Nunes — Orientadora — [LinkedIn](https://www.linkedin.com/in/vanunes/)
-- Reginaldo A. — Computação — [LinkedIn](https://www.linkedin.com/in/reginaldo-arakaki-9574222b/)
-- Bryan Kano — Computação — [LinkedIn](https://www.linkedin.com/in/bryan-kano/)
-- Fernando Pizzo — Matemática — [LinkedIn](https://www.linkedin.com/in/fernando-pizzo-208b526a/)
-- Lisane Valdo — Negócios — [LinkedIn](https://www.linkedin.com/in/lisane-valdo/)
-- Bruno Rodilha — Design — [LinkedIn](https://www.linkedin.com/in/bruno-grandchamp-rodilha/)
-- Filipe Gonçalves — Liderança — [LinkedIn](https://www.linkedin.com/in/filipe-gon%C3%A7alves-08a55015b/)
-
-## 💡 A solução
+## A solução
 
 A solução proposta consiste em um agente de IA capaz de interpretar solicitações em linguagem natural e auxiliar na obtenção e na análise de informações relacionadas aos projetos. O agente deverá apoiar usuários com diferentes responsabilidades na gestão do portfólio, adequando suas respostas ao contexto de uso e às permissões de acesso.
 
@@ -130,6 +113,9 @@ Conforme os requisitos levantados, o projeto prevê:
 - geração de informações e prévias de relatórios gerenciais.
 
 O desenvolvimento considera a integração com o ecossistema Microsoft já utilizado pelo Metrô, incluindo SharePoint, Power BI, Power Automate e Copilot Studio. A forma e os limites dessas integrações deverão respeitar as definições de segurança, governança e escopo do projeto.
+
+## Estrutura de pastas
+[A preencher]
 
 ## 📝 Documentação
 
