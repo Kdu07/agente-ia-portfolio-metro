@@ -298,6 +298,54 @@ A facilidade de uso e a baixa dependência de conhecimentos técnicos são requi
 
 Esta versão das personas constitui uma primeira modelagem baseada nas informações disponíveis no TAPI e no *kick-off*. O parceiro informou que forneceria posteriormente um documento mais detalhado sobre prioridades e/ou perfis de usuários. Consequentemente, necessidades, comportamentos, critérios de sucesso e hipóteses de interação aqui registrados deverão ser revisados e refinados quando os novos dados forem disponibilizados, evitando que decisões definitivas de UX ou requisitos sejam sustentadas apenas por suposições ainda não validadas.
 
+### 2.4.5 Jornada de Roberto Nogueira — Diretor
+
+As jornadas do usuário complementam a caracterização das personas ao representar como usuários com diferentes responsabilidades e níveis de acesso podem interagir com o agente de IA ao longo de suas atividades. O mapeamento reúne ações, pensamentos, emoções, dores, frustrações e oportunidades, permitindo compreender não apenas o resultado esperado de cada interação, mas também os obstáculos encontrados durante o processo.
+
+Esses artefatos apoiam decisões de UX e de produto ao evidenciar diferenças entre uma consulta estratégica, o acompanhamento gerencial e a contribuição operacional. As imagens apresentam o detalhamento de cada jornada; as análises a seguir interpretam seus principais achados, sem reproduzir integralmente o conteúdo visual.
+
+<div align="center">
+  <img src="imagens/jornadaRoberto.png" width="90%" alt="Jornada do usuário Roberto Nogueira">
+  <br>
+  <sub>Figura X: Jornada de Roberto Nogueira.</sub>
+</div>
+
+A jornada de Roberto tem como objetivo obter uma visão executiva do portfólio que apoie a tomada de decisão. Seus principais momentos de interação com o agente envolvem a consulta de informações consolidadas, a identificação de projetos ou subportfólios que exigem atenção e o aprofundamento dos riscos mais relevantes. A principal dor está na dependência de informações previamente consolidadas e na dificuldade de localizar, em meio ao volume de dados, os pontos que demandam ação estratégica.
+
+Como oportunidade de produto, o agente pode reduzir o esforço necessário para transformar dados dispersos em uma leitura executiva, desde que apresente respostas objetivas, confiáveis e adequadas ao nível de decisão. Para esse perfil, a interação deve começar por sínteses, indicadores e criticidades, permitir aprofundamento sob demanda e indicar as fontes utilizadas. O escopo das informações apresentadas deve sempre respeitar as permissões institucionais associadas ao usuário.
+
+### 2.4.6 Jornada de Fernanda Medina — Líder de Projeto
+
+<div align="center">
+  <img src="imagens/jornadaFernanda.png" width="90%" alt="Jornada da usuária Fernanda Medina">
+  <br>
+  <sub>Figura X: Jornada de Fernanda Medina.</sub>
+</div>
+
+A jornada de Fernanda está orientada ao acompanhamento do projeto e à manutenção da qualidade das informações gerenciais. A interação com o agente ocorre durante consultas sobre avanço, cronograma, entregas, riscos e pendências, na verificação de informações e normativos e no registro de atualizações. Entre as dores mais relevantes estão a recorrência de atividades manuais de acompanhamento e cobrança, o esforço para localizar orientações normativas e a necessidade de manter os dados atualizados e verificáveis.
+
+Oportunidades para o produto incluem facilitar consultas e atualizações em linguagem natural, evidenciar a origem das respostas e apoiar a identificação de pendências. O agente também pode assumir uma postura proativa, sinalizando prazos, dados desatualizados ou pontos de atenção; os critérios e limites dessa atuação ainda devem ser validados com o parceiro. Para Fernanda, as respostas precisam combinar detalhamento e clareza, manter o contexto dos projetos aos quais possui acesso e solicitar confirmação antes de efetivar atualizações quando aplicável.
+
+### 2.4.7 Jornada de Carlos Mendes — Membro da Equipe de Projeto
+
+<div align="center">
+  <img src="imagens/jornadaCarlos.png" width="90%" alt="Jornada do usuário Carlos Mendes">
+  <br>
+  <sub>Figura X: Jornada de Carlos Mendes.</sub>
+</div>
+
+A jornada de Carlos tem como objetivo consultar e contribuir com informações do projeto em que atua. Seus momentos de interação concentram-se na busca de informações necessárias à execução, na compreensão de pendências e no fornecimento de atualizações autorizadas. As principais dores estão associadas à dificuldade de localizar conteúdos relevantes, compreender o que precisa ser realizado e interagir com sistemas cuja estrutura técnica não lhe é familiar.
+
+Para esse perfil, a oportunidade central é oferecer uma experiência simples, orientada e de baixa barreira técnica. O agente deve compreender solicitações em linguagem natural, responder de forma clara, indicar próximos passos e auxiliar o usuário quando uma pergunta estiver incompleta. A consulta e as ações disponíveis devem permanecer restritas ao projeto e às permissões de Carlos, com explicações compreensíveis quando uma solicitação não puder ser atendida, sem revelar informações protegidas.
+
+### 2.4.8 Análise das jornadas
+
+As três jornadas evidenciam diferentes níveis de interação com a solução. Roberto possui uma experiência predominantemente estratégica e consultiva, voltada à interpretação de informações consolidadas e à identificação rápida de riscos e pontos de atenção. Fernanda necessita de uma experiência gerencial que combine consulta, acompanhamento e atualização, além de apoio à identificação de pendências e à consulta de normativos. Carlos, por sua vez, apresenta uma experiência operacional, pontual e orientada, concentrada nas informações e contribuições relacionadas ao projeto em que atua.
+
+Essas diferenças demonstram que o agente deve adaptar a profundidade das respostas, as ações disponíveis e o conjunto de informações acessíveis conforme o perfil e as permissões do usuário. Uma mesma questão pode exigir uma síntese executiva para a Diretoria, uma visão detalhada para a liderança e uma orientação direta para a equipe. O controle de acesso deve ser aplicado antes da recuperação e da apresentação dos dados, e as respostas devem indicar suas fontes para favorecer confiança e rastreabilidade.
+
+Como decisões transversais de produto, as jornadas reforçam a interação em linguagem natural, a facilidade de uso, os diferentes níveis de detalhamento e o apoio proativo na identificação de pendências. Também indicam a necessidade de integração com o ecossistema Microsoft já utilizado pelo Metrô, respeitando os mecanismos de segurança e governança aplicáveis. A forma exata dessas integrações, dos alertas proativos e das ações permitidas por perfil constitui um ponto de refinamento e validação com o parceiro durante a evolução da solução.
+
 ## 2.5 Modelagem do Fluxo de Negócio
 
 ### 2.5.1 Cadeia de Valor
