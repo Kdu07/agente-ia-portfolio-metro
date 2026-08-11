@@ -49,7 +49,8 @@
 - [3.5 Casos de Uso x Requisitos Funcionais](#35-casos-de-uso-x-requisitos-funcionais)
 - [3.6 Business Drivers](#36-business-drivers)
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
-- [5. Solução Técnica (Design)](#5-solução-técnica-design)
+- [5. Solução Técnica](#5-solução-técnica)
+- [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
 - [7. Projeto Visual da Solução](#7-projeto-visual-da-solução)
 - [8. Desenvolvimento do Projeto](#8-desenvolvimento-do-projeto)
@@ -752,11 +753,47 @@ Como direcionador de negócio, é fundamental destacar que nenhum dado sensível
 
 [Preencher]
 
-# 5. Solução Técnica (Design)
+# 5. Solução Técnica
 
-## 5.1 Diagrama de Classes
+## 5.1 Visão inicial: tecnologias e ferramentas
 
-[Preencher]
+Esta seção apresenta uma estimativa inicial das tecnologias e ferramentas que o grupo pretende utilizar na construção da solução, considerando a arquitetura em dois pilares definida para o projeto. Trata-se de uma visão preliminar, sujeita a ajustes ao longo do desenvolvimento conforme validações técnicas e restrições impostas pelo Metrô.
+
+#### 5.1.1. Tecnologias do Pilar 1 - PLN Próprio da Equipe
+
+Responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
+
+- **Linguagem de programação**: Python, pela ampla disponibilidade de bibliotecas voltadas a PLN e facilidade de integração com APIs de LLM.
+- **Bibliotecas de NLP**: spaCy e/ou NLTK, para tarefas de pré-processamento textual, tokenização, classificação de intenções e extração de entidades.
+- **API de LLM**: modelo de linguagem via API (ex.: OpenAI ou Azure OpenAI), utilizado para tarefas de compreensão e geração de linguagem natural mais complexas, respeitando a restrição de que nenhum dado sensível real seja enviado a serviços externos não homologados — reforçando o uso de dados sintéticos no MVP.
+
+#### 5.1.2. Tecnologias do Pilar 2 — Integração com Ecossistema Microsoft
+
+Responsável por conectar o agente à infraestrutura corporativa já adotada pelo Metrô, garantindo aderência aos sistemas existentes.
+
+- **Copilot Studio**: construção e orquestração do agente conversacional dentro do ecossistema Microsoft.
+- **Power Platform**: integração com fluxos de automação (Power Automate) e possível consumo/exposição de dados via Power Apps/Power BI, conforme necessidade identificada ao longo do projeto.
+
+#### 5.1.3. Ferramentas de Apoio ao Desenvolvimento
+
+- **Controle de versão**: Git/GitLab, para versionamento do código e colaboração entre os integrantes do grupo.
+- **Ambiente de desenvolvimento**: ambiente Python (ex.: Jupyter Notebook ou IDE como VS Code) para prototipagem e testes do Pilar 1.
+- **Documentação e gestão do projeto**: ferramentas colaborativas (ex.: Gitlab) para organização de entregas e alinhamento entre a equipe e o parceiro.
+
+#### 5.1.4. Listagem Organizada dos Recursos
+
+| Categoria | Tecnologia/Ferramenta | Finalidade |
+|---|---|---|
+| Linguagem | Python | Desenvolvimento do Pilar 1 (PLN próprio) |
+| Biblioteca de NLP | spaCy / NLTK | Pré-processamento, tokenização e classificação de intenções |
+| API de LLM | OpenAI / Azure OpenAI | Compreensão e geração de linguagem natural |
+| Plataforma low-code | Copilot Studio | Construção do agente conversacional (Pilar 2) |
+| Automação | Power Platform (Power Automate) | Integração com sistemas corporativos do Metrô |
+| Versionamento | Git/GitLab | Controle de versão e colaboração |
+| Ambiente de desenvolvimento | VS Code / Jupyter Notebook | Prototipagem e testes |
+| Gestão e documentação | GitLab | Organização de entregas e alinhamento da equipe |
+
+> **Observação**: esta listagem representa uma visão inicial e poderá ser refinada conforme o projeto evolua, especialmente à medida que forem definidos com mais precisão os requisitos de integração com os sistemas homologados do Metrô.
 
 ## 5.2 Diagrama de Componentes da UML
 
