@@ -599,7 +599,7 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 ## 2.8 Canvas do Projeto
 
 <div align="center">
-  <img src="imagens/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
+  <img src="../assets/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
   <br>
   <sub>Figura X: Business Model Canvas do projeto.</sub>
 </div>
