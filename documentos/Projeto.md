@@ -678,109 +678,7 @@ As histórias de usuário foram derivadas das personas e dos requisitos funciona
 | US07 | Roberto Nogueira — Diretor | **Como Roberto Nogueira, eu quero comparar projetos e subportfólios, para identificar diferenças, relações, riscos e indicadores que exijam atenção estratégica.** | RF07 | Desejável | O sistema permite realizar análises entre projetos do portfólio.<br>A análise apresenta relações ou diferenças relevantes com base nas informações disponíveis.<br>A análise pode considerar riscos com impacto em outros projetos, avanço, desempenho e demais indicadores disponíveis. |
 | US08 | Roberto Nogueira — Diretor | **Como Roberto Nogueira, eu quero obter prévias de relatórios e materiais gerenciais com visão executiva, para acompanhar o portfólio e apoiar a tomada de decisão.** | RF08 | Desejável | O sistema gera prévias a partir das informações disponíveis nos projetos.<br>As prévias contemplam os materiais gerenciais previstos no requisito: relatório de status, apresentação periódica para a diretoria ou relatório de encerramento.<br>O nível de detalhamento do material é adequado ao perfil do usuário. |
 
-## 3.2 Requisitos Não Funcionais (RNFs)
-
-Os requisitos não funcionais abaixo foram derivados dos *business drivers* do projeto - especialmente a exigência de confidencialidade no tratamento de dados sensíveis do Metrô e a necessidade de confiabilidade na operação do agente - e formulados como histórias de usuário, de modo a manter coerência com os RFs já modelados.
-
-**RNF01 — Confidencialidade dos dados**
-> Como responsável pela segurança da informação do Metrô, quero que nenhum dado sensível dos projetos seja processado, armazenado ou transmitido fora do ambiente Microsoft homologado, para que a confidencialidade das informações estratégicas do portfólio seja preservada e a organização permaneça em conformidade com suas políticas internas de segurança.
-
-**RNF02 — Rastreabilidade das alterações**
-> Como Líder de Projeto, quero que toda alteração realizada nos dados do projeto (avanço, cronograma, riscos, marcos) fique registrada com autor, origem e momento da ação, para que eu possa auditar o histórico de atualizações e confiar na integridade das informações do portfólio.
-
-**RNF03 — Precisão na classificação de intenções**
-> Como usuário do agente, quero que minhas solicitações em linguagem natural sejam corretamente interpretadas e associadas ao catálogo de funcionalidades permitidas, para que eu receba respostas relevantes e nenhuma ação indevida ou fora do escopo seja executada em meu nome.
-
-**RNF04 — Disponibilidade do agente**
-> Como Diretor, quero que o agente esteja disponível de forma confiável durante o horário de expediente, para que eu possa consultar o status consolidado dos projetos sempre que precisar embasar uma decisão.
-
-**RNF05 — Adequação da resposta ao perfil do usuário**
-> Como Membro da Equipe de Projeto, quero que o nível de detalhamento e a modalidade de interação (texto ou voz) se adaptem ao meu perfil de acesso, para que eu receba respostas no formato mais útil ao meu contexto de trabalho, sem sobrecarga de informação irrelevante.
-
-
-## 3.3 Correlação RFs e RNFs
-
-Os RNFs especificados decorrem diretamente dos *business drivers* do projeto e sustentam a viabilidade dos RFs modelados, garantindo que as funcionalidades entregues operem de forma segura, confiável e adequada ao contexto do Metrô de São Paulo.
-
-O **RNF01 (confidencialidade)** é o requisito mais crítico do projeto, derivado da restrição de negócio de que nenhum dado sensível pode trafegar por serviços externos não homologados. Ele se relaciona diretamente ao **RF01** (controle de acesso e permissões) e ao **RF05** (apoio à criação e atualização de projetos), assegurando que tanto o acesso quanto a movimentação de dados sensíveis ocorram exclusivamente dentro do ecossistema Microsoft homologado (Pilar 2 da arquitetura).
-
-O **RNF02 (rastreabilidade)** sustenta o **RF05**, que já prevê manter registro de origem, autoria e momento das alterações, e também o **RF03** (identificação e controle de intenções), cujas solicitações fora do escopo devem ser registradas para análise futura — reforçando a exigência de auditabilidade em toda a solução.
-
-O **RNF03 (precisão na classificação de intenções)** está diretamente ligado ao **RF03**, responsável por identificar e classificar a intenção das solicitações, e ao **RF02** (interação em linguagem natural por texto e voz), já que a qualidade da interpretação da linguagem natural é pré-condição para que o agente direcione corretamente cada solicitação às funcionalidades do Pilar 1 (PLN próprio).
-
-O **RNF04 (disponibilidade)** impacta transversalmente o **RF04** (consulta e análise de informações), o **RF06** (alertas e apoio proativo a pendências) e o **RF08** (geração de relatórios), funcionalidades que dependem da operação contínua do agente para gerar valor no dia a dia da gestão do portfólio.
-
-Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**, garantindo que o controle de perfil de acesso já previsto nos RFs se reflita também na forma e no nível de detalhe das respostas entregues a cada persona (Diretor, Líder de Projeto, Membro de Equipe).
-
-## 3.4 Casos de Uso
-
-### 3.4.1 Diagrama de Casos de Uso
-
-[Inserir diagrama ou descrição]
-
-### 3.4.2 Atores do Sistema
-
-[Preencher]
-
-### 3.4.3 Descrição dos Casos de Uso
-
-[Preencher]
-
-### 3.4.4 Relacionamentos e Regras Representadas no Diagrama
-
-[Preencher]
-
-### 3.4.5 Coerência com o Problema e com a Solução Proposta
-
-[Preencher]
-
-## 3.5 Casos de Uso x Requisitos Funcionais
-
-[Preencher]
-
-### 3.6. Business Drivers
-
-Esta seção descreve o contexto de negócio que motiva a construção da aplicação computacional, alinhando-se aos documentos de entendimento de negócio produzidos junto à Companhia do Metropolitano de São Paulo (Metrô), e explica como o uso de Processamento de Linguagem Natural (PLN) transforma os processos atuais de gestão de portfólio de projetos.
-
-#### 3.6.1. Contexto de Negócio
-
-A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo de status, riscos, marcos (*milestones*) e aderência a normativos internos e externos. Atualmente, esse acompanhamento depende fortemente de consultas manuais a sistemas corporativos e da consolidação de informações dispersas, o que demanda tempo das equipes de gestão e aumenta o risco de decisões baseadas em dados desatualizados ou incompletos.
-
-Nesse contexto, identificou-se a oportunidade de introduzir um agente de inteligência artificial capaz de interagir em linguagem natural — por texto e voz — permitindo que gestores e demais stakeholders obtenham respostas diretas sobre o portfólio sem a necessidade de navegar manualmente por múltiplos sistemas ou relatórios.
-
-#### 3.6.2. Transformação do Negócio por meio do PLN
-
-A introdução de PLN modifica o negócio nas seguintes frentes:
-
-- **Redução de fricção no acesso à informação**: em vez de consultar relatórios estáticos ou navegar por múltiplas telas, o usuário formula perguntas em linguagem natural (ex.: "quais projetos estão em risco esta semana?") e recebe respostas objetivas e contextualizadas.
-- **Democratização do acompanhamento de portfólio**: usuários sem conhecimento técnico aprofundado sobre os sistemas de gestão passam a conseguir extrair informações relevantes, ampliando a base de pessoas capazes de monitorar o portfólio.
-- **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
-- **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
-
-#### 3.6.3. Alinhamento com o Ecossistema Corporativo
-
-A solução se apoia em dois pilares complementares:
-
-1. **Pilar 1 — PLN próprio**: desenvolvido pela equipe do projeto, responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
-2. **Pilar 2 — Integração com o ecossistema Microsoft**: aproveitamento das ferramentas já adotadas pelo Metrô (Copilot Studio/Power Platform), garantindo aderência à infraestrutura corporativa existente e facilitando a adoção pelos usuários finais.
-
-Essa combinação assegura que a transformação proposta não exija a substituição de ferramentas já consolidadas na organização, mas sim a adição de uma camada inteligente de interação sobre elas.
-
-#### 3.6.4. Restrições de Negócio Relevantes
-
-Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
-
-
-
-# 4. Modelagem de Dados
-
-## 4.1 Especificação da Base de Dados
-
-[Descreva a proposta de estrutura de dados e o contexto de uso.]
-
-## 4.2 Modelo Conceitual de Dados
-
-### 4.2.1 Modelo estático
+### 3.1.2 Modelagem estática — Diagrama de classes
 
 O diagrama de classes a seguir apresenta a modelagem estática e conceitual do domínio necessário para atender aos requisitos funcionais e às User Stories da Sprint 1. Seu propósito é representar os principais conceitos do agente de IA e as relações entre eles, sem antecipar decisões de arquitetura, persistência ou integração que serão refinadas na etapa de projeto técnico. Por esse motivo, não são representados componentes como controladores, serviços, APIs, bancos de dados, Copilot Studio ou SharePoint.
 
@@ -899,7 +797,7 @@ classDiagram
 
 *Figura X — Diagrama de classes conceitual do domínio do agente.*
 
-#### 4.2.1.1 Classes do domínio
+#### 3.1.2.1 Classes do domínio
 
 | Classe | Responsabilidade no domínio | Origem principal |
 |---|---|---|
@@ -923,7 +821,7 @@ classDiagram
 | `Alerta` | Representar o aviso ou contato proativo originado por uma pendência e direcionado ao usuário responsável. | RF06 e US06 |
 | `PreviaMaterialGerencial` | Representar a prévia de um relatório ou material gerencial produzida com informações dos projetos. | RF08 e US08 |
 
-#### 4.2.1.2 Relações e decisões de modelagem
+#### 3.1.2.2 Relações e decisões de modelagem
 
 O acesso autorizado entre `Usuario` e `Projeto` representa a regra funcional de restrição das informações, e não um acesso já realizado. Os valores formais de `perfil`, as permissões correspondentes e as multiplicidades dessa associação deverão ser refinados após o recebimento do documento de níveis de acesso informado pelo parceiro.
 
@@ -941,7 +839,7 @@ As condições de informação ausente, inconsistente ou pendente não foram con
 
 Por fim, `PreviaMaterialGerencial` abrange os relatórios de status, as apresentações periódicas para a Diretoria e os relatórios de encerramento citados no RF08. Esses artefatos não foram reduzidos a uma enumeração de relatórios, pois uma apresentação constitui um material gerencial de natureza distinta.
 
-#### 4.2.1.3 Rastreabilidade entre RFs, User Stories e modelo
+#### 3.1.2.3 Rastreabilidade entre RFs, User Stories e modelo
 
 | RF | User Story | Classes e relações correspondentes |
 |---|---|---|
@@ -954,9 +852,113 @@ Por fim, `PreviaMaterialGerencial` abrange os relatórios de status, as apresent
 | RF07 | US07 | `Portfolio`, `Subportfolio`, `Projeto` e `Resposta`; a comparação é tratada como comportamento do agente. |
 | RF08 | US08 | `Portfolio`, `Projeto` e `PreviaMaterialGerencial`. |
 
-#### 4.2.1.4 Limitações e refinamentos futuros
+#### 3.1.2.4 Limitações e refinamentos futuros
 
 Esta modelagem utiliza as informações disponíveis na Sprint 1 e deverá ser revisada durante o projeto técnico e arquitetural. Permanecem pendentes de validação: os perfis e níveis formais de acesso; as multiplicidades entre usuários, portfólios, subportfólios e projetos; a estrutura do catálogo de intenções e sua associação às funcionalidades; os estados de confirmação das alterações; e os atributos detalhados de cronogramas, marcos, entregas, pendências, alertas e materiais gerenciais. Essas definições não foram antecipadas para evitar transformar hipóteses em regras consolidadas do domínio.
+
+## 3.2 Requisitos Não Funcionais (RNFs)
+
+Os requisitos não funcionais abaixo foram derivados dos *business drivers* do projeto - especialmente a exigência de confidencialidade no tratamento de dados sensíveis do Metrô e a necessidade de confiabilidade na operação do agente - e formulados como histórias de usuário, de modo a manter coerência com os RFs já modelados.
+
+**RNF01 — Confidencialidade dos dados**
+> Como responsável pela segurança da informação do Metrô, quero que nenhum dado sensível dos projetos seja processado, armazenado ou transmitido fora do ambiente Microsoft homologado, para que a confidencialidade das informações estratégicas do portfólio seja preservada e a organização permaneça em conformidade com suas políticas internas de segurança.
+
+**RNF02 — Rastreabilidade das alterações**
+> Como Líder de Projeto, quero que toda alteração realizada nos dados do projeto (avanço, cronograma, riscos, marcos) fique registrada com autor, origem e momento da ação, para que eu possa auditar o histórico de atualizações e confiar na integridade das informações do portfólio.
+
+**RNF03 — Precisão na classificação de intenções**
+> Como usuário do agente, quero que minhas solicitações em linguagem natural sejam corretamente interpretadas e associadas ao catálogo de funcionalidades permitidas, para que eu receba respostas relevantes e nenhuma ação indevida ou fora do escopo seja executada em meu nome.
+
+**RNF04 — Disponibilidade do agente**
+> Como Diretor, quero que o agente esteja disponível de forma confiável durante o horário de expediente, para que eu possa consultar o status consolidado dos projetos sempre que precisar embasar uma decisão.
+
+**RNF05 — Adequação da resposta ao perfil do usuário**
+> Como Membro da Equipe de Projeto, quero que o nível de detalhamento e a modalidade de interação (texto ou voz) se adaptem ao meu perfil de acesso, para que eu receba respostas no formato mais útil ao meu contexto de trabalho, sem sobrecarga de informação irrelevante.
+
+
+## 3.3 Correlação RFs e RNFs
+
+Os RNFs especificados decorrem diretamente dos *business drivers* do projeto e sustentam a viabilidade dos RFs modelados, garantindo que as funcionalidades entregues operem de forma segura, confiável e adequada ao contexto do Metrô de São Paulo.
+
+O **RNF01 (confidencialidade)** é o requisito mais crítico do projeto, derivado da restrição de negócio de que nenhum dado sensível pode trafegar por serviços externos não homologados. Ele se relaciona diretamente ao **RF01** (controle de acesso e permissões) e ao **RF05** (apoio à criação e atualização de projetos), assegurando que tanto o acesso quanto a movimentação de dados sensíveis ocorram exclusivamente dentro do ecossistema Microsoft homologado (Pilar 2 da arquitetura).
+
+O **RNF02 (rastreabilidade)** sustenta o **RF05**, que já prevê manter registro de origem, autoria e momento das alterações, e também o **RF03** (identificação e controle de intenções), cujas solicitações fora do escopo devem ser registradas para análise futura — reforçando a exigência de auditabilidade em toda a solução.
+
+O **RNF03 (precisão na classificação de intenções)** está diretamente ligado ao **RF03**, responsável por identificar e classificar a intenção das solicitações, e ao **RF02** (interação em linguagem natural por texto e voz), já que a qualidade da interpretação da linguagem natural é pré-condição para que o agente direcione corretamente cada solicitação às funcionalidades do Pilar 1 (PLN próprio).
+
+O **RNF04 (disponibilidade)** impacta transversalmente o **RF04** (consulta e análise de informações), o **RF06** (alertas e apoio proativo a pendências) e o **RF08** (geração de relatórios), funcionalidades que dependem da operação contínua do agente para gerar valor no dia a dia da gestão do portfólio.
+
+Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**, garantindo que o controle de perfil de acesso já previsto nos RFs se reflita também na forma e no nível de detalhe das respostas entregues a cada persona (Diretor, Líder de Projeto, Membro de Equipe).
+
+## 3.4 Casos de Uso
+
+### 3.4.1 Diagrama de Casos de Uso
+
+[Inserir diagrama ou descrição]
+
+### 3.4.2 Atores do Sistema
+
+[Preencher]
+
+### 3.4.3 Descrição dos Casos de Uso
+
+[Preencher]
+
+### 3.4.4 Relacionamentos e Regras Representadas no Diagrama
+
+[Preencher]
+
+### 3.4.5 Coerência com o Problema e com a Solução Proposta
+
+[Preencher]
+
+## 3.5 Casos de Uso x Requisitos Funcionais
+
+[Preencher]
+
+### 3.6. Business Drivers
+
+Esta seção descreve o contexto de negócio que motiva a construção da aplicação computacional, alinhando-se aos documentos de entendimento de negócio produzidos junto à Companhia do Metropolitano de São Paulo (Metrô), e explica como o uso de Processamento de Linguagem Natural (PLN) transforma os processos atuais de gestão de portfólio de projetos.
+
+#### 3.6.1. Contexto de Negócio
+
+A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo de status, riscos, marcos (*milestones*) e aderência a normativos internos e externos. Atualmente, esse acompanhamento depende fortemente de consultas manuais a sistemas corporativos e da consolidação de informações dispersas, o que demanda tempo das equipes de gestão e aumenta o risco de decisões baseadas em dados desatualizados ou incompletos.
+
+Nesse contexto, identificou-se a oportunidade de introduzir um agente de inteligência artificial capaz de interagir em linguagem natural — por texto e voz — permitindo que gestores e demais stakeholders obtenham respostas diretas sobre o portfólio sem a necessidade de navegar manualmente por múltiplos sistemas ou relatórios.
+
+#### 3.6.2. Transformação do Negócio por meio do PLN
+
+A introdução de PLN modifica o negócio nas seguintes frentes:
+
+- **Redução de fricção no acesso à informação**: em vez de consultar relatórios estáticos ou navegar por múltiplas telas, o usuário formula perguntas em linguagem natural (ex.: "quais projetos estão em risco esta semana?") e recebe respostas objetivas e contextualizadas.
+- **Democratização do acompanhamento de portfólio**: usuários sem conhecimento técnico aprofundado sobre os sistemas de gestão passam a conseguir extrair informações relevantes, ampliando a base de pessoas capazes de monitorar o portfólio.
+- **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
+- **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
+
+#### 3.6.3. Alinhamento com o Ecossistema Corporativo
+
+A solução se apoia em dois pilares complementares:
+
+1. **Pilar 1 — PLN próprio**: desenvolvido pela equipe do projeto, responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
+2. **Pilar 2 — Integração com o ecossistema Microsoft**: aproveitamento das ferramentas já adotadas pelo Metrô (Copilot Studio/Power Platform), garantindo aderência à infraestrutura corporativa existente e facilitando a adoção pelos usuários finais.
+
+Essa combinação assegura que a transformação proposta não exija a substituição de ferramentas já consolidadas na organização, mas sim a adição de uma camada inteligente de interação sobre elas.
+
+#### 3.6.4. Restrições de Negócio Relevantes
+
+Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
+
+
+
+# 4. Modelagem de Dados
+
+## 4.1 Especificação da Base de Dados
+
+[Descreva a proposta de estrutura de dados e o contexto de uso.]
+
+## 4.2 Modelo Conceitual de Dados
+
+[Preencher]
 
 ## 4.3 Modelo Lógico de Dados
 
