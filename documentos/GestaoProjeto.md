@@ -1,171 +1,241 @@
-<Table>
+<p align="center">
+  <img src="imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
+</p>
+
+<table align="center" width="100%" style="table-layout: fixed;">
   <tr>
-    <td><a href= "https://www.btgpactual.com/"><img src="img/logo-btg.png" alt="Centro Paula Souza" border="0"></td>
-    <td>
-      <a href= "https://www.inteli.edu.br/"><img src="img/logo-Inteli.png" alt="Inteli - Instituto de Tecnologia e Liderança" border="0"></a>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/alexsander-dsbarbosa/">
+        <img src="imagens/alexsander.png" width="90" alt="Alexsander B.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/CaduQuaglia">
+        <img src="imagens/cadu.png" width="90" alt="Carlos Eduardo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/celsojwnior/">
+        <img src="imagens/celso.png" width="90" alt="Celso Rocha">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/eduardo-casarini/">
+        <img src="imagens/edu.png" width="90" alt="Eduardo C.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/marianalacerdareis/">
+        <img src="imagens/mariana.png" width="90" alt="Mariana Reis">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/mirela-bianchi-608601254/">
+        <img src="imagens/mirela.png" width="90" alt="Mirela Bianchi">
+      </a>
     </td>
   </tr>
 </table>
 
-# Nome do Projeto: <nome do projeto>
+<br>
 
-## Nome do Grupo: <nome do grupo>
+<p align="center">
+  <img src="imagens/professores.png" alt="Professores">
+</p>
 
-## Integrantes:
+<table align="center" width="100%" style="table-layout: fixed;">
+  <tr>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/vanunes/">
+        <img src="imagens/vanessa.png" width="100" alt="Vanessa Nunes">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/reginaldo-arakaki-9574222b/">
+        <img src="imagens/reginaldo.png" width="100" alt="Reginaldo A.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/bryan-kano/">
+        <img src="imagens/bryan.png" width="100" alt="Bryan Kano">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/fernando-pizzo-208b526a/">
+        <img src="imagens/pizzo.png" width="100" alt="Fernando Pizzo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/lisane-valdo/">
+        <img src="imagens/lisane.png" width="100" alt="Lisane Valdo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/bruno-grandchamp-rodilha/">
+        <img src="imagens/bruno.png" width="100" alt="Bruno Rodilha">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/filipe-gon%C3%A7alves-08a55015b/">
+        <img src="imagens/filipe.png" width="100" alt="Filipe Gonçalves">
+      </a>
+    </td>
+  </tr>
+</table>
 
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
+<br>
 
+<p align="center">
+  <img src="imagens/bottom.png" alt="Elemento visual de encerramento do cabeçalho">
+</p>
 
-# Sumário
+# Gestão do Projeto
+
+## Sumário
 
 - [1. Introdução](#1-introdução)
-  - [1.1 Objetivo do Documento](#11-objetivo-do-documento)
-- [2. Política de Branches](#2-política-de-branches)
-  - [2.1 Visão Geral do Gitflow](#21-visão-geral-do-gitflow)
-  - [2.2 Estrutura de Branches](#22-estrutura-de-branches)
-  - [2.3 Diretrizes de Uso das Branches](#23-diretrizes-de-uso-das-branches)
-- [3. Políticas de Commit](#3-políticas-de-commit)
-- [4. Política de Push e Pull Requests](#4-política-de-push-e-pull-requests)
-- [5. Infraestrutura como Código](#5-infraestrutura-como-código)
-- [6. Gestão de Arquivos Sensíveis](#6-gestao-de-arquivos-sensiveis)
-- [7. Política de Rollback](#7-política-de-rollback)
-- [8. Registro de Variáveis de Ambiente][#8-registro-de-variaveis-de-ambiente]
-- [Referências](#referências)
+- [2. Contrato de convivência](#2-contrato-de-convivência)
+  - [2.1 Regra de ouro](#21-regra-de-ouro)
+  - [2.2 Responsabilidade e colaboração](#22-responsabilidade-e-colaboração)
+- [3. Comunicação e rituais](#3-comunicação-e-rituais)
+  - [3.1 Comunicação oficial](#31-comunicação-oficial)
+  - [3.2 Dailies](#32-dailies)
+  - [3.3 Revisões de merge request](#33-revisões-de-merge-request)
+- [4. Resolução de impasses e gestão de conflitos](#4-resolução-de-impasses-e-gestão-de-conflitos)
+- [5. SLA de entregas](#5-sla-de-entregas)
+- [6. Gestão de issues](#6-gestão-de-issues)
+  - [6.1 Estrutura das issues](#61-estrutura-das-issues)
+  - [6.2 T-shirt sizing](#62-t-shirt-sizing)
+  - [6.3 Labels padronizadas](#63-labels-padronizadas)
+- [7. Fluxo e rastreabilidade das atividades](#7-fluxo-e-rastreabilidade-das-atividades)
+- [8. Fechamento da sprint](#8-fechamento-da-sprint)
 
-# 1. Introdução
-_conteúdo_
+## 1. Introdução
 
-## 1.1 Objetivo do Documento
-Este documento estabelece diretrizes claras para a utilização de boas práticas no desenvolvimento de software, visando a organização e a qualidade do código. Todos os membros da equipe devem seguir as instruções definidas.
+Este documento registra o contrato de convivência, o acordo de nível de serviço (SLA) interno e os rituais adotados pelo grupo durante o desenvolvimento do projeto. Seu objetivo é tornar explícitas as regras de colaboração, comunicação, resolução de impasses e acompanhamento do trabalho.
 
-# 2. Política de Branches
-_conteúdo_
+## 2. Contrato de convivência
 
-## 2.1 Visão Geral do Gitflow
-Nota: Fornecer uma breve explicação sobre o Gitflow e sua importância para o gerenciamento eficiente do código fonte.
+### 2.1 Regra de ouro
 
-## 2.2 Estrutura de Branches
-Padrão de Nomenclatura das Branches:
+O board e o repositório constituem as fontes oficiais de acompanhamento do projeto. Uma atividade somente é considerada concluída quando seu card está atualizado e, quando aplicável, existe um commit ou merge request rastreável. Decisões tomadas em conversas ou reuniões devem ser registradas nos canais do projeto.
 
-> **main**: Contém o código pronto para produção.
-> **dev**: Integração contínua das novas funcionalidades em desenvolvimento.
-> **feature/[nome-da-feature]**: Para desenvolvimento de novas funcionalidades. Exemplo: feature/integracao-api
-> **bugfix/[nome-do-bug]**: Para correção de bugs. Exemplo: bugfix/corrige-login
-> **release/[versao]**: Preparação para lançamento de uma nova versão. Exemplo: release/v1.0.0
-> **hotfix/[nome-do-hotfix]**: Correção urgente diretamente na produção. Exemplo: hotfix/corrige-bug-em-producao
+### 2.2 Responsabilidade e colaboração
 
-## 2.3 Diretrizes de Uso das Branches
-- Cada nova funcionalidade deve ser desenvolvida em uma branch de feature criada a partir da branch develop.
-  - Nomeação das branches de features deve seguir o padrão feature/[nome-da-feature].
-- Todas as novas funcionalidades devem ser desenvolvidas em branches de features e integradas na branch develop através de pull requests.
-- Commits diretos na branch main são proibidos! 
-  - Configurem o Github para proteger de commits direto para a main.
-- Branches de hotfix devem ser criadas a partir da branch main para corrigir problemas críticos em produção.
-  - Nomeação das branches de hotfix deve seguir o padrão hotfix/[nome-do-hotfix].
+- Cada integrante deve manter seus cards atualizados e comunicar impedimentos assim que forem identificados.
+- Alterações devem respeitar o escopo do card e ser submetidas à revisão por pares.
+- A comunicação deve ser respeitosa, objetiva e direcionada à resolução do problema.
+- Integrantes devem colaborar na revisão de merge requests e no esclarecimento de dúvidas que bloqueiem o trabalho da equipe.
 
-# 3. Políticas de Commit
-Integrar "Conventional Commits" nas políticas de commit ajuda a manter um histórico de commits claro e estruturado, facilitando a automação de processos como geração de changelogs e versionamento semântico.
+## 3. Comunicação e rituais
 
-As mensagens de commit devem seguir o padrão de Conventional Commits para garantir clareza e consistência.
+### 3.1 Comunicação oficial
 
-Formato: [Tipo][Escopo opcional]: Mensagem clara e descritiva.
+A equipe utiliza o **WhatsApp para comunicações informais**, como avisos rápidos, dúvidas pontuais e alinhamentos cotidianos. O **Slack é o canal formal de comunicação**, utilizado para registrar informações, decisões e comunicados relacionados ao projeto. Decisões que afetem escopo, prazos ou responsabilidades também devem ser refletidas no board ou no repositório para preservar a rastreabilidade.
 
-Os tipos devem ser:
+### 3.2 Dailies
 
-> **feat**: Uma nova funcionalidade para o usuário.
-> **fix**: Correção de bug.
-> **docs**: Mudanças na documentação.
-> **style**: Mudanças que não afetam o significado do código (espaços em branco, formatação, etc.).
-> **refactor**: Uma mudança de código que não corrige um bug nem adiciona uma funcionalidade.
-> **test**: Adição ou correção de testes.
-> **chore**: Atualizações de tarefas de build ou ferramentas auxiliares e bibliotecas, como a geração de documentação.
+As dailies acontecem **às 14h, em todos os dias nos quais a equipe possui instrução**, com duração prevista de **15 minutos**. Cada integrante apresenta de forma objetiva as atividades concluídas, as próximas atividades e os impedimentos identificados. Quando um integrante não puder participar, sua atualização deve ser enviada pelo canal formal antes do encontro.
 
-Exemplo de commit: feat(auth): add login feature with JWT
+### 3.3 Revisões de merge request
 
-Proibido:
-- O uso de emojis nas mensagens de commit, e commits com mensagens vagas como "melhorias" ou "atualizações".
+Ao abrir um merge request, a pessoa autora deve solicitar a revisão do grupo. A pessoa revisora deve verificar o atendimento ao card e registrar ajustes necessários antes da aprovação. As políticas técnicas de branch, commit e merge request estão documentadas em [GestaoConfiguracao.md](GestaoConfiguracao.md).
 
-IMPORTANTE!
-- Realizar commits frequentes (diários) para facilitar o rastreamento de mudanças e a colaboração.
+## 4. Resolução de impasses e gestão de conflitos
 
-# 4. Política de Push e Pull Requests
+1. Divergências devem ser discutidas inicialmente entre as pessoas envolvidas, com base nos requisitos e artefatos do projeto.
+2. Se não houver consenso, o tema deve ser apresentado ao grupo em uma daily ou reunião específica.
+3. Persistindo o impasse, o Scrum Master da sprint organiza a decisão necessária para evitar bloqueio do trabalho.
+4. Questões que não possam ser resolvidas internamente devem ser encaminhadas à professora orientadora.
 
-**Políticas de Push**:
-- Não é permitido fazer push diretamente para a main ou dev.
-- Todas as contribuições devem ser feitas via branches e submetidas por meio de pull requests.
+Conflitos interpessoais devem ser tratados de forma reservada e respeitosa, com mediação de outro integrante quando necessário.
 
-**Regras de Push**:
-- Todo código deve passar por revisão de código por pares antes de ser mergeado.
-- A revisão só deve ser aprovada se os testes automatizados forem bem-sucedidos e os critérios de qualidade (cobertura de testes, análise de código) forem atendidos.
+## 5. SLA de entregas
 
-**Revisão por Pares - Critério de Aprovação**:
-- O pull request deve ser revisado por, no mínimo, uma pessoa.
-- A revisão de código deve considerar: 
-  - Está funcional e resolve o problema proposto.
-  - Passou em todos os testes automatizados.
-  - Cobertura mínima de testes (60% ou mais). 
-  - Verificação de boas práticas de código.
-  - Não introduz duplicidade de código.
-- Após a aprovação, a branch deve ser mergeada na dev e o pull request pode ser fechado. 
-- O Scrum Master da Sprint é responsável por subir os artefatos para a MAIN ao final da Sprint.
+- Cards, merge requests e artefatos de documentação devem ser disponibilizados para revisão interna até **quinta-feira às 23h59**, independentemente do prazo formal da sprint.
+- A pessoa responsável deve comunicar antecipadamente quando identificar risco de não cumprimento do prazo.
+- Cards não concluídos devem permanecer atualizados no board, com o impedimento e o próximo passo registrados.
+- A conclusão de uma entrega depende do atendimento ao DoD do card e da aprovação do merge request, quando aplicável.
 
+## 6. Gestão de issues
 
-## 5. Infraestrutura como Código
-- Uso obrigatório de Docker para padronizar ambientes de desenvolvimento e produção.
-- Incluir na raiz do repositório:
-  - Dockerfile(s) para build de aplicações e serviços.
-  - .dockerignore para excluir arquivos desnecessários do contexto de build.
-  - docker-compose.yml para orquestrar múltiplos serviços/containers localmente.
-- Cada serviço/contêiner deve ter seu próprio Dockerfile customizável, se necessário.
-- O Docker Compose deve funcionar para rodar toda a stack do sistema localmente com um único comando (docker-compose up).
+### 6.1 Estrutura das issues
 
-## 6. Gestão de Arquivos Sensíveis
-- É obrigatório o uso de .gitignore bem configurado para bloquear:
-  - Arquivos contendo senhas, segredos ou informações sensíveis.
-  - Arquivos de configuração individuais (por exemplo, .env, configs locais, etc).
-- Explicação/documentação das diferenças entre arquivos de configuração locais, de desenvolvimento e de produção (ex.: .env.local, .env.dev, .env.prod).
-- Nunca commitar dados sensíveis ou credenciais diretamente no repositório.
+Toda atividade relevante deve possuir uma issue no GitLab. O título deve começar com um verbo no infinitivo, representar uma entrega específica e evitar descrições genéricas. Exemplos: `Modelar fluxo AS-IS da gestão de portfólio`, `Identificar requisitos não funcionais` e `Elaborar matriz de risco`.
 
-## 7. Política de Rollback
-- Documentar o processo básico para rollback de uma release defeituosa.
-- Passos mínimos recomendados:
-  - Identificar rapidamente a versão estável anterior (tag/release/commit).
-  - Criar uma branch/selecione a tag da versão a ser restaurada.
-  - Realizar o deploy dessa versão, conforme procedimento do time.
-  - Comunicar o time e stakeholders sobre a reversão.
-- Deixar esses procedimentos registrados no repositório (ex: docs/rollback.md).
+Cada issue deve conter:
 
-## 8. Registro de Variáveis de Ambiente
-- Obrigatório manter um arquivo .env.example documentando todas as variáveis de ambiente exigidas pela aplicação.
-- O arquivo deve listar todas as keys (sem valores reais/sensíveis) e breve explicação de cada variável.
-- Todos os membros devem usar esse exemplo para criar seus próprios arquivos .env locais.
-- Exemplo:
-  - DB_HOST= # Endereço do banco de dados
-  - DB_USER= # Usuário do banco
-  - DB_PASS= # Senha do banco (NUNCA commitada)
-  - SECRET_KEY= # Chave secreta do sistema
+- descrição do que deve ser realizado e de seu contexto;
+- DoR (*Definition of Ready*), indicando os pré-requisitos para início;
+- DoD (*Definition of Done*), com condições objetivas de conclusão;
+- milestone correspondente à sprint;
+- label de natureza da atividade;
+- estimativa de tamanho;
+- pessoa responsável, quando a divisão do trabalho estiver definida.
 
-# Referências
-- Conventional Commits: https://www.conventionalcommits.org/en/v1.0.0/
-- GitFlow: https://nvie.com/posts/a-successful-git-branching-model/
-- Gitihub/iuricode: https://github.com/iuricode/padroes-de-commits
-- Docker (documentação oficial): https://docs.docker.com/
-- Best Practices for Writing Dockerfiles: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
-- Docker Compose (documentação oficial): https://docs.docker.com/compose/
-- .dockerignore Reference: https://docs.docker.com/engine/reference/builder/#dockerignore-file
-- .gitignore (documentação oficial): https://git-scm.com/docs/gitignore
-- gitignore.io (gerador de .gitignore para diferentes stacks): https://www.toptal.com/developers/gitignore/
-- Handling secrets in Git repos (GitHub Guide): https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-and-storing-encrypted-secrets
-- Creating a pull request template for your repository: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository
-- Exemplo de Checklists para PRs: https://github.com/othneildrew/Best-README-Template#pull-request-template
-- Best Practices for Rollbacks (Atlassian): https://www.atlassian.com/continuous-delivery/principles/rollback-strategies
-- How to Use Git Revert and Git Reset: https://www.git-tower.com/learn/git/faq/git-reset-vs-revert/
-- 12 Factor App: Config: https://12factor.net/config
-- Dotenv (Exemplo e uso de arquivos .env): https://github.com/motdotla/dotenv#usage
+As atividades devem ser granulares e produzir entregas verificáveis. Cards amplos, como “Fazer documentação da Sprint”, devem ser divididos em tarefas menores que permitam acompanhar o progresso e distribuir o trabalho entre os integrantes.
+
+### 6.2 T-shirt sizing
+
+As estimativas representam referências de esforço relativo, não compromissos de duração exata.
+
+| Size | Referência |
+|---|---|
+| `SIZE_PP` | aproximadamente 15 minutos |
+| `SIZE_P` | aproximadamente 30 minutos |
+| `SIZE_M` | aproximadamente 1 hora |
+| `SIZE_G` | aproximadamente 2 horas |
+
+Quando uma atividade exceder a referência de `SIZE_G`, a equipe deve avaliar sua divisão em issues menores e verificáveis.
+
+### 6.3 Labels padronizadas
+
+Devem ser utilizadas somente as labels já existentes no projeto, evitando a criação de nomes diferentes para representar a mesma finalidade.
+
+| Label | Uso |
+|---|---|
+| `REQUIREMENTS` | Requisitos funcionais e não funcionais, User Stories e business drivers |
+| `DOCUMENTATION` | Documentação e consolidação de artefatos |
+| `DESIGN` | UML, BPMN, C4, jornadas e demais modelagens |
+| `CODE` | Implementação e configuração técnica |
+| `TEST` | Testes |
+| `CODE_REVIEW` | Revisão de código |
+| `DEPLOY` | Implantação |
+| `MEET` | Reuniões e alinhamentos |
+| `BUG` | Correção de defeitos |
+| `BLOCKED` | Atividade impedida de avançar |
+
+As labels de acompanhamento `Doing`, `Review`, `Waiting Review`, `DOR_INCOMPLETE` e `DOD_INCOMPLETE` devem ser aplicadas quando correspondentes à situação da atividade.
+
+## 7. Fluxo e rastreabilidade das atividades
+
+O fluxo esperado é:
+
+```text
+Issue → Branch → Desenvolvimento/Documentação → Commit → Push → MR → Review → Merge → Fechamento da Issue
+```
+
+- Uma issue somente deve ser iniciada quando seu DoR estiver atendido.
+- Uma issue somente deve ser encerrada quando todos os critérios de seu DoD estiverem atendidos.
+- Quando uma dependência impedir o avanço, a issue deve receber a label `BLOCKED` e registrar o impedimento.
+- Branches, commits e merge requests devem ser relacionados à issue correspondente.
+- A abertura do merge request não caracteriza a conclusão da atividade; revisão, atendimento aos comentários e merge fazem parte da entrega.
+- A pessoa revisora deve verificar o DoD, os arquivos alterados, a coerência com outros artefatos, os conflitos e os testes aplicáveis.
+
+Ao final, o GitLab deve permitir identificar o que precisava ser feito, quem realizou a atividade, quando ela foi executada, qual merge request entregou o resultado, se houve revisão e se o DoD foi cumprido.
+
+As dependências entre artefatos devem ser respeitadas. Um exemplo de sequência é: stakeholders → personas → jornadas → User Stories → diagramas. A ordem específica de cada sprint deve seguir o planejamento aprovado pela equipe.
+
+## 8. Fechamento da sprint
+
+Ao final de cada sprint, a equipe deve:
+
+- revisar as entregas realizadas;
+- consolidar o `Projeto.md` e os documentos de gestão;
+- verificar a coerência entre NEG, REQ e PROJ;
+- conferir o atendimento ao DoD das issues;
+- verificar merge requests pendentes;
+- registrar a retrospectiva;
+- identificar e documentar pendências;
+- planejar e criar as issues da sprint seguinte, incluindo estimativas, labels, milestone e dependências.
+
