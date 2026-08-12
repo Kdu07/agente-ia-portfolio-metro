@@ -51,6 +51,10 @@
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
 - [5. Solução Técnica](#5-solução-técnica)
 - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
+- [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
+- [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
+- [5.4 Linguagens e Tecnologias Utilizadas](#54-linguagens-e-tecnologias-utilizadas)
+- [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
 - [7. Projeto Visual da Solução](#7-projeto-visual-da-solução)
 - [8. Desenvolvimento do Projeto](#8-desenvolvimento-do-projeto)
@@ -70,8 +74,16 @@
 |---|---|
 | RF | Requisito Funcional |
 | RNF | Requisito Não Funcional |
-| API | Application Programming Interface |
-| MVP | Minimum Viable Product |
+| API | *Application Programming Interface* |
+| MVP | *Minimum Viable Product* |
+| PLN | Processamento de Linguagem Natural |
+| DLP | *Data Loss Prevention* — políticas do Power Platform que restringem a combinação de conectores em um ambiente |
+| SSO | *Single Sign-On* |
+| Conector | Componente do Power Platform que expõe operações de um serviço a fluxos e agentes |
+| Conector personalizado | Conector criado pela equipe a partir de uma especificação OpenAPI para expor uma API própria |
+| Entra ID | Serviço de identidade da Microsoft (antigo Azure Active Directory) |
+| Graph API | Interface unificada de acesso a dados do Microsoft 365 |
+| *Tenant* | Instância corporativa do Microsoft 365 / Entra ID da organização |
 
 ## 1.2 Objetivo do Documento
 
@@ -844,6 +856,249 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 [Preencher]
 
+## 5.5 Integrações com o Ecossistema Microsoft
+
+### 5.5.1 Objetivo
+
+Esta seção mapeia as integrações necessárias entre o agente de IA proposto e o ecossistema Microsoft já utilizado pelo PMO do Metrô de São Paulo (SharePoint, Power BI, Power Automate e Copilot Studio), detalhando, para cada ponto de integração, seu propósito, o mecanismo técnico previsto, os dados trafegados e os pré-requisitos de ambiente.
+
+O mapeamento cumpre duas finalidades no projeto:
+
+1. **Subsidiar a visão técnica** desta seção 5, convertendo a listagem preliminar de tecnologias apresentada em 5.1 em um desenho de interfaces entre componentes;
+2. **Organizar as solicitações de ambiente e acesso** que precisam ser encaminhadas à equipe de TI/TAA do Metrô, cuja disponibilização é premissa explícita do TAPI.
+
+### 5.5.2 Escopo e delimitação
+
+O escopo deste mapeamento é o do MVP estabelecido no TAPI e representado na Figura 01 daquele documento: o núcleo de PLN da equipe, o canal conversacional, a camada de orquestração e a leitura das fontes preenchidas com dados sintéticos.
+
+Permanecem fora do escopo, conforme a seção "O projeto não contempla" do TAPI: implantação em produção, integração com o portfólio real e qualquer processamento de dados reais sensíveis fora de ambiente homologado. Toda integração descrita adiante é exercitada, no MVP, exclusivamente sobre **dados sintéticos**.
+
+### 5.5.3 Visão geral da arquitetura de integração
+
+#### 5.5.3.1 Camadas da solução
+
+A arquitetura de integração organiza-se em seis camadas. Ela mantém o núcleo de PLN (entregável central do módulo, construído pela equipe) isolado das particularidades das plataformas Microsoft, atendendo à premissa do TAPI de que a solução permaneça funcional caso a plataforma de portfólio seja substituída ou complementada no futuro.
+
+| Camada | Componentes | Responsabilidade |
+|---|---|---|
+| **Canal** | Microsoft Teams, canal web | Receber a solicitação do usuário em linguagem natural e devolver a resposta |
+| **Orquestração** | Copilot Studio | Autenticar o usuário, acionar o núcleo de PLN, rotear a intenção classificada para a ação correspondente e compor a resposta |
+| **Núcleo de PLN (Pilar 1)** | API própria em Python (classificação de intenções, extração de entidades, busca semântica e análise comparativa) | Interpretar a solicitação, verificar aderência ao catálogo de intenções e produzir a resposta estruturada |
+| **Automação e acesso a dados** | Power Automate, conectores SharePoint e Office 365 | Executar as operações de leitura e escrita sobre as fontes do portfólio e a geração de artefatos |
+| **Fontes de dados** | Listas do SharePoint, bibliotecas de documentos, conjuntos de dados do Power BI | Armazenar as informações do portfólio (no MVP, preenchidas com dados sintéticos) |
+| **Identidade e governança** | Entra ID, permissões do SharePoint, políticas de DLP, trilhas de auditoria | Controlar quem acessa o quê e registrar as interações para rastreabilidade |
+
+#### 5.5.3.2 Diagrama de integrações
+
+<div align="center">
+  <img src="imagens/integracoes-microsoft.png" width="70%" alt="Diagrama das integrações entre o agente de IA e o ecossistema Microsoft do Metrô de São Paulo, organizado em camadas de canal, orquestração, núcleo de PLN, automação, fontes de dados e governança">
+  <br>
+  <sub>Figura X: Visão das integrações entre o agente e o ecossistema Microsoft do Metrô.</sub>
+</div>
+
+As arestas identificadas por `INT-xx` correspondem às fichas da seção 5.5.5.2.
+
+### 5.5.4 Inventário dos componentes Microsoft
+
+| Componente | Uso atual no Metrô (informado no TAPI) | Papel previsto na solução | Cobertura no MVP |
+|---|---|---|---|
+| **SharePoint — Listas** | Site central de dados do portfólio e dos projetos | Fonte primária de dados estruturados: status, cronograma, marcos, riscos, avanço | Integral (dados sintéticos) |
+| **SharePoint — Bibliotecas de documentos** | Armazenamento dos documentos vinculados aos projetos | Fonte de dados não estruturados para busca semântica e análise documental | Integral (dados sintéticos) |
+| **Copilot Studio** | Bot de apoio à obtenção e atualização de status de projetos e subportfólios | Camada de orquestração e canal conversacional do agente | Integral |
+| **Power Automate** | Automação de fluxos de trabalho | Execução de operações de escrita, alertas proativos e geração de artefatos | Integral |
+| **Power BI** | Relatórios de indicadores do portfólio | Referência de indicadores consolidados e destino de encaminhamento das respostas executivas | Parcial |
+| **Microsoft Teams** | Ferramenta corporativa de colaboração | Canal de publicação do agente e de entrega de alertas | Integral |
+| **Microsoft Entra ID** | Identidade corporativa | Autenticação do usuário e origem do perfil que rege as permissões (RF01) | Parcial |
+| **Word, Excel e PowerPoint** | Consolidação do portfólio: partida, balanços mensais e encerramento | Formato de saída das prévias de relatórios e apresentações (RF08) | Parcial |
+
+### 5.5.5 Mapeamento detalhado das integrações
+
+#### 5.5.5.1 Quadro-resumo
+
+| ID | Integração | Direção | Mecanismo previsto | RFs atendidos | Cobertura no MVP | Criticidade para o MVP |
+|---|---|---|---|---|---|---|
+| INT-01 | Canal conversacional ↔ Copilot Studio | Bidirecional | Publicação do agente nos canais Teams e web | RF02 | Integral | Alta |
+| INT-02 | Copilot Studio ↔ API de PLN | Bidirecional | Conector personalizado (OpenAPI) ou requisição HTTP em tópico | RF02, RF03, RF04, RF07 | Integral | **Crítica** |
+| INT-03 | Leitura de listas do SharePoint | Entrada | Conector SharePoint via Power Automate ou ação do agente | RF04, RF06, RF07 | Integral | Alta |
+| INT-04 | Ingestão de documentos do SharePoint | Entrada | Fonte de conhecimento do Copilot Studio e/ou indexação própria pelo Pilar 1 | RF04 | Integral | Alta |
+| INT-05 | Escrita e atualização em listas | Saída | Fluxo do Power Automate acionado como ação, com confirmação do usuário | RF05 | Integral | Média |
+| INT-06 | Consumo e encaminhamento de Power BI | Entrada | Link contextual para relatório; consumo de dados a validar | RF04, RF08 | Parcial | Média |
+| INT-07 | Alertas proativos | Saída | Fluxo agendado no Power Automate com notificação no Teams | RF06 | Integral | Média |
+| INT-08 | Identidade e permissões | Transversal | Autenticação Entra ID no Copilot Studio; perfil propagado ao Pilar 1 | RF01 | Parcial | Alta |
+| INT-09 | Geração de artefatos Office | Saída | Fluxo do Power Automate com preenchimento de modelo | RF08 | Parcial | Média |
+| INT-10 | Trilha de auditoria das interações | Saída | Logs de execução dos fluxos e registro próprio da API de PLN | RF03, RF05 | Parcial | Média |
+
+#### 5.5.5.2 Fichas de integração
+
+##### INT-01 — Canal conversacional ↔ Copilot Studio
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Disponibilizar ao usuário o ponto de entrada em linguagem natural, no ambiente onde ele já trabalha |
+| **Direção** | Bidirecional (usuário → agente → usuário) |
+| **Mecanismo** | Publicação do agente do Copilot Studio nos canais Microsoft Teams e site de demonstração |
+| **Dados trafegados** | Texto da solicitação, identificador do usuário, resposta composta pelo agente |
+| **Pré-requisitos** | Ambiente do Power Platform disponível à equipe; permissão de publicação do agente no canal Teams do *tenant* utilizado |
+| **Tratamento no MVP** | O canal Teams depende de autorização no *tenant* do Metrô; caso indisponível, a demonstração ocorre pelo canal web do próprio Copilot Studio |
+
+##### INT-02 — Copilot Studio ↔ API de PLN (Pilar 1)
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Delegar ao núcleo de PLN construído pela equipe a classificação da intenção, a extração de entidades, a busca semântica e a análise comparativa, mantendo o Copilot Studio como orquestrador |
+| **Direção** | Bidirecional (Copilot Studio → API → Copilot Studio) |
+| **Mecanismo** | Conector personalizado gerado a partir da especificação OpenAPI da API, ou ação de requisição HTTP dentro de um tópico. A API expõe um contrato estável: recebe o enunciado do usuário e o contexto de perfil; devolve intenção classificada, entidades extraídas, grau de confiança e, quando aplicável, a resposta estruturada com as referências das fontes |
+| **Dados trafegados** | Enunciado em linguagem natural, perfil e permissões do solicitante, resposta estruturada em JSON |
+| **Pré-requisitos** | API publicada em endereço HTTPS acessível pelo ambiente do Power Platform; conectores personalizados podem exigir licenciamento *premium* e liberação nas políticas de DLP do *tenant* |
+| **Tratamento no MVP** | A API é hospedada fora do perímetro do Metrô e trafega **exclusivamente dados sintéticos**. Nenhum documento ou dado real do portfólio pode transitar por esse caminho enquanto a hospedagem não estiver homologada |
+| **Criticidade** | **É o ponto de integração mais crítico do projeto**: sua inviabilização isola o núcleo do módulo da camada de orquestração |
+
+##### INT-03 — Leitura de listas do SharePoint
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Recuperar os dados estruturados do portfólio — projetos, status, cronograma, marcos, riscos, avanço e indicadores — que sustentam as respostas do agente |
+| **Direção** | Entrada (SharePoint → agente) |
+| **Mecanismo** | Conector SharePoint acionado por fluxo do Power Automate (operações de obtenção de itens com filtro) ou consulta direta como ação do agente. Alternativa a avaliar: Microsoft Graph API, quando for necessário acesso mais granular |
+| **Dados trafegados** | Campos das listas de projetos e subportfólios, filtrados pelo escopo autorizado ao usuário |
+| **Pré-requisitos** | Réplica das listas do portfólio em site de desenvolvimento, com estrutura de colunas equivalente à do ambiente real; permissão de leitura para a conta de serviço ou para o usuário autenticado |
+| **Tratamento no MVP** | Listas recriadas pela equipe com dados sintéticos, espelhando a estrutura informada pelo parceiro. **A fidelidade dessa estrutura é condição para a validade da avaliação do pipeline** |
+
+##### INT-04 — Ingestão de documentos do SharePoint
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Permitir que o agente responda a partir do conteúdo dos documentos de projeto — termos de abertura, atas, planos, relatórios e normativos —, que hoje exigem leitura e consolidação manuais |
+| **Direção** | Entrada (SharePoint → agente) |
+| **Mecanismo** | Duas rotas complementares: (a) biblioteca de documentos registrada como **fonte de conhecimento** do agente no Copilot Studio; (b) **indexação própria pelo Pilar 1**, com extração de texto, segmentação e busca semântica sobre representações vetoriais |
+| **Dados trafegados** | Conteúdo textual dos documentos e seus metadados (projeto, tipo, data, versão) |
+| **Pré-requisitos** | Biblioteca acessível ao agente; formatos suportados verificados; para a rota (b), pipeline de extração e armazenamento do índice |
+| **Tratamento no MVP** | Prioriza-se a rota (b), por ser a que exercita o aprendizado de PLN previsto no módulo e por manter o comportamento auditável e independente de plataforma. A rota (a) é avaliada como comparação de desempenho e como caminho de sustentação pela equipe interna |
+
+##### INT-05 — Escrita e atualização em listas do SharePoint
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Apoiar a entrada e a atualização conversacional de dados dos projetos (RF05), reduzindo o preenchimento manual apontado como dor no TAPI |
+| **Direção** | Saída (agente → SharePoint) |
+| **Mecanismo** | Fluxo do Power Automate acionado como ação do agente, executando criação ou atualização de item. A operação só é disparada **após confirmação explícita do usuário**, e o fluxo registra origem, autoria e momento da alteração |
+| **Dados trafegados** | Campos a atualizar, identificador do item, identidade do solicitante |
+| **Pré-requisitos** | Permissão de escrita na lista; regras de validação de campo definidas; desenho do comportamento em caso de falha parcial da atualização |
+| **Tratamento no MVP** | Escrita restrita ao site de desenvolvimento com dados sintéticos. Em hipótese alguma o MVP escreve em listas do portfólio real |
+
+##### INT-06 — Consumo e encaminhamento de Power BI
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Reaproveitar os indicadores já consolidados no Power BI, evitando que o agente recalcule métricas que a organização considera oficiais, e encaminhar o usuário ao relatório correspondente quando a resposta exigir visualização |
+| **Direção** | Entrada (dados) e saída (encaminhamento) |
+| **Mecanismo** | Composição de link contextual para o relatório pertinente à pergunta. Alternativas a validar conforme o ambiente disponibilizado: consumo do conjunto de dados via API REST do Power BI, exportação programada de indicadores para uma lista intermediária ou uso dos recursos de Copilot do Power BI |
+| **Dados trafegados** | Identificadores de relatório e de página; se implementado o consumo, valores agregados de indicadores |
+| **Pré-requisitos** | Acesso a um espaço de trabalho do Power BI; **os recursos de Copilot do Power BI dependem de capacidade dedicada (Fabric/Premium), cuja disponibilidade no ambiente cedido à equipe precisa ser confirmada** |
+| **Tratamento no MVP** | Trata-se da integração com maior probabilidade de ficar restrita ao encaminhamento por link, dado o custo de capacidade envolvido. A limitação, se confirmada, deve ser registrada nos entregáveis de implantação |
+
+##### INT-07 — Alertas proativos e acompanhamento de pendências
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Atender ao RF06 e à dor de "cobrança manual" relatada pela persona de liderança, sinalizando dados ausentes, desatualizados ou prazos próximos sem exigir que o usuário pergunte |
+| **Direção** | Saída (agente → usuário) |
+| **Mecanismo** | Fluxo agendado no Power Automate que percorre as listas, aplica as regras de pendência definidas com o PMO e emite notificação no Teams ou por e-mail para o responsável |
+| **Dados trafegados** | Itens pendentes, responsável, prazo, mensagem de alerta |
+| **Pré-requisitos** | Regras de pendência acordadas com o parceiro; política de frequência e de destinatários; mecanismo para evitar excesso de notificações |
+| **Tratamento no MVP** | Demonstrado sobre a base sintética, com uma ou duas regras representativas. Os critérios e limites da atuação proativa ainda dependem de validação com o parceiro |
+
+##### INT-08 — Identidade, perfil e permissões
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Sustentar o RF01 e o comportamento diferenciado por persona: o mesmo agente deve responder com escopo e profundidade distintos para Diretoria, liderança e equipe de projeto, aplicando a verificação **antes** da recuperação e da apresentação dos dados |
+| **Direção** | Transversal |
+| **Mecanismo** | Autenticação do usuário no Copilot Studio via Entra ID, com propagação do identificador e do perfil às chamadas subsequentes (INT-02, INT-03, INT-05). No SharePoint, a autorização efetiva depende ainda das permissões do site e das listas |
+| **Dados trafegados** | Identificador do usuário, grupos e papéis, escopo de projetos autorizados |
+| **Pré-requisitos** | Registro de aplicação no Entra ID; definição, junto ao PMO, do mapeamento entre grupos corporativos e perfis do agente; decisão sobre acesso em nome do usuário *versus* conta de serviço |
+| **Tratamento no MVP** | Modelo de perfis simulado sobre a base sintética — usuários fictícios associados aos três perfis das personas —, ficando a autenticação efetiva via Entra ID condicionada ao ambiente disponibilizado pela TI do Metrô |
+
+##### INT-09 — Geração de artefatos Office
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Produzir as prévias de relatório de status, apresentação mensal para a diretoria e relatório de encerramento previstas no RF08, nos formatos já usados pelo PMO |
+| **Direção** | Saída (agente → documento) |
+| **Mecanismo** | Fluxo do Power Automate que preenche um modelo (Word ou PowerPoint) com os dados consolidados e o deposita em biblioteca do SharePoint, devolvendo o link ao usuário |
+| **Dados trafegados** | Conteúdo consolidado do relatório, identificação do projeto e do período |
+| **Pré-requisitos** | Modelos de documento fornecidos ou aprovados pelo PMO; **as ações de preenchimento de modelo podem exigir licenciamento *premium*, a confirmar** |
+| **Tratamento no MVP** | Escopo reduzido a um tipo de artefato representativo, sobre dados sintéticos, com a saída marcada como prévia sujeita a revisão humana |
+
+##### INT-10 — Trilha de auditoria das interações
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Sustentar o benefício de rastreabilidade e o suporte ao não repúdio exigidos no TAPI, registrando consultas, intenções classificadas, recusas por fora de escopo e alterações efetivadas |
+| **Direção** | Saída (componentes → repositório de log) |
+| **Mecanismo** | Dois níveis complementares: histórico de execução dos fluxos do Power Automate; e registro próprio da API de PLN, com o enunciado, a intenção atribuída, o grau de confiança e as fontes utilizadas na resposta |
+| **Dados trafegados** | Enunciado, identificador do usuário, intenção, decisão de autorização, referências das fontes, carimbo de tempo |
+| **Pré-requisitos** | Política de retenção definida; cuidado para que o próprio log não se torne um repositório de dados sensíveis fora do perímetro homologado |
+| **Tratamento no MVP** | Implementado no nível da API de PLN, que é o componente sob controle da equipe; o registro dos fluxos é documentado como orientação de implantação |
+
+### 5.5.6 Rastreabilidade: requisitos funcionais × integrações
+
+| RF | Descrição resumida | Integrações envolvidas |
+|---|---|---|
+| RF01 | Controle de acesso, permissões e perfil | INT-08, INT-03, INT-10 |
+| RF02 | Interação em linguagem natural por texto e voz | INT-01, INT-02 |
+| RF03 | Identificação e controle de intenções | INT-02, INT-10 |
+| RF04 | Consulta e análise de informações dos projetos | INT-02, INT-03, INT-04, INT-06 |
+| RF05 | Apoio à criação e atualização de projetos | INT-05, INT-08, INT-10 |
+| RF06 | Alertas e apoio proativo a pendências | INT-07, INT-03 |
+| RF07 | Análise comparativa do portfólio | INT-02, INT-03, INT-04 |
+| RF08 | Geração de relatórios e informações gerenciais | INT-09, INT-06, INT-03 |
+
+Todos os requisitos funcionais possuem cobertura de integração. Observa-se que **INT-02 e INT-03 concentram a maior parte das dependências** — o que os torna prioritários tanto na ordem de implementação quanto no acompanhamento de risco.
+
+### 5.5.7 Pré-requisitos de ambiente, licenciamento e acessos
+
+A tabela a seguir consolida o que precisa ser obtido junto à equipe de TI/TAA do Metrô ou provido pelo Inteli, e serve como pauta objetiva para as interações com o parceiro. A premissa do TAPI de que "a equipe de TI do Metrô deverá fornecer os recursos e ambiente necessários" torna esse levantamento uma dependência de cronograma, não apenas técnica.
+
+| # | Item | Necessário para | Responsável | Status |
+|---|---|---|---|---|
+| P01 | Ambiente do Power Platform com Copilot Studio acessível à equipe | INT-01, INT-02, INT-05 | TI do Metrô / Inteli | A confirmar |
+| P02 | Confirmação do licenciamento disponível, incluindo conectores *premium* e limites de mensagens e créditos | INT-02, INT-05, INT-09 | TI do Metrô | A confirmar |
+| P03 | Políticas de DLP vigentes no ambiente e possibilidade de liberar um conector personalizado | INT-02 | TI do Metrô | A confirmar |
+| P04 | Site do SharePoint de desenvolvimento, com permissão de leitura e escrita | INT-03, INT-04, INT-05 | TI do Metrô | A confirmar |
+| P05 | Estrutura das listas do portfólio: nomes de colunas, tipos e domínios de valores | INT-03, e representatividade dos dados sintéticos | PMO | A confirmar |
+| P06 | Amostras anonimizadas ou modelos dos documentos de projeto | INT-04 | PMO | A confirmar |
+| P07 | Acesso a espaço de trabalho do Power BI e confirmação de capacidade dedicada | INT-06 | TI do Metrô | A confirmar |
+| P08 | Modelos (Word/PowerPoint) dos relatórios e da apresentação mensal | INT-09 | PMO | A confirmar |
+| P09 | Mapeamento entre grupos do Entra ID e perfis de acesso do agente | INT-08 | PMO / TI do Metrô | A confirmar |
+| P10 | Hospedagem da API de PLN e definição do que é aceitável para dados sintéticos | INT-02 | Equipe / TI do Metrô | A definir |
+
+### 5.5.8 Estratégia de desacoplamento
+
+O TAPI estabelece como premissa que a plataforma de portfólio pode ser modificada ou substituída no futuro — citando explicitamente o Dynamics Project Operations — e que a IA deve permanecer funcional nesse cenário. Três decisões de projeto respondem a essa premissa:
+
+1. **Contrato estável na fronteira do Pilar 1.** O núcleo de PLN não conhece SharePoint, Power BI nem Copilot Studio: recebe um enunciado com contexto de perfil e devolve intenção, entidades e resposta estruturada. Trocar a plataforma de portfólio afeta as integrações INT-03 a INT-07, não o núcleo.
+
+2. **Acesso a dados isolado em uma camada de fluxos.** As operações de leitura e escrita concentram-se em fluxos do Power Automate com finalidade única e bem delimitada. Substituir a fonte de dados implica reescrever esses fluxos, preservando o restante da solução.
+
+3. **Plano B explícito para a orquestração.** Caso o licenciamento do ambiente ou as políticas de DLP do *tenant* inviabilizem a chamada do Copilot Studio à API, o pipeline permanece demonstrável como API própria, e a integração ao Copilot Studio converte-se em guia de implantação para a equipe interna do Metrô — mantendo o benefício de sustentação e autonomia previsto no TAPI, ainda que com entrega adiada.
+
+### 5.5.9 Pontos em aberto para validação com o parceiro
+
+| # | Questão | Impacto se não respondida | Integração afetada |
+|---|---|---|---|
+| Q01 | Qual ambiente do Power Platform será disponibilizado e com qual licenciamento? | Bloqueia o desenho definitivo de INT-02, INT-05 e INT-09 | INT-02, INT-05, INT-09 |
+| Q02 | As políticas de DLP permitem um conector personalizado apontando para um endpoint externo? | Determina se o núcleo de PLN pode ser orquestrado pelo Copilot Studio no MVP | INT-02 |
+| Q03 | Qual a estrutura das listas do portfólio — colunas, tipos e domínios de valores? | Compromete a representatividade da base sintética e a validade da avaliação do pipeline | INT-03 |
+| Q04 | Quais tipos, formatos e volumes de documento predominam nas bibliotecas dos projetos? | Define a estratégia de ingestão e os limites de INT-04 | INT-04 |
+| Q05 | Como os perfis de acesso são hoje representados: grupos do Entra ID, permissões do site ou campos das listas? | Define como o RF01 será implementado e verificado | INT-08 |
+| Q06 | O agente pode escrever em listas, ou deve limitar-se a propor a alteração ao usuário? | Altera o escopo de INT-05 e o desenho do RF05 | INT-05 |
+| Q07 | Quais regras de pendência e qual frequência de alerta o PMO considera adequadas? | Define o comportamento proativo do RF06 e evita excesso de notificações | INT-07 |
+| Q08 | Há capacidade dedicada de Power BI disponível para o ambiente do projeto? | Determina se INT-06 vai além do encaminhamento por link | INT-06 |
+| Q09 | Quais requisitos de retenção e auditoria se aplicam aos registros de interação? | Define o desenho de INT-10 e a aderência ao requisito de não repúdio | INT-10 |
+
+Cada questão em aberto foi tratada, nesta seção, por uma hipótese registrada e uma alternativa de contorno, de modo que o desenvolvimento não fique bloqueado enquanto as respostas não chegam.
+
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
@@ -940,5 +1195,10 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 # Referências
 
-- [Inserir referências bibliográficas ou links relevantes]
-- [Inserir referências técnicas]
+- MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
+- MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
+- MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/
+- MICROSOFT. *Criar um conector personalizado a partir de uma definição OpenAPI*. Disponível em: https://learn.microsoft.com/pt-br/connectors/custom-connectors/define-openapi-definition
+- MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
+- MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
+- DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot
