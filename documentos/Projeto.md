@@ -1019,6 +1019,49 @@ As arestas identificadas por `INT-xx` correspondem às fichas da seção 5.5.5.2
 
 Todos os requisitos funcionais possuem cobertura de integração. Observa-se que **INT-02 e INT-03 concentram a maior parte das dependências** — o que os torna prioritários tanto na ordem de implementação quanto no acompanhamento de risco.
 
+### 5.5.7 Pré-requisitos de ambiente, licenciamento e acessos
+
+A tabela a seguir consolida o que precisa ser obtido junto à equipe de TI/TAA do Metrô ou provido pelo Inteli, e serve como pauta objetiva para as interações com o parceiro. A premissa do TAPI de que "a equipe de TI do Metrô deverá fornecer os recursos e ambiente necessários" torna esse levantamento uma dependência de cronograma, não apenas técnica.
+
+| # | Item | Necessário para | Responsável | Status |
+|---|---|---|---|---|
+| P01 | Ambiente do Power Platform com Copilot Studio acessível à equipe | INT-01, INT-02, INT-05 | TI do Metrô / Inteli | A confirmar |
+| P02 | Confirmação do licenciamento disponível, incluindo conectores *premium* e limites de mensagens e créditos | INT-02, INT-05, INT-09 | TI do Metrô | A confirmar |
+| P03 | Políticas de DLP vigentes no ambiente e possibilidade de liberar um conector personalizado | INT-02 | TI do Metrô | A confirmar |
+| P04 | Site do SharePoint de desenvolvimento, com permissão de leitura e escrita | INT-03, INT-04, INT-05 | TI do Metrô | A confirmar |
+| P05 | Estrutura das listas do portfólio: nomes de colunas, tipos e domínios de valores | INT-03, e representatividade dos dados sintéticos | PMO | A confirmar |
+| P06 | Amostras anonimizadas ou modelos dos documentos de projeto | INT-04 | PMO | A confirmar |
+| P07 | Acesso a espaço de trabalho do Power BI e confirmação de capacidade dedicada | INT-06 | TI do Metrô | A confirmar |
+| P08 | Modelos (Word/PowerPoint) dos relatórios e da apresentação mensal | INT-09 | PMO | A confirmar |
+| P09 | Mapeamento entre grupos do Entra ID e perfis de acesso do agente | INT-08 | PMO / TI do Metrô | A confirmar |
+| P10 | Hospedagem da API de PLN e definição do que é aceitável para dados sintéticos | INT-02 | Equipe / TI do Metrô | A definir |
+
+### 5.5.8 Estratégia de desacoplamento
+
+O TAPI estabelece como premissa que a plataforma de portfólio pode ser modificada ou substituída no futuro — citando explicitamente o Dynamics Project Operations — e que a IA deve permanecer funcional nesse cenário. Três decisões de projeto respondem a essa premissa:
+
+1. **Contrato estável na fronteira do Pilar 1.** O núcleo de PLN não conhece SharePoint, Power BI nem Copilot Studio: recebe um enunciado com contexto de perfil e devolve intenção, entidades e resposta estruturada. Trocar a plataforma de portfólio afeta as integrações INT-03 a INT-07, não o núcleo.
+
+2. **Acesso a dados isolado em uma camada de fluxos.** As operações de leitura e escrita concentram-se em fluxos do Power Automate com finalidade única e bem delimitada. Substituir a fonte de dados implica reescrever esses fluxos, preservando o restante da solução.
+
+3. **Plano B explícito para a orquestração.** Caso o licenciamento do ambiente ou as políticas de DLP do *tenant* inviabilizem a chamada do Copilot Studio à API, o pipeline permanece demonstrável como API própria, e a integração ao Copilot Studio converte-se em guia de implantação para a equipe interna do Metrô — mantendo o benefício de sustentação e autonomia previsto no TAPI, ainda que com entrega adiada.
+
+### 5.5.9 Pontos em aberto para validação com o parceiro
+
+| # | Questão | Impacto se não respondida | Integração afetada |
+|---|---|---|---|
+| Q01 | Qual ambiente do Power Platform será disponibilizado e com qual licenciamento? | Bloqueia o desenho definitivo de INT-02, INT-05 e INT-09 | INT-02, INT-05, INT-09 |
+| Q02 | As políticas de DLP permitem um conector personalizado apontando para um endpoint externo? | Determina se o núcleo de PLN pode ser orquestrado pelo Copilot Studio no MVP | INT-02 |
+| Q03 | Qual a estrutura das listas do portfólio — colunas, tipos e domínios de valores? | Compromete a representatividade da base sintética e a validade da avaliação do pipeline | INT-03 |
+| Q04 | Quais tipos, formatos e volumes de documento predominam nas bibliotecas dos projetos? | Define a estratégia de ingestão e os limites de INT-04 | INT-04 |
+| Q05 | Como os perfis de acesso são hoje representados: grupos do Entra ID, permissões do site ou campos das listas? | Define como o RF01 será implementado e verificado | INT-08 |
+| Q06 | O agente pode escrever em listas, ou deve limitar-se a propor a alteração ao usuário? | Altera o escopo de INT-05 e o desenho do RF05 | INT-05 |
+| Q07 | Quais regras de pendência e qual frequência de alerta o PMO considera adequadas? | Define o comportamento proativo do RF06 e evita excesso de notificações | INT-07 |
+| Q08 | Há capacidade dedicada de Power BI disponível para o ambiente do projeto? | Determina se INT-06 vai além do encaminhamento por link | INT-06 |
+| Q09 | Quais requisitos de retenção e auditoria se aplicam aos registros de interação? | Define o desenho de INT-10 e a aderência ao requisito de não repúdio | INT-10 |
+
+Cada questão em aberto foi tratada, nesta seção, por uma hipótese registrada e uma alternativa de contorno, de modo que o desenvolvimento não fique bloqueado enquanto as respostas não chegam.
+
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
