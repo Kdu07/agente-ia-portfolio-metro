@@ -182,59 +182,59 @@ Mudanças futuras na estrutura do SharePoint, nas listas do portfólio ou nas fe
 
 ### 2.3.1 Visão
 
-O produto consiste em um agente de IA integrado ao ecossistema Microsoft utilizado pelo PMO do Metrô, capaz de interpretar solicitações em linguagem natural e buscar as informações necessárias para respondê-las. A proposta é ampliar as possibilidades do agente atualmente utilizado, permitindo que o usuário faça perguntas abertas sobre os projetos, consulte informações distribuídas entre listas e documentos e receba respostas mais contextualizadas, sem depender de caminhos previamente definidos. 
+O produto consiste em um agente de IA integrado ao ecossistema Microsoft utilizado pelo PMO do Metrô, com foco em facilitar o acesso e a análise das informações do portfólio. A partir de solicitações em linguagem natural, o produto interpreta a intenção do usuário, consulta as informações disponíveis e apresenta respostas contextualizadas sobre os projetos. A proposta é reduzir o esforço necessário para localizar e consolidar informações, além de apoiar o acompanhamento dos projetos e a tomada de decisão.
 
 ### 2.3.2 O que o produto faz
 
 #### Interação em linguagem natural
 
-O produto permite que os usuários façam perguntas e solicitações em linguagem natural, sem precisar seguir opções ou fluxos previamente definidos. O agente interpreta a intenção do usuário e identifica o tipo de solicitação para direcionar o processamento adequado. Essa capacidade torna a consulta às informações do portfólio mais simples e flexível para diferentes perfis de usuário.
+O produto permite que os usuários façam perguntas e solicitações em linguagem natural, sem depender de caminhos previamente definidos. O agente interpreta a intenção da solicitação e direciona o processamento de acordo com o tipo de demanda, tornando a interação mais simples e flexível para diferentes perfis de usuário.
 
 #### Consulta e análise do portfólio
 
-O agente permite consultar informações dos projetos e analisar documentos relacionados para responder perguntas sobre temas como status, cronograma, entregas, riscos, marcos, indicadores e aderência a normativos. Também permite realizar consultas que envolvem mais de um projeto, reunindo informações que atualmente precisam ser localizadas e consolidadas manualmente.
+O produto consulta informações dos projetos e analisa documentos relacionados para responder perguntas sobre temas como status, cronograma, entregas, riscos, marcos, indicadores e aderência a normativos. Também realiza consultas que envolvem diferentes projetos, reunindo informações que estão distribuídas entre as fontes utilizadas pelo PMO.
 
-#### Atualização e acompanhamento dos projetos
+#### Acompanhamento dos projetos
 
-Além de consultar informações, o produto apoia atividades relacionadas ao preenchimento e à atualização dos dados dos projetos. Também pode acompanhar pendências e fornecer alertas relacionados às informações que precisam ser atualizadas, ajudando a manter o portfólio mais completo e atualizado.
+O produto monitora informações relevantes dos projetos e emite alertas sobre pendências, prazos, riscos, desvios e possíveis inconformidades que demandem atenção. Dessa forma, apoia o acompanhamento contínuo das iniciativas e facilita a identificação antecipada de pontos que precisam ser avaliados pela equipe responsável.
 
 #### Apoio à gestão e à tomada de decisão
 
-A solução fornece informações consolidadas para apoiar o acompanhamento dos projetos e a gestão do portfólio. O agente pode auxiliar na identificação de riscos, problemas, pendências e outros pontos que mereçam atenção, além de apoiar análises comparativas entre projetos. O objetivo é facilitar o acesso às informações necessárias para a tomada de decisão, sem substituir a avaliação dos responsáveis pelos projetos.
+O produto identifica e sinaliza riscos, pendências e pontos de atenção a partir das informações disponíveis no portfólio. Também realiza análises comparativas entre projetos e consolida informações relevantes para diferentes níveis de gestão, oferecendo subsídios para que gestores e equipes avaliem situações e tomem decisões com maior agilidade.
 
 #### Relatórios e informações para acompanhamento
 
-O produto também pode apoiar a preparação de informações utilizadas no acompanhamento do portfólio, incluindo prévias de apresentações e relatórios previstos no processo de gestão. Dessa forma, informações que já estão disponíveis no ambiente do PMO podem ser organizadas, reduzindo o esforço necessário para sua consolidação. Além disso, o perfil do usuário é considerado, limitando as informações conforme o nível hierárquico e apresentando algumas views personalizadas, uma vez que um executivo, por exemplo, precisa de uma visão mais ampla e enxuta.
+O produto gera prévias de relatórios e apresentações a partir das informações disponíveis no ambiente do PMO, organizando dados relevantes para o acompanhamento do portfólio. Essa capacidade reduz o esforço necessário para consolidar informações que já estão distribuídas entre diferentes fontes.
 
 #### Segurança e rastreabilidade
 
-O produto deve respeitar os níveis de acesso definidos para os usuários e manter o registro das interações realizadas. Essas capacidades permitem controlar o acesso às informações e manter a rastreabilidade das consultas e ações realizadas pelo agente, considerando os requisitos de segurança e governança do ambiente corporativo.
+O produto aplica os controles de acesso definidos para cada perfil de usuário e mantém o registro das interações realizadas. Dessa forma, o acesso às informações é condicionado às permissões do usuário e as consultas realizadas permanecem rastreáveis, considerando os requisitos de segurança e governança do ambiente corporativo.
 
 ### 2.3.3 O que o produto não faz
 
 #### Interação em linguagem natural
 
-O produto não substitui a análise humana em situações que exigem avaliação ou decisão por parte dos responsáveis pelos projetos. As respostas fornecidas pelo agente servem como apoio aos usuários e não devem ser tratadas como decisões tomadas automaticamente pelo sistema.
+O produto não interpreta solicitações fora do domínio da gestão de portfólio nem executa comandos que não estejam previstos em seu catálogo de intenções. Solicitações não reconhecidas recebem retorno explícito, sem tentativa de gerar uma resposta especulativa.
 
 #### Consulta e análise do portfólio
 
-O produto não substitui as ferramentas e fontes corporativas utilizadas atualmente pelo PMO. SharePoint, Power BI e demais sistemas continuam sendo utilizados como parte do processo de gestão. Além disso, o MVP não contempla a integração completa com todos os sistemas do Metrô.
+O produto não realiza integrações com sistemas fora do escopo definido para o MVP. Nesta etapa, sua atuação está concentrada no ecossistema Microsoft utilizado pelo projeto, especialmente SharePoint, Lists e Copilot Studio, não contemplando uma integração completa com todos os sistemas corporativos do Metrô.
 
 #### Atualização e acompanhamento dos projetos
 
-O produto não substitui a responsabilidade das equipes pela atualização e validação das informações dos projetos. O agente pode apoiar essas atividades, mas não garante, de forma autônoma, que os dados estejam completos, corretos ou atualizados.
+O produto não gera nem edita cronogramas de projeto e não realiza previsão estatística de prazo ou custo. Seu papel é acompanhar e analisar as informações disponíveis, sinalizando situações que demandem atenção, sem assumir a gestão operacional dos projetos.
 
 #### Apoio à gestão e à tomada de decisão
 
-O produto não toma decisões automaticamente nem substitui gestores ou responsáveis pelos projetos. Sua função é fornecer informações, análises e alertas que apoiem a avaliação dos usuários, mantendo a decisão final sob responsabilidade humana.
+O produto não toma decisões automaticamente nem substitui os responsáveis pela gestão dos projetos. As informações, análises e alertas fornecidos servem como subsídio para a avaliação dos usuários, mantendo a decisão final sob responsabilidade humana. O produto também não executa aprovações formais previstas no processo de gestão, como a aprovação do TAP ou a passagem entre fases.
 
 #### Relatórios e informações para acompanhamento
 
-O produto não substitui os materiais e processos oficiais utilizados pelo PMO para acompanhamento do portfólio. As informações e prévias geradas pelo agente devem ser consideradas como apoio ao processo e podem exigir revisão e validação antes de sua utilização oficial.
+O produto não substitui os relatórios, apresentações ou ferramentas corporativas utilizadas oficialmente pelo PMO. As prévias geradas pelo produto servem como apoio ao processo de acompanhamento e podem exigir revisão e validação dos responsáveis antes de sua utilização oficial.
 
 #### Segurança e rastreabilidade
 
-O produto não processa dados sensíveis reais fora dos ambientes homologados pelo Metrô. No MVP, a validação deve utilizar dados sintéticos ou anonimizados, evitando o uso de informações reais em serviços externos não autorizados. A solução também deve respeitar os controles de acesso e os requisitos de segurança definidos para o ambiente corporativo.
+O produto não altera registros no SharePoint nem atualiza diretamente os dados do portfólio. No MVP, também não processa dados sensíveis reais fora dos ambientes homologados pelo Metrô, sendo utilizados dados sintéticos ou anonimizados para a validação da solução. O produto não contempla, nesta etapa, um aplicativo móvel nativo.
 
 ## 2.4 Personas e Jornadas do Usuário
 
