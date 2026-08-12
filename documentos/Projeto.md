@@ -642,15 +642,29 @@ A manutenção da relação ao longo do tempo, contudo, depende menos da adesão
 
 ### 2.8.5 Fontes de Receita
 
-[Preencher]
+Por se tratar de solução interna desenvolvida para uma empresa pública sob controle do Governo do Estado de São Paulo, o projeto não gera receita direta. O retorno esperado manifesta-se como benefício operacional e como melhoria da qualidade da informação que sustenta a decisão, o que exige substituir a noção de receita pela de valor capturado pela companhia.
+
+O principal benefício é a liberação de capacidade técnica atualmente empregada em atividades administrativas de preenchimento, consolidação e cobrança, que passa a ser direcionada a atividades de gestão. Somam-se a ele a redução do retrabalho decorrente de inconsistências identificadas tardiamente, a ampliação da conformidade com os normativos de gestão de portfólio e a diminuição da dependência de consolidações manuais para a produção dos relatórios mensais e de fechamento. Há ainda um benefício de sustentação: a solução é concebida para ser operada e evoluída pela própria equipe do Metrô, reduzindo a dependência de terceiros ao longo do tempo.
+
+O dimensionamento desse retorno depende de informações que ainda não estão disponíveis à equipe. Sabe-se que o Portfólio Organizacional de 2025 reúne 31 programas e projetos distribuídos em seis subportfólios, cada um sujeito ao preenchimento periódico dos artefatos de gestão e ao acompanhamento mensal do avanço, o que estabelece a escala do processo. Para converter essa escala em valor, contudo, são necessários três dados que devem ser levantados junto ao PMO: o tempo médio despendido por líder de projeto no preenchimento e na atualização dos artefatos; o esforço mensal da própria área na consolidação do balanço e na varredura de pendências; e a incidência de retrabalho decorrente de informação inconsistente ou incompleta.
+
+Optou-se por não apresentar estimativa numérica nesta versão, uma vez que qualquer valor calculado sem esses dados seria arbitrário e comprometeria a credibilidade da análise. A quantificação monetária do benefício e a hipótese de precificação da solução, caso fosse comercializada a um cliente externo, serão desenvolvidas na análise de viabilidade financeira prevista para a Sprint 4, quando as informações solicitadas ao parceiro já deverão estar disponíveis.
 
 ### 2.8.6 Recursos-Chave
 
-[Preencher]
+O recurso mais crítico do projeto é o conjunto de dados sintéticos utilizado para treinar e avaliar o pipeline. Por restrição de compliance estabelecida no TAPI, o MVP não pode ser validado sobre informações reais, o que transfere para a qualidade desses dados toda a validade da avaliação de desempenho. Conforme registrado na seção 2.6, essa dependência corresponde ao risco R01, de maior severidade entre as ameaças mapeadas, e sua mitigação envolve a construção dos dados a partir dos modelos de documento e do vocabulário efetivamente utilizados pelo PMO.
+
+Compõem também os recursos-chave a base de conhecimento documental do portfólio, formada pelos modelos de Termo de Abertura, Mapa de Benefícios, cronograma, lista de avanço, relatórios mensais e de fechamento, além do normativo NOR-00-223; o catálogo de intenções que delimita as interações aceitáveis; os modelos de linguagem e os serviços de conversão entre fala e texto em português; a infraestrutura de nuvem que hospeda a aplicação e a base de dados; e a equipe de seis integrantes responsável pelo desenvolvimento.
+
+Dois recursos de natureza distinta completam o quadro e merecem registro por serem frequentemente omitidos. O primeiro é o acesso ao ambiente homologado e às licenças do ecossistema Microsoft, sem o qual as orientações de implantação e sustentação permanecem no plano teórico, por não poderem ser verificadas na prática — dependência correspondente ao risco R02 da seção 2.6. O segundo é o recurso financeiro que sustenta a operação, composto pelos serviços de nuvem contratados durante o desenvolvimento e, em uma eventual continuidade, pelo orçamento da área responsável pela manutenção da solução.
 
 ### 2.8.7 Atividades-Chave
 
-[Preencher]
+A atividade central do projeto é a construção e a avaliação do pipeline de Processamento de Linguagem Natural, que compreende a classificação das intenções em catálogo delimitado, a detecção de solicitações fora de domínio, a extração de entidades relevantes e a busca semântica sobre os documentos de projeto. É dessa atividade que decorre o aprendizado principal do módulo.
+
+A ela somam-se a geração e a curadoria dos dados sintéticos, tratada como atividade estruturante por condicionar todas as demais; a integração dos serviços de conversão de áudio em texto e de texto em áudio, com tratamento do vocabulário específico da companhia; o desenvolvimento das interfaces conversacional e de acompanhamento; a implementação dos mecanismos de controle de acesso e de registro de auditoria; a avaliação sistemática de desempenho sobre conjunto de teste previamente definido; e a implantação em nuvem acompanhada da documentação necessária para a sustentação pela equipe do parceiro.
+
+As atividades descritas acima correspondem à construção da solução. A sua permanência em funcionamento depende de um segundo conjunto, de natureza contínua, que precisa ser considerado desde já, uma vez que a sustentação pela equipe interna do Metrô figura entre os benefícios declarados no TAPI. Integram esse conjunto a revisão periódica do catálogo de intenções, à medida que novas formas de solicitação surgem no uso corrente; o retreinamento do classificador quando o desempenho medido se afastar dos limiares estabelecidos; a atualização da base de conhecimento sempre que os modelos de documento ou os normativos forem revisados; e o monitoramento contínuo da qualidade das respostas e dos registros de auditoria. O projeto não executa essas atividades, por estarem fora do escopo do MVP, mas deve documentá-las e entregar os mecanismos que permitam ao parceiro executá-las de forma autônoma.
 
 ### 2.8.8 Parcerias-Chave
 
