@@ -600,19 +600,45 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 
 ### 2.8.1 Proposta de Valor
 
-[Preencher]
+A proposta de valor consiste em um agente conversacional, acessível por texto e por voz, que permite consultar e atualizar informações do portfólio de projetos sem recorrer a formulários extensos ou ao conhecimento da estrutura técnica dos sistemas. Seu núcleo é um pipeline de Processamento de Linguagem Natural desenvolvido e avaliado pela própria equipe, responsável por identificar a intenção da solicitação, extrair as informações pertinentes e recusar interações situadas fora do contexto do portfólio ou do nível de acesso do perfil autenticado.
+
+O diferencial em relação ao cenário atual está justamente nessa capacidade de interpretação. Conforme registrado na análise de fraquezas da seção 2.2.3, o agente hoje utilizado responde apenas a fluxos previamente configurados, sem interpretar perguntas abertas nem identificar a intenção do usuário, o que restringe seu uso aos cenários já previstos. A solução proposta substitui esse modelo determinístico por um modelo capaz de lidar com formulações variadas, mantendo o controle sobre o que pode ou não ser respondido.
+
+O valor entregue distribui-se em quatro dimensões. A primeira é a eficiência, pela substituição do preenchimento manual e da consolidação documental por interações em linguagem natural. A segunda é a confidencialidade, assegurada pela operação exclusiva sobre dados sintéticos durante o MVP e pela ausência de trânsito de informação por serviços não homologados. A terceira é a rastreabilidade, garantida pelo registro de origem, autoria e momento de cada consulta e atualização. A quarta é a proatividade, pela identificação antecipada de pendências de preenchimento e pela sinalização ao responsável antes que a informação se torne inconsistente.
+
+A proposta é formulada como hipótese verificável, e não como descrição de escopo. Admite-se que a interação em linguagem natural reduz o esforço operacional das equipes de projeto e do PMO sem comprometer a confiabilidade das informações. Considera-se a hipótese confirmada caso o MVP demonstre, ao término do módulo, redução de 80% na necessidade de execução manual das consultas contempladas (O1), cobertura de 100% das categorias de informação previstas no escopo (O2) e acurácia mínima de 85% na classificação das intenções (O5).
 
 ### 2.8.2 Segmentos de Clientes
 
-[Preencher]
+O cliente institucional da solução é o PMO Corporativo do Metrô, área responsável por estabelecer e gerir a governança de estratégia, portfólio, programas, projetos e indicadores estratégicos da companhia. É essa área que concentra o esforço de consolidação, verificação de qualidade e acompanhamento do uso das plataformas de gestão, e é sobre esse esforço que a solução pretende atuar.
+
+Os usuários finais correspondem às três personas definidas na seção 2.4, que representam níveis distintos da estrutura de gestão de projetos. Para efeito do recorte do MVP, esses perfis não recebem o mesmo peso. Fernanda Medina, líder de projeto, constitui o perfil prioritário, por concentrar simultaneamente as atividades de consulta, atualização e acompanhamento de pendências, sendo o segmento sobre o qual se apoiam as hipóteses de redução de esforço manual. Roberto Nogueira, representante da Diretoria, é atendido predominantemente pelas funcionalidades de consulta consolidada e de geração de prévias de relatório, e valida as hipóteses relativas à sumarização executiva e à aplicação de permissões diferenciadas. Carlos Mendes, membro de equipe de projeto, é atendido por um subconjunto delimitado de funcionalidades, restrito ao projeto em que atua, e valida as hipóteses de usabilidade e de recusa compreensível diante de solicitações fora do escopo ou da permissão.
+
+Conforme a decisão de escopo registrada na seção 2.4, a atuação do gestor de portfólio associado ao PMO permanece tratada de forma transversal às demais personas, não constituindo um segmento adicional nesta versão. Essa delimitação deverá ser reavaliada caso o parceiro disponibilize informações que evidenciem necessidades suficientemente distintas.
 
 ### 2.8.3 Canais
 
-[Preencher]
+O canal principal de entrega de valor no MVP é uma interface conversacional web desenvolvida pela equipe, que reúne a interação por texto, o envio de comandos por áudio e a apresentação das respostas em formato estruturado. A escolha por uma interface própria decorre da necessidade de demonstrar e avaliar o pipeline de PLN de forma independente da camada de orquestração, permitindo medir o desempenho do núcleo analítico sem interferência de serviços intermediários.
+
+Um segundo canal, de natureza assíncrona, corresponde às notificações proativas geradas pela varredura periódica de pendências, que alcançam o responsável sem exigir que ele acesse a aplicação. Esse canal materializa o requisito de proatividade indicado pelo parceiro e reduz a dependência da cobrança manual hoje exercida pelo PMO.
+
+Um terceiro canal, de natureza formativa, responde a um problema frequentemente subestimado em ferramentas corporativas internas: a descoberta e a aprendizagem. Como a interação ocorre em linguagem livre, o usuário não dispõe de menus que revelem o que a solução é capaz de fazer, e tende a subutilizá-la ou a abandoná-la após uma primeira solicitação mal compreendida. Por isso o próprio agente atua como canal de apresentação das suas capacidades, por meio do conjunto de perguntas sugeridas previsto no TAPI, que orienta o uso inicial e torna visível o alcance do catálogo de intenções.
+
+O MVP não contempla a publicação do agente no ecossistema Microsoft. Essa delimitação é deliberada e decorre do escopo definido no TAPI, segundo o qual a implementação em produção e a integração com o portfólio real do Metrô constituem evolução posterior ao trabalho realizado neste módulo. O que o projeto entrega, nesse aspecto, não é um canal adicional em operação, e sim a viabilização da sua futura abertura pelo parceiro.
+
+Essa viabilização se concretiza por dois meios. O primeiro é arquitetural: o núcleo de PLN é exposto por interfaces independentes da camada de apresentação, de modo que a substituição ou a adição de um canal não exija reconstrução do que foi desenvolvido. O segundo é documental, correspondendo às diretrizes, aos padrões e às orientações de implantação, operação e sustentação no ecossistema Microsoft previstos entre os entregáveis do projeto.
+
+Assim, a disponibilização do agente por meio do Copilot Studio, do Microsoft Teams ou dos demais componentes da plataforma atual do portfólio — SharePoint, Power Automate e Power BI — permanece sob responsabilidade do parceiro e condicionada ao acesso a ambiente homologado, porém com o custo de adoção reduzido pelo trabalho realizado neste módulo. A premissa tecnológica do Metrô é respeitada não pela entrega de uma integração operante, mas pela garantia de que a solução construída não cria barreiras para ela.
 
 ### 2.8.4 Relação com o Cliente
 
-[Preencher]
+A relação estabelecida com o usuário é de autoatendimento assistido. O agente não se limita a responder solicitações: conduz o usuário por meio de perguntas sequenciais quando a tarefa exige o preenchimento estruturado de informações, como na elaboração do Termo de Abertura ou do Mapa de Benefícios, adaptando as perguntas conforme as respostas recebidas e oferecendo sugestões quando solicitado.
+
+Três princípios orientam essa relação. O primeiro é a confirmação: toda atualização relevante é apresentada ao usuário antes de ser registrada, preservando seu controle sobre o que entra na base. O segundo é a transparência: as respostas factuais indicam a origem da informação apresentada, o que sustenta a confiança do usuário e atende ao objetivo de rastreabilidade (O3). O terceiro é a recusa orientada: quando uma solicitação está fora do catálogo de intenções ou do nível de acesso do perfil, o agente comunica a limitação em linguagem compreensível e sugere alternativas pertinentes, sem expor a existência ou o conteúdo de informações restritas.
+
+A continuidade da relação é apoiada pela possibilidade de salvar rascunhos e retomar o preenchimento posteriormente, reconhecendo que os usuários frequentemente interrompem a tarefa por conta de outras demandas.
+
+A manutenção da relação ao longo do tempo, contudo, depende menos da adesão inicial do que da consistência das respostas. O principal risco de abandono não é a dificuldade de uso, e sim a perda de confiança: basta que o agente apresente uma informação incorreta em um momento de decisão para que o usuário retorne à planilha e à consulta direta ao PMO, e a retomada dessa confiança é substancialmente mais custosa do que a adesão original. Por essa razão, a indicação da origem dos dados e a recusa explícita diante de solicitações que o agente não pode atender com segurança são tratadas neste projeto como mecanismos de retenção, e não apenas como requisitos de conformidade. Neste contexto, a ausência de resposta inventada é mais valiosa do que a amplitude da cobertura.
 
 ### 2.8.5 Fontes de Receita
 
