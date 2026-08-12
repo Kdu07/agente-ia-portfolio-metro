@@ -610,41 +610,99 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 
 ## 2.8 Canvas do Projeto
 
+<div align="center">
+  <img src="../assets/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
+  <br>
+  <sub>Figura X: Business Model Canvas do projeto.</sub>
+</div>
+
 ### 2.8.1 Proposta de Valor
 
-[Preencher]
+A proposta de valor consiste em um agente conversacional, acessível por texto e por voz, que permite consultar e atualizar informações do portfólio de projetos sem recorrer a formulários extensos ou ao conhecimento da estrutura técnica dos sistemas. Seu núcleo é um pipeline de Processamento de Linguagem Natural desenvolvido e avaliado pela própria equipe, responsável por identificar a intenção da solicitação, extrair as informações pertinentes e recusar interações situadas fora do contexto do portfólio ou do nível de acesso do perfil autenticado.
+
+O diferencial em relação ao cenário atual está justamente nessa capacidade de interpretação. Conforme registrado na análise de fraquezas da seção 2.2.3, o agente hoje utilizado responde apenas a fluxos previamente configurados, sem interpretar perguntas abertas nem identificar a intenção do usuário, o que restringe seu uso aos cenários já previstos. A solução proposta substitui esse modelo determinístico por um modelo capaz de lidar com formulações variadas, mantendo o controle sobre o que pode ou não ser respondido.
+
+O valor entregue distribui-se em quatro dimensões. A primeira é a eficiência, pela substituição do preenchimento manual e da consolidação documental por interações em linguagem natural. A segunda é a confidencialidade, assegurada pela operação exclusiva sobre dados sintéticos durante o MVP e pela ausência de trânsito de informação por serviços não homologados. A terceira é a rastreabilidade, garantida pelo registro de origem, autoria e momento de cada consulta e atualização. A quarta é a proatividade, pela identificação antecipada de pendências de preenchimento e pela sinalização ao responsável antes que a informação se torne inconsistente.
+
+A proposta é formulada como hipótese verificável, e não como descrição de escopo. Admite-se que a interação em linguagem natural reduz o esforço operacional das equipes de projeto e do PMO sem comprometer a confiabilidade das informações. Considera-se a hipótese confirmada caso o MVP demonstre, ao término do módulo, redução de 80% na necessidade de execução manual das consultas contempladas (O1), cobertura de 100% das categorias de informação previstas no escopo (O2) e acurácia mínima de 85% na classificação das intenções (O5).
 
 ### 2.8.2 Segmentos de Clientes
 
-[Preencher]
+O cliente institucional da solução é o PMO Corporativo do Metrô, área responsável por estabelecer e gerir a governança de estratégia, portfólio, programas, projetos e indicadores estratégicos da companhia. É essa área que concentra o esforço de consolidação, verificação de qualidade e acompanhamento do uso das plataformas de gestão, e é sobre esse esforço que a solução pretende atuar.
+
+Os usuários finais correspondem às três personas definidas na seção 2.4, que representam níveis distintos da estrutura de gestão de projetos. Para efeito do recorte do MVP, esses perfis não recebem o mesmo peso. Fernanda Medina, líder de projeto, constitui o perfil prioritário, por concentrar simultaneamente as atividades de consulta, atualização e acompanhamento de pendências, sendo o segmento sobre o qual se apoiam as hipóteses de redução de esforço manual. Roberto Nogueira, representante da Diretoria, é atendido predominantemente pelas funcionalidades de consulta consolidada e de geração de prévias de relatório, e valida as hipóteses relativas à sumarização executiva e à aplicação de permissões diferenciadas. Carlos Mendes, membro de equipe de projeto, é atendido por um subconjunto delimitado de funcionalidades, restrito ao projeto em que atua, e valida as hipóteses de usabilidade e de recusa compreensível diante de solicitações fora do escopo ou da permissão.
+
+Conforme a decisão de escopo registrada na seção 2.4, a atuação do gestor de portfólio associado ao PMO permanece tratada de forma transversal às demais personas, não constituindo um segmento adicional nesta versão. Essa delimitação deverá ser reavaliada caso o parceiro disponibilize informações que evidenciem necessidades suficientemente distintas.
 
 ### 2.8.3 Canais
 
-[Preencher]
+O canal principal de entrega de valor no MVP é uma interface conversacional web desenvolvida pela equipe, que reúne a interação por texto, o envio de comandos por áudio e a apresentação das respostas em formato estruturado. A escolha por uma interface própria decorre da necessidade de demonstrar e avaliar o pipeline de PLN de forma independente da camada de orquestração, permitindo medir o desempenho do núcleo analítico sem interferência de serviços intermediários.
+
+Um segundo canal, de natureza assíncrona, corresponde às notificações proativas geradas pela varredura periódica de pendências, que alcançam o responsável sem exigir que ele acesse a aplicação. Esse canal materializa o requisito de proatividade indicado pelo parceiro e reduz a dependência da cobrança manual hoje exercida pelo PMO.
+
+Um terceiro canal, de natureza formativa, responde a um problema frequentemente subestimado em ferramentas corporativas internas: a descoberta e a aprendizagem. Como a interação ocorre em linguagem livre, o usuário não dispõe de menus que revelem o que a solução é capaz de fazer, e tende a subutilizá-la ou a abandoná-la após uma primeira solicitação mal compreendida. Por isso o próprio agente atua como canal de apresentação das suas capacidades, por meio do conjunto de perguntas sugeridas previsto no TAPI, que orienta o uso inicial e torna visível o alcance do catálogo de intenções.
+
+O MVP não contempla a publicação do agente no ecossistema Microsoft. Essa delimitação é deliberada e decorre do escopo definido no TAPI, segundo o qual a implementação em produção e a integração com o portfólio real do Metrô constituem evolução posterior ao trabalho realizado neste módulo. O que o projeto entrega, nesse aspecto, não é um canal adicional em operação, e sim a viabilização da sua futura abertura pelo parceiro.
+
+Essa viabilização se concretiza por dois meios. O primeiro é arquitetural: o núcleo de PLN é exposto por interfaces independentes da camada de apresentação, de modo que a substituição ou a adição de um canal não exija reconstrução do que foi desenvolvido. O segundo é documental, correspondendo às diretrizes, aos padrões e às orientações de implantação, operação e sustentação no ecossistema Microsoft previstos entre os entregáveis do projeto.
+
+Assim, a disponibilização do agente por meio do Copilot Studio, do Microsoft Teams ou dos demais componentes da plataforma atual do portfólio — SharePoint, Power Automate e Power BI — permanece sob responsabilidade do parceiro e condicionada ao acesso a ambiente homologado, porém com o custo de adoção reduzido pelo trabalho realizado neste módulo. A premissa tecnológica do Metrô é respeitada não pela entrega de uma integração operante, mas pela garantia de que a solução construída não cria barreiras para ela.
 
 ### 2.8.4 Relação com o Cliente
 
-[Preencher]
+A relação estabelecida com o usuário é de autoatendimento assistido. O agente não se limita a responder solicitações: conduz o usuário por meio de perguntas sequenciais quando a tarefa exige o preenchimento estruturado de informações, como na elaboração do Termo de Abertura ou do Mapa de Benefícios, adaptando as perguntas conforme as respostas recebidas e oferecendo sugestões quando solicitado.
+
+Três princípios orientam essa relação. O primeiro é a confirmação: toda atualização relevante é apresentada ao usuário antes de ser registrada, preservando seu controle sobre o que entra na base. O segundo é a transparência: as respostas factuais indicam a origem da informação apresentada, o que sustenta a confiança do usuário e atende ao objetivo de rastreabilidade (O3). O terceiro é a recusa orientada: quando uma solicitação está fora do catálogo de intenções ou do nível de acesso do perfil, o agente comunica a limitação em linguagem compreensível e sugere alternativas pertinentes, sem expor a existência ou o conteúdo de informações restritas.
+
+A continuidade da relação é apoiada pela possibilidade de salvar rascunhos e retomar o preenchimento posteriormente, reconhecendo que os usuários frequentemente interrompem a tarefa por conta de outras demandas.
+
+A manutenção da relação ao longo do tempo, contudo, depende menos da adesão inicial do que da consistência das respostas. O principal risco de abandono não é a dificuldade de uso, e sim a perda de confiança: basta que o agente apresente uma informação incorreta em um momento de decisão para que o usuário retorne à planilha e à consulta direta ao PMO, e a retomada dessa confiança é substancialmente mais custosa do que a adesão original. Por essa razão, a indicação da origem dos dados e a recusa explícita diante de solicitações que o agente não pode atender com segurança são tratadas neste projeto como mecanismos de retenção, e não apenas como requisitos de conformidade. Neste contexto, a ausência de resposta inventada é mais valiosa do que a amplitude da cobertura.
 
 ### 2.8.5 Fontes de Receita
 
-[Preencher]
+Por se tratar de solução interna desenvolvida para uma empresa pública sob controle do Governo do Estado de São Paulo, o projeto não gera receita direta. O retorno esperado manifesta-se como benefício operacional e como melhoria da qualidade da informação que sustenta a decisão, o que exige substituir a noção de receita pela de valor capturado pela companhia.
+
+O principal benefício é a liberação de capacidade técnica atualmente empregada em atividades administrativas de preenchimento, consolidação e cobrança, que passa a ser direcionada a atividades de gestão. Somam-se a ele a redução do retrabalho decorrente de inconsistências identificadas tardiamente, a ampliação da conformidade com os normativos de gestão de portfólio e a diminuição da dependência de consolidações manuais para a produção dos relatórios mensais e de fechamento. Há ainda um benefício de sustentação: a solução é concebida para ser operada e evoluída pela própria equipe do Metrô, reduzindo a dependência de terceiros ao longo do tempo.
+
+O dimensionamento desse retorno depende de informações que ainda não estão disponíveis à equipe. Sabe-se que o Portfólio Organizacional de 2025 reúne 31 programas e projetos distribuídos em seis subportfólios, cada um sujeito ao preenchimento periódico dos artefatos de gestão e ao acompanhamento mensal do avanço, o que estabelece a escala do processo. Para converter essa escala em valor, contudo, são necessários três dados que devem ser levantados junto ao PMO: o tempo médio despendido por líder de projeto no preenchimento e na atualização dos artefatos; o esforço mensal da própria área na consolidação do balanço e na varredura de pendências; e a incidência de retrabalho decorrente de informação inconsistente ou incompleta.
+
+Optou-se por não apresentar estimativa numérica nesta versão, uma vez que qualquer valor calculado sem esses dados seria arbitrário e comprometeria a credibilidade da análise. A quantificação monetária do benefício e a hipótese de precificação da solução, caso fosse comercializada a um cliente externo, serão desenvolvidas na análise de viabilidade financeira prevista para a Sprint 4, quando as informações solicitadas ao parceiro já deverão estar disponíveis.
 
 ### 2.8.6 Recursos-Chave
 
-[Preencher]
+O recurso mais crítico do projeto é o conjunto de dados sintéticos utilizado para treinar e avaliar o pipeline. Por restrição de compliance estabelecida no TAPI, o MVP não pode ser validado sobre informações reais, o que transfere para a qualidade desses dados toda a validade da avaliação de desempenho. Conforme registrado na seção 2.6, essa dependência corresponde ao risco R01, de maior severidade entre as ameaças mapeadas, e sua mitigação envolve a construção dos dados a partir dos modelos de documento e do vocabulário efetivamente utilizados pelo PMO.
+
+Compõem também os recursos-chave a base de conhecimento documental do portfólio, formada pelos modelos de Termo de Abertura, Mapa de Benefícios, cronograma, lista de avanço, relatórios mensais e de fechamento, além do normativo NOR-00-223; o catálogo de intenções que delimita as interações aceitáveis; os modelos de linguagem e os serviços de conversão entre fala e texto em português; a infraestrutura de nuvem que hospeda a aplicação e a base de dados; e a equipe de seis integrantes responsável pelo desenvolvimento.
+
+Dois recursos de natureza distinta completam o quadro e merecem registro por serem frequentemente omitidos. O primeiro é o acesso ao ambiente homologado e às licenças do ecossistema Microsoft, sem o qual as orientações de implantação e sustentação permanecem no plano teórico, por não poderem ser verificadas na prática — dependência correspondente ao risco R02 da seção 2.6. O segundo é o recurso financeiro que sustenta a operação, composto pelos serviços de nuvem contratados durante o desenvolvimento e, em uma eventual continuidade, pelo orçamento da área responsável pela manutenção da solução.
 
 ### 2.8.7 Atividades-Chave
 
-[Preencher]
+A atividade central do projeto é a construção e a avaliação do pipeline de Processamento de Linguagem Natural, que compreende a classificação das intenções em catálogo delimitado, a detecção de solicitações fora de domínio, a extração de entidades relevantes e a busca semântica sobre os documentos de projeto. É dessa atividade que decorre o aprendizado principal do módulo.
+
+A ela somam-se a geração e a curadoria dos dados sintéticos, tratada como atividade estruturante por condicionar todas as demais; a integração dos serviços de conversão de áudio em texto e de texto em áudio, com tratamento do vocabulário específico da companhia; o desenvolvimento das interfaces conversacional e de acompanhamento; a implementação dos mecanismos de controle de acesso e de registro de auditoria; a avaliação sistemática de desempenho sobre conjunto de teste previamente definido; e a implantação em nuvem acompanhada da documentação necessária para a sustentação pela equipe do parceiro.
+
+As atividades descritas acima correspondem à construção da solução. A sua permanência em funcionamento depende de um segundo conjunto, de natureza contínua, que precisa ser considerado desde já, uma vez que a sustentação pela equipe interna do Metrô figura entre os benefícios declarados no TAPI. Integram esse conjunto a revisão periódica do catálogo de intenções, à medida que novas formas de solicitação surgem no uso corrente; o retreinamento do classificador quando o desempenho medido se afastar dos limiares estabelecidos; a atualização da base de conhecimento sempre que os modelos de documento ou os normativos forem revisados; e o monitoramento contínuo da qualidade das respostas e dos registros de auditoria. O projeto não executa essas atividades, por estarem fora do escopo do MVP, mas deve documentá-las e entregar os mecanismos que permitam ao parceiro executá-las de forma autônoma.
 
 ### 2.8.8 Parcerias-Chave
 
-[Preencher]
+A parceria central é estabelecida com o PMO Corporativo do Metrô, responsável por fornecer o entendimento do processo de gestão de portfólio, os modelos de documento, os critérios de qualidade da informação e a validação dos resultados obtidos. Sem essa interlocução, os dados sintéticos não alcançam representatividade suficiente e a solução perde aderência ao processo real, o que remete diretamente ao risco de maior severidade registrado na seção 2.6.
+
+Participam igualmente a equipe de TI e de tecnologia da automação do Metrô, responsável por disponibilizar os recursos e o ambiente necessários à execução do projeto, e a equipe do programa de Inteligência Artificial e Transformação Digital da companhia, que orienta o alinhamento da solução às diretrizes corporativas. Complementam o conjunto os provedores de serviços de nuvem e de conversão entre fala e texto, que sustentam a operação técnica, e o Inteli, por meio dos professores orientadores, que assegura o alinhamento entre o desenvolvimento e os objetivos de aprendizagem do módulo.
+
+Integram ainda o quadro de parcerias, na condição de instâncias autorizadoras, os setores técnicos e de compliance do Metrô. O TAPI condiciona expressamente o processamento de qualquer dado sensível de projeto à homologação por essas áreas, o que as torna interlocutoras decisivas para a evolução da solução além do MVP. Embora não participem do desenvolvimento, é a sua avaliação que determina se e quando a integração com o portfólio real se torna viável. Por essa razão, a documentação produzida pelo projeto deve antecipar os critérios que essas áreas costumam observar, de modo que a análise futura não parta do zero.
 
 ### 2.8.9 Estrutura de Custos
 
-[Preencher]
+O desenvolvimento ocorre em cinco sprints de duas semanas, totalizando dez semanas, com início em 05 de agosto de 2026 e término em 07 de outubro de 2026, conforme o cronograma estabelecido no TAPI, e conta com uma equipe de seis integrantes.
+
+Os custos de construção compõem-se de três elementos: o trabalho da equipe, que responde pela maior parcela; os serviços de nuvem consumidos durante o desenvolvimento, incluindo hospedagem, banco de dados, conversão de fala e chamadas a modelos; e as licenças e ferramentas de apoio ao design, à gestão do projeto e ao versionamento. A concentração no trabalho da equipe é coerente com a natureza do projeto, uma vez que o valor entregue reside na construção e na avaliação do pipeline de PLN, e não na aquisição de infraestrutura. Essa concentração reforça a decisão de manter o núcleo analítico sob domínio da equipe, pois a autonomia técnica resultante constitui, ela própria, parte do resultado entregue ao parceiro.
+
+É necessário distinguir dois regimes de custo, frequentemente tratados como um só. O custo de construção é fixo e delimitado no tempo, encerrando-se com a conclusão do módulo. O custo de operação, por sua vez, é majoritariamente variável, uma vez que a conversão de áudio em texto e as chamadas a modelos generativos são tarifadas por requisição, de modo que a despesa cresce com a adoção da solução. Um projeto que considere apenas o primeiro regime subestima o compromisso assumido pelo parceiro ao adotar a ferramenta.
+
+Cabe registrar, nesse ponto, um efeito favorável da arquitetura adotada. A classificação de intenções, que constitui o núcleo funcional do MVP e corresponde à operação de maior frequência, foi projetada para ser executada em modelos próprios, sem tarifação por requisição. Essa decisão mantém o custo marginal da funcionalidade mais utilizada próximo de zero e reserva o consumo de serviços tarifados às operações de menor frequência, como a transcrição de áudio e a geração de relatórios. Trata-se de um caso em que a escolha técnica adotada por razões de aprendizagem — construir o núcleo analítico em vez de consumi-lo como serviço — produz também um efeito econômico favorável à sustentação da solução pelo parceiro.
+
+A quantificação monetária desta estrutura não é apresentada nesta versão. Sua elaboração depende da definição, pelo grupo, dos valores de referência a serem adotados para hora de trabalho por função, e do levantamento do volume esperado de interações, que determina a parcela variável. Ambos serão estabelecidos na análise de viabilidade financeira prevista para a Sprint 4, ocasião em que o orçamento completo, contemplando despesas operacionais, carga tributária e margem, será desenvolvido.
 
 ## 2.9 Delimitação de Escopo: O que o Produto Faz e Não Faz
 
