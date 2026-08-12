@@ -51,6 +51,10 @@
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
 - [5. Solução Técnica](#5-solução-técnica)
 - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
+- [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
+- [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
+- [5.4 Linguagens e Tecnologias Utilizadas](#54-linguagens-e-tecnologias-utilizadas)
+- [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
 - [7. Projeto Visual da Solução](#7-projeto-visual-da-solução)
 - [8. Desenvolvimento do Projeto](#8-desenvolvimento-do-projeto)
@@ -70,8 +74,16 @@
 |---|---|
 | RF | Requisito Funcional |
 | RNF | Requisito Não Funcional |
-| API | Application Programming Interface |
-| MVP | Minimum Viable Product |
+| API | *Application Programming Interface* |
+| MVP | *Minimum Viable Product* |
+| PLN | Processamento de Linguagem Natural |
+| DLP | *Data Loss Prevention* — políticas do Power Platform que restringem a combinação de conectores em um ambiente |
+| SSO | *Single Sign-On* |
+| Conector | Componente do Power Platform que expõe operações de um serviço a fluxos e agentes |
+| Conector personalizado | Conector criado pela equipe a partir de uma especificação OpenAPI para expor uma API própria |
+| Entra ID | Serviço de identidade da Microsoft (antigo Azure Active Directory) |
+| Graph API | Interface unificada de acesso a dados do Microsoft 365 |
+| *Tenant* | Instância corporativa do Microsoft 365 / Entra ID da organização |
 
 ## 1.2 Objetivo do Documento
 
@@ -807,6 +819,24 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 [Preencher]
 
+## 5.5 Integrações com o Ecossistema Microsoft
+
+### 5.5.1 Objetivo
+
+Esta seção mapeia as integrações necessárias entre o agente de IA proposto e o ecossistema Microsoft já utilizado pelo PMO do Metrô de São Paulo (SharePoint, Power BI, Power Automate e Copilot Studio), detalhando, para cada ponto de integração, seu propósito, o mecanismo técnico previsto, os dados trafegados e os pré-requisitos de ambiente.
+
+O mapeamento cumpre duas finalidades no projeto:
+
+1. **Subsidiar a visão técnica** desta seção 5, convertendo a listagem preliminar de tecnologias apresentada em 5.1 em um desenho de interfaces entre componentes;
+2. **Organizar as solicitações de ambiente e acesso** que precisam ser encaminhadas à equipe de TI/TAA do Metrô, cuja disponibilização é premissa explícita do TAPI.
+
+### 5.5.2 Escopo e delimitação
+
+O escopo deste mapeamento é o do MVP estabelecido no TAPI e representado na Figura 01 daquele documento: o núcleo de PLN da equipe, o canal conversacional, a camada de orquestração e a leitura das fontes preenchidas com dados sintéticos.
+
+Permanecem fora do escopo, conforme a seção "O projeto não contempla" do TAPI: implantação em produção, integração com o portfólio real e qualquer processamento de dados reais sensíveis fora de ambiente homologado. Toda integração descrita adiante é exercitada, no MVP, exclusivamente sobre **dados sintéticos**.
+
+
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
@@ -903,5 +933,10 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 # Referências
 
-- [Inserir referências bibliográficas ou links relevantes]
-- [Inserir referências técnicas]
+- MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
+- MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
+- MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/
+- MICROSOFT. *Criar um conector personalizado a partir de uma definição OpenAPI*. Disponível em: https://learn.microsoft.com/pt-br/connectors/custom-connectors/define-openapi-definition
+- MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
+- MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
+- DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot
