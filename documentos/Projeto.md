@@ -729,6 +729,19 @@ O **RNF04 (disponibilidade)** impacta transversalmente o **RF04** (consulta e an
 
 Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**, garantindo que o controle de perfil de acesso já previsto nos RFs se reflita também na forma e no nível de detalhe das respostas entregues a cada persona (Diretor, Líder de Projeto, Membro de Equipe).
 
+**Matriz de correlação RF × RNF**
+
+| RF \ RNF | RNF01 | RNF02 | RNF03 | RNF04 | RNF05 |
+|---|:-:|:-:|:-:|:-:|:-:|
+| RF01 | X |  |  |  | X |
+| RF02 |  |  | X |  |  |
+| RF03 |  | X | X |  |  |
+| RF04 |  |  |  | X |  |
+| RF05 | X | X |  |  |  |
+| RF06 |  |  |  | X |  |
+| RF07 |  |  |  |  |  |
+| RF08 |  |  |  | X | X |
+
 ## 3.4 Casos de Uso
 
 ### 3.4.1 Diagrama de Casos de Uso
