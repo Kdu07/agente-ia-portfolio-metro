@@ -299,7 +299,7 @@ Embora o gestor do portfólio, associado ao PMO, seja um ator recorrente nas his
 <div align="center">
   <img src="imagens/Roberto.png" width="35%" alt="Persona Roberto Nogueira">
   <br>
-  <sub>Figura X: Persona Roberto Nogueira.</sub>
+  <sub>Figura 1: Persona Roberto Nogueira.</sub>
 </div>
 
 Roberto Nogueira tem 48 anos, nível de familiaridade tecnológica intermediário e representa o usuário de nível estratégico. Em seu papel na Diretoria, utiliza as informações do portfólio como subsídio para decisões, priorizações e acompanhamento institucional. No cenário atual, não opera diretamente as ferramentas de gestão: recebe do PMO relatórios, indicadores e apresentações previamente consolidados. Assim, seu contato com o portfólio é orientado à leitura executiva, e não ao acompanhamento das atividades rotineiras de cada projeto.
@@ -315,7 +315,7 @@ O nível de informação disponibilizado deve ser compatível com as atribuiçõ
 <div align="center">
   <img src="imagens/Fernanda.png" width="35%" alt="Persona Fernanda Medina">
   <br>
-  <sub>Figura X: Persona Fernanda Medina.</sub>
+  <sub>Figura 2: Persona Fernanda Medina.</sub>
 </div>
 
 Fernanda Medina tem 39 anos, nível de familiaridade tecnológica intermediário e representa o nível gerencial ou tático. Como líder de projeto, acompanha o avanço, o cronograma, as entregas, os riscos e as pendências, além de manter interlocução com o PMO. Diferentemente do perfil da Diretoria, sua atuação exige acesso recorrente a informações detalhadas dos projetos sob sua responsabilidade e participação ativa na atualização dos respectivos dados.
@@ -331,7 +331,7 @@ Fernanda deve visualizar informações suficientemente detalhadas sobre os proje
 <div align="center">
   <img src="imagens/Carlos.png" width="35%" alt="Persona Carlos Mendes">
   <br>
-  <sub>Figura X: Persona Carlos Mendes.</sub>
+  <sub>Figura 3: Persona Carlos Mendes.</sub>
 </div>
 
 Carlos Mendes tem 34 anos, nível de familiaridade tecnológica básico e representa o nível operacional. Como membro de uma equipe de projeto, participa da execução das atividades e precisa compreender as informações que afetam diretamente seu trabalho. Sua interação com a gestão do portfólio é mais delimitada que a dos demais perfis: ele necessita consultar o projeto do qual participa, identificar pendências e contribuir com atualizações pertinentes, sem precisar conhecer a arquitetura dos sistemas ou a organização das bases de dados.
@@ -367,7 +367,7 @@ Esses artefatos apoiam decisões de UX e de produto ao evidenciar diferenças en
 <div align="center">
   <img src="imagens/jornadaRoberto.png" width="90%" alt="Jornada do usuário Roberto Nogueira">
   <br>
-  <sub>Figura X: Jornada de Roberto Nogueira.</sub>
+  <sub>Figura 4: Jornada de Roberto Nogueira.</sub>
 </div>
 
 A jornada de Roberto tem como objetivo obter uma visão executiva do portfólio que apoie a tomada de decisão. Seus principais momentos de interação com o agente envolvem a consulta de informações consolidadas, a identificação de projetos ou subportfólios que exigem atenção e o aprofundamento dos riscos mais relevantes. A principal dor está na dependência de informações previamente consolidadas e na dificuldade de localizar, em meio ao volume de dados, os pontos que demandam ação estratégica.
@@ -379,7 +379,7 @@ Como oportunidade de produto, o agente pode reduzir o esforço necessário para 
 <div align="center">
   <img src="imagens/jornadaFernanda.png" width="90%" alt="Jornada da usuária Fernanda Medina">
   <br>
-  <sub>Figura X: Jornada de Fernanda Medina.</sub>
+  <sub>Figura 5: Jornada de Fernanda Medina.</sub>
 </div>
 
 A jornada de Fernanda está orientada ao acompanhamento do projeto e à manutenção da qualidade das informações gerenciais. A interação com o agente ocorre durante consultas sobre avanço, cronograma, entregas, riscos e pendências, na verificação de informações e normativos e no registro de atualizações. Entre as dores mais relevantes estão a recorrência de atividades manuais de acompanhamento e cobrança, o esforço para localizar orientações normativas e a necessidade de manter os dados atualizados e verificáveis.
@@ -391,7 +391,7 @@ Oportunidades para o produto incluem facilitar consultas e atualizações em lin
 <div align="center">
   <img src="imagens/jornadaCarlos.png" width="90%" alt="Jornada do usuário Carlos Mendes">
   <br>
-  <sub>Figura X: Jornada de Carlos Mendes.</sub>
+  <sub>Figura 6: Jornada de Carlos Mendes.</sub>
 </div>
 
 A jornada de Carlos tem como objetivo consultar e contribuir com informações do projeto em que atua. Seus momentos de interação concentram-se na busca de informações necessárias à execução, na compreensão de pendências e no fornecimento de atualizações autorizadas. As principais dores estão associadas à dificuldade de localizar conteúdos relevantes, compreender o que precisa ser realizado e interagir com sistemas cuja estrutura técnica não lhe é familiar.
@@ -447,7 +447,7 @@ O processo começa quando o gestor de portfólio precisa consultar o status de u
 <div align="center">
   <img src="../documentos/imagens/asis.png" width="80%" alt="Fluxo AS-IS">
   <br>
-  <sub>Figura X: Fluxo AS-IS.</sub>
+  <sub>Figura 7: Fluxo AS-IS.</sub>
 </div>
 
 Não existe, nesse cenário, um canal único de consulta em linguagem natural, nem verificação automática de confidencialidade dos dados: tudo depende de onde a informação está armazenada e da disponibilidade de terceiros para respondê-la.
@@ -466,7 +466,7 @@ Um gateway exclusivo decide o caminho a partir dessa classificação:
 <div align="center">
   <img src="../documentos/imagens/tobe.png" width="80%" alt="Fluxo TO-BE">
   <br>
-  <sub>Figura X: Fluxo TO-BE.</sub>
+  <sub>Figura 8: Fluxo TO-BE.</sub>
 </div>
 
 Em ambos os desfechos, é o Gestor específico quem recebe o resultado final — a diferença está em qual dos dois pilares processou o pedido e se ele foi autorizado a prosseguir.
@@ -589,7 +589,7 @@ Cada risco negativo possui uma **ação de mitigação** (preventiva, que reduz 
 
 <img src="imagens\matriz-risco.png" alt="Matriz de probabilidade × impacto do projeto" width="50%">
 
-*Figura X — Matriz de probabilidade x impacto
+*Figura 9 — Matriz de probabilidade x impacto
 
 A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a faixa crítica (17–25) e apenas R10 permanece na faixa baixa. R01 é o item isolado de maior severidade, em (P4, I4), e R09 é o único da coluna de impacto muito alto (I5) — o que explica sua entrada na análise da seção 6 mesmo com probabilidade baixa.
 
@@ -718,7 +718,39 @@ A quantificação monetária desta estrutura não é apresentada nesta versão. 
 
 # 3. Requisitos do Projeto
 
-## 3.1 Requisitos Funcionais (RFs)
+## 3.1 Business Drivers
+
+Esta seção descreve o contexto de negócio que motiva a construção da aplicação computacional, alinhando-se aos documentos de entendimento de negócio produzidos junto à Companhia do Metropolitano de São Paulo (Metrô), e explica como o uso de Processamento de Linguagem Natural (PLN) transforma os processos atuais de gestão de portfólio de projetos.
+
+### 3.1.1. Contexto de Negócio
+
+A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo de status, riscos, marcos (*milestones*) e aderência a normativos internos e externos. Atualmente, esse acompanhamento depende fortemente de consultas manuais a sistemas corporativos e da consolidação de informações dispersas, o que demanda tempo das equipes de gestão e aumenta o risco de decisões baseadas em dados desatualizados ou incompletos.
+
+Nesse contexto, identificou-se a oportunidade de introduzir um agente de inteligência artificial capaz de interagir em linguagem natural — por texto e voz — permitindo que gestores e demais stakeholders obtenham respostas diretas sobre o portfólio sem a necessidade de navegar manualmente por múltiplos sistemas ou relatórios.
+
+### 3.1.2. Transformação do Negócio por meio do PLN
+
+A introdução de PLN modifica o negócio nas seguintes frentes:
+
+- **Redução de fricção no acesso à informação**: em vez de consultar relatórios estáticos ou navegar por múltiplas telas, o usuário formula perguntas em linguagem natural (ex.: "quais projetos estão em risco esta semana?") e recebe respostas objetivas e contextualizadas.
+- **Democratização do acompanhamento de portfólio**: usuários sem conhecimento técnico aprofundado sobre os sistemas de gestão passam a conseguir extrair informações relevantes, ampliando a base de pessoas capazes de monitorar o portfólio.
+- **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
+- **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
+
+### 3.1.3. Alinhamento com o Ecossistema Corporativo
+
+A solução se apoia em dois pilares complementares:
+
+1. **Pilar 1 — PLN próprio**: desenvolvido pela equipe do projeto, responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
+2. **Pilar 2 — Integração com o ecossistema Microsoft**: aproveitamento das ferramentas já adotadas pelo Metrô (Copilot Studio/Power Platform), garantindo aderência à infraestrutura corporativa existente e facilitando a adoção pelos usuários finais.
+
+Essa combinação assegura que a transformação proposta não exija a substituição de ferramentas já consolidadas na organização, mas sim a adição de uma camada inteligente de interação sobre elas.
+
+### 3.1.4. Restrições de Negócio Relevantes
+
+Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
+
+## 3.2 Requisitos Funcionais (RFs)
 
 Os requisitos funcionais representam as principais capacidades esperadas do agente de IA para apoiar a gestão do portfólio de projetos do Metrô de São Paulo. Sua definição foi realizada a partir dos *business drivers*, do escopo estabelecido no TAPI e das *features* priorizadas pela equipe, de modo a organizar as funções que deverão ser oferecidas pela solução.
 
@@ -781,6 +813,19 @@ O **RNF03 (precisão na classificação de intenções)** está diretamente liga
 O **RNF04 (disponibilidade)** impacta transversalmente o **RF04** (consulta e análise de informações), o **RF06** (alertas e apoio proativo a pendências) e o **RF08** (geração de relatórios), funcionalidades que dependem da operação contínua do agente para gerar valor no dia a dia da gestão do portfólio.
 
 Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**, garantindo que o controle de perfil de acesso já previsto nos RFs se reflita também na forma e no nível de detalhe das respostas entregues a cada persona (Diretor, Líder de Projeto, Membro de Equipe).
+
+**Matriz de correlação RF × RNF**
+
+| RF \ RNF | RNF01 | RNF02 | RNF03 | RNF04 | RNF05 |
+|---|:-:|:-:|:-:|:-:|:-:|
+| RF01 | X |  |  |  | X |
+| RF02 |  |  | X |  |  |
+| RF03 |  | X | X |  |  |
+| RF04 |  |  |  | X |  |
+| RF05 | X | X |  |  |  |
+| RF06 |  |  |  | X |  |
+| RF07 |  |  |  |  |  |
+| RF08 |  |  |  | X | X |
 
 ## 3.4 Casos de Uso
 
