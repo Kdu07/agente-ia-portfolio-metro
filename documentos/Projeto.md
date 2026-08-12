@@ -598,6 +598,12 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 
 ## 2.8 Canvas do Projeto
 
+<div align="center">
+  <img src="imagens/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
+  <br>
+  <sub>Figura X: Business Model Canvas do projeto.</sub>
+</div>
+
 ### 2.8.1 Proposta de Valor
 
 A proposta de valor consiste em um agente conversacional, acessível por texto e por voz, que permite consultar e atualizar informações do portfólio de projetos sem recorrer a formulários extensos ou ao conhecimento da estrutura técnica dos sistemas. Seu núcleo é um pipeline de Processamento de Linguagem Natural desenvolvido e avaliado pela própria equipe, responsável por identificar a intenção da solicitação, extrair as informações pertinentes e recusar interações situadas fora do contexto do portfólio ou do nível de acesso do perfil autenticado.
@@ -668,11 +674,23 @@ As atividades descritas acima correspondem à construção da solução. A sua p
 
 ### 2.8.8 Parcerias-Chave
 
-[Preencher]
+A parceria central é estabelecida com o PMO Corporativo do Metrô, responsável por fornecer o entendimento do processo de gestão de portfólio, os modelos de documento, os critérios de qualidade da informação e a validação dos resultados obtidos. Sem essa interlocução, os dados sintéticos não alcançam representatividade suficiente e a solução perde aderência ao processo real, o que remete diretamente ao risco de maior severidade registrado na seção 2.6.
+
+Participam igualmente a equipe de TI e de tecnologia da automação do Metrô, responsável por disponibilizar os recursos e o ambiente necessários à execução do projeto, e a equipe do programa de Inteligência Artificial e Transformação Digital da companhia, que orienta o alinhamento da solução às diretrizes corporativas. Complementam o conjunto os provedores de serviços de nuvem e de conversão entre fala e texto, que sustentam a operação técnica, e o Inteli, por meio dos professores orientadores, que assegura o alinhamento entre o desenvolvimento e os objetivos de aprendizagem do módulo.
+
+Integram ainda o quadro de parcerias, na condição de instâncias autorizadoras, os setores técnicos e de compliance do Metrô. O TAPI condiciona expressamente o processamento de qualquer dado sensível de projeto à homologação por essas áreas, o que as torna interlocutoras decisivas para a evolução da solução além do MVP. Embora não participem do desenvolvimento, é a sua avaliação que determina se e quando a integração com o portfólio real se torna viável. Por essa razão, a documentação produzida pelo projeto deve antecipar os critérios que essas áreas costumam observar, de modo que a análise futura não parta do zero.
 
 ### 2.8.9 Estrutura de Custos
 
-[Preencher]
+O desenvolvimento ocorre em cinco sprints de duas semanas, totalizando dez semanas, com início em 05 de agosto de 2026 e término em 07 de outubro de 2026, conforme o cronograma estabelecido no TAPI, e conta com uma equipe de seis integrantes.
+
+Os custos de construção compõem-se de três elementos: o trabalho da equipe, que responde pela maior parcela; os serviços de nuvem consumidos durante o desenvolvimento, incluindo hospedagem, banco de dados, conversão de fala e chamadas a modelos; e as licenças e ferramentas de apoio ao design, à gestão do projeto e ao versionamento. A concentração no trabalho da equipe é coerente com a natureza do projeto, uma vez que o valor entregue reside na construção e na avaliação do pipeline de PLN, e não na aquisição de infraestrutura. Essa concentração reforça a decisão de manter o núcleo analítico sob domínio da equipe, pois a autonomia técnica resultante constitui, ela própria, parte do resultado entregue ao parceiro.
+
+É necessário distinguir dois regimes de custo, frequentemente tratados como um só. O custo de construção é fixo e delimitado no tempo, encerrando-se com a conclusão do módulo. O custo de operação, por sua vez, é majoritariamente variável, uma vez que a conversão de áudio em texto e as chamadas a modelos generativos são tarifadas por requisição, de modo que a despesa cresce com a adoção da solução. Um projeto que considere apenas o primeiro regime subestima o compromisso assumido pelo parceiro ao adotar a ferramenta.
+
+Cabe registrar, nesse ponto, um efeito favorável da arquitetura adotada. A classificação de intenções, que constitui o núcleo funcional do MVP e corresponde à operação de maior frequência, foi projetada para ser executada em modelos próprios, sem tarifação por requisição. Essa decisão mantém o custo marginal da funcionalidade mais utilizada próximo de zero e reserva o consumo de serviços tarifados às operações de menor frequência, como a transcrição de áudio e a geração de relatórios. Trata-se de um caso em que a escolha técnica adotada por razões de aprendizagem — construir o núcleo analítico em vez de consumi-lo como serviço — produz também um efeito econômico favorável à sustentação da solução pelo parceiro.
+
+A quantificação monetária desta estrutura não é apresentada nesta versão. Sua elaboração depende da definição, pelo grupo, dos valores de referência a serem adotados para hora de trabalho por função, e do levantamento do volume esperado de interações, que determina a parcela variável. Ambos serão estabelecidos na análise de viabilidade financeira prevista para a Sprint 4, ocasião em que o orçamento completo, contemplando despesas operacionais, carga tributária e margem, será desenvolvido.
 
 ## 2.9 Delimitação de Escopo: O que o Produto Faz e Não Faz
 
