@@ -1,303 +1,249 @@
-<Table>
+<p align="center">
+  <img src="imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
+</p>
+
+<table align="center" width="100%" style="table-layout: fixed;">
   <tr>
-    <td><a href= "https://www.metro.sp.gov.br/"><img src="img/logo-metrosp.png" alt="Metrô de São Paulo" border="0"></td>
-    <td>
-      <a href= "https://www.inteli.edu.br/"><img src="img/logo-Inteli.png" alt="Inteli - Instituto de Tecnologia e Liderança" border="0"></a>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/alexsander-dsbarbosa/">
+        <img src="imagens/alexsander.png" width="90" alt="Alexsander B.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/CaduQuaglia">
+        <img src="imagens/cadu.png" width="90" alt="Carlos Eduardo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/celsojwnior/">
+        <img src="imagens/celso.png" width="90" alt="Celso Rocha">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/eduardo-casarini/">
+        <img src="imagens/edu.png" width="90" alt="Eduardo C.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/marianalacerdareis/">
+        <img src="imagens/mariana.png" width="90" alt="Mariana Reis">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/mirela-bianchi-608601254/">
+        <img src="imagens/mirela.png" width="90" alt="Mirela Bianchi">
+      </a>
     </td>
   </tr>
 </table>
 
-# Nome do Projeto: <a definir>
+<br>
 
-## Nome do Grupo: <a definir>
+<p align="center">
+  <img src="imagens/professores.png" alt="Professores">
+</p>
 
-## Integrantes:
+<table align="center" width="100%" style="table-layout: fixed;">
+  <tr>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/vanunes/">
+        <img src="imagens/vanessa.png" width="100" alt="Vanessa Nunes">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/reginaldo-arakaki-9574222b/">
+        <img src="imagens/reginaldo.png" width="100" alt="Reginaldo A.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/bryan-kano/">
+        <img src="imagens/bryan.png" width="100" alt="Bryan Kano">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/fernando-pizzo-208b526a/">
+        <img src="imagens/pizzo.png" width="100" alt="Fernando Pizzo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/lisane-valdo/">
+        <img src="imagens/lisane.png" width="100" alt="Lisane Valdo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/bruno-grandchamp-rodilha/">
+        <img src="imagens/bruno.png" width="100" alt="Bruno Rodilha">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/filipe-gon%C3%A7alves-08a55015b/">
+        <img src="imagens/filipe.png" width="100" alt="Filipe Gonçalves">
+      </a>
+    </td>
+  </tr>
+</table>
 
-- <a href="">Nome</a>
-- <a href="">Nome</a>
-- <a href="">Nome</a>
-- <a href="">Nome</a>
-- <a href="">Nome</a>
-- <a href="">Nome</a>
-- <a href="">Nome</a>
+<br>
 
-# Sumário
+<p align="center">
+  <img src="imagens/bottom.png" alt="Elemento visual de encerramento do cabeçalho">
+</p>
+
+# Gestão de Configuração
+
+## Sumário
 
 - [1. Introdução](#1-introdução)
-  - [1.1 Objetivo do Documento](#11-objetivo-do-documento)
-- [2. Política de Branches](#2-política-de-branches)
-  - [2.1 Visão Geral do Gitflow](#21-visão-geral-do-gitflow)
-  - [2.2 Estrutura de Branches](#22-estrutura-de-branches)
-  - [2.3 Diretrizes de Uso das Branches](#23-diretrizes-de-uso-das-branches)
-- [3. Políticas de Commit](#3-políticas-de-commit)
-- [4. Política de Push e Pull Requests](#4-política-de-push-e-pull-requests)
-- [5. Tecnologias e Infraestrutura](#5-tecnologias-e-infraestrutura)
-  - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
-  - [5.2 Infraestrutura como Código](#52-infraestrutura-como-código)
-- [6. Gestão de Arquivos Sensíveis](#6-gestão-de-arquivos-sensíveis)
-- [7. Política de Rollback](#7-política-de-rollback)
-- [8. Contrato de Convivência, SLA e Rituais do Grupo](#8-contrato-de-convivência-sla-e-rituais-do-grupo)
-  - [8.1 Regra de Ouro](#81-regra-de-ouro)
-  - [8.2 Comunicação Oficial e Dailies](#82-comunicação-oficial-e-dailies)
-  - [8.3 Resolução de Impasses e Gestão de Conflitos](#83-resolução-de-impasses-e-gestão-de-conflitos)
-  - [8.4 SLA de Entregas](#84-sla-de-entregas)
-- [9. Registro de Variáveis de Ambiente](#9-registro-de-variáveis-de-ambiente)
+- [2. GitFlow e política de branches](#2-gitflow-e-política-de-branches)
+  - [2.1 Estrutura de branches](#21-estrutura-de-branches)
+  - [2.2 Criação de branches](#22-criação-de-branches)
+  - [2.3 Integração e revisão](#23-integração-e-revisão)
+  - [2.4 Exemplo prático](#24-exemplo-prático)
+- [3. Política de commits](#3-política-de-commits)
+- [4. Padrão de merge requests](#4-padrão-de-merge-requests)
 - [Referências](#referências)
 
-# 1. Introdução
+## 1. Introdução
 
-Este documento estabelece as políticas e práticas de gestão de configuração adotadas pelo grupo no desenvolvimento do Agente de IA para o Portfólio de Projetos do Metrô de São Paulo, projeto conduzido no Módulo 7 de Engenharia de Software do Inteli em parceria com o PMO Corporativo do Metrô (GPM).
+Este documento estabelece as práticas de versionamento e rastreabilidade adotadas no desenvolvimento do Agente de IA para Gestão do Portfólio de Projetos do Metrô de São Paulo. As diretrizes organizam o trabalho colaborativo da equipe e relacionam branches, commits e merge requests aos cards do projeto.
 
-O projeto tem como núcleo um pipeline de Processamento de Linguagem Natural construído e avaliado pela própria equipe, capaz de interpretar comandos em linguagem natural (texto e áudio), identificar intenções e responder a solicitações sobre os documentos do portfólio — sempre dentro de um catálogo aceitável de interações e respeitando as restrições de confidencialidade do Metrô. Por essa razão, a gestão de configuração aqui descrita não é apenas uma boa prática genérica de engenharia de software: ela sustenta diretamente três requisitos não-funcionais centrais do projeto — **confidencialidade** (nenhum dado sensível deve trafegar por serviços não homologados), **rastreabilidade** (toda consulta e ação deve poder ser auditada, com suporte ao não repúdio) e **precisão** (redução de erros humanos e de inconsistências no processo de desenvolvimento).
+## 2. GitFlow e política de branches
 
-As práticas descritas a seguir seguem padrões consolidados da indústria — Gitflow e Conventional Commits — adaptados à realidade do grupo e às exigências do módulo, incluindo os critérios avaliados pelo Dashboard Ágil do Inteli.
+O projeto adota um fluxo baseado em GitFlow, no qual o trabalho é desenvolvido em branches dedicadas e integrado por meio de merge requests. Os nomes devem utilizar letras minúsculas e palavras separadas por hífen.
 
-## 1.1 Objetivo do Documento
+### 2.1 Estrutura de branches
 
-Estabelecer diretrizes claras e de cumprimento obrigatório para o desenvolvimento do projeto, cobrindo desde o versionamento de código até os acordos de convivência e rotina do grupo, garantindo organização, qualidade, rastreabilidade e alinhamento entre todos os integrantes ao longo de todo o módulo.
+| Branch | Finalidade | Origem | Destino do merge |
+|---|---|---|---|
+| `main` | Versão estável destinada às entregas do projeto | — | — |
+| `develop` | Integração contínua do trabalho em desenvolvimento | `main` | `main`, nos marcos de entrega |
+| `feature/<nome>` | Desenvolvimento de funcionalidades | `develop` | `develop` |
+| `bugfix/<nome>` | Correção de defeitos identificados durante o desenvolvimento | `develop` | `develop` |
+| `release/<versão>` | Preparação e estabilização de uma entrega | `develop` | `main` e `develop` |
+| `hotfix/<nome>` | Correção urgente de uma versão estável | `main` | `main` e `develop` |
+| `docs/<nome>` | Criação ou atualização de documentação | `develop` | `develop` |
+| `design/<nome>` | Criação ou atualização de artefatos de design e modelagem | `develop` | `develop` |
+| `test/<nome>` | Criação ou atualização de testes | `develop` | `develop` |
 
-# 2. Política de Branches
+Exemplos: `feature/classificacao-intencoes`, `bugfix/corrige-parser-audio`, `release/v1.0.0`, `hotfix/corrige-consulta-status`, `docs/gestao-projeto`, `design/as-is-bpmn` e `test/classificacao-intencoes`.
 
-A política de branches organiza como o código do agente de IA é versionado ao longo do desenvolvimento. Essa organização é especialmente importante neste projeto porque o trabalho está dividido em duas frentes com maturidades e ritmos diferentes — o Pilar 1 (pipeline de PLN próprio, validado sobre dados sintéticos) e o Pilar 2 (integração com o ecossistema Microsoft) — e a estrutura de branches precisa permitir que essas frentes evoluam em paralelo sem comprometer a estabilidade do que já foi validado.
+### 2.2 Criação de branches
 
-## 2.1 Visão Geral do Gitflow
+Antes de iniciar uma tarefa, a pessoa responsável deve atualizar a branch de origem e criar uma branch dedicada ao card:
 
-Adotamos o Gitflow como modelo de ramificação do projeto. O Gitflow organiza o desenvolvimento em branches com propósitos bem definidos, separando claramente código estável de código em construção, e criando fluxos específicos para novas funcionalidades, correções e preparação de entregas.
-
-Para este projeto, o Gitflow contribui diretamente para:
-
-- **Isolamento de frentes de trabalho**: cada componente do pipeline de PLN (classificação de intenções, extração de informação, geração de respostas) e cada integração com o ecossistema Microsoft podem ser desenvolvidos em branches independentes, sem interferir no restante do sistema;
-- **Estabilidade**: a branch `main` sempre reflete uma versão validada e apresentável do agente;
-- **Colaboração paralela**: os integrantes podem trabalhar simultaneamente em diferentes cards do board sem gerar conflitos constantes;
-- **Rastreabilidade**: o histórico de branches evidencia quando e como cada funcionalidade foi construída, reforçando o requisito de não repúdio do projeto;
-- **Reversão segura**: em caso de regressão no pipeline (por exemplo, uma mudança que piora a classificação de intenções), o Gitflow facilita voltar a um estado estável anterior.
-
-## 2.2 Estrutura de Branches
-
-Padrão de nomenclatura das branches (letras minúsculas, palavras separadas por hífen):
-
-> **main**: contém o código pronto para demonstração/entrega, sempre estável.
-> **dev**: branch de integração contínua das funcionalidades em desenvolvimento.
-> **feature/[nome-da-feature]**: para o desenvolvimento de novas funcionalidades. Exemplo: `feature/classificacao-intencoes`.
-> **bugfix/[nome-do-bug]**: para correção de bugs identificados durante o desenvolvimento. Exemplo: `bugfix/corrige-parser-audio`.
-> **release/[versao]**: preparação para uma nova entrega/versão do agente. Exemplo: `release/v1.0.0`.
-> **hotfix/[nome-do-hotfix]**: correção urgente aplicada diretamente sobre a `main`. Exemplo: `hotfix/corrige-quebra-demo`.
-> **docs/[nome-do-docs]**: criação ou atualização de documentação do projeto (ex.: este próprio documento). Exemplo: `docs/atualiza-gestao-projeto`.
-
-## 2.3 Diretrizes de Uso das Branches
-
-- Toda nova funcionalidade deve ser desenvolvida em uma branch de feature criada a partir da `dev`.
-  - A nomeação das branches de feature deve seguir o padrão `feature/[nome-da-feature]`.
-- Todas as novas funcionalidades devem ser integradas à `dev` por meio de pull/merge requests — nunca por push direto.
-- Commits diretos na `main` são proibidos. O GitLab do grupo deve ter proteção de branch configurada para impedir push direto tanto em `main` quanto em `dev`.
-- Branches de hotfix devem ser criadas a partir da `main`, para corrigir problemas críticos identificados após uma entrega, e devem retornar tanto para `main` quanto para `dev` após aprovação.
-- Branches devem ser excluídas após o merge aprovado, para evitar acúmulo de branches obsoletas no repositório.
-
-# 3. Políticas de Commit
-
-O grupo adota o padrão **Conventional Commits** para manter um histórico de commits claro, estruturado e rastreável — requisito reforçado pela natureza do projeto, em que toda decisão de engenharia sobre o pipeline de PLN precisa poder ser reconstituída posteriormente. Esse padrão também facilita a automação de processos como geração de changelog e a avaliação do Dashboard Ágil do Inteli.
-
-**Formato**: `<tipo>(<escopo opcional>): <mensagem clara e descritiva no imperativo>`
-
-Os tipos utilizados no projeto são:
-
-> **feat**: uma nova funcionalidade para o usuário ou para o sistema (ex.: um novo tipo de intenção reconhecida pelo pipeline).
-> **fix**: correção de um bug (ex.: erro na extração de entidades de um comando de voz).
-> **docs**: mudanças em documentação (ex.: atualização deste documento ou do `GestaoConfiguracao.md`).
-> **style**: mudanças que não afetam o comportamento do código (formatação, espaçamento, etc.).
-> **refactor**: mudança de código que não corrige bug nem adiciona funcionalidade.
-> **test**: adição ou correção de testes automatizados.
-> **chore**: tarefas de build, configuração de ferramentas auxiliares ou manutenção geral.
-
-**Exemplos aplicados ao projeto:**
-
-```
-feat(pln): adiciona classificação de intenção "prazo-projeto"
-fix(audio): corrige falha na conversão de áudio para texto em comandos longos
-docs(gestao): documenta política de branches e rituais do grupo
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c docs/gestao-projeto
 ```
 
-**Proibido:**
+Para funcionalidades, correções, releases e hotfixes, deve-se utilizar o prefixo e a branch de origem indicados na tabela da seção 2.1.
 
-- Uso de emojis nas mensagens de commit.
-- Mensagens vagas como "melhorias", "ajustes" ou "update".
-- Commits grandes que misturam múltiplas mudanças sem relação entre si.
+### 2.3 Integração e revisão
 
-**Importante:**
+- Não são permitidos commits diretos em `main` ou `develop`.
+- Toda contribuição deve ser submetida por merge request no GitLab.
+- O merge request deve ser revisado por pelo menos uma pessoa diferente da autora.
+- A revisão deve confirmar que a mudança atende ao card, não introduz alterações fora do escopo e preserva a documentação ou o comportamento existente.
+- Verificações automatizadas disponíveis no repositório devem ser executadas antes do merge.
+- Após a aprovação, branches `feature`, `bugfix`, `docs`, `design` e `test` devem ser integradas à `develop`.
+- Branches já integradas devem ser excluídas do repositório remoto para evitar acúmulo de branches obsoletas.
 
-- Commits devem ser pequenos, frequentes (idealmente diários) e sempre referenciar o card do board correspondente ao final da mensagem (ex.: `Refs #34`), garantindo rastreabilidade entre o board e o histórico do Git.
+### 2.4 Exemplo prático
 
-# 4. Política de Push e Pull Requests
+Para documentar as User Stories do card #22, o fluxo utilizado é:
 
-**Políticas de Push:**
+1. atualizar a `develop`;
+2. criar `docs/user-stories` a partir dela;
+3. editar e revisar o `Projeto.md`;
+4. criar commits referenciando o card #22;
+5. enviar a branch ao GitLab;
+6. abrir um merge request de `docs/user-stories` para `develop`;
+7. solicitar revisão por pares;
+8. após a aprovação e o merge, excluir a branch remota.
 
-- É proibido fazer push diretamente para `main` ou `dev`.
-- Toda contribuição deve ser feita em uma branch dedicada e submetida por meio de merge request (MR).
+## 3. Política de commits
 
-**Regras de Push:**
+O grupo utiliza Conventional Commits para manter o histórico legível e rastreável.
 
-- Todo código deve passar por revisão por pares antes de ser mesclado.
-- O MR só deve ser aprovado se os testes automatizados forem bem-sucedidos e os critérios de qualidade (cobertura de testes, análise de código) forem atendidos.
+Formato:
 
-**Revisão por Pares — Critérios de Aprovação:**
-
-- O MR deve ser revisado por, no mínimo, uma pessoa que não seja a autora da mudança.
-- A revisão deve considerar:
-  - Se a mudança é funcional e resolve o problema proposto no card.
-  - Se passou em todos os testes automatizados.
-  - Cobertura mínima de testes de 60% ou mais.
-  - Aderência às boas práticas de código combinadas pelo grupo.
-  - Ausência de duplicidade de código.
-- Após a aprovação, a branch deve ser mesclada na `dev` e o MR pode ser fechado.
-- O Scrum Master da Sprint é responsável por subir os artefatos validados da `dev` para a `main` ao final de cada Sprint.
-
-**Template de Merge Request:**
-
+```text
+<tipo>(<escopo opcional>): <descrição objetiva> (#<card>)
 ```
-Título: <tipo>(<escopo>): <resumo claro da mudança>
 
+Tipos adotados:
+
+| Tipo | Uso |
+|---|---|
+| `feat` | Nova funcionalidade |
+| `fix` | Correção de defeito |
+| `docs` | Alteração de documentação |
+| `style` | Formatação sem mudança de comportamento |
+| `refactor` | Reorganização interna sem nova funcionalidade ou correção |
+| `test` | Adição ou correção de testes |
+| `chore` | Manutenção e configuração auxiliar |
+
+Exemplos:
+
+```text
+feat(pln): adiciona classificação de intenção (#40)
+fix(audio): corrige conversão de áudio para texto (#41)
+docs: adiciona user stories e critérios de aceitação (#22)
+```
+
+Não devem ser usadas mensagens vagas, como “ajustes”, “melhorias” ou “update”, nem commits que misturem mudanças sem relação entre si.
+
+## 4. Padrão de merge requests
+
+O título deve seguir a convenção de merge requests utilizada pelo grupo:
+
+```text
+TIPO | descrição objetiva da entrega (#issue)
+```
+
+O prefixo deve identificar a natureza da entrega, como `DOCS`, `DESIGN`, `FEAT`, `FIX` ou `TEST`, seguido de uma descrição objetiva e da issue relacionada. Essa convenção de título é específica dos merge requests e não substitui o padrão Conventional Commits utilizado nas mensagens de commit.
+
+Exemplos:
+
+```text
+DOCS | user stories dos requisitos funcionais (#22)
+DESIGN | fluxo AS-IS BPMN (#12)
+FEAT | classificação de intenções (#40)
+```
+
+Estrutura recomendada para a descrição:
+
+```markdown
 ## Descrição
-O que foi feito e por quê.
 
-## Cards relacionados
-Refs #<numero-do-card-1>, #<numero-do-card-2>, ...
+Resumo do que foi realizado e da motivação da alteração.
+
+## Issue relacionada
+
+Closes #22
 
 ## Como testar
-Passos para validar a mudança (quando aplicável).
+
+Passos para revisar ou validar a mudança.
+
+## Evidências
+
+Capturas de tela, resultados de testes ou caminhos dos arquivos alterados, quando aplicável.
 
 ## Checklist
-- [ ] Pipeline de CI passou (lint/testes)
-- [ ] Documentação atualizada, se necessário
-- [ ] DoD do(s) card(s) atendido
+
+- [ ] Lint/CI do repositório passou, quando aplicável
+- [ ] DoD dos cards relacionados foi atendido
+- [ ] Alterações revisadas
+- [ ] Sem conflitos com a branch de destino
+- [ ] Board atualizado após o merge
 ```
 
-# 5. Tecnologias e Infraestrutura
+Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a atividade e puder fechar a issue automaticamente. Quando o merge apenas contribuir para uma atividade que continuará aberta, deve-se utilizar `Refs #<issue>`.
 
-## 5.1 Visão inicial: tecnologias e ferramentas
+## Referências
 
-Esta seção apresenta uma estimativa inicial das tecnologias e ferramentas que o grupo pretende utilizar na construção da solução, considerando a arquitetura em dois pilares definida para o projeto. Trata-se de uma visão preliminar, sujeita a ajustes ao longo do desenvolvimento conforme validações técnicas e restrições impostas pelo Metrô.
-
-#### 5.1.1. Tecnologias do Pilar 1 — PLN Próprio da Equipe
-
-Responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
-
-- **Linguagem de programação**: Python, pela ampla disponibilidade de bibliotecas voltadas a PLN e facilidade de integração com APIs de LLM.
-- **Bibliotecas de NLP**: spaCy e/ou NLTK, para tarefas de pré-processamento textual, tokenização, classificação de intenções e extração de entidades.
-- **API de LLM**: modelo de linguagem via API (ex.: OpenAI ou Azure OpenAI), utilizado para tarefas de compreensão e geração de linguagem natural mais complexas, respeitando a restrição de que nenhum dado sensível real seja enviado a serviços externos não homologados — reforçando o uso de dados sintéticos no MVP.
-
-#### 5.1.2. Tecnologias do Pilar 2 — Integração com Ecossistema Microsoft
-
-Responsável por conectar o agente à infraestrutura corporativa já adotada pelo Metrô, garantindo aderência aos sistemas existentes.
-
-- **Copilot Studio**: construção e orquestração do agente conversacional dentro do ecossistema Microsoft.
-- **Power Platform**: integração com fluxos de automação (Power Automate) e possível consumo/exposição de dados via Power Apps/Power BI, conforme necessidade identificada ao longo do projeto.
-
-#### 5.1.3. Ferramentas de Apoio ao Desenvolvimento
-
-- **Controle de versão**: Git/GitLab, para versionamento do código e colaboração entre os integrantes do grupo.
-- **Ambiente de desenvolvimento**: ambiente Python (ex.: Jupyter Notebook ou IDE como VS Code) para prototipagem e testes do Pilar 1.
-- **Documentação e gestão do projeto**: ferramentas colaborativas (ex.: GitLab) para organização de entregas e alinhamento entre a equipe e o parceiro.
-
-#### 5.1.4. Listagem Organizada dos Recursos
-
-| Categoria | Tecnologia/Ferramenta | Finalidade |
-|---|---|---|
-| Linguagem | Python | Desenvolvimento do Pilar 1 (PLN próprio) |
-| Biblioteca de NLP | spaCy / NLTK | Pré-processamento, tokenização e classificação de intenções |
-| API de LLM | OpenAI / Azure OpenAI | Compreensão e geração de linguagem natural |
-| Plataforma low-code | Copilot Studio | Construção do agente conversacional (Pilar 2) |
-| Automação | Power Platform (Power Automate) | Integração com sistemas corporativos do Metrô |
-| Versionamento | Git/GitLab | Controle de versão e colaboração |
-| Ambiente de desenvolvimento | VS Code / Jupyter Notebook | Prototipagem e testes |
-| Gestão e documentação | GitLab | Organização de entregas e alinhamento da equipe |
-
-> **Observação**: esta listagem representa uma visão inicial e poderá ser refinada conforme o projeto evolua, especialmente à medida que forem definidos com mais precisão os requisitos de integração com os sistemas homologados do Metrô.
-
-## 5.2 Infraestrutura como Código
-
-- Uso obrigatório de Docker para padronizar os ambientes de desenvolvimento do Pilar 1, garantindo que o pipeline de PLN rode de forma idêntica na máquina de qualquer integrante.
-- Devem constar na raiz do repositório:
-  - `Dockerfile`(s) para build do serviço de PLN e de eventuais APIs auxiliares.
-  - `.dockerignore` para excluir arquivos desnecessários do contexto de build (ex.: modelos de NLP baixados localmente, notebooks de rascunho).
-  - `docker-compose.yml` para orquestrar os serviços localmente com um único comando.
-- Cada serviço deve ter seu próprio `Dockerfile` customizável, se necessário (por exemplo, um serviço para o pipeline de PLN e outro para uma eventual API de exposição de resultados).
-- O Docker Compose deve permitir subir toda a stack local do MVP com `docker-compose up`, incluindo as dependências necessárias para rodar o pipeline sobre os dados sintéticos.
-
-# 6. Gestão de Arquivos Sensíveis
-
-- É obrigatório o uso de um `.gitignore` bem configurado para bloquear:
-  - Arquivos contendo senhas, chaves de API (incluindo chaves de LLM) ou outras informações sensíveis.
-  - Arquivos de configuração individuais (ex.: `.env`, configs locais de cada integrante).
-- As diferenças entre arquivos de configuração locais, de desenvolvimento e de teste (ex.: `.env.local`, `.env.dev`, `.env.test`) devem estar documentadas no repositório.
-- Nunca commitar dados sensíveis ou credenciais diretamente no repositório — e, dado o contexto do projeto, nunca commitar dados reais do Metrô: todo o desenvolvimento e todos os testes devem usar exclusivamente dados sintéticos/anonimizados, em conformidade com as restrições de confidencialidade estabelecidas pelo parceiro.
-
-# 7. Política de Rollback
-
-- O processo básico de rollback de uma versão defeituosa do agente deve estar documentado no repositório (ex.: `docs/rollback.md`).
-- Passos mínimos recomendados:
-  - Identificar rapidamente a versão estável anterior (tag/release/commit) na `main`.
-  - Criar uma branch a partir da tag da versão a ser restaurada, ou selecioná-la diretamente.
-  - Realizar o deploy/demonstração dessa versão, conforme o procedimento combinado pelo time.
-  - Comunicar o grupo e, quando aplicável, o professor orientador sobre a reversão e o motivo.
-- Esses procedimentos devem permanecer registrados no repositório para consulta futura.
-
-# 8. Contrato de Convivência, SLA e Rituais do Grupo
-
-Esta seção documenta os acordos operacionais construídos coletivamente pelo grupo para reger a convivência, a comunicação e a rotina de trabalho ao longo de todo o módulo, complementando as políticas técnicas descritas nas seções anteriores.
-
-## 8.1 Regra de Ouro
-
-Tratar o board e o repositório como a fonte oficial da verdade do projeto: nenhum trabalho é considerado concluído até que esteja refletido no card correspondente e, quando aplicável, em um commit ou MR rastreável. Combinados feitos fora desses canais (em conversa informal, por exemplo) devem ser registrados assim que possível para não se perderem.
-
-## 8.2 Comunicação Oficial e Dailies
-
-- O canal oficial de comunicação do grupo é o [a definir — ex.: grupo de WhatsApp/Slack do time], usado para avisos, dúvidas e sinalização de impedimentos.
-- Dailies ocorrem em horário fixo combinado pelo grupo, com formato objetivo: o que foi feito, impedimentos e o que será feito a seguir.
-- Quem não puder comparecer deve enviar sua atualização pelo canal oficial antes ou durante o horário da daily.
-- Sempre que um MR for aberto, o autor deve avisar no canal oficial para agilizar a revisão.
-
-## 8.3 Resolução de Impasses e Gestão de Conflitos
-
-- Divergências técnicas devem ser primeiro discutidas entre as partes envolvidas, buscando uma solução por consenso.
-- Caso não haja consenso, o impasse é levado ao grupo como um todo na daily seguinte ou em uma reunião pontual.
-- Se ainda assim não houver acordo, o Scrum Master da Sprint tem a palavra final para destravar a decisão e permitir que o trabalho avance.
-- Conflitos interpessoais devem ser tratados com respeito e, se necessário, mediados por outro integrante do grupo antes de serem escalados ao professor orientador.
-
-## 8.4 SLA de Entregas
-
-- O grupo padronizou suas entregas internas (cards, MRs e artefatos de documentação) para o prazo fixo de **quinta-feira às 23h59**, independentemente do prazo formal de cada Sprint. Esse acordo dá previsibilidade à revisão por pares e evita concentração de entregas em cima da hora da avaliação.
-- Cards que não puderem ser concluídos até esse horário devem ser sinalizados no board e comunicados ao grupo com antecedência, para replanejamento.
-
-# 9. Registro de Variáveis de Ambiente
-
-- É obrigatório manter um arquivo `.env.example` documentando todas as variáveis de ambiente exigidas pela aplicação.
-- O arquivo deve listar todas as chaves (sem valores reais/sensíveis) com uma breve explicação de cada variável.
-- Todos os integrantes devem usar esse exemplo como base para criar seus próprios arquivos `.env` locais.
-
-Exemplo:
-
-```
-LLM_API_KEY=            # Chave da API de LLM utilizada no Pilar 1 (NUNCA commitar valor real)
-LLM_PROVIDER=            # Provedor do modelo de linguagem (ex.: openai, azure-openai)
-COPILOT_STUDIO_ENV_ID=   # Identificador do ambiente do Copilot Studio usado no Pilar 2
-POWER_AUTOMATE_FLOW_URL= # URL do fluxo do Power Automate consumido/exposto pela integração
-LOG_LEVEL=info            # Nível padrão de logs (info, warn, error)
-```
-
-# Referências
-
-- Conventional Commits: https://www.conventionalcommits.org/en/v1.0.0/
-- GitFlow: https://nvie.com/posts/a-successful-git-branching-model/
-- Gitihub/iuricode: https://github.com/iuricode/padroes-de-commits
-- Docker (documentação oficial): https://docs.docker.com/
-- Best Practices for Writing Dockerfiles: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
-- Docker Compose (documentação oficial): https://docs.docker.com/compose/
-- .dockerignore Reference: https://docs.docker.com/engine/reference/builder/#dockerignore-file
-- .gitignore (documentação oficial): https://git-scm.com/docs/gitignore
-- gitignore.io (gerador de .gitignore para diferentes stacks): https://www.toptal.com/developers/gitignore/
-- Handling secrets in Git repos (GitHub Guide): https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-and-storing-encrypted-secrets
-- Best Practices for Rollbacks (Atlassian): https://www.atlassian.com/continuous-delivery/principles/rollback-strategies
-- How to Use Git Revert and Git Reset: https://www.git-tower.com/learn/git/faq/git-reset-vs-revert/
-- 12 Factor App: Config: https://12factor.net/config
-- Dotenv (Exemplo e uso de arquivos .env): https://github.com/motdotla/dotenv#usage
-- Copilot Studio - Documentação oficial: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
+- [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+- [A successful Git branching model](https://nvie.com/posts/a-successful-git-branching-model/)
+- [Documentação do GitLab sobre merge requests](https://docs.gitlab.com/user/project/merge_requests/)
