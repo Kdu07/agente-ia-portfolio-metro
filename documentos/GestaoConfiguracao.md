@@ -94,24 +94,35 @@
 ## Sumário
 
 - [1. Introdução](#1-introdução)
-- [2. GitFlow e política de branches](#2-gitflow-e-política-de-branches)
-  - [2.1 Estrutura de branches](#21-estrutura-de-branches)
-  - [2.2 Criação de branches](#22-criação-de-branches)
-  - [2.3 Integração e revisão](#23-integração-e-revisão)
+  - [1.1 Objetivo do documento](#11-objetivo-do-documento)
+- [2. Política de branches](#2-política-de-branches)
+  - [2.1 Visão geral do GitFlow](#21-visão-geral-do-gitflow)
+  - [2.2 Estrutura de branches](#22-estrutura-de-branches)
+  - [2.3 Diretrizes de uso das branches](#23-diretrizes-de-uso-das-branches)
   - [2.4 Exemplo prático](#24-exemplo-prático)
-- [3. Política de commits](#3-política-de-commits)
-- [4. Padrão de merge requests](#4-padrão-de-merge-requests)
+- [3. Políticas de commit](#3-políticas-de-commit)
+- [4. Política de push e Merge Requests](#4-política-de-push-e-merge-requests)
+- [5. Infraestrutura como código](#5-infraestrutura-como-código)
+- [6. Gestão de arquivos sensíveis](#6-gestão-de-arquivos-sensíveis)
+- [7. Política de rollback](#7-política-de-rollback)
+- [8. Registro de variáveis de ambiente](#8-registro-de-variáveis-de-ambiente)
 - [Referências](#referências)
 
 ## 1. Introdução
 
 Este documento estabelece as práticas de versionamento e rastreabilidade adotadas no desenvolvimento do Agente de IA para Gestão do Portfólio de Projetos do Metrô de São Paulo. As diretrizes organizam o trabalho colaborativo da equipe e relacionam branches, commits e merge requests aos cards do projeto.
 
-## 2. GitFlow e política de branches
+### 1.1 Objetivo do documento
+
+O objetivo deste documento é registrar as políticas utilizadas para controlar, versionar, revisar e recuperar os artefatos do projeto, oferecendo uma referência comum para as contribuições realizadas no repositório.
+
+## 2. Política de branches
+
+### 2.1 Visão geral do GitFlow
 
 O projeto adota um fluxo baseado em GitFlow, no qual o trabalho é desenvolvido em branches dedicadas e integrado por meio de merge requests. Os nomes devem utilizar letras minúsculas e palavras separadas por hífen.
 
-### 2.1 Estrutura de branches
+### 2.2 Estrutura de branches
 
 | Branch | Finalidade | Origem | Destino do merge |
 |---|---|---|---|
@@ -127,7 +138,9 @@ O projeto adota um fluxo baseado em GitFlow, no qual o trabalho é desenvolvido 
 
 Exemplos: `feature/classificacao-intencoes`, `bugfix/corrige-parser-audio`, `release/v1.0.0`, `hotfix/corrige-consulta-status`, `docs/gestao-projeto`, `design/as-is-bpmn` e `test/classificacao-intencoes`.
 
-### 2.2 Criação de branches
+### 2.3 Diretrizes de uso das branches
+
+#### Criação de branches
 
 Antes de iniciar uma tarefa, a pessoa responsável deve atualizar a branch de origem e criar uma branch dedicada ao card:
 
@@ -139,7 +152,7 @@ git switch -c docs/gestao-projeto
 
 Para funcionalidades, correções, releases e hotfixes, deve-se utilizar o prefixo e a branch de origem indicados na tabela da seção 2.1.
 
-### 2.3 Integração e revisão
+#### Integração e revisão
 
 - Não são permitidos commits diretos em `main` ou `develop`.
 - Toda contribuição deve ser submetida por merge request no GitLab.
@@ -162,7 +175,7 @@ Para documentar as User Stories do card #22, o fluxo utilizado é:
 7. solicitar revisão por pares;
 8. após a aprovação e o merge, excluir a branch remota.
 
-## 3. Política de commits
+## 3. Políticas de commit
 
 O grupo utiliza Conventional Commits para manter o histórico legível e rastreável.
 
@@ -194,7 +207,11 @@ docs: adiciona user stories e critérios de aceitação (#22)
 
 Não devem ser usadas mensagens vagas, como “ajustes”, “melhorias” ou “update”, nem commits que misturem mudanças sem relação entre si.
 
-## 4. Padrão de merge requests
+## 4. Política de push e Merge Requests
+
+As alterações locais devem ser sincronizadas com a branch remota correspondente e submetidas à `develop` por Merge Request. O envio direto de alterações para `main` ou `develop` não faz parte do fluxo regular do grupo. Antes do push, a pessoa autora deve conferir os arquivos incluídos, a coerência do commit e a referência à issue.
+
+### 4.1 Padrão de Merge Requests
 
 O título deve seguir a convenção de merge requests utilizada pelo grupo:
 
@@ -241,6 +258,22 @@ Capturas de tela, resultados de testes ou caminhos dos arquivos alterados, quand
 ```
 
 Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a atividade e puder fechar a issue automaticamente. Quando o merge apenas contribuir para uma atividade que continuará aberta, deve-se utilizar `Refs #<issue>`.
+
+## 5. Infraestrutura como código
+
+O projeto ainda não definiu artefatos de infraestrutura como código. Caso essa estratégia seja adotada nas próximas sprints, os arquivos, ferramentas, ambientes contemplados e procedimentos de validação deverão ser registrados nesta seção.
+
+## 6. Gestão de arquivos sensíveis
+
+Dados sensíveis do Metrô não devem ser adicionados ao repositório. O MVP utiliza somente dados sintéticos ou anonimizados, e credenciais, tokens, chaves e segredos devem permanecer fora do controle de versão. Arquivos locais que possam conter essas informações devem ser incluídos no `.gitignore` quando passarem a existir.
+
+## 7. Política de rollback
+
+O procedimento de rollback será detalhado quando o projeto possuir versões executáveis e processo de implantação definido. Até essa etapa, correções em artefatos versionados devem ocorrer por novos commits ou Merge Requests rastreáveis, sem reescrever o histórico compartilhado.
+
+## 8. Registro de variáveis de ambiente
+
+As variáveis de ambiente ainda dependem das decisões técnicas das próximas sprints. Quando forem definidas, deverão ser documentadas apenas pelo nome e pela finalidade, utilizando arquivos de exemplo sem valores sensíveis. Valores reais não devem ser registrados no repositório.
 
 ## Referências
 
