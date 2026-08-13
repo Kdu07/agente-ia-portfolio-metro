@@ -5,7 +5,7 @@
 <table align="center" width="100%" style="table-layout: fixed;">
   <tr>
     <td align="center"><a href="https://www.linkedin.com/in/alexsander-dsbarbosa/"><img src="imagens/alexsander.png" width="90" alt="Alexsander B."></a></td>
-    <td align="center"><a href="https://github.com/CaduQuaglia"><img src="imagens/cadu.png" width="90" alt="Carlos Eduardo"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/carlos-quaglia-309088357/"><img src="imagens/cadu.png" width="90" alt="Carlos Eduardo"></a></td>
     <td align="center"><a href="https://www.linkedin.com/in/celsojwnior/"><img src="imagens/celso.png" width="90" alt="Celso Rocha"></a></td>
     <td align="center"><a href="https://www.linkedin.com/in/eduardo-casarini/"><img src="imagens/edu.png" width="90" alt="Eduardo C."></a></td>
     <td align="center"><a href="https://www.linkedin.com/in/marianalacerdareis/"><img src="imagens/mariana.png" width="90" alt="Mariana Reis"></a></td>
@@ -797,6 +797,37 @@ Essa combinação assegura que a transformação proposta não exija a substitui
 ### 3.1.4. Restrições de Negócio Relevantes
 
 Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
+
+### 3.1.5. Indicadores Computacionais do Pipeline de PLN
+
+Os direcionadores acima exigem que o desempenho do agente seja medido de forma objetiva. Os indicadores a seguir traduzem esses direcionadores em métricas verificáveis. Em especial o objetivo **O5** (acurácia mínima de 85% na classificação de intenções) e o **RNF03**.
+
+#### 3.1.5.1. Indicadores de classificação de intenções
+
+Os indicadores derivam da comparação entre a intenção prevista e a intenção verdadeira de cada solicitação, resumida na **matriz de confusão**: verdadeiros positivos (VP), falsos positivos (FP) e falsos negativos (FN) por intenção.
+
+| Indicador | Fórmula | O que mede e por que importa |
+|---|---|---|
+| **Acurácia** | `acertos / total avaliado` | Proporção de acertos no geral. É a métrica pactuada no objetivo **O5** (≥ 85%), mas mascara o desempenho nas intenções menos frequentes. |
+| **Precisão** | `VP / (VP + FP)` | Quando o agente atribui uma intenção, com que frequência acerta. Crítica nas **transações**, em que o erro altera dado de projeto indevidamente (RF05), e na guarda de confidencialidade (RNF01). |
+| **Recall** | `VP / (VP + FN)` | Quantas solicitações legítimas o agente reconhece. Crítica nas **consultas**: recall baixo gera recusas indevidas e devolve o usuário ao processo manual. |
+| **F1-score** | `2 × (Precisão × Recall) / (Precisão + Recall)` | Equilíbrio entre precisão e recall. Principal métrica de comparação entre versões do classificador. |
+
+Precisão, recall e F1 serão reportados por intenção e em macro-média, para evidenciar as categorias menos frequentes.
+
+#### 3.1.5.2. Indicadores de conversão entre voz e texto
+
+O canal de voz é um incremento no MVP, mas precisa ser medido: conforme o risco **R03**, um erro de transcrição em uma sigla ou código de projeto propaga-se como erro de intenção.
+
+| Indicador | Fórmula / método | O que mede e por que importa |
+|---|---|---|
+| **WER** (*Word Error Rate*) | `(S + D + I) / N` — substituições, deleções e inserções sobre o total de palavras da referência | Erro por palavra na conversão áudio → texto. Métrica padrão para comparar serviços de reconhecimento de fala. |
+| **Acurácia de termos de domínio** | `termos do glossário transcritos corretamente / total de ocorrências` | Acerto no jargão do Metrô (siglas e códigos). Um WER global aceitável pode esconder falha justamente nos termos que carregam a informação (R03). |
+| **Degradação ponta a ponta** | `acurácia de intenção por voz − acurácia de intenção por texto` | Quanto da classificação se perde ao entrar por voz. Define se o canal está pronto para demonstração. |
+| **Inteligibilidade da síntese** | *Round-trip WER*: sintetizar a resposta, transcrevê-la de volta e comparar com o texto original | Qualidade da conversão texto → áudio. Proxy objetivo, que dispensa avaliação humana. |
+| **Latência** | Tempo de transcrição e tempo até o início da resposta falada | Tempo percebido no canal de voz. Uma transcrição correta e lenta anula o ganho de usar voz. |
+
+**Metas iniciais.** Além da acurácia ≥ 85% (O5): macro-F1 ≥ 0,80, recall ≥ 0,90 na classe fora do escopo e precisão ≥ 0,90 nas transações. Para o canal de voz, as metas são preliminares — WER ≤ 15%, acurácia de termos de domínio ≥ 90% e degradação ponta a ponta ≤ 10 pontos percentuais — e serão revisadas quando o serviço de fala for definido.
 
 ## 3.2 Requisitos Funcionais (RFs)
 
@@ -1828,3 +1859,5 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 - MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
 - MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
 - DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot
+- JURAFSKY, D.; MARTIN, J. H. *Speech and Language Processing*. 3. ed. (rascunho). Cap. 4 (avaliação de classificadores: precisão, recall e F1) e Cap. 16 (reconhecimento automático de fala e *Word Error Rate*). Disponível em: https://web.stanford.edu/~jurafsky/slp3/
+- SCIKIT-LEARN. *Metrics and scoring: quantifying the quality of predictions*. Disponível em: https://scikit-learn.org/stable/modules/model_evaluation.html
