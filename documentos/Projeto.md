@@ -1175,7 +1175,60 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 ## 5.2 Diagrama de Componentes da UML
 
-[Preencher]
+## 5.2 Diagrama de Componentes UML
+
+Um Diagrama de Componentes UML é uma representação visual que descreve a organização dos principais módulos de um sistema de software, suas responsabilidades e as interfaces por meio das quais se comunicam. Esse tipo de diagrama permite visualizar, de forma modular, como cada parte do sistema interage com as demais, garantindo organização, coesão e clareza arquitetural, e servindo como referência para o desenvolvimento, integração e implantação da solução.
+
+O diagrama a seguir foi construído com base nos Business Drivers e nos Requisitos Funcionais e Não Funcionais elicitados anteriormente. A arquitetura reflete os dois pilares do projeto: o **Pilar 1**, composto pelo pipeline de PLN desenvolvido pela própria equipe, e o **Pilar 2**, composto pelo ecossistema Microsoft do Metrô (Copilot Studio / Power Platform).
+
+<div align="center">
+  <img src="../assets/diagrama_componentes.png" width="80%" alt="Diagrama de Componentes UML">
+  <br>
+  <sub>Figura X — Diagrama de Componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
+</div>
+
+---
+
+### Descrição dos Componentes
+
+| Componente | Tipo | Função no Sistema |
+|---|---|---|
+| Interface do Usuário (Canal de Entrada) | Interface Humano-Computador | Recebe comandos do usuário em texto digitado ou áudio. Realiza a conversão de áudio em texto (STT) e normaliza a mensagem antes de repassá-la ao pipeline de PLN. |
+| Módulo de PLN (Pré-processamento) | Processamento Computacional | Executa as etapas de tokenização, normalização e vetorização (embeddings) sobre a mensagem recebida, produzindo a representação semântica necessária para a classificação de intenções. |
+| Classificador de Intenções (+ Controle de Confidencialidade) | Processamento Computacional | Identifica a intenção do usuário (consulta, transação ou alerta) e verifica se a solicitação pertence ao catálogo de interações permitidas e se os dados envolvidos são sensíveis. Solicitações autorizadas seguem para o Pilar 2; solicitações bloqueadas retornam diretamente ao Módulo de Resposta. |
+| Módulo de Resposta (Formatação e Entrega) | Processamento Computacional | Recebe o resultado processado — seja uma resposta consolidada vinda do Pilar 2 ou uma notificação de bloqueio — e o formata em linguagem natural para entrega ao usuário. |
+| Conector Microsoft (Copilot Studio / Power Platform) | Serviço de Orquestração | Atua como camada de orquestração e integração do Pilar 2. Recebe a intenção autorizada, consulta o repositório de documentos e consolida a resposta a ser entregue ao Módulo de Resposta. |
+| Repositório de Documentos (SharePoint / Dados Sintéticos) | Armazenamento de Dados | Fonte de dados do portfólio de projetos do Metrô. No MVP, contém dados sintéticos gerados para validação. Na evolução prevista, integra-se ao portfólio real do Metrô via SharePoint. |
+
+> Fonte: Material produzido pelos autores (2026).
+
+---
+
+### Interfaces e Relacionamentos entre Componentes
+
+**Usuário → Interface do Usuário**  
+O usuário PMO interage com o sistema por meio de texto digitado ou voz. A Interface do Usuário normaliza essa entrada — incluindo a conversão de áudio em texto (STT) — e a repassa ao pipeline de PLN.
+
+**Interface do Usuário → Módulo de PLN**  
+A mensagem normalizada é enviada ao Módulo de PLN, que executa tokenização, limpeza e vetorização, produzindo a representação semântica (tokens e embeddings) necessária para a etapa de classificação.
+
+**Módulo de PLN → Classificador de Intenções**  
+Os tokens e embeddings gerados são repassados ao Classificador de Intenções, que identifica a intenção da solicitação e verifica sua conformidade com o catálogo de interações permitidas e com as restrições de confidencialidade do sistema.
+
+**Classificador de Intenções → Conector Microsoft** *(caminho autorizado)*  
+Quando a intenção é identificada e os dados não são sensíveis, a solicitação segue para o Pilar 2 via Conector Microsoft (Copilot Studio / Power Platform).
+
+**Classificador de Intenções → Módulo de Resposta** *(caminho bloqueado)*  
+Quando a solicitação envolve dado sensível ou está fora do catálogo permitido, o Classificador bloqueia o fluxo internamente e repassa uma notificação de bloqueio diretamente ao Módulo de Resposta, sem que nenhum dado chegue ao Pilar 2.
+
+**Conector Microsoft ↔ Repositório de Documentos**  
+O Conector Microsoft consulta o Repositório de Documentos para recuperar as informações do portfólio relevantes à solicitação e consolida o resultado.
+
+**Conector Microsoft → Módulo de Resposta**  
+O resultado consolidado pelo Pilar 2 é enviado ao Módulo de Resposta para formatação final.
+
+**Módulo de Resposta → Usuário**  
+O Módulo de Resposta entrega a resposta final ao usuário em linguagem natural — seja um resultado do portfólio ou uma notificação de bloqueio com orientação sobre como prosseguir.
 
 ## 5.3 Diagramas de Sequência da UML
 
