@@ -1,30 +1,43 @@
-<table>
+<p align="center">
+  <img src="imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
+</p>
+
+<table align="center" width="100%" style="table-layout: fixed;">
   <tr>
-    <td>
-      <a href="https://www.btgpactual.com/">
-        <img src="img/logo-btg.png" alt="BTG Pactual" border="0">
-      </a>
-    </td>
-    <td>
-      <a href="https://www.inteli.edu.br/">
-        <img src="img/logo-Inteli.png" alt="Inteli - Instituto de Tecnologia e Liderança" border="0">
-      </a>
-    </td>
+    <td align="center"><a href="https://www.linkedin.com/in/alexsander-dsbarbosa/"><img src="imagens/alexsander.png" width="90" alt="Alexsander B."></a></td>
+    <td align="center"><a href="https://github.com/CaduQuaglia"><img src="imagens/cadu.png" width="90" alt="Carlos Eduardo"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/celsojwnior/"><img src="imagens/celso.png" width="90" alt="Celso Rocha"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/eduardo-casarini/"><img src="imagens/edu.png" width="90" alt="Eduardo C."></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/marianalacerdareis/"><img src="imagens/mariana.png" width="90" alt="Mariana Reis"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/mirela-bianchi-608601254/"><img src="imagens/mirela.png" width="90" alt="Mirela Bianchi"></a></td>
   </tr>
 </table>
 
-# Nome do Projeto: <nome do projeto>
+<br>
 
-## Nome do Grupo: <nome do grupo>
+<p align="center">
+  <img src="imagens/professores.png" alt="Professores">
+</p>
 
-## Integrantes:
+<table align="center" width="100%" style="table-layout: fixed;">
+  <tr>
+    <td align="center"><a href="https://www.linkedin.com/in/vanunes/"><img src="imagens/vanessa.png" width="100" alt="Vanessa Nunes"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/reginaldo-arakaki-9574222b/"><img src="imagens/reginaldo.png" width="100" alt="Reginaldo A."></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/bryan-kano/"><img src="imagens/bryan.png" width="100" alt="Bryan Kano"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/fernando-pizzo-208b526a/"><img src="imagens/pizzo.png" width="100" alt="Fernando Pizzo"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/lisane-valdo/"><img src="imagens/lisane.png" width="100" alt="Lisane Valdo"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/bruno-grandchamp-rodilha/"><img src="imagens/bruno.png" width="100" alt="Bruno Rodilha"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/filipe-gon%C3%A7alves-08a55015b/"><img src="imagens/filipe.png" width="100" alt="Filipe Gonçalves"></a></td>
+  </tr>
+</table>
 
-- [Nome do integrante 1]
-- [Nome do integrante 2]
-- [Nome do integrante 3]
-- [Nome do integrante 4]
-- [Nome do integrante 5]
-- [Nome do integrante 6]
+<br>
+
+<p align="center">
+  <img src="imagens/bottom.png" alt="Elemento visual de encerramento do cabeçalho">
+</p>
+
+# Agente de IA para Gestão do Portfólio de Projetos do Metrô
 
 # Sumário
 
@@ -51,7 +64,11 @@
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
 - [5. Solução Técnica](#5-solução-técnica)
 - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
-- [5.5 Visão preliminar da arquitetura em blocos conectados](#55-visão-preliminar-da-arquitetura-em-blocos-conectados)
+- [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
+- [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
+- [5.4 Linguagens e Tecnologias Utilizadas](#54-linguagens-e-tecnologias-utilizadas)
+- [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
+- [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
 - [7. Projeto Visual da Solução](#7-projeto-visual-da-solução)
 - [8. Desenvolvimento do Projeto](#8-desenvolvimento-do-projeto)
@@ -61,7 +78,9 @@
 
 # 1. Introdução
 
-[Descreva o contexto geral do projeto, o objetivo deste documento e o escopo da documentação.]
+Este documento apresenta o projeto do Módulo 7 de Engenharia de Software do Inteli, desenvolvido em parceria com o Metrô de São Paulo. O projeto propõe um agente de Inteligência Artificial aplicado à gestão do portfólio de projetos, com Processamento de Linguagem Natural (PLN) para permitir interações por texto e, dentro do escopo previsto, por voz.
+
+Em seu escopo macro, a solução busca interpretar e classificar intenções, consultar e analisar informações dos projetos, apoiar atualizações, identificar pendências e produzir informações gerenciais conforme o perfil e as permissões do usuário. O MVP utiliza dados sintéticos ou anonimizados e não contempla a substituição das ferramentas corporativas, a tomada autônoma de decisões nem o processamento de dados sensíveis fora dos ambientes homologados pelo Metrô.
 
 ## 1.1 Termos e Abreviações
 
@@ -71,12 +90,20 @@
 |---|---|
 | RF | Requisito Funcional |
 | RNF | Requisito Não Funcional |
-| API | Application Programming Interface |
-| MVP | Minimum Viable Product |
+| API | *Application Programming Interface* |
+| MVP | *Minimum Viable Product* |
+| PLN | Processamento de Linguagem Natural |
+| DLP | *Data Loss Prevention* — políticas do Power Platform que restringem a combinação de conectores em um ambiente |
+| SSO | *Single Sign-On* |
+| Conector | Componente do Power Platform que expõe operações de um serviço a fluxos e agentes |
+| Conector personalizado | Conector criado pela equipe a partir de uma especificação OpenAPI para expor uma API própria |
+| Entra ID | Serviço de identidade da Microsoft (antigo Azure Active Directory) |
+| Graph API | Interface unificada de acesso a dados do Microsoft 365 |
+| *Tenant* | Instância corporativa do Microsoft 365 / Entra ID da organização |
 
 ## 1.2 Objetivo do Documento
 
-[Descreva os objetivos principais deste documento, como alinhamento do time, registro de decisões e apoio à validação do projeto.]
+Este documento tem como objetivo consolidar o entendimento do problema, a visão e o escopo do produto, os requisitos, as modelagens e as decisões técnicas do projeto. Ele serve como referência para o alinhamento da equipe, a validação com o parceiro e o acompanhamento da evolução da solução ao longo das sprints.
 
 # 2. Entendimento do Projeto e do Negócio
 
@@ -288,7 +315,7 @@ Embora o gestor do portfólio, associado ao PMO, seja um ator recorrente nas his
 <div align="center">
   <img src="imagens/Roberto.png" width="35%" alt="Persona Roberto Nogueira">
   <br>
-  <sub>Figura X: Persona Roberto Nogueira.</sub>
+  <sub>Figura 1: Persona Roberto Nogueira.</sub>
 </div>
 
 Roberto Nogueira tem 48 anos, nível de familiaridade tecnológica intermediário e representa o usuário de nível estratégico. Em seu papel na Diretoria, utiliza as informações do portfólio como subsídio para decisões, priorizações e acompanhamento institucional. No cenário atual, não opera diretamente as ferramentas de gestão: recebe do PMO relatórios, indicadores e apresentações previamente consolidados. Assim, seu contato com o portfólio é orientado à leitura executiva, e não ao acompanhamento das atividades rotineiras de cada projeto.
@@ -304,7 +331,7 @@ O nível de informação disponibilizado deve ser compatível com as atribuiçõ
 <div align="center">
   <img src="imagens/Fernanda.png" width="35%" alt="Persona Fernanda Medina">
   <br>
-  <sub>Figura X: Persona Fernanda Medina.</sub>
+  <sub>Figura 2: Persona Fernanda Medina.</sub>
 </div>
 
 Fernanda Medina tem 39 anos, nível de familiaridade tecnológica intermediário e representa o nível gerencial ou tático. Como líder de projeto, acompanha o avanço, o cronograma, as entregas, os riscos e as pendências, além de manter interlocução com o PMO. Diferentemente do perfil da Diretoria, sua atuação exige acesso recorrente a informações detalhadas dos projetos sob sua responsabilidade e participação ativa na atualização dos respectivos dados.
@@ -320,7 +347,7 @@ Fernanda deve visualizar informações suficientemente detalhadas sobre os proje
 <div align="center">
   <img src="imagens/Carlos.png" width="35%" alt="Persona Carlos Mendes">
   <br>
-  <sub>Figura X: Persona Carlos Mendes.</sub>
+  <sub>Figura 3: Persona Carlos Mendes.</sub>
 </div>
 
 Carlos Mendes tem 34 anos, nível de familiaridade tecnológica básico e representa o nível operacional. Como membro de uma equipe de projeto, participa da execução das atividades e precisa compreender as informações que afetam diretamente seu trabalho. Sua interação com a gestão do portfólio é mais delimitada que a dos demais perfis: ele necessita consultar o projeto do qual participa, identificar pendências e contribuir com atualizações pertinentes, sem precisar conhecer a arquitetura dos sistemas ou a organização das bases de dados.
@@ -356,7 +383,7 @@ Esses artefatos apoiam decisões de UX e de produto ao evidenciar diferenças en
 <div align="center">
   <img src="imagens/jornadaRoberto.png" width="90%" alt="Jornada do usuário Roberto Nogueira">
   <br>
-  <sub>Figura X: Jornada de Roberto Nogueira.</sub>
+  <sub>Figura 4: Jornada de Roberto Nogueira.</sub>
 </div>
 
 A jornada de Roberto tem como objetivo obter uma visão executiva do portfólio que apoie a tomada de decisão. Seus principais momentos de interação com o agente envolvem a consulta de informações consolidadas, a identificação de projetos ou subportfólios que exigem atenção e o aprofundamento dos riscos mais relevantes. A principal dor está na dependência de informações previamente consolidadas e na dificuldade de localizar, em meio ao volume de dados, os pontos que demandam ação estratégica.
@@ -368,7 +395,7 @@ Como oportunidade de produto, o agente pode reduzir o esforço necessário para 
 <div align="center">
   <img src="imagens/jornadaFernanda.png" width="90%" alt="Jornada da usuária Fernanda Medina">
   <br>
-  <sub>Figura X: Jornada de Fernanda Medina.</sub>
+  <sub>Figura 5: Jornada de Fernanda Medina.</sub>
 </div>
 
 A jornada de Fernanda está orientada ao acompanhamento do projeto e à manutenção da qualidade das informações gerenciais. A interação com o agente ocorre durante consultas sobre avanço, cronograma, entregas, riscos e pendências, na verificação de informações e normativos e no registro de atualizações. Entre as dores mais relevantes estão a recorrência de atividades manuais de acompanhamento e cobrança, o esforço para localizar orientações normativas e a necessidade de manter os dados atualizados e verificáveis.
@@ -380,7 +407,7 @@ Oportunidades para o produto incluem facilitar consultas e atualizações em lin
 <div align="center">
   <img src="imagens/jornadaCarlos.png" width="90%" alt="Jornada do usuário Carlos Mendes">
   <br>
-  <sub>Figura X: Jornada de Carlos Mendes.</sub>
+  <sub>Figura 6: Jornada de Carlos Mendes.</sub>
 </div>
 
 A jornada de Carlos tem como objetivo consultar e contribuir com informações do projeto em que atua. Seus momentos de interação concentram-se na busca de informações necessárias à execução, na compreensão de pendências e no fornecimento de atualizações autorizadas. As principais dores estão associadas à dificuldade de localizar conteúdos relevantes, compreender o que precisa ser realizado e interagir com sistemas cuja estrutura técnica não lhe é familiar.
@@ -436,7 +463,7 @@ O processo começa quando o gestor de portfólio precisa consultar o status de u
 <div align="center">
   <img src="../documentos/imagens/asis.png" width="80%" alt="Fluxo AS-IS">
   <br>
-  <sub>Figura X: Fluxo AS-IS.</sub>
+  <sub>Figura 7: Fluxo AS-IS.</sub>
 </div>
 
 Não existe, nesse cenário, um canal único de consulta em linguagem natural, nem verificação automática de confidencialidade dos dados: tudo depende de onde a informação está armazenada e da disponibilidade de terceiros para respondê-la.
@@ -455,7 +482,7 @@ Um gateway exclusivo decide o caminho a partir dessa classificação:
 <div align="center">
   <img src="../documentos/imagens/tobe.png" width="80%" alt="Fluxo TO-BE">
   <br>
-  <sub>Figura X: Fluxo TO-BE.</sub>
+  <sub>Figura 8: Fluxo TO-BE.</sub>
 </div>
 
 Em ambos os desfechos, é o Gestor específico quem recebe o resultado final — a diferença está em qual dos dois pilares processou o pedido e se ele foi autorizado a prosseguir.
@@ -578,7 +605,7 @@ Cada risco negativo possui uma **ação de mitigação** (preventiva, que reduz 
 
 <img src="imagens\matriz-risco.png" alt="Matriz de probabilidade × impacto do projeto" width="50%">
 
-*Figura X — Matriz de probabilidade x impacto
+*Figura 9 — Matriz de probabilidade x impacto
 
 A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a faixa crítica (17–25) e apenas R10 permanece na faixa baixa. R01 é o item isolado de maior severidade, em (P4, I4), e R09 é o único da coluna de impacto muito alto (I5) — o que explica sua entrada na análise da seção 6 mesmo com probabilidade baixa.
 
@@ -599,41 +626,99 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 
 ## 2.8 Canvas do Projeto
 
+<div align="center">
+  <img src="../assets/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
+  <br>
+  <sub>Figura X: Business Model Canvas do projeto.</sub>
+</div>
+
 ### 2.8.1 Proposta de Valor
 
-[Preencher]
+A proposta de valor consiste em um agente conversacional, acessível por texto e por voz, que permite consultar e atualizar informações do portfólio de projetos sem recorrer a formulários extensos ou ao conhecimento da estrutura técnica dos sistemas. Seu núcleo é um pipeline de Processamento de Linguagem Natural desenvolvido e avaliado pela própria equipe, responsável por identificar a intenção da solicitação, extrair as informações pertinentes e recusar interações situadas fora do contexto do portfólio ou do nível de acesso do perfil autenticado.
+
+O diferencial em relação ao cenário atual está justamente nessa capacidade de interpretação. Conforme registrado na análise de fraquezas da seção 2.2.3, o agente hoje utilizado responde apenas a fluxos previamente configurados, sem interpretar perguntas abertas nem identificar a intenção do usuário, o que restringe seu uso aos cenários já previstos. A solução proposta substitui esse modelo determinístico por um modelo capaz de lidar com formulações variadas, mantendo o controle sobre o que pode ou não ser respondido.
+
+O valor entregue distribui-se em quatro dimensões. A primeira é a eficiência, pela substituição do preenchimento manual e da consolidação documental por interações em linguagem natural. A segunda é a confidencialidade, assegurada pela operação exclusiva sobre dados sintéticos durante o MVP e pela ausência de trânsito de informação por serviços não homologados. A terceira é a rastreabilidade, garantida pelo registro de origem, autoria e momento de cada consulta e atualização. A quarta é a proatividade, pela identificação antecipada de pendências de preenchimento e pela sinalização ao responsável antes que a informação se torne inconsistente.
+
+A proposta é formulada como hipótese verificável, e não como descrição de escopo. Admite-se que a interação em linguagem natural reduz o esforço operacional das equipes de projeto e do PMO sem comprometer a confiabilidade das informações. Considera-se a hipótese confirmada caso o MVP demonstre, ao término do módulo, redução de 80% na necessidade de execução manual das consultas contempladas (O1), cobertura de 100% das categorias de informação previstas no escopo (O2) e acurácia mínima de 85% na classificação das intenções (O5).
 
 ### 2.8.2 Segmentos de Clientes
 
-[Preencher]
+O cliente institucional da solução é o PMO Corporativo do Metrô, área responsável por estabelecer e gerir a governança de estratégia, portfólio, programas, projetos e indicadores estratégicos da companhia. É essa área que concentra o esforço de consolidação, verificação de qualidade e acompanhamento do uso das plataformas de gestão, e é sobre esse esforço que a solução pretende atuar.
+
+Os usuários finais correspondem às três personas definidas na seção 2.4, que representam níveis distintos da estrutura de gestão de projetos. Para efeito do recorte do MVP, esses perfis não recebem o mesmo peso. Fernanda Medina, líder de projeto, constitui o perfil prioritário, por concentrar simultaneamente as atividades de consulta, atualização e acompanhamento de pendências, sendo o segmento sobre o qual se apoiam as hipóteses de redução de esforço manual. Roberto Nogueira, representante da Diretoria, é atendido predominantemente pelas funcionalidades de consulta consolidada e de geração de prévias de relatório, e valida as hipóteses relativas à sumarização executiva e à aplicação de permissões diferenciadas. Carlos Mendes, membro de equipe de projeto, é atendido por um subconjunto delimitado de funcionalidades, restrito ao projeto em que atua, e valida as hipóteses de usabilidade e de recusa compreensível diante de solicitações fora do escopo ou da permissão.
+
+Conforme a decisão de escopo registrada na seção 2.4, a atuação do gestor de portfólio associado ao PMO permanece tratada de forma transversal às demais personas, não constituindo um segmento adicional nesta versão. Essa delimitação deverá ser reavaliada caso o parceiro disponibilize informações que evidenciem necessidades suficientemente distintas.
 
 ### 2.8.3 Canais
 
-[Preencher]
+O canal principal de entrega de valor no MVP é uma interface conversacional web desenvolvida pela equipe, que reúne a interação por texto, o envio de comandos por áudio e a apresentação das respostas em formato estruturado. A escolha por uma interface própria decorre da necessidade de demonstrar e avaliar o pipeline de PLN de forma independente da camada de orquestração, permitindo medir o desempenho do núcleo analítico sem interferência de serviços intermediários.
+
+Um segundo canal, de natureza assíncrona, corresponde às notificações proativas geradas pela varredura periódica de pendências, que alcançam o responsável sem exigir que ele acesse a aplicação. Esse canal materializa o requisito de proatividade indicado pelo parceiro e reduz a dependência da cobrança manual hoje exercida pelo PMO.
+
+Um terceiro canal, de natureza formativa, responde a um problema frequentemente subestimado em ferramentas corporativas internas: a descoberta e a aprendizagem. Como a interação ocorre em linguagem livre, o usuário não dispõe de menus que revelem o que a solução é capaz de fazer, e tende a subutilizá-la ou a abandoná-la após uma primeira solicitação mal compreendida. Por isso o próprio agente atua como canal de apresentação das suas capacidades, por meio do conjunto de perguntas sugeridas previsto no TAPI, que orienta o uso inicial e torna visível o alcance do catálogo de intenções.
+
+O MVP não contempla a publicação do agente no ecossistema Microsoft. Essa delimitação é deliberada e decorre do escopo definido no TAPI, segundo o qual a implementação em produção e a integração com o portfólio real do Metrô constituem evolução posterior ao trabalho realizado neste módulo. O que o projeto entrega, nesse aspecto, não é um canal adicional em operação, e sim a viabilização da sua futura abertura pelo parceiro.
+
+Essa viabilização se concretiza por dois meios. O primeiro é arquitetural: o núcleo de PLN é exposto por interfaces independentes da camada de apresentação, de modo que a substituição ou a adição de um canal não exija reconstrução do que foi desenvolvido. O segundo é documental, correspondendo às diretrizes, aos padrões e às orientações de implantação, operação e sustentação no ecossistema Microsoft previstos entre os entregáveis do projeto.
+
+Assim, a disponibilização do agente por meio do Copilot Studio, do Microsoft Teams ou dos demais componentes da plataforma atual do portfólio — SharePoint, Power Automate e Power BI — permanece sob responsabilidade do parceiro e condicionada ao acesso a ambiente homologado, porém com o custo de adoção reduzido pelo trabalho realizado neste módulo. A premissa tecnológica do Metrô é respeitada não pela entrega de uma integração operante, mas pela garantia de que a solução construída não cria barreiras para ela.
 
 ### 2.8.4 Relação com o Cliente
 
-[Preencher]
+A relação estabelecida com o usuário é de autoatendimento assistido. O agente não se limita a responder solicitações: conduz o usuário por meio de perguntas sequenciais quando a tarefa exige o preenchimento estruturado de informações, como na elaboração do Termo de Abertura ou do Mapa de Benefícios, adaptando as perguntas conforme as respostas recebidas e oferecendo sugestões quando solicitado.
+
+Três princípios orientam essa relação. O primeiro é a confirmação: toda atualização relevante é apresentada ao usuário antes de ser registrada, preservando seu controle sobre o que entra na base. O segundo é a transparência: as respostas factuais indicam a origem da informação apresentada, o que sustenta a confiança do usuário e atende ao objetivo de rastreabilidade (O3). O terceiro é a recusa orientada: quando uma solicitação está fora do catálogo de intenções ou do nível de acesso do perfil, o agente comunica a limitação em linguagem compreensível e sugere alternativas pertinentes, sem expor a existência ou o conteúdo de informações restritas.
+
+A continuidade da relação é apoiada pela possibilidade de salvar rascunhos e retomar o preenchimento posteriormente, reconhecendo que os usuários frequentemente interrompem a tarefa por conta de outras demandas.
+
+A manutenção da relação ao longo do tempo, contudo, depende menos da adesão inicial do que da consistência das respostas. O principal risco de abandono não é a dificuldade de uso, e sim a perda de confiança: basta que o agente apresente uma informação incorreta em um momento de decisão para que o usuário retorne à planilha e à consulta direta ao PMO, e a retomada dessa confiança é substancialmente mais custosa do que a adesão original. Por essa razão, a indicação da origem dos dados e a recusa explícita diante de solicitações que o agente não pode atender com segurança são tratadas neste projeto como mecanismos de retenção, e não apenas como requisitos de conformidade. Neste contexto, a ausência de resposta inventada é mais valiosa do que a amplitude da cobertura.
 
 ### 2.8.5 Fontes de Receita
 
-[Preencher]
+Por se tratar de solução interna desenvolvida para uma empresa pública sob controle do Governo do Estado de São Paulo, o projeto não gera receita direta. O retorno esperado manifesta-se como benefício operacional e como melhoria da qualidade da informação que sustenta a decisão, o que exige substituir a noção de receita pela de valor capturado pela companhia.
+
+O principal benefício é a liberação de capacidade técnica atualmente empregada em atividades administrativas de preenchimento, consolidação e cobrança, que passa a ser direcionada a atividades de gestão. Somam-se a ele a redução do retrabalho decorrente de inconsistências identificadas tardiamente, a ampliação da conformidade com os normativos de gestão de portfólio e a diminuição da dependência de consolidações manuais para a produção dos relatórios mensais e de fechamento. Há ainda um benefício de sustentação: a solução é concebida para ser operada e evoluída pela própria equipe do Metrô, reduzindo a dependência de terceiros ao longo do tempo.
+
+O dimensionamento desse retorno depende de informações que ainda não estão disponíveis à equipe. Sabe-se que o Portfólio Organizacional de 2025 reúne 31 programas e projetos distribuídos em seis subportfólios, cada um sujeito ao preenchimento periódico dos artefatos de gestão e ao acompanhamento mensal do avanço, o que estabelece a escala do processo. Para converter essa escala em valor, contudo, são necessários três dados que devem ser levantados junto ao PMO: o tempo médio despendido por líder de projeto no preenchimento e na atualização dos artefatos; o esforço mensal da própria área na consolidação do balanço e na varredura de pendências; e a incidência de retrabalho decorrente de informação inconsistente ou incompleta.
+
+Optou-se por não apresentar estimativa numérica nesta versão, uma vez que qualquer valor calculado sem esses dados seria arbitrário e comprometeria a credibilidade da análise. A quantificação monetária do benefício e a hipótese de precificação da solução, caso fosse comercializada a um cliente externo, serão desenvolvidas na análise de viabilidade financeira prevista para a Sprint 4, quando as informações solicitadas ao parceiro já deverão estar disponíveis.
 
 ### 2.8.6 Recursos-Chave
 
-[Preencher]
+O recurso mais crítico do projeto é o conjunto de dados sintéticos utilizado para treinar e avaliar o pipeline. Por restrição de compliance estabelecida no TAPI, o MVP não pode ser validado sobre informações reais, o que transfere para a qualidade desses dados toda a validade da avaliação de desempenho. Conforme registrado na seção 2.6, essa dependência corresponde ao risco R01, de maior severidade entre as ameaças mapeadas, e sua mitigação envolve a construção dos dados a partir dos modelos de documento e do vocabulário efetivamente utilizados pelo PMO.
+
+Compõem também os recursos-chave a base de conhecimento documental do portfólio, formada pelos modelos de Termo de Abertura, Mapa de Benefícios, cronograma, lista de avanço, relatórios mensais e de fechamento, além do normativo NOR-00-223; o catálogo de intenções que delimita as interações aceitáveis; os modelos de linguagem e os serviços de conversão entre fala e texto em português; a infraestrutura de nuvem que hospeda a aplicação e a base de dados; e a equipe de seis integrantes responsável pelo desenvolvimento.
+
+Dois recursos de natureza distinta completam o quadro e merecem registro por serem frequentemente omitidos. O primeiro é o acesso ao ambiente homologado e às licenças do ecossistema Microsoft, sem o qual as orientações de implantação e sustentação permanecem no plano teórico, por não poderem ser verificadas na prática — dependência correspondente ao risco R02 da seção 2.6. O segundo é o recurso financeiro que sustenta a operação, composto pelos serviços de nuvem contratados durante o desenvolvimento e, em uma eventual continuidade, pelo orçamento da área responsável pela manutenção da solução.
 
 ### 2.8.7 Atividades-Chave
 
-[Preencher]
+A atividade central do projeto é a construção e a avaliação do pipeline de Processamento de Linguagem Natural, que compreende a classificação das intenções em catálogo delimitado, a detecção de solicitações fora de domínio, a extração de entidades relevantes e a busca semântica sobre os documentos de projeto. É dessa atividade que decorre o aprendizado principal do módulo.
+
+A ela somam-se a geração e a curadoria dos dados sintéticos, tratada como atividade estruturante por condicionar todas as demais; a integração dos serviços de conversão de áudio em texto e de texto em áudio, com tratamento do vocabulário específico da companhia; o desenvolvimento das interfaces conversacional e de acompanhamento; a implementação dos mecanismos de controle de acesso e de registro de auditoria; a avaliação sistemática de desempenho sobre conjunto de teste previamente definido; e a implantação em nuvem acompanhada da documentação necessária para a sustentação pela equipe do parceiro.
+
+As atividades descritas acima correspondem à construção da solução. A sua permanência em funcionamento depende de um segundo conjunto, de natureza contínua, que precisa ser considerado desde já, uma vez que a sustentação pela equipe interna do Metrô figura entre os benefícios declarados no TAPI. Integram esse conjunto a revisão periódica do catálogo de intenções, à medida que novas formas de solicitação surgem no uso corrente; o retreinamento do classificador quando o desempenho medido se afastar dos limiares estabelecidos; a atualização da base de conhecimento sempre que os modelos de documento ou os normativos forem revisados; e o monitoramento contínuo da qualidade das respostas e dos registros de auditoria. O projeto não executa essas atividades, por estarem fora do escopo do MVP, mas deve documentá-las e entregar os mecanismos que permitam ao parceiro executá-las de forma autônoma.
 
 ### 2.8.8 Parcerias-Chave
 
-[Preencher]
+A parceria central é estabelecida com o PMO Corporativo do Metrô, responsável por fornecer o entendimento do processo de gestão de portfólio, os modelos de documento, os critérios de qualidade da informação e a validação dos resultados obtidos. Sem essa interlocução, os dados sintéticos não alcançam representatividade suficiente e a solução perde aderência ao processo real, o que remete diretamente ao risco de maior severidade registrado na seção 2.6.
+
+Participam igualmente a equipe de TI e de tecnologia da automação do Metrô, responsável por disponibilizar os recursos e o ambiente necessários à execução do projeto, e a equipe do programa de Inteligência Artificial e Transformação Digital da companhia, que orienta o alinhamento da solução às diretrizes corporativas. Complementam o conjunto os provedores de serviços de nuvem e de conversão entre fala e texto, que sustentam a operação técnica, e o Inteli, por meio dos professores orientadores, que assegura o alinhamento entre o desenvolvimento e os objetivos de aprendizagem do módulo.
+
+Integram ainda o quadro de parcerias, na condição de instâncias autorizadoras, os setores técnicos e de compliance do Metrô. O TAPI condiciona expressamente o processamento de qualquer dado sensível de projeto à homologação por essas áreas, o que as torna interlocutoras decisivas para a evolução da solução além do MVP. Embora não participem do desenvolvimento, é a sua avaliação que determina se e quando a integração com o portfólio real se torna viável. Por essa razão, a documentação produzida pelo projeto deve antecipar os critérios que essas áreas costumam observar, de modo que a análise futura não parta do zero.
 
 ### 2.8.9 Estrutura de Custos
 
-[Preencher]
+O desenvolvimento ocorre em cinco sprints de duas semanas, totalizando dez semanas, com início em 05 de agosto de 2026 e término em 07 de outubro de 2026, conforme o cronograma estabelecido no TAPI, e conta com uma equipe de seis integrantes.
+
+Os custos de construção compõem-se de três elementos: o trabalho da equipe, que responde pela maior parcela; os serviços de nuvem consumidos durante o desenvolvimento, incluindo hospedagem, banco de dados, conversão de fala e chamadas a modelos; e as licenças e ferramentas de apoio ao design, à gestão do projeto e ao versionamento. A concentração no trabalho da equipe é coerente com a natureza do projeto, uma vez que o valor entregue reside na construção e na avaliação do pipeline de PLN, e não na aquisição de infraestrutura. Essa concentração reforça a decisão de manter o núcleo analítico sob domínio da equipe, pois a autonomia técnica resultante constitui, ela própria, parte do resultado entregue ao parceiro.
+
+É necessário distinguir dois regimes de custo, frequentemente tratados como um só. O custo de construção é fixo e delimitado no tempo, encerrando-se com a conclusão do módulo. O custo de operação, por sua vez, é majoritariamente variável, uma vez que a conversão de áudio em texto e as chamadas a modelos generativos são tarifadas por requisição, de modo que a despesa cresce com a adoção da solução. Um projeto que considere apenas o primeiro regime subestima o compromisso assumido pelo parceiro ao adotar a ferramenta.
+
+Cabe registrar, nesse ponto, um efeito favorável da arquitetura adotada. A classificação de intenções, que constitui o núcleo funcional do MVP e corresponde à operação de maior frequência, foi projetada para ser executada em modelos próprios, sem tarifação por requisição. Essa decisão mantém o custo marginal da funcionalidade mais utilizada próximo de zero e reserva o consumo de serviços tarifados às operações de menor frequência, como a transcrição de áudio e a geração de relatórios. Trata-se de um caso em que a escolha técnica adotada por razões de aprendizagem — construir o núcleo analítico em vez de consumi-lo como serviço — produz também um efeito econômico favorável à sustentação da solução pelo parceiro.
+
+A quantificação monetária desta estrutura não é apresentada nesta versão. Sua elaboração depende da definição, pelo grupo, dos valores de referência a serem adotados para hora de trabalho por função, e do levantamento do volume esperado de interações, que determina a parcela variável. Ambos serão estabelecidos na análise de viabilidade financeira prevista para a Sprint 4, ocasião em que o orçamento completo, contemplando despesas operacionais, carga tributária e margem, será desenvolvido.
 
 ## 2.9 Delimitação de Escopo: O que o Produto Faz e Não Faz
 
@@ -649,7 +734,39 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 
 # 3. Requisitos do Projeto
 
-## 3.1 Requisitos Funcionais (RFs)
+## 3.1 Business Drivers
+
+Esta seção descreve o contexto de negócio que motiva a construção da aplicação computacional, alinhando-se aos documentos de entendimento de negócio produzidos junto à Companhia do Metropolitano de São Paulo (Metrô), e explica como o uso de Processamento de Linguagem Natural (PLN) transforma os processos atuais de gestão de portfólio de projetos.
+
+### 3.1.1. Contexto de Negócio
+
+A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo de status, riscos, marcos (*milestones*) e aderência a normativos internos e externos. Atualmente, esse acompanhamento depende fortemente de consultas manuais a sistemas corporativos e da consolidação de informações dispersas, o que demanda tempo das equipes de gestão e aumenta o risco de decisões baseadas em dados desatualizados ou incompletos.
+
+Nesse contexto, identificou-se a oportunidade de introduzir um agente de inteligência artificial capaz de interagir em linguagem natural — por texto e voz — permitindo que gestores e demais stakeholders obtenham respostas diretas sobre o portfólio sem a necessidade de navegar manualmente por múltiplos sistemas ou relatórios.
+
+### 3.1.2. Transformação do Negócio por meio do PLN
+
+A introdução de PLN modifica o negócio nas seguintes frentes:
+
+- **Redução de fricção no acesso à informação**: em vez de consultar relatórios estáticos ou navegar por múltiplas telas, o usuário formula perguntas em linguagem natural (ex.: "quais projetos estão em risco esta semana?") e recebe respostas objetivas e contextualizadas.
+- **Democratização do acompanhamento de portfólio**: usuários sem conhecimento técnico aprofundado sobre os sistemas de gestão passam a conseguir extrair informações relevantes, ampliando a base de pessoas capazes de monitorar o portfólio.
+- **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
+- **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
+
+### 3.1.3. Alinhamento com o Ecossistema Corporativo
+
+A solução se apoia em dois pilares complementares:
+
+1. **Pilar 1 — PLN próprio**: desenvolvido pela equipe do projeto, responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
+2. **Pilar 2 — Integração com o ecossistema Microsoft**: aproveitamento das ferramentas já adotadas pelo Metrô (Copilot Studio/Power Platform), garantindo aderência à infraestrutura corporativa existente e facilitando a adoção pelos usuários finais.
+
+Essa combinação assegura que a transformação proposta não exija a substituição de ferramentas já consolidadas na organização, mas sim a adição de uma camada inteligente de interação sobre elas.
+
+### 3.1.4. Restrições de Negócio Relevantes
+
+Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
+
+## 3.2 Requisitos Funcionais (RFs)
 
 Os requisitos funcionais representam as principais capacidades esperadas do agente de IA para apoiar a gestão do portfólio de projetos do Metrô de São Paulo. Sua definição foi realizada a partir dos *business drivers*, do escopo estabelecido no TAPI e das *features* priorizadas pela equipe, de modo a organizar as funções que deverão ser oferecidas pela solução.
 
@@ -678,6 +795,184 @@ As histórias de usuário foram derivadas das personas e dos requisitos funciona
 | US06 | Fernanda Medina — Líder de Projeto | **Como Fernanda Medina, eu quero ser alertada e receber apoio proativo sobre dados ausentes, inconsistentes ou pendentes, para complementar ou corrigir as informações necessárias ao acompanhamento do projeto.** | RF06 | MVP | O sistema identifica dados ausentes, inconsistentes ou pendentes nos projetos.<br>O sistema alerta os usuários responsáveis pelas informações identificadas.<br>O sistema oferece apoio proativo para que as informações sejam complementadas ou corrigidas.<br>O sistema inicia contato direto com o usuário responsável para solicitar a atualização da informação pendente, sem depender de o usuário acessar o sistema por conta própria. |
 | US07 | Roberto Nogueira — Diretor | **Como Roberto Nogueira, eu quero comparar projetos e subportfólios, para identificar diferenças, relações, riscos e indicadores que exijam atenção estratégica.** | RF07 | Desejável | O sistema permite realizar análises entre projetos do portfólio.<br>A análise apresenta relações ou diferenças relevantes com base nas informações disponíveis.<br>A análise pode considerar riscos com impacto em outros projetos, avanço, desempenho e demais indicadores disponíveis. |
 | US08 | Roberto Nogueira — Diretor | **Como Roberto Nogueira, eu quero obter prévias de relatórios e materiais gerenciais com visão executiva, para acompanhar o portfólio e apoiar a tomada de decisão.** | RF08 | Desejável | O sistema gera prévias a partir das informações disponíveis nos projetos.<br>As prévias contemplam os materiais gerenciais previstos no requisito: relatório de status, apresentação periódica para a diretoria ou relatório de encerramento.<br>O nível de detalhamento do material é adequado ao perfil do usuário. |
+
+### 3.1.2 Modelagem estática — Diagrama de classes
+
+O diagrama de classes a seguir apresenta a modelagem estática e conceitual do domínio necessário para atender aos requisitos funcionais e às User Stories da Sprint 1. Seu propósito é representar os principais conceitos do agente de IA e as relações entre eles, sem antecipar decisões de arquitetura, persistência ou integração que serão refinadas na etapa de projeto técnico. Por esse motivo, não são representados componentes como controladores, serviços, APIs, bancos de dados, Copilot Studio ou SharePoint.
+
+As associações foram mantidas sem multiplicidades quando os requisitos não determinam limites mínimos ou máximos entre as entidades. Da mesma forma, foram utilizadas associações simples, pois os artefatos atuais não estabelecem dependências de ciclo de vida que justifiquem agregação ou composição. Os atributos apresentados são aqueles necessários ou diretamente úteis à compreensão dos RFs; identificadores técnicos, estados não definidos e enumerações ainda não validadas foram deixados para refinamento posterior.
+
+```mermaid
+classDiagram
+    class Usuario {
+        nome
+        perfil
+    }
+
+    class Portfolio {
+        nome
+    }
+
+    class Subportfolio {
+        nome
+    }
+
+    class Projeto {
+        nome
+        status
+        avanco
+    }
+
+    class Solicitacao {
+        conteudo
+        tipoEntrada: TipoEntrada
+    }
+
+    class TipoEntrada {
+        <<enumeration>>
+        TEXTO
+        VOZ
+    }
+
+    class Classificacao
+
+    class Intencao {
+        nome
+    }
+
+    class Resposta {
+        conteudo
+    }
+
+    class Documento {
+        titulo
+        referencia
+    }
+
+    class Cronograma
+
+    class Marco {
+        nome
+    }
+
+    class Entrega {
+        nome
+    }
+
+    class Risco {
+        descricao
+    }
+
+    class Problema {
+        descricao
+    }
+
+    class AlteracaoProjeto {
+        origem
+        momento
+    }
+
+    class Pendencia {
+        descricao
+    }
+
+    class Alerta {
+        mensagem
+    }
+
+    class PreviaMaterialGerencial {
+        descricao
+    }
+
+    Usuario -- Projeto : tem acesso autorizado
+    Usuario -- Solicitacao : realiza
+    Solicitacao -- Classificacao : recebe
+    Classificacao -- Intencao : identifica
+    Solicitacao -- Resposta : gera
+    Resposta -- Documento : referencia
+    Resposta -- Projeto : utiliza informações de
+
+    Portfolio -- Subportfolio : organiza
+    Subportfolio -- Projeto : agrupa
+
+    Projeto -- Documento : possui
+    Projeto -- Cronograma : possui
+    Cronograma -- Marco : organiza
+    Projeto -- Entrega : possui
+    Projeto -- Risco : possui
+    Projeto -- Problema : possui
+
+    Projeto -- AlteracaoProjeto : recebe
+    Usuario -- AlteracaoProjeto : realiza
+
+    Projeto -- Pendencia : apresenta
+    Pendencia -- Usuario : possui responsável
+    Pendencia -- Alerta : origina
+    Usuario -- Alerta : recebe
+
+    PreviaMaterialGerencial -- Projeto : utiliza informações de
+```
+
+*Figura X — Diagrama de classes conceitual do domínio do agente.*
+
+#### 3.1.2.1 Classes do domínio
+
+| Classe | Responsabilidade no domínio | Origem principal |
+|---|---|---|
+| `Usuario` | Representar quem interage com o agente, considerando o perfil associado e os projetos para os quais possui acesso autorizado. | RF01, RF02, RF05 e RF06 |
+| `Portfolio` | Representar o conjunto de iniciativas sobre o qual são realizadas consultas e produzidas informações gerenciais. | RF04, RF07 e RF08 |
+| `Subportfolio` | Representar um agrupamento de projetos dentro do portfólio estratégico, considerado nas comparações solicitadas pelo perfil de Diretoria. | US07 e materiais do parceiro |
+| `Projeto` | Centralizar as informações de acompanhamento, como status e avanço, e relacionar os demais conceitos do ciclo de vida do projeto. | RF04 a RF08 |
+| `Solicitacao` | Representar a entrada em linguagem natural realizada pelo usuário, por texto ou voz. | RF02 e RF03 |
+| `TipoEntrada` | Restringir a forma de entrada aos canais explicitamente previstos: texto e voz. | RF02 e US02 |
+| `Classificacao` | Representar o resultado da interpretação de uma solicitação. | RF03 e US03 |
+| `Intencao` | Representar uma intenção reconhecida no catálogo de interações do agente. | RF03 e US03 |
+| `Resposta` | Representar o retorno produzido para uma solicitação, cujo conteúdo deve ser adequado ao perfil e às permissões do usuário. | RF01, RF03, RF04, RF07 e RF08 |
+| `Documento` | Representar documentos relacionados aos projetos e as referências utilizadas nas respostas, quando disponíveis. | RF04 e RF05 |
+| `Cronograma` | Representar as informações de planejamento temporal relacionadas ao projeto. | RF04 e RF05 |
+| `Marco` | Representar os marcos acompanhados no cronograma. | RF04 e RF05 |
+| `Entrega` | Representar as entregas previstas no ciclo de vida do projeto. | RF05 |
+| `Risco` | Representar riscos consultados, atualizados ou considerados nas análises do portfólio. | RF04, RF05 e RF07 |
+| `Problema` | Representar problemas registrados e consultados no acompanhamento do projeto. | RF04 e RF05 |
+| `AlteracaoProjeto` | Representar uma mudança nas informações do projeto, preservando sua origem e seu momento e relacionando sua autoria ao usuário. | RF05 e US05 |
+| `Pendencia` | Representar uma informação ausente, inconsistente ou ainda pendente de complementação ou correção. | RF06 e US06 |
+| `Alerta` | Representar o aviso ou contato proativo originado por uma pendência e direcionado ao usuário responsável. | RF06 e US06 |
+| `PreviaMaterialGerencial` | Representar a prévia de um relatório ou material gerencial produzida com informações dos projetos. | RF08 e US08 |
+
+#### 3.1.2.2 Relações e decisões de modelagem
+
+O acesso autorizado entre `Usuario` e `Projeto` representa a regra funcional de restrição das informações, e não um acesso já realizado. Os valores formais de `perfil`, as permissões correspondentes e as multiplicidades dessa associação deverão ser refinados após o recebimento do documento de níveis de acesso informado pelo parceiro.
+
+Uma `Solicitacao` é realizada por um usuário e pode ser submetida à `Classificacao`, que busca identificar uma `Intencao`. A própria `Solicitacao` representa a interação registrada, inclusive quando nenhuma intenção do catálogo é reconhecida. Nesse caso, o agente deve gerar uma `Resposta` orientativa, mantendo o registro previsto no RF03 para análise futura. A conversão de voz em texto não foi transformada em classe, pois corresponde a um comportamento técnico a ser detalhado na arquitetura.
+
+`TipoEntrada` foi mantido como enumeração porque RF02 e US02 estabelecem explicitamente um conjunto conhecido de formas de entrada: texto e voz. Diferentemente de outras classificações ainda abertas no domínio, esses valores estão delimitados pelos requisitos desta etapa.
+
+A `Resposta` pode utilizar informações de projetos e referenciar documentos. A adequação de seu conteúdo ao perfil constitui uma regra funcional, não um atributo persistente denominado nível de detalhamento. Consultas comparativas também são tratadas como um comportamento que produz respostas com base em mais de um projeto ou subportfólio, sem criar uma entidade persistente de análise comparativa.
+
+`Cronograma`, `Marco`, `Documento`, `Entrega`, `Risco` e `Problema` foram associados ao projeto sem composição. Os RFs confirmam a relação entre esses conceitos, mas não estabelecem dependência de ciclo de vida ou propagação de exclusão que justifique uma relação mais forte nesta etapa.
+
+`AlteracaoProjeto` representa especificamente a mudança de informações prevista no RF05. Sua associação com `Usuario` expressa a autoria, enquanto `origem` e `momento` atendem à rastreabilidade exigida para a alteração. A confirmação anterior à efetivação permanece como regra funcional quando aplicável, pois os estados possíveis desse processo ainda não foram definidos. Essa classe não substitui um eventual mecanismo geral de auditoria das interações do agente.
+
+As condições de informação ausente, inconsistente ou pendente não foram consolidadas como enumeração, pois os requisitos não afirmam que formem categorias fechadas e mutuamente exclusivas. A `Pendencia` pode originar um `Alerta`, mas o canal, a frequência e o número de responsáveis ainda dependem de refinamento.
+
+Por fim, `PreviaMaterialGerencial` abrange os relatórios de status, as apresentações periódicas para a Diretoria e os relatórios de encerramento citados no RF08. Esses artefatos não foram reduzidos a uma enumeração de relatórios, pois uma apresentação constitui um material gerencial de natureza distinta.
+
+#### 3.1.2.3 Rastreabilidade entre RFs, User Stories e modelo
+
+| RF | User Story | Classes e relações correspondentes |
+|---|---|---|
+| RF01 | US01 | `Usuario`, `Projeto` e a associação de acesso autorizado. |
+| RF02 | US02 | `Usuario`, `Solicitacao` e `TipoEntrada`. |
+| RF03 | US03 | `Solicitacao`, `Classificacao`, `Intencao` e `Resposta`. |
+| RF04 | US04 | `Projeto`, `Resposta`, `Documento`, `Cronograma`, `Marco`, `Risco` e `Problema`. |
+| RF05 | US05 | `Projeto`, `Documento`, `Cronograma`, `Marco`, `Entrega`, `Risco`, `Problema` e `AlteracaoProjeto`. |
+| RF06 | US06 | `Projeto`, `Pendencia`, `Usuario` e `Alerta`. |
+| RF07 | US07 | `Portfolio`, `Subportfolio`, `Projeto` e `Resposta`; a comparação é tratada como comportamento do agente. |
+| RF08 | US08 | `Portfolio`, `Projeto` e `PreviaMaterialGerencial`. |
+
+#### 3.1.2.4 Limitações e refinamentos futuros
+
+Esta modelagem utiliza as informações disponíveis na Sprint 1 e deverá ser revisada durante o projeto técnico e arquitetural. Permanecem pendentes de validação: os perfis e níveis formais de acesso; as multiplicidades entre usuários, portfólios, subportfólios e projetos; a estrutura do catálogo de intenções e sua associação às funcionalidades; os estados de confirmação das alterações; e os atributos detalhados de cronogramas, marcos, entregas, pendências, alertas e materiais gerenciais. Essas definições não foram antecipadas para evitar transformar hipóteses em regras consolidadas do domínio.
 
 ## 3.2 Requisitos Não Funcionais (RNFs)
 
@@ -712,6 +1007,19 @@ O **RNF03 (precisão na classificação de intenções)** está diretamente liga
 O **RNF04 (disponibilidade)** impacta transversalmente o **RF04** (consulta e análise de informações), o **RF06** (alertas e apoio proativo a pendências) e o **RF08** (geração de relatórios), funcionalidades que dependem da operação contínua do agente para gerar valor no dia a dia da gestão do portfólio.
 
 Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**, garantindo que o controle de perfil de acesso já previsto nos RFs se reflita também na forma e no nível de detalhe das respostas entregues a cada persona (Diretor, Líder de Projeto, Membro de Equipe).
+
+**Matriz de correlação RF × RNF**
+
+| RF \ RNF | RNF01 | RNF02 | RNF03 | RNF04 | RNF05 |
+|---|:-:|:-:|:-:|:-:|:-:|
+| RF01 | X |  |  |  | X |
+| RF02 |  |  | X |  |  |
+| RF03 |  | X | X |  |  |
+| RF04 |  |  |  | X |  |
+| RF05 | X | X |  |  |  |
+| RF06 |  |  |  | X |  |
+| RF07 |  |  |  |  |  |
+| RF08 |  |  |  | X | X |
 
 ## 3.4 Casos de Uso
 
@@ -845,9 +1153,252 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 [Preencher]
 
-## 5.5 Visão preliminar da arquitetura em blocos conectados
+## 5.5 Integrações com o Ecossistema Microsoft
 
 ### 5.5.1 Objetivo
+
+Esta seção mapeia as integrações necessárias entre o agente de IA proposto e o ecossistema Microsoft já utilizado pelo PMO do Metrô de São Paulo (SharePoint, Power BI, Power Automate e Copilot Studio), detalhando, para cada ponto de integração, seu propósito, o mecanismo técnico previsto, os dados trafegados e os pré-requisitos de ambiente.
+
+O mapeamento cumpre duas finalidades no projeto:
+
+1. **Subsidiar a visão técnica** desta seção 5, convertendo a listagem preliminar de tecnologias apresentada em 5.1 em um desenho de interfaces entre componentes;
+2. **Organizar as solicitações de ambiente e acesso** que precisam ser encaminhadas à equipe de TI/TAA do Metrô, cuja disponibilização é premissa explícita do TAPI.
+
+### 5.5.2 Escopo e delimitação
+
+O escopo deste mapeamento é o do MVP estabelecido no TAPI e representado na Figura 01 daquele documento: o núcleo de PLN da equipe, o canal conversacional, a camada de orquestração e a leitura das fontes preenchidas com dados sintéticos.
+
+Permanecem fora do escopo, conforme a seção "O projeto não contempla" do TAPI: implantação em produção, integração com o portfólio real e qualquer processamento de dados reais sensíveis fora de ambiente homologado. Toda integração descrita adiante é exercitada, no MVP, exclusivamente sobre **dados sintéticos**.
+
+### 5.5.3 Visão geral da arquitetura de integração
+
+#### 5.5.3.1 Camadas da solução
+
+A arquitetura de integração organiza-se em seis camadas. Ela mantém o núcleo de PLN (entregável central do módulo, construído pela equipe) isolado das particularidades das plataformas Microsoft, atendendo à premissa do TAPI de que a solução permaneça funcional caso a plataforma de portfólio seja substituída ou complementada no futuro.
+
+| Camada | Componentes | Responsabilidade |
+|---|---|---|
+| **Canal** | Microsoft Teams, canal web | Receber a solicitação do usuário em linguagem natural e devolver a resposta |
+| **Orquestração** | Copilot Studio | Autenticar o usuário, acionar o núcleo de PLN, rotear a intenção classificada para a ação correspondente e compor a resposta |
+| **Núcleo de PLN (Pilar 1)** | API própria em Python (classificação de intenções, extração de entidades, busca semântica e análise comparativa) | Interpretar a solicitação, verificar aderência ao catálogo de intenções e produzir a resposta estruturada |
+| **Automação e acesso a dados** | Power Automate, conectores SharePoint e Office 365 | Executar as operações de leitura e escrita sobre as fontes do portfólio e a geração de artefatos |
+| **Fontes de dados** | Listas do SharePoint, bibliotecas de documentos, conjuntos de dados do Power BI | Armazenar as informações do portfólio (no MVP, preenchidas com dados sintéticos) |
+| **Identidade e governança** | Entra ID, permissões do SharePoint, políticas de DLP, trilhas de auditoria | Controlar quem acessa o quê e registrar as interações para rastreabilidade |
+
+#### 5.5.3.2 Diagrama de integrações
+
+<div align="center">
+  <img src="imagens/integracoes-microsoft.png" width="70%" alt="Diagrama das integrações entre o agente de IA e o ecossistema Microsoft do Metrô de São Paulo, organizado em camadas de canal, orquestração, núcleo de PLN, automação, fontes de dados e governança">
+  <br>
+  <sub>Figura X: Visão das integrações entre o agente e o ecossistema Microsoft do Metrô.</sub>
+</div>
+
+As arestas identificadas por `INT-xx` correspondem às fichas da seção 5.5.5.2.
+
+### 5.5.4 Inventário dos componentes Microsoft
+
+| Componente | Uso atual no Metrô (informado no TAPI) | Papel previsto na solução | Cobertura no MVP |
+|---|---|---|---|
+| **SharePoint — Listas** | Site central de dados do portfólio e dos projetos | Fonte primária de dados estruturados: status, cronograma, marcos, riscos, avanço | Integral (dados sintéticos) |
+| **SharePoint — Bibliotecas de documentos** | Armazenamento dos documentos vinculados aos projetos | Fonte de dados não estruturados para busca semântica e análise documental | Integral (dados sintéticos) |
+| **Copilot Studio** | Bot de apoio à obtenção e atualização de status de projetos e subportfólios | Camada de orquestração e canal conversacional do agente | Integral |
+| **Power Automate** | Automação de fluxos de trabalho | Execução de operações de escrita, alertas proativos e geração de artefatos | Integral |
+| **Power BI** | Relatórios de indicadores do portfólio | Referência de indicadores consolidados e destino de encaminhamento das respostas executivas | Parcial |
+| **Microsoft Teams** | Ferramenta corporativa de colaboração | Canal de publicação do agente e de entrega de alertas | Integral |
+| **Microsoft Entra ID** | Identidade corporativa | Autenticação do usuário e origem do perfil que rege as permissões (RF01) | Parcial |
+| **Word, Excel e PowerPoint** | Consolidação do portfólio: partida, balanços mensais e encerramento | Formato de saída das prévias de relatórios e apresentações (RF08) | Parcial |
+
+### 5.5.5 Mapeamento detalhado das integrações
+
+#### 5.5.5.1 Quadro-resumo
+
+| ID | Integração | Direção | Mecanismo previsto | RFs atendidos | Cobertura no MVP | Criticidade para o MVP |
+|---|---|---|---|---|---|---|
+| INT-01 | Canal conversacional ↔ Copilot Studio | Bidirecional | Publicação do agente nos canais Teams e web | RF02 | Integral | Alta |
+| INT-02 | Copilot Studio ↔ API de PLN | Bidirecional | Conector personalizado (OpenAPI) ou requisição HTTP em tópico | RF02, RF03, RF04, RF07 | Integral | **Crítica** |
+| INT-03 | Leitura de listas do SharePoint | Entrada | Conector SharePoint via Power Automate ou ação do agente | RF04, RF06, RF07 | Integral | Alta |
+| INT-04 | Ingestão de documentos do SharePoint | Entrada | Fonte de conhecimento do Copilot Studio e/ou indexação própria pelo Pilar 1 | RF04 | Integral | Alta |
+| INT-05 | Escrita e atualização em listas | Saída | Fluxo do Power Automate acionado como ação, com confirmação do usuário | RF05 | Integral | Média |
+| INT-06 | Consumo e encaminhamento de Power BI | Entrada | Link contextual para relatório; consumo de dados a validar | RF04, RF08 | Parcial | Média |
+| INT-07 | Alertas proativos | Saída | Fluxo agendado no Power Automate com notificação no Teams | RF06 | Integral | Média |
+| INT-08 | Identidade e permissões | Transversal | Autenticação Entra ID no Copilot Studio; perfil propagado ao Pilar 1 | RF01 | Parcial | Alta |
+| INT-09 | Geração de artefatos Office | Saída | Fluxo do Power Automate com preenchimento de modelo | RF08 | Parcial | Média |
+| INT-10 | Trilha de auditoria das interações | Saída | Logs de execução dos fluxos e registro próprio da API de PLN | RF03, RF05 | Parcial | Média |
+
+#### 5.5.5.2 Fichas de integração
+
+##### INT-01 — Canal conversacional ↔ Copilot Studio
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Disponibilizar ao usuário o ponto de entrada em linguagem natural, no ambiente onde ele já trabalha |
+| **Direção** | Bidirecional (usuário → agente → usuário) |
+| **Mecanismo** | Publicação do agente do Copilot Studio nos canais Microsoft Teams e site de demonstração |
+| **Dados trafegados** | Texto da solicitação, identificador do usuário, resposta composta pelo agente |
+| **Pré-requisitos** | Ambiente do Power Platform disponível à equipe; permissão de publicação do agente no canal Teams do *tenant* utilizado |
+| **Tratamento no MVP** | O canal Teams depende de autorização no *tenant* do Metrô; caso indisponível, a demonstração ocorre pelo canal web do próprio Copilot Studio |
+
+##### INT-02 — Copilot Studio ↔ API de PLN (Pilar 1)
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Delegar ao núcleo de PLN construído pela equipe a classificação da intenção, a extração de entidades, a busca semântica e a análise comparativa, mantendo o Copilot Studio como orquestrador |
+| **Direção** | Bidirecional (Copilot Studio → API → Copilot Studio) |
+| **Mecanismo** | Conector personalizado gerado a partir da especificação OpenAPI da API, ou ação de requisição HTTP dentro de um tópico. A API expõe um contrato estável: recebe o enunciado do usuário e o contexto de perfil; devolve intenção classificada, entidades extraídas, grau de confiança e, quando aplicável, a resposta estruturada com as referências das fontes |
+| **Dados trafegados** | Enunciado em linguagem natural, perfil e permissões do solicitante, resposta estruturada em JSON |
+| **Pré-requisitos** | API publicada em endereço HTTPS acessível pelo ambiente do Power Platform; conectores personalizados podem exigir licenciamento *premium* e liberação nas políticas de DLP do *tenant* |
+| **Tratamento no MVP** | A API é hospedada fora do perímetro do Metrô e trafega **exclusivamente dados sintéticos**. Nenhum documento ou dado real do portfólio pode transitar por esse caminho enquanto a hospedagem não estiver homologada |
+| **Criticidade** | **É o ponto de integração mais crítico do projeto**: sua inviabilização isola o núcleo do módulo da camada de orquestração |
+
+##### INT-03 — Leitura de listas do SharePoint
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Recuperar os dados estruturados do portfólio — projetos, status, cronograma, marcos, riscos, avanço e indicadores — que sustentam as respostas do agente |
+| **Direção** | Entrada (SharePoint → agente) |
+| **Mecanismo** | Conector SharePoint acionado por fluxo do Power Automate (operações de obtenção de itens com filtro) ou consulta direta como ação do agente. Alternativa a avaliar: Microsoft Graph API, quando for necessário acesso mais granular |
+| **Dados trafegados** | Campos das listas de projetos e subportfólios, filtrados pelo escopo autorizado ao usuário |
+| **Pré-requisitos** | Réplica das listas do portfólio em site de desenvolvimento, com estrutura de colunas equivalente à do ambiente real; permissão de leitura para a conta de serviço ou para o usuário autenticado |
+| **Tratamento no MVP** | Listas recriadas pela equipe com dados sintéticos, espelhando a estrutura informada pelo parceiro. **A fidelidade dessa estrutura é condição para a validade da avaliação do pipeline** |
+
+##### INT-04 — Ingestão de documentos do SharePoint
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Permitir que o agente responda a partir do conteúdo dos documentos de projeto — termos de abertura, atas, planos, relatórios e normativos —, que hoje exigem leitura e consolidação manuais |
+| **Direção** | Entrada (SharePoint → agente) |
+| **Mecanismo** | Duas rotas complementares: (a) biblioteca de documentos registrada como **fonte de conhecimento** do agente no Copilot Studio; (b) **indexação própria pelo Pilar 1**, com extração de texto, segmentação e busca semântica sobre representações vetoriais |
+| **Dados trafegados** | Conteúdo textual dos documentos e seus metadados (projeto, tipo, data, versão) |
+| **Pré-requisitos** | Biblioteca acessível ao agente; formatos suportados verificados; para a rota (b), pipeline de extração e armazenamento do índice |
+| **Tratamento no MVP** | Prioriza-se a rota (b), por ser a que exercita o aprendizado de PLN previsto no módulo e por manter o comportamento auditável e independente de plataforma. A rota (a) é avaliada como comparação de desempenho e como caminho de sustentação pela equipe interna |
+
+##### INT-05 — Escrita e atualização em listas do SharePoint
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Apoiar a entrada e a atualização conversacional de dados dos projetos (RF05), reduzindo o preenchimento manual apontado como dor no TAPI |
+| **Direção** | Saída (agente → SharePoint) |
+| **Mecanismo** | Fluxo do Power Automate acionado como ação do agente, executando criação ou atualização de item. A operação só é disparada **após confirmação explícita do usuário**, e o fluxo registra origem, autoria e momento da alteração |
+| **Dados trafegados** | Campos a atualizar, identificador do item, identidade do solicitante |
+| **Pré-requisitos** | Permissão de escrita na lista; regras de validação de campo definidas; desenho do comportamento em caso de falha parcial da atualização |
+| **Tratamento no MVP** | Escrita restrita ao site de desenvolvimento com dados sintéticos. Em hipótese alguma o MVP escreve em listas do portfólio real |
+
+##### INT-06 — Consumo e encaminhamento de Power BI
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Reaproveitar os indicadores já consolidados no Power BI, evitando que o agente recalcule métricas que a organização considera oficiais, e encaminhar o usuário ao relatório correspondente quando a resposta exigir visualização |
+| **Direção** | Entrada (dados) e saída (encaminhamento) |
+| **Mecanismo** | Composição de link contextual para o relatório pertinente à pergunta. Alternativas a validar conforme o ambiente disponibilizado: consumo do conjunto de dados via API REST do Power BI, exportação programada de indicadores para uma lista intermediária ou uso dos recursos de Copilot do Power BI |
+| **Dados trafegados** | Identificadores de relatório e de página; se implementado o consumo, valores agregados de indicadores |
+| **Pré-requisitos** | Acesso a um espaço de trabalho do Power BI; **os recursos de Copilot do Power BI dependem de capacidade dedicada (Fabric/Premium), cuja disponibilidade no ambiente cedido à equipe precisa ser confirmada** |
+| **Tratamento no MVP** | Trata-se da integração com maior probabilidade de ficar restrita ao encaminhamento por link, dado o custo de capacidade envolvido. A limitação, se confirmada, deve ser registrada nos entregáveis de implantação |
+
+##### INT-07 — Alertas proativos e acompanhamento de pendências
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Atender ao RF06 e à dor de "cobrança manual" relatada pela persona de liderança, sinalizando dados ausentes, desatualizados ou prazos próximos sem exigir que o usuário pergunte |
+| **Direção** | Saída (agente → usuário) |
+| **Mecanismo** | Fluxo agendado no Power Automate que percorre as listas, aplica as regras de pendência definidas com o PMO e emite notificação no Teams ou por e-mail para o responsável |
+| **Dados trafegados** | Itens pendentes, responsável, prazo, mensagem de alerta |
+| **Pré-requisitos** | Regras de pendência acordadas com o parceiro; política de frequência e de destinatários; mecanismo para evitar excesso de notificações |
+| **Tratamento no MVP** | Demonstrado sobre a base sintética, com uma ou duas regras representativas. Os critérios e limites da atuação proativa ainda dependem de validação com o parceiro |
+
+##### INT-08 — Identidade, perfil e permissões
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Sustentar o RF01 e o comportamento diferenciado por persona: o mesmo agente deve responder com escopo e profundidade distintos para Diretoria, liderança e equipe de projeto, aplicando a verificação **antes** da recuperação e da apresentação dos dados |
+| **Direção** | Transversal |
+| **Mecanismo** | Autenticação do usuário no Copilot Studio via Entra ID, com propagação do identificador e do perfil às chamadas subsequentes (INT-02, INT-03, INT-05). No SharePoint, a autorização efetiva depende ainda das permissões do site e das listas |
+| **Dados trafegados** | Identificador do usuário, grupos e papéis, escopo de projetos autorizados |
+| **Pré-requisitos** | Registro de aplicação no Entra ID; definição, junto ao PMO, do mapeamento entre grupos corporativos e perfis do agente; decisão sobre acesso em nome do usuário *versus* conta de serviço |
+| **Tratamento no MVP** | Modelo de perfis simulado sobre a base sintética — usuários fictícios associados aos três perfis das personas —, ficando a autenticação efetiva via Entra ID condicionada ao ambiente disponibilizado pela TI do Metrô |
+
+##### INT-09 — Geração de artefatos Office
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Produzir as prévias de relatório de status, apresentação mensal para a diretoria e relatório de encerramento previstas no RF08, nos formatos já usados pelo PMO |
+| **Direção** | Saída (agente → documento) |
+| **Mecanismo** | Fluxo do Power Automate que preenche um modelo (Word ou PowerPoint) com os dados consolidados e o deposita em biblioteca do SharePoint, devolvendo o link ao usuário |
+| **Dados trafegados** | Conteúdo consolidado do relatório, identificação do projeto e do período |
+| **Pré-requisitos** | Modelos de documento fornecidos ou aprovados pelo PMO; **as ações de preenchimento de modelo podem exigir licenciamento *premium*, a confirmar** |
+| **Tratamento no MVP** | Escopo reduzido a um tipo de artefato representativo, sobre dados sintéticos, com a saída marcada como prévia sujeita a revisão humana |
+
+##### INT-10 — Trilha de auditoria das interações
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Sustentar o benefício de rastreabilidade e o suporte ao não repúdio exigidos no TAPI, registrando consultas, intenções classificadas, recusas por fora de escopo e alterações efetivadas |
+| **Direção** | Saída (componentes → repositório de log) |
+| **Mecanismo** | Dois níveis complementares: histórico de execução dos fluxos do Power Automate; e registro próprio da API de PLN, com o enunciado, a intenção atribuída, o grau de confiança e as fontes utilizadas na resposta |
+| **Dados trafegados** | Enunciado, identificador do usuário, intenção, decisão de autorização, referências das fontes, carimbo de tempo |
+| **Pré-requisitos** | Política de retenção definida; cuidado para que o próprio log não se torne um repositório de dados sensíveis fora do perímetro homologado |
+| **Tratamento no MVP** | Implementado no nível da API de PLN, que é o componente sob controle da equipe; o registro dos fluxos é documentado como orientação de implantação |
+
+### 5.5.6 Rastreabilidade: requisitos funcionais × integrações
+
+| RF | Descrição resumida | Integrações envolvidas |
+|---|---|---|
+| RF01 | Controle de acesso, permissões e perfil | INT-08, INT-03, INT-10 |
+| RF02 | Interação em linguagem natural por texto e voz | INT-01, INT-02 |
+| RF03 | Identificação e controle de intenções | INT-02, INT-10 |
+| RF04 | Consulta e análise de informações dos projetos | INT-02, INT-03, INT-04, INT-06 |
+| RF05 | Apoio à criação e atualização de projetos | INT-05, INT-08, INT-10 |
+| RF06 | Alertas e apoio proativo a pendências | INT-07, INT-03 |
+| RF07 | Análise comparativa do portfólio | INT-02, INT-03, INT-04 |
+| RF08 | Geração de relatórios e informações gerenciais | INT-09, INT-06, INT-03 |
+
+Todos os requisitos funcionais possuem cobertura de integração. Observa-se que **INT-02 e INT-03 concentram a maior parte das dependências** — o que os torna prioritários tanto na ordem de implementação quanto no acompanhamento de risco.
+
+### 5.5.7 Pré-requisitos de ambiente, licenciamento e acessos
+
+A tabela a seguir consolida o que precisa ser obtido junto à equipe de TI/TAA do Metrô ou provido pelo Inteli, e serve como pauta objetiva para as interações com o parceiro. A premissa do TAPI de que "a equipe de TI do Metrô deverá fornecer os recursos e ambiente necessários" torna esse levantamento uma dependência de cronograma, não apenas técnica.
+
+| # | Item | Necessário para | Responsável | Status |
+|---|---|---|---|---|
+| P01 | Ambiente do Power Platform com Copilot Studio acessível à equipe | INT-01, INT-02, INT-05 | TI do Metrô / Inteli | A confirmar |
+| P02 | Confirmação do licenciamento disponível, incluindo conectores *premium* e limites de mensagens e créditos | INT-02, INT-05, INT-09 | TI do Metrô | A confirmar |
+| P03 | Políticas de DLP vigentes no ambiente e possibilidade de liberar um conector personalizado | INT-02 | TI do Metrô | A confirmar |
+| P04 | Site do SharePoint de desenvolvimento, com permissão de leitura e escrita | INT-03, INT-04, INT-05 | TI do Metrô | A confirmar |
+| P05 | Estrutura das listas do portfólio: nomes de colunas, tipos e domínios de valores | INT-03, e representatividade dos dados sintéticos | PMO | A confirmar |
+| P06 | Amostras anonimizadas ou modelos dos documentos de projeto | INT-04 | PMO | A confirmar |
+| P07 | Acesso a espaço de trabalho do Power BI e confirmação de capacidade dedicada | INT-06 | TI do Metrô | A confirmar |
+| P08 | Modelos (Word/PowerPoint) dos relatórios e da apresentação mensal | INT-09 | PMO | A confirmar |
+| P09 | Mapeamento entre grupos do Entra ID e perfis de acesso do agente | INT-08 | PMO / TI do Metrô | A confirmar |
+| P10 | Hospedagem da API de PLN e definição do que é aceitável para dados sintéticos | INT-02 | Equipe / TI do Metrô | A definir |
+
+### 5.5.8 Estratégia de desacoplamento
+
+O TAPI estabelece como premissa que a plataforma de portfólio pode ser modificada ou substituída no futuro — citando explicitamente o Dynamics Project Operations — e que a IA deve permanecer funcional nesse cenário. Três decisões de projeto respondem a essa premissa:
+
+1. **Contrato estável na fronteira do Pilar 1.** O núcleo de PLN não conhece SharePoint, Power BI nem Copilot Studio: recebe um enunciado com contexto de perfil e devolve intenção, entidades e resposta estruturada. Trocar a plataforma de portfólio afeta as integrações INT-03 a INT-07, não o núcleo.
+
+2. **Acesso a dados isolado em uma camada de fluxos.** As operações de leitura e escrita concentram-se em fluxos do Power Automate com finalidade única e bem delimitada. Substituir a fonte de dados implica reescrever esses fluxos, preservando o restante da solução.
+
+3. **Plano B explícito para a orquestração.** Caso o licenciamento do ambiente ou as políticas de DLP do *tenant* inviabilizem a chamada do Copilot Studio à API, o pipeline permanece demonstrável como API própria, e a integração ao Copilot Studio converte-se em guia de implantação para a equipe interna do Metrô — mantendo o benefício de sustentação e autonomia previsto no TAPI, ainda que com entrega adiada.
+
+### 5.5.9 Pontos em aberto para validação com o parceiro
+
+| # | Questão | Impacto se não respondida | Integração afetada |
+|---|---|---|---|
+| Q01 | Qual ambiente do Power Platform será disponibilizado e com qual licenciamento? | Bloqueia o desenho definitivo de INT-02, INT-05 e INT-09 | INT-02, INT-05, INT-09 |
+| Q02 | As políticas de DLP permitem um conector personalizado apontando para um endpoint externo? | Determina se o núcleo de PLN pode ser orquestrado pelo Copilot Studio no MVP | INT-02 |
+| Q03 | Qual a estrutura das listas do portfólio — colunas, tipos e domínios de valores? | Compromete a representatividade da base sintética e a validade da avaliação do pipeline | INT-03 |
+| Q04 | Quais tipos, formatos e volumes de documento predominam nas bibliotecas dos projetos? | Define a estratégia de ingestão e os limites de INT-04 | INT-04 |
+| Q05 | Como os perfis de acesso são hoje representados: grupos do Entra ID, permissões do site ou campos das listas? | Define como o RF01 será implementado e verificado | INT-08 |
+| Q06 | O agente pode escrever em listas, ou deve limitar-se a propor a alteração ao usuário? | Altera o escopo de INT-05 e o desenho do RF05 | INT-05 |
+| Q07 | Quais regras de pendência e qual frequência de alerta o PMO considera adequadas? | Define o comportamento proativo do RF06 e evita excesso de notificações | INT-07 |
+| Q08 | Há capacidade dedicada de Power BI disponível para o ambiente do projeto? | Determina se INT-06 vai além do encaminhamento por link | INT-06 |
+| Q09 | Quais requisitos de retenção e auditoria se aplicam aos registros de interação? | Define o desenho de INT-10 e a aderência ao requisito de não repúdio | INT-10 |
+
+Cada questão em aberto foi tratada, nesta seção, por uma hipótese registrada e uma alternativa de contorno, de modo que o desenvolvimento não fique bloqueado enquanto as respostas não chegam.
+
+## 5.6 Visão preliminar da arquitetura em blocos conectados
+
+### 5.6.1 Objetivo
 
 Esta seção apresenta o esboço preliminar da solução técnica do agente de IA para gestão do portfólio de projetos do Metrô de São Paulo, representado como um conjunto de blocos conectados. O objetivo é oferecer, ainda em nível de visão inicial, um entendimento comum sobre quais componentes compõem a solução, qual a responsabilidade de cada um e como eles se comunicam.
 
@@ -856,7 +1407,7 @@ A representação está organizada em camadas: interface, identidade e controle 
 - **Pilar 1 (fronteira básica):** pipeline de PLN construído e avaliado pela própria equipe, responsável por interpretar a linguagem natural, classificar as intenções e aplicar o controle de escopo e confidencialidade.
 - **Pilar 2 (avanço da fronteira básica):** integração com as ferramentas homologadas do Metrô (Copilot Studio, Power Platform, Power BI e SharePoint), responsável por orquestrar o agente e acessar os dados e serviços do portfólio.
 
-### 5.5.2 Princípios que orientaram o desenho
+### 5.6.2 Princípios que orientaram o desenho
 
 A separação em blocos seguiu cinco princípios derivados dos requisitos e das restrições do projeto:
 
@@ -866,7 +1417,7 @@ A separação em blocos seguiu cinco princípios derivados dos requisitos e das 
 4. **Substituibilidade da fonte de dados.** A camada de acesso a dados isola o restante da solução da plataforma de portfólio, atendendo à premissa do TAPI de que a plataforma atual pode ser modificada ou substituída no futuro.
 5. **Rastreabilidade transversal.** Toda interação, decisão de roteamento e alteração de dado gera registro, atendendo ao RNF02.
 
-### 5.5.3 Diagrama de blocos conectados
+### 5.6.3 Diagrama de blocos conectados
 
 ```mermaid
 flowchart TB
@@ -980,9 +1531,9 @@ flowchart TB
 
 A correspondência com a Figura 01 do TAPI é direta: a camada 3 equivale à caixa "Processo PLN", as camadas 4 e 5 equivalem ao núcleo de transação, consulta, alertas e IA, e a camada 6 equivale ao bloco "Portfólio de Projetos". No MVP, a camada 6 é atendida por dados sintéticos, e o bloco F5 permanece previsto como evolução do tipo "Ir Além".
 
-### 5.5.4 Descrição dos blocos por camada
+### 5.6.4 Descrição dos blocos por camada
 
-#### 5.5.4.1 Camada de Interface e Canais
+#### 5.6.4.1 Camada de Interface e Canais
 
 Responsável por receber a solicitação do usuário e devolver a resposta no formato adequado ao seu perfil. É a única camada exposta diretamente ao usuário final.
 
@@ -993,7 +1544,7 @@ Responsável por receber a solicitação do usuário e devolver a resposta no fo
 | A3. Conversão de voz em texto | Transcreve o áudio capturado para texto antes de qualquer processamento pelo pipeline de PLN. | RF02 |
 | A4. Apresentação da resposta | Formata a resposta conforme o perfil do usuário: síntese executiva para a Diretoria, detalhamento gerencial para a Liderança e orientação direta para a Equipe de Projeto. | RF01, RF08, RNF05 |
 
-#### 5.5.4.2 Camada de Identidade e Controle de Acesso
+#### 5.6.4.2 Camada de Identidade e Controle de Acesso
 
 Responsável por estabelecer quem é o usuário e o que ele pode ver e fazer, antes de qualquer recuperação de dado.
 
@@ -1003,7 +1554,7 @@ Responsável por estabelecer quem é o usuário e o que ele pode ver e fazer, an
 | B2. Perfil e permissões | Resolve o perfil do usuário e o conjunto de projetos e ações autorizadas, que passa a acompanhar a solicitação em todas as camadas seguintes. | RF01, RNF01, RNF05 |
 | B3. Contexto de sessão | Mantém o histórico da conversa, permitindo interações de múltiplos passos, como a criação de um projeto realizada por etapas. | RF05 |
 
-#### 5.5.4.3 Núcleo de PLN (Pilar 1)
+#### 5.6.4.3 Núcleo de PLN (Pilar 1)
 
 O principal entregável técnico do módulo. Recebe texto e o contexto de permissões e devolve uma intenção classificada, as entidades extraídas e uma resposta estruturada.
 
@@ -1017,7 +1568,7 @@ O principal entregável técnico do módulo. Recebe texto e o contexto de permis
 | C5. Busca semântica em documentos | Recupera os trechos de documentos de projeto relevantes para a solicitação, sustentando as respostas com base em conteúdo existente. | RF04, RF07 |
 | C6. Montagem da resposta estruturada | Consolida os dados recuperados em uma resposta, preservando a referência da fonte utilizada. Também produz as respostas de recusa orientativa. | RF04, RNF02 |
 
-#### 5.5.4.4 Camada de Lógica de Negócio
+#### 5.6.4.4 Camada de Lógica de Negócio
 
 Traduz a intenção classificada em uma operação sobre o portfólio. É a camada que concentra as regras do domínio de gestão de projetos.
 
@@ -1031,7 +1582,7 @@ Traduz a intenção classificada em uma operação sobre o portfólio. É a cama
 | D6. Serviço de relatórios | Gera prévias de relatório de status, apresentação para a diretoria e relatório de encerramento. | RF08 |
 | D7. Registro de auditoria | Registra a solicitação, a intenção classificada, a decisão de autorização, a fonte consultada e a alteração efetivada, com autor, origem e momento. | RNF02 |
 
-#### 5.5.4.5 Camada de Integração Microsoft (Pilar 2)
+#### 5.6.4.5 Camada de Integração Microsoft (Pilar 2)
 
 Conecta a lógica de negócio ao ambiente homologado do Metrô. É a camada que garante que a solução seja operada, mantida e evoluída pela própria equipe interna.
 
@@ -1042,7 +1593,7 @@ Conecta a lógica de negócio ao ambiente homologado do Metrô. É a camada que 
 | E3. Serviços de IA homologados | Apoia tarefas de compreensão e geração que ultrapassam o pipeline básico, restritos a serviços aprovados pelos setores técnicos e de compliance. | RF07, RNF01 |
 | E4. Power BI | Fornece e apresenta indicadores consolidados do portfólio utilizados nas respostas e nas prévias gerenciais. | RF08 |
 
-#### 5.5.4.6 Camada de Acesso a Dados e Serviços
+#### 5.6.4.6 Camada de Acesso a Dados e Serviços
 
 Isola o restante da arquitetura das fontes de informação. Essa fronteira é o que permite trocar a plataforma de portfólio sem reescrever as camadas superiores.
 
@@ -1054,7 +1605,7 @@ Isola o restante da arquitetura das fontes de informação. Essa fronteira é o 
 | F4. Trilha de auditoria | Persiste os registros produzidos pelo bloco D7, incluindo solicitações recusadas. | MVP |
 | F5. SharePoint e Listas do portfólio | Fonte real de dados do portfólio do Metrô. | Ir Além |
 
-### 5.5.5 Fluxo de uma solicitação entre os blocos
+### 5.6.5 Fluxo de uma solicitação entre os blocos
 
 O percurso a seguir descreve o caminho completo de uma pergunta como "quais riscos do projeto 123XXX podem atrasar a entrega do próximo marco?".
 
@@ -1070,7 +1621,7 @@ O percurso a seguir descreve o caminho completo de uma pergunta como "quais risc
 
 O mesmo percurso se aplica às demais intenções, alterando apenas o serviço de negócio acionado no passo 6. Uma intenção de transação segue para D3 e inclui a etapa de confirmação da alteração pelo usuário antes da gravação.
 
-### 5.5.6 Cobertura dos requisitos pela arquitetura
+### 5.6.6 Cobertura dos requisitos pela arquitetura
 
 A tabela consolida quais blocos sustentam cada requisito, permitindo verificar se nenhum requisito ficou sem componente responsável.
 
@@ -1089,7 +1640,6 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 | RNF03. Precisão na classificação de intenções | C1, C2, C3 |
 | RNF04. Disponibilidade do agente | C0, E1 |
 | RNF05. Adequação da resposta ao perfil | B2, A4 |
-
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
@@ -1186,8 +1736,11 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 # Referências
 
-- TAPI do projeto: Agente de IA Portfólio de Projetos do Metrô, Módulo 7 de Engenharia de Software, Inteli, 2026.
-- Documentação oficial do Microsoft Copilot Studio. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
-- Documentação do Copilot no Power BI. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
-- [Inserir referências bibliográficas ou links relevantes]
-- [Inserir referências técnicas]
+- INTELI. *TAPI — Agente de IA para Gestão do Portfólio de Projetos do Metrô*. Módulo 7 de Engenharia de Software, 2026.
+- MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
+- MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
+- MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/
+- MICROSOFT. *Criar um conector personalizado a partir de uma definição OpenAPI*. Disponível em: https://learn.microsoft.com/pt-br/connectors/custom-connectors/define-openapi-definition
+- MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
+- MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
+- DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot
