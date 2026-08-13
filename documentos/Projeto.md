@@ -780,6 +780,184 @@ As histórias de usuário foram derivadas das personas e dos requisitos funciona
 | US07 | Roberto Nogueira — Diretor | **Como Roberto Nogueira, eu quero comparar projetos e subportfólios, para identificar diferenças, relações, riscos e indicadores que exijam atenção estratégica.** | RF07 | Desejável | O sistema permite realizar análises entre projetos do portfólio.<br>A análise apresenta relações ou diferenças relevantes com base nas informações disponíveis.<br>A análise pode considerar riscos com impacto em outros projetos, avanço, desempenho e demais indicadores disponíveis. |
 | US08 | Roberto Nogueira — Diretor | **Como Roberto Nogueira, eu quero obter prévias de relatórios e materiais gerenciais com visão executiva, para acompanhar o portfólio e apoiar a tomada de decisão.** | RF08 | Desejável | O sistema gera prévias a partir das informações disponíveis nos projetos.<br>As prévias contemplam os materiais gerenciais previstos no requisito: relatório de status, apresentação periódica para a diretoria ou relatório de encerramento.<br>O nível de detalhamento do material é adequado ao perfil do usuário. |
 
+### 3.1.2 Modelagem estática — Diagrama de classes
+
+O diagrama de classes a seguir apresenta a modelagem estática e conceitual do domínio necessário para atender aos requisitos funcionais e às User Stories da Sprint 1. Seu propósito é representar os principais conceitos do agente de IA e as relações entre eles, sem antecipar decisões de arquitetura, persistência ou integração que serão refinadas na etapa de projeto técnico. Por esse motivo, não são representados componentes como controladores, serviços, APIs, bancos de dados, Copilot Studio ou SharePoint.
+
+As associações foram mantidas sem multiplicidades quando os requisitos não determinam limites mínimos ou máximos entre as entidades. Da mesma forma, foram utilizadas associações simples, pois os artefatos atuais não estabelecem dependências de ciclo de vida que justifiquem agregação ou composição. Os atributos apresentados são aqueles necessários ou diretamente úteis à compreensão dos RFs; identificadores técnicos, estados não definidos e enumerações ainda não validadas foram deixados para refinamento posterior.
+
+```mermaid
+classDiagram
+    class Usuario {
+        nome
+        perfil
+    }
+
+    class Portfolio {
+        nome
+    }
+
+    class Subportfolio {
+        nome
+    }
+
+    class Projeto {
+        nome
+        status
+        avanco
+    }
+
+    class Solicitacao {
+        conteudo
+        tipoEntrada: TipoEntrada
+    }
+
+    class TipoEntrada {
+        <<enumeration>>
+        TEXTO
+        VOZ
+    }
+
+    class Classificacao
+
+    class Intencao {
+        nome
+    }
+
+    class Resposta {
+        conteudo
+    }
+
+    class Documento {
+        titulo
+        referencia
+    }
+
+    class Cronograma
+
+    class Marco {
+        nome
+    }
+
+    class Entrega {
+        nome
+    }
+
+    class Risco {
+        descricao
+    }
+
+    class Problema {
+        descricao
+    }
+
+    class AlteracaoProjeto {
+        origem
+        momento
+    }
+
+    class Pendencia {
+        descricao
+    }
+
+    class Alerta {
+        mensagem
+    }
+
+    class PreviaMaterialGerencial {
+        descricao
+    }
+
+    Usuario -- Projeto : tem acesso autorizado
+    Usuario -- Solicitacao : realiza
+    Solicitacao -- Classificacao : recebe
+    Classificacao -- Intencao : identifica
+    Solicitacao -- Resposta : gera
+    Resposta -- Documento : referencia
+    Resposta -- Projeto : utiliza informações de
+
+    Portfolio -- Subportfolio : organiza
+    Subportfolio -- Projeto : agrupa
+
+    Projeto -- Documento : possui
+    Projeto -- Cronograma : possui
+    Cronograma -- Marco : organiza
+    Projeto -- Entrega : possui
+    Projeto -- Risco : possui
+    Projeto -- Problema : possui
+
+    Projeto -- AlteracaoProjeto : recebe
+    Usuario -- AlteracaoProjeto : realiza
+
+    Projeto -- Pendencia : apresenta
+    Pendencia -- Usuario : possui responsável
+    Pendencia -- Alerta : origina
+    Usuario -- Alerta : recebe
+
+    PreviaMaterialGerencial -- Projeto : utiliza informações de
+```
+
+*Figura X — Diagrama de classes conceitual do domínio do agente.*
+
+#### 3.1.2.1 Classes do domínio
+
+| Classe | Responsabilidade no domínio | Origem principal |
+|---|---|---|
+| `Usuario` | Representar quem interage com o agente, considerando o perfil associado e os projetos para os quais possui acesso autorizado. | RF01, RF02, RF05 e RF06 |
+| `Portfolio` | Representar o conjunto de iniciativas sobre o qual são realizadas consultas e produzidas informações gerenciais. | RF04, RF07 e RF08 |
+| `Subportfolio` | Representar um agrupamento de projetos dentro do portfólio estratégico, considerado nas comparações solicitadas pelo perfil de Diretoria. | US07 e materiais do parceiro |
+| `Projeto` | Centralizar as informações de acompanhamento, como status e avanço, e relacionar os demais conceitos do ciclo de vida do projeto. | RF04 a RF08 |
+| `Solicitacao` | Representar a entrada em linguagem natural realizada pelo usuário, por texto ou voz. | RF02 e RF03 |
+| `TipoEntrada` | Restringir a forma de entrada aos canais explicitamente previstos: texto e voz. | RF02 e US02 |
+| `Classificacao` | Representar o resultado da interpretação de uma solicitação. | RF03 e US03 |
+| `Intencao` | Representar uma intenção reconhecida no catálogo de interações do agente. | RF03 e US03 |
+| `Resposta` | Representar o retorno produzido para uma solicitação, cujo conteúdo deve ser adequado ao perfil e às permissões do usuário. | RF01, RF03, RF04, RF07 e RF08 |
+| `Documento` | Representar documentos relacionados aos projetos e as referências utilizadas nas respostas, quando disponíveis. | RF04 e RF05 |
+| `Cronograma` | Representar as informações de planejamento temporal relacionadas ao projeto. | RF04 e RF05 |
+| `Marco` | Representar os marcos acompanhados no cronograma. | RF04 e RF05 |
+| `Entrega` | Representar as entregas previstas no ciclo de vida do projeto. | RF05 |
+| `Risco` | Representar riscos consultados, atualizados ou considerados nas análises do portfólio. | RF04, RF05 e RF07 |
+| `Problema` | Representar problemas registrados e consultados no acompanhamento do projeto. | RF04 e RF05 |
+| `AlteracaoProjeto` | Representar uma mudança nas informações do projeto, preservando sua origem e seu momento e relacionando sua autoria ao usuário. | RF05 e US05 |
+| `Pendencia` | Representar uma informação ausente, inconsistente ou ainda pendente de complementação ou correção. | RF06 e US06 |
+| `Alerta` | Representar o aviso ou contato proativo originado por uma pendência e direcionado ao usuário responsável. | RF06 e US06 |
+| `PreviaMaterialGerencial` | Representar a prévia de um relatório ou material gerencial produzida com informações dos projetos. | RF08 e US08 |
+
+#### 3.1.2.2 Relações e decisões de modelagem
+
+O acesso autorizado entre `Usuario` e `Projeto` representa a regra funcional de restrição das informações, e não um acesso já realizado. Os valores formais de `perfil`, as permissões correspondentes e as multiplicidades dessa associação deverão ser refinados após o recebimento do documento de níveis de acesso informado pelo parceiro.
+
+Uma `Solicitacao` é realizada por um usuário e pode ser submetida à `Classificacao`, que busca identificar uma `Intencao`. A própria `Solicitacao` representa a interação registrada, inclusive quando nenhuma intenção do catálogo é reconhecida. Nesse caso, o agente deve gerar uma `Resposta` orientativa, mantendo o registro previsto no RF03 para análise futura. A conversão de voz em texto não foi transformada em classe, pois corresponde a um comportamento técnico a ser detalhado na arquitetura.
+
+`TipoEntrada` foi mantido como enumeração porque RF02 e US02 estabelecem explicitamente um conjunto conhecido de formas de entrada: texto e voz. Diferentemente de outras classificações ainda abertas no domínio, esses valores estão delimitados pelos requisitos desta etapa.
+
+A `Resposta` pode utilizar informações de projetos e referenciar documentos. A adequação de seu conteúdo ao perfil constitui uma regra funcional, não um atributo persistente denominado nível de detalhamento. Consultas comparativas também são tratadas como um comportamento que produz respostas com base em mais de um projeto ou subportfólio, sem criar uma entidade persistente de análise comparativa.
+
+`Cronograma`, `Marco`, `Documento`, `Entrega`, `Risco` e `Problema` foram associados ao projeto sem composição. Os RFs confirmam a relação entre esses conceitos, mas não estabelecem dependência de ciclo de vida ou propagação de exclusão que justifique uma relação mais forte nesta etapa.
+
+`AlteracaoProjeto` representa especificamente a mudança de informações prevista no RF05. Sua associação com `Usuario` expressa a autoria, enquanto `origem` e `momento` atendem à rastreabilidade exigida para a alteração. A confirmação anterior à efetivação permanece como regra funcional quando aplicável, pois os estados possíveis desse processo ainda não foram definidos. Essa classe não substitui um eventual mecanismo geral de auditoria das interações do agente.
+
+As condições de informação ausente, inconsistente ou pendente não foram consolidadas como enumeração, pois os requisitos não afirmam que formem categorias fechadas e mutuamente exclusivas. A `Pendencia` pode originar um `Alerta`, mas o canal, a frequência e o número de responsáveis ainda dependem de refinamento.
+
+Por fim, `PreviaMaterialGerencial` abrange os relatórios de status, as apresentações periódicas para a Diretoria e os relatórios de encerramento citados no RF08. Esses artefatos não foram reduzidos a uma enumeração de relatórios, pois uma apresentação constitui um material gerencial de natureza distinta.
+
+#### 3.1.2.3 Rastreabilidade entre RFs, User Stories e modelo
+
+| RF | User Story | Classes e relações correspondentes |
+|---|---|---|
+| RF01 | US01 | `Usuario`, `Projeto` e a associação de acesso autorizado. |
+| RF02 | US02 | `Usuario`, `Solicitacao` e `TipoEntrada`. |
+| RF03 | US03 | `Solicitacao`, `Classificacao`, `Intencao` e `Resposta`. |
+| RF04 | US04 | `Projeto`, `Resposta`, `Documento`, `Cronograma`, `Marco`, `Risco` e `Problema`. |
+| RF05 | US05 | `Projeto`, `Documento`, `Cronograma`, `Marco`, `Entrega`, `Risco`, `Problema` e `AlteracaoProjeto`. |
+| RF06 | US06 | `Projeto`, `Pendencia`, `Usuario` e `Alerta`. |
+| RF07 | US07 | `Portfolio`, `Subportfolio`, `Projeto` e `Resposta`; a comparação é tratada como comportamento do agente. |
+| RF08 | US08 | `Portfolio`, `Projeto` e `PreviaMaterialGerencial`. |
+
+#### 3.1.2.4 Limitações e refinamentos futuros
+
+Esta modelagem utiliza as informações disponíveis na Sprint 1 e deverá ser revisada durante o projeto técnico e arquitetural. Permanecem pendentes de validação: os perfis e níveis formais de acesso; as multiplicidades entre usuários, portfólios, subportfólios e projetos; a estrutura do catálogo de intenções e sua associação às funcionalidades; os estados de confirmação das alterações; e os atributos detalhados de cronogramas, marcos, entregas, pendências, alertas e materiais gerenciais. Essas definições não foram antecipadas para evitar transformar hipóteses em regras consolidadas do domínio.
+
 ## 3.2 Requisitos Não Funcionais (RNFs)
 
 Os requisitos não funcionais abaixo foram derivados dos *business drivers* do projeto - especialmente a exigência de confidencialidade no tratamento de dados sensíveis do Metrô e a necessidade de confiabilidade na operação do agente - e formulados como histórias de usuário, de modo a manter coerência com os RFs já modelados.
