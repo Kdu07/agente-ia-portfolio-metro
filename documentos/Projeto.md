@@ -68,6 +68,7 @@
 - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
 - [5.4 Linguagens e Tecnologias Utilizadas](#54-linguagens-e-tecnologias-utilizadas)
 - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
+- [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
 - [7. Projeto Visual da Solução](#7-projeto-visual-da-solução)
 - [8. Desenvolvimento do Projeto](#8-desenvolvimento-do-projeto)
@@ -1427,6 +1428,250 @@ O TAPI estabelece como premissa que a plataforma de portfólio pode ser modifica
 
 Cada questão em aberto foi tratada, nesta seção, por uma hipótese registrada e uma alternativa de contorno, de modo que o desenvolvimento não fique bloqueado enquanto as respostas não chegam.
 
+## 5.6 Visão preliminar da arquitetura em blocos conectados
+
+### 5.6.1 Objetivo
+
+Esta seção apresenta o esboço preliminar da solução técnica do agente de IA para gestão do portfólio de projetos do Metrô de São Paulo, representado como um conjunto de blocos conectados. O objetivo é oferecer, ainda em nível de visão inicial, um entendimento comum sobre quais componentes compõem a solução, qual a responsabilidade de cada um e como eles se comunicam.
+
+A representação está organizada em camadas: interface, identidade e controle de acesso, núcleo de PLN, lógica de negócio, integração com o ecossistema Microsoft e acesso a dados e serviços. Essa organização decorre da arquitetura em dois pilares definida no TAPI e já registrada na seção 3.6.3 deste documento:
+
+- **Pilar 1 (fronteira básica):** pipeline de PLN construído e avaliado pela própria equipe, responsável por interpretar a linguagem natural, classificar as intenções e aplicar o controle de escopo e confidencialidade.
+- **Pilar 2 (avanço da fronteira básica):** integração com as ferramentas homologadas do Metrô (Copilot Studio, Power Platform, Power BI e SharePoint), responsável por orquestrar o agente e acessar os dados e serviços do portfólio.
+
+### 5.6.2 Princípios que orientaram o desenho
+
+A separação em blocos seguiu cinco princípios derivados dos requisitos e das restrições do projeto:
+
+1. **Separação entre interpretação e execução.** O bloco que entende a solicitação (PLN) é distinto do bloco que executa a ação sobre o portfólio. Isso permite evoluir a qualidade da classificação de intenções sem alterar os serviços de negócio, e vice-versa.
+2. **Controle de escopo antes do acesso ao dado.** Nenhuma consulta chega às fontes de dados sem passar pela verificação de intenção permitida e de permissão do usuário, atendendo ao RNF01 e ao RF01.
+3. **Desacoplamento do pipeline de PLN.** O Pilar 1 é exposto por uma interface de serviço própria, o que reduz a dependência de licenças e conectores do Copilot Studio e endereça o risco R02 registrado na matriz de riscos.
+4. **Substituibilidade da fonte de dados.** A camada de acesso a dados isola o restante da solução da plataforma de portfólio, atendendo à premissa do TAPI de que a plataforma atual pode ser modificada ou substituída no futuro.
+5. **Rastreabilidade transversal.** Toda interação, decisão de roteamento e alteração de dado gera registro, atendendo ao RNF02.
+
+### 5.6.3 Diagrama de blocos conectados
+
+```mermaid
+flowchart TB
+    U(["Usuário<br/>Diretoria, Liderança ou Equipe de Projeto"])
+
+    subgraph L1["1. Camada de Interface e Canais"]
+        direction LR
+        A1["Canal de texto<br/>chat corporativo"]
+        A2["Canal de voz<br/>captura de áudio"]
+        A3["Conversão de voz em texto"]
+        A4["Apresentação da resposta<br/>formatação por perfil"]
+    end
+
+    subgraph L2["2. Camada de Identidade e Controle de Acesso"]
+        direction LR
+        B1["Autenticação<br/>identidade corporativa"]
+        B2["Perfil e permissões"]
+        B3["Contexto de sessão<br/>e histórico da conversa"]
+    end
+
+    subgraph L3["3. Núcleo de PLN (Pilar 1)"]
+        direction TB
+        C0["Interface de serviço do pipeline"]
+        C1["Pré-processamento textual"]
+        C2["Classificador de intenções"]
+        C3["Extração de entidades"]
+        C4["Guarda de escopo e<br/>confidencialidade"]
+        C5["Busca semântica<br/>em documentos"]
+        C6["Montagem da<br/>resposta estruturada"]
+    end
+
+    subgraph L4["4. Camada de Lógica de Negócio"]
+        direction TB
+        D1["Roteador de intenções"]
+        D2["Serviço de consulta<br/>e análise"]
+        D3["Serviço de transação<br/>criação e atualização"]
+        D4["Serviço de alertas<br/>e pendências"]
+        D5["Serviço de análise<br/>comparativa"]
+        D6["Serviço de relatórios<br/>e prévias gerenciais"]
+        D7["Registro de auditoria"]
+    end
+
+    subgraph L5["5. Camada de Integração Microsoft (Pilar 2)"]
+        direction LR
+        E1["Copilot Studio<br/>orquestração do agente"]
+        E2["Power Automate<br/>fluxos e conectores"]
+        E3["Serviços de IA homologados"]
+        E4["Power BI"]
+    end
+
+    subgraph L6["6. Camada de Acesso a Dados e Serviços"]
+        direction LR
+        F1["Base de dados sintéticos<br/>projetos, marcos, riscos"]
+        F2["Índice vetorial<br/>de documentos"]
+        F3["Base de normativos"]
+        F4["Trilha de auditoria"]
+        F5["SharePoint e Listas<br/>portfólio real (Ir Além)"]
+    end
+
+    U --> A1
+    U --> A2
+    A2 --> A3
+    A1 --> B1
+    A3 --> B1
+    B1 --> B2
+    B2 --> B3
+    B3 --> C0
+
+    C0 --> C1 --> C2 --> C3 --> C4
+    C4 -->|"intenção fora do catálogo"| C6
+    C4 -->|"intenção permitida"| D1
+    C5 --> C6
+    D2 --> C5
+
+    D1 --> D2
+    D1 --> D3
+    D1 --> D4
+    D1 --> D5
+    D1 --> D6
+    D1 --> D7
+
+    D2 --> E1
+    D3 --> E2
+    D4 --> E2
+    D5 --> E3
+    D6 --> E4
+    D7 --> F4
+
+    E1 --> F1
+    E2 --> F1
+    E2 --> F5
+    E3 --> F2
+    E3 --> F3
+    E4 --> F1
+
+    F1 --> C6
+    F2 --> C6
+    F3 --> C6
+    C6 --> A4
+    A4 --> U
+
+    classDef pilar1 fill:#E8E2F4,stroke:#5B4B8A,color:#1F1B2E
+    classDef pilar2 fill:#FDF3D8,stroke:#B58B00,color:#2E2607
+    classDef base fill:#E4EEF7,stroke:#2E6DA4,color:#10222E
+    class C0,C1,C2,C3,C4,C5,C6 pilar1
+    class E1,E2,E3,E4 pilar2
+    class F1,F2,F3,F4,F5 base
+```
+
+*Figura X: Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
+
+A correspondência com a Figura 01 do TAPI é direta: a camada 3 equivale à caixa "Processo PLN", as camadas 4 e 5 equivalem ao núcleo de transação, consulta, alertas e IA, e a camada 6 equivale ao bloco "Portfólio de Projetos". No MVP, a camada 6 é atendida por dados sintéticos, e o bloco F5 permanece previsto como evolução do tipo "Ir Além".
+
+### 5.6.4 Descrição dos blocos por camada
+
+#### 5.6.4.1 Camada de Interface e Canais
+
+Responsável por receber a solicitação do usuário e devolver a resposta no formato adequado ao seu perfil. É a única camada exposta diretamente ao usuário final.
+
+| Bloco | Responsabilidade | Requisitos atendidos |
+|---|---|---|
+| A1. Canal de texto | Recebe solicitações escritas em linguagem natural pela superfície conversacional corporativa. | RF02 |
+| A2. Canal de voz | Captura o áudio da solicitação do usuário. Tratado como incremento, com retorno sempre possível ao canal de texto. | RF02 |
+| A3. Conversão de voz em texto | Transcreve o áudio capturado para texto antes de qualquer processamento pelo pipeline de PLN. | RF02 |
+| A4. Apresentação da resposta | Formata a resposta conforme o perfil do usuário: síntese executiva para a Diretoria, detalhamento gerencial para a Liderança e orientação direta para a Equipe de Projeto. | RF01, RF08, RNF05 |
+
+#### 5.6.4.2 Camada de Identidade e Controle de Acesso
+
+Responsável por estabelecer quem é o usuário e o que ele pode ver e fazer, antes de qualquer recuperação de dado.
+
+| Bloco | Responsabilidade | Requisitos atendidos |
+|---|---|---|
+| B1. Autenticação | Valida a identidade do usuário junto ao diretório corporativo do Metrô. | RF01, RNF01 |
+| B2. Perfil e permissões | Resolve o perfil do usuário e o conjunto de projetos e ações autorizadas, que passa a acompanhar a solicitação em todas as camadas seguintes. | RF01, RNF01, RNF05 |
+| B3. Contexto de sessão | Mantém o histórico da conversa, permitindo interações de múltiplos passos, como a criação de um projeto realizada por etapas. | RF05 |
+
+#### 5.6.4.3 Núcleo de PLN (Pilar 1)
+
+O principal entregável técnico do módulo. Recebe texto e o contexto de permissões e devolve uma intenção classificada, as entidades extraídas e uma resposta estruturada.
+
+| Bloco | Responsabilidade | Requisitos atendidos |
+|---|---|---|
+| C0. Interface de serviço do pipeline | Expõe o pipeline como serviço próprio, permitindo que ele seja consumido pelo Copilot Studio ou por outro orquestrador sem reescrita. | RNF01, RNF04 |
+| C1. Pré-processamento textual | Normaliza o texto recebido: limpeza, tokenização, tratamento de siglas, códigos de projeto e jargão do Metrô. | RF03, RNF03 |
+| C2. Classificador de intenções | Associa a solicitação a uma das intenções do catálogo definido (consulta, transação, alerta e demais categorias previstas na Figura 01 do TAPI). Meta de acurácia mínima de 85%, conforme o objetivo O5. | RF03, RNF03 |
+| C3. Extração de entidades | Identifica os parâmetros da solicitação: código ou nome do projeto, período, indicador, tipo de documento e demais atributos necessários à execução. | RF03, RF04 |
+| C4. Guarda de escopo e confidencialidade | Verifica se a intenção pertence ao catálogo permitido e se é compatível com as permissões do usuário. Solicitações genéricas ou fora do contexto de portfólio são recusadas de forma orientativa e registradas. | RF03, RNF01, RNF02 |
+| C5. Busca semântica em documentos | Recupera os trechos de documentos de projeto relevantes para a solicitação, sustentando as respostas com base em conteúdo existente. | RF04, RF07 |
+| C6. Montagem da resposta estruturada | Consolida os dados recuperados em uma resposta, preservando a referência da fonte utilizada. Também produz as respostas de recusa orientativa. | RF04, RNF02 |
+
+#### 5.6.4.4 Camada de Lógica de Negócio
+
+Traduz a intenção classificada em uma operação sobre o portfólio. É a camada que concentra as regras do domínio de gestão de projetos.
+
+| Bloco | Responsabilidade | Requisitos atendidos |
+|---|---|---|
+| D1. Roteador de intenções | Mapeia cada intenção do catálogo para o serviço de negócio correspondente, isolando o PLN do conhecimento sobre como cada operação é executada. | RF03 |
+| D2. Serviço de consulta e análise | Atende solicitações sobre avanço, cronograma, status, marcos, riscos, problemas e aderência a normativos de um projeto. | RF04 |
+| D3. Serviço de transação | Executa criação e atualização de informações de projeto, apresentando a alteração para confirmação antes de efetivá-la. | RF05 |
+| D4. Serviço de alertas e pendências | Identifica dados ausentes, inconsistentes ou pendentes e aciona a notificação do usuário responsável. | RF06 |
+| D5. Serviço de análise comparativa | Compara projetos e subportfólios, evidenciando diferenças, relações e riscos com impacto cruzado. | RF07 |
+| D6. Serviço de relatórios | Gera prévias de relatório de status, apresentação para a diretoria e relatório de encerramento. | RF08 |
+| D7. Registro de auditoria | Registra a solicitação, a intenção classificada, a decisão de autorização, a fonte consultada e a alteração efetivada, com autor, origem e momento. | RNF02 |
+
+#### 5.6.4.5 Camada de Integração Microsoft (Pilar 2)
+
+Conecta a lógica de negócio ao ambiente homologado do Metrô. É a camada que garante que a solução seja operada, mantida e evoluída pela própria equipe interna.
+
+| Bloco | Responsabilidade | Requisitos atendidos |
+|---|---|---|
+| E1. Copilot Studio | Orquestra o agente conversacional e concentra a superfície de interação dentro do ambiente já utilizado pelo PMO. | RF02, RNF04 |
+| E2. Power Automate | Executa os fluxos que leem e gravam informações nas fontes do portfólio e dispara as notificações proativas. | RF05, RF06 |
+| E3. Serviços de IA homologados | Apoia tarefas de compreensão e geração que ultrapassam o pipeline básico, restritos a serviços aprovados pelos setores técnicos e de compliance. | RF07, RNF01 |
+| E4. Power BI | Fornece e apresenta indicadores consolidados do portfólio utilizados nas respostas e nas prévias gerenciais. | RF08 |
+
+#### 5.6.4.6 Camada de Acesso a Dados e Serviços
+
+Isola o restante da arquitetura das fontes de informação. Essa fronteira é o que permite trocar a plataforma de portfólio sem reescrever as camadas superiores.
+
+| Bloco | Responsabilidade | Escopo |
+|---|---|---|
+| F1. Base de dados sintéticos | Reproduz a estrutura das listas do portfólio (projetos, marcos, riscos, cronograma, avanço) com dados sintéticos representativos. | MVP |
+| F2. Índice vetorial de documentos | Armazena as representações dos documentos de projeto utilizadas pela busca semântica. | MVP |
+| F3. Base de normativos | Reúne os normativos de gestão de portfólio consultados nas verificações de aderência. | MVP |
+| F4. Trilha de auditoria | Persiste os registros produzidos pelo bloco D7, incluindo solicitações recusadas. | MVP |
+| F5. SharePoint e Listas do portfólio | Fonte real de dados do portfólio do Metrô. | Ir Além |
+
+### 5.6.5 Fluxo de uma solicitação entre os blocos
+
+O percurso a seguir descreve o caminho completo de uma pergunta como "quais riscos do projeto 123XXX podem atrasar a entrega do próximo marco?".
+
+1. O usuário envia a solicitação por texto (A1) ou por voz (A2). No caso da voz, o áudio é transcrito em A3.
+2. A identidade é validada em B1 e o perfil e as permissões são resolvidos em B2. O contexto da conversa é recuperado em B3.
+3. O texto e o contexto de permissões são enviados ao pipeline pela interface de serviço C0.
+4. O texto é normalizado em C1, a intenção é classificada em C2 e as entidades (código do projeto, tipo de informação) são extraídas em C3.
+5. A guarda C4 verifica se a intenção pertence ao catálogo permitido e se é compatível com as permissões do usuário. Se não for, o fluxo segue direto para C6, que produz uma recusa orientativa, e o registro é gravado em D7.
+6. Sendo permitida, a intenção é encaminhada ao roteador D1, que aciona o serviço de consulta D2.
+7. O serviço D2 aciona a busca semântica C5 para recuperar os trechos relevantes dos documentos e solicita os dados estruturados por meio da camada de integração (E1 e E2), que os obtém das fontes F1 e F2.
+8. A resposta é consolidada em C6, com a referência das fontes utilizadas, e formatada em A4 conforme o perfil do usuário.
+9. Toda a interação é registrada em D7 e persistida em F4.
+
+O mesmo percurso se aplica às demais intenções, alterando apenas o serviço de negócio acionado no passo 6. Uma intenção de transação segue para D3 e inclui a etapa de confirmação da alteração pelo usuário antes da gravação.
+
+### 5.6.6 Cobertura dos requisitos pela arquitetura
+
+A tabela consolida quais blocos sustentam cada requisito, permitindo verificar se nenhum requisito ficou sem componente responsável.
+
+| Requisito | Blocos responsáveis |
+|---|---|
+| RF01. Controle de acesso, permissões e perfil | B1, B2, C4, A4 |
+| RF02. Interação em linguagem natural por texto e voz | A1, A2, A3, E1 |
+| RF03. Identificação e controle de intenções | C1, C2, C3, C4, D1 |
+| RF04. Consulta e análise de informações dos projetos | D2, C5, C6, E1, F1, F2 |
+| RF05. Apoio à criação e atualização de projetos | D3, B3, E2, D7 |
+| RF06. Identificação, alertas e apoio proativo a pendências | D4, E2, F1 |
+| RF07. Análise comparativa do portfólio | D5, C5, E3 |
+| RF08. Geração de relatórios e informações gerenciais | D6, E4, A4 |
+| RNF01. Confidencialidade dos dados | C0, C4, B2, E3, F1 |
+| RNF02. Rastreabilidade das alterações | D7, F4, C6 |
+| RNF03. Precisão na classificação de intenções | C1, C2, C3 |
+| RNF04. Disponibilidade do agente | C0, E1 |
+| RNF05. Adequação da resposta ao perfil | B2, A4 |
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
