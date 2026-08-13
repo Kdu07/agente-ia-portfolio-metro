@@ -101,7 +101,8 @@
   - [2.4 SLA de entregas](#24-sla-de-entregas)
   - [2.5 Gestão de issues e estimativas](#25-gestão-de-issues-e-estimativas)
   - [2.6 Fluxo e rastreabilidade](#26-fluxo-e-rastreabilidade)
-  - [2.7 Fechamento da sprint](#27-fechamento-da-sprint)
+  - [2.7 Política de commits](#27-política-de-commits)
+  - [2.8 Fechamento da sprint](#28-fechamento-da-sprint)
 - [3. Avaliação das sprints](#3-avaliação-das-sprints)
   - [3.1 Quadro evolutivo de pontos fortes e fracos](#31-quadro-evolutivo-de-pontos-fortes-e-fracos)
   - [3.2 Sprint 1](#32-sprint-1)
@@ -150,6 +151,10 @@ A equipe utiliza o **WhatsApp para comunicações informais**, como avisos rápi
 #### 2.2.2 Dailies
 
 As dailies acontecem **às 14h, em todos os dias nos quais a equipe possui instrução**, com duração prevista de **15 minutos**. Cada integrante apresenta de forma objetiva as atividades concluídas, as próximas atividades e os impedimentos identificados. Quando um integrante não puder participar, sua atualização deve ser enviada pelo canal formal antes do encontro.
+
+Durante a daily, as tarefas práticas são organizadas para um horizonte máximo de dois a três dias. A distribuição considera as dependências entre as atividades, de modo que a entrega de uma pessoa não bloqueie desnecessariamente o avanço das demais. No fechamento diário, o grupo verifica se as tarefas previstas foram concluídas. Quando uma atividade não é finalizada no mesmo dia, ela continua no dia seguinte, e a equipe avalia se a pessoa responsável necessita de apoio, redistribuição ou esclarecimento para prosseguir.
+
+O Kanban do GitLab apoia esse acompanhamento ao tornar visíveis o estado das tarefas, os responsáveis, as dependências e os impedimentos. Os cards devem refletir a situação discutida nas dailies, permitindo que o grupo acompanhe o progresso entre os encontros e identifique antecipadamente riscos de bloqueio ou atraso.
 
 #### 2.2.3 Revisões de merge request
 
@@ -240,7 +245,11 @@ Ao final, o GitLab deve permitir identificar o que precisava ser feito, quem rea
 
 As dependências entre artefatos devem ser respeitadas. Um exemplo de sequência é: stakeholders → personas → jornadas → User Stories → diagramas. A ordem específica de cada sprint deve seguir o planejamento aprovado pela equipe.
 
-### 2.7 Fechamento da sprint
+### 2.7 Política de commits
+
+Os commits devem seguir o padrão *Conventional Commits*, no formato `<tipo>(<escopo opcional>): <descrição objetiva> (#<card>)`. Cada commit deve representar uma alteração coerente, possuir uma descrição objetiva e referenciar a issue correspondente. Mensagens vagas e commits que misturem atividades sem relação devem ser evitados. Os tipos aceitos, exemplos e demais regras técnicas estão detalhados no [GestaoConfiguracao.md](GestaoConfiguracao.md).
+
+### 2.8 Fechamento da sprint
 
 Ao final de cada sprint, a equipe deve:
 
