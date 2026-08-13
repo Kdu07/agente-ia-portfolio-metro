@@ -109,6 +109,11 @@
   - [6.3 Labels padronizadas](#63-labels-padronizadas)
 - [7. Fluxo e rastreabilidade das atividades](#7-fluxo-e-rastreabilidade-das-atividades)
 - [8. Fechamento da sprint](#8-fechamento-da-sprint)
+- [9. Sprint 1](#9-sprint-1)
+  - [9.1 Matriz de papéis e responsabilidades](#91-matriz-de-papéis-e-responsabilidades)
+    - [9.1.1 Integrantes e papéis](#911-integrantes-e-papéis)
+    - [9.1.2 Distribuição por artefato](#912-distribuição-por-artefato)
+    - [9.1.3 Acordos de processo](#913-acordos-de-processo)
 
 ## 1. Introdução
 
@@ -238,4 +243,82 @@ Ao final de cada sprint, a equipe deve:
 - registrar a retrospectiva;
 - identificar e documentar pendências;
 - planejar e criar as issues da sprint seguinte, incluindo estimativas, labels, milestone e dependências.
+
+## 9. Sprint 1
+
+### 9.1 Matriz de papéis e responsabilidades
+
+A matriz foi construída em alto nível por artefato e entregável, conforme orientação do Escritório de Projetos. A alocação prática de tarefas segue um horizonte de dois a três dias e é revisada nas dailies. A indicação de uma pessoa responsável principal não implica execução isolada: os artefatos permanecem sujeitos à colaboração e à revisão do grupo.
+
+#### 9.1.1 Integrantes e papéis
+
+| Integrante | Papel principal | Frente de atuação | Principais entregas sob responsabilidade |
+|---|---|---|---|
+| **Mirela Bianchi** | Tech Lead e apresentação | NEG — Fluxo de negócio; REQ — Business Drivers, RNFs e stack | BPMN AS-IS e TO-BE, Business Drivers, Requisitos Não Funcionais, stack tecnológico e slides da Sprint 1 |
+| **Mariana Reis** | Scrum Master e REQ | NEG — Personas e jornadas; REQ — RFs, User Stories e diagrama de classes | Personas, jornadas do usuário, Requisitos Funcionais, User Stories, diagrama de classes e README |
+| **Celso Rocha** | Gestão de Configuração e REQ | NEG — Contexto e objetivos; REQ — Diagrama UML; PROJ — GitFlow, commits e contrato | Contexto da indústria, objetivos do produto, diagrama UML de componentes, GitFlow, padrão de commits e contrato de convivência |
+| **Carlos Eduardo Serrano** | Arquiteto e riscos | NEG — Matriz de risco; REQ — Visão técnica e integrações | Identificação e avaliação de riscos, matriz de risco completa, visão preliminar da arquitetura e mapeamento de integrações Microsoft |
+| **Alexsander Barbosa** | Negócio e BPMN | NEG — Problema, visão do produto e fluxo de negócio | Descrição do problema, visão do produto, cadeia de valor e processos em BPMN |
+| **Eduardo Casarini** | Features, Canvas e modelagem | NEG — Brainstorming, priorização e Canvas MVP; REQ — Diagramas de sequência | Brainstorming de features, priorização, Canvas do MVP e diagramas de sequência |
+
+#### 9.1.2 Distribuição por artefato
+
+##### NEG — Entendimento do Negócio
+
+| Seção | Responsável principal |
+|---|---|
+| Problema | Alexsander Barbosa |
+| Contexto da indústria | Celso Rocha |
+| Visão do produto | Alexsander Barbosa |
+| Objetivos do produto | Celso Rocha |
+| Personas | Mariana Reis |
+| Jornada do usuário | Mariana Reis |
+| Fluxo de negócio — AS-IS (BPMN) | Mirela Bianchi |
+| Fluxo de negócio — TO-BE (BPMN) | Mirela Bianchi |
+| Cadeia de valor e processos | Alexsander Barbosa |
+| Brainstorming de features | Eduardo Casarini |
+| Priorização de features | Eduardo Casarini |
+| Canvas do MVP | Eduardo Casarini |
+| Matriz de risco | Carlos Eduardo Serrano |
+| Visual de probabilidade e impacto | Carlos Eduardo Serrano |
+| Descrição curta e escopo macro | Mariana Reis |
+
+##### REQ — Especificação de Requisitos
+
+| Seção | Responsável principal |
+|---|---|
+| Business Drivers | Mirela Bianchi |
+| Fluxos de negócio com PLN | Alexsander Barbosa |
+| Requisitos Funcionais | Mariana Reis |
+| User Stories | Mariana Reis |
+| Diagrama de classes | Mariana Reis |
+| Diagramas de sequência | Eduardo Casarini |
+| Requisitos Não Funcionais | Mirela Bianchi |
+| Visão da solução técnica (blocos) | Carlos Eduardo Serrano |
+| Integrações com o ecossistema Microsoft | Carlos Eduardo Serrano |
+| Diagrama UML de componentes | Celso Rocha |
+| Stack tecnológico | Mirela Bianchi |
+
+##### PROJ — Gestão do Projeto
+
+| Documento | Seção | Responsável principal |
+|---|---|---|
+| `documentos/GestaoProjeto.md` | Matriz de papéis e responsabilidades | Mariana Reis |
+| `documentos/GestaoProjeto.md` | Contrato de convivência, SLA e rituais | Celso Rocha |
+| `documentos/GestaoProjeto.md` | Análise da Sprint 1 | Mariana Reis |
+| `documentos/GestaoProjeto.md` | Planejamento da Sprint 2 | Mariana Reis |
+| `documentos/GestaoConfiguracao.md` | GitFlow e política de branches | Celso Rocha |
+| `documentos/GestaoConfiguracao.md` | Padrão de commits | Celso Rocha |
+| Apresentação da Sprint 1 | Slides | Mirela Bianchi |
+| `README.md` | Visão geral do projeto | Mariana Reis |
+
+A distribuição foi verificada considerando a quantidade e a complexidade dos artefatos, bem como a atuação de cada integrante em frentes complementares de negócio, requisitos, modelagem, arquitetura e gestão. As responsabilidades principais estão distribuídas entre os seis integrantes, enquanto as revisões coletivas e os ajustes definidos nas dailies reduzem o risco de centralização das entregas.
+
+#### 9.1.3 Acordos de processo
+
+- **Horizonte de alocação:** tarefas práticas definidas com antecedência de dois a três dias e revisadas nas dailies.
+- **Comunicação de bloqueios:** dificuldades devem ser reportadas antecipadamente na daily, sem aguardar o prazo da entrega.
+- **Desvios do plano:** alterações relevantes devem ser documentadas no `GestaoProjeto.md` como memória do projeto.
+- **Kanban:** o board deve ser atualizado no início e no fim de cada dia de trabalho.
+- **Prazo interno:** as entregas devem ser disponibilizadas até quinta-feira, com a sexta-feira reservada apenas para revisões finais.
 
