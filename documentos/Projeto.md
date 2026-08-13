@@ -1736,7 +1736,6 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 # Referências
 
-- INTELI. *TAPI — Agente de IA para Gestão do Portfólio de Projetos do Metrô*. Módulo 7 de Engenharia de Software, 2026.
 - MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
 - MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
 - MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/
