@@ -1,30 +1,43 @@
-<table>
+<p align="center">
+  <img src="imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
+</p>
+
+<table align="center" width="100%" style="table-layout: fixed;">
   <tr>
-    <td>
-      <a href="https://www.btgpactual.com/">
-        <img src="img/logo-btg.png" alt="BTG Pactual" border="0">
-      </a>
-    </td>
-    <td>
-      <a href="https://www.inteli.edu.br/">
-        <img src="img/logo-Inteli.png" alt="Inteli - Instituto de Tecnologia e Liderança" border="0">
-      </a>
-    </td>
+    <td align="center"><a href="https://www.linkedin.com/in/alexsander-dsbarbosa/"><img src="imagens/alexsander.png" width="90" alt="Alexsander B."></a></td>
+    <td align="center"><a href="https://github.com/CaduQuaglia"><img src="imagens/cadu.png" width="90" alt="Carlos Eduardo"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/celsojwnior/"><img src="imagens/celso.png" width="90" alt="Celso Rocha"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/eduardo-casarini/"><img src="imagens/edu.png" width="90" alt="Eduardo C."></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/marianalacerdareis/"><img src="imagens/mariana.png" width="90" alt="Mariana Reis"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/mirela-bianchi-608601254/"><img src="imagens/mirela.png" width="90" alt="Mirela Bianchi"></a></td>
   </tr>
 </table>
 
-# Nome do Projeto: <nome do projeto>
+<br>
 
-## Nome do Grupo: <nome do grupo>
+<p align="center">
+  <img src="imagens/professores.png" alt="Professores">
+</p>
 
-## Integrantes:
+<table align="center" width="100%" style="table-layout: fixed;">
+  <tr>
+    <td align="center"><a href="https://www.linkedin.com/in/vanunes/"><img src="imagens/vanessa.png" width="100" alt="Vanessa Nunes"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/reginaldo-arakaki-9574222b/"><img src="imagens/reginaldo.png" width="100" alt="Reginaldo A."></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/bryan-kano/"><img src="imagens/bryan.png" width="100" alt="Bryan Kano"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/fernando-pizzo-208b526a/"><img src="imagens/pizzo.png" width="100" alt="Fernando Pizzo"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/lisane-valdo/"><img src="imagens/lisane.png" width="100" alt="Lisane Valdo"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/bruno-grandchamp-rodilha/"><img src="imagens/bruno.png" width="100" alt="Bruno Rodilha"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/filipe-gon%C3%A7alves-08a55015b/"><img src="imagens/filipe.png" width="100" alt="Filipe Gonçalves"></a></td>
+  </tr>
+</table>
 
-- [Nome do integrante 1]
-- [Nome do integrante 2]
-- [Nome do integrante 3]
-- [Nome do integrante 4]
-- [Nome do integrante 5]
-- [Nome do integrante 6]
+<br>
+
+<p align="center">
+  <img src="imagens/bottom.png" alt="Elemento visual de encerramento do cabeçalho">
+</p>
+
+# Agente de IA para Gestão do Portfólio de Projetos do Metrô
 
 # Sumário
 
@@ -64,7 +77,9 @@
 
 # 1. Introdução
 
-[Descreva o contexto geral do projeto, o objetivo deste documento e o escopo da documentação.]
+Este documento apresenta o projeto do Módulo 7 de Engenharia de Software do Inteli, desenvolvido em parceria com o Metrô de São Paulo. O projeto propõe um agente de Inteligência Artificial aplicado à gestão do portfólio de projetos, com Processamento de Linguagem Natural (PLN) para permitir interações por texto e, dentro do escopo previsto, por voz.
+
+Em seu escopo macro, a solução busca interpretar e classificar intenções, consultar e analisar informações dos projetos, apoiar atualizações, identificar pendências e produzir informações gerenciais conforme o perfil e as permissões do usuário. O MVP utiliza dados sintéticos ou anonimizados e não contempla a substituição das ferramentas corporativas, a tomada autônoma de decisões nem o processamento de dados sensíveis fora dos ambientes homologados pelo Metrô.
 
 ## 1.1 Termos e Abreviações
 
@@ -87,7 +102,7 @@
 
 ## 1.2 Objetivo do Documento
 
-[Descreva os objetivos principais deste documento, como alinhamento do time, registro de decisões e apoio à validação do projeto.]
+Este documento tem como objetivo consolidar o entendimento do problema, a visão e o escopo do produto, os requisitos, as modelagens e as decisões técnicas do projeto. Ele serve como referência para o alinhamento da equipe, a validação com o parceiro e o acompanhamento da evolução da solução ao longo das sprints.
 
 # 2. Entendimento do Projeto e do Negócio
 
