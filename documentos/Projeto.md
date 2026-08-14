@@ -5,7 +5,7 @@
 <table align="center" width="100%" style="table-layout: fixed;">
   <tr>
     <td align="center"><a href="https://www.linkedin.com/in/alexsander-dsbarbosa/"><img src="imagens/alexsander.png" width="90" alt="Alexsander B."></a></td>
-    <td align="center"><a href="https://github.com/CaduQuaglia"><img src="imagens/cadu.png" width="90" alt="Carlos Eduardo"></a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/carlos-quaglia-309088357/"><img src="imagens/cadu.png" width="90" alt="Carlos Eduardo"></a></td>
     <td align="center"><a href="https://www.linkedin.com/in/celsojwnior/"><img src="imagens/celso.png" width="90" alt="Celso Rocha"></a></td>
     <td align="center"><a href="https://www.linkedin.com/in/eduardo-casarini/"><img src="imagens/edu.png" width="90" alt="Eduardo C."></a></td>
     <td align="center"><a href="https://www.linkedin.com/in/marianalacerdareis/"><img src="imagens/mariana.png" width="90" alt="Mariana Reis"></a></td>
@@ -236,59 +236,59 @@ Mudanças futuras na estrutura do SharePoint, nas listas do portfólio ou nas fe
 
 ### 2.3.1 Visão
 
-O produto consiste em um agente de IA integrado ao ecossistema Microsoft utilizado pelo PMO do Metrô, capaz de interpretar solicitações em linguagem natural e buscar as informações necessárias para respondê-las. A proposta é ampliar as possibilidades do agente atualmente utilizado, permitindo que o usuário faça perguntas abertas sobre os projetos, consulte informações distribuídas entre listas e documentos e receba respostas mais contextualizadas, sem depender de caminhos previamente definidos. 
+O produto consiste em um agente de IA integrado ao ecossistema Microsoft utilizado pelo PMO do Metrô, com foco em facilitar o acesso e a análise das informações do portfólio. A partir de solicitações em linguagem natural, o produto interpreta a intenção do usuário, consulta as informações disponíveis e apresenta respostas contextualizadas sobre os projetos. A proposta é reduzir o esforço necessário para localizar e consolidar informações, além de apoiar o acompanhamento dos projetos e a tomada de decisão.
 
 ### 2.3.2 O que o produto faz
 
 #### Interação em linguagem natural
 
-O produto permite que os usuários façam perguntas e solicitações em linguagem natural, sem precisar seguir opções ou fluxos previamente definidos. O agente interpreta a intenção do usuário e identifica o tipo de solicitação para direcionar o processamento adequado. Essa capacidade torna a consulta às informações do portfólio mais simples e flexível para diferentes perfis de usuário.
+O produto permite que os usuários façam perguntas e solicitações em linguagem natural, sem depender de caminhos previamente definidos. O agente interpreta a intenção da solicitação e direciona o processamento de acordo com o tipo de demanda, tornando a interação mais simples e flexível para diferentes perfis de usuário.
 
 #### Consulta e análise do portfólio
 
-O agente permite consultar informações dos projetos e analisar documentos relacionados para responder perguntas sobre temas como status, cronograma, entregas, riscos, marcos, indicadores e aderência a normativos. Também permite realizar consultas que envolvem mais de um projeto, reunindo informações que atualmente precisam ser localizadas e consolidadas manualmente.
+O produto consulta informações dos projetos e analisa documentos relacionados para responder perguntas sobre temas como status, cronograma, entregas, riscos, marcos, indicadores e aderência a normativos. Também realiza consultas que envolvem diferentes projetos, reunindo informações que estão distribuídas entre as fontes utilizadas pelo PMO.
 
-#### Atualização e acompanhamento dos projetos
+#### Acompanhamento dos projetos
 
-Além de consultar informações, o produto apoia atividades relacionadas ao preenchimento e à atualização dos dados dos projetos. Também pode acompanhar pendências e fornecer alertas relacionados às informações que precisam ser atualizadas, ajudando a manter o portfólio mais completo e atualizado.
+O produto monitora informações relevantes dos projetos e emite alertas sobre pendências, prazos, riscos, desvios e possíveis inconformidades que demandem atenção. Dessa forma, apoia o acompanhamento contínuo das iniciativas e facilita a identificação antecipada de pontos que precisam ser avaliados pela equipe responsável.
 
 #### Apoio à gestão e à tomada de decisão
 
-A solução fornece informações consolidadas para apoiar o acompanhamento dos projetos e a gestão do portfólio. O agente pode auxiliar na identificação de riscos, problemas, pendências e outros pontos que mereçam atenção, além de apoiar análises comparativas entre projetos. O objetivo é facilitar o acesso às informações necessárias para a tomada de decisão, sem substituir a avaliação dos responsáveis pelos projetos.
+O produto identifica e sinaliza riscos, pendências e pontos de atenção a partir das informações disponíveis no portfólio. Também realiza análises comparativas entre projetos e consolida informações relevantes para diferentes níveis de gestão, oferecendo subsídios para que gestores e equipes avaliem situações e tomem decisões com maior agilidade.
 
 #### Relatórios e informações para acompanhamento
 
-O produto também pode apoiar a preparação de informações utilizadas no acompanhamento do portfólio, incluindo prévias de apresentações e relatórios previstos no processo de gestão. Dessa forma, informações que já estão disponíveis no ambiente do PMO podem ser organizadas, reduzindo o esforço necessário para sua consolidação. Além disso, o perfil do usuário é considerado, limitando as informações conforme o nível hierárquico e apresentando algumas views personalizadas, uma vez que um executivo, por exemplo, precisa de uma visão mais ampla e enxuta.
+O produto gera prévias de relatórios e apresentações a partir das informações disponíveis no ambiente do PMO, organizando dados relevantes para o acompanhamento do portfólio. Essa capacidade reduz o esforço necessário para consolidar informações que já estão distribuídas entre diferentes fontes.
 
 #### Segurança e rastreabilidade
 
-O produto deve respeitar os níveis de acesso definidos para os usuários e manter o registro das interações realizadas. Essas capacidades permitem controlar o acesso às informações e manter a rastreabilidade das consultas e ações realizadas pelo agente, considerando os requisitos de segurança e governança do ambiente corporativo.
+O produto aplica os controles de acesso definidos para cada perfil de usuário e mantém o registro das interações realizadas. Dessa forma, o acesso às informações é condicionado às permissões do usuário e as consultas realizadas permanecem rastreáveis, considerando os requisitos de segurança e governança do ambiente corporativo.
 
 ### 2.3.3 O que o produto não faz
 
 #### Interação em linguagem natural
 
-O produto não substitui a análise humana em situações que exigem avaliação ou decisão por parte dos responsáveis pelos projetos. As respostas fornecidas pelo agente servem como apoio aos usuários e não devem ser tratadas como decisões tomadas automaticamente pelo sistema.
+O produto não interpreta solicitações fora do domínio da gestão de portfólio nem executa comandos que não estejam previstos em seu catálogo de intenções. Solicitações não reconhecidas recebem retorno explícito, sem tentativa de gerar uma resposta especulativa.
 
 #### Consulta e análise do portfólio
 
-O produto não substitui as ferramentas e fontes corporativas utilizadas atualmente pelo PMO. SharePoint, Power BI e demais sistemas continuam sendo utilizados como parte do processo de gestão. Além disso, o MVP não contempla a integração completa com todos os sistemas do Metrô.
+O produto não realiza integrações com sistemas fora do escopo definido para o MVP. Nesta etapa, sua atuação está concentrada no ecossistema Microsoft utilizado pelo projeto, especialmente SharePoint, Lists e Copilot Studio, não contemplando uma integração completa com todos os sistemas corporativos do Metrô.
 
 #### Atualização e acompanhamento dos projetos
 
-O produto não substitui a responsabilidade das equipes pela atualização e validação das informações dos projetos. O agente pode apoiar essas atividades, mas não garante, de forma autônoma, que os dados estejam completos, corretos ou atualizados.
+O produto não gera nem edita cronogramas de projeto e não realiza previsão estatística de prazo ou custo. Seu papel é acompanhar e analisar as informações disponíveis, sinalizando situações que demandem atenção, sem assumir a gestão operacional dos projetos.
 
 #### Apoio à gestão e à tomada de decisão
 
-O produto não toma decisões automaticamente nem substitui gestores ou responsáveis pelos projetos. Sua função é fornecer informações, análises e alertas que apoiem a avaliação dos usuários, mantendo a decisão final sob responsabilidade humana.
+O produto não toma decisões automaticamente nem substitui os responsáveis pela gestão dos projetos. As informações, análises e alertas fornecidos servem como subsídio para a avaliação dos usuários, mantendo a decisão final sob responsabilidade humana. O produto também não executa aprovações formais previstas no processo de gestão, como a aprovação do TAP ou a passagem entre fases.
 
 #### Relatórios e informações para acompanhamento
 
-O produto não substitui os materiais e processos oficiais utilizados pelo PMO para acompanhamento do portfólio. As informações e prévias geradas pelo agente devem ser consideradas como apoio ao processo e podem exigir revisão e validação antes de sua utilização oficial.
+O produto não substitui os relatórios, apresentações ou ferramentas corporativas utilizadas oficialmente pelo PMO. As prévias geradas pelo produto servem como apoio ao processo de acompanhamento e podem exigir revisão e validação dos responsáveis antes de sua utilização oficial.
 
 #### Segurança e rastreabilidade
 
-O produto não processa dados sensíveis reais fora dos ambientes homologados pelo Metrô. No MVP, a validação deve utilizar dados sintéticos ou anonimizados, evitando o uso de informações reais em serviços externos não autorizados. A solução também deve respeitar os controles de acesso e os requisitos de segurança definidos para o ambiente corporativo.
+O produto não altera registros no SharePoint nem atualiza diretamente os dados do portfólio. No MVP, também não processa dados sensíveis reais fora dos ambientes homologados pelo Metrô, sendo utilizados dados sintéticos ou anonimizados para a validação da solução. O produto não contempla, nesta etapa, um aplicativo móvel nativo.
 
 ### 2.3.4 Objetivos do Produto (SMART)
 
@@ -1138,6 +1138,37 @@ Essa combinação assegura que a transformação proposta não exija a substitui
 
 Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
 
+### 3.1.5. Indicadores Computacionais do Pipeline de PLN
+
+Os direcionadores acima exigem que o desempenho do agente seja medido de forma objetiva. Os indicadores a seguir traduzem esses direcionadores em métricas verificáveis. Em especial o objetivo **O5** (acurácia mínima de 85% na classificação de intenções) e o **RNF03**.
+
+#### 3.1.5.1. Indicadores de classificação de intenções
+
+Os indicadores derivam da comparação entre a intenção prevista e a intenção verdadeira de cada solicitação, resumida na **matriz de confusão**: verdadeiros positivos (VP), falsos positivos (FP) e falsos negativos (FN) por intenção.
+
+| Indicador | Fórmula | O que mede e por que importa |
+|---|---|---|
+| **Acurácia** | `acertos / total avaliado` | Proporção de acertos no geral. É a métrica pactuada no objetivo **O5** (≥ 85%), mas mascara o desempenho nas intenções menos frequentes. |
+| **Precisão** | `VP / (VP + FP)` | Quando o agente atribui uma intenção, com que frequência acerta. Crítica nas **transações**, em que o erro altera dado de projeto indevidamente (RF05), e na guarda de confidencialidade (RNF01). |
+| **Recall** | `VP / (VP + FN)` | Quantas solicitações legítimas o agente reconhece. Crítica nas **consultas**: recall baixo gera recusas indevidas e devolve o usuário ao processo manual. |
+| **F1-score** | `2 × (Precisão × Recall) / (Precisão + Recall)` | Equilíbrio entre precisão e recall. Principal métrica de comparação entre versões do classificador. |
+
+Precisão, recall e F1 serão reportados por intenção e em macro-média, para evidenciar as categorias menos frequentes.
+
+#### 3.1.5.2. Indicadores de conversão entre voz e texto
+
+O canal de voz é um incremento no MVP, mas precisa ser medido: conforme o risco **R03**, um erro de transcrição em uma sigla ou código de projeto propaga-se como erro de intenção.
+
+| Indicador | Fórmula / método | O que mede e por que importa |
+|---|---|---|
+| **WER** (*Word Error Rate*) | `(S + D + I) / N` — substituições, deleções e inserções sobre o total de palavras da referência | Erro por palavra na conversão áudio → texto. Métrica padrão para comparar serviços de reconhecimento de fala. |
+| **Acurácia de termos de domínio** | `termos do glossário transcritos corretamente / total de ocorrências` | Acerto no jargão do Metrô (siglas e códigos). Um WER global aceitável pode esconder falha justamente nos termos que carregam a informação (R03). |
+| **Degradação ponta a ponta** | `acurácia de intenção por voz − acurácia de intenção por texto` | Quanto da classificação se perde ao entrar por voz. Define se o canal está pronto para demonstração. |
+| **Inteligibilidade da síntese** | *Round-trip WER*: sintetizar a resposta, transcrevê-la de volta e comparar com o texto original | Qualidade da conversão texto → áudio. Proxy objetivo, que dispensa avaliação humana. |
+| **Latência** | Tempo de transcrição e tempo até o início da resposta falada | Tempo percebido no canal de voz. Uma transcrição correta e lenta anula o ganho de usar voz. |
+
+**Metas iniciais.** Além da acurácia ≥ 85% (O5): macro-F1 ≥ 0,80, recall ≥ 0,90 na classe fora do escopo e precisão ≥ 0,90 nas transações. Para o canal de voz, as metas são preliminares — WER ≤ 15%, acurácia de termos de domínio ≥ 90% e degradação ponta a ponta ≤ 10 pontos percentuais — e serão revisadas quando o serviço de fala for definido.
+
 ## 3.2 Requisitos Funcionais (RFs)
 
 Os requisitos funcionais representam as principais capacidades esperadas do agente de IA para apoiar a gestão do portfólio de projetos do Metrô de São Paulo. Sua definição foi realizada a partir dos *business drivers*, do escopo estabelecido no TAPI e das *features* priorizadas pela equipe, de modo a organizar as funções que deverão ser oferecidas pela solução.
@@ -1348,7 +1379,25 @@ Esta modelagem utiliza as informações disponíveis na Sprint 1 e deverá ser r
 
 ## 3.2 Requisitos Não Funcionais (RNFs)
 
-Os requisitos não funcionais abaixo foram derivados dos *business drivers* do projeto - especialmente a exigência de confidencialidade no tratamento de dados sensíveis do Metrô e a necessidade de confiabilidade na operação do agente - e formulados como histórias de usuário, de modo a manter coerência com os RFs já modelados.
+Os requisitos não funcionais abaixo foram derivados dos *business drivers* do projeto — especialmente a exigência de confidencialidade no tratamento de dados sensíveis do Metrô e a necessidade de confiabilidade na operação do agente. Para torná-los verificáveis, cada RNF é apresentado inicialmente por meio de uma descrição objetiva, uma métrica numérica e uma referência normativa, seguida de sua respectiva User Story. As normas ISO/IEC são utilizadas como modelos de qualidade e vocabulário de referência; sua adoção nesta documentação não representa certificação da solução nem declaração de conformidade integral.
+
+### Especificação mensurável dos RNFs
+
+| ID | Requisito Não Funcional | Descrição mensurável | Métrica e critério de aceitação | Referência ISO/IEC |
+|---|---|---|---|---|
+| RNF01 | Confidencialidade dos dados | O sistema deve impedir que dados sensíveis reais dos projetos sejam processados, armazenados ou transmitidos fora do ambiente Microsoft homologado pelo Metrô. Durante o MVP, todo processamento deve utilizar dados sintéticos ou anonimizados. | **Taxa de processamento em ambiente autorizado = (operações executadas em ambiente homologado ou com dados sintéticos/anonimizados ÷ total de operações avaliadas) × 100.** Meta: **100%**, com **zero ocorrência** de dado sensível real em serviço externo não homologado. | **ISO/IEC 27001:2022**, quanto à preservação da confidencialidade, integridade e disponibilidade da informação; **ISO/IEC 25010:2023**, característica de segurança. |
+| RNF02 | Rastreabilidade das alterações | O sistema deve registrar as alterações efetivadas nos dados dos projetos, mantendo autoria, origem e momento da realização, de forma que seja possível reconstruir e auditar o histórico da ação. | **Cobertura de rastreabilidade = (alterações com autoria, origem e momento registrados ÷ total de alterações efetivadas) × 100.** Meta: **100%** das alterações avaliadas com os três elementos de rastreabilidade. | **ISO/IEC 25010:2023**, característica de segurança, especialmente quanto à responsabilização das ações; **ISO/IEC 25059:2023**, como modelo de qualidade específico para sistemas de IA. |
+| RNF03 | Precisão na classificação de intenções | O classificador deve associar corretamente as solicitações do conjunto de teste às intenções previstas no catálogo e reconhecer os casos que não pertencem ao escopo permitido. | **Acurácia = (solicitações classificadas corretamente ÷ total de solicitações do conjunto de teste) × 100.** Meta: **acurácia mínima de 85%**, conforme o objetivo O5. O resultado deverá ser complementado por matriz de confusão para evidenciar erros entre intenções. | **ISO/IEC 25059:2023**, modelo de qualidade para sistemas de IA; **ISO/IEC 25010:2023**, característica de adequação funcional, quanto à correção dos resultados produzidos. |
+| RNF04 | Disponibilidade do agente | O agente deve permanecer acessível de forma confiável durante o horário de expediente definido para o contexto de uso, desconsiderando indisponibilidades previamente programadas e comunicadas. | **Disponibilidade = (tempo previsto de operação − tempo de indisponibilidade não planejada) ÷ tempo previsto de operação × 100.** Meta preliminar: **mínimo de 99% durante o horário de expediente** no período de avaliação. O percentual e o horário exato deverão ser validados com o parceiro antes da implantação. | **ISO/IEC 25010:2023**, característica de confiabilidade e subcaracterística de disponibilidade; **ISO/IEC 27001:2022**, quanto à disponibilidade da informação. |
+| RNF05 | Adequação da resposta ao perfil do usuário | O sistema deve adaptar o conteúdo, a profundidade e as ações apresentadas ao perfil e às permissões do usuário, evitando tanto a exposição de informações não autorizadas quanto respostas incompatíveis com seu contexto de atuação. | **Taxa de adequação ao perfil = (respostas avaliadas como adequadas ao perfil e às permissões ÷ total de respostas do conjunto de teste por perfil) × 100.** Meta: **mínimo de 90%**, alinhada ao objetivo O4, e **zero exposição** de conteúdo não autorizado nos casos de teste. | **ISO/IEC 25010:2023**, características de capacidade de interação e segurança; **ISO/IEC 25059:2023**, como referência complementar para a qualidade de sistemas de IA. |
+
+A meta de disponibilidade do RNF04 é uma hipótese quantitativa inicial adotada para tornar o requisito testável. Diferentemente das metas dos objetivos O3, O4 e O5 e das restrições explícitas de confidencialidade, esse percentual não foi fornecido pelo parceiro e deverá ser refinado quando forem definidos o horário de operação, o ambiente de execução e as condições de manutenção. As métricas deverão ser verificadas sobre dados sintéticos ou anonimizados e em ambiente compatível com as restrições do MVP.
+
+As referências normativas adotadas são a [ISO/IEC 25010:2023 — modelo de qualidade de produto](https://www.iso.org/standard/78176.html), a [ISO/IEC 25059:2023 — modelo de qualidade para sistemas de IA](https://www.iso.org/standard/80655.html) e a [ISO/IEC 27001:2022 — sistemas de gestão de segurança da informação](https://www.iso.org/standard/27001).
+
+### User Stories dos RNFs
+
+As User Stories a seguir complementam a especificação mensurável ao registrar o valor esperado por seus respectivos perfis de interesse.
 
 **RNF01 — Confidencialidade dos dados**
 > Como responsável pela segurança da informação do Metrô, quero que nenhum dado sensível dos projetos seja processado, armazenado ou transmitido fora do ambiente Microsoft homologado, para que a confidencialidade das informações estratégicas do portfólio seja preservada e a organização permaneça em conformidade com suas políticas internas de segurança.
@@ -1515,7 +1564,60 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 ## 5.2 Diagrama de Componentes da UML
 
-[Preencher]
+## 5.2 Diagrama de Componentes UML
+
+Um Diagrama de Componentes UML é uma representação visual que descreve a organização dos principais módulos de um sistema de software, suas responsabilidades e as interfaces por meio das quais se comunicam. Esse tipo de diagrama permite visualizar, de forma modular, como cada parte do sistema interage com as demais, garantindo organização, coesão e clareza arquitetural, e servindo como referência para o desenvolvimento, integração e implantação da solução.
+
+O diagrama a seguir foi construído com base nos Business Drivers e nos Requisitos Funcionais e Não Funcionais elicitados anteriormente. A arquitetura reflete os dois pilares do projeto: o **Pilar 1**, composto pelo pipeline de PLN desenvolvido pela própria equipe, e o **Pilar 2**, composto pelo ecossistema Microsoft do Metrô (Copilot Studio / Power Platform).
+
+<div align="center">
+  <img src="../assets/diagrama_componentes.png" width="80%" alt="Diagrama de Componentes UML">
+  <br>
+  <sub>Figura X — Diagrama de Componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
+</div>
+
+---
+
+### Descrição dos Componentes
+
+| Componente | Tipo | Função no Sistema |
+|---|---|---|
+| Interface do Usuário (Canal de Entrada) | Interface Humano-Computador | Recebe comandos do usuário em texto digitado ou áudio. Realiza a conversão de áudio em texto (STT) e normaliza a mensagem antes de repassá-la ao pipeline de PLN. |
+| Módulo de PLN (Pré-processamento) | Processamento Computacional | Executa as etapas de tokenização, normalização e vetorização (embeddings) sobre a mensagem recebida, produzindo a representação semântica necessária para a classificação de intenções. |
+| Classificador de Intenções (+ Controle de Confidencialidade) | Processamento Computacional | Identifica a intenção do usuário (consulta, transação ou alerta) e verifica se a solicitação pertence ao catálogo de interações permitidas e se os dados envolvidos são sensíveis. Solicitações autorizadas seguem para o Pilar 2; solicitações bloqueadas retornam diretamente ao Módulo de Resposta. |
+| Módulo de Resposta (Formatação e Entrega) | Processamento Computacional | Recebe o resultado processado — seja uma resposta consolidada vinda do Pilar 2 ou uma notificação de bloqueio — e o formata em linguagem natural para entrega ao usuário. |
+| Conector Microsoft (Copilot Studio / Power Platform) | Serviço de Orquestração | Atua como camada de orquestração e integração do Pilar 2. Recebe a intenção autorizada, consulta o repositório de documentos e consolida a resposta a ser entregue ao Módulo de Resposta. |
+| Repositório de Documentos (SharePoint / Dados Sintéticos) | Armazenamento de Dados | Fonte de dados do portfólio de projetos do Metrô. No MVP, contém dados sintéticos gerados para validação. Na evolução prevista, integra-se ao portfólio real do Metrô via SharePoint. |
+
+> Fonte: Material produzido pelos autores (2026).
+
+---
+
+### Interfaces e Relacionamentos entre Componentes
+
+**Usuário → Interface do Usuário**  
+O usuário PMO interage com o sistema por meio de texto digitado ou voz. A Interface do Usuário normaliza essa entrada — incluindo a conversão de áudio em texto (STT) — e a repassa ao pipeline de PLN.
+
+**Interface do Usuário → Módulo de PLN**  
+A mensagem normalizada é enviada ao Módulo de PLN, que executa tokenização, limpeza e vetorização, produzindo a representação semântica (tokens e embeddings) necessária para a etapa de classificação.
+
+**Módulo de PLN → Classificador de Intenções**  
+Os tokens e embeddings gerados são repassados ao Classificador de Intenções, que identifica a intenção da solicitação e verifica sua conformidade com o catálogo de interações permitidas e com as restrições de confidencialidade do sistema.
+
+**Classificador de Intenções → Conector Microsoft** *(caminho autorizado)*  
+Quando a intenção é identificada e os dados não são sensíveis, a solicitação segue para o Pilar 2 via Conector Microsoft (Copilot Studio / Power Platform).
+
+**Classificador de Intenções → Módulo de Resposta** *(caminho bloqueado)*  
+Quando a solicitação envolve dado sensível ou está fora do catálogo permitido, o Classificador bloqueia o fluxo internamente e repassa uma notificação de bloqueio diretamente ao Módulo de Resposta, sem que nenhum dado chegue ao Pilar 2.
+
+**Conector Microsoft ↔ Repositório de Documentos**  
+O Conector Microsoft consulta o Repositório de Documentos para recuperar as informações do portfólio relevantes à solicitação e consolida o resultado.
+
+**Conector Microsoft → Módulo de Resposta**  
+O resultado consolidado pelo Pilar 2 é enviado ao Módulo de Resposta para formatação final.
+
+**Módulo de Resposta → Usuário**  
+O Módulo de Resposta entrega a resposta final ao usuário em linguagem natural — seja um resultado do portfólio ou uma notificação de bloqueio com orientação sobre como prosseguir.
 
 ## 5.3 Diagramas de Sequência da UML
 
@@ -2544,3 +2646,5 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 - MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
 - MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
 - DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot
+- JURAFSKY, D.; MARTIN, J. H. *Speech and Language Processing*. 3. ed. (rascunho). Cap. 4 (avaliação de classificadores: precisão, recall e F1) e Cap. 16 (reconhecimento automático de fala e *Word Error Rate*). Disponível em: https://web.stanford.edu/~jurafsky/slp3/
+- SCIKIT-LEARN. *Metrics and scoring: quantifying the quality of predictions*. Disponível em: https://scikit-learn.org/stable/modules/model_evaluation.html
