@@ -115,13 +115,44 @@ Conforme os requisitos levantados, o projeto prevê:
 O desenvolvimento considera a integração com o ecossistema Microsoft já utilizado pelo Metrô, incluindo SharePoint, Power BI, Power Automate e Copilot Studio. A forma e os limites dessas integrações deverão respeitar as definições de segurança, governança e escopo do projeto.
 
 ## Estrutura de pastas
-[A preencher]
+
+```text
+g02/
+├── assets/                    # Imagens de apoio (canvas, SWOT, diagramas) usadas na documentação
+├── documentos/
+│   ├── imagens/                # Imagens referenciadas pelos documentos em documentos/
+│   ├── Projeto.md              # Documentação geral do projeto
+│   ├── GestaoProjeto.md        # Gestão de projeto e das sprints
+│   ├── GestaoConfiguracao.md   # Gestão de configuração e versionamento
+│   ├── GuiaPadroesDesenvolvimento.md  # Padrões de desenvolvimento (a ser detalhado nas sprints técnicas)
+│   ├── Manual-instalacao.md    # Manual de instalação (a ser detalhado nas sprints técnicas)
+│   └── Index.md                # Índice da documentação
+└── README.md
+```
 
 ## 📝 Documentação
 
 - [Documentação geral do projeto](documentos/Projeto.md): entendimento do negócio, visão do produto, personas, jornadas, fluxos, riscos e requisitos do projeto.
-- [Gestão do projeto](documentos/GestaoProjeto.md): diretrizes de branches, commits, revisão e organização do trabalho da equipe.
-- [Gestão de configuração](documentos/GestaoConfiguracao.md): orientações para configuração e manutenção dos artefatos do projeto.
+- [Gestão do projeto](documentos/GestaoProjeto.md): diretrizes de branches, commits, revisão e organização do trabalho da equipe, além da avaliação e retrospectiva de cada sprint.
+- [Gestão de configuração](documentos/GestaoConfiguracao.md): orientações para configuração e manutenção dos artefatos do projeto, incluindo a política de branches, commits e releases.
+
+## 🚀 Versionamento
+
+O projeto segue [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-BR/), no formato `MAJOR.MINOR.PATCH`, conforme detalhado na [Gestão de configuração](documentos/GestaoConfiguracao.md#2-política-de-branches):
+
+- **MAJOR**: entrega consolidada ao final de cada sprint, mesclada de `release/<versão>` para `main` e marcada com uma tag anotada (ex.: `v1.0.0`).
+- **MINOR**: incremento de escopo relevante integrado a uma versão já entregue.
+- **PATCH**: correção urgente aplicada via `hotfix/<nome>` sobre uma versão em `main`.
+
+| Versão | Sprint | Status | Escopo |
+|---|---|---|---|
+| `v1.0.0` | Sprint 1 | ✅ Lançada | Entendimento do negócio, visão do produto, personas, jornadas, requisitos (RF/RNF), modelagem estática, diagramas UML e artefatos de gestão do projeto. |
+| `v2.0.0` | Sprint 2 | 🔜 Planejada | Estratégia técnica da solução (APIs de voz, pipeline de PLN, stack, dados), modelagem UML complementar e planejamento das Sprints 3 a 5. |
+| `v3.0.0` | Sprint 3 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 3. |
+| `v4.0.0` | Sprint 4 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 4. |
+| `v5.0.0` | Sprint 5 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 5. |
+
+O histórico detalhado de cada entrega — incluindo métricas, retrospectivas e planejamento da sprint seguinte — é registrado em [Gestão do projeto](documentos/GestaoProjeto.md#3-avaliação-das-sprints).
 
 ## 📋 Licença
 
