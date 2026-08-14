@@ -511,13 +511,39 @@ Para responder às diferentes perguntas de negócio, a arquitetura do processo f
 
 #### 2.5.3.1 Viés de Orçamento do projeto
 
+O viés de Orçamento tem como foco o rastreamento do capital investido (CAPEX - R$ 5,2 Bi), alocado no contexto da Linha 6-Laranja do Metrô de São Paulo. Esta perspectiva responde diretamente às perguntas operacionais sobre a origem dos gastos, a validação de avanço físico em campo e os ritos de aprovação para medições e eventuais aditivos contratuais. Como não foi nos fornecido dados pelo próprio parceiro, esses dados foram retirados do site de transparência da prefeitura de SP.
+
+O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebimento do TAP Aprovado emitido pelo Poder Público, passando pelas medições de engenharia para apuração dos Custos de Estações e Custos de Túneis, até o encerramento com a emissão do Termo de Aceite Financeiro e Imobilização para a Operação.
+
 ![Descrição da imagem](/documentos/imagens/Fluxo%20Orçamento.jpg)
 *Diagrama de Víes de Orçamento*
 
+### Detalhamento das Raias e Governança do Fluxo:
+
+**PMO / Gestão de Projetos:** Define a Linha de Base (EAP), atua como instância de governança para Aprovação de Aditivos Orçamentários quando a medição excede o teto previsto, e consolida o Custo Histórico Final.
+
+**Controladoria & Financeiro:** Estrutura os Centros de Custo, realiza a Auditoria do Boletim de Medição (BMO), utilizando os dados de escavação de túneis, executa a validação do teto orçamentário (Dentro do Teto?) e processa a liquidação financeira das notas fiscais.
+
+**Engenharia & Fiscalização:** Emite as Ordens de Serviço (OS) e realiza as vistorias de campo para Validar o Avanço Físico, gerando os dados de custos referentes às obras civis das estações.
+
+**Consórcio Construtor:** Executa o cronograma físico em campo, consolida o Boletim de Medição de Obra (BMO) mensal e submete os faturamentos correspondentes à fiscalização.
+
 #### 2.5.3.2 Viés de Gestão do Tempo, Cronograma e Marcos Críticos
+
+O viés de Tempo e Cronograma tem como foco o acompanhamento contínuo do progresso físico e o controle do caminho crítico do empreendimento no contexto da Linha 6-Laranja do Metrô de São Paulo. Esta perspectiva responde às perguntas operacionais sobre o cumprimento dos marcos contratuais (Milestones), o desempenho dos prazos via Índice de Desempenho de Prazos (SPI) e os ritos de governança para mitigação e aceleração de frentes de obra.
 
 ![Descrição da imagem](/documentos/imagens/Fluxo%20Tempo.jpg)
 *Diagrama de Víes de Gestão do Tempo*
+
+### Detalhamento das Raias e Governança do Fluxo:
+
+**PMO / Gestão de Projetos:** Responsável por congelar o Cronograma Linha de Base (Master Schedule), atuar na governança para deliberação e Aprovação de Planos de Mitigação / Aceleração (quando há desvio no caminho crítico) e validar o encerramento físico do projeto mediante a emissão do Termo de Aceite Técnico Final (TRD).
+
+**Controladoria & Financeiro:** Realiza o mapeamento dos prazos de pagamento atrelados a entregas físicas e consolida o Registro do Percentual Físico Concluído (% Curva S), gerando o documento analítico do Relatório SPI e acionando o ponto de decisão de desvio de prazo.
+
+**Engenharia & Fiscalização:** Emite a Autorização de Liberação de Frentes de Trabalho e conduz as vistorias técnicas de campo para Fiscalizar o Cumprimento do Cronograma Físico, apurando os dados de avanço referentes ao Status dos Marcos Críticos (Tatueté e Pátios).
+
+**Consórcio Construtor:** Executa as etapas sequenciais das obras civis e montagem de sistemas em campo, realiza o comissionamento e os testes dinâmicos de rodagem na via e submete formalmente a Solicitação de Vistoria de Homologação da Via para a fiscalização de engenharia.
 
 ## 2.6 Matriz de Risco do Projeto
 
