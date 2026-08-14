@@ -100,6 +100,7 @@
   - [2.2 Estrutura de branches](#22-estrutura-de-branches)
   - [2.3 Diretrizes de uso das branches](#23-diretrizes-de-uso-das-branches)
   - [2.4 Exemplo prático](#24-exemplo-prático)
+  - [2.5 Procedimentos de release, hotfix e exclusão](#25-procedimentos-de-release-hotfix-e-exclusão)
 - [3. Políticas de commit](#3-políticas-de-commit)
 - [4. Política de push e Merge Requests](#4-política-de-push-e-merge-requests)
 - [5. Infraestrutura como código](#5-infraestrutura-como-código)
@@ -175,6 +176,55 @@ Para documentar as User Stories do card #22, o fluxo utilizado é:
 7. solicitar revisão por pares;
 8. após a aprovação e o merge, excluir a branch remota.
 
+### 2.5 Procedimentos de release, hotfix e exclusão
+
+#### Preparação de release
+
+Uma release consolida uma versão candidata a entrega. A branch deve partir da `develop` atualizada:
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c release/v1.0.0
+git push --set-upstream origin release/v1.0.0
+```
+
+Durante a estabilização, somente correções necessárias à entrega devem entrar na branch. Quando a versão estiver validada, devem ser abertos MRs de `release/v1.0.0` para `main` e para `develop`, ambos sujeitos à revisão. Após o merge em `main`, a versão pode receber uma tag rastreável:
+
+```bash
+git switch main
+git pull --ff-only origin main
+git tag -a v1.0.0 -m "Entrega v1.0.0"
+git push origin v1.0.0
+```
+
+#### Correção urgente com hotfix
+
+Uma hotfix deve partir da versão estável em `main`:
+
+```bash
+git switch main
+git pull --ff-only origin main
+git switch -c hotfix/corrige-consulta-status
+git push --set-upstream origin hotfix/corrige-consulta-status
+```
+
+Depois da correção e da validação, devem ser abertos MRs da hotfix para `main` e `develop`, evitando que a correção desapareça do fluxo de desenvolvimento. Não são permitidos merges locais diretos nas branches protegidas.
+
+#### Exclusão e sincronização após o merge
+
+Após confirmar no GitLab que o MR foi integrado, a pessoa autora deve atualizar a branch-base e remover referências obsoletas:
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+git branch -d docs/user-stories
+git push origin --delete docs/user-stories
+git fetch --prune
+```
+
+Para branches originadas de `main`, deve-se atualizar `main` no lugar de `develop`. O parâmetro `-D` não deve ser utilizado como procedimento regular; se o Git impedir a exclusão com `-d`, a pessoa responsável deve confirmar primeiro se o trabalho foi integrado ou se ainda precisa ser preservado.
+
 ## 3. Políticas de commit
 
 O grupo utiliza Conventional Commits para manter o histórico legível e rastreável.
@@ -210,6 +260,8 @@ Não devem ser usadas mensagens vagas, como “ajustes”, “melhorias” ou �
 ## 4. Política de push e Merge Requests
 
 As alterações locais devem ser sincronizadas com a branch remota correspondente e submetidas à `develop` por Merge Request. O envio direto de alterações para `main` ou `develop` não faz parte do fluxo regular do grupo. Antes do push, a pessoa autora deve conferir os arquivos incluídos, a coerência do commit e a referência à issue.
+
+Todo MR deve receber uma primeira revisão em até **24 horas úteis** após a solicitação. Impedimentos devem ser comunicados no Slack e registrados na issue; MRs que bloqueiem outras entregas recebem prioridade, conforme o SLA definido no `GestaoProjeto.md`.
 
 ### 4.1 Padrão de Merge Requests
 
