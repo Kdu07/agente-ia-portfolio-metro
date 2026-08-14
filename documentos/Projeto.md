@@ -622,7 +622,347 @@ A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a fa
 
 ## 2.7 Ideação
 
-[Descreva as ideias geradas, hipóteses preliminares e direções de solução.]
+### 2.7.1 Features levantadas
+
+As *features* estão agrupadas em dez épicos. A coluna **Origem** indica a fonte da ideia: `TAPI` para o Termo de Abertura do Projeto Inteli, `HU` para o documento de Histórias de Usuário do parceiro, `AX` para os Anexos 1 a 4 e `EQ` para proposta da equipe. As colunas de importância, viabilidade, prioridade e escopo seguem os critérios declarados na seção 2.7.2.
+
+#### EP01 — Núcleo de Processamento de Linguagem Natural
+
+*Entendimento da intenção*
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F01 | Catálogo de intenções | Taxonomia fechada e versionada das intenções válidas do domínio de portfólio: consultar status, consultar prazo, listar riscos, criar projeto, atualizar avanço, explicar conceito, gerar relatório e comparar projetos. É o artefato-âncora de todo o pipeline. | TAPI | Alta | Alta | 9 | **MVP** |
+| F02 | Classificador de intenções | Modelo treinado sobre dados sintéticos que mapeia a solicitação do usuário para uma intenção do catálogo, com *score* de confiança associado. | TAPI | Alta | Alta | 9 | **MVP** |
+| F03 | Detecção de fora de domínio | Requisito literal do TAPI: interação genérica ou sem contexto de portfólio deve ser detectada, orientada e descartada. Implementada como classe de rejeição explícita no classificador. | TAPI | Alta | Alta | 9 | **MVP** |
+| F04 | Extração de entidades | Identificação de nome de projeto, subportfólio, líder, mês ou data de referência, indicador, valor monetário e nível de criticidade no interior da solicitação. | TAPI | Alta | Alta | 9 | **MVP** |
+| F05 | Normalização e correspondência de nomes | "L15", "Linha 15", "15-Prata" e "Prata" devem apontar para a mesma entidade. Combina dicionário do portfólio e correspondência aproximada. Sem esse componente, a extração de entidades não sustenta consulta real. | EQ | Alta | Alta | 9 | **MVP** |
+| F06 | Desambiguação interativa | Quando a correspondência retorna múltiplos candidatos, o agente pergunta em vez de escolher: "Você quis dizer L2-Verde ou Túnel de Ligação L2×L4?". | EQ | Média | Alta | 6 | **MVP** |
+| F07 | Contexto multi-turno | Resolução de referência anafórica e retomada de assunto entre mensagens, como em "e o dele?" ou "continuando a criação do projeto 123XXX". Situação exemplificada no Apêndice do TAPI. | TAPI | Alta | Média | 6 | **MVP** |
+| F08 | Preenchimento progressivo de parâmetros | O agente identifica quais parâmetros faltam para completar a intenção e solicita apenas o que falta, sem reiniciar o diálogo. | EQ | Alta | Média | 6 | **MVP** |
+| F09 | Tratamento graduado de baixa confiança | Abaixo do limiar de confiança, o agente solicita reformulação, sugere as intenções mais próximas e, persistindo a dúvida, encaminha ao GPM. Evita resposta incorreta com aparência de certeza. | EQ | Alta | Alta | 9 | **MVP** |
+| F10 | Robustez a linguagem coloquial | Tolerância a saudações, gírias, erros de digitação e abreviações. O próprio Apêndice do TAPI exemplifica com "Bom dia sis. Qual o prazo do projeto XPTO?". | TAPI | Média | Alta | 6 | **MVP** |
+| F11 | Classificação por tipo de solicitação | Além da intenção, rotular a solicitação como consulta, transação ou alerta, conforme a Figura 01 do TAPI. Define o caminho de tratamento subsequente. | TAPI | Alta | Alta | 9 | **MVP** |
+
+*Recuperação e análise*
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F12 | Busca semântica sobre documentos | Indexação vetorial de termos de abertura, cronogramas, listas de risco e relatórios mensais, permitindo recuperação por significado e não por correspondência literal de termos. | TAPI | Alta | Média | 6 | **MVP** |
+| F13 | Resposta com referência de origem | Toda resposta indica o documento e o campo de onde a informação foi extraída. Sustenta os objetivos O3 e O4 da seção 2.3.4. | EQ | Alta | Alta | 9 | **MVP** |
+| F14 | Sumarização de situação | Geração do resumo executivo do campo "Situação" por projeto e por subportfólio, no padrão observado nos Anexos 2 e 3. | HU / AX | Alta | Média | 6 | **MVP** |
+| F15 | Análise comparativa entre projetos | Consultas do tipo "quais projetos da Expansão estão abaixo da margem de tolerância?", envolvendo comparação entre componentes do portfólio. Oportunidade central apontada na definição do problema do TAPI. | TAPI | Alta | Média | 6 | Desejável |
+| F16 | Classificação automática de criticidade | Derivação da criticidade, entendida como impacto multiplicado por probabilidade, a partir da descrição textual do risco, com proposta de nível ao líder. | HU | Média | Média | 4 | Desejável |
+| F17 | Distinção entre risco e problema | Classificar se o item relatado é risco, entendido como possibilidade futura, ou problema, entendido como ocorrência presente, e explicar a diferença ao usuário. Solicitação explícita nas Histórias de Usuário. | HU | Média | Alta | 6 | **MVP** |
+| F18 | Extração de marcos a partir de texto livre | Interpretar uma ata ou mensagem e propor os marcos concluídos correspondentes. | EQ | Média | Baixa | 2 | Ir Além |
+| F19 | Detecção de inconsistência entre artefatos | Apontar quando o benefício declarado no termo de abertura não consta do Mapa de Benefícios, ou quando a data de um marco extrapola o término previsto do projeto. | EQ | Alta | Média | 6 | **MVP** |
+
+*Avaliação do pipeline*
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F20 | Geração de conjunto de dados sintéticos | Corpus de enunciados em português por intenção, com variação de formalidade, erros de digitação e sinônimos. Atende à restrição de confidencialidade, que impede o uso de dado real. | TAPI | Alta | Alta | 9 | **MVP** |
+| F21 | Bancada de avaliação | Acurácia, F1 por intenção, matriz de confusão e curva de rejeição para o fora de domínio, sobre divisão de treino, validação e teste. Instrumenta a verificação do objetivo O5. | TAPI | Alta | Alta | 9 | **MVP** |
+| F22 | Registro comparativo de abordagens | Documentação do desempenho de ao menos duas estratégias — linha de base por regras ou vetorização clássica e modelo de linguagem — de modo a justificar a escolha final. | TAPI | Alta | Alta | 9 | **MVP** |
+| F23 | Painel de erros e casos difíceis | Coleção mantida ao longo do projeto com as falhas do classificador, utilizada para orientar as iterações seguintes. | EQ | Média | Alta | 6 | Desejável |
+
+#### EP02 — Entrada de dados guiada por entrevista
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F24 | Assistente do Mapa de Benefícios | Entrevista guiada cobrindo Programa, Projeto, Entrega, Resultado, Benefícios e Objetivos Estratégicos. | HU | Alta | Alta | 9 | **MVP** |
+| F25 | Assistente do Termo de Abertura | Entrevista dos catorze campos do TAP: objetivo, justificativa, escopo, não escopo, benefícios, premissas, restrições, contribuições estratégicas, partes interessadas, datas e riscos nas modalidades ameaça e oportunidade. | HU | Alta | Média | 6 | **MVP** |
+| F26 | Assistente de Entregas e Marcos | Coleta da descrição do marco e da data prevista de conclusão. | HU | Alta | Alta | 9 | **MVP** |
+| F27 | Assistente de Cronograma | Desdobramento de entregas em atividades, com dependências, datas e pesos percentuais. | HU | Alta | Baixa | 3 | Ir Além |
+| F28 | Assistente da Lista de Avanço | Coleta do previsto físico em percentual e do previsto financeiro em reais, além de nome do projeto e subportfólio. A data de referência é preenchida automaticamente com o último dia do mês, conforme instrução do parceiro. | HU | Alta | Alta | 9 | **MVP** |
+| F29 | Assistente de Riscos e Problemas | Entrevista cobrindo descrição, causa raiz, áreas afetadas, tipo e criticidade, plano de ação, responsável, prazo e necessidade de escalonamento à diretoria. | HU | Alta | Alta | 9 | **MVP** |
+| F30 | Assistente de Mudanças | Registro de solicitações de mudança de escopo, prazo ou custo. Citado no escopo macro do TAPI, sem roteiro detalhado pelo parceiro. | TAPI | Média | Média | 4 | Ir Além |
+| F31 | Assistente de Encerramento | Coleta dos dados de fechamento do projeto. Citado no escopo macro do TAPI. | TAPI | Média | Média | 4 | Ir Além |
+| F32 | Perguntas adaptativas | Ramificação do roteiro conforme a resposta: tratando-se de projeto único, todo o bloco relativo à composição de programa é suprimido. | HU | Alta | Alta | 9 | **MVP** |
+| F33 | Sugestões sob demanda | O gatilho "Quer sugestões?" aparece em cerca de dez pontos do roteiro fornecido pelo parceiro. O agente propõe marcos típicos, premissas, partes interessadas, indicadores de benefício e planos de ação. | HU | Alta | Média | 6 | **MVP** |
+| F34 | Reaproveitamento entre artefatos | Benefícios levantados no Mapa alimentam o TAP, entregas do TAP alimentam o Cronograma e campos do TAP alimentam o relatório final. Amarrações marcadas explicitamente pelo parceiro. | HU | Alta | Média | 6 | Desejável |
+| F35 | Rascunho e retomada | Salvar o preenchimento parcial e retomá-lo posteriormente sem perda de contexto. | HU | Média | Média | 4 | Desejável |
+| F36 | Revisão antes da finalização | Apresentação do que foi coletado, com edição campo a campo antes da gravação definitiva. | HU | Alta | Alta | 9 | **MVP** |
+| F37 | Validações de consistência | Soma dos pesos das entregas igual a cem por cento, soma das atividades igual a cem por cento dentro de cada entrega, data de conclusão não posterior ao término do projeto e campos obrigatórios preenchidos. | HU | Alta | Alta | 9 | **MVP** |
+| F38 | Distribuição automática de pesos | O agente oferece distribuir os pesos percentuais entre entregas e atividades quando o líder não manifesta preferência. | HU | Baixa | Alta | 3 | Desejável |
+| F39 | Anexo de documentos e ligações | Permitir que o líder anexe arquivos ou informe endereços que forneçam contexto adicional ao agente. | HU | Média | Média | 4 | Desejável |
+| F40 | Exportação estruturada | Gravação do resultado em Excel, MS Project, Miro ou diretamente na Lista do SharePoint, conforme escolha do usuário. | HU | Alta | Baixa | 3 | Ir Além |
+| F41 | Criação de projeto a partir de documento | "Criar projeto segundo arquivo em anexo" — extrair nome, código, descrição, prazo e valor de um documento e pré-preencher o artefato. Exemplo literal do Apêndice do TAPI. | TAPI | Média | Baixa | 2 | Ir Além |
+| F42 | Diretriz de comunicação | Requisito de estilo declarado pelo parceiro: comunicação clara, objetiva e empática. Tratado como diretriz de persona do agente. | HU | Média | Alta | 6 | **MVP** |
+
+#### EP03 — Consulta, status e análise do portfólio
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F43 | Status de projeto sob demanda | Resposta rápida e precisa sobre a situação de um projeto específico. | TAPI / HU | Alta | Alta | 9 | **MVP** |
+| F44 | Status consolidado de subportfólio | Visão agregada dos projetos de um subportfólio, com aderência física e principais desvios. | AX | Alta | Média | 6 | **MVP** |
+| F45 | Consulta por atributo | Prazo, avanço físico, avanço financeiro, aderência, líder responsável e datas de início e término. | TAPI | Alta | Alta | 9 | **MVP** |
+| F46 | Perguntas sugeridas | Conjunto de perguntas de partida apresentadas ao usuário. Solicitado nominalmente no TAPI como forma de orientar o uso. | TAPI | Alta | Alta | 9 | **MVP** |
+| F47 | Ordenação e filtros | Consultas como "os três riscos mais críticos", "projetos com aderência inferior a 90%" ou "marcos com vencimento nos próximos trinta dias". | HU / AX | Alta | Média | 6 | **MVP** |
+| F48 | Comparação temporal | Evolução mês a mês de um indicador ou de um projeto. | AX | Média | Média | 4 | Desejável |
+| F49 | Conexão com estratégia e indicadores | Relacionar o projeto aos objetivos estratégicos e aos indicadores do Plano de Negócios. Citado no escopo macro do TAPI. | TAPI | Média | Baixa | 2 | Ir Além |
+| F50 | Consulta a portfólios de exercícios anteriores | Comparar o portfólio corrente com os de anos anteriores. | EQ | Baixa | Baixa | 1 | Ir Além |
+
+#### EP04 — Base de conhecimento normativa
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F51 | Perguntas e respostas sobre a NOR-00-223 | Esclarecimento de dúvidas sobre a norma de gestão de portfólio, programas e projetos, indicada nominalmente pelo parceiro. | HU | Alta | Média | 6 | **MVP** |
+| F52 | Explicação de conceitos de gestão | Diferença entre benefício e resultado, entre risco e problema, definição de criticidade e critérios de escalonamento. | HU | Alta | Alta | 9 | **MVP** |
+| F53 | Ingestão dos vídeos institucionais | Transcrição e indexação dos vídeos "Partida do Portfólio" e "Mapa de Benefícios", indicados como fonte pelo parceiro. | HU | Média | Média | 4 | Desejável |
+| F54 | Verificação de aderência a normativo | Avaliar se um artefato preenchido atende ao que a norma exige e apontar as lacunas identificadas. | TAPI | Alta | Média | 6 | **MVP** |
+| F55 | Consulta às atribuições das áreas | Sugerir partes interessadas a partir do cadastro de atribuições das gerências, marcado como fonte no roteiro do TAP. | HU | Baixa | Baixa | 1 | Ir Além |
+
+#### EP05 — Proatividade, pendências e alertas
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F56 | Varredura mensal da Lista de Avanço | Rotina mensal que identifica projetos com preenchimento pendente. Instrução literal do parceiro. | HU | Alta | Média | 6 | **MVP** |
+| F57 | Lembretes personalizados por líder | Notificação a cada líder apenas quanto às suas próprias pendências, por Teams ou correio eletrônico. | HU | Alta | Média | 6 | **MVP** |
+| F58 | Alerta de marco em risco | Data prevista se aproximando sem avanço registrado. | TAPI | Alta | Média | 6 | **MVP** |
+| F59 | Alerta de conformidade | Campo obrigatório vazio, termo de abertura sem assinatura digital ou termo de confidencialidade pendente. | TAPI / AX | Alta | Média | 6 | **MVP** |
+| F60 | Painel de saúde dos dados | Percentual de completude por projeto e por subportfólio, evidenciando a qualidade da informação disponível. | EQ | Média | Média | 4 | Desejável |
+| F61 | Oferta proativa de apoio | Ao detectar a pendência, o agente não se limita a avisar: abre a entrevista de preenchimento na mesma conversa. | HU | Alta | Média | 6 | **MVP** |
+| F62 | Alerta de desvio de indicador | Sinalização quando a aderência física de um subportfólio recua abaixo da margem de tolerância. | AX | Média | Média | 4 | Desejável |
+
+#### EP06 — Geração de documentos e relatórios
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F63 | Prévia da apresentação mensal à diretoria | Campo Situação com resumo executivo por subportfólio, os três riscos mais críticos e as três últimas realizações. Estrutura descrita campo a campo pelo parceiro e confirmada no Anexo 2. | HU / AX | Alta | Média | 6 | Desejável |
+| F64 | Prévia do relatório final do projeto | Montagem dos doze blocos do relatório de fechamento, cada um alimentado por uma fonte definida pelo parceiro: TAP, cronograma, avanço e relatórios mensais. | HU / AX | Alta | Média | 6 | Desejável |
+| F65 | Prévia do relatório de fechamento do portfólio | Consolidação anual no formato do Anexo 3. | HU / AX | Média | Baixa | 2 | Ir Além |
+| F66 | Relatório de status para partes interessadas | Recorte da informação conforme o perfil que a solicita. | TAPI | Alta | Média | 6 | Desejável |
+| F67 | Exportação nos modelos do Metrô | Saída em Word e PowerPoint respeitando a identidade visual e a classificação "Corporativo" no rodapé. | TAPI | Média | Baixa | 2 | Ir Além |
+| F68 | Marcação explícita de lacunas | Sinalizar o que o agente não conseguiu preencher, em vez de completar por inferência. Decisão de projeto destinada a evitar conteúdo incorreto em documento oficial. | EQ | Alta | Alta | 9 | Desejável |
+| F69 | Geração de painel sob demanda | "Montar um dashboard de compliance financeiro de 123XXX", exemplo constante do Apêndice do TAPI. | TAPI | Baixa | Baixa | 1 | Ir Além |
+
+#### EP07 — Segurança, permissões e rastreabilidade
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F70 | Perfis de acesso | Modelagem dos perfis líder de projeto, responsável de subportfólio, GPM e diretoria, espelhando a governança descrita no Anexo 1. | TAPI / AX | Alta | Alta | 9 | **MVP** |
+| F71 | Filtro de resposta por perfil | A mesma pergunta retorna escopos distintos conforme o perfil que a formula. Requisito explícito do TAPI: atuar dentro dos limites de permissão e acesso à informação de cada perfil. | TAPI / HU | Alta | Média | 6 | **MVP** |
+| F72 | Barreira de confidencialidade | Bloqueio de extração em massa e de vazamento de informação entre subportfólios distintos. | TAPI | Alta | Média | 6 | **MVP** |
+| F73 | Registro de auditoria | Registro de toda consulta e ação realizada, com suporte ao não repúdio. Benefício prometido ao parceiro no TAPI. | TAPI | Alta | Alta | 9 | **MVP** |
+| F74 | Operação exclusiva sobre dados sintéticos | Garantia arquitetural de que o experimento acadêmico não toca dado real do Metrô. | TAPI | Alta | Alta | 9 | **MVP** |
+| F75 | Verificação do termo de confidencialidade | Condicionar o acesso à informação à assinatura do termo, tal como ocorre no fluxo vigente do SharePoint. | AX | Média | Baixa | 2 | Ir Além |
+| F76 | Mascaramento de dados no registro | Anonimização do conteúdo antes da gravação no registro de auditoria. | EQ | Média | Média | 4 | Desejável |
+
+#### EP08 — Voz e multimodalidade
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F77 | Conversão de áudio em texto | Aceitar solicitações por voz, convertendo-as em texto antes do processamento pelo pipeline de intenção. | TAPI | Alta | Média | 6 | **MVP** |
+| F78 | Robustez a ruído e sotaque | Manutenção da acurácia da classificação de intenção sobre transcrição imperfeita. | EQ | Média | Baixa | 2 | Ir Além |
+| F79 | Ditado extenso com retomada | Áudio de vários minutos descrevendo um projeto completo, processado em etapas. Exemplo do Apêndice do TAPI. | TAPI | Baixa | Baixa | 1 | Ir Além |
+| F80 | Resposta falada | Conversão da resposta em áudio, útil para consulta em campo. | EQ | Baixa | Média | 2 | Ir Além |
+| F81 | Entrada por documento anexado | Envio de arquivo como fonte de contexto para a conversa. | HU | Média | Média | 4 | Desejável |
+
+#### EP09 — Plataforma e integração
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F82 | Orquestração no Copilot Studio | Camada de orquestração e integração do agente, conforme premissa tecnológica declarada pelo parceiro. | TAPI | Alta | Média | 6 | Desejável |
+| F83 | Leitura e escrita nas Listas do SharePoint | Integração com o site central de dados do portfólio. | TAPI | Alta | Baixa | 3 | Ir Além |
+| F84 | Acionamento por Power Automate | Disparo das rotinas proativas de varredura e notificação. | TAPI | Média | Baixa | 2 | Ir Além |
+| F85 | Consulta a métricas do Power BI | Recuperação de indicadores já calculados no painel do portfólio. | TAPI | Média | Baixa | 2 | Ir Além |
+| F86 | Canal no Microsoft Teams | Superfície de conversa no ambiente em que as equipes já trabalham. | TAPI / AX | Média | Baixa | 2 | Ir Além |
+| F87 | Camada de abstração de dados | Isolamento do pipeline em relação à plataforma de origem. Atende à premissa do TAPI segundo a qual a plataforma pode ser substituída por Dynamics Project Operations sem comprometer o funcionamento do agente. | TAPI | Alta | Média | 6 | **MVP** |
+| F88 | Transação de prazo no legado | "Qual o prazo do projeto XPTO?" resolvido contra o serviço de prazos do legado. Exemplo do Apêndice do TAPI. | TAPI | Média | Baixa | 2 | Ir Além |
+| F89 | Transação de faturas no legado | "Algum pagamento atrasado?" e "Listar faturas vencidas e não pagas". Exemplos do Apêndice do TAPI. | TAPI | Baixa | Baixa | 1 | Ir Além |
+| F90 | Verificação de conformidade financeira no legado | "Verificar compliance financeira de 123XXX", relativo à adequação a normas financeiras. Exemplo do Apêndice do TAPI. | TAPI | Baixa | Baixa | 1 | Ir Além |
+| F91 | Adoção futura de IA generativa homologada | Substituição de componentes do pipeline por serviços generativos, uma vez homologados pelo compliance do Metrô. Registrada no TAPI como evolução. | TAPI | Média | Baixa | 2 | Ir Além |
+
+#### EP10 — Experiência de uso e sustentação
+
+| ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
+|---|---|---|---|---|---|:-:|---|
+| F92 | Apresentação inicial do agente | Exposição do que o agente sabe e não sabe fazer no primeiro contato, reduzindo frustração diante de solicitações fora do catálogo. | EQ | Média | Alta | 6 | Desejável |
+| F93 | Coleta de retorno por resposta | Marcação de resposta útil ou incorreta, alimentando o painel de erros descrito em F23. | EQ | Média | Alta | 6 | Desejável |
+| F94 | Manutenção do catálogo de intenções pelo GPM | Permitir que a própria equipe do Metrô acrescente intenções sem depender de terceiros, sustentando o benefício de autonomia da equipe interna previsto no TAPI. | TAPI | Média | Baixa | 2 | Ir Além |
+| F95 | Manual de operação e sustentação | Documentação de implantação, operação e evolução no ecossistema Microsoft. Entregável obrigatório previsto no TAPI. | TAPI | Alta | Alta | 9 | **MVP** |
+| F96 | Atendimento multilíngue | Interação em outros idiomas além do português. | EQ | Baixa | Média | 2 | Ir Além |
+
+### 2.7.2 Como as *features* foram levantadas e avaliadas
+
+Nas duas primeiras etapas não se aplicou qualquer filtro de viabilidade, de modo a maximizar a geração de ideias antes de qualquer julgamento sobre esforço ou escopo.
+
+| Etapa | Descrição | Resultado |
+|---|---|---|
+| 1. Divergência | Leitura integral do TAPI, do documento de Histórias de Usuário fornecido pelo parceiro e dos Anexos 1 a 4 — Partida do portfólio, Balanço do portfólio e relatórios anuais de fechamento. Extração de toda capacidade citada explicitamente ou implícita nos artefatos. | Lista bruta de ideias |
+| 2. Agrupamento | Consolidação das ideias em dez épicos temáticos, com eliminação de duplicidades e nomeação de cada *feature* em termos acionáveis. | 96 *features* em 10 épicos |
+| 3. Rastreabilidade | Marcação da origem de cada *feature* e associação ao requisito funcional correspondente, garantindo que toda solicitação do parceiro permanecesse identificável em relação à sua fonte. | Colunas "Origem" e seção 2.7.5 |
+| 4. Avaliação e sequenciamento | Atribuição de importância e viabilidade, cálculo da prioridade resultante e organização das *features* do MVP em ondas de construção que respeitam as precedências técnicas. | Matriz de priorização e plano de ondas |
+
+A visão do produto que orientou a avaliação é a registrada na seção [2.3 Visão do Projeto e do Produto](#23-visão-do-projeto-e-do-produto), e os objetivos SMART da seção 2.3.4 serviram como critério de desempate na atribuição de importância. A janela considerada na avaliação de viabilidade é a do cronograma do TAPI: de 05 de agosto a 07 de outubro de 2026, correspondente a cinco *sprints* de duas semanas.
+
+**Critérios de importância**
+
+A importância mede o valor da *feature* para o parceiro e o peso que ela recebe nos artefatos do projeto.
+
+| Nível | Peso | Critério |
+|---|:-:|---|
+| Alta | 3 | Citada explicitamente como capacidade no TAPI ou detalhada campo a campo nas Histórias de Usuário; ou condição para o atendimento de um dos objetivos O1 a O5 |
+| Média | 2 | Amplia de forma relevante o valor entregue, mas sua ausência não impede o atendimento dos objetivos declarados |
+| Baixa | 1 | Conveniência ou refinamento; sua ausência passa despercebida pelo usuário no horizonte do MVP |
+
+**Critérios de viabilidade**
+
+A viabilidade mede a possibilidade de construção dentro da janela do módulo, considerando esforço, domínio técnico da equipe e dependências externas.
+
+| Nível | Peso | Critério |
+|---|:-:|---|
+| Alta | 3 | Construível com o que a equipe já domina, sobre dados sintéticos, sem dependência de terceiros ou de ambiente homologado |
+| Média | 2 | Exige aprendizado técnico novo ou esforço concentrado de mais de uma *sprint*, mas permanece sob controle da equipe |
+| Baixa | 1 | Depende de ambiente homologado do Metrô, de credenciais corporativas, de integração com o legado ou de volume de dados indisponível ao projeto |
+
+**Regra de prioridade**
+
+**Prioridade = Importância × Viabilidade**, com resultado entre 1 e 9. A regra espelha deliberadamente a fórmula de severidade adotada na seção 2.6, mantendo coerência metodológica entre as duas priorizações do documento. Nenhuma *feature* com prioridade inferior a 6 foi admitida no MVP.
+
+**Escopo**
+
+O escopo indica onde cada *feature* será construída e utiliza o mesmo vocabulário já adotado nas *user stories* da seção 3.1.1 e na camada de dados da seção 5.6.4.
+
+| Escopo | Significado |
+|---|---|
+| **MVP** | Integra a prova de conceito do Módulo 7. Corresponde aos requisitos RF01 a RF06, priorizados como MVP na seção 3.1.1 |
+| Desejável | Construída caso haja folga de cronograma. Corresponde aos requisitos RF07 e RF08 e a refinamentos das demais capacidades |
+| Ir Além | Desejo válido do parceiro, fora do escopo deste módulo, por depender de ambiente homologado, de integração com o legado ou de dados indisponíveis ao projeto |
+
+### 2.7.3 Resultado da priorização
+
+<div align="center">
+  <img src="imagens/matriz-features.png" width="85%" alt="Matriz de priorização das features por importância e viabilidade, com a contagem de features em cada uma das nove células">
+  <br>
+  <sub>Figura X: Matriz de priorização de <i>features</i> (importância × viabilidade).</sub>
+</div>
+
+As 27 *features* de prioridade máxima correspondem quase integralmente ao núcleo de Processamento de Linguagem Natural somado às fundações de segurança e rastreabilidade — o que confirma o alinhamento entre o que o parceiro mais valoriza e o que o módulo avalia. Merece registro o contraste entre duas células de mesma prioridade 6: as de alta importância e viabilidade média constituem o esforço principal do MVP, enquanto as de importância média e alta viabilidade são acréscimos baratos que elevam a percepção de qualidade sem competir por espaço no cronograma. Apenas três *features* combinam alta importância e baixa viabilidade, e todas dependem do ambiente Microsoft homologado — o que as torna candidatas naturais ao "Ir Além" descrito no TAPI, e não itens a serem forçados para dentro do MVP.
+
+**Distribuição por escopo**
+
+| Escopo | Quantidade | Participação |
+|---|:-:|:-:|
+| MVP | 50 | 52% |
+| Desejável | 20 | 21% |
+| Ir Além | 26 | 27% |
+| **Total** | **96** | **100%** |
+
+**Distribuição por épico**
+
+| Épico | *Features* | MVP | Desejável | Ir Além |
+|---|:-:|:-:|:-:|:-:|
+| EP01 — Núcleo de PLN | 23 | 19 | 3 | 1 |
+| EP02 — Entrada de dados guiada | 19 | 10 | 4 | 5 |
+| EP03 — Consulta e análise | 8 | 5 | 1 | 2 |
+| EP04 — Base de conhecimento normativa | 5 | 3 | 1 | 1 |
+| EP05 — Proatividade e alertas | 7 | 5 | 2 | 0 |
+| EP06 — Geração de documentos | 7 | 0 | 4 | 3 |
+| EP07 — Segurança e rastreabilidade | 7 | 5 | 1 | 1 |
+| EP08 — Voz e multimodalidade | 5 | 1 | 1 | 3 |
+| EP09 — Plataforma e integração | 10 | 1 | 1 | 8 |
+| EP10 — Experiência e sustentação | 5 | 1 | 2 | 2 |
+| **Total** | **96** | **50** | **20** | **26** |
+
+Todos os dez épicos têm representação no MVP ou entre as *features* desejáveis. O EP06, relativo à geração de documentos, é o único sem *features* no MVP, o que decorre diretamente da priorização das *user stories*: US08, que lhe corresponde, está classificada como desejável na seção 3.1.1. Já o EP05, relativo à proatividade, entra no MVP com quatro *features*, uma vez que a antecipação de pendências figura entre os benefícios declarados no TAPI e o requisito RF06 está priorizado como MVP. O EP08 contribui com a conversão de áudio em texto, exigida pelo RF02 e pela US02.
+
+### 2.7.4 Sequenciamento das *features* do MVP
+
+A prioridade indica **o que** construir, mas não **em que ordem**: uma *feature* de prioridade máxima pode depender de outra que ainda não existe. O sequenciamento abaixo combina a prioridade calculada com as precedências técnicas entre componentes, organizando as 50 *features* do MVP em três ondas de construção. As Sprints 1 e 2 são ocupadas pelos artefatos de especificação — entendimento do negócio, requisitos, design compreensivo e estratégia técnica —, de modo que a construção ocupa as Sprints 3, 4 e 5, na proporção de uma onda por *sprint*. Cada onda foi montada para coincidir com os componentes técnicos exigidos na *sprint* correspondente, e este plano constitui o insumo direto da estratégia de entrega para as Sprints 3, 4 e 5 prevista no artefato de estratégia técnica. A decomposição por camadas segue a arquitetura registrada na seção 5.6.4, de modo que cada onda entrega blocos completos e não fragmentos de blocos.
+
+**Restrições de precedência**
+
+| Precedente | Habilita | Natureza da dependência |
+|---|---|---|
+| F01 Catálogo de intenções | F02, F03, F11 | Sem a taxonomia não existem classes a treinar nem classe de rejeição a definir |
+| F20 Conjunto de dados sintéticos | F02, F21 | Sem corpus não há treino do classificador nem medida de desempenho |
+| F04 Extração de entidades | F05 | A normalização opera sobre a entidade já extraída da frase |
+| F05 Normalização de nomes | F06, F43, F45 | Toda consulta por projeto exige resolver antes o nome informado pelo usuário |
+| F02 Classificador de intenções | F09 | O tratamento de baixa confiança consome o *score* produzido pelo classificador |
+| F77 Conversão de áudio em texto | F02 | A voz entra no pipeline como texto; a classificação é a mesma para os dois canais |
+| F12 Busca semântica | F13, F14 | Citação de origem e sumarização operam sobre o material recuperado |
+| F70 Perfis de acesso | F71, F72 | Filtro por perfil e barreira de confidencialidade pressupõem perfil identificado |
+| F07 Contexto multi-turno e parâmetros | F24, F25, F28, F29 | A entrevista guiada é um diálogo com estado, e não uma sequência de perguntas isoladas |
+| F24 Mapa de Benefícios | F25 | Os benefícios levantados no Mapa alimentam o campo correspondente do TAP |
+| F28 Lista de Avanço | F56, F57, F58 | A varredura de pendências, o acionamento do responsável e o alerta de marco em risco operam sobre o avanço registrado |
+| F29 Riscos e Problemas | F19, F59 | A detecção de inconsistência e o alerta de conformidade exigem artefatos preenchidos |
+
+**Onda 1 — Compreensão e consulta** · *Sprint 3* · 19 *features* · prioridade média 8.4
+
+Constrói o núcleo do Pilar 1 e o primeiro caminho completo de valor: a solicitação entra por texto ou por áudio, é classificada, tem suas entidades extraídas e normalizadas, e retorna uma resposta ancorada em documento. É a onda que sustenta a medição de desempenho exigida entre os entregáveis do módulo.
+
+`F01` · `F02` · `F03` · `F04` · `F05` · `F06` · `F09` · `F10` · `F11` · `F12` · `F13` · `F20` · `F21` · `F22` · `F43` · `F45` · `F46` · `F74` · `F77`
+
+*Componentes correspondentes no artefato de desenvolvimento:* API de recebimento de áudio · implementação do algoritmo de PLN · frontend básico.
+
+*Critério de saída:* Classificador treinado sobre o corpus sintético, com acurácia medida por intenção e rejeição de fora de domínio funcionando; usuário formula pergunta livre sobre um projeto, por texto ou áudio, e recebe resposta correta com referência ao documento de origem. A demonstração ocorre sobre um perfil único, uma vez que a aplicação diferenciada de permissões depende da persistência entregue na onda seguinte.
+
+**Onda 2 — Transação e governança** · *Sprint 4* · 19 *features* · prioridade média 7.6
+
+Habilita a escrita e o controle sobre ela. O diálogo com estado permite a entrevista guiada, e a chegada do banco de dados nesta *sprint* é o que torna possível persistir perfis, aplicar permissões por perfil e registrar a trilha de auditoria — capacidades que não se sustentam sem armazenamento.
+
+`F07` · `F08` · `F17` · `F24` · `F25` · `F26` · `F28` · `F29` · `F32` · `F33` · `F36` · `F37` · `F42` · `F52` · `F70` · `F71` · `F72` · `F73` · `F87`
+
+*Componentes correspondentes no artefato de desenvolvimento:* webhooks · implementação e integração com o banco de dados · deploy da solução.
+
+*Critério de saída:* Líder de projeto conclui, em conversa, o preenchimento do Mapa de Benefícios, do Termo de Abertura, da Lista de Avanço e do registro de Riscos e Problemas, com validação de consistência e revisão antes da gravação; a mesma pergunta passa a retornar escopos distintos conforme o perfil, e toda consulta e alteração fica registrada.
+
+**Onda 3 — Proatividade e síntese** · *Sprint 5* · 12 *features* · prioridade média 6.2
+
+Fecha o ciclo do portfólio. A alocação das capacidades proativas nesta onda não decorre de menor prioridade, e sim de duas dependências convergentes: varrer pendências e apontar marcos em risco exige base preenchida na onda anterior, e o acionamento do responsável sem que ele acesse o sistema apoia-se justamente no sistema de mensageria assíncrona previsto para esta *sprint*.
+
+`F14` · `F19` · `F44` · `F47` · `F51` · `F54` · `F56` · `F57` · `F58` · `F59` · `F61` · `F95`
+
+*Componentes correspondentes no artefato de desenvolvimento:* sistema de troca de mensagens assíncronas · frontend completo · integração frontend-backend.
+
+*Critério de saída:* O agente identifica pendências de preenchimento sem ser perguntado, aciona diretamente o líder responsável sem depender de que ele acesse o sistema, aponta marcos em risco e verifica a aderência dos artefatos aos normativos; consultas consolidadas de subportfólio respondem corretamente; documentação de sustentação entregue.
+
+A prioridade média não cresce ao longo das ondas — 8,4 · 7,6 · 6,2 — o que indica que o sequenciamento por dependência técnica não contradiz a priorização por valor: as ondas iniciais concentram as *features* de maior prioridade, e o que é adiado é adiado por necessidade de precedência, não por menor importância.
+
+### 2.7.5 Rastreabilidade com os requisitos funcionais
+
+Toda *feature* levantada foi associada a um dos requisitos funcionais consolidados na seção [3.2 Requisitos Funcionais](#32-requisitos-funcionais-rfs), de modo que a lista desta seção e a especificação de requisitos não divirjam. A classificação de escopo obedece à priorização das *user stories* da seção 3.1.1: nenhuma *feature* vinculada a RF07 ou RF08, cujas histórias estão marcadas como desejáveis, foi admitida no MVP. Requisitos priorizados como MVP não são necessariamente cobertos em sua totalidade — o RF05 é o caso mais relevante, uma vez que o assistente completo de cronograma (F27) permanece registrado como Ir Além pelas razões apresentadas na seção 2.7.6, enquanto os demais artefatos de entrada previstos no requisito são contemplados.
+
+| Requisito | Prioridade (§3.1.1) | *Features* correspondentes | No MVP |
+|---|---|---|:-:|
+| RF01 — Controle de acesso, permissões e perfil | MVP | F70, F71, F72, F75 | 3 |
+| RF02 — Interação em linguagem natural por texto e voz | MVP | F10, F77, F78, F79, F80, F81 | 2 |
+| RF03 — Identificação e controle de intenções | MVP | F01, F02, F03, F04, F05, F06, F07, F08, F09, F11, F20, F21, F22, F23, F94 | 13 |
+| RF04 — Consulta e análise de informações dos projetos | MVP | F12, F13, F14, F43, F44, F45, F46, F47, F48, F51, F52, F53, F54, F55, F88 | 11 |
+| RF05 — Apoio à criação e atualização de projetos | MVP | F17, F18, F24, F25, F26, F27, F28, F29, F30, F31, F32, F33, F34, F35, F36, F37, F38, F39, F40, F41, F42 | 11 |
+| RF06 — Identificação, alertas e apoio proativo a pendências | MVP | F19, F56, F57, F58, F59, F60, F61, F62, F90 | 6 |
+| RF07 — Análise comparativa do portfólio | Desejável | F15, F16, F49, F50 | 0 |
+| RF08 — Geração de relatórios e informações gerenciais | Desejável | F63, F64, F65, F66, F67, F68, F69 | 0 |
+
+As demais *features* não correspondem a requisitos funcionais por descreverem propriedades transversais ou decisões de plataforma, e são endereçadas em outras seções do documento:
+
+| *Features* | Onde são tratadas |
+|---|---|
+| F73, F74, F76 | Requisitos não funcionais RNF01 e RNF02 — confidencialidade dos dados e rastreabilidade das alterações |
+| F82, F83, F84, F85, F86, F87, F89, F91 | Seção [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft) e camada de integração da seção 5.6.4 |
+| F92, F93, F95, F96 | Experiência de uso e documentação de sustentação prevista entre os entregáveis do TAPI |
+
+### 2.7.6 Desejos do parceiro registrados fora do MVP
+
+Esta seção preserva as solicitações manifestadas pelo Metrô que não integrarão a prova de conceito. Todos os itens permanecem documentados como insumo para as próximas etapas do projeto e para eventual continuidade em módulos posteriores.
+
+| *Features* | Desejo | Motivo da exclusão |
+|---|---|---|
+| F27 | Assistente completo de cronograma, com pesos e dependências | A modelagem do grafo de dependências e a exportação para MS Project excedem a janela do módulo |
+| F30, F31 | Assistentes de Mudanças e de Encerramento | Citados no escopo macro do TAPI sem roteiro detalhado pelo parceiro; dependem de definição adicional |
+| F40 | Exportação para Excel, MS Project, Miro e SharePoint | Depende de credenciais e de ambiente homologado do Metrô, indisponíveis no experimento acadêmico |
+| F41, F18 | Extração a partir de documentos e atas reais | Exige robustez sobre documentos heterogêneos, incompatível com validação restrita a dados sintéticos |
+| F49, F50 | Conexão com indicadores estratégicos e consulta a portfólios anteriores | Requerem bases históricas e de indicadores fora do perímetro do MVP |
+| F55 | Consulta às atribuições das áreas | Depende do cadastro corporativo de atribuições das gerências |
+| F65, F67, F69 | Relatório anual do portfólio, exportação nos modelos oficiais e painel sob demanda | Consomem dados consolidados de doze meses e modelos sob classificação Corporativo |
+| F75 | Condicionar o acesso à assinatura do termo de confidencialidade | Depende de integração com o fluxo de assinatura digital vigente |
+| F78, F79, F80 | Robustez a ruído, ditado longo e resposta falada | Refinamentos do canal de voz; o MVP entrega a conversão de áudio em texto (F77) e mede suas limitações |
+| F83, F84, F85, F86 | Integração com SharePoint, Power Automate, Power BI e Teams | Posicionada explicitamente no TAPI como a caixa "Ir Além" da Figura 01 |
+| F88, F89, F90 | Transações contra o legado: prazos, faturas vencidas e conformidade financeira | Os três exemplos do Apêndice do TAPI dependem de serviços do legado indisponíveis ao projeto |
+| F91 | Adoção de serviços de IA generativa homologados | Condicionada à homologação pelos setores técnicos e de compliance do Metrô |
+| F94, F96 | Administração do catálogo pelo GPM e atendimento multilíngue | Exigem maturidade de produto superior à de uma prova de conceito |
 
 ## 2.8 Canvas do Projeto
 
