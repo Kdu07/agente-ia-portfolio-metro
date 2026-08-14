@@ -1519,7 +1519,436 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 ## 5.3 Diagramas de Sequência da UML
 
-[Preencher]
+A seção 3.1.2 apresentou a modelagem estática do domínio — quais conceitos existem e como se relacionam. Esta seção apresenta a modelagem dinâmica correspondente: **como esses conceitos são produzidos e consumidos ao longo do tempo**, quais componentes trocam mensagens entre si, em que ordem e sob quais condições.
+
+A modelagem dinâmica é necessária porque três regras centrais dos requisitos não são expressáveis em um diagrama de classes, por serem regras de **ordem** e não de estrutura:
+
+- a verificação de permissão do perfil ocorre **antes** da recuperação e da apresentação do dado, e não depois (RF01, INT-08);
+- a classificação da intenção é condição necessária mas não suficiente para a execução: uma solicitação pode ser corretamente classificada e ainda assim recusada (RF03);
+- nenhuma alteração é efetivada sem confirmação explícita do usuário, e o registro de origem, autoria e momento acompanha a gravação (RF05, RNF02).
+
+### 5.3.1 Convenções adotadas
+
+**Nível de abstração.** As linhas de vida representam os **componentes da arquitetura de integração** descrita em 5.5.3.1, e não as classes do domínio de 3.1.2. A escolha é deliberada: esta é a seção de solução técnica, e o objetivo dos diagramas é mostrar como a solicitação do usuário atravessa o canal, a orquestração, o núcleo de PLN construído pela equipe e os sistemas corporativos que guardam os dados do portfólio. A ligação com o modelo estático não se perde: ela é restabelecida na tabela de rastreabilidade de 5.3.6.
+
+| Linha de vida | Camada (5.5.3.1) | Papel no fluxo | Integrações |
+|---|---|---|---|
+| `Usuário` | — (ator) | Persona que formula a solicitação ou recebe o alerta, com perfil e escopo de acesso associados | — |
+| `Canal (Teams / Web)` | Canal | Recebe a solicitação em texto ou voz e devolve a resposta no ambiente de trabalho do usuário | INT-01 |
+| `Copilot Studio` | Orquestração | Autentica, aciona o núcleo de PLN, verifica a autorização, roteia a intenção classificada e compõe a resposta | INT-01, INT-02 |
+| `Microsoft Entra ID` | Identidade | Autentica o usuário e fornece o perfil que rege as permissões | INT-08 |
+| `API de PLN` | Pilar 1 | Classifica a intenção, rotula o tipo, extrai e normaliza entidades, realiza busca semântica e redige a resposta | INT-02, INT-04 |
+| `Power Automate` | Automação | Executa as operações de leitura e escrita sobre as fontes e dispara os fluxos agendados | INT-03, INT-05, INT-07 |
+| `SharePoint` | Fontes de dados | Guarda as listas e as bibliotecas de documentos do portfólio (dados sintéticos no MVP) | INT-03, INT-04, INT-05 |
+| `Trilha de auditoria` | Governança | Registra enunciado, intenção, decisão de autorização e alterações efetivadas | INT-10 |
+
+**Fragmentos combinados.** Os diagramas utilizam quatro operadores da UML: `alt` para caminhos mutuamente exclusivos (autorizado *versus* não autorizado); `opt` para trechos condicionais sem alternativa (entrada por voz, desambiguação); `loop` para repetição até uma condição ser satisfeita (preenchimento progressivo de parâmetros); e `break` para saída excepcional do fragmento que o contém (falha de gravação), semântica adequada por interromper o restante do fluxo em vez de oferecer um caminho paralelo.
+
+**Reúso entre diagramas.** DS02, DS03 e DS04 não repetem o pipeline de classificação já detalhado em DS01. O reúso é indicado por uma região sombreada com a marcação `ref DSxx`, equivalente ao fragmento de uso de interação (`ref`) da UML — notação adotada porque a ferramenta de renderização utilizada não implementa esse operador nativamente.
+
+**Numeração.** As mensagens são numeradas automaticamente em cada diagrama. As referências no texto — "passo 7", por exemplo — correspondem a essa numeração e são reiniciadas a cada cenário.
+
+**Formato.** Cada diagrama é apresentado como imagem exportada em `documentos/imagens/`, com o código-fonte em Mermaid disponível logo abaixo, em bloco recolhível, para permitir edição e versionamento sem dependência de ferramenta gráfica externa.
+
+**Escopo dos cenários.** Foram modelados quatro cenários, escolhidos para cobrir os três tipos de fluxo previstos na Figura 01 do TAPI — consulta, transação e alerta — e a totalidade das *User Stories* classificadas como MVP:
+
+| Diagrama | Cenário | Tipo de fluxo | Por que foi escolhido |
+|---|---|---|---|
+| DS01 | Classificação de intenção e controle de escopo | Transversal | É o pipeline que antecede todos os demais fluxos e o entregável central do Módulo 7; concentra o comportamento de recusa exigido pelo RF03 |
+| DS02 | Consulta de status de projeto | Consulta | Fluxo de maior frequência esperada; exercita a verificação de permissão anterior ao acesso e a resposta com referência de origem |
+| DS03 | Atualização de avanço com confirmação | Transação | Único fluxo que altera o estado do portfólio; exercita confirmação prévia, rastreabilidade e tratamento de falha |
+| DS04 | Alerta proativo de pendência | Alerta | Único fluxo iniciado pelo sistema, sem solicitação do usuário; demonstra a atuação proativa do RF06 |
+
+Os cenários de análise comparativa (RF07) e de geração de prévias de relatório (RF08) não foram modelados nesta etapa por corresponderem a *User Stories* classificadas como desejáveis, fora do MVP. Do ponto de vista da sequência, ambos são variações de DS02: alteram a amplitude da consulta às fontes e o formato de saída, sem introduzir novas linhas de vida ou novos pontos de decisão.
+
+### 5.3.2 DS01 — Classificação de intenção e controle de escopo
+
+| Campo | Conteúdo |
+|---|---|
+| **Ator primário** | Qualquer perfil (Diretoria, Líder de Projeto ou Membro de Equipe) |
+| **Gatilho** | O usuário envia uma solicitação em linguagem natural, por texto ou voz |
+| **Requisitos** | RF02, RF03 · apoia RF01 · RNF03 |
+| **User Stories** | US02, US03 |
+| **Integrações** | INT-01, INT-02, INT-08, INT-10 |
+| **Pré-condição** | O usuário está autenticado no canal corporativo e o catálogo de intenções está publicado na versão vigente |
+| **Pós-condição (sucesso)** | A solicitação está associada a uma intenção do catálogo, com tipo, entidades resolvidas e grau de confiança, e foi encaminhada ao fluxo correspondente |
+| **Pós-condição (recusa)** | Nenhuma ação é executada; o usuário recebe orientação sobre o escopo do agente e a solicitação fica registrada para análise futura |
+
+<div align="center">
+  <img src="imagens/ds01-classificacao-intencao.png" width="95%" alt="Diagrama de sequência DS01: o usuário envia uma solicitação pelo canal Teams ou web; o Copilot Studio autentica o usuário no Entra ID e chama a API de PLN, que pré-processa o enunciado, classifica a intenção, rotula o tipo, extrai e normaliza entidades; conforme a confiança e a aderência ao catálogo, o fluxo segue para o roteamento, para um pedido de reformulação ou para uma recusa orientativa, sempre com registro na trilha de auditoria">
+  <br>
+  <sub>Figura X: DS01 — Classificação de intenção e controle de escopo.</sub>
+</div>
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box transparent Camada de canal
+        actor U as Usuário
+        participant CH as Canal<br/>(Teams / Web)
+    end
+    box transparent Camada de orquestração
+        participant CS as Copilot Studio<br/>(orquestrador)
+        participant ID as Microsoft<br/>Entra ID
+    end
+    box transparent Pilar 1 — núcleo de PLN
+        participant PLN as API de PLN<br/>(equipe)
+    end
+    box transparent Identidade e governança
+        participant LOG as Trilha de<br/>auditoria
+    end
+
+    U->>CH: solicitação em linguagem natural (texto ou voz)
+    opt entrada por voz
+        CH->>CH: converter fala em texto (TipoEntrada.VOZ)
+    end
+    CH->>+CS: enunciado + identificador do usuário
+    CS->>+ID: autenticar e obter perfil
+    ID-->>-CS: perfil, grupos e escopo de projetos autorizado
+
+    CS->>+PLN: POST /classificar { enunciado, perfil }
+    PLN->>PLN: pré-processar (normalizar, tokenizar)
+    PLN->>PLN: classificar intenção sobre o catálogo → intenção + confiança
+    PLN->>PLN: rotular tipo (consulta, transação ou análise)
+    PLN->>PLN: extrair entidades (projeto, subportfólio, período, indicador)
+    PLN->>PLN: normalizar nomes contra o dicionário do portfólio
+    PLN-->>-CS: { intenção, tipo, entidades, confiança }
+
+    alt intenção pertence ao catálogo e confiança ≥ limiar
+        opt entidade ambígua — mais de um projeto candidato
+            loop até restar um único candidato
+                CS-->>CH: pergunta de desambiguação + candidatos
+                CH-->>U: "Você quis dizer L2-Verde ou L4-Amarela?"
+                U->>CH: candidato escolhido
+                CH->>CS: candidato informado
+                CS->>PLN: reclassificar com a entidade resolvida
+                PLN-->>CS: entidades resolvidas
+            end
+        end
+        Note over CS,PLN: Roteamento por tipo de solicitação:<br/>consulta → DS02 · transação → DS03 · alerta → DS04
+    else confiança abaixo do limiar
+        CS-->>CH: pedido de reformulação + intenções mais próximas
+        CH-->>U: "Não tenho certeza. Você quis consultar o status ou o cronograma?"
+    else fora do catálogo, fora de domínio ou tentativa de manipulação
+        CS-->>CH: resposta orientativa sobre o escopo do agente
+        CH-->>U: orientação sobre o que o agente pode responder
+    end
+
+    PLN->>LOG: registrar enunciado, intenção, confiança e decisão de escopo
+    deactivate CS
+```
+
+</details>
+
+**Fluxo principal.** O usuário formula a solicitação no canal (1). Quando a entrada é por voz, o canal converte a fala em texto antes de qualquer processamento (2), materializando o valor `VOZ` da enumeração `TipoEntrada` sem que a conversão constitua um componente próprio da arquitetura. O canal encaminha o enunciado e o identificador do usuário ao orquestrador (3), que obtém do Entra ID o perfil, os grupos e o escopo de projetos autorizado (4–5). O perfil é recuperado **antes** da chamada ao núcleo de PLN e segue junto com o enunciado (6), de modo que a classificação já ocorra ciente do contexto de autorização. A API de PLN executa então o pipeline do Pilar 1 (7–11): pré-processamento, classificação da intenção sobre o catálogo com grau de confiança, rotulagem do tipo de solicitação, extração de entidades e normalização dos nomes contra o dicionário do portfólio — passo sem o qual "L15", "Linha 15" e "15-Prata" seriam tratados como entidades distintas. O resultado estruturado retorna ao orquestrador (12).
+
+**Fluxos alternativos.** O fragmento `alt` (a partir de 12) expressa as três saídas possíveis da classificação:
+
+- *Intenção no catálogo, confiança acima do limiar.* Quando a entidade extraída admite mais de um projeto candidato, o agente pergunta em vez de escolher (13–18), repetindo o ciclo até restar um único candidato. Resolvida a entidade, a solicitação é roteada por tipo: consulta segue para DS02, transação para DS03, alerta corresponde a DS04.
+- *Confiança abaixo do limiar.* O agente não arrisca uma resposta com aparência de certeza: solicita reformulação e apresenta as intenções mais próximas (19–20).
+- *Fora do catálogo, fora de domínio ou tentativa de manipulação do agente.* O agente devolve resposta orientativa sobre o que é capaz de responder, sem acionar conhecimento geral do modelo de linguagem (21–22).
+
+O registro na trilha de auditoria (23) está **fora** do fragmento `alt`, e essa posição é intencional: toda solicitação é registrada com enunciado, intenção atribuída, confiança e decisão de escopo, independentemente do desfecho. É esse registro que atende à exigência do RF03 de manter as recusas disponíveis para análise futura e que alimenta o painel de casos difíceis previsto na *feature* F1.23.
+
+**Decisões de modelagem.** A verificação de permissão não aparece aqui como mensagem própria porque, neste cenário, o perfil é apenas *carregado* e propagado; sua aplicação como regra de autorização ocorre nos fluxos que efetivamente acessam ou alteram dados, e está modelada em DS02 e DS03. As etapas do pipeline foram representadas como mensagens reflexivas da API de PLN, e não como linhas de vida separadas, porque constituem operações internas de um mesmo componente sob responsabilidade da equipe — decompô-las em componentes distintos anteciparia decisões de implementação ainda não tomadas.
+
+### 5.3.3 DS02 — Consulta de status de projeto
+
+| Campo | Conteúdo |
+|---|---|
+| **Ator primário** | Líder de Projeto (Fernanda Medina) |
+| **Gatilho** | O usuário pergunta pelo estado de um projeto do portfólio |
+| **Requisitos** | RF01, RF04 · RNF04, RNF05 |
+| **User Stories** | US01, US04 |
+| **Integrações** | INT-02, INT-03, INT-04, INT-08, INT-10 |
+| **Pré-condição** | A solicitação foi classificada como consulta e a entidade `Projeto` foi resolvida (DS01) |
+| **Pós-condição (sucesso)** | O usuário recebe a resposta no nível de detalhe do seu perfil, acompanhada da referência da fonte utilizada, e a consulta fica registrada |
+| **Pós-condição (recusa)** | Nenhuma informação do projeto é revelada, nem sua existência; a tentativa fica registrada |
+
+<div align="center">
+  <img src="imagens/ds02-consulta-status.png" width="95%" alt="Diagrama de sequência DS02: após a classificação da intenção referenciada de DS01, o Copilot Studio verifica se o projeto está no escopo autorizado do perfil; se não estiver, recusa sem revelar a existência do projeto; se estiver, o Power Automate consulta as listas do SharePoint, a API de PLN realiza busca semântica nos documentos quando necessário e compõe a resposta com referência de origem">
+  <br>
+  <sub>Figura X: DS02 — Consulta de status de projeto.</sub>
+</div>
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box transparent Camada de canal
+        actor U as Usuário<br/>(Líder de Projeto)
+        participant CH as Canal<br/>(Teams / Web)
+    end
+    box transparent Camada de orquestração
+        participant CS as Copilot Studio<br/>(orquestrador)
+    end
+    box transparent Pilar 1 — núcleo de PLN
+        participant PLN as API de PLN<br/>(equipe)
+    end
+    box transparent Automação e fontes de dados
+        participant PA as Power<br/>Automate
+        participant SP as SharePoint<br/>(listas e biblioteca)
+    end
+    box transparent Identidade e governança
+        participant LOG as Trilha de<br/>auditoria
+    end
+
+    U->>CH: "Qual o status do projeto Linha 15-Prata?"
+    CH->>+CS: enunciado + identificador do usuário
+
+    rect rgb(244, 244, 248)
+        Note over CH,PLN: ref DS01 — autenticação, classificação da intenção e extração de entidades
+        CS->>PLN: classificar solicitação
+        PLN-->>CS: intenção = consultar_status · tipo = consulta · Projeto = "L15-Prata"
+    end
+
+    CS->>CS: verificar se o projeto está no escopo autorizado do perfil
+
+    alt projeto fora do escopo autorizado do perfil
+        CS->>LOG: registrar tentativa de acesso não autorizado
+        CS-->>CH: recusa sem revelar a existência ou o conteúdo do projeto
+        CH-->>U: "Não encontrei projetos com esse nome no seu escopo de acesso."
+    else projeto autorizado para o perfil
+        CS->>+PA: obter dados do projeto (filtro pelo escopo autorizado)
+        PA->>+SP: consultar listas de Projetos, Avanço, Marcos e Riscos
+        SP-->>-PA: itens das listas (dados sintéticos no MVP)
+        PA-->>-CS: dados estruturados do projeto
+
+        opt a pergunta exige conteúdo documental
+            CS->>+PLN: busca semântica no índice de documentos
+            PLN->>PLN: recuperar trechos por similaridade
+            PLN-->>-CS: trechos relevantes + referência (documento, campo, data)
+        end
+
+        CS->>+PLN: compor resposta no nível de detalhe do perfil
+        PLN-->>-CS: resposta redigida com referência de origem
+        CS->>LOG: registrar consulta, intenção e fontes utilizadas
+        CS-->>CH: resposta composta
+        CH-->>U: status, avanço, próximos marcos e referência da fonte
+    end
+    deactivate CS
+```
+
+</details>
+
+**Fluxo principal.** A pergunta chega ao orquestrador (1–2) e passa pelo pipeline de DS01, que devolve a intenção `consultar_status`, o tipo `consulta` e a entidade `Projeto` já normalizada (3–4). O orquestrador então verifica se o projeto pertence ao escopo autorizado do perfil (5). Autorizada a consulta, o Power Automate recupera os dados estruturados nas listas do SharePoint — projetos, avanço, marcos e riscos —, sempre filtrados pelo escopo do usuário (9–12). Quando a pergunta exige conteúdo que não está nas listas, mas nos documentos do projeto, a API de PLN realiza busca semântica sobre o índice vetorial e devolve os trechos relevantes com sua procedência (13–15). A resposta é redigida no nível de detalhe adequado ao perfil (16–17), registrada (18) e devolvida ao usuário com a referência da fonte (19–20).
+
+**Fluxo alternativo — projeto fora do escopo autorizado.** O agente recusa **sem revelar a existência ou o conteúdo do projeto** (6–8). A formulação da resposta ("não encontrei projetos com esse nome no seu escopo de acesso") é deliberada: uma recusa do tipo "você não tem permissão para ver este projeto" confirmaria a existência do projeto e violaria o critério de aceitação da US01 que exige restringir a solicitação sem revelar o conteúdo protegido.
+
+**Decisões de modelagem.** A verificação de autorização (5) precede a chamada às fontes de dados, e não o inverso. Trata-se de uma decisão de projeto com consequência prática: nenhum dado do portfólio é recuperado antes de a autorização ser confirmada, o que evita que informação não autorizada transite pela camada de orquestração ainda que nunca chegue a ser exibida. A referência da fonte é devolvida junto com o conteúdo, e não anexada ao final pela camada de apresentação, porque o RF04 a trata como parte da resposta e a *feature* F1.13 a estabelece como propriedade do núcleo de PLN.
+
+### 5.3.4 DS03 — Atualização de avanço com confirmação
+
+| Campo | Conteúdo |
+|---|---|
+| **Ator primário** | Líder de Projeto (Fernanda Medina) |
+| **Gatilho** | O usuário solicita a alteração de uma informação do projeto |
+| **Requisitos** | RF01, RF05 · RNF01, RNF02 |
+| **User Stories** | US05 |
+| **Integrações** | INT-02, INT-05, INT-08, INT-10 |
+| **Pré-condição** | A solicitação foi classificada como transação e o perfil do usuário foi carregado (DS01) |
+| **Pós-condição (sucesso)** | O item da lista foi atualizado e o registro da alteração contém origem, autoria e momento |
+| **Pós-condição (cancelamento ou falha)** | Nenhuma alteração é efetivada e o valor anterior é preservado |
+
+<div align="center">
+  <img src="imagens/ds03-atualizacao-avanco.png" width="95%" alt="Diagrama de sequência DS03: após a classificação referenciada de DS01, o Copilot Studio verifica a permissão de escrita do perfil; completa os parâmetros ausentes em ciclo de perguntas; lê o valor atual no SharePoint via Power Automate; apresenta a prévia da alteração ao usuário e só efetiva a gravação após confirmação explícita, registrando origem, autoria e momento, com tratamento de falha de gravação e de cancelamento pelo usuário">
+  <br>
+  <sub>Figura X: DS03 — Atualização de avanço com confirmação do usuário.</sub>
+</div>
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box transparent Camada de canal
+        actor U as Usuário<br/>(Líder de Projeto)
+        participant CH as Canal<br/>(Teams / Web)
+    end
+    box transparent Camada de orquestração
+        participant CS as Copilot Studio<br/>(orquestrador)
+    end
+    box transparent Pilar 1 — núcleo de PLN
+        participant PLN as API de PLN<br/>(equipe)
+    end
+    box transparent Automação e fontes de dados
+        participant PA as Power<br/>Automate
+        participant SP as SharePoint<br/>(listas do portfólio)
+    end
+    box transparent Identidade e governança
+        participant LOG as Trilha de<br/>auditoria
+    end
+
+    U->>CH: "Atualiza o avanço do projeto L15-Prata para 60%"
+    CH->>+CS: enunciado + identificador do usuário
+
+    rect rgb(244, 244, 248)
+        Note over CH,PLN: ref DS01 — autenticação, classificação da intenção e extração de entidades
+        CS->>PLN: classificar solicitação
+        PLN-->>CS: intenção = atualizar_avanco · tipo = transação · Projeto, valor
+    end
+
+    CS->>CS: verificar permissão de escrita do perfil sobre o projeto
+
+    alt perfil sem permissão de escrita
+        CS->>LOG: registrar recusa por falta de permissão
+        CS-->>CH: recusa orientativa
+        CH-->>U: "Seu perfil não permite alterar o avanço deste projeto."
+    else perfil autorizado a alterar o projeto
+        opt parâmetros obrigatórios ausentes
+            loop até completar os parâmetros da intenção
+                CS-->>CH: solicitar apenas o parâmetro que falta
+                CH-->>U: "Para qual mês de referência?"
+                U->>CH: "Julho de 2026"
+                CH->>CS: parâmetro informado
+            end
+        end
+
+        CS->>+PA: ler o valor atual do avanço
+        PA->>+SP: consultar item na lista de Avanço
+        SP-->>-PA: avanço atual = 45%
+        PA-->>-CS: valor atual
+
+        CS-->>CH: prévia da alteração (45% → 60%, ref. jul/2026)
+        CH-->>U: "Confirma a alteração?"
+        U->>CH: decisão do usuário
+        CH->>CS: confirmação ou cancelamento
+
+        alt usuário confirma a alteração
+            CS->>+PA: efetivar atualização
+            PA->>+SP: atualizar item da lista de Avanço
+            break falha na gravação
+                SP-->>PA: erro de gravação
+                PA-->>CS: falha na atualização
+                CS-->>CH: aviso de falha, valor anterior preservado
+                CH-->>U: "Não consegui gravar. O avanço anterior foi mantido."
+            end
+            SP-->>-PA: confirmação da gravação
+            PA->>LOG: registrar origem, autoria e momento da alteração
+            PA-->>-CS: alteração efetivada
+            CS-->>CH: confirmação da atualização
+            CH-->>U: "Avanço atualizado para 60% (jul/2026)."
+        else usuário cancela
+            CS->>LOG: registrar transação cancelada
+            CS-->>CH: nenhuma alteração efetivada
+            CH-->>U: "Certo, nada foi alterado."
+        end
+    end
+    deactivate CS
+```
+
+</details>
+
+**Fluxo principal.** Classificada a intenção como `atualizar_avanco` do tipo transação (3–4), o orquestrador verifica a permissão de **escrita** do perfil sobre aquele projeto (5) — verificação distinta da permissão de leitura exercida em DS02, já que um usuário pode consultar um projeto sem estar autorizado a alterá-lo. Quando faltam parâmetros para completar a intenção, o agente solicita apenas o que falta, sem reiniciar o diálogo (9–12), repetindo o ciclo até a intenção estar completa. O agente então lê o valor atual na lista de Avanço (13–16) e apresenta ao usuário a **prévia da alteração**, contrapondo o valor vigente ao proposto (17–18). Somente após a confirmação explícita (19–20) a gravação é disparada (21–22), seguida do registro de origem, autoria e momento (28) e da confirmação ao usuário (30–31).
+
+**Fluxos alternativos.**
+
+- *Perfil sem permissão de escrita* (6–8): a recusa é registrada e o usuário é orientado, sem que nenhuma leitura de valor atual chegue a ocorrer.
+- *Falha na gravação* (fragmento `break`, 23–26): a sequência é interrompida, o valor anterior é preservado e o usuário é informado de que a alteração não foi aplicada. O operador `break` foi escolhido em lugar de um `alt` porque a falha encerra o fluxo restante, em vez de oferecer um caminho paralelo de mesma hierarquia.
+- *Cancelamento pelo usuário* (32–34): nenhuma alteração é efetivada e a desistência também é registrada, o que permite distinguir, na análise posterior, uma transação abandonada de uma transação que nunca foi proposta.
+
+**Decisões de modelagem.** A leitura do valor atual (13–16) antecede a prévia porque a confirmação exigida pelo RF05 só é informativa se o usuário puder comparar o valor vigente ao proposto. O registro de rastreabilidade parte do Power Automate, e não do orquestrador, porque é o componente que efetivamente conclui a gravação: registrar a partir da camada de orquestração criaria a possibilidade de uma alteração registrada como efetivada sem ter sido persistida. Essa distinção é o que sustenta o RNF02 na prática.
+
+### 5.3.5 DS04 — Alerta proativo de pendência
+
+| Campo | Conteúdo |
+|---|---|
+| **Ator primário** | Nenhum — cenário iniciado pelo sistema |
+| **Gatilho** | Disparo agendado do fluxo de varredura do portfólio |
+| **Requisitos** | RF06 · RNF04 |
+| **User Stories** | US06 |
+| **Integrações** | INT-03, INT-07, INT-10 |
+| **Pré-condição** | As regras de pendência estão acordadas com o PMO e os projetos possuem responsável identificado |
+| **Pós-condição** | Cada responsável por pendência recebeu notificação dirigida, e as pendências identificadas ficaram registradas |
+
+<div align="center">
+  <img src="imagens/ds04-alerta-proativo.png" width="95%" alt="Diagrama de sequência DS04: um fluxo agendado do Power Automate varre as listas do SharePoint, aplica as regras de pendência projeto a projeto e, ao identificar uma pendência, aciona o Copilot Studio para compor e enviar a notificação ao responsável pelo canal; caso o usuário responda ao alerta, a atualização segue o fluxo transacional de DS03">
+  <br>
+  <sub>Figura X: DS04 — Alerta proativo de pendência, iniciado pelo sistema.</sub>
+</div>
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box transparent Automação e fontes de dados
+        participant PA as Power Automate<br/>(fluxo agendado)
+        participant SP as SharePoint<br/>(listas do portfólio)
+    end
+    box transparent Camada de orquestração
+        participant CS as Copilot Studio<br/>(orquestrador)
+    end
+    box transparent Camada de canal
+        participant CH as Canal<br/>(Teams / Web)
+        actor U as Usuário<br/>(responsável)
+    end
+    box transparent Identidade e governança
+        participant LOG as Trilha de<br/>auditoria
+    end
+
+    Note over PA: Cenário iniciado pelo sistema:<br/>não há solicitação do usuário
+    PA->>PA: disparo agendado (varredura mensal da Lista de Avanço)
+    PA->>+SP: obter itens dos projetos ativos e seus responsáveis
+    SP-->>-PA: itens das listas (dados sintéticos no MVP)
+
+    loop para cada projeto do portfólio
+        PA->>PA: aplicar regras de pendência<br/>(dado ausente, desatualizado ou prazo próximo)
+        opt pendência identificada
+            PA->>LOG: registrar pendência e responsável notificado
+            PA->>+CS: solicitar composição da mensagem de alerta
+            CS-->>-CH: notificação dirigida ao responsável
+            CH-->>U: "Os riscos do L15-Prata estão sem atualização há 30 dias."
+        end
+    end
+
+    opt usuário responde ao alerta
+        U->>CH: "Pode registrar agora"
+        CH->>CS: enunciado + identificador do usuário
+        rect rgb(244, 244, 248)
+            Note over CH,SP: ref DS03 — a atualização segue o fluxo transacional,<br/>com confirmação explícita e registro de autoria
+        end
+    end
+```
+
+</details>
+
+**Fluxo principal.** Este é o único cenário sem solicitação do usuário: a sequência começa em um disparo agendado do Power Automate (1), que percorre as listas de projetos ativos e seus responsáveis (2–3). Para cada projeto, as regras de pendência são aplicadas (4) — dado ausente, dado desatualizado ou prazo próximo. Identificada uma pendência, ela é registrada (5), o orquestrador compõe a mensagem (6–7) e a notificação é entregue ao responsável no canal onde ele já trabalha (8). O ciclo se repete para todos os projetos do portfólio.
+
+**Continuidade.** Se o usuário responde ao alerta dispondo-se a corrigir a informação (9–10), a atualização **não** segue por um caminho abreviado: ela retorna ao fluxo transacional de DS03, com confirmação explícita e registro de autoria. A observação é relevante porque o contato ter partido do sistema não altera as garantias exigidas pelo RF05 — o alerta convida à correção, mas não a autoriza.
+
+**Decisões de modelagem.** O ator aparece à direita das demais linhas de vida, invertendo a disposição dos diagramas anteriores. A escolha é intencional e comunica a inversão de iniciativa: aqui o usuário é o destinatário da interação, não seu originador. A varredura foi modelada como `loop` sobre os projetos, e não como consulta única com filtro, porque as regras de pendência acordadas com o PMO podem variar por tipo de projeto e por subportfólio — decisão que a seção 5.5.5.2 (INT-07) registra como ainda pendente de validação com o parceiro.
+
+### 5.3.6 Rastreabilidade entre diagramas, requisitos e modelos
+
+A tabela a seguir liga cada cenário aos requisitos que o originaram, às classes do modelo estático de 3.1.2 que ele exercita e aos pontos de integração de 5.5 que ele atravessa. Ela cumpre a função de conectar as três modelagens do documento — requisitos, estática e dinâmica — e de evidenciar que a modelagem dinâmica não introduziu conceitos ausentes do domínio.
+
+| Diagrama | RFs | User Stories | RNFs | Classes exercitadas (3.1.2) | Integrações (5.5) |
+|---|---|---|---|---|---|
+| DS01 | RF02, RF03 | US02, US03 | RNF03 | `Usuario`, `Solicitacao`, `TipoEntrada`, `Classificacao`, `Intencao`, `Resposta` | INT-01, INT-02, INT-08, INT-10 |
+| DS02 | RF01, RF04 | US01, US04 | RNF04, RNF05 | `Usuario`, `Projeto`, `Resposta`, `Documento`, `Cronograma`, `Marco`, `Risco`, `Problema` | INT-02, INT-03, INT-04, INT-08, INT-10 |
+| DS03 | RF01, RF05 | US05 | RNF01, RNF02 | `Usuario`, `Projeto`, `AlteracaoProjeto` | INT-02, INT-05, INT-08, INT-10 |
+| DS04 | RF06 | US06 | RNF04 | `Projeto`, `Pendencia`, `Alerta`, `Usuario` | INT-03, INT-07, INT-10 |
+
+**Cobertura.** Os quatro diagramas cobrem RF01 a RF06 e as seis *User Stories* de prioridade MVP (US01 a US06). RF07 e RF08, associados às *User Stories* desejáveis US07 e US08, permanecem sem modelagem dinâmica nesta etapa, conforme justificado em 5.3.1. Entre as classes do modelo estático, permanecem não exercitadas `Portfolio`, `Subportfolio`, `Entrega` e `PreviaMaterialGerencial` — todas associadas justamente a RF07 e RF08, o que confirma a consistência entre a lacuna de cobertura e o recorte do MVP.
+
+### 5.3.7 Limitações e refinamentos futuros
+
+Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revistos à medida que as decisões técnicas se consolidarem. Permanecem em aberto:
+
+- **Limiar de confiança da classificação.** O valor que separa a resposta direta do pedido de reformulação em DS01 (passo 12) será definido a partir da bancada de avaliação prevista na *feature* F1.21, e não por arbitragem prévia.
+- **Autenticação efetiva.** DS01 representa a autenticação via Entra ID como já disponível. No MVP, conforme INT-08, os perfis são simulados sobre a base sintética, e a integração real depende do ambiente a ser disponibilizado pela TI do Metrô.
+- **Granularidade da permissão.** Os diagramas distinguem permissão de leitura (DS02) e de escrita (DS03), mas o mapeamento entre grupos corporativos e perfis do agente ainda depende do documento de níveis de acesso a ser fornecido pelo parceiro.
+- **Regras de pendência e política de notificação.** A frequência da varredura, os critérios de pendência e o mecanismo para evitar excesso de notificações em DS04 dependem de validação com o PMO.
+- **Comportamento em falha parcial.** O fragmento `break` de DS03 trata a falha de gravação como atômica. O comportamento diante de atualização parcialmente aplicada — mais de um campo alterado em uma mesma transação — ainda não foi definido e está registrado como pendência técnica em INT-05.
+- **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
 
 ## 5.4 Linguagens e Tecnologias Utilizadas
 
