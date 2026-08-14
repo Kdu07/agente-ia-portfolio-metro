@@ -1603,10 +1603,10 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 Um Diagrama de Componentes UML é uma representação visual que descreve a organização dos principais módulos de um sistema de software, suas responsabilidades e as interfaces por meio das quais se comunicam. Esse tipo de diagrama permite visualizar, de forma modular, como cada parte do sistema interage com as demais, garantindo organização, coesão e clareza arquitetural, e servindo como referência para o desenvolvimento, integração e implantação da solução.
 
-O diagrama a seguir foi construído com base nos Business Drivers e nos Requisitos Funcionais e Não Funcionais elicitados anteriormente. A arquitetura reflete os dois pilares do projeto: o **Pilar 1**, composto pelo pipeline de PLN desenvolvido pela própria equipe, e o **Pilar 2**, composto pelo ecossistema Microsoft do Metrô (Copilot Studio / Power Platform).
+O diagrama a seguir foi construído com base nos Business Drivers e nos Requisitos Funcionais e Não Funcionais elicitados anteriormente. A arquitetura reflete os dois pilares do projeto: o **Pilar 1**, composto pelo pipeline de PLN desenvolvido pela própria equipe, e o **Pilar 2**, composto pelo ecossistema Microsoft do Metrô (Copilot Studio / Power Platform). Os identificadores de componente utilizados aqui (A1–A4, B1–B3, C0–C6, D1–D7, E1–E4, F1–F5) são os mesmos empregados nas fichas de responsabilidade da seção 5.6.4, de modo que as duas seções descrevem a mesma arquitetura sob duas perspectivas complementares: esta, como diagrama UML formal; aquela, como narrativa por camadas.
 
 <div align="center">
-  <img src="../assets/diagrama_componentes.png" width="80%" alt="Diagrama de Componentes UML">
+  <img src="../assets/diagrama_componentes.png" width="85%" alt="Diagrama de Componentes UML">
   <br>
   <sub>Figura X — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
 </div>
@@ -1617,12 +1617,32 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 
 | Componente | Tipo | Função no Sistema |
 |---|---|---|
-| Interface do Usuário (Canal de Entrada) | Interface Humano-Computador | Recebe comandos do usuário em texto digitado ou áudio. Realiza a conversão de áudio em texto (STT) e normaliza a mensagem antes de repassá-la ao pipeline de PLN. |
-| Módulo de PLN (Pré-processamento) | Processamento Computacional | Executa as etapas de tokenização, normalização e vetorização (embeddings) sobre a mensagem recebida, produzindo a representação semântica necessária para a classificação de intenções. |
-| Classificador de Intenções (+ Controle de Confidencialidade) | Processamento Computacional | Identifica a intenção do usuário (consulta, transação ou alerta) e verifica se a solicitação pertence ao catálogo de interações permitidas e se os dados envolvidos são sensíveis. Solicitações autorizadas seguem para o Pilar 2; solicitações bloqueadas retornam diretamente ao Módulo de Resposta. |
-| Módulo de Resposta (Formatação e Entrega) | Processamento Computacional | Recebe o resultado processado — seja uma resposta consolidada vinda do Pilar 2 ou uma notificação de bloqueio — e o formata em linguagem natural para entrega ao usuário. |
-| Conector Microsoft (Copilot Studio / Power Platform) | Serviço de Orquestração | Atua como camada de orquestração e integração do Pilar 2. Recebe a intenção autorizada, consulta o repositório de documentos e consolida a resposta a ser entregue ao Módulo de Resposta. |
-| Repositório de Documentos (SharePoint / Dados Sintéticos) | Armazenamento de Dados | Fonte de dados do portfólio de projetos do Metrô. No MVP, contém dados sintéticos gerados para validação. Na evolução prevista, integra-se ao portfólio real do Metrô via SharePoint. |
+| A1. Canal de texto | Interface Humano-Computador | Recebe solicitações escritas em linguagem natural pela superfície conversacional corporativa. |
+| A2. Canal de voz | Interface Humano-Computador | Captura o áudio da solicitação do usuário, tratado como incremento sobre o canal de texto. |
+| A3. Conversão de voz em texto | Processamento Computacional | Transcreve o áudio capturado (STT) para texto antes de qualquer processamento pelo pipeline de PLN. |
+| A4. Apresentação da resposta | Interface Humano-Computador | Formata a resposta conforme o perfil do usuário e a entrega em linguagem natural — resultado do portfólio ou notificação de bloqueio com orientação sobre como prosseguir. |
+| B1. Autenticação | Identidade e Acesso | Valida a identidade do usuário junto ao diretório corporativo do Metrô, antes de qualquer acesso ao pipeline. |
+| B2. Perfil e permissões | Identidade e Acesso | Resolve o perfil do usuário e o conjunto de projetos e ações autorizadas, propagado às camadas seguintes. |
+| B3. Contexto de sessão | Identidade e Acesso | Mantém o histórico da conversa, permitindo interações de múltiplos passos (ex.: criação de projeto por etapas). |
+| C0. Interface de serviço do pipeline | Serviço (Pilar 1) | Expõe o pipeline como serviço próprio, consumido pelo Copilot Studio (E1) via a interface `IPipelinePLN`, sem acoplamento direto ao Pilar 2. |
+| C1. Pré-processamento textual | Processamento Computacional (Pilar 1) | Executa tokenização, limpeza e normalização (embeddings) sobre a mensagem recebida, tratando siglas e jargão do Metrô. |
+| C2. Classificador de intenções | Processamento Computacional (Pilar 1) | Identifica a intenção da solicitação (consulta, transação, alerta ou demais categorias do catálogo). |
+| C3. Extração de entidades | Processamento Computacional (Pilar 1) | Identifica os parâmetros da solicitação: código/nome do projeto, período, indicador, tipo de documento. |
+| C4. Guarda de escopo e confidencialidade | Controle de Acesso (Pilar 1) | Verifica se a intenção pertence ao catálogo permitido e é compatível com as permissões do usuário. Solicitações autorizadas seguem para o Pilar 2 (D1); solicitações bloqueadas retornam diretamente à montagem de resposta (C6), sem que nenhum dado sensível chegue ao Pilar 2. |
+| C5. Busca semântica em documentos | Processamento Computacional (Pilar 1) | Recupera trechos de documentos de projeto relevantes à solicitação, sustentando as respostas com base em conteúdo existente. |
+| C6. Montagem da resposta estruturada | Processamento Computacional (Pilar 1) | Consolida os dados recuperados — ou a notificação de bloqueio — em uma resposta com referência à fonte utilizada. |
+| D1. Roteador de intenções | Lógica de Negócio | Mapeia a intenção classificada para o serviço de negócio correspondente (D2–D6), isolando o PLN do conhecimento sobre como cada operação é executada. |
+| D2–D6. Serviços de consulta, transação, alertas, análise comparativa e relatórios | Lógica de Negócio | Traduzem a intenção classificada em operações concretas sobre o portfólio, cada um respondendo a um subconjunto dos requisitos funcionais (ver 5.5.6). |
+| D7. Registro de auditoria | Rastreabilidade | Registra a solicitação, a intenção classificada, a decisão de autorização e a alteração efetivada, com autor, origem e momento. |
+| E1. Copilot Studio | Serviço de Orquestração (Pilar 2) | Orquestra o agente conversacional, consumindo a interface `IPipelinePLN` exposta por C0. |
+| E2. Power Automate | Serviço de Orquestração (Pilar 2) | Executa os fluxos que leem e gravam informações nas fontes do portfólio e dispara notificações proativas. |
+| E3. Serviços de IA homologados | Serviço de Orquestração (Pilar 2) | Apoia tarefas de compreensão e geração que ultrapassam o pipeline básico, restrito a serviços aprovados por compliance. |
+| E4. Power BI | Serviço de Orquestração (Pilar 2) | Fornece indicadores consolidados do portfólio, utilizados nas respostas e nas prévias gerenciais. |
+| F1. Base de dados sintéticos | Armazenamento de Dados | Reproduz a estrutura das listas do portfólio (projetos, marcos, riscos, cronograma) com dados sintéticos. No MVP, é a fonte primária consultada por E1, E2 e E4. |
+| F2. Índice vetorial de documentos | Armazenamento de Dados | Armazena as representações dos documentos de projeto utilizadas pela busca semântica (C5). |
+| F3. Base de normativos | Armazenamento de Dados | Reúne os normativos de gestão de portfólio consultados nas verificações de aderência. |
+| F4. Trilha de auditoria | Armazenamento de Dados | Persiste os registros produzidos por D7, incluindo solicitações recusadas. |
+| F5. SharePoint e Listas do portfólio | Armazenamento de Dados | Fonte real de dados do portfólio do Metrô — fora do escopo do MVP, previsto como evolução ("Ir Além"). |
 
 > Fonte: Material produzido pelos autores (2026).
 
@@ -1630,29 +1650,34 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 
 ### 5.2.2 Interfaces e Relacionamentos entre Componentes
 
-**Usuário → Interface do Usuário**  
-O usuário PMO interage com o sistema por meio de texto digitado ou voz. A Interface do Usuário normaliza essa entrada — incluindo a conversão de áudio em texto (STT) — e a repassa ao pipeline de PLN.
+**Usuário → A1/A2 (Canais de entrada)**
+O usuário PMO interage com o sistema por texto (A1) ou voz (A2). No caso da voz, o áudio é transcrito em A3 (STT) antes de seguir adiante.
 
-**Interface do Usuário → Módulo de PLN**  
-A mensagem normalizada é enviada ao Módulo de PLN, que executa tokenização, limpeza e vetorização, produzindo a representação semântica (tokens e embeddings) necessária para a etapa de classificação.
+**A1/A3 → B1 → B2 → B3 (Identidade e contexto)**
+Antes de qualquer processamento pelo pipeline de PLN, a identidade do usuário é validada em B1, o perfil e as permissões são resolvidos em B2, e o contexto da conversa é recuperado em B3. Essa verificação ocorre **antes** da recuperação e da apresentação de qualquer dado, atendendo a RF01 e RNF01.
 
-**Módulo de PLN → Classificador de Intenções**  
-Os tokens e embeddings gerados são repassados ao Classificador de Intenções, que identifica a intenção da solicitação e verifica sua conformidade com o catálogo de interações permitidas e com as restrições de confidencialidade do sistema.
+**B3 → C0 → C1 → C2 → C3 → C4 (Núcleo de PLN — Pilar 1)**
+A mensagem normalizada entra no pipeline pela interface de serviço C0 e passa por pré-processamento (C1), classificação de intenção (C2) e extração de entidades (C3), chegando à guarda de escopo e confidencialidade (C4).
 
-**Classificador de Intenções → Conector Microsoft** *(caminho autorizado)*  
-Quando a intenção é identificada e os dados não são sensíveis, a solicitação segue para o Pilar 2 via Conector Microsoft (Copilot Studio / Power Platform).
+**C4 → D1 (Roteador de intenções)** *— caminho autorizado*
+Quando a intenção é identificada e é compatível com as permissões do usuário, a solicitação segue para o roteador D1, que a direciona ao serviço de negócio correspondente (D2 a D6) e aciona o registro de auditoria (D7).
 
-**Classificador de Intenções → Módulo de Resposta** *(caminho bloqueado)*  
-Quando a solicitação envolve dado sensível ou está fora do catálogo permitido, o Classificador bloqueia o fluxo internamente e repassa uma notificação de bloqueio diretamente ao Módulo de Resposta, sem que nenhum dado chegue ao Pilar 2.
+**C4 → C6** *— caminho bloqueado*
+Quando a solicitação envolve dado sensível ou está fora do catálogo permitido, C4 bloqueia o fluxo internamente e repassa a notificação de bloqueio diretamente a C6, sem que nenhum dado chegue ao Pilar 2.
 
-**Conector Microsoft ↔ Repositório de Documentos**  
-O Conector Microsoft consulta o Repositório de Documentos para recuperar as informações do portfólio relevantes à solicitação e consolida o resultado.
+**D2–D6 → E1/E2/E3/E4 (Integração Microsoft — Pilar 2)**
+Cada serviço de negócio aciona o componente do Pilar 2 correspondente à sua operação: consulta e análise comparativa via Copilot Studio e serviços de IA homologados; transação e alertas via Power Automate; relatórios via Power BI.
 
-**Conector Microsoft → Módulo de Resposta**  
-O resultado consolidado pelo Pilar 2 é enviado ao Módulo de Resposta para formatação final.
+**E1–E4 ↔ F1–F5 (Acesso a dados)**
+Os componentes do Pilar 2 consultam e, quando aplicável, gravam nas fontes de dados: base sintética (F1), índice vetorial (F2), base de normativos (F3) e, na evolução prevista, o SharePoint real do Metrô (F5).
 
-**Módulo de Resposta → Usuário**  
-O Módulo de Resposta entrega a resposta final ao usuário em linguagem natural — seja um resultado do portfólio ou uma notificação de bloqueio com orientação sobre como prosseguir.
+**C5 ↔ F2/F3 → C6**
+Em paralelo, a busca semântica (C5) consulta o índice vetorial e a base de normativos para sustentar a resposta com trechos de documentos, alimentando a montagem final em C6.
+
+**C6 → A4 → Usuário**
+C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio — e o repassa a A4, que formata a resposta conforme o perfil do usuário e a entrega em linguagem natural.
+
+> Fonte: Material produzido pelos autores (2026).
 
 ## 5.3 Diagramas de Sequência da UML
 
