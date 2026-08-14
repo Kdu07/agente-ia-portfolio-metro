@@ -198,7 +198,7 @@ Embora o PMO já conte com um agente para apoiar consultas ao portfólio, ele at
 ### 2.2.3 Matriz SWOT
 
 ![Descrição da imagem](/assets/swot.png)
-*Figura 1 — Matriz SWOT do parceiro.*
+*Figura X — Matriz SWOT do parceiro.*
 
 #### 2.2.3.1 Forças
 
@@ -339,7 +339,7 @@ Embora o gestor do portfólio, associado ao PMO, seja um ator recorrente nas his
 <div align="center">
   <img src="imagens/Roberto.png" width="35%" alt="Persona Roberto Nogueira">
   <br>
-  <sub>Figura 2 — Persona Roberto Nogueira.</sub>
+  <sub>Figura X — Persona Roberto Nogueira.</sub>
 </div>
 
 Roberto Nogueira tem 48 anos, nível de familiaridade tecnológica intermediário e representa o usuário de nível estratégico. Em seu papel na Diretoria, utiliza as informações do portfólio como subsídio para decisões, priorizações e acompanhamento institucional. No cenário atual, não opera diretamente as ferramentas de gestão: recebe do PMO relatórios, indicadores e apresentações previamente consolidados. Assim, seu contato com o portfólio é orientado à leitura executiva, e não ao acompanhamento das atividades rotineiras de cada projeto.
@@ -355,7 +355,7 @@ O nível de informação disponibilizado deve ser compatível com as atribuiçõ
 <div align="center">
   <img src="imagens/Fernanda.png" width="35%" alt="Persona Fernanda Medina">
   <br>
-  <sub>Figura 3 — Persona Fernanda Medina.</sub>
+  <sub>Figura X — Persona Fernanda Medina.</sub>
 </div>
 
 Fernanda Medina tem 39 anos, nível de familiaridade tecnológica intermediário e representa o nível gerencial ou tático. Como líder de projeto, acompanha o avanço, o cronograma, as entregas, os riscos e as pendências, além de manter interlocução com o PMO. Diferentemente do perfil da Diretoria, sua atuação exige acesso recorrente a informações detalhadas dos projetos sob sua responsabilidade e participação ativa na atualização dos respectivos dados.
@@ -371,7 +371,7 @@ Fernanda deve visualizar informações suficientemente detalhadas sobre os proje
 <div align="center">
   <img src="imagens/Carlos.png" width="35%" alt="Persona Carlos Mendes">
   <br>
-  <sub>Figura 4 — Persona Carlos Mendes.</sub>
+  <sub>Figura X — Persona Carlos Mendes.</sub>
 </div>
 
 Carlos Mendes tem 34 anos, nível de familiaridade tecnológica básico e representa o nível operacional. Como membro de uma equipe de projeto, participa da execução das atividades e precisa compreender as informações que afetam diretamente seu trabalho. Sua interação com a gestão do portfólio é mais delimitada que a dos demais perfis: ele necessita consultar o projeto do qual participa, identificar pendências e contribuir com atualizações pertinentes, sem precisar conhecer a arquitetura dos sistemas ou a organização das bases de dados.
@@ -407,7 +407,7 @@ Esses artefatos apoiam decisões de UX e de produto ao evidenciar diferenças en
 <div align="center">
   <img src="imagens/jornadaRoberto.png" width="90%" alt="Jornada do usuário Roberto Nogueira">
   <br>
-  <sub>Figura 5 — Jornada de Roberto Nogueira.</sub>
+  <sub>Figura X — Jornada de Roberto Nogueira.</sub>
 </div>
 
 A jornada de Roberto tem como objetivo obter uma visão executiva do portfólio que apoie a tomada de decisão. Seus principais momentos de interação com o agente envolvem a consulta de informações consolidadas, a identificação de projetos ou subportfólios que exigem atenção e o aprofundamento dos riscos mais relevantes. A principal dor está na dependência de informações previamente consolidadas e na dificuldade de localizar, em meio ao volume de dados, os pontos que demandam ação estratégica.
@@ -419,7 +419,7 @@ Como oportunidade de produto, o agente pode reduzir o esforço necessário para 
 <div align="center">
   <img src="imagens/jornadaFernanda.png" width="90%" alt="Jornada da usuária Fernanda Medina">
   <br>
-  <sub>Figura 6 — Jornada de Fernanda Medina.</sub>
+  <sub>Figura X — Jornada de Fernanda Medina.</sub>
 </div>
 
 A jornada de Fernanda está orientada ao acompanhamento do projeto e à manutenção da qualidade das informações gerenciais. A interação com o agente ocorre durante consultas sobre avanço, cronograma, entregas, riscos e pendências, na verificação de informações e normativos e no registro de atualizações. Entre as dores mais relevantes estão a recorrência de atividades manuais de acompanhamento e cobrança, o esforço para localizar orientações normativas e a necessidade de manter os dados atualizados e verificáveis.
@@ -431,7 +431,7 @@ Oportunidades para o produto incluem facilitar consultas e atualizações em lin
 <div align="center">
   <img src="imagens/jornadaCarlos.png" width="90%" alt="Jornada do usuário Carlos Mendes">
   <br>
-  <sub>Figura 7 — Jornada de Carlos Mendes.</sub>
+  <sub>Figura X — Jornada de Carlos Mendes.</sub>
 </div>
 
 A jornada de Carlos tem como objetivo consultar e contribuir com informações do projeto em que atua. Seus momentos de interação concentram-se na busca de informações necessárias à execução, na compreensão de pendências e no fornecimento de atualizações autorizadas. As principais dores estão associadas à dificuldade de localizar conteúdos relevantes, compreender o que precisa ser realizado e interagir com sistemas cuja estrutura técnica não lhe é familiar.
@@ -487,7 +487,7 @@ O processo começa quando o gestor de portfólio precisa consultar o status de u
 <div align="center">
   <img src="../documentos/imagens/asis.png" width="80%" alt="Fluxo AS-IS">
   <br>
-  <sub>Figura 8 — Fluxo AS-IS.</sub>
+  <sub>Figura X — Fluxo AS-IS.</sub>
 </div>
 
 Não existe, nesse cenário, um canal único de consulta em linguagem natural, nem verificação automática de confidencialidade dos dados: tudo depende de onde a informação está armazenada e da disponibilidade de terceiros para respondê-la.
@@ -506,7 +506,7 @@ Um gateway exclusivo decide o caminho a partir dessa classificação:
 <div align="center">
   <img src="../documentos/imagens/tobe.png" width="80%" alt="Fluxo TO-BE">
   <br>
-  <sub>Figura 9 — Fluxo TO-BE.</sub>
+  <sub>Figura X — Fluxo TO-BE.</sub>
 </div>
 
 Em ambos os desfechos, é o Gestor específico quem recebe o resultado final — a diferença está em qual dos dois pilares processou o pedido e se ele foi autorizado a prosseguir.
@@ -540,7 +540,7 @@ O viés de Orçamento tem como foco o rastreamento do capital investido (CAPEX -
 O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebimento do TAP Aprovado emitido pelo Poder Público, passando pelas medições de engenharia para apuração dos Custos de Estações e Custos de Túneis, até o encerramento com a emissão do Termo de Aceite Financeiro e Imobilização para a Operação.
 
 ![Descrição da imagem](/documentos/imagens/Fluxo%20Orçamento.jpg)
-*Figura 10 — Fluxo do viés de orçamento.*
+*Figura X — Fluxo do viés de orçamento.*
 
 ##### Detalhamento das raias e governança do fluxo
 
@@ -557,7 +557,7 @@ O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebi
 O viés de Tempo e Cronograma tem como foco o acompanhamento contínuo do progresso físico e o controle do caminho crítico do empreendimento no contexto da Linha 6-Laranja do Metrô de São Paulo. Esta perspectiva responde às perguntas operacionais sobre o cumprimento dos marcos contratuais (Milestones), o desempenho dos prazos via Índice de Desempenho de Prazos (SPI) e os ritos de governança para mitigação e aceleração de frentes de obra.
 
 ![Descrição da imagem](/documentos/imagens/Fluxo%20Tempo.jpg)
-*Figura 11 — Fluxo do viés de gestão do tempo.*
+*Figura X — Fluxo do viés de gestão do tempo.*
 
 ##### Detalhamento das raias e governança do fluxo
 
@@ -677,7 +677,7 @@ Cada risco negativo possui uma **ação de mitigação** (preventiva, que reduz 
 
 <img src="imagens\matriz-risco.png" alt="Matriz de probabilidade × impacto do projeto" width="50%">
 
-*Figura 12 — Matriz de probabilidade × impacto.*
+*Figura X — Matriz de probabilidade × impacto.*
 
 A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a faixa crítica (17–25) e apenas R10 permanece na faixa baixa. R01 é o item isolado de maior severidade, em (P4, I4), e R09 é o único da coluna de impacto muito alto (I5) — o que explica sua entrada na análise da seção 6 mesmo com probabilidade baixa.
 
@@ -908,7 +908,7 @@ O escopo indica onde cada *feature* será construída e utiliza o mesmo vocabul�
 <div align="center">
   <img src="imagens/matriz-features.png" width="85%" alt="Matriz de priorização das features por importância e viabilidade, com a contagem de features em cada uma das nove células">
   <br>
-  <sub>Figura 13 — Matriz de priorização de <i>features</i> (importância × viabilidade).</sub>
+  <sub>Figura X — Matriz de priorização de <i>features</i> (importância × viabilidade).</sub>
 </div>
 
 As 27 *features* de prioridade máxima correspondem quase integralmente ao núcleo de Processamento de Linguagem Natural somado às fundações de segurança e rastreabilidade — o que confirma o alinhamento entre o que o parceiro mais valoriza e o que o módulo avalia. Merece registro o contraste entre duas células de mesma prioridade 6: as de alta importância e viabilidade média constituem o esforço principal do MVP, enquanto as de importância média e alta viabilidade são acréscimos baratos que elevam a percepção de qualidade sem competir por espaço no cronograma. Apenas três *features* combinam alta importância e baixa viabilidade, e todas dependem do ambiente Microsoft homologado — o que as torna candidatas naturais ao "Ir Além" descrito no TAPI, e não itens a serem forçados para dentro do MVP.
@@ -1041,7 +1041,7 @@ Esta seção preserva as solicitações manifestadas pelo Metrô que não integr
 <div align="center">
   <img src="../assets/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
   <br>
-  <sub>Figura 14 — Business Model Canvas do projeto.</sub>
+  <sub>Figura X — Business Model Canvas do projeto.</sub>
 </div>
 
 ### 2.8.1 Proposta de Valor
@@ -1388,7 +1388,7 @@ classDiagram
     PreviaMaterialGerencial -- Projeto : utiliza informações de
 ```
 
-*Figura 15 — Diagrama de classes conceitual do domínio do agente.*
+*Figura X — Diagrama de classes conceitual do domínio do agente.*
 
 #### 3.2.2.1 Classes do domínio
 
@@ -1608,7 +1608,7 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 <div align="center">
   <img src="../assets/diagrama_componentes.png" width="80%" alt="Diagrama de Componentes UML">
   <br>
-  <sub>Figura 16 — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
+  <sub>Figura X — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
 </div>
 
 ---
@@ -1733,7 +1733,7 @@ Os cenários de análise comparativa (RF07) e de geração de prévias de relat�
 <div align="center">
   <img src="imagens/ds01-classificacao-intencao.png" width="95%" alt="Diagrama de sequência DS01: o usuário envia uma solicitação pelo canal Teams ou web; o Copilot Studio autentica o usuário no Entra ID e chama a API de PLN, que pré-processa o enunciado, classifica a intenção, rotula o tipo, extrai e normaliza entidades; conforme a confiança e a aderência ao catálogo, o fluxo segue para o roteamento, para um pedido de reformulação ou para uma recusa orientativa, sempre com registro na trilha de auditoria">
   <br>
-  <sub>Figura 17 — DS01: classificação de intenção e controle de escopo.</sub>
+  <sub>Figura X — DS01: classificação de intenção e controle de escopo.</sub>
 </div>
 
 <details>
@@ -1828,7 +1828,7 @@ O registro na trilha de auditoria (23) está **fora** do fragmento `alt`, e essa
 <div align="center">
   <img src="imagens/ds02-consulta-status.png" width="95%" alt="Diagrama de sequência DS02: após a classificação da intenção referenciada de DS01, o Copilot Studio verifica se o projeto está no escopo autorizado do perfil; se não estiver, recusa sem revelar a existência do projeto; se estiver, o Power Automate consulta as listas do SharePoint, a API de PLN realiza busca semântica nos documentos quando necessário e compõe a resposta com referência de origem">
   <br>
-  <sub>Figura 18 — DS02: consulta de status de projeto.</sub>
+  <sub>Figura X — DS02: consulta de status de projeto.</sub>
 </div>
 
 <details>
@@ -1918,7 +1918,7 @@ sequenceDiagram
 <div align="center">
   <img src="imagens/ds03-atualizacao-avanco.png" width="95%" alt="Diagrama de sequência DS03: após a classificação referenciada de DS01, o Copilot Studio verifica a permissão de escrita do perfil; completa os parâmetros ausentes em ciclo de perguntas; lê o valor atual no SharePoint via Power Automate; apresenta a prévia da alteração ao usuário e só efetiva a gravação após confirmação explícita, registrando origem, autoria e momento, com tratamento de falha de gravação e de cancelamento pelo usuário">
   <br>
-  <sub>Figura 19 — DS03: atualização de avanço com confirmação do usuário.</sub>
+  <sub>Figura X — DS03: atualização de avanço com confirmação do usuário.</sub>
 </div>
 
 <details>
@@ -2034,7 +2034,7 @@ sequenceDiagram
 <div align="center">
   <img src="imagens/ds04-alerta-proativo.png" width="95%" alt="Diagrama de sequência DS04: um fluxo agendado do Power Automate varre as listas do SharePoint, aplica as regras de pendência projeto a projeto e, ao identificar uma pendência, aciona o Copilot Studio para compor a mensagem e entrega a notificação ao responsável pelo canal; caso o usuário responda ao alerta, a atualização segue o fluxo transacional de DS03">
   <br>
-  <sub>Figura 20 — DS04: alerta proativo de pendência, iniciado pelo sistema.</sub>
+  <sub>Figura X — DS04: alerta proativo de pendência, iniciado pelo sistema.</sub>
 </div>
 
 <details>
@@ -2155,7 +2155,7 @@ A arquitetura de integração organiza-se em seis camadas. Ela mantém o núcleo
 <div align="center">
   <img src="imagens/integracoes-microsoft.png" width="70%" alt="Diagrama das integrações entre o agente de IA e o ecossistema Microsoft do Metrô de São Paulo, organizado em camadas de canal, orquestração, núcleo de PLN, automação, fontes de dados e governança">
   <br>
-  <sub>Figura 21 — Visão das integrações entre o agente e o ecossistema Microsoft do Metrô.</sub>
+  <sub>Figura X — Visão das integrações entre o agente e o ecossistema Microsoft do Metrô.</sub>
 </div>
 
 As arestas identificadas por `INT-xx` correspondem às fichas da seção 5.5.5.2.
@@ -2492,7 +2492,7 @@ flowchart TB
     class F1,F2,F3,F4,F5 base
 ```
 
-*Figura 22 — Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
+*Figura X — Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
 
 A correspondência com a Figura 01 do TAPI é direta: a camada 3 equivale à caixa "Processo PLN", as camadas 4 e 5 equivalem ao núcleo de transação, consulta, alertas e IA, e a camada 6 equivale ao bloco "Portfólio de Projetos". No MVP, a camada 6 é atendida por dados sintéticos, e o bloco F5 permanece previsto como evolução do tipo "Ir Além".
 
