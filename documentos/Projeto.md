@@ -497,6 +497,28 @@ Em ambos os desfechos, é o Gestor específico quem recebe o resultado final —
 | Resultado no caminho "problema" | Decisão tomada com atraso | Consulta bloqueada com aviso imediato |
 | Fonte de dados | Planilhas / relatórios estáticos | Dados sintéticos (MVP), via Pilar 2 |
 
+### 2.5.3 Fluxo Principal
+
+Esta seção tem como objetivo mapear a arquitetura ponta a ponta da execução do projeto, dividindo as responsabilidades operacionais em três níveis estratégicos de escopo (Pools):
+
+1. Poder Público & Sociedade (Fora do Escopo Direto): Responsável pelo alinhamento estratégico, viabilidade macroeconômica e autorização orçamentária;
+
+2. Execução e Gestão do Projeto (Escopo Central / "Dentro da Caixa"): Núcleo decisório e operacional composto por PMO, Financeiro, Engenharia e Consórcio Construtor;
+
+3. Operação da Linha (Fora do Escopo Direto): Etapa pós-obra focada no comissionamento, operação assistida e transição para o regime comercial.
+
+Para responder às diferentes perguntas de negócio, a arquitetura do processo foi desdobrada em duas visões analíticos, detalhados a seguir.
+
+#### 2.5.3.1 Viés de Orçamento do projeto
+
+![Descrição da imagem](/documentos/imagens/Fluxo%20Orçamento.jpg)
+*Diagrama de Víes de Orçamento*
+
+#### 2.5.3.2 Viés de Gestão do Tempo, Cronograma e Marcos Críticos
+
+![Descrição da imagem](/documentos/imagens/Fluxo%20Tempo.jpg)
+*Diagrama de Víes de Gestão do Tempo*
+
 ## 2.6 Matriz de Risco do Projeto
 
 ### 2.6.1 Metodologia de avaliação
