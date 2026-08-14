@@ -1704,23 +1704,23 @@ A modelagem dinâmica é necessária porque três regras centrais dos requisitos
 | `SharePoint` | Fontes de dados | Guarda as listas e as bibliotecas de documentos do portfólio (dados sintéticos no MVP) | INT-03, INT-04, INT-05 |
 | `Trilha de auditoria` | Identidade e governança | Registra enunciado, intenção, decisão de autorização e alterações efetivadas | INT-10 |
 
-**Correspondência com as demais vistas da solução.** O documento descreve a arquitetura em três vistas complementares: o diagrama de componentes (5.2), as camadas de integração (5.5.3.1) e os blocos conectados (5.6). Os diagramas de sequência descrevem o mesmo sistema em movimento, e não um quarto desenho. A tabela abaixo estabelece a correspondência, de modo que cada linha de vida possa ser localizada nas outras vistas:
+**Correspondência com as demais vistas da solução.** O documento descreve a arquitetura em três vistas complementares: o diagrama de componentes (5.2), as camadas de integração (5.5.3.1) e os blocos conectados (5.6). Desde a revisão do diagrama de componentes, as vistas 5.2 e 5.6 compartilham os mesmos identificadores de bloco (A1–F5), de modo que a tabela abaixo relaciona cada linha de vida diretamente a eles:
 
-| Linha de vida (5.3) | Blocos correspondentes (5.6) | Componente correspondente (5.2) |
-|---|---|---|
-| `Canal (Teams / Web)` | A1, A2, A3 (entrada e transcrição) e A4 (apresentação) | Interface do Usuário e Módulo de Resposta |
-| `Microsoft Entra ID` | B1 (autenticação) e B2 (perfil e permissões) | não representado |
-| `Copilot Studio` | E1, no papel de orquestrador que consome o pipeline por C0, e D1 (roteador de intenções); aplica as permissões resolvidas em B2 | Conector Microsoft |
-| `API de PLN` | C0 a C6 (interface de serviço, pré-processamento, classificação, extração, guarda de escopo, busca semântica e montagem da resposta) | Módulo de PLN e Classificador de Intenções para C0 a C4; em 5.2, a busca semântica e a composição da resposta cabem ao Conector Microsoft e ao Módulo de Resposta |
-| `Power Automate` | E2 (leitura, gravação e disparo de notificações) | Conector Microsoft, na função de acesso a dados |
-| `SharePoint` | F1, F2 e F3 no MVP; F5 na evolução prevista | Repositório de Documentos |
-| `Trilha de auditoria` | D7 (registro) e F4 (persistência) | não representado |
+| Linha de vida (5.3) | Blocos correspondentes (5.2 e 5.6) |
+|---|---|
+| `Canal (Teams / Web)` | A1, A2, A3 (entrada e transcrição) e A4 (apresentação) |
+| `Microsoft Entra ID` | B1 (autenticação) e B2 (perfil e permissões) |
+| `Copilot Studio` | E1, no papel de orquestrador que consome o pipeline por C0, e D1 (roteador de intenções); aplica as permissões resolvidas em B2 |
+| `API de PLN` | C0 a C6 (interface de serviço, pré-processamento, classificação, extração, guarda de escopo, busca semântica e montagem da resposta) |
+| `Power Automate` | E2 (leitura, gravação e disparo de notificações) |
+| `SharePoint` | F1, F2 e F3 no MVP; F5 na evolução prevista |
+| `Trilha de auditoria` | D7 (registro) e F4 (persistência) |
 
 DS01 reproduz o trecho inicial do percurso descrito em 5.6.5 — canal, identidade, pipeline, guarda de escopo, roteamento e registro; a integração e as fontes de dados, etapas 7 e 8 daquele percurso, são retomadas em DS02, DS03 e DS04, que possuem as linhas de vida correspondentes. A delegação do orquestrador ao núcleo de PLN é a prevista em C0 e na ficha INT-02, que estabelece o Copilot Studio como consumidor da API do Pilar 1.
 
 A guarda C4 merece uma observação, por ser o ponto em que as vistas se distinguem. Ela reúne duas verificações de naturezas diferentes, que os diagramas separam: a **aderência ao catálogo de intenções**, determinada pelo núcleo de PLN e devolvida junto com o grau de confiança, e a **permissão do perfil sobre o recurso concreto**, que depende do escopo resolvido em B2 e só pode ser aplicada pelo orquestrador — daí a mensagem reflexiva de verificação em DS02 e DS03. O núcleo determina se a solicitação é admissível; o orquestrador decide o que fazer com ela.
 
-Três divergências em relação ao diagrama de componentes (5.2) merecem registro: aquela vista não representa a autenticação e a resolução de perfil, nem a trilha de auditoria, ambas exigidas por RF01 e RNF02 e, por isso, presentes nestes diagramas; posiciona o conector Microsoft apenas a jusante do classificador, sem representar o caminho de entrada da solicitação; e atribui a busca semântica ao conector Microsoft e a composição da resposta ao Módulo de Resposta, enquanto 5.6 as mantém no núcleo do Pilar 1 (C5 e C6), leitura seguida por estes diagramas. Recomenda-se harmonizar as vistas na próxima revisão da seção 5.2.
+A revisão do diagrama de componentes (5.2) harmonizou as três vistas da arquitetura: a autenticação e a resolução de perfil (B1, B2) e a trilha de auditoria (D7), antes ausentes daquela vista, passaram a ser representadas, assim como o caminho de entrada da solicitação até o núcleo de PLN; e a busca semântica e a composição da resposta (C5, C6) foram atribuídas ao Pilar 1, como já constava em 5.6 e como estes diagramas de sequência já assumiam. As três vistas — 5.2, 5.3 e 5.6 — descrevem hoje a mesma arquitetura sob os mesmos identificadores de bloco.
 
 **Fragmentos combinados.** Os diagramas utilizam três operadores da UML: `alt` para caminhos mutuamente exclusivos com guardas complementares (perfil autorizado *versus* não autorizado; gravação confirmada *versus* falha); `opt` para trechos condicionais sem alternativa (entrada por voz, desambiguação, parâmetros ausentes); e `loop` para repetição enquanto uma condição se mantém (desambiguação e preenchimento progressivo de parâmetros). As guardas de `loop` foram redigidas como **condição de continuação**, e não de parada, conforme a semântica do operador na UML.
 
