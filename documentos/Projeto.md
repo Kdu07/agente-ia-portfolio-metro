@@ -53,7 +53,6 @@
   - [2.6 Matriz de Risco do Projeto](#26-matriz-de-risco-do-projeto)
   - [2.7 Ideação](#27-ideação)
   - [2.8 Canvas do Projeto](#28-canvas-do-projeto)
-  - [2.9 Delimitação de Escopo: O que o Produto Faz e Não Faz](#29-delimitação-de-escopo-o-que-o-produto-faz-e-não-faz)
 - [3. Requisitos do Projeto](#3-requisitos-do-projeto)
   - [3.1 Business Drivers](#31-business-drivers)
   - [3.2 Requisitos Funcionais (RFs)](#32-requisitos-funcionais-rfs)
@@ -70,7 +69,6 @@
   - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
-  - [5.4 Linguagens e Tecnologias Utilizadas](#54-linguagens-e-tecnologias-utilizadas)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
@@ -124,6 +122,8 @@ Em seu escopo macro, a solução busca interpretar e classificar intenções, co
 | Entra ID | Serviço de identidade da Microsoft (antigo Azure Active Directory) |
 | Graph API | Interface unificada de acesso a dados do Microsoft 365 |
 | *Tenant* | Instância corporativa do Microsoft 365 / Entra ID da organização |
+| TAPI | Termo de Abertura do Projeto Inteli |
+| GPM | *Group Product Manager* — responsável pela gestão do produto/portfólio no lado do parceiro |
 
 ## 1.2 Objetivo do Documento
 
@@ -197,7 +197,7 @@ Embora o PMO já conte com um agente para apoiar consultas ao portfólio, ele at
 
 ### 2.2.3 Matriz SWOT
 
-![Descrição da imagem](/assets/swot.png)
+![Descrição da imagem](../assets/swot.png)
 *Figura X — Matriz SWOT do parceiro.*
 
 #### 2.2.3.1 Forças
@@ -261,6 +261,8 @@ Mudanças futuras na estrutura do SharePoint, nas listas do portfólio ou nas fe
 ### 2.3.1 Visão
 
 O produto consiste em um agente de IA integrado ao ecossistema Microsoft utilizado pelo PMO do Metrô, com foco em facilitar o acesso e a análise das informações do portfólio. A partir de solicitações em linguagem natural, o produto interpreta a intenção do usuário, consulta as informações disponíveis e apresenta respostas contextualizadas sobre os projetos. A proposta é reduzir o esforço necessário para localizar e consolidar informações, além de apoiar o acompanhamento dos projetos e a tomada de decisão.
+
+Para viabilizar essa proposta, a solução é organizada em dois pilares complementares: o **Pilar 1**, núcleo de PLN desenvolvido pela própria equipe, responsável por interpretar e classificar as solicitações; e o **Pilar 2**, camada de integração com o ecossistema Microsoft do Metrô (Copilot Studio/Power Platform), responsável por executar a consulta ou ação sobre os dados do portfólio. Essa divisão é detalhada em 3.1.3 e retomada no fluxo de negócio (2.5) e na arquitetura da solução (5.6).
 
 ### 2.3.2 O que o produto faz
 
@@ -485,7 +487,7 @@ O processo começa quando o gestor de portfólio precisa consultar o status de u
 - **Caminho "Não"** — se o dado não está disponível, o fluxo cruza para a raia da Equipe: o gestor aciona a equipe do projeto por e-mail ou reunião, a equipe levanta os dados manualmente, e só então a decisão é tomada — já com atraso.
 
 <div align="center">
-  <img src="../documentos/imagens/asis.png" width="80%" alt="Fluxo AS-IS">
+  <img src="imagens/asis.png" width="80%" alt="Fluxo AS-IS">
   <br>
   <sub>Figura X — Fluxo AS-IS.</sub>
 </div>
@@ -504,7 +506,7 @@ Um gateway exclusivo decide o caminho a partir dessa classificação:
 - **Caminho "Não" (dado autorizado)** — o fluxo desce até a raia do Pilar 2, que consulta o ecossistema Microsoft do Metrô (Copilot Studio/Power Platform) sobre a base de dados sintéticos usada no MVP. O resultado sobe de volta à raia do Gestor, encerrando o processo com uma resposta consolidada.
 
 <div align="center">
-  <img src="../documentos/imagens/tobe.png" width="80%" alt="Fluxo TO-BE">
+  <img src="imagens/tobe.png" width="80%" alt="Fluxo TO-BE">
   <br>
   <sub>Figura X — Fluxo TO-BE.</sub>
 </div>
@@ -531,15 +533,17 @@ Esta seção tem como objetivo mapear a arquitetura ponta a ponta da execução 
 
 3. Operação da Linha (Fora do Escopo Direto): Etapa pós-obra focada no comissionamento, operação assistida e transição para o regime comercial.
 
-Para responder às diferentes perguntas de negócio, a arquitetura do processo foi desdobrada em duas visões analíticos, detalhados a seguir.
+Para responder às diferentes perguntas de negócio, a arquitetura do processo foi desdobrada em duas visões analíticas, detalhadas a seguir.
+
+É sobre essas duas visões que o agente atua: as consultas de status e desvio de orçamento (2.5.3.1) e de cronograma/marcos críticos (2.5.3.2) correspondem às perguntas de negócio que o RF04 (consulta e análise do portfólio) responde em linguagem natural, e as pendências e desvios identificados nesses fluxos são o gatilho dos alertas proativos do RF06 — ambos priorizados no MVP (2.7.2).
 
 #### 2.5.3.1 Viés de Orçamento do projeto
 
-O viés de Orçamento tem como foco o rastreamento do capital investido (CAPEX - R$ 5,2 Bi), alocado no contexto da Linha 6-Laranja do Metrô de São Paulo. Esta perspectiva responde diretamente às perguntas operacionais sobre a origem dos gastos, a validação de avanço físico em campo e os ritos de aprovação para medições e eventuais aditivos contratuais. Como não foi nos fornecido dados pelo próprio parceiro, esses dados foram retirados do site de transparência da prefeitura de SP.
+O viés de Orçamento tem como foco o rastreamento do capital investido (CAPEX - R$ 5,2 Bi), alocado no contexto da Linha 6-Laranja do Metrô de São Paulo. Esta perspectiva responde diretamente às perguntas operacionais sobre a origem dos gastos, a validação de avanço físico em campo e os ritos de aprovação para medições e eventuais aditivos contratuais. Como esses dados não nos foram fornecidos pelo próprio parceiro, eles foram retirados do site de transparência da prefeitura de SP.
 
 O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebimento do TAP Aprovado emitido pelo Poder Público, passando pelas medições de engenharia para apuração dos Custos de Estações e Custos de Túneis, até o encerramento com a emissão do Termo de Aceite Financeiro e Imobilização para a Operação.
 
-![Descrição da imagem](/documentos/imagens/Fluxo%20Orçamento.jpg)
+![Descrição da imagem](imagens/Fluxo%20Orçamento.jpg)
 *Figura X — Fluxo do viés de orçamento.*
 
 ##### Detalhamento das raias e governança do fluxo
@@ -556,7 +560,7 @@ O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebi
 
 O viés de Tempo e Cronograma tem como foco o acompanhamento contínuo do progresso físico e o controle do caminho crítico do empreendimento no contexto da Linha 6-Laranja do Metrô de São Paulo. Esta perspectiva responde às perguntas operacionais sobre o cumprimento dos marcos contratuais (Milestones), o desempenho dos prazos via Índice de Desempenho de Prazos (SPI) e os ritos de governança para mitigação e aceleração de frentes de obra.
 
-![Descrição da imagem](/documentos/imagens/Fluxo%20Tempo.jpg)
+![Descrição da imagem](imagens/Fluxo%20Tempo.jpg)
 *Figura X — Fluxo do viés de gestão do tempo.*
 
 ##### Detalhamento das raias e governança do fluxo
@@ -675,7 +679,7 @@ Cada risco negativo possui uma **ação de mitigação** (preventiva, que reduz 
 
 ### 2.6.5 Matriz probabilidade × impacto
 
-<img src="imagens\matriz-risco.png" alt="Matriz de probabilidade × impacto do projeto" width="50%">
+<img src="imagens/matriz-risco.png" alt="Matriz de probabilidade × impacto do projeto" width="50%">
 
 *Figura X — Matriz de probabilidade × impacto.*
 
@@ -712,7 +716,7 @@ As *features* estão agrupadas em dez épicos. A coluna **Origem** indica a font
 | F06 | Desambiguação interativa | Quando a correspondência retorna múltiplos candidatos, o agente pergunta em vez de escolher: "Você quis dizer L2-Verde ou Túnel de Ligação L2×L4?". | EQ | Média | Alta | 6 | **MVP** |
 | F07 | Contexto multi-turno | Resolução de referência anafórica e retomada de assunto entre mensagens, como em "e o dele?" ou "continuando a criação do projeto 123XXX". Situação exemplificada no Apêndice do TAPI. | TAPI | Alta | Média | 6 | **MVP** |
 | F08 | Preenchimento progressivo de parâmetros | O agente identifica quais parâmetros faltam para completar a intenção e solicita apenas o que falta, sem reiniciar o diálogo. | EQ | Alta | Média | 6 | **MVP** |
-| F09 | Tratamento graduado de baixa confiança | Abaixo do limiar de confiança, o agente solicita reformulação, sugere as intenções mais próximas e, persistindo a dúvida, encaminha ao GPM. Evita resposta incorreta com aparência de certeza. | EQ | Alta | Alta | 9 | **MVP** |
+| F09 | Tratamento graduado de baixa confiança | Abaixo do limiar de confiança, o agente solicita reformulação, sugere as intenções mais próximas e, persistindo a dúvida, encaminha ao GPM (*Group Product Manager*). Evita resposta incorreta com aparência de certeza. | EQ | Alta | Alta | 9 | **MVP** |
 | F10 | Robustez a linguagem coloquial | Tolerância a saudações, gírias, erros de digitação e abreviações. O próprio Apêndice do TAPI exemplifica com "Bom dia sis. Qual o prazo do projeto XPTO?". | TAPI | Média | Alta | 6 | **MVP** |
 | F11 | Classificação por tipo de solicitação | Além da intenção, rotular a solicitação como consulta, transação ou alerta, conforme a Figura 01 do TAPI. Define o caminho de tratamento subsequente. | TAPI | Alta | Alta | 9 | **MVP** |
 
@@ -1132,18 +1136,6 @@ Cabe registrar, nesse ponto, um efeito favorável da arquitetura adotada. A clas
 
 A quantificação monetária desta estrutura não é apresentada nesta versão. Sua elaboração depende da definição, pelo grupo, dos valores de referência a serem adotados para hora de trabalho por função, e do levantamento do volume esperado de interações, que determina a parcela variável. Ambos serão estabelecidos na análise de viabilidade financeira prevista para a Sprint 4, ocasião em que o orçamento completo, contemplando despesas operacionais, carga tributária e margem, será desenvolvido.
 
-## 2.9 Delimitação de Escopo: O que o Produto Faz e Não Faz
-
-### 2.9.1 O que o Produto Faz
-
-- [Preencher]
-- [Preencher]
-
-### 2.9.2 O que o Produto Não Faz
-
-- [Preencher]
-- [Preencher]
-
 # 3. Requisitos do Projeto
 
 ## 3.1 Business Drivers
@@ -1513,31 +1505,15 @@ Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**
 | RF07 |  |  |  |  |  |
 | RF08 |  |  |  | X | X |
 
+*RF07 (análise comparativa entre projetos) está fora do escopo do MVP (2.7.2 e 2.7.5) e por isso ainda não possui RNF associado nesta versão da especificação.*
+
 ## 3.5 Casos de Uso
 
-### 3.5.1 Diagrama de Casos de Uso
-
-[Inserir diagrama ou descrição]
-
-### 3.5.2 Atores do Sistema
-
-[Preencher]
-
-### 3.5.3 Descrição dos Casos de Uso
-
-[Preencher]
-
-### 3.5.4 Relacionamentos e Regras Representadas no Diagrama
-
-[Preencher]
-
-### 3.5.5 Coerência com o Problema e com a Solução Proposta
-
-[Preencher]
+Esta seção será desenvolvida na Sprint 2, com a modelagem de casos de uso derivada das *User Stories* já especificadas em 3.2.1 e do diagrama de classes de 3.2.2.
 
 ## 3.6 Casos de Uso x Requisitos Funcionais
 
-[Preencher]
+Esta seção será desenvolvida na Sprint 2, em conjunto com 3.5, consolidando a rastreabilidade entre os casos de uso e os RFs já definidos em 3.2.
 
 # 4. Modelagem de Dados
 
@@ -2138,10 +2114,6 @@ Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revi
 - **Comportamento em falha parcial.** DS03 trata a gravação como atômica: ela é confirmada ou falha por inteiro. O comportamento diante de atualização parcialmente aplicada — mais de um campo alterado em uma mesma transação — ainda não foi definido e está registrado como pendência técnica em INT-05.
 - **Cobertura da trilha de auditoria.** A modelagem dinâmica evidenciou uma lacuna do mapeamento de integrações: a ficha INT-10 prevê o registro de consultas, intenções classificadas, recusas e alterações efetivadas, mas não de alertas proativos, e a rastreabilidade de 5.5.6 associa o RF06 apenas a INT-03 e INT-07. Por coerência, DS04 não registra o alerta emitido. Recomenda-se ampliar o escopo de INT-10 para cobrir as notificações do RF06, de modo que a atuação proativa também seja auditável.
 - **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
-
-## 5.4 Linguagens e Tecnologias Utilizadas
-
-[Preencher]
 
 ## 5.5 Integrações com o Ecossistema Microsoft
 
