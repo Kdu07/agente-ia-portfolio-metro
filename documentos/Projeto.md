@@ -42,38 +42,62 @@
 # Sumário
 
 - [1. Introdução](#1-introdução)
-- [1.1 Termos e Abreviações](#11-termos-e-abreviações)
-- [1.2 Objetivo do Documento](#12-objetivo-do-documento)
+  - [1.1 Termos e Abreviações](#11-termos-e-abreviações)
+  - [1.2 Objetivo do Documento](#12-objetivo-do-documento)
 - [2. Entendimento do Projeto e do Negócio](#2-entendimento-do-projeto-e-do-negócio)
-- [2.1 Contexto da Indústria do Parceiro](#21-contexto-da-indústria-do-parceiro)
-- [2.2 Problema](#22-problema)
-- [2.3 Visão do Projeto e do Produto](#23-visão-do-projeto-e-do-produto)
-- [2.4 Personas e Jornadas do Usuário](#24-personas-e-jornadas-do-usuário)
-- [2.5 Modelagem do Fluxo de Negócio](#25-modelagem-do-fluxo-de-negócio)
-- [2.6 Matriz de Risco do Projeto](#26-matriz-de-risco-do-projeto)
-- [2.7 Ideação](#27-ideação)
-- [2.8 Canvas do Projeto](#28-canvas-do-projeto)
-- [2.9 Delimitação de Escopo](#29-delimitação-de-escopo-o-que-o-produto-faz-e-não-faz)
+  - [2.1 Contexto da Indústria do Parceiro](#21-contexto-da-indústria-do-parceiro)
+  - [2.2 Problema](#22-problema)
+  - [2.3 Visão do Projeto e do Produto](#23-visão-do-projeto-e-do-produto)
+  - [2.4 Personas e Jornadas do Usuário](#24-personas-e-jornadas-do-usuário)
+  - [2.5 Modelagem do Fluxo de Negócio](#25-modelagem-do-fluxo-de-negócio)
+  - [2.6 Matriz de Risco do Projeto](#26-matriz-de-risco-do-projeto)
+  - [2.7 Ideação](#27-ideação)
+  - [2.8 Canvas do Projeto](#28-canvas-do-projeto)
+  - [2.9 Delimitação de Escopo: O que o Produto Faz e Não Faz](#29-delimitação-de-escopo-o-que-o-produto-faz-e-não-faz)
 - [3. Requisitos do Projeto](#3-requisitos-do-projeto)
-- [3.1 Requisitos Funcionais](#31-requisitos-funcionais-rfs)
-- [3.2 Requisitos Não Funcionais](#32-requisitos-não-funcionais-rnfs)
-- [3.3 Correlação RFs e RNFs](#33-correlação-rfs-e-rnfs)
-- [3.4 Casos de Uso](#34-casos-de-uso)
-- [3.5 Casos de Uso x Requisitos Funcionais](#35-casos-de-uso-x-requisitos-funcionais)
-- [3.6 Business Drivers](#36-business-drivers)
+  - [3.1 Business Drivers](#31-business-drivers)
+  - [3.2 Requisitos Funcionais (RFs)](#32-requisitos-funcionais-rfs)
+  - [3.3 Requisitos Não Funcionais (RNFs)](#33-requisitos-não-funcionais-rnfs)
+  - [3.4 Correlação RFs e RNFs](#34-correlação-rfs-e-rnfs)
+  - [3.5 Casos de Uso](#35-casos-de-uso)
+  - [3.6 Casos de Uso x Requisitos Funcionais](#36-casos-de-uso-x-requisitos-funcionais)
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
+  - [4.1 Especificação da Base de Dados](#41-especificação-da-base-de-dados)
+  - [4.2 Modelo Conceitual de Dados](#42-modelo-conceitual-de-dados)
+  - [4.3 Modelo Lógico de Dados](#43-modelo-lógico-de-dados)
+  - [4.4 Modelo Físico de Dados](#44-modelo-físico-de-dados)
 - [5. Solução Técnica](#5-solução-técnica)
-- [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
-- [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
-- [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
-- [5.4 Linguagens e Tecnologias Utilizadas](#54-linguagens-e-tecnologias-utilizadas)
-- [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
-- [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
+  - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
+  - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
+  - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
+  - [5.4 Linguagens e Tecnologias Utilizadas](#54-linguagens-e-tecnologias-utilizadas)
+  - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
+  - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
+  - [6.1 Diagrama de Implantação da UML](#61-diagrama-de-implantação-da-uml)
+  - [6.2 Justificativa das Escolhas de Implantação](#62-justificativa-das-escolhas-de-implantação)
+  - [6.3 Considerações sobre Desempenho e Segurança](#63-considerações-sobre-desempenho-e-segurança)
+  - [6.4 Diagrama de Implantação de Infraestrutura](#64-diagrama-de-implantação-de-infraestrutura)
 - [7. Projeto Visual da Solução](#7-projeto-visual-da-solução)
+  - [7.1 Desenvolvimento de Wireframes](#71-desenvolvimento-de-wireframes)
+  - [7.2 Desenvolvimento de Mockups](#72-desenvolvimento-de-mockups)
+  - [7.3 Guia Visual](#73-guia-visual)
 - [8. Desenvolvimento do Projeto](#8-desenvolvimento-do-projeto)
+  - [8.1 Arquitetura de Codificação e Estrutura de Diretórios](#81-arquitetura-de-codificação-e-estrutura-de-diretórios)
+  - [8.2 Modelo de Recomendação](#82-modelo-de-recomendação)
+  - [8.3 Desenvolvimento de Features](#83-desenvolvimento-de-features)
+  - [8.4 Testes Unitários e de Integração](#84-testes-unitários-e-de-integração)
 - [9. Planejamento e Execução de Testes](#9-planejamento-e-execução-de-testes)
+  - [9.1 Testes Funcionais](#91-testes-funcionais)
+  - [9.2 Testes de RNFs](#92-testes-de-rnfs)
+  - [9.3 Testes de Usabilidade](#93-testes-de-usabilidade)
+  - [9.4 Testes de APIs Externas](#94-testes-de-apis-externas)
+  - [9.5 Testes de Integração](#95-testes-de-integração)
+  - [9.6 Testes de Regras de Negócio](#96-testes-de-regras-de-negócio)
+  - [9.7 Cobertura Consolidada do Artefato de Testes](#97-cobertura-consolidada-do-artefato-de-testes)
 - [10. Procedimentos de Implantação](#10-procedimentos-de-implantação)
+  - [10.1 Implantação e Configuração do Banco de Dados](#101-implantação-e-configuração-do-banco-de-dados)
+  - [10.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento](#102-implantação-do-protótipo-para-uso-pela-equipe-de-desenvolvimento)
 - [Referências](#referências)
 
 # 1. Introdução
@@ -84,7 +108,7 @@ Em seu escopo macro, a solução busca interpretar e classificar intenções, co
 
 ## 1.1 Termos e Abreviações
 
-### Abreviações Utilizadas
+### 1.1.1 Abreviações Utilizadas
 
 | Abreviação | Significado |
 |---|---|
@@ -174,7 +198,7 @@ Embora o PMO já conte com um agente para apoiar consultas ao portfólio, ele at
 ### 2.2.3 Matriz SWOT
 
 ![Descrição da imagem](/assets/swot.png)
-*Matriz SWOT do parceiro*
+*Figura 1 — Matriz SWOT do parceiro.*
 
 #### 2.2.3.1 Forças
 
@@ -315,7 +339,7 @@ Embora o gestor do portfólio, associado ao PMO, seja um ator recorrente nas his
 <div align="center">
   <img src="imagens/Roberto.png" width="35%" alt="Persona Roberto Nogueira">
   <br>
-  <sub>Figura 1: Persona Roberto Nogueira.</sub>
+  <sub>Figura 2 — Persona Roberto Nogueira.</sub>
 </div>
 
 Roberto Nogueira tem 48 anos, nível de familiaridade tecnológica intermediário e representa o usuário de nível estratégico. Em seu papel na Diretoria, utiliza as informações do portfólio como subsídio para decisões, priorizações e acompanhamento institucional. No cenário atual, não opera diretamente as ferramentas de gestão: recebe do PMO relatórios, indicadores e apresentações previamente consolidados. Assim, seu contato com o portfólio é orientado à leitura executiva, e não ao acompanhamento das atividades rotineiras de cada projeto.
@@ -331,7 +355,7 @@ O nível de informação disponibilizado deve ser compatível com as atribuiçõ
 <div align="center">
   <img src="imagens/Fernanda.png" width="35%" alt="Persona Fernanda Medina">
   <br>
-  <sub>Figura 2: Persona Fernanda Medina.</sub>
+  <sub>Figura 3 — Persona Fernanda Medina.</sub>
 </div>
 
 Fernanda Medina tem 39 anos, nível de familiaridade tecnológica intermediário e representa o nível gerencial ou tático. Como líder de projeto, acompanha o avanço, o cronograma, as entregas, os riscos e as pendências, além de manter interlocução com o PMO. Diferentemente do perfil da Diretoria, sua atuação exige acesso recorrente a informações detalhadas dos projetos sob sua responsabilidade e participação ativa na atualização dos respectivos dados.
@@ -347,7 +371,7 @@ Fernanda deve visualizar informações suficientemente detalhadas sobre os proje
 <div align="center">
   <img src="imagens/Carlos.png" width="35%" alt="Persona Carlos Mendes">
   <br>
-  <sub>Figura 3: Persona Carlos Mendes.</sub>
+  <sub>Figura 4 — Persona Carlos Mendes.</sub>
 </div>
 
 Carlos Mendes tem 34 anos, nível de familiaridade tecnológica básico e representa o nível operacional. Como membro de uma equipe de projeto, participa da execução das atividades e precisa compreender as informações que afetam diretamente seu trabalho. Sua interação com a gestão do portfólio é mais delimitada que a dos demais perfis: ele necessita consultar o projeto do qual participa, identificar pendências e contribuir com atualizações pertinentes, sem precisar conhecer a arquitetura dos sistemas ou a organização das bases de dados.
@@ -383,7 +407,7 @@ Esses artefatos apoiam decisões de UX e de produto ao evidenciar diferenças en
 <div align="center">
   <img src="imagens/jornadaRoberto.png" width="90%" alt="Jornada do usuário Roberto Nogueira">
   <br>
-  <sub>Figura 4: Jornada de Roberto Nogueira.</sub>
+  <sub>Figura 5 — Jornada de Roberto Nogueira.</sub>
 </div>
 
 A jornada de Roberto tem como objetivo obter uma visão executiva do portfólio que apoie a tomada de decisão. Seus principais momentos de interação com o agente envolvem a consulta de informações consolidadas, a identificação de projetos ou subportfólios que exigem atenção e o aprofundamento dos riscos mais relevantes. A principal dor está na dependência de informações previamente consolidadas e na dificuldade de localizar, em meio ao volume de dados, os pontos que demandam ação estratégica.
@@ -395,7 +419,7 @@ Como oportunidade de produto, o agente pode reduzir o esforço necessário para 
 <div align="center">
   <img src="imagens/jornadaFernanda.png" width="90%" alt="Jornada da usuária Fernanda Medina">
   <br>
-  <sub>Figura 5: Jornada de Fernanda Medina.</sub>
+  <sub>Figura 6 — Jornada de Fernanda Medina.</sub>
 </div>
 
 A jornada de Fernanda está orientada ao acompanhamento do projeto e à manutenção da qualidade das informações gerenciais. A interação com o agente ocorre durante consultas sobre avanço, cronograma, entregas, riscos e pendências, na verificação de informações e normativos e no registro de atualizações. Entre as dores mais relevantes estão a recorrência de atividades manuais de acompanhamento e cobrança, o esforço para localizar orientações normativas e a necessidade de manter os dados atualizados e verificáveis.
@@ -407,7 +431,7 @@ Oportunidades para o produto incluem facilitar consultas e atualizações em lin
 <div align="center">
   <img src="imagens/jornadaCarlos.png" width="90%" alt="Jornada do usuário Carlos Mendes">
   <br>
-  <sub>Figura 6: Jornada de Carlos Mendes.</sub>
+  <sub>Figura 7 — Jornada de Carlos Mendes.</sub>
 </div>
 
 A jornada de Carlos tem como objetivo consultar e contribuir com informações do projeto em que atua. Seus momentos de interação concentram-se na busca de informações necessárias à execução, na compreensão de pendências e no fornecimento de atualizações autorizadas. As principais dores estão associadas à dificuldade de localizar conteúdos relevantes, compreender o que precisa ser realizado e interagir com sistemas cuja estrutura técnica não lhe é familiar.
@@ -463,7 +487,7 @@ O processo começa quando o gestor de portfólio precisa consultar o status de u
 <div align="center">
   <img src="../documentos/imagens/asis.png" width="80%" alt="Fluxo AS-IS">
   <br>
-  <sub>Figura 7: Fluxo AS-IS.</sub>
+  <sub>Figura 8 — Fluxo AS-IS.</sub>
 </div>
 
 Não existe, nesse cenário, um canal único de consulta em linguagem natural, nem verificação automática de confidencialidade dos dados: tudo depende de onde a informação está armazenada e da disponibilidade de terceiros para respondê-la.
@@ -482,7 +506,7 @@ Um gateway exclusivo decide o caminho a partir dessa classificação:
 <div align="center">
   <img src="../documentos/imagens/tobe.png" width="80%" alt="Fluxo TO-BE">
   <br>
-  <sub>Figura 8: Fluxo TO-BE.</sub>
+  <sub>Figura 9 — Fluxo TO-BE.</sub>
 </div>
 
 Em ambos os desfechos, é o Gestor específico quem recebe o resultado final — a diferença está em qual dos dois pilares processou o pedido e se ele foi autorizado a prosseguir.
@@ -516,9 +540,9 @@ O viés de Orçamento tem como foco o rastreamento do capital investido (CAPEX -
 O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebimento do TAP Aprovado emitido pelo Poder Público, passando pelas medições de engenharia para apuração dos Custos de Estações e Custos de Túneis, até o encerramento com a emissão do Termo de Aceite Financeiro e Imobilização para a Operação.
 
 ![Descrição da imagem](/documentos/imagens/Fluxo%20Orçamento.jpg)
-*Diagrama de Víes de Orçamento*
+*Figura 10 — Fluxo do viés de orçamento.*
 
-### Detalhamento das Raias e Governança do Fluxo:
+##### Detalhamento das raias e governança do fluxo
 
 **PMO / Gestão de Projetos:** Define a Linha de Base (EAP), atua como instância de governança para Aprovação de Aditivos Orçamentários quando a medição excede o teto previsto, e consolida o Custo Histórico Final.
 
@@ -533,9 +557,9 @@ O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebi
 O viés de Tempo e Cronograma tem como foco o acompanhamento contínuo do progresso físico e o controle do caminho crítico do empreendimento no contexto da Linha 6-Laranja do Metrô de São Paulo. Esta perspectiva responde às perguntas operacionais sobre o cumprimento dos marcos contratuais (Milestones), o desempenho dos prazos via Índice de Desempenho de Prazos (SPI) e os ritos de governança para mitigação e aceleração de frentes de obra.
 
 ![Descrição da imagem](/documentos/imagens/Fluxo%20Tempo.jpg)
-*Diagrama de Víes de Gestão do Tempo*
+*Figura 11 — Fluxo do viés de gestão do tempo.*
 
-### Detalhamento das Raias e Governança do Fluxo:
+##### Detalhamento das raias e governança do fluxo
 
 **PMO / Gestão de Projetos:** Responsável por congelar o Cronograma Linha de Base (Master Schedule), atuar na governança para deliberação e Aprovação de Planos de Mitigação / Aceleração (quando há desvio no caminho crítico) e validar o encerramento físico do projeto mediante a emissão do Termo de Aceite Técnico Final (TRD).
 
@@ -653,13 +677,13 @@ Cada risco negativo possui uma **ação de mitigação** (preventiva, que reduz 
 
 <img src="imagens\matriz-risco.png" alt="Matriz de probabilidade × impacto do projeto" width="50%">
 
-*Figura 9 — Matriz de probabilidade x impacto
+*Figura 12 — Matriz de probabilidade × impacto.*
 
 A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a faixa crítica (17–25) e apenas R10 permanece na faixa baixa. R01 é o item isolado de maior severidade, em (P4, I4), e R09 é o único da coluna de impacto muito alto (I5) — o que explica sua entrada na análise da seção 6 mesmo com probabilidade baixa.
 
 ---
 
-### 2.6.6. Análise das três ameaças mais críticas
+### 2.6.6 Análise das três ameaças mais críticas
 
 **1º — R01 · Representatividade dos dados sintéticos (Sev. 16).** É o item de maior severidade e o único na célula (P4, I4). Por restrição de compliance do TAPI, o MVP é validado exclusivamente sobre dados sintéticos; se a equipe não espelhar o vocabulário, a estrutura e o ruído dos documentos reais do PMO, toda a avaliação de desempenho do pipeline (entregável central do módulo) perde validade. Afeta classificação de intenções, extração de informações, busca semântica e análise comparativa ao mesmo tempo. Por isso a mitigação (co-criação dos templates com o PMO) já está em execução.
 
@@ -871,11 +895,11 @@ A viabilidade mede a possibilidade de construção dentro da janela do módulo, 
 
 **Escopo**
 
-O escopo indica onde cada *feature* será construída e utiliza o mesmo vocabulário já adotado nas *user stories* da seção 3.1.1 e na camada de dados da seção 5.6.4.
+O escopo indica onde cada *feature* será construída e utiliza o mesmo vocabulário já adotado nas *user stories* da seção 3.2.1 e na camada de dados da seção 5.6.4.
 
 | Escopo | Significado |
 |---|---|
-| **MVP** | Integra a prova de conceito do Módulo 7. Corresponde aos requisitos RF01 a RF06, priorizados como MVP na seção 3.1.1 |
+| **MVP** | Integra a prova de conceito do Módulo 7. Corresponde aos requisitos RF01 a RF06, priorizados como MVP na seção 3.2.1 |
 | Desejável | Construída caso haja folga de cronograma. Corresponde aos requisitos RF07 e RF08 e a refinamentos das demais capacidades |
 | Ir Além | Desejo válido do parceiro, fora do escopo deste módulo, por depender de ambiente homologado, de integração com o legado ou de dados indisponíveis ao projeto |
 
@@ -884,7 +908,7 @@ O escopo indica onde cada *feature* será construída e utiliza o mesmo vocabul�
 <div align="center">
   <img src="imagens/matriz-features.png" width="85%" alt="Matriz de priorização das features por importância e viabilidade, com a contagem de features em cada uma das nove células">
   <br>
-  <sub>Figura X: Matriz de priorização de <i>features</i> (importância × viabilidade).</sub>
+  <sub>Figura 13 — Matriz de priorização de <i>features</i> (importância × viabilidade).</sub>
 </div>
 
 As 27 *features* de prioridade máxima correspondem quase integralmente ao núcleo de Processamento de Linguagem Natural somado às fundações de segurança e rastreabilidade — o que confirma o alinhamento entre o que o parceiro mais valoriza e o que o módulo avalia. Merece registro o contraste entre duas células de mesma prioridade 6: as de alta importância e viabilidade média constituem o esforço principal do MVP, enquanto as de importância média e alta viabilidade são acréscimos baratos que elevam a percepção de qualidade sem competir por espaço no cronograma. Apenas três *features* combinam alta importância e baixa viabilidade, e todas dependem do ambiente Microsoft homologado — o que as torna candidatas naturais ao "Ir Além" descrito no TAPI, e não itens a serem forçados para dentro do MVP.
@@ -914,7 +938,7 @@ As 27 *features* de prioridade máxima correspondem quase integralmente ao núcl
 | EP10 — Experiência e sustentação | 5 | 1 | 2 | 2 |
 | **Total** | **96** | **50** | **20** | **26** |
 
-Todos os dez épicos têm representação no MVP ou entre as *features* desejáveis. O EP06, relativo à geração de documentos, é o único sem *features* no MVP, o que decorre diretamente da priorização das *user stories*: US08, que lhe corresponde, está classificada como desejável na seção 3.1.1. Já o EP05, relativo à proatividade, entra no MVP com quatro *features*, uma vez que a antecipação de pendências figura entre os benefícios declarados no TAPI e o requisito RF06 está priorizado como MVP. O EP08 contribui com a conversão de áudio em texto, exigida pelo RF02 e pela US02.
+Todos os dez épicos têm representação no MVP ou entre as *features* desejáveis. O EP06, relativo à geração de documentos, é o único sem *features* no MVP, o que decorre diretamente da priorização das *user stories*: US08, que lhe corresponde, está classificada como desejável na seção 3.2.1. Já o EP05, relativo à proatividade, entra no MVP com quatro *features*, uma vez que a antecipação de pendências figura entre os benefícios declarados no TAPI e o requisito RF06 está priorizado como MVP. O EP08 contribui com a conversão de áudio em texto, exigida pelo RF02 e pela US02.
 
 ### 2.7.4 Sequenciamento das *features* do MVP
 
@@ -971,9 +995,9 @@ A prioridade média não cresce ao longo das ondas — 8,4 · 7,6 · 6,2 — o q
 
 ### 2.7.5 Rastreabilidade com os requisitos funcionais
 
-Toda *feature* levantada foi associada a um dos requisitos funcionais consolidados na seção [3.2 Requisitos Funcionais](#32-requisitos-funcionais-rfs), de modo que a lista desta seção e a especificação de requisitos não divirjam. A classificação de escopo obedece à priorização das *user stories* da seção 3.1.1: nenhuma *feature* vinculada a RF07 ou RF08, cujas histórias estão marcadas como desejáveis, foi admitida no MVP. Requisitos priorizados como MVP não são necessariamente cobertos em sua totalidade — o RF05 é o caso mais relevante, uma vez que o assistente completo de cronograma (F27) permanece registrado como Ir Além pelas razões apresentadas na seção 2.7.6, enquanto os demais artefatos de entrada previstos no requisito são contemplados.
+Toda *feature* levantada foi associada a um dos requisitos funcionais consolidados na seção [3.2 Requisitos Funcionais](#32-requisitos-funcionais-rfs), de modo que a lista desta seção e a especificação de requisitos não divirjam. A classificação de escopo obedece à priorização das *user stories* da seção 3.2.1: nenhuma *feature* vinculada a RF07 ou RF08, cujas histórias estão marcadas como desejáveis, foi admitida no MVP. Requisitos priorizados como MVP não são necessariamente cobertos em sua totalidade — o RF05 é o caso mais relevante, uma vez que o assistente completo de cronograma (F27) permanece registrado como Ir Além pelas razões apresentadas na seção 2.7.6, enquanto os demais artefatos de entrada previstos no requisito são contemplados.
 
-| Requisito | Prioridade (§3.1.1) | *Features* correspondentes | No MVP |
+| Requisito | Prioridade (§3.2.1) | *Features* correspondentes | No MVP |
 |---|---|---|:-:|
 | RF01 — Controle de acesso, permissões e perfil | MVP | F70, F71, F72, F75 | 3 |
 | RF02 — Interação em linguagem natural por texto e voz | MVP | F10, F77, F78, F79, F80, F81 | 2 |
@@ -1017,7 +1041,7 @@ Esta seção preserva as solicitações manifestadas pelo Metrô que não integr
 <div align="center">
   <img src="../assets/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
   <br>
-  <sub>Figura X: Business Model Canvas do projeto.</sub>
+  <sub>Figura 14 — Business Model Canvas do projeto.</sub>
 </div>
 
 ### 2.8.1 Proposta de Valor
@@ -1126,7 +1150,7 @@ A quantificação monetária desta estrutura não é apresentada nesta versão. 
 
 Esta seção descreve o contexto de negócio que motiva a construção da aplicação computacional, alinhando-se aos documentos de entendimento de negócio produzidos junto à Companhia do Metropolitano de São Paulo (Metrô), e explica como o uso de Processamento de Linguagem Natural (PLN) transforma os processos atuais de gestão de portfólio de projetos.
 
-### 3.1.1. Contexto de Negócio
+### 3.1.1 Contexto de Negócio
 
 A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo de status, riscos, marcos (*milestones*) e aderência a normativos internos e externos. Atualmente, esse acompanhamento depende fortemente de consultas manuais a sistemas corporativos e da consolidação de informações dispersas, o que demanda tempo das equipes de gestão e aumenta o risco de decisões baseadas em dados desatualizados ou incompletos.
 
@@ -1164,7 +1188,7 @@ Toda solicitação enquadrada nessas categorias deve gerar uma resposta orientat
 
 > **Observação:** este catálogo representa a primeira versão, construída a partir dos exemplos do apêndice do TAPI e dos RFs já modelados. Ele deverá ser revisado e ampliado ao longo das sprints, especialmente à medida que novas formas de solicitação forem identificadas no uso do agente (conforme risco R04, seção 2.6) e que o parceiro fornecer informações adicionais sobre perfis e prioridades.
 
-### 3.1.2. Transformação do Negócio por meio do PLN
+### 3.1.2 Transformação do Negócio por meio do PLN
 
 A introdução de PLN modifica o negócio nas seguintes frentes:
 
@@ -1173,7 +1197,7 @@ A introdução de PLN modifica o negócio nas seguintes frentes:
 - **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
 - **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
 
-### 3.1.3. Alinhamento com o Ecossistema Corporativo
+### 3.1.3 Alinhamento com o Ecossistema Corporativo
 
 A solução se apoia em dois pilares complementares:
 
@@ -1182,15 +1206,15 @@ A solução se apoia em dois pilares complementares:
 
 Essa combinação assegura que a transformação proposta não exija a substituição de ferramentas já consolidadas na organização, mas sim a adição de uma camada inteligente de interação sobre elas.
 
-### 3.1.4. Restrições de Negócio Relevantes
+### 3.1.4 Restrições de Negócio Relevantes
 
 Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
 
-### 3.1.5. Indicadores Computacionais do Pipeline de PLN
+### 3.1.5 Indicadores Computacionais do Pipeline de PLN
 
 Os direcionadores acima exigem que o desempenho do agente seja medido de forma objetiva. Os indicadores a seguir traduzem esses direcionadores em métricas verificáveis. Em especial o objetivo **O5** (acurácia mínima de 85% na classificação de intenções) e o **RNF03**.
 
-#### 3.1.5.1. Indicadores de classificação de intenções
+#### 3.1.5.1 Indicadores de classificação de intenções
 
 Os indicadores derivam da comparação entre a intenção prevista e a intenção verdadeira de cada solicitação, resumida na **matriz de confusão**: verdadeiros positivos (VP), falsos positivos (FP) e falsos negativos (FN) por intenção.
 
@@ -1203,7 +1227,7 @@ Os indicadores derivam da comparação entre a intenção prevista e a intençã
 
 Precisão, recall e F1 serão reportados por intenção e em macro-média, para evidenciar as categorias menos frequentes.
 
-#### 3.1.5.2. Indicadores de conversão entre voz e texto
+#### 3.1.5.2 Indicadores de conversão entre voz e texto
 
 O canal de voz é um incremento no MVP, mas precisa ser medido: conforme o risco **R03**, um erro de transcrição em uma sigla ou código de projeto propaga-se como erro de intenção.
 
@@ -1232,7 +1256,7 @@ Os requisitos funcionais representam as principais capacidades esperadas do agen
 | RF07 | Análise comparativa do portfólio | O sistema deve realizar análises entre projetos do portfólio, permitindo identificar relações e diferenças relevantes, como riscos que possam impactar outros projetos, avanço, desempenho e demais indicadores disponíveis. |
 | RF08 | Geração de relatórios e informações gerenciais | O sistema deve gerar prévias de relatórios e materiais gerenciais a partir das informações dos projetos, incluindo relatório de status, apresentação periódica para a diretoria e relatório de encerramento, adequando o nível de detalhamento ao perfil do usuário. |
 
-### 3.1.1 User Stories
+### 3.2.1 User Stories
 
 As histórias de usuário foram derivadas das personas e dos requisitos funcionais, buscando representar as necessidades dos usuários em relação às capacidades previstas para o agente. Cada história associa a persona que recebe maior valor da funcionalidade ao requisito correspondente e estabelece condições observáveis para verificar seu atendimento. A priorização considera as definições registradas no *kick-off*: linguagem natural, classificação de intenções, avanço, termo de abertura e cronograma compõem o MVP, enquanto análises comparativas e relatórios executivos são classificados como desejáveis e podem integrar incrementos posteriores associados ao "Ir Além".
 
@@ -1247,7 +1271,7 @@ As histórias de usuário foram derivadas das personas e dos requisitos funciona
 | US07 | Roberto Nogueira — Diretor | **Como Roberto Nogueira, eu quero comparar projetos e subportfólios, para identificar diferenças, relações, riscos e indicadores que exijam atenção estratégica.** | RF07 | Desejável | O sistema permite realizar análises entre projetos do portfólio.<br>A análise apresenta relações ou diferenças relevantes com base nas informações disponíveis.<br>A análise pode considerar riscos com impacto em outros projetos, avanço, desempenho e demais indicadores disponíveis. |
 | US08 | Roberto Nogueira — Diretor | **Como Roberto Nogueira, eu quero obter prévias de relatórios e materiais gerenciais com visão executiva, para acompanhar o portfólio e apoiar a tomada de decisão.** | RF08 | Desejável | O sistema gera prévias a partir das informações disponíveis nos projetos.<br>As prévias contemplam os materiais gerenciais previstos no requisito: relatório de status, apresentação periódica para a diretoria ou relatório de encerramento.<br>O nível de detalhamento do material é adequado ao perfil do usuário. |
 
-### 3.1.2 Modelagem estática — Diagrama de classes
+### 3.2.2 Modelagem estática — Diagrama de classes
 
 O diagrama de classes a seguir apresenta a modelagem estática e conceitual do domínio necessário para atender aos requisitos funcionais e às User Stories da Sprint 1. Seu propósito é representar os principais conceitos do agente de IA e as relações entre eles, sem antecipar decisões de arquitetura, persistência ou integração que serão refinadas na etapa de projeto técnico. Por esse motivo, não são representados componentes como controladores, serviços, APIs, bancos de dados, Copilot Studio ou SharePoint.
 
@@ -1364,9 +1388,9 @@ classDiagram
     PreviaMaterialGerencial -- Projeto : utiliza informações de
 ```
 
-*Figura X — Diagrama de classes conceitual do domínio do agente.*
+*Figura 15 — Diagrama de classes conceitual do domínio do agente.*
 
-#### 3.1.2.1 Classes do domínio
+#### 3.2.2.1 Classes do domínio
 
 | Classe | Responsabilidade no domínio | Origem principal |
 |---|---|---|
@@ -1390,7 +1414,7 @@ classDiagram
 | `Alerta` | Representar o aviso ou contato proativo originado por uma pendência e direcionado ao usuário responsável. | RF06 e US06 |
 | `PreviaMaterialGerencial` | Representar a prévia de um relatório ou material gerencial produzida com informações dos projetos. | RF08 e US08 |
 
-#### 3.1.2.2 Relações e decisões de modelagem
+#### 3.2.2.2 Relações e decisões de modelagem
 
 O acesso autorizado entre `Usuario` e `Projeto` representa a regra funcional de restrição das informações, e não um acesso já realizado. Os valores formais de `perfil`, as permissões correspondentes e as multiplicidades dessa associação deverão ser refinados após o recebimento do documento de níveis de acesso informado pelo parceiro.
 
@@ -1408,7 +1432,7 @@ As condições de informação ausente, inconsistente ou pendente não foram con
 
 Por fim, `PreviaMaterialGerencial` abrange os relatórios de status, as apresentações periódicas para a Diretoria e os relatórios de encerramento citados no RF08. Esses artefatos não foram reduzidos a uma enumeração de relatórios, pois uma apresentação constitui um material gerencial de natureza distinta.
 
-#### 3.1.2.3 Rastreabilidade entre RFs, User Stories e modelo
+#### 3.2.2.3 Rastreabilidade entre RFs, User Stories e modelo
 
 | RF | User Story | Classes e relações correspondentes |
 |---|---|---|
@@ -1421,15 +1445,15 @@ Por fim, `PreviaMaterialGerencial` abrange os relatórios de status, as apresent
 | RF07 | US07 | `Portfolio`, `Subportfolio`, `Projeto` e `Resposta`; a comparação é tratada como comportamento do agente. |
 | RF08 | US08 | `Portfolio`, `Projeto` e `PreviaMaterialGerencial`. |
 
-#### 3.1.2.4 Limitações e refinamentos futuros
+#### 3.2.2.4 Limitações e refinamentos futuros
 
 Esta modelagem utiliza as informações disponíveis na Sprint 1 e deverá ser revisada durante o projeto técnico e arquitetural. Permanecem pendentes de validação: os perfis e níveis formais de acesso; as multiplicidades entre usuários, portfólios, subportfólios e projetos; a estrutura do catálogo de intenções e sua associação às funcionalidades; os estados de confirmação das alterações; e os atributos detalhados de cronogramas, marcos, entregas, pendências, alertas e materiais gerenciais. Essas definições não foram antecipadas para evitar transformar hipóteses em regras consolidadas do domínio.
 
-## 3.2 Requisitos Não Funcionais (RNFs)
+## 3.3 Requisitos Não Funcionais (RNFs)
 
 Os requisitos não funcionais abaixo foram derivados dos *business drivers* do projeto — especialmente a exigência de confidencialidade no tratamento de dados sensíveis do Metrô e a necessidade de confiabilidade na operação do agente. Para torná-los verificáveis, cada RNF é apresentado inicialmente por meio de uma descrição objetiva, uma métrica numérica e uma referência normativa, seguida de sua respectiva User Story. As normas ISO/IEC são utilizadas como modelos de qualidade e vocabulário de referência; sua adoção nesta documentação não representa certificação da solução nem declaração de conformidade integral.
 
-### Especificação mensurável dos RNFs
+### 3.3.1 Especificação mensurável dos RNFs
 
 | ID | Requisito Não Funcional | Descrição mensurável | Métrica e critério de aceitação | Referência ISO/IEC |
 |---|---|---|---|---|
@@ -1443,7 +1467,7 @@ A meta de disponibilidade do RNF04 é uma hipótese quantitativa inicial adotada
 
 As referências normativas adotadas são a [ISO/IEC 25010:2023 — modelo de qualidade de produto](https://www.iso.org/standard/78176.html), a [ISO/IEC 25059:2023 — modelo de qualidade para sistemas de IA](https://www.iso.org/standard/80655.html) e a [ISO/IEC 27001:2022 — sistemas de gestão de segurança da informação](https://www.iso.org/standard/27001).
 
-### User Stories dos RNFs
+### 3.3.2 User Stories dos RNFs
 
 As User Stories a seguir complementam a especificação mensurável ao registrar o valor esperado por seus respectivos perfis de interesse.
 
@@ -1462,8 +1486,7 @@ As User Stories a seguir complementam a especificação mensurável ao registrar
 **RNF05 — Adequação da resposta ao perfil do usuário**
 > Como Membro da Equipe de Projeto, quero que o nível de detalhamento e a modalidade de interação (texto ou voz) se adaptem ao meu perfil de acesso, para que eu receba respostas no formato mais útil ao meu contexto de trabalho, sem sobrecarga de informação irrelevante.
 
-
-## 3.3 Correlação RFs e RNFs
+## 3.4 Correlação RFs e RNFs
 
 Os RNFs especificados decorrem diretamente dos *business drivers* do projeto e sustentam a viabilidade dos RFs modelados, garantindo que as funcionalidades entregues operem de forma segura, confiável e adequada ao contexto do Metrô de São Paulo.
 
@@ -1490,65 +1513,31 @@ Por fim, o **RNF05 (adequação ao perfil)** complementa o **RF01** e o **RF08**
 | RF07 |  |  |  |  |  |
 | RF08 |  |  |  | X | X |
 
-## 3.4 Casos de Uso
+## 3.5 Casos de Uso
 
-### 3.4.1 Diagrama de Casos de Uso
+### 3.5.1 Diagrama de Casos de Uso
 
 [Inserir diagrama ou descrição]
 
-### 3.4.2 Atores do Sistema
+### 3.5.2 Atores do Sistema
 
 [Preencher]
 
-### 3.4.3 Descrição dos Casos de Uso
+### 3.5.3 Descrição dos Casos de Uso
 
 [Preencher]
 
-### 3.4.4 Relacionamentos e Regras Representadas no Diagrama
+### 3.5.4 Relacionamentos e Regras Representadas no Diagrama
 
 [Preencher]
 
-### 3.4.5 Coerência com o Problema e com a Solução Proposta
+### 3.5.5 Coerência com o Problema e com a Solução Proposta
 
 [Preencher]
 
-## 3.5 Casos de Uso x Requisitos Funcionais
+## 3.6 Casos de Uso x Requisitos Funcionais
 
 [Preencher]
-
-### 3.6. Business Drivers
-
-Esta seção descreve o contexto de negócio que motiva a construção da aplicação computacional, alinhando-se aos documentos de entendimento de negócio produzidos junto à Companhia do Metropolitano de São Paulo (Metrô), e explica como o uso de Processamento de Linguagem Natural (PLN) transforma os processos atuais de gestão de portfólio de projetos.
-
-#### 3.6.1. Contexto de Negócio
-
-A gestão de portfólio de projetos do Metrô envolve o acompanhamento contínuo de status, riscos, marcos (*milestones*) e aderência a normativos internos e externos. Atualmente, esse acompanhamento depende fortemente de consultas manuais a sistemas corporativos e da consolidação de informações dispersas, o que demanda tempo das equipes de gestão e aumenta o risco de decisões baseadas em dados desatualizados ou incompletos.
-
-Nesse contexto, identificou-se a oportunidade de introduzir um agente de inteligência artificial capaz de interagir em linguagem natural — por texto e voz — permitindo que gestores e demais stakeholders obtenham respostas diretas sobre o portfólio sem a necessidade de navegar manualmente por múltiplos sistemas ou relatórios.
-
-#### 3.6.2. Transformação do Negócio por meio do PLN
-
-A introdução de PLN modifica o negócio nas seguintes frentes:
-
-- **Redução de fricção no acesso à informação**: em vez de consultar relatórios estáticos ou navegar por múltiplas telas, o usuário formula perguntas em linguagem natural (ex.: "quais projetos estão em risco esta semana?") e recebe respostas objetivas e contextualizadas.
-- **Democratização do acompanhamento de portfólio**: usuários sem conhecimento técnico aprofundado sobre os sistemas de gestão passam a conseguir extrair informações relevantes, ampliando a base de pessoas capazes de monitorar o portfólio.
-- **Agilidade na tomada de decisão**: ao reduzir o tempo entre a dúvida do gestor e a resposta obtida, o agente contribui para decisões mais rápidas sobre riscos, marcos e conformidade normativa.
-- **Padronização da interpretação de intenções**: a camada de PLN (classificação de intenções e tratamento de confidencialidade) garante que as solicitações dos usuários sejam interpretadas de forma consistente antes de acionar os sistemas de backend.
-
-#### 3.6.3. Alinhamento com o Ecossistema Corporativo
-
-A solução se apoia em dois pilares complementares:
-
-1. **Pilar 1 — PLN próprio**: desenvolvido pela equipe do projeto, responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
-2. **Pilar 2 — Integração com o ecossistema Microsoft**: aproveitamento das ferramentas já adotadas pelo Metrô (Copilot Studio/Power Platform), garantindo aderência à infraestrutura corporativa existente e facilitando a adoção pelos usuários finais.
-
-Essa combinação assegura que a transformação proposta não exija a substituição de ferramentas já consolidadas na organização, mas sim a adição de uma camada inteligente de interação sobre elas.
-
-#### 3.6.4. Restrições de Negócio Relevantes
-
-Como direcionador de negócio, é fundamental destacar que nenhum dado sensível do Metrô pode ser processado por serviços externos não homologados. Por esse motivo, o MVP da aplicação será validado utilizando dados sintéticos, garantindo que a evolução da solução respeite as políticas de segurança e confidencialidade da informação da organização antes de qualquer integração com dados reais de produção.
-
-
 
 # 4. Modelagem de Dados
 
@@ -1574,7 +1563,7 @@ Como direcionador de negócio, é fundamental destacar que nenhum dado sensível
 
 Esta seção apresenta uma estimativa inicial das tecnologias e ferramentas que o grupo pretende utilizar na construção da solução, considerando a arquitetura em dois pilares definida para o projeto. Trata-se de uma visão preliminar, sujeita a ajustes ao longo do desenvolvimento conforme validações técnicas e restrições impostas pelo Metrô.
 
-#### 5.1.1. Tecnologias do Pilar 1 - PLN Próprio da Equipe
+### 5.1.1 Tecnologias do Pilar 1 — PLN Próprio da Equipe
 
 Responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
 
@@ -1582,20 +1571,20 @@ Responsável pela identificação de intenções, classificação de solicitaç�
 - **Bibliotecas de NLP**: spaCy e/ou NLTK, para tarefas de pré-processamento textual, tokenização, classificação de intenções e extração de entidades.
 - **API de LLM**: modelo de linguagem via API (ex.: OpenAI ou Azure OpenAI), utilizado para tarefas de compreensão e geração de linguagem natural mais complexas, respeitando a restrição de que nenhum dado sensível real seja enviado a serviços externos não homologados — reforçando o uso de dados sintéticos no MVP.
 
-#### 5.1.2. Tecnologias do Pilar 2 — Integração com Ecossistema Microsoft
+### 5.1.2 Tecnologias do Pilar 2 — Integração com Ecossistema Microsoft
 
 Responsável por conectar o agente à infraestrutura corporativa já adotada pelo Metrô, garantindo aderência aos sistemas existentes.
 
 - **Copilot Studio**: construção e orquestração do agente conversacional dentro do ecossistema Microsoft.
 - **Power Platform**: integração com fluxos de automação (Power Automate) e possível consumo/exposição de dados via Power Apps/Power BI, conforme necessidade identificada ao longo do projeto.
 
-#### 5.1.3. Ferramentas de Apoio ao Desenvolvimento
+### 5.1.3 Ferramentas de Apoio ao Desenvolvimento
 
 - **Controle de versão**: Git/GitLab, para versionamento do código e colaboração entre os integrantes do grupo.
 - **Ambiente de desenvolvimento**: ambiente Python (ex.: Jupyter Notebook ou IDE como VS Code) para prototipagem e testes do Pilar 1.
 - **Documentação e gestão do projeto**: ferramentas colaborativas (ex.: Gitlab) para organização de entregas e alinhamento entre a equipe e o parceiro.
 
-#### 5.1.4. Listagem Organizada dos Recursos
+### 5.1.4 Listagem Organizada dos Recursos
 
 | Categoria | Tecnologia/Ferramenta | Finalidade |
 |---|---|---|
@@ -1612,8 +1601,6 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 ## 5.2 Diagrama de Componentes da UML
 
-## 5.2 Diagrama de Componentes UML
-
 Um Diagrama de Componentes UML é uma representação visual que descreve a organização dos principais módulos de um sistema de software, suas responsabilidades e as interfaces por meio das quais se comunicam. Esse tipo de diagrama permite visualizar, de forma modular, como cada parte do sistema interage com as demais, garantindo organização, coesão e clareza arquitetural, e servindo como referência para o desenvolvimento, integração e implantação da solução.
 
 O diagrama a seguir foi construído com base nos Business Drivers e nos Requisitos Funcionais e Não Funcionais elicitados anteriormente. A arquitetura reflete os dois pilares do projeto: o **Pilar 1**, composto pelo pipeline de PLN desenvolvido pela própria equipe, e o **Pilar 2**, composto pelo ecossistema Microsoft do Metrô (Copilot Studio / Power Platform).
@@ -1621,12 +1608,12 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 <div align="center">
   <img src="../assets/diagrama_componentes.png" width="80%" alt="Diagrama de Componentes UML">
   <br>
-  <sub>Figura X — Diagrama de Componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
+  <sub>Figura 16 — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
 </div>
 
 ---
 
-### Descrição dos Componentes
+### 5.2.1 Descrição dos Componentes
 
 | Componente | Tipo | Função no Sistema |
 |---|---|---|
@@ -1641,7 +1628,7 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 
 ---
 
-### Interfaces e Relacionamentos entre Componentes
+### 5.2.2 Interfaces e Relacionamentos entre Componentes
 
 **Usuário → Interface do Usuário**  
 O usuário PMO interage com o sistema por meio de texto digitado ou voz. A Interface do Usuário normaliza essa entrada — incluindo a conversão de áudio em texto (STT) — e a repassa ao pipeline de PLN.
@@ -1669,7 +1656,7 @@ O Módulo de Resposta entrega a resposta final ao usuário em linguagem natural 
 
 ## 5.3 Diagramas de Sequência da UML
 
-A seção 3.1.2 — *Modelagem estática — Diagrama de classes* — apresentou a modelagem estática do domínio — quais conceitos existem e como se relacionam. Esta seção apresenta a modelagem dinâmica correspondente: **como esses conceitos são produzidos e consumidos ao longo do tempo**, quais componentes trocam mensagens entre si, em que ordem e sob quais condições.
+A seção 3.2.2 — *Modelagem estática — Diagrama de classes* — apresentou a modelagem estática do domínio — quais conceitos existem e como se relacionam. Esta seção apresenta a modelagem dinâmica correspondente: **como esses conceitos são produzidos e consumidos ao longo do tempo**, quais componentes trocam mensagens entre si, em que ordem e sob quais condições.
 
 A modelagem dinâmica é necessária porque três regras centrais dos requisitos não são expressáveis em um diagrama de classes, por serem regras de **ordem** e não de estrutura:
 
@@ -1679,7 +1666,7 @@ A modelagem dinâmica é necessária porque três regras centrais dos requisitos
 
 ### 5.3.1 Convenções adotadas
 
-**Nível de abstração.** As linhas de vida representam os **componentes da arquitetura de integração** descrita em 5.5.3.1, e não as classes do domínio de 3.1.2. A escolha é deliberada: esta é a seção de solução técnica, e o objetivo dos diagramas é mostrar como a solicitação do usuário atravessa o canal, a orquestração, o núcleo de PLN construído pela equipe e os sistemas corporativos que guardam os dados do portfólio. A ligação com o modelo estático não se perde: ela é restabelecida na tabela de rastreabilidade de 5.3.6.
+**Nível de abstração.** As linhas de vida representam os **componentes da arquitetura de integração** descrita em 5.5.3.1, e não as classes do domínio de 3.2.2. A escolha é deliberada: esta é a seção de solução técnica, e o objetivo dos diagramas é mostrar como a solicitação do usuário atravessa o canal, a orquestração, o núcleo de PLN construído pela equipe e os sistemas corporativos que guardam os dados do portfólio. A ligação com o modelo estático não se perde: ela é restabelecida na tabela de rastreabilidade de 5.3.6.
 
 | Linha de vida | Camada (5.5.3.1) | Papel no fluxo | Integrações |
 |---|---|---|---|
@@ -1746,7 +1733,7 @@ Os cenários de análise comparativa (RF07) e de geração de prévias de relat�
 <div align="center">
   <img src="imagens/ds01-classificacao-intencao.png" width="95%" alt="Diagrama de sequência DS01: o usuário envia uma solicitação pelo canal Teams ou web; o Copilot Studio autentica o usuário no Entra ID e chama a API de PLN, que pré-processa o enunciado, classifica a intenção, rotula o tipo, extrai e normaliza entidades; conforme a confiança e a aderência ao catálogo, o fluxo segue para o roteamento, para um pedido de reformulação ou para uma recusa orientativa, sempre com registro na trilha de auditoria">
   <br>
-  <sub>Figura X: DS01 — Classificação de intenção e controle de escopo.</sub>
+  <sub>Figura 17 — DS01: classificação de intenção e controle de escopo.</sub>
 </div>
 
 <details>
@@ -1841,7 +1828,7 @@ O registro na trilha de auditoria (23) está **fora** do fragmento `alt`, e essa
 <div align="center">
   <img src="imagens/ds02-consulta-status.png" width="95%" alt="Diagrama de sequência DS02: após a classificação da intenção referenciada de DS01, o Copilot Studio verifica se o projeto está no escopo autorizado do perfil; se não estiver, recusa sem revelar a existência do projeto; se estiver, o Power Automate consulta as listas do SharePoint, a API de PLN realiza busca semântica nos documentos quando necessário e compõe a resposta com referência de origem">
   <br>
-  <sub>Figura X: DS02 — Consulta de status de projeto.</sub>
+  <sub>Figura 18 — DS02: consulta de status de projeto.</sub>
 </div>
 
 <details>
@@ -1931,7 +1918,7 @@ sequenceDiagram
 <div align="center">
   <img src="imagens/ds03-atualizacao-avanco.png" width="95%" alt="Diagrama de sequência DS03: após a classificação referenciada de DS01, o Copilot Studio verifica a permissão de escrita do perfil; completa os parâmetros ausentes em ciclo de perguntas; lê o valor atual no SharePoint via Power Automate; apresenta a prévia da alteração ao usuário e só efetiva a gravação após confirmação explícita, registrando origem, autoria e momento, com tratamento de falha de gravação e de cancelamento pelo usuário">
   <br>
-  <sub>Figura X: DS03 — Atualização de avanço com confirmação do usuário.</sub>
+  <sub>Figura 19 — DS03: atualização de avanço com confirmação do usuário.</sub>
 </div>
 
 <details>
@@ -2047,7 +2034,7 @@ sequenceDiagram
 <div align="center">
   <img src="imagens/ds04-alerta-proativo.png" width="95%" alt="Diagrama de sequência DS04: um fluxo agendado do Power Automate varre as listas do SharePoint, aplica as regras de pendência projeto a projeto e, ao identificar uma pendência, aciona o Copilot Studio para compor a mensagem e entrega a notificação ao responsável pelo canal; caso o usuário responda ao alerta, a atualização segue o fluxo transacional de DS03">
   <br>
-  <sub>Figura X: DS04 — Alerta proativo de pendência, iniciado pelo sistema.</sub>
+  <sub>Figura 20 — DS04: alerta proativo de pendência, iniciado pelo sistema.</sub>
 </div>
 
 <details>
@@ -2104,9 +2091,9 @@ sequenceDiagram
 
 ### 5.3.6 Rastreabilidade entre diagramas, requisitos e modelos
 
-A tabela a seguir liga cada cenário aos requisitos que o originaram, às classes do modelo estático de 3.1.2 que ele exercita e aos pontos de integração de 5.5 que ele atravessa. Os requisitos não funcionais indicados derivam da matriz de correlação da seção 3.3 e correspondem aos efetivamente exercitados por cada cenário, constituindo um subconjunto dos pares registrados naquela matriz. Ela cumpre a função de conectar as três modelagens do documento — requisitos, estática e dinâmica — e de evidenciar que a modelagem dinâmica não introduziu conceitos ausentes do domínio.
+A tabela a seguir liga cada cenário aos requisitos que o originaram, às classes do modelo estático de 3.2.2 que ele exercita e aos pontos de integração de 5.5 que ele atravessa. Os requisitos não funcionais indicados derivam da matriz de correlação da seção 3.4 e correspondem aos efetivamente exercitados por cada cenário, constituindo um subconjunto dos pares registrados naquela matriz. Ela cumpre a função de conectar as três modelagens do documento — requisitos, estática e dinâmica — e de evidenciar que a modelagem dinâmica não introduziu conceitos ausentes do domínio.
 
-| Diagrama | RFs | User Stories | RNFs | Classes exercitadas (3.1.2) | Integrações (5.5) |
+| Diagrama | RFs | User Stories | RNFs | Classes exercitadas (3.2.2) | Integrações (5.5) |
 |---|---|---|---|---|---|
 | DS01 | RF02, RF03 | US02, US03 | RNF02, RNF03 | `Usuario`, `Solicitacao`, `TipoEntrada`, `Classificacao`, `Intencao`, `Resposta` | INT-01, INT-02, INT-08, INT-10 |
 | DS02 | RF01, RF04 | US01, US04 | RNF04, RNF05 | `Usuario`, `Projeto`, `Resposta`, `Documento`, `Cronograma`, `Marco`, `Risco`, `Problema` | INT-02, INT-03, INT-04, INT-08, INT-10 |
@@ -2168,7 +2155,7 @@ A arquitetura de integração organiza-se em seis camadas. Ela mantém o núcleo
 <div align="center">
   <img src="imagens/integracoes-microsoft.png" width="70%" alt="Diagrama das integrações entre o agente de IA e o ecossistema Microsoft do Metrô de São Paulo, organizado em camadas de canal, orquestração, núcleo de PLN, automação, fontes de dados e governança">
   <br>
-  <sub>Figura X: Visão das integrações entre o agente e o ecossistema Microsoft do Metrô.</sub>
+  <sub>Figura 21 — Visão das integrações entre o agente e o ecossistema Microsoft do Metrô.</sub>
 </div>
 
 As arestas identificadas por `INT-xx` correspondem às fichas da seção 5.5.5.2.
@@ -2380,7 +2367,7 @@ Cada questão em aberto foi tratada, nesta seção, por uma hipótese registrada
 
 Esta seção apresenta o esboço preliminar da solução técnica do agente de IA para gestão do portfólio de projetos do Metrô de São Paulo, representado como um conjunto de blocos conectados. O objetivo é oferecer, ainda em nível de visão inicial, um entendimento comum sobre quais componentes compõem a solução, qual a responsabilidade de cada um e como eles se comunicam.
 
-A representação está organizada em camadas: interface, identidade e controle de acesso, núcleo de PLN, lógica de negócio, integração com o ecossistema Microsoft e acesso a dados e serviços. Essa organização decorre da arquitetura em dois pilares definida no TAPI e já registrada na seção 3.6.3 deste documento:
+A representação está organizada em camadas: interface, identidade e controle de acesso, núcleo de PLN, lógica de negócio, integração com o ecossistema Microsoft e acesso a dados e serviços. Essa organização decorre da arquitetura em dois pilares definida no TAPI e já registrada na seção 3.1.3 deste documento:
 
 - **Pilar 1 (fronteira básica):** pipeline de PLN construído e avaliado pela própria equipe, responsável por interpretar a linguagem natural, classificar as intenções e aplicar o controle de escopo e confidencialidade.
 - **Pilar 2 (avanço da fronteira básica):** integração com as ferramentas homologadas do Metrô (Copilot Studio, Power Platform, Power BI e SharePoint), responsável por orquestrar o agente e acessar os dados e serviços do portfólio.
@@ -2505,7 +2492,7 @@ flowchart TB
     class F1,F2,F3,F4,F5 base
 ```
 
-*Figura X: Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
+*Figura 22 — Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
 
 A correspondência com a Figura 01 do TAPI é direta: a camada 3 equivale à caixa "Processo PLN", as camadas 4 e 5 equivalem ao núcleo de transação, consulta, alertas e IA, e a camada 6 equivale ao bloco "Portfólio de Projetos". No MVP, a camada 6 é atendida por dados sintéticos, e o bloco F5 permanece previsto como evolução do tipo "Ir Além".
 
