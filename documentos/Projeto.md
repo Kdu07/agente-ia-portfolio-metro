@@ -85,7 +85,6 @@
   - [7.6 Comparação sem Decidir](#76-comparação-sem-decidir)
   - [7.7 Insumos para a Equipe](#77-insumos-para-a-equipe)
   - [7.8 Documentação Visual](#78-documentação-visual)
-  - [7.9 Checklist de Entrega](#79-checklist-de-entrega)
 - [8. Projeto Visual da Solução](#8-projeto-visual-da-solução)
   - [8.1 Desenvolvimento de Wireframes](#81-desenvolvimento-de-wireframes)
   - [8.2 Desenvolvimento de Mockups](#82-desenvolvimento-de-mockups)
@@ -2733,20 +2732,6 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 ### 7.8.2 Registro visual — Protótipo B
 
 [Inserir fotos, capturas de tela ou links para os registros visuais do Protótipo B. Armazenar arquivos na pasta `docs/prototipacao-exploratoria/protB/`.]
-
-## 7.9 Checklist de Entrega
-
-- [ ] Questão de projeto enunciada com justificativa
-- [ ] Duas alternativas divergentes descritas com diferenças explícitas
-- [ ] Formatos de prototipação justificados, com pelo menos um não-digital
-- [ ] Diário de construção do Protótipo A
-- [ ] Diário de construção do Protótipo B
-- [ ] Registro visual bruto do Protótipo A, incluindo falhas
-- [ ] Registro visual bruto do Protótipo B, incluindo falhas
-- [ ] Execução/testagem realizada com espaço de testagem preenchido
-- [ ] Comparação entre protótipos com limites declarados
-- [ ] Inventário de decisões em aberto preenchido
-- [ ] Repertório de situações documentado
 
 # 8. Projeto Visual da Solução
 
