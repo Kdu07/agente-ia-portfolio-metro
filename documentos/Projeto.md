@@ -76,26 +76,36 @@
   - [6.2 Justificativa das Escolhas de Implantação](#62-justificativa-das-escolhas-de-implantação)
   - [6.3 Considerações sobre Desempenho e Segurança](#63-considerações-sobre-desempenho-e-segurança)
   - [6.4 Diagrama de Implantação de Infraestrutura](#64-diagrama-de-implantação-de-infraestrutura)
-- [7. Projeto Visual da Solução](#7-projeto-visual-da-solução)
-  - [7.1 Desenvolvimento de Wireframes](#71-desenvolvimento-de-wireframes)
-  - [7.2 Desenvolvimento de Mockups](#72-desenvolvimento-de-mockups)
-  - [7.3 Guia Visual](#73-guia-visual)
-- [8. Desenvolvimento do Projeto](#8-desenvolvimento-do-projeto)
-  - [8.1 Arquitetura de Codificação e Estrutura de Diretórios](#81-arquitetura-de-codificação-e-estrutura-de-diretórios)
-  - [8.2 Modelo de Recomendação](#82-modelo-de-recomendação)
-  - [8.3 Desenvolvimento de Features](#83-desenvolvimento-de-features)
-  - [8.4 Testes Unitários e de Integração](#84-testes-unitários-e-de-integração)
-- [9. Planejamento e Execução de Testes](#9-planejamento-e-execução-de-testes)
-  - [9.1 Testes Funcionais](#91-testes-funcionais)
-  - [9.2 Testes de RNFs](#92-testes-de-rnfs)
-  - [9.3 Testes de Usabilidade](#93-testes-de-usabilidade)
-  - [9.4 Testes de APIs Externas](#94-testes-de-apis-externas)
-  - [9.5 Testes de Integração](#95-testes-de-integração)
-  - [9.6 Testes de Regras de Negócio](#96-testes-de-regras-de-negócio)
-  - [9.7 Cobertura Consolidada do Artefato de Testes](#97-cobertura-consolidada-do-artefato-de-testes)
-- [10. Procedimentos de Implantação](#10-procedimentos-de-implantação)
-  - [10.1 Implantação e Configuração do Banco de Dados](#101-implantação-e-configuração-do-banco-de-dados)
-  - [10.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento](#102-implantação-do-protótipo-para-uso-pela-equipe-de-desenvolvimento)
+- [7. Prototipação Exploratória](#7-prototipação-exploratória)
+  - [7.1 Questão de Projeto](#71-questão-de-projeto)
+  - [7.2 Alternativas Divergentes](#72-alternativas-divergentes)
+  - [7.3 Formatos de Prototipação](#73-formatos-de-prototipação)
+  - [7.4 Diário de Construção](#74-diário-de-construção)
+  - [7.5 Execução dos Protótipos](#75-execução-dos-protótipos)
+  - [7.6 Comparação sem Decidir](#76-comparação-sem-decidir)
+  - [7.7 Insumos para a Equipe](#77-insumos-para-a-equipe)
+  - [7.8 Documentação Visual](#78-documentação-visual)
+  - [7.9 Checklist de Entrega](#79-checklist-de-entrega)
+- [8. Projeto Visual da Solução](#8-projeto-visual-da-solução)
+  - [8.1 Desenvolvimento de Wireframes](#81-desenvolvimento-de-wireframes)
+  - [8.2 Desenvolvimento de Mockups](#82-desenvolvimento-de-mockups)
+  - [8.3 Guia Visual](#83-guia-visual)
+- [9. Desenvolvimento do Projeto](#9-desenvolvimento-do-projeto)
+  - [9.1 Arquitetura de Codificação e Estrutura de Diretórios](#91-arquitetura-de-codificação-e-estrutura-de-diretórios)
+  - [9.2 Modelo de Recomendação](#92-modelo-de-recomendação)
+  - [9.3 Desenvolvimento de Features](#93-desenvolvimento-de-features)
+  - [9.4 Testes Unitários e de Integração](#94-testes-unitários-e-de-integração)
+- [10. Planejamento e Execução de Testes](#10-planejamento-e-execução-de-testes)
+  - [10.1 Testes Funcionais](#101-testes-funcionais)
+  - [10.2 Testes de RNFs](#102-testes-de-rnfs)
+  - [10.3 Testes de Usabilidade](#103-testes-de-usabilidade)
+  - [10.4 Testes de APIs Externas](#104-testes-de-apis-externas)
+  - [10.5 Testes de Integração](#105-testes-de-integração)
+  - [10.6 Testes de Regras de Negócio](#106-testes-de-regras-de-negócio)
+  - [10.7 Cobertura Consolidada do Artefato de Testes](#107-cobertura-consolidada-do-artefato-de-testes)
+- [11. Procedimentos de Implantação](#11-procedimentos-de-implantação)
+  - [11.1 Implantação e Configuração do Banco de Dados](#111-implantação-e-configuração-do-banco-de-dados)
+  - [11.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento](#112-implantação-do-protótipo-para-uso-pela-equipe-de-desenvolvimento)
 - [Referências](#referências)
 
 # 1. Introdução
@@ -2620,79 +2630,197 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 [Preencher]
 
-# 7. Projeto Visual da Solução
+# 7. Prototipação Exploratória
 
-## 7.1 Desenvolvimento de Wireframes
+## 7.1 Questão de Projeto
+
+### 7.1.1 Enunciado da questão
+
+[Preencher com uma frase que sintetize a questão de projeto ainda em aberto que motivou a prototipação exploratória.]
+
+### 7.1.2 Justificativa
+
+[Preencher com até 5 linhas explicando por que essa questão é relevante e por que ainda não pode ser resolvida apenas com análise — exigindo exploração por meio de protótipos.]
+
+## 7.2 Alternativas Divergentes
+
+### 7.2.1 Alternativa A — descrição
+
+[Preencher com a descrição da Alternativa A: qual direção de projeto ela representa, o que propõe e quais premissas assume.]
+
+### 7.2.2 Alternativa B — descrição
+
+[Preencher com a descrição da Alternativa B: qual direção de projeto ela representa, o que propõe e quais premissas assume.]
+
+### 7.2.3 O que muda entre A e B
+
+[Preencher com as diferenças fundamentais entre as duas alternativas — não apenas em formato, mas em lógica, experiência ou estrutura.]
+
+## 7.3 Formatos de Prototipação
+
+### 7.3.1 Formato escolhido para A + justificativa
+
+[Preencher com o formato de protótipo adotado para a Alternativa A (ex.: interface digital, maquete, encenação, vídeo, cartões etc.) e justificar por que esse formato é adequado para explorar a questão.]
+
+### 7.3.2 Formato escolhido para B + justificativa
+
+[Preencher com o formato de protótipo adotado para a Alternativa B e justificar. Indicar explicitamente qual dos dois protótipos (A ou B) é não-digital. Pelo menos um dos dois DEVE ser não-digital (encenação, vídeo, objeto físico, maquete, documento narrativo, cartões etc.).]
+
+## 7.4 Diário de Construção
+
+### 7.4.1 Diário — Protótipo A
+
+[Preencher com o registro cronológico das decisões tomadas durante a construção do Protótipo A: o que foi feito, o que mudou no caminho, dificuldades, improvisações e ajustes.]
+
+### 7.4.2 Diário — Protótipo B
+
+[Preencher com o registro cronológico das decisões tomadas durante a construção do Protótipo B: o que foi feito, o que mudou no caminho, dificuldades, improvisações e ajustes.]
+
+## 7.5 Execução dos Protótipos
+
+### 7.5.1 Execução — Protótipo A
+
+[Preencher com o relato da execução/teste do Protótipo A: como foi apresentado ou rodado, com quem, em que contexto e o que aconteceu.]
+
+### 7.5.2 Execução — Protótipo B
+
+[Preencher com o relato da execução/teste do Protótipo B: como foi apresentado ou rodado, com quem, em que contexto e o que aconteceu.]
+
+### 7.5.3 Espaço de testagem
+
+| Protótipo | Situação testada | O que aconteceu | Onde falhou/precisou de improviso |
+|---|---|---|---|
+| [Preencher] | [Preencher] | [Preencher] | [Preencher] |
+| [Preencher] | [Preencher] | [Preencher] | [Preencher] |
+
+## 7.6 Comparação sem Decidir
+
+### 7.6.1 O que cada protótipo tornou visível
+
+[Preencher com o que cada protótipo revelou sobre a questão de projeto — insights, comportamentos, reações ou aspectos que só ficaram claros ao construir e testar.]
+
+### 7.6.2 O que surpreendeu o grupo
+
+[Preencher com descobertas inesperadas que surgiram durante a construção ou testagem dos protótipos.]
+
+### 7.6.3 O que o formato não-digital revelou que o outro não revelaria
+
+[Preencher com os aprendizados específicos que o protótipo não-digital proporcionou e que não teriam emergido em um protótipo digital.]
+
+### 7.6.4 Limites declarados
+
+[Preencher com os limites reconhecidos pelo grupo: o que os protótipos NÃO conseguiram responder, o que ficou inconclusivo e o que precisaria de mais investigação.]
+
+## 7.7 Insumos para a Equipe
+
+### 7.7.1 Inventário de decisões em aberto
+
+| Decisão | Opções identificadas | O que está em jogo |
+|---|---|---|
+| [Preencher] | [Preencher] | [Preencher] |
+| [Preencher] | [Preencher] | [Preencher] |
+
+### 7.7.2 Repertório de situações
+
+[Preencher com o repertório de situações concretas (cenários, contextos de uso, casos-limite) identificados durante a prototipação, que servem como insumo para decisões técnicas e de design da equipe.]
+
+## 7.8 Documentação Visual
+
+### 7.8.1 Registro visual — Protótipo A
+
+[Inserir fotos, capturas de tela ou links para os registros visuais do Protótipo A. Armazenar arquivos na pasta `docs/prototipacao-exploratoria/protA/`.]
+
+### 7.8.2 Registro visual — Protótipo B
+
+[Inserir fotos, capturas de tela ou links para os registros visuais do Protótipo B. Armazenar arquivos na pasta `docs/prototipacao-exploratoria/protB/`.]
+
+## 7.9 Checklist de Entrega
+
+- [ ] Questão de projeto enunciada com justificativa
+- [ ] Duas alternativas divergentes descritas com diferenças explícitas
+- [ ] Formatos de prototipação justificados, com pelo menos um não-digital
+- [ ] Diário de construção do Protótipo A
+- [ ] Diário de construção do Protótipo B
+- [ ] Registro visual bruto do Protótipo A, incluindo falhas
+- [ ] Registro visual bruto do Protótipo B, incluindo falhas
+- [ ] Execução/testagem realizada com espaço de testagem preenchido
+- [ ] Comparação entre protótipos com limites declarados
+- [ ] Inventário de decisões em aberto preenchido
+- [ ] Repertório de situações documentado
+
+# 8. Projeto Visual da Solução
+
+## 8.1 Desenvolvimento de Wireframes
 
 [Preencher]
 
-## 7.2 Desenvolvimento de Mockups
+## 8.2 Desenvolvimento de Mockups
 
 [Preencher]
 
-## 7.3 Guia Visual
+## 8.3 Guia Visual
 
 [Preencher]
 
-# 8. Desenvolvimento do Projeto
+# 9. Desenvolvimento do Projeto
 
-## 8.1 Arquitetura de Codificação e Estrutura de Diretórios
-
-[Preencher]
-
-## 8.2 Modelo de Recomendação
+## 9.1 Arquitetura de Codificação e Estrutura de Diretórios
 
 [Preencher]
 
-## 8.3 Desenvolvimento de Features
+## 9.2 Modelo de Recomendação
 
 [Preencher]
 
-## 8.4 Testes Unitários e de Integração
+## 9.3 Desenvolvimento de Features
 
 [Preencher]
 
-# 9. Planejamento e Execução de Testes
+## 9.4 Testes Unitários e de Integração
+
+[Preencher]
+
+# 10. Planejamento e Execução de Testes
 
 [Descreva a estratégia de testes, cobertura e critérios de aceitação.]
 
-## 9.1 Testes Funcionais
+## 10.1 Testes Funcionais
 
 [Preencher]
 
-## 9.2 Testes de RNFs
+## 10.2 Testes de RNFs
 
 [Preencher]
 
-## 9.3 Testes de Usabilidade
+## 10.3 Testes de Usabilidade
 
 [Preencher]
 
-## 9.4 Testes de APIs Externas
+## 10.4 Testes de APIs Externas
 
 [Preencher]
 
-## 9.5 Testes de Integração
+## 10.5 Testes de Integração
 
 [Preencher]
 
-## 9.6 Testes de Regras de Negócio
+## 10.6 Testes de Regras de Negócio
 
 [Preencher]
 
-## 9.7 Cobertura Consolidada do Artefato de Testes
+## 10.7 Cobertura Consolidada do Artefato de Testes
 
 [Preencher]
 
-# 10. Procedimentos de Implantação
+# 11. Procedimentos de Implantação
 
 [Descreva os passos para configuração, execução e implantação da solução.]
 
-## 10.1 Implantação e Configuração do Banco de Dados
+## 11.1 Implantação e Configuração do Banco de Dados
 
 [Preencher]
 
-## 10.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento
+## 11.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento
 
 [Preencher]
 
