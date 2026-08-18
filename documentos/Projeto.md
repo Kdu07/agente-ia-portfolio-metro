@@ -2683,7 +2683,11 @@ Esse formato foi escolhido porque a questão investigada pela Alternativa B não
 
 ### 7.4.2 Diário — Protótipo B
 
-[Preencher com o registro cronológico das decisões tomadas durante a construção do Protótipo B: o que foi feito, o que mudou no caminho, dificuldades, improvisações e ajustes.]
+> Ao montar o crachá físico, a primeira decisão necessária foi definir se o alerta deveria piscar continuamente até a resolução da pendência ou emitir apenas um sinal e depois permanecer apagado. O alerta contínuo seria mais eficaz para a cobrança, mas também mais constrangedor. Para viabilizar a observação da reação das pessoas durante a simulação, foi adotado provisoriamente o sinal contínuo, sem considerar essa escolha uma decisão definitiva do produto.
+>
+> Outra ambiguidade apareceu ao imaginar o crachá fora do corpo do usuário. Se a pessoa o deixasse sobre a mesa para participar de uma reunião, não estava definido se o sistema deveria continuar sinalizando a pendência ou reconhecer que o objeto não estava sendo utilizado. Essa situação não havia sido considerada antes da construção do protótipo.
+>
+> O formato físico também não permite representar adequadamente o uso ao longo de vários dias. A simulação cobre apenas um recorte curto e, portanto, não permite avaliar a fadiga de alerta, isto é, o risco de o sinal repetitivo tornar-se ruído e passar a ser ignorado.
 
 ## 7.5 Execução dos Protótipos
 
@@ -2696,28 +2700,28 @@ O integrante representando a Fernanda navegou pelas telas simuladas do Teams a p
 
 ### 7.5.2 Execução — Protótipo B
 
-[Preencher com o relato da execução/teste do Protótipo B: como foi apresentado ou rodado, com quem, em que contexto e o que aconteceu.]
+Um integrante vestiu o crachá durante uma simulação de reunião com outros dois integrantes representando colegas de equipe. O alerta foi acionado durante a conversa para observar se o sinal físico seria percebido e como afetaria a interação. A reação foi uma pergunta direta de outro participante sobre o motivo de o crachá estar piscando, tornando a pendência socialmente visível. A situação revelou que a presença física do alerta pode produzir constrangimento e exposição, mesmo quando seu conteúdo não é apresentado aos demais.
 
 ### 7.5.3 Espaço de testagem
 
 | Protótipo | Situação testada | O que aconteceu | Onde falhou/precisou de improviso |
 |---|---|---|---|
-| [Preencher] | [Preencher] | [Preencher] | [Preencher] |
-| [Preencher] | [Preencher] | [Preencher] | [Preencher] |
+| B | Crachá sinaliza uma pendência durante uma reunião com outras pessoas presentes | O sinal gerou uma pergunta direta de um colega e tornou a pendência perceptível no ambiente | O grupo não havia previsto o efeito social e precisou observar a reação sem um roteiro previamente definido |
+| B | Crachá é deixado sobre a mesa, longe da pessoa responsável | O sinal permaneceu ativo, mas deixou de alcançar diretamente o usuário | Não estava definido se o sistema deveria detectar que o crachá foi retirado e suspender ou manter o alerta |
 
 ## 7.6 Comparação sem Decidir
 
 ### 7.6.1 O que cada protótipo tornou visível
 
-[Preencher com o que cada protótipo revelou sobre a questão de projeto — insights, comportamentos, reações ou aspectos que só ficaram claros ao construir e testar.]
+O Protótipo A tornou visíveis lacunas do fluxo de conversa, como o tratamento de múltiplas pendências e a mudança de assunto durante uma interação. O Protótipo B revelou uma dimensão social e emocional ausente do protótipo digital: a exposição perante colegas. Enquanto uma notificação no Teams é normalmente privada, o crachá ocupa um espaço compartilhado e pode comunicar a existência de uma pendência mesmo sem revelar seu conteúdo.
 
 ### 7.6.2 O que surpreendeu o grupo
 
-[Preencher com descobertas inesperadas que surgiram durante a construção ou testagem dos protótipos.]
+A reação de questionamento e constrangimento durante a simulação do crachá não havia sido antecipada. A Alternativa B foi inicialmente concebida como uma forma de tornar a cobrança mais perceptível, mas a execução mostrou que essa eficácia pode ser acompanhada pela exposição pública de uma situação individual. Esse efeito interfere diretamente na confiança e na aceitação do agente.
 
 ### 7.6.3 O que o formato não-digital revelou que o outro não revelaria
 
-[Preencher com os aprendizados específicos que o protótipo não-digital proporcionou e que não teriam emergido em um protótipo digital.]
+O formato físico revelou a **visibilidade involuntária para terceiros**. Um mockup de tela pressupõe uma interação individual, enquanto o crachá permanece no espaço compartilhado e inclui colegas como observadores não planejados. Essa variável não está representada nos requisitos funcionais atuais, embora altere a forma como a proatividade pode ser recebida pelo usuário.
 
 ### 7.6.4 Limites declarados
 
@@ -2736,7 +2740,10 @@ Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o
 
 ### 7.7.2 Repertório de situações
 
-[Preencher com o repertório de situações concretas (cenários, contextos de uso, casos-limite) identificados durante a prototipação, que servem como insumo para decisões técnicas e de design da equipe.]
+- Dispositivo físico ou canal persistente de notificação deixado longe da pessoa responsável, sem regra definida para manter ou suspender o alerta.
+- Colega que não é responsável pela pendência percebe o sinal e questiona diretamente a pessoa que utiliza o crachá, criando uma situação social não coberta pelos requisitos funcionais atuais.
+- Alerta que permanece ativo até a resolução e pode produzir fadiga, constrangimento ou habituação ao longo do tempo.
+- Usuário em reunião ou atividade que não pode ser interrompida, mas cujo crachá continua sinalizando uma pendência no ambiente compartilhado.
 
 ## 7.8 Documentação Visual
 
