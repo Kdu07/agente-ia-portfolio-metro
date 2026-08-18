@@ -2668,7 +2668,12 @@ Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma
 
 ### 7.4.1 Diário — Protótipo A
 
-[Preencher com o registro cronológico das decisões tomadas durante a construção do Protótipo A: o que foi feito, o que mudou no caminho, dificuldades, improvisações e ajustes.]
+> Ao montar o cartão adaptável de pendência, percebemos que não havíamos decidido se o botão de ação deveria dizer "Atualizar agora" (levando direto à entrevista guiada) ou "Ver detalhes" (abrindo antes um resumo) — o TAPI não especifica isso, e tivemos que escolher no momento pela opção mais direta, mesmo sem validar com o parceiro.
+>
+> Tentamos posicionar a notificação como mensagem direta (DM) do bot, mas isso levantou uma ambiguidade que não havíamos previsto: se o mesmo líder tem três projetos com pendência, o agente manda três DMs separadas ou uma só consolidada? Optamos por consolidar, mas essa foi uma decisão de projeto tomada durante a prototipação, não antes dela.
+>
+> Uma impossibilidade do formato: o mockup estático não deixa claro se a notificação "empurra" o usuário para fora do que ele estava fazendo (como uma chamada) ou se fica silenciosamente na lista — isso só seria testável com o bot rodando de verdade dentro do Teams real, algo fora do alcance deste protótipo.
+
 
 ### 7.4.2 Diário — Protótipo B
 
@@ -2678,7 +2683,10 @@ Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma
 
 ### 7.5.1 Execução — Protótipo A
 
-[Preencher com o relato da execução/teste do Protótipo A: como foi apresentado ou rodado, com quem, em que contexto e o que aconteceu.]
+
+
+O integrante representando a Fernanda navegou pelas telas simuladas do Teams a partir de uma notificação de pendência. Ao tentar consultar um segundo projeto no meio da conversa sobre o primeiro, o mockup não teve resposta prevista - o "roteirista" (integrante conduzindo o Wizard of Oz) teve que interromper e admitir que aquele fluxo não fora desenhado, expondo uma lacuna real do RF03 quanto a mudança de assunto em contexto multi-turno.
+
 
 ### 7.5.2 Execução — Protótipo B
 
@@ -2707,7 +2715,7 @@ Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma
 
 ### 7.6.4 Limites declarados
 
-[Preencher com os limites reconhecidos pelo grupo: o que os protótipos NÃO conseguiram responder, o que ficou inconclusivo e o que precisaria de mais investigação.]
+Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o tempo de resposta a pendências — isso só seria observável com uso real e prolongado, por semanas, com o PMO de verdade, e não em uma simulação de poucos minutos com integrantes do próprio grupo interpretando papéis. Também não é possível, a partir destes protótipos, avaliar o custo de implantação de hardware físico (bateria, distribuição, manutenção) da Alternativa B, nem a fadiga de alerta que um crachá piscando repetidamente produziria ao longo de semanas de uso - só usuários reais, ao longo do tempo, poderiam revelar isso.
 
 ## 7.7 Insumos para a Equipe
 
@@ -2715,8 +2723,10 @@ Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma
 
 | Decisão | Opções identificadas | O que está em jogo |
 |---|---|---|
-| [Preencher] | [Preencher] | [Preencher] |
-| [Preencher] | [Preencher] | [Preencher] |
+| Consolidação de notificações por usuário | (a) uma notificação por pendência (b) uma notificação consolidada por usuário | (a) é mais simples de implementar, mas pode gerar excesso de mensagens; (b) exige lógica de agregação, mas reduz fadiga de notificação |
+| Persistência do alerta ao longo do tempo | (a) alerta único, sem reforço (b) alerta reforçado em intervalos até resolução | (a) respeita a autonomia do usuário, mas pode ser ignorado; (b) aumenta eficácia da cobrança, mas aumenta o risco de ser percebido como pressão excessiva |
+| Comportamento do agente diante de mudança de assunto em conversa | (a) manter o contexto anterior até confirmação explícita (b) assumir novo assunto automaticamente | (a) é mais seguro, mas pode frustrar o usuário quando a intenção de mudar é óbvia; (b) é mais fluido, mas arrisca perder o fio da pendência original |
+| Visibilidade da pendência para terceiros (se a solução incorporar qualquer sinal físico ou ambiente) | (a) sinal visível apenas ao responsável (b) sinal visível a quem estiver por perto | (a) preserva privacidade, mas perde o efeito de pressão social observado no teste; (b) aumenta eficácia percebida, mas introduz risco de constrangimento não endereçado por nenhum RF atual |
 
 ### 7.7.2 Repertório de situações
 
