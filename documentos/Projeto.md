@@ -2634,8 +2634,7 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 ## 7.1 Questão de Projeto
 
 ### 7.1.1 Enunciado da questão
-
-[Preencher com uma frase que sintetize a questão de projeto ainda em aberto que motivou a prototipação exploratória.]
+Esta seção apresenta a prototipação exploratória realizada para investigar alternativas de interação e identificar lacunas, ambiguidades e impactos das diferentes propostas de solução.
 
 ### 7.1.2 Justificativa
 
