@@ -2630,22 +2630,21 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 [Preencher]
 
 # 7. Prototipação Exploratória
+Esta seção apresenta a prototipação exploratória realizada para investigar alternativas de interação e identificar lacunas, ambiguidades e impactos das diferentes propostas de solução.
 
 ## 7.1 Questão de Projeto
 
 ### 7.1.1 Enunciado da questão
-
-[Preencher com uma frase que sintetize a questão de projeto ainda em aberto que motivou a prototipação exploratória.]
+O agente deve viver exclusivamente dentro dos canais digitais que a equipe já utiliza (Teams / Copilot Studio), confinado a interações que o usuário escolhe abrir, ou deve ter presença física e ambiente no espaço de trabalho, manifestando-se por conta própria independentemente de o usuário estar com algum aplicativo aberto?
 
 ### 7.1.2 Justificativa
-
-[Preencher com até 5 linhas explicando por que essa questão é relevante e por que ainda não pode ser resolvida apenas com análise — exigindo exploração por meio de protótipos.]
+O TAPI define o Copilot Studio e o Teams como plataforma de orquestração (3.1.3), mas não define se o agente deve ser algo que o usuário *procura* ou algo que *o procura*. A seção 2.8.3 já identifica um problema de descoberta e aprendizagem no canal puramente conversacional, e o RF06 exige proatividade - mas proatividade dentro de um app fechado é diferente de proatividade que ocupa o espaço físico do escritório. Essa tensão entre presença opcional e presença ambiente nunca foi resolvida nos artefatos do parceiro, e muda diretamente como as três personas percebem o agente: como ferramenta ou como colega presente.
 
 ## 7.2 Alternativas Divergentes
 
 ### 7.2.1 Alternativa A — descrição
 
-[Preencher com a descrição da Alternativa A: qual direção de projeto ela representa, o que propõe e quais premissas assume.]
+O agente existe como um bot dentro do Teams, no mesmo ambiente onde o PMO já trabalha (SharePoint, Power BI, Outlook). Toda interação é iniciada pelo usuário abrindo uma conversa, ou recebida como uma notificação padrão do Teams, que o usuário pode silenciar, adiar ou ignorar como qualquer outra mensagem. A presença do agente é indistinguível, em termos de interação, de qualquer outro colega ou bot corporativo — ele "mora" dentro da caixa de ferramentas já existente.
 
 ### 7.2.2 Alternativa B — descrição
 
@@ -2659,7 +2658,7 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 ### 7.3.1 Formato escolhido para A + justificativa
 
-[Preencher com o formato de protótipo adotado para a Alternativa A (ex.: interface digital, maquete, encenação, vídeo, cartões etc.) e justificar por que esse formato é adequado para explorar a questão.]
+Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma notificação chegando na barra lateral, um cartão adaptável (*Adaptive Card*) com a pendência e um botão de ação. Formato adequado porque a pergunta que a Alternativa A investiga é sobre **fluxo de conversa e hierarquia de notificação dentro de um ambiente já familiar** — algo que só um mockup fiel ao Teams consegue representar com precisão de posicionamento, ícones e comportamento esperado pelo usuário.
 
 ### 7.3.2 Formato escolhido para B + justificativa
 
@@ -2669,7 +2668,12 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 ### 7.4.1 Diário — Protótipo A
 
-[Preencher com o registro cronológico das decisões tomadas durante a construção do Protótipo A: o que foi feito, o que mudou no caminho, dificuldades, improvisações e ajustes.]
+> Ao montar o cartão adaptável de pendência, percebemos que não havíamos decidido se o botão de ação deveria dizer "Atualizar agora" (levando direto à entrevista guiada) ou "Ver detalhes" (abrindo antes um resumo) — o TAPI não especifica isso, e tivemos que escolher no momento pela opção mais direta, mesmo sem validar com o parceiro.
+>
+> Tentamos posicionar a notificação como mensagem direta (DM) do bot, mas isso levantou uma ambiguidade que não havíamos previsto: se o mesmo líder tem três projetos com pendência, o agente manda três DMs separadas ou uma só consolidada? Optamos por consolidar, mas essa foi uma decisão de projeto tomada durante a prototipação, não antes dela.
+>
+> Uma impossibilidade do formato: o mockup estático não deixa claro se a notificação "empurra" o usuário para fora do que ele estava fazendo (como uma chamada) ou se fica silenciosamente na lista — isso só seria testável com o bot rodando de verdade dentro do Teams real, algo fora do alcance deste protótipo.
+
 
 ### 7.4.2 Diário — Protótipo B
 
@@ -2679,7 +2683,10 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 ### 7.5.1 Execução — Protótipo A
 
-[Preencher com o relato da execução/teste do Protótipo A: como foi apresentado ou rodado, com quem, em que contexto e o que aconteceu.]
+
+
+O integrante representando a Fernanda navegou pelas telas simuladas do Teams a partir de uma notificação de pendência. Ao tentar consultar um segundo projeto no meio da conversa sobre o primeiro, o mockup não teve resposta prevista - o "roteirista" (integrante conduzindo o Wizard of Oz) teve que interromper e admitir que aquele fluxo não fora desenhado, expondo uma lacuna real do RF03 quanto a mudança de assunto em contexto multi-turno.
+
 
 ### 7.5.2 Execução — Protótipo B
 
@@ -2708,7 +2715,7 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 ### 7.6.4 Limites declarados
 
-[Preencher com os limites reconhecidos pelo grupo: o que os protótipos NÃO conseguiram responder, o que ficou inconclusivo e o que precisaria de mais investigação.]
+Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o tempo de resposta a pendências — isso só seria observável com uso real e prolongado, por semanas, com o PMO de verdade, e não em uma simulação de poucos minutos com integrantes do próprio grupo interpretando papéis. Também não é possível, a partir destes protótipos, avaliar o custo de implantação de hardware físico (bateria, distribuição, manutenção) da Alternativa B, nem a fadiga de alerta que um crachá piscando repetidamente produziria ao longo de semanas de uso - só usuários reais, ao longo do tempo, poderiam revelar isso.
 
 ## 7.7 Insumos para a Equipe
 
@@ -2716,8 +2723,10 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 | Decisão | Opções identificadas | O que está em jogo |
 |---|---|---|
-| [Preencher] | [Preencher] | [Preencher] |
-| [Preencher] | [Preencher] | [Preencher] |
+| Consolidação de notificações por usuário | (a) uma notificação por pendência (b) uma notificação consolidada por usuário | (a) é mais simples de implementar, mas pode gerar excesso de mensagens; (b) exige lógica de agregação, mas reduz fadiga de notificação |
+| Persistência do alerta ao longo do tempo | (a) alerta único, sem reforço (b) alerta reforçado em intervalos até resolução | (a) respeita a autonomia do usuário, mas pode ser ignorado; (b) aumenta eficácia da cobrança, mas aumenta o risco de ser percebido como pressão excessiva |
+| Comportamento do agente diante de mudança de assunto em conversa | (a) manter o contexto anterior até confirmação explícita (b) assumir novo assunto automaticamente | (a) é mais seguro, mas pode frustrar o usuário quando a intenção de mudar é óbvia; (b) é mais fluido, mas arrisca perder o fio da pendência original |
+| Visibilidade da pendência para terceiros (se a solução incorporar qualquer sinal físico ou ambiente) | (a) sinal visível apenas ao responsável (b) sinal visível a quem estiver por perto | (a) preserva privacidade, mas perde o efeito de pressão social observado no teste; (b) aumenta eficácia percebida, mas introduz risco de constrangimento não endereçado por nenhum RF atual |
 
 ### 7.7.2 Repertório de situações
 
