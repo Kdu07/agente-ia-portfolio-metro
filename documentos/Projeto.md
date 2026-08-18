@@ -2648,11 +2648,15 @@ O agente existe como um bot dentro do Teams, no mesmo ambiente onde o PMO já tr
 
 ### 7.2.2 Alternativa B — descrição
 
-[Preencher com a descrição da Alternativa B: qual direção de projeto ela representa, o que propõe e quais premissas assume.]
+O agente ganha uma presença física por meio de um crachá utilizado pelos funcionários. O objeto reage por luz, vibração ou som curto quando existe algo que exige atenção, como uma pendência, um marco em risco ou um alerta de conformidade. O crachá não substitui a conversa em linguagem natural, que ainda pode ocorrer por voz ao se aproximar ou tocar o dispositivo. Sua função é tornar o alerta presente no ambiente físico, antes mesmo de qualquer interação verbal.
+
+A alternativa assume que a proatividade do agente não precisa ficar limitada a uma aplicação aberta pelo usuário. Ao mesmo tempo, essa presença física faz com que o sinal possa ser percebido por outras pessoas próximas, introduzindo efeitos sociais e emocionais que não aparecem em uma notificação privada.
 
 ### 7.2.3 O que muda entre A e B
 
-[Preencher com as diferenças fundamentais entre as duas alternativas — não apenas em formato, mas em lógica, experiência ou estrutura.]
+Na Alternativa A, a decisão de prestar atenção ao agente permanece sob controle do usuário: a pendência existe, mas sua visualização depende da abertura do Teams ou da atenção dedicada a uma notificação digital. Na Alternativa B, o agente introduz **visibilidade social involuntária**. Um crachá emitindo um sinal pode ser percebido por colegas próximos, tornando a existência da pendência visível no espaço compartilhado.
+
+Essa diferença altera a natureza da cobrança. No ambiente digital, ela é privada e pode ser adiada ou silenciada. No objeto físico, passa a existir um componente de exposição que pode acelerar a resolução, mas também pode ser sentido como constrangimento e afetar a relação de confiança com o agente. Além disso, a Alternativa A aproveita canais e equipamentos já disponíveis, enquanto a B exige fabricação, distribuição, manutenção e alimentação de um dispositivo físico.
 
 ## 7.3 Formatos de Prototipação
 
@@ -2662,7 +2666,9 @@ Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma
 
 ### 7.3.2 Formato escolhido para B + justificativa
 
-[Preencher com o formato de protótipo adotado para a Alternativa B e justificar. Indicar explicitamente qual dos dois protótipos (A ou B) é não-digital. Pelo menos um dos dois DEVE ser não-digital (encenação, vídeo, objeto físico, maquete, documento narrativo, cartões etc.).]
+Para a Alternativa B foi escolhido um **protótipo físico não digital**: um crachá confeccionado em papelão ou cartolina, com dimensões próximas às de um crachá corporativo. O estado do alerta poderá ser representado por um LED simples ou, na ausência de componentes eletrônicos, por um indicador manual controlado por outro integrante segundo a técnica *Wizard of Oz*. O objeto deverá ser vestido por um integrante durante uma simulação de expediente.
+
+Esse formato foi escolhido porque a questão investigada pela Alternativa B não se limita ao funcionamento de uma interface. O objetivo é observar o que acontece quando um alerta ocupa o ambiente físico, permanece visível e pode ser percebido por terceiros. Uma tela não reproduziria adequadamente aspectos como exposição social, constrangimento ou pressão percebida; por isso, o crachá é o protótipo não digital desta exploração.
 
 ## 7.4 Diário de Construção
 
