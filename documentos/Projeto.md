@@ -2644,7 +2644,7 @@ O TAPI define o Copilot Studio e o Teams como plataforma de orquestração (3.1.
 
 ### 7.2.1 Alternativa A — descrição
 
-[Preencher com a descrição da Alternativa A: qual direção de projeto ela representa, o que propõe e quais premissas assume.]
+O agente existe como um bot dentro do Teams, no mesmo ambiente onde o PMO já trabalha (SharePoint, Power BI, Outlook). Toda interação é iniciada pelo usuário abrindo uma conversa, ou recebida como uma notificação padrão do Teams, que o usuário pode silenciar, adiar ou ignorar como qualquer outra mensagem. A presença do agente é indistinguível, em termos de interação, de qualquer outro colega ou bot corporativo — ele "mora" dentro da caixa de ferramentas já existente.
 
 ### 7.2.2 Alternativa B — descrição
 
@@ -2658,7 +2658,7 @@ O TAPI define o Copilot Studio e o Teams como plataforma de orquestração (3.1.
 
 ### 7.3.1 Formato escolhido para A + justificativa
 
-[Preencher com o formato de protótipo adotado para a Alternativa A (ex.: interface digital, maquete, encenação, vídeo, cartões etc.) e justificar por que esse formato é adequado para explorar a questão.]
+Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma notificação chegando na barra lateral, um cartão adaptável (*Adaptive Card*) com a pendência e um botão de ação. Formato adequado porque a pergunta que a Alternativa A investiga é sobre **fluxo de conversa e hierarquia de notificação dentro de um ambiente já familiar** — algo que só um mockup fiel ao Teams consegue representar com precisão de posicionamento, ícones e comportamento esperado pelo usuário.
 
 ### 7.3.2 Formato escolhido para B + justificativa
 
