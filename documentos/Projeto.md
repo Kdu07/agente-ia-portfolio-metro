@@ -2635,11 +2635,10 @@ Esta seção apresenta a prototipação exploratória realizada para investigar 
 ## 7.1 Questão de Projeto
 
 ### 7.1.1 Enunciado da questão
-
+O agente deve viver exclusivamente dentro dos canais digitais que a equipe já utiliza (Teams / Copilot Studio), confinado a interações que o usuário escolhe abrir, ou deve ter presença física e ambiente no espaço de trabalho, manifestando-se por conta própria independentemente de o usuário estar com algum aplicativo aberto?
 
 ### 7.1.2 Justificativa
-
-[Preencher com até 5 linhas explicando por que essa questão é relevante e por que ainda não pode ser resolvida apenas com análise — exigindo exploração por meio de protótipos.]
+O TAPI define o Copilot Studio e o Teams como plataforma de orquestração (3.1.3), mas não define se o agente deve ser algo que o usuário *procura* ou algo que *o procura*. A seção 2.8.3 já identifica um problema de descoberta e aprendizagem no canal puramente conversacional, e o RF06 exige proatividade - mas proatividade dentro de um app fechado é diferente de proatividade que ocupa o espaço físico do escritório. Essa tensão entre presença opcional e presença ambiente nunca foi resolvida nos artefatos do parceiro, e muda diretamente como as três personas percebem o agente: como ferramenta ou como colega presente.
 
 ## 7.2 Alternativas Divergentes
 
