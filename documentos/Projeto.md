@@ -2642,11 +2642,11 @@ O TAPI define o Copilot Studio e o Teams como plataforma de orquestração (3.1.
 
 ## 7.2 Alternativas Divergentes
 
-### 7.2.1 Alternativa A — descrição
+### 7.2.1 Alternativa A - descrição
 
 O agente existe como um bot dentro do Teams, no mesmo ambiente onde o PMO já trabalha (SharePoint, Power BI, Outlook). Toda interação é iniciada pelo usuário abrindo uma conversa, ou recebida como uma notificação padrão do Teams, que o usuário pode silenciar, adiar ou ignorar como qualquer outra mensagem. A presença do agente é indistinguível, em termos de interação, de qualquer outro colega ou bot corporativo — ele "mora" dentro da caixa de ferramentas já existente.
 
-### 7.2.2 Alternativa B — descrição
+### 7.2.2 Alternativa B - descrição
 
 O agente ganha uma presença física por meio de um crachá utilizado pelos funcionários. O objeto reage por luz, vibração ou som curto quando existe algo que exige atenção, como uma pendência, um marco em risco ou um alerta de conformidade. O crachá não substitui a conversa em linguagem natural, que ainda pode ocorrer por voz ao se aproximar ou tocar o dispositivo. Sua função é tornar o alerta presente no ambiente físico, antes mesmo de qualquer interação verbal.
 
@@ -2662,7 +2662,7 @@ Essa diferença altera a natureza da cobrança. No ambiente digital, ela é priv
 
 ### 7.3.1 Formato escolhido para A + justificativa
 
-Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma notificação chegando na barra lateral, um cartão adaptável (*Adaptive Card*) com a pendência e um botão de ação. Formato adequado porque a pergunta que a Alternativa A investiga é sobre **fluxo de conversa e hierarquia de notificação dentro de um ambiente já familiar** — algo que só um mockup fiel ao Teams consegue representar com precisão de posicionamento, ícones e comportamento esperado pelo usuário.
+Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma notificação chegando na barra lateral, um cartão adaptável (*Adaptive Card*) com a pendência e um botão de ação. Formato adequado porque a pergunta que a Alternativa A investiga é sobre **fluxo de conversa e hierarquia de notificação dentro de um ambiente já familiar** - algo que só um mockup fiel ao Teams consegue representar com precisão de posicionamento, ícones e comportamento esperado pelo usuário.
 
 ### 7.3.2 Formato escolhido para B + justificativa
 
@@ -2672,7 +2672,7 @@ Esse formato foi escolhido porque a questão investigada pela Alternativa B não
 
 ## 7.4 Diário de Construção
 
-### 7.4.1 Diário — Protótipo A
+### 7.4.1 Diário - Protótipo A
 
 > Ao montar o cartão adaptável de pendência, percebemos que não havíamos decidido se o botão de ação deveria dizer "Atualizar agora" (levando direto à entrevista guiada) ou "Ver detalhes" (abrindo antes um resumo) — o TAPI não especifica isso, e tivemos que escolher no momento pela opção mais direta, mesmo sem validar com o parceiro.
 >
@@ -2681,7 +2681,7 @@ Esse formato foi escolhido porque a questão investigada pela Alternativa B não
 > Uma impossibilidade do formato: o mockup estático não deixa claro se a notificação "empurra" o usuário para fora do que ele estava fazendo (como uma chamada) ou se fica silenciosamente na lista — isso só seria testável com o bot rodando de verdade dentro do Teams real, algo fora do alcance deste protótipo.
 
 
-### 7.4.2 Diário — Protótipo B
+### 7.4.2 Diário - Protótipo B
 
 > Ao montar o crachá físico, a primeira decisão necessária foi definir se o alerta deveria piscar continuamente até a resolução da pendência ou emitir apenas um sinal e depois permanecer apagado. O alerta contínuo seria mais eficaz para a cobrança, mas também mais constrangedor. Para viabilizar a observação da reação das pessoas durante a simulação, foi adotado provisoriamente o sinal contínuo, sem considerar essa escolha uma decisão definitiva do produto.
 >
@@ -2691,67 +2691,67 @@ Esse formato foi escolhido porque a questão investigada pela Alternativa B não
 
 ## 7.5 Execução dos Protótipos
 
-### 7.5.1 Execução — Protótipo A
+### 7.5.1 Execução - Protótipo A
 
 O protótipo A foi executado como um mockup interativo que simula o fluxo conversacional proativo do agente Prata dentro do Microsoft Teams. A figura a seguir apresenta o storyboard completo do fluxo, composto por cinco frames que representam a jornada desde a notificação inicial até o ponto de ruptura.
 
 <div align="center">
 
-![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](documentos/imagens/storyboard-fluxo-prata.png)
+![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](../documentos/imagens/storyboard-fluxo-prata.png)
 
-*Figura — Storyboard do fluxo de chat do Prata AI Agent.*
+*Figura - Storyboard do fluxo de chat do Prata AI Agent.*
 
 </div>
 
 O integrante representando a persona Fernanda navegou pelas telas simuladas do Teams a partir de uma notificação de pendência. O fluxo executado seguiu os cinco frames do storyboard:
 
-**Frame 1 · Notificação** — O agente Prata envia proativamente uma notificação informando que o Projeto X está com um marco em risco, perguntando se a usuária deseja atualizar agora. A notificação aparece como um pop-up sobreposto à conversa, com as opções "Ver detalhes" e "Ignorar".
+**Frame 1 · Notificação** - O agente Prata envia proativamente uma notificação informando que o Projeto X está com um marco em risco, perguntando se a usuária deseja atualizar agora. A notificação aparece como um pop-up sobreposto à conversa, com as opções "Ver detalhes" e "Ignorar".
 
 <div align="center">
 
-![Tela 1 — Notificação proativa do agente Prata sobre atraso no marco "Entrega da Fase 2" do Projeto X, com opções para "Ver detalhes" ou "Ignorar".](documentos/imagens/tela-1-notificacao.png)
+![Tela 1 — Notificação proativa do agente Prata sobre atraso no marco "Entrega da Fase 2" do Projeto X, com opções para "Ver detalhes" ou "Ignorar".](../documentos/imagens/tela-1-notificacao.png)
 
-*Figura — Tela de notificação proativa do agente Prata.*
+*Figura - Tela de notificação proativa do agente Prata.*
 
 </div>
 
-**Frame 2 · Conversa** — Ao clicar em "Ver detalhes", a usuária é levada à conversa com o agente, que informa o atraso de 3 dias no marco "Entrega da Fase 2" e oferece duas opções de ação: "Contar o motivo" ou "Ver histórico".
+**Frame 2 · Conversa** - Ao clicar em "Ver detalhes", a usuária é levada à conversa com o agente, que informa o atraso de 3 dias no marco "Entrega da Fase 2" e oferece duas opções de ação: "Contar o motivo" ou "Ver histórico".
 
 <div align="center">
 
-![Tela 2 — Mensagem inicial do agente informando que o marco "Entrega da Fase 2" está atrasado, oferecendo botões "Contar o motivo" e "Ver histórico".](documentos/imagens/tela-2-mensagem-inicial.png)
+![Tela 2 — Mensagem inicial do agente informando que o marco "Entrega da Fase 2" está atrasado, oferecendo botões "Contar o motivo" e "Ver histórico".](../documentos/imagens/tela-2-mensagem-inicial.png)
 
-*Figura — Mensagem inicial do agente sobre o atraso.*
+*Figura - Mensagem inicial do agente sobre o atraso.*
 
 </div>
 
-**Frame 3 · Resposta da usuária e confirmação** — A usuária responde em linguagem natural ("A equipe está esperando aprovação do cliente") e o agente interpreta a resposta, oferecendo registrar o motivo como justificativa do atraso e notificar o Roberto, com botões "Sim, registrar" e "Não, só anotar pra mim".
+**Frame 3 · Resposta da usuária e confirmação** - A usuária responde em linguagem natural ("A equipe está esperando aprovação do cliente") e o agente interpreta a resposta, oferecendo registrar o motivo como justificativa do atraso e notificar o Roberto, com botões "Sim, registrar" e "Não, só anotar pra mim".
 
 <div align="center">
 
-![Tela 3 — Resposta da usuária informando o motivo do atraso e confirmação do agente perguntando se deve registrar e notificar o responsável.](documentos/imagens/tela-3-resposta-usuaria.png)
+![Tela 3 - Resposta da usuária informando o motivo do atraso e confirmação do agente perguntando se deve registrar e notificar o responsável.](../documentos/imagens/tela-3-resposta-usuaria.png)
 
-*Figura — Resposta da usuária e confirmação do agente.*
+*Figura - Resposta da usuária e confirmação do agente.*
 
 </div>
 
-**Frame 4 · Registro confirmado** — Após a confirmação, o agente apresenta um cartão adaptável (*Adaptive Card*) com o resumo da pendência atualizada: marco "Entrega da Fase 2", motivo registrado ("Aguardando aprovação do cliente") e confirmação de que Roberto foi notificado. O cartão oferece as opções "Ver outras pendências" ou "Fechar".
+**Frame 4 · Registro confirmado** - Após a confirmação, o agente apresenta um cartão adaptável (*Adaptive Card*) com o resumo da pendência atualizada: marco "Entrega da Fase 2", motivo registrado ("Aguardando aprovação do cliente") e confirmação de que Roberto foi notificado. O cartão oferece as opções "Ver outras pendências" ou "Fechar".
 
 <div align="center">
 
-![Tela 4 — Cartão adaptável de confirmação mostrando a pendência atualizada com marco, motivo registrado e notificação enviada ao Roberto.](documentos/imagens/tela-4-cartao-confirmacao.png)
+![Tela 4 - Cartão adaptável de confirmação mostrando a pendência atualizada com marco, motivo registrado e notificação enviada ao Roberto.](../documentos/imagens/tela-4-cartao-confirmacao.png)
 
-*Figura — Cartão adaptável de confirmação da pendência atualizada.*
+*Figura - Cartão adaptável de confirmação da pendência atualizada.*
 
 </div>
 
-**Frame 5 · Ponto de ruptura** — No meio da conversa sobre o Projeto X, a usuária tenta consultar outro projeto ("E o Projeto Y, como está?"). Essa mudança brusca de assunto representa o ponto de ruptura do protótipo: o mockup não tinha resposta prevista para essa situação, e o "roteirista" (integrante conduzindo o Wizard of Oz) teve que interromper e admitir que aquele fluxo não fora desenhado, expondo uma lacuna real do RF03 quanto a mudança de assunto em contexto multi-turno.
+**Frame 5 · Ponto de ruptura** - No meio da conversa sobre o Projeto X, a usuária tenta consultar outro projeto ("E o Projeto Y, como está?"). Essa mudança brusca de assunto representa o ponto de ruptura do protótipo: o mockup não tinha resposta prevista para essa situação, e o "roteirista" (integrante conduzindo o Wizard of Oz) teve que interromper e admitir que aquele fluxo não fora desenhado, expondo uma lacuna real do RF03 quanto a mudança de assunto em contexto multi-turno.
 
 <div align="center">
 
-![Tela 5 — Ponto de ruptura: a usuária tenta mudar de assunto perguntando sobre o Projeto Y enquanto a conversa sobre o Projeto X ainda está ativa.](documentos/imagens/tela-5-ponto-ruptura.png)
+![Tela 5 — Ponto de ruptura: a usuária tenta mudar de assunto perguntando sobre o Projeto Y enquanto a conversa sobre o Projeto X ainda está ativa.](../documentos/imagens/tela-5-ponto-ruptura.png)
 
-*Figura — Ponto de ruptura: mudança de assunto durante a conversa.*
+*Figura - Ponto de ruptura: mudança de assunto durante a conversa.*
 
 </div>
 
@@ -2759,13 +2759,13 @@ A tela a seguir ilustra como essa lacuna se manifestaria em uma interface real: 
 
 <div align="center">
 
-![Tela 5b — Tela de fluxo não mapeado com anotação de UX indicando lacuna no comportamento do agente para mudanças de assunto fora do escopo planejado.](documentos/imagens/tela-5b-fluxo-nao-mapeado.png)
+![Tela 5b — Tela de fluxo não mapeado com anotação de UX indicando lacuna no comportamento do agente para mudanças de assunto fora do escopo planejado.](../documentos/imagens/tela-5b-fluxo-nao-mapeado.png)
 
-*Figura — Tela de fluxo não mapeado identificada durante a execução do protótipo.*
+*Figura - Tela de fluxo não mapeado identificada durante a execução do protótipo.*
 
 </div>
 
-### 7.5.2 Execução — Protótipo B
+### 7.5.2 Execução - Protótipo B
 
 Um integrante vestiu o crachá durante uma simulação de reunião com outros dois integrantes representando colegas de equipe. O alerta foi acionado durante a conversa para observar se o sinal físico seria percebido e como afetaria a interação. A reação foi uma pergunta direta de outro participante sobre o motivo de o crachá estar piscando, tornando a pendência socialmente visível. A situação revelou que a presença física do alerta pode produzir constrangimento e exposição, mesmo quando seu conteúdo não é apresentado aos demais.
 
@@ -2795,7 +2795,7 @@ O formato físico revelou a **visibilidade involuntária para terceiros**. Um mo
 
 ### 7.6.4 Limites declarados
 
-Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o tempo de resposta a pendências — isso só seria observável com uso real e prolongado, por semanas, com o PMO de verdade, e não em uma simulação de poucos minutos com integrantes do próprio grupo interpretando papéis. Também não é possível, a partir destes protótipos, avaliar o custo de implantação de hardware físico (bateria, distribuição, manutenção) da Alternativa B, nem a fadiga de alerta que um crachá piscando repetidamente produziria ao longo de semanas de uso - só usuários reais, ao longo do tempo, poderiam revelar isso.
+Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o tempo de resposta a pendências - isso só seria observável com uso real e prolongado, por semanas, com o PMO de verdade, e não em uma simulação de poucos minutos com integrantes do próprio grupo interpretando papéis. Também não é possível, a partir destes protótipos, avaliar o custo de implantação de hardware físico (bateria, distribuição, manutenção) da Alternativa B, nem a fadiga de alerta que um crachá piscando repetidamente produziria ao longo de semanas de uso - só usuários reais, ao longo do tempo, poderiam revelar isso.
 
 ## 7.7 Insumos para a Equipe
 
@@ -2817,7 +2817,7 @@ Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o
 
 ## 7.8 Documentação Visual
 
-### 7.8.1 Registro visual — Protótipo A
+### 7.8.1 Registro visual - Protótipo A
 
 As imagens a seguir compõem o registro visual completo do Protótipo A. Todas as telas foram criadas como mockups de alta fidelidade simulando a interface do agente Prata dentro do Microsoft Teams.
 
