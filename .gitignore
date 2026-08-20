@@ -1,0 +1,12 @@
+# Segredos e configuração local
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Docker
+dbdata/

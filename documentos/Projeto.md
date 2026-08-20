@@ -207,7 +207,7 @@ Embora o PMO já conte com um agente para apoiar consultas ao portfólio, ele at
 
 ### 2.2.3 Matriz SWOT
 
-![Descrição da imagem](../assets/swot.png)
+![Descrição da imagem](imagens/swot.png)
 *Figura X — Matriz SWOT do parceiro.*
 
 #### 2.2.3.1 Forças
@@ -1053,7 +1053,7 @@ Esta seção preserva as solicitações manifestadas pelo Metrô que não integr
 ## 2.8 Canvas do Projeto
 
 <div align="center">
-  <img src="../assets/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
+  <img src="imagens/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
   <br>
   <sub>Figura X — Business Model Canvas do projeto.</sub>
 </div>
@@ -1560,7 +1560,7 @@ Um Diagrama de Componentes UML é uma representação visual que descreve a orga
 O diagrama a seguir foi construído com base nos Business Drivers e nos Requisitos Funcionais e Não Funcionais elicitados anteriormente. A arquitetura reflete os dois pilares do projeto: o **Pilar 1**, composto pelo pipeline de PLN desenvolvido pela própria equipe, e o **Pilar 2**, composto pelo ecossistema Microsoft do Metrô (Copilot Studio / Power Platform). Os identificadores de componente utilizados aqui (A1–A4, B1–B3, C0–C6, D1–D7, E1–E4, F1–F5) são os mesmos empregados nas fichas de responsabilidade da seção 5.6.4, de modo que as duas seções descrevem a mesma arquitetura sob duas perspectivas complementares: esta, como diagrama UML formal; aquela, como narrativa por camadas.
 
 <div align="center">
-  <img src="../assets/diagrama_componentes.png" width="85%" alt="Diagrama de Componentes UML">
+  <img src="imagens/diagrama_componentes.png" width="85%" alt="Diagrama de Componentes UML">
   <br>
   <sub>Figura X — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
 </div>

@@ -118,9 +118,8 @@ O desenvolvimento considera a integração com o ecossistema Microsoft já utili
 
 ```text
 g02/
-├── assets/                    # Imagens de apoio (canvas, SWOT, diagramas) usadas na documentação
 ├── documentos/
-│   ├── imagens/                # Imagens referenciadas pelos documentos em documentos/
+│   ├── imagens/                # Imagens de apoio (canvas, SWOT, diagramas, personas) usadas na documentação
 │   ├── Projeto.md              # Documentação geral do projeto
 │   ├── GestaoProjeto.md        # Gestão de projeto e das sprints
 │   ├── GestaoConfiguracao.md   # Gestão de configuração e versionamento
