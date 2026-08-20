@@ -2693,10 +2693,77 @@ Esse formato foi escolhido porque a questão investigada pela Alternativa B não
 
 ### 7.5.1 Execução — Protótipo A
 
+O protótipo A foi executado como um mockup interativo que simula o fluxo conversacional proativo do agente Prata dentro do Microsoft Teams. A figura a seguir apresenta o storyboard completo do fluxo, composto por cinco frames que representam a jornada desde a notificação inicial até o ponto de ruptura.
 
+<div align="center">
 
-O integrante representando a Fernanda navegou pelas telas simuladas do Teams a partir de uma notificação de pendência. Ao tentar consultar um segundo projeto no meio da conversa sobre o primeiro, o mockup não teve resposta prevista - o "roteirista" (integrante conduzindo o Wizard of Oz) teve que interromper e admitir que aquele fluxo não fora desenhado, expondo uma lacuna real do RF03 quanto a mudança de assunto em contexto multi-turno.
+![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](documentos/imagens/storyboard-fluxo-prata.png)
 
+*Figura — Storyboard do fluxo de chat do Prata AI Agent.*
+
+</div>
+
+O integrante representando a persona Fernanda navegou pelas telas simuladas do Teams a partir de uma notificação de pendência. O fluxo executado seguiu os cinco frames do storyboard:
+
+**Frame 1 · Notificação** — O agente Prata envia proativamente uma notificação informando que o Projeto X está com um marco em risco, perguntando se a usuária deseja atualizar agora. A notificação aparece como um pop-up sobreposto à conversa, com as opções "Ver detalhes" e "Ignorar".
+
+<div align="center">
+
+![Tela 1 — Notificação proativa do agente Prata sobre atraso no marco "Entrega da Fase 2" do Projeto X, com opções para "Ver detalhes" ou "Ignorar".](documentos/imagens/tela-1-notificacao.png)
+
+*Figura — Tela de notificação proativa do agente Prata.*
+
+</div>
+
+**Frame 2 · Conversa** — Ao clicar em "Ver detalhes", a usuária é levada à conversa com o agente, que informa o atraso de 3 dias no marco "Entrega da Fase 2" e oferece duas opções de ação: "Contar o motivo" ou "Ver histórico".
+
+<div align="center">
+
+![Tela 2 — Mensagem inicial do agente informando que o marco "Entrega da Fase 2" está atrasado, oferecendo botões "Contar o motivo" e "Ver histórico".](documentos/imagens/tela-2-mensagem-inicial.png)
+
+*Figura — Mensagem inicial do agente sobre o atraso.*
+
+</div>
+
+**Frame 3 · Resposta da usuária e confirmação** — A usuária responde em linguagem natural ("A equipe está esperando aprovação do cliente") e o agente interpreta a resposta, oferecendo registrar o motivo como justificativa do atraso e notificar o Roberto, com botões "Sim, registrar" e "Não, só anotar pra mim".
+
+<div align="center">
+
+![Tela 3 — Resposta da usuária informando o motivo do atraso e confirmação do agente perguntando se deve registrar e notificar o responsável.](documentos/imagens/tela-3-resposta-usuaria.png)
+
+*Figura — Resposta da usuária e confirmação do agente.*
+
+</div>
+
+**Frame 4 · Registro confirmado** — Após a confirmação, o agente apresenta um cartão adaptável (*Adaptive Card*) com o resumo da pendência atualizada: marco "Entrega da Fase 2", motivo registrado ("Aguardando aprovação do cliente") e confirmação de que Roberto foi notificado. O cartão oferece as opções "Ver outras pendências" ou "Fechar".
+
+<div align="center">
+
+![Tela 4 — Cartão adaptável de confirmação mostrando a pendência atualizada com marco, motivo registrado e notificação enviada ao Roberto.](documentos/imagens/tela-4-cartao-confirmacao.png)
+
+*Figura — Cartão adaptável de confirmação da pendência atualizada.*
+
+</div>
+
+**Frame 5 · Ponto de ruptura** — No meio da conversa sobre o Projeto X, a usuária tenta consultar outro projeto ("E o Projeto Y, como está?"). Essa mudança brusca de assunto representa o ponto de ruptura do protótipo: o mockup não tinha resposta prevista para essa situação, e o "roteirista" (integrante conduzindo o Wizard of Oz) teve que interromper e admitir que aquele fluxo não fora desenhado, expondo uma lacuna real do RF03 quanto a mudança de assunto em contexto multi-turno.
+
+<div align="center">
+
+![Tela 5 — Ponto de ruptura: a usuária tenta mudar de assunto perguntando sobre o Projeto Y enquanto a conversa sobre o Projeto X ainda está ativa.](documentos/imagens/tela-5-ponto-ruptura.png)
+
+*Figura — Ponto de ruptura: mudança de assunto durante a conversa.*
+
+</div>
+
+A tela a seguir ilustra como essa lacuna se manifestaria em uma interface real: uma tela de "Fluxo não mapeado" com anotações de UX indicando que o agente não tem resposta ou comportamento parametrizado para mudanças bruscas de assunto fora do fluxo atual de atraso (RF03).
+
+<div align="center">
+
+![Tela 5b — Tela de fluxo não mapeado com anotação de UX indicando lacuna no comportamento do agente para mudanças de assunto fora do escopo planejado.](documentos/imagens/tela-5b-fluxo-nao-mapeado.png)
+
+*Figura — Tela de fluxo não mapeado identificada durante a execução do protótipo.*
+
+</div>
 
 ### 7.5.2 Execução — Protótipo B
 
@@ -2706,6 +2773,9 @@ Um integrante vestiu o crachá durante uma simulação de reunião com outros do
 
 | Protótipo | Situação testada | O que aconteceu | Onde falhou/precisou de improviso |
 |---|---|---|---|
+| A | Notificação proativa de pendência chega enquanto a usuária está na tela inicial do agente | A usuária visualizou o pop-up com opções "Ver detalhes" e "Ignorar" e seguiu o fluxo esperado | O protótipo não permitiu testar o comportamento caso a usuária clicasse em "Ignorar" — apenas o caminho "Ver detalhes" foi desenhado |
+| A | Usuária responde em linguagem natural ao motivo do atraso | O agente interpretou corretamente a resposta livre e ofereceu registrar a justificativa e notificar o responsável | O mockup estático não permite avaliar se o agente conseguiria interpretar respostas ambíguas ou incompletas |
+| A | Usuária tenta mudar de assunto no meio da conversa sobre uma pendência | O "roteirista" (Wizard of Oz) precisou interromper — o fluxo de mudança de assunto não havia sido desenhado, expondo lacuna do RF03 | Lacuna real: o agente não tem comportamento definido para mudanças bruscas de assunto em contexto multi-turno |
 | B | Crachá sinaliza uma pendência durante uma reunião com outras pessoas presentes | O sinal gerou uma pergunta direta de um colega e tornou a pendência perceptível no ambiente | O grupo não havia previsto o efeito social e precisou observar a reação sem um roteiro previamente definido |
 | B | Crachá é deixado sobre a mesa, longe da pessoa responsável | O sinal permaneceu ativo, mas deixou de alcançar diretamente o usuário | Não estava definido se o sistema deveria detectar que o crachá foi retirado e suspender ou manter o alerta |
 
@@ -2749,7 +2819,18 @@ Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o
 
 ### 7.8.1 Registro visual — Protótipo A
 
-[Inserir fotos, capturas de tela ou links para os registros visuais do Protótipo A. Armazenar arquivos na pasta `docs/prototipacao-exploratoria/protA/`.]
+As imagens a seguir compõem o registro visual completo do Protótipo A. Todas as telas foram criadas como mockups de alta fidelidade simulando a interface do agente Prata dentro do Microsoft Teams.
+
+| Arquivo | Descrição |
+|---|---|
+| `storyboard-fluxo-prata.png` | Storyboard completo do fluxo de chat do Prata AI Agent, com os cinco frames da jornada conversacional |
+| `tela-1-notificacao.png` | Tela de notificação proativa do agente sobre atraso no marco "Entrega da Fase 2" |
+| `tela-2-mensagem-inicial.png` | Mensagem inicial do agente informando o atraso e oferecendo opções de ação |
+| `tela-3-resposta-usuaria.png` | Resposta da usuária em linguagem natural e confirmação do agente para registro |
+| `tela-4-cartao-confirmacao.png` | Cartão adaptável (*Adaptive Card*) com resumo da pendência atualizada |
+| `tela-5-ponto-ruptura.png` | Ponto de ruptura: tentativa de mudança de assunto durante a conversa |
+| `tela-5b-fluxo-nao-mapeado.png` | Tela de fluxo não mapeado com anotação de UX sobre lacuna no RF03 |
+
 
 ### 7.8.2 Registro visual — Protótipo B
 
