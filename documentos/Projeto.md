@@ -2318,6 +2318,196 @@ O diagrama de classes abaixo apresenta a modelagem técnica atual do middleware 
 
 O modelo mantém o catálogo de intenções como referência para a classificação e o roteamento, mas explicita as decisões que acontecem antes e depois da chamada ao Copilot Studio: detecção de injeção, controle de abuso, verificação da saída, registro do desfecho e associação com o perfil do usuário. A representação é conceitual-técnica; os identificadores UUID, os tipos de dados e os nomes das classes servem para orientar a implementação e ainda podem ser refinados durante a evolução da arquitetura.
 
+```mermaid
+classDiagram
+    class Usuario {
+        +UUID id
+        +String nome
+        +String email
+        +String entraObjectId
+        +Perfil perfil
+        +List~Permissao~ permissoes
+        +DateTime criadoEm
+        +possuiPermissao(permissao) Boolean
+    }
+
+    class Perfil {
+        <<enumeration>>
+        DIRETORIA
+        LIDER_PROJETO
+        MEMBRO_EQUIPE
+    }
+
+    class Permissao {
+        <<enumeration>>
+        VER_INTENCOES
+        GERIR_ROTINAS
+    }
+
+    class Conversa {
+        +UUID id
+        +UUID usuarioId
+        +String titulo
+        +String conversaExternaId
+        +DateTime arquivadaEm
+        +DateTime criadaEm
+        +gerarTitulo(primeiroTurno) String
+    }
+
+    class Interacao {
+        +UUID id
+        +UUID conversaId
+        +UUID usuarioId
+        +String prompt
+        +String resposta
+        +UUID intencaoId
+        +Float confianca
+        +Desfecho desfecho
+        +Perfil perfil
+        +Canal canal
+        +UUID rotinaId
+        +Integer latenciaMs
+        +DateTime criadaEm
+        +persistir() Void
+    }
+
+    class Canal {
+        <<enumeration>>
+        CHAT
+        VOZ
+        ROTINA
+    }
+
+    class Desfecho {
+        <<enumeration>>
+        SUCESSO
+        BLOQUEADA_INJECAO
+        BLOQUEADA_ABUSO
+        RECUSADA_FORA_ESCOPO
+        RECUSADA_BAIXA_CONFIANCA
+        FALHA_EXECUTOR
+        BLOQUEADA_SAIDA
+    }
+
+    class IntencaoCatalogo {
+        +UUID id
+        +String codigo
+        +String nome
+        +String descricao
+        +Float limiarConfianca
+        +Boolean ehForaDeEscopo
+        +DateTime versaoAtualizadaEm
+    }
+
+    class GuardaInjecao {
+        +avaliarRegrasDeterministicas(texto) Boolean
+        +avaliarClassificador(texto) Float
+        +decidir(texto) Desfecho
+    }
+
+    class GuardaAbuso {
+        +avaliarCategoriasConteudo(texto) Boolean
+        +avaliarPoliticaUsoCorporativo(usuario, texto) Boolean
+        +decidir(usuario, texto) Desfecho
+    }
+
+    class GuardaSaida {
+        +avaliarRespostaCopilot(resposta) Boolean
+        +decidir(resposta) Desfecho
+    }
+
+    class ClassificadorIntencao {
+        +classificar(texto) IntencaoCatalogo
+        +calcularConfianca(texto, intencao) Float
+    }
+
+    class Orquestrador {
+        +processar(mensagem, usuario, canal) Interacao
+        -resolverSessao(usuario) Void
+        -executarGuardaInjecao(texto) Desfecho
+        -executarGuardaAbuso(usuario, texto) Desfecho
+        -executarClassificacao(texto) IntencaoCatalogo
+        -executarNoCopilot(promptValidado, intencao) String
+        -executarGuardaSaida(resposta) Desfecho
+        -registrarInteracao(dados) Interacao
+    }
+
+    class ClienteCopilotStudio {
+        +String directLineToken
+        +enviarPromptRotulado(prompt, intencaoMetadados) String
+    }
+
+    class Rotina {
+        +UUID id
+        +String nome
+        +String prompt
+        +String agendaCron
+        +String timezone
+        +UUID donoId
+        +UUID intencaoPrevista
+        +Boolean ativa
+        +DateTime criadaEm
+        +validarNoCadastro() Boolean
+    }
+
+    class ExecucaoRotina {
+        +UUID id
+        +UUID rotinaId
+        +DateTime iniciadaEm
+        +DateTime concluidaEm
+        +StatusExecucao status
+        +UUID interacaoId
+        +String erro
+    }
+
+    class StatusExecucao {
+        <<enumeration>>
+        SUCESSO
+        FALHA
+        EM_EXECUCAO
+    }
+
+    class RecorteAnalitico {
+        +UUID id
+        +String tipo
+        +DateTime periodoInicio
+        +DateTime periodoFim
+        +Map dados
+        +gerarVolumePorIntencao() Map
+        +gerarDistribuicaoDesfechos() Map
+        +gerarSerieBloqueiosPorGuarda() Map
+        +gerarAgrupamentoForaDeEscopo() Map
+        +gerarConfiancaMediaPorIntencao() Map
+    }
+
+    Usuario "1" --> "1" Perfil : possui
+    Usuario "1" --> "*" Permissao : possui
+    Usuario "1" --> "*" Conversa : inicia
+    Conversa "1" --> "*" Interacao : contém
+    Usuario "1" --> "*" Interacao : gera
+    Interacao "1" --> "1" Canal : ocorre via
+    Interacao "1" --> "1" Desfecho : resulta em
+    Interacao "*" --> "0..1" IntencaoCatalogo : classificada como
+
+    Orquestrador "1" --> "1" GuardaInjecao : aciona
+    Orquestrador "1" --> "1" GuardaAbuso : aciona
+    Orquestrador "1" --> "1" GuardaSaida : aciona
+    Orquestrador "1" --> "1" ClassificadorIntencao : aciona
+    Orquestrador "1" --> "1" ClienteCopilotStudio : aciona
+    Orquestrador "1" --> "*" Interacao : produz
+    ClassificadorIntencao "*" --> "*" IntencaoCatalogo : consulta
+
+    Usuario "1" --> "*" Rotina : possui (dono)
+    Rotina "1" --> "*" ExecucaoRotina : gera
+    ExecucaoRotina "1" --> "1" StatusExecucao : possui
+    ExecucaoRotina "1" --> "0..1" Interacao : associada a
+    Rotina "1" --> "0..1" IntencaoCatalogo : prevê
+
+    RecorteAnalitico "*" --> "*" Interacao : agrega
+```
+
+*Figura X — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
+
 ## 5.5 Integrações com o Ecossistema Microsoft
 
 ### 5.5.1 Objetivo
