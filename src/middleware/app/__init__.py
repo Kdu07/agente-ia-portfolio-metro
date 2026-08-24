@@ -1,1 +1,1 @@
-"""Middleware de PLN — camada entre o usuário e o Copilot Studio."""
+"""Middleware do Agente de Portfólio — Metrô de São Paulo (g02)."""

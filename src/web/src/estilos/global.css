@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Altura real da viewport no mobile: 100vh inclui a barra de endereco do
+   navegador, o que empurra o campo de mensagem para fora da tela quando
+   o teclado abre. `dvh` acompanha a barra. */
+:root {
+  --altura-tela: 100dvh;
+}
+
+html,
+body,
+#raiz {
+  height: var(--altura-tela);
+}

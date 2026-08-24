@@ -1,1 +1,1 @@
-"""Pipeline de PLN: injection -> PII -> intenção, coordenado pelo orquestrador."""
+"""Pipeline: guardas -> intenção -> execução -> saída, pelo orquestrador."""

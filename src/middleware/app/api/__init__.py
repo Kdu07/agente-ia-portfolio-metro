@@ -1,1 +1,1 @@
-"""Camada HTTP: rotas e dependências de autenticação/perfil."""
+"""Camada HTTP: rotas e dependências de sessão, perfil e permissão."""
