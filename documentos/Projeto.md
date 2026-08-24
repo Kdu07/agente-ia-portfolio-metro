@@ -2508,6 +2508,41 @@ classDiagram
 
 *Figura X — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
 
+#### 5.4.11.1 Classes e responsabilidades
+
+| Classe | Responsabilidade na solução |
+|---|---|
+| `Usuario` | Representar a identidade autenticada, o perfil e as permissões que determinam o acesso às funcionalidades. |
+| `Perfil` | Enumerar os perfis corporativos considerados no controle de acesso: Diretoria, liderança de projeto e membro de equipe. |
+| `Permissao` | Enumerar as capacidades administrativas previstas para o usuário, como visualizar intenções e gerir rotinas. |
+| `Conversa` | Manter a sessão conversacional, seu título, identificador externo e ciclo de vida. |
+| `Interacao` | Registrar cada solicitação processada, sua resposta, intenção, confiança, canal, desfecho, latência e contexto de usuário. |
+| `Canal` | Identificar se a interação veio por chat, voz ou execução de rotina. |
+| `Desfecho` | Padronizar o resultado do processamento, incluindo sucesso, recusas, bloqueios e falha do executor. |
+| `IntencaoCatalogo` | Representar uma intenção versionada do catálogo, seu limiar de confiança e a indicação de fora de escopo. |
+| `GuardaInjecao` | Avaliar regras determinísticas e o classificador de injeção antes do processamento da solicitação. |
+| `GuardaAbuso` | Verificar categorias de conteúdo e a política de uso corporativo aplicada ao usuário e ao texto. |
+| `GuardaSaida` | Avaliar a resposta produzida pelo Copilot antes de sua entrega ao usuário. |
+| `ClassificadorIntencao` | Classificar o texto em uma intenção do catálogo e calcular a confiança associada. |
+| `Orquestrador` | Coordenar sessão, guardas, classificação, chamada ao Copilot, guarda de saída e registro da interação. |
+| `ClienteCopilotStudio` | Encapsular o envio do prompt validado e dos metadados de intenção ao Copilot Studio por Direct Line. |
+| `Rotina` | Definir um prompt agendado, sua expressão cron, fuso horário, intenção prevista e responsável. |
+| `ExecucaoRotina` | Registrar uma execução de rotina, seu estado, os horários, eventual erro e a interação gerada. |
+| `StatusExecucao` | Enumerar os estados de uma execução: em execução, sucesso ou falha. |
+| `RecorteAnalitico` | Agregar interações em um período e produzir indicadores de volume, desfecho, bloqueios, escopo e confiança. |
+
+#### 5.4.11.2 Relações e decisões de modelagem
+
+`Usuario` possui um único `Perfil` e pode possuir várias `Permissao`, `Conversa`, `Interacao` e `Rotina`. O perfil é armazenado também em `Interacao` para preservar o contexto de autorização no momento do processamento, mesmo que a configuração do usuário seja alterada posteriormente. A rotina tem um usuário como dono, e a permissão `GERIR_ROTINAS` representa a capacidade administrativa relacionada a esse recurso.
+
+Uma `Conversa` agrupa uma ou mais `Interacao`. Cada interação ocorre por um `Canal` e termina em um `Desfecho`; a associação opcional com `IntencaoCatalogo` permite registrar bloqueios que ocorreram antes da classificação ou que não produziram uma intenção válida. O `Orquestrador` produz as interações e coordena todas as guardas, o classificador e o cliente de integração.
+
+As três guardas representam pontos de decisão distintos. `GuardaInjecao` protege a entrada contra instruções de manipulação; `GuardaAbuso` aplica as políticas de conteúdo e de uso corporativo; e `GuardaSaida` verifica o retorno do Copilot antes da entrega. A separação permite que o `Desfecho` identifique a etapa responsável pelo bloqueio, sustentando a auditoria e os recortes analíticos.
+
+`ClassificadorIntencao` consulta várias entradas do `IntencaoCatalogo`, mas a interação registra no máximo uma intenção resultante. O `ClienteCopilotStudio` recebe o prompt somente depois das validações do orquestrador e envia os metadados da intenção para manter o roteamento coerente com o catálogo definido em 5.4.4.
+
+Uma `Rotina` pode gerar várias `ExecucaoRotina`. Cada execução possui um `StatusExecucao` e pode estar associada a uma `Interacao` quando o processamento chega ao pipeline. A associação é opcional para permitir registrar falhas de agendamento ou de inicialização que não produziram uma interação completa. `RecorteAnalitico` agrega múltiplas interações para apoiar a observabilidade do middleware, sem alterar os registros de origem.
+
 ## 5.5 Integrações com o Ecossistema Microsoft
 
 ### 5.5.1 Objetivo
