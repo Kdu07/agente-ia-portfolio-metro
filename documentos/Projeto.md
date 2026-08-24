@@ -76,6 +76,7 @@
   - [6.2 Justificativa das Escolhas de Implantação](#62-justificativa-das-escolhas-de-implantação)
   - [6.3 Considerações sobre Desempenho e Segurança](#63-considerações-sobre-desempenho-e-segurança)
   - [6.4 Diagrama de Implantação de Infraestrutura](#64-diagrama-de-implantação-de-infraestrutura)
+  - [6.5 Preparação do Ambiente de Nuvem e das Credenciais de Deploy](#65-preparação-do-ambiente-de-nuvem-e-das-credenciais-de-deploy)
 - [7. Prototipação Exploratória](#7-prototipação-exploratória)
   - [7.1 Questão de Projeto](#71-questão-de-projeto)
   - [7.2 Alternativas Divergentes](#72-alternativas-divergentes)
