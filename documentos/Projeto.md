@@ -70,6 +70,7 @@
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
+        - [5.4.11 Diagrama de Classes UML — Sprint 2](#5411-diagrama-de-classes-uml--sprint-2)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
@@ -2310,6 +2311,12 @@ O catálogo é artefato vivo. Três mecanismos sustentam sua manutenção:
 - **Limiar de confiança.** O valor que separa a classificação aceita do pedido de reformulação é o mesmo ponto em aberto registrado em 5.3.7 e será definido na bancada de avaliação, não por arbitragem prévia.
 - **Estabilidade do número de classes.** Os 17 rótulos do MVP são uma hipótese de trabalho derivada do critério de granularidade, e não um resultado medido. A confirmação depende dos indicadores de 3.1.5 apurados sobre o primeiro conjunto sintético.
 - **Efeito do canal de voz.** Os exemplos de enunciado desta seção foram escritos como texto digitado. A transcrição introduz erro sistemático em siglas e códigos de projeto (risco R03), e o conjunto de treino deve incorporar variantes transcritas para que a degradação ponta a ponta prevista em 3.1.5 seja efetivamente medida.
+
+### 5.4.11 Diagrama de Classes UML — Sprint 2
+
+O diagrama de classes abaixo apresenta a modelagem técnica atual do middleware responsável por intermediar as solicitações entre os usuários e o Copilot Studio. Diferentemente do modelo conceitual apresentado na seção 3.2.2, elaborado na Sprint 1, esta versão detalha os componentes de processamento, as guardas de segurança, a persistência das interações e a execução de rotinas agendadas previstos para a Sprint 2.
+
+O modelo mantém o catálogo de intenções como referência para a classificação e o roteamento, mas explicita as decisões que acontecem antes e depois da chamada ao Copilot Studio: detecção de injeção, controle de abuso, verificação da saída, registro do desfecho e associação com o perfil do usuário. A representação é conceitual-técnica; os identificadores UUID, os tipos de dados e os nomes das classes servem para orientar a implementação e ainda podem ser refinados durante a evolução da arquitetura.
 
 ## 5.5 Integrações com o Ecossistema Microsoft
 
