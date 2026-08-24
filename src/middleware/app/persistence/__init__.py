@@ -1,1 +1,1 @@
-"""Registro de interações para auditoria e analytics."""
+"""Registro de interações, conversas, rotinas e execuções."""
