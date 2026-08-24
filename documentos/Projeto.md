@@ -2629,6 +2629,153 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 [Preencher]
 
+## 6.5 Preparação do Ambiente de Nuvem e das Credenciais de Deploy
+
+Esta seção documenta a infraestrutura de nuvem e os controles de credenciais adotados para a solução. O ambiente Azure recebeu uma configuração inicial, e o Azure Container Apps foi definido como serviço de hospedagem do backend/API do núcleo de PLN. Os detalhes operacionais devem ser mantidos nesta documentação conforme a infraestrutura for consolidada, sem exposição de identificadores ou informações sensíveis.
+
+### 6.5.1 Arquitetura de Implantação
+
+A arquitetura mantém a separação entre o canal conversacional do ecossistema Microsoft e o núcleo analítico desenvolvido pela equipe. O Copilot Studio e os componentes do Power Platform atuam como consumidores da API por HTTPS; o Azure Container Apps é exclusivamente o ambiente de execução do backend que encapsula o pipeline de PLN em Python, e não o ambiente responsável pelo Copilot Studio.
+
+```text
+Copilot Studio / Power Platform
+              |
+              | HTTPS
+              v
+      API do núcleo de PLN
+              |
+              v
+     Azure Container Apps
+              |
+              v
+       Container Docker
+              |
+              v
+    Pipeline de PLN em Python
+              |
+              v
+Classificação de intenções / processamento
+```
+
+Essa topologia representa a organização de referência para a infraestrutura da solução e orienta a consolidação do ambiente inicialmente configurado no Azure.
+
+### 6.5.2 Justificativa da Plataforma Escolhida
+
+A plataforma definida para hospedar a API/backend do núcleo de PLN é o **Microsoft Azure**, por meio do **Azure Container Apps**. A decisão preserva a coerência com o ecossistema Microsoft utilizado pelo Metrô e favorece a integração futura da API com Copilot Studio e Power Platform.
+
+O Azure Container Apps é adequado à execução de APIs em Python empacotadas em containers. O uso de Docker torna o ambiente do pipeline reproduzível entre desenvolvimento e nuvem, reduz diferenças de configuração e permite que as dependências de classificação de intenções e demais etapas de PLN sejam distribuídas junto à aplicação. O serviço também oferece escalabilidade automática e modelo de consumo compatível com o volume inicialmente esperado para o MVP acadêmico.
+
+A escolha ainda permite centralizar identidade, permissões, segredos e monitoramento no ecossistema Azure. Essa decisão não transfere ao Azure Container Apps as atribuições do Copilot Studio: o primeiro executará o backend/API, enquanto o segundo permanecerá como parte da camada de interação e orquestração do ecossistema Microsoft.
+
+### 6.5.3 Considerações sobre Desempenho e Segurança
+
+A aplicação conteinerizada pode ajustar sua quantidade de réplicas conforme a demanda. O modelo priorizado é o *Consumption*, inclusive pela possibilidade de *scale-to-zero* quando não houver requisições, característica coerente com o baixo volume esperado para o MVP. Os parâmetros de escala, limites de CPU e memória e tempos de resposta são definidos a partir de medições do container e do pipeline completo.
+
+Quanto à segurança e à confidencialidade, permanecem aplicáveis os RNFs e as delimitações já estabelecidas neste documento: uso de dados sintéticos ou anonimizados no MVP, comunicação da API por HTTPS, autenticação e autorização nas integrações e rastreabilidade das operações. O ambiente deverá adotar o princípio do menor privilégio, manter credenciais fora do código e do repositório e utilizar mecanismos próprios do Azure para armazenar segredos. Dados sensíveis reais não deverão ser processados fora de ambientes homologados pelo Metrô.
+
+### 6.5.4 Organização da Infraestrutura
+
+O ambiente foi criado no Microsoft Azure, com os recursos agrupados no **Resource Group `METROSP`**, localizado na região **West US 2 (`westus2`)**. A região originalmente considerada era **Brazil South**; a adoção de `westus2` poderá ser reavaliada em fases seguintes. O motivo operacional da alteração de região não foi registrado nesta versão do documento, pois não foi fornecida evidência suficiente para documentá-lo.
+
+O Azure Container Apps Environment e o Container App foram criados para a validação inicial, porém seus nomes não foram informados para registro neste artefato. O Container App utilizou a imagem oficial de quickstart `mcr.microsoft.com/k8se/quickstart:latest`, que não corresponde ao backend definitivo do pipeline de PLN.
+
+```text
+Azure Subscription
+└── Resource Group: METROSP (westus2)
+    ├── Azure Container Apps Environment [obrigatório; nome não informado]
+    │   └── Container App [obrigatório; nome não informado]
+    │       ├── Imagem de validação: mcr.microsoft.com/k8se/quickstart:latest
+    │       └── Secrets do Container App [obrigatórios quando houver credenciais]
+    ├── Azure Container Registry [condicional]
+    ├── Azure Key Vault [condicional]
+    └── Azure Cost Management / Budget [acompanhamento obrigatório quando disponível]
+```
+
+O Azure Container Registry e o Azure Key Vault permanecem condicionais. A imagem de quickstart foi obtida diretamente do Microsoft Container Registry e, portanto, sua validação não comprova a necessidade de um registro privado. A adoção dos recursos condicionais depende do fluxo de publicação, da gestão de segredos e dos requisitos de governança do backend definitivo.
+
+### 6.5.5 Recursos do Ambiente de Nuvem
+
+Os recursos da arquitetura, sua classificação e a configuração registrada são apresentados a seguir.
+
+| Recurso | Papel no ambiente | Classificação | Configuração registrada |
+|---|---|---|---|
+| Azure Subscription | Limite administrativo, de cobrança e governança dos recursos | Obrigatório | Subscription utilizada na configuração inicial; identificador não registrado neste documento |
+| Azure Resource Group | Agrupamento dos recursos relacionados ao backend de PLN | Obrigatório | `METROSP`, região `westus2` |
+| Azure Container Apps Environment | Limite operacional compartilhado para o Container App | Obrigatório | Criado; nome não informado |
+| Azure Container App | Execução da API/backend conteinerizada | Obrigatório | Criado para validação; nome não informado |
+| Docker | Empacotamento reproduzível da aplicação Python e de suas dependências | Obrigatório para o deploy | Backend definitivo ainda não disponibilizado; validação realizada com imagem oficial de quickstart |
+| Azure Container Registry | Armazenamento privado das imagens Docker | Condicional ao fluxo de publicação escolhido | Não necessário para a imagem de quickstart; adoção não definida para o backend definitivo |
+| Secrets do Azure Container Apps | Injeção segura de valores sensíveis na aplicação | Obrigatório quando a aplicação consumir credenciais | Funcionalidade conferida e disponível; nenhum segredo real cadastrado |
+| Azure Key Vault | Centralização e governança avançada de segredos | Condicional às necessidades de integração, rotação e governança | Adoção não informada |
+| Azure Cost Management | Acompanhamento do consumo, orçamento e alertas de gasto | Obrigatório quando disponível na subscription | Orçamento informado como configurado; limite, percentual de alerta e destinatário não fornecidos |
+
+### 6.5.6 Gestão de Segredos e Credenciais
+
+Nenhuma senha, token, chave de API ou credencial poderá ser versionada. Credenciais individuais não deverão ser compartilhadas entre integrantes. No desenvolvimento local, valores sensíveis poderão ser fornecidos por variáveis de ambiente e arquivos `.env` locais; esses arquivos deverão permanecer ignorados pelo Git, por exemplo:
+
+```gitignore
+.env
+.env.*
+```
+
+Em nuvem, os valores deverão ser cadastrados nos secrets do Azure Container Apps e referenciados como variáveis de ambiente, sem inserção direta no código ou na imagem Docker. O Azure Key Vault poderá ser adotado quando forem necessários controle centralizado, rotação, auditoria ou compartilhamento seguro entre serviços. O procedimento operacional deverá registrar, sem expor os valores: finalidade do segredo, serviço consumidor, responsável pela concessão de acesso, mecanismo de rotação e forma de revogação.
+
+O acesso aos segredos deverá ocorrer por permissões individuais ou identidades gerenciadas, quando aplicável. A recuperação de um segredo para uso local somente deverá ser permitida a integrantes autorizados e nunca deverá resultar em sua inclusão em logs, capturas de tela, documentação ou histórico do repositório.
+
+### 6.5.7 Controle de Acesso
+
+O ambiente deverá aplicar o princípio do menor privilégio por meio dos mecanismos de controle de acesso do Azure. Cada integrante deverá utilizar identidade individual; contas e credenciais compartilhadas não serão aceitas. As permissões deverão ser concedidas no menor escopo suficiente — preferencialmente no Resource Group ou no recurso específico — e revisadas quando houver mudança de responsabilidade.
+
+Ao menos dois integrantes devem conseguir acessar e operar o ambiente, com validação individual da autenticação e das operações administrativas necessárias. Esse procedimento evita dependência de uma única pessoa e preserva a proibição de contas ou credenciais compartilhadas.
+
+### 6.5.8 Estratégia de Custos
+
+Será priorizado o modelo **Consumption** do Azure Container Apps. Nesse modelo, o custo depende do consumo efetivo de recursos e pode ser reduzido pela capacidade de *scale-to-zero* em períodos sem requisições, o que é adequado ao baixo volume esperado para o MVP acadêmico. Essa característica não permite afirmar que a operação terá custo zero.
+
+Recursos auxiliares, como Azure Container Registry, Azure Key Vault, armazenamento, tráfego, logs e monitoramento, também podem gerar custos. A estimativa quantitativa mensal deve utilizar a região, o dimensionamento e os recursos condicionais da configuração efetiva, evitando valores sem base na infraestrutura utilizada.
+
+Deverá ser criado um orçamento no Azure Cost Management, com limite e alerta de gasto quando esse recurso estiver disponível na subscription utilizada. A evidência deverá registrar a configuração do orçamento e dos destinatários do alerta, sem expor dados pessoais ou financeiros desnecessários.
+
+### 6.5.9 Validação Inicial do Ambiente
+
+A validação inicial utilizou a imagem oficial `mcr.microsoft.com/k8se/quickstart:latest` no Container App. Essa imagem foi empregada exclusivamente para verificar a disponibilização de um container no Azure Container Apps e não contém o backend nem o pipeline de PLN desenvolvido pela equipe.
+
+A quickstart não expõe o endpoint `GET /health` previsto para a API definitiva. A resposta efetivamente apresentada pela URL da aplicação não foi fornecida para inclusão neste documento e, por isso, não é reproduzida nem presumida. O registro dessa resposta deverá ser acrescentado a partir da evidência real do teste.
+
+A validação do endpoint abaixo permanece aplicável ao backend definitivo, quando ele estiver disponível:
+
+```http
+GET /health
+```
+
+```json
+{
+  "status": "ok"
+}
+```
+
+Assim, o teste com a quickstart valida somente a etapa inicial de hospedagem da imagem de exemplo. Ele não valida o funcionamento do backend, o pipeline de PLN, a classificação de intenções nem o contrato do endpoint `/health`.
+
+### 6.5.10 Registro e Evidências do Ambiente
+
+Os registros técnicos do ambiente devem ser acompanhados de uma breve descrição que permita reproduzir a configuração. O conjunto de evidências inclui a configuração do Resource Group, do Container App, das permissões, dos secrets, do orçamento/alerta no Cost Management e a chamada bem-sucedida ao endpoint `/health`. Capturas de tela devem ocultar identificadores, credenciais e demais informações sensíveis.
+
+| Registro técnico | Status | Situação documentada |
+|---|---|---|
+| Plataforma Microsoft Azure | Concluído | Ambiente inicialmente configurado |
+| Resource Group | Concluído | `METROSP`, região `westus2` |
+| Azure Container Apps Environment e Container App | Concluído | Recursos criados; nomes não informados para registro |
+| Imagem de validação publicada | Concluído | `mcr.microsoft.com/k8se/quickstart:latest` |
+| Resposta da URL da quickstart | Pendente | Resposta real não fornecida para documentação |
+| Acesso individual de ao menos dois integrantes | Concluído com dados a complementar | Acesso validado individualmente via IAM com papel Contributor no Resource Group; nomes não fornecidos |
+| Funcionalidade de secrets do Container App | Concluído | Aba conferida e disponível; nenhum segredo real cadastrado porque a API ainda não existe |
+| Azure Container Registry | Condicional | Necessidade será definida para a imagem do backend definitivo |
+| Azure Key Vault | Condicional | Adoção não informada |
+| Estimativa quantitativa de custo mensal | Pendente | Valor não fornecido |
+| Budget/alerta no Azure Cost Management | Concluído com dados a complementar | Limite, percentual de alerta e destinatário não fornecidos |
+| Endpoint `/health` do backend por HTTPS | Pendente | Backend e pipeline de PLN ainda não disponíveis |
+| Capturas de tela e guia de reprodução | Pendente | Lista de arquivos anexados não fornecida |
+
 # 7. Prototipação Exploratória
 Esta seção apresenta a prototipação exploratória realizada para investigar alternativas de interação e identificar lacunas, ambiguidades e impactos das diferentes propostas de solução.
 
