@@ -2543,6 +2543,28 @@ As três guardas representam pontos de decisão distintos. `GuardaInjecao` prote
 
 Uma `Rotina` pode gerar várias `ExecucaoRotina`. Cada execução possui um `StatusExecucao` e pode estar associada a uma `Interacao` quando o processamento chega ao pipeline. A associação é opcional para permitir registrar falhas de agendamento ou de inicialização que não produziram uma interação completa. `RecorteAnalitico` agrega múltiplas interações para apoiar a observabilidade do middleware, sem alterar os registros de origem.
 
+#### 5.4.11.3 Rastreabilidade e integração com as demais vistas
+
+| Elemento do diagrama | Requisitos ou artefatos relacionados | Papel na Sprint 2 |
+|---|---|---|
+| `Usuario`, `Perfil` e `Permissao` | RF01, RNF05, INT-08 | Identidade, escopo autorizado e controle de operações administrativas. |
+| `Conversa` e `Interacao` | RF02, RF03, RNF02, INT-10 | Contexto conversacional, registro de auditoria e rastreabilidade dos desfechos. |
+| `IntencaoCatalogo` e `ClassificadorIntencao` | RF03, seção 5.4.4, bloco C2 | Classificação fechada, confiança e roteamento baseado no catálogo. |
+| `GuardaInjecao`, `GuardaAbuso` e `GuardaSaida` | RNF01, RNF02, RNF05, risco R09 | Proteção da entrada, aplicação de política e validação da resposta. |
+| `Orquestrador` e `ClienteCopilotStudio` | Diagrama de componentes (5.2), INT-02 | Coordenação do pipeline e integração controlada com o Copilot Studio. |
+| `Rotina` e `ExecucaoRotina` | RF06, feature F1.21 | Execução agendada, registro de falhas e associação opcional ao resultado. |
+| `RecorteAnalitico` | RNF02, INT-10 | Indicadores para monitorar volume, confiança, bloqueios e desfechos. |
+
+O modelo complementa, e não substitui, o diagrama de componentes da seção 5.2: os componentes descrevem módulos e interfaces, enquanto as classes descrevem os dados e comportamentos que esses módulos manipulam. Também complementa os diagramas de sequência da seção 5.3: o `Orquestrador` e as guardas aparecem como participantes de um fluxo temporal, enquanto aqui são detalhados por atributos, operações e relações. A versão conceitual da seção 3.2.2 permanece como histórico da Sprint 1 e não deve ser interpretada como contrato atualizado da implementação do middleware.
+
+#### 5.4.11.4 Limitações e refinamentos futuros
+
+- **Persistência.** O diagrama representa entidades persistidas e serviços em uma mesma vista lógica. A separação entre modelos de domínio, schemas de API e tabelas do banco deverá ser definida no projeto físico.
+- **Integração externa.** `ClienteCopilotStudio` expõe o token Direct Line como atributo conceitual; o armazenamento, a renovação e a proteção desse segredo devem ser definidos na configuração segura do ambiente, sem persistência em `Interacao`.
+- **Execução assíncrona.** O modelo não detalha filas, workers, retentativas ou concorrência das `ExecucaoRotina`. Esses elementos pertencem ao desenho de implantação e podem exigir estados adicionais.
+- **Políticas.** As categorias de abuso, regras de injeção e critérios da guarda de saída são abstraídos como operações. Seus catálogos, limiares e versões devem ser governados fora do diagrama e registrados para auditoria.
+- **Evolução do catálogo.** `IntencaoCatalogo` admite versionamento e limiar próprio, mas o modelo ainda não define histórico de versões, aprovação ou publicação. Esses pontos dependem da governança do catálogo descrita em 5.4.9.
+
 ## 5.5 Integrações com o Ecossistema Microsoft
 
 ### 5.5.1 Objetivo
