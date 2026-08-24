@@ -20,6 +20,9 @@ dependencies = [
     "msal>=1.28",
     # Assinatura do cookie de sessão
     "itsdangerous>=2.2",
+    # Vetorização (Bag of Words / TF-IDF) da linha de base clássica do
+    # classificador de intenção — ver pipeline/intencao/vetorizacao.py.
+    "scikit-learn>=1.4",
 ]
 
 [project.optional-dependencies]
@@ -29,9 +32,10 @@ dev = [
     "ruff>=0.5",
 ]
 
-# Dependências do classificador de intenção (embeddings + classificador
-# supervisionado) serão adicionadas na onda 3, junto com a bancada de
-# avaliação que define o limiar por intenção.
+# Dependências do classificador de intenção em produção (embeddings +
+# classificador supervisionado, ver Arquitetura.md seção 7) ainda serão
+# adicionadas quando essa escolha for fechada. scikit-learn acima cobre só
+# a linha de base clássica (TF-IDF/BoW) usada na comparação da feature F22.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

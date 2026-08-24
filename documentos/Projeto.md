@@ -1553,6 +1553,98 @@ Responsável por conectar o agente à infraestrutura corporativa já adotada pel
 
 > **Observação**: esta listagem representa uma visão inicial e poderá ser refinada conforme o projeto evolua, especialmente à medida que forem definidos com mais precisão os requisitos de integração com os sistemas homologados do Metrô.
 
+### 5.1.5 Vetorização de texto: Bag of Words e TF-IDF (linha de base clássica)
+
+A feature F22 (seção 2.7) prevê registrar o desempenho de pelo menos duas
+estratégias — uma linha de base por vetorização clássica e um modelo de
+linguagem — para justificar a escolha final do classificador de intenção.
+Esta seção documenta a implementação dessa linha de base
+(`src/middleware/app/pipeline/intencao/vetorizacao.py`); a escolha do
+classificador de produção continua em aberto, dependente de embeddings
+(ver Arquitetura.md, seção 7).
+
+**Entrada.** O vetorizador consome `texto_classificador`, a visão do texto
+que sai do pré-processamento (seção correspondente à TEC-11) com códigos de
+projeto e datas já mascarados por `⟨PROJETO⟩`/`⟨DATA⟩`. Vetorizar o texto
+cru faria cada código de projeto virar uma coluna própria do vocabulário —
+o modelo aprenderia a decorar nomes do conjunto de treino em vez do padrão
+da frase.
+
+**Exemplo de código e saída.** Sobre dois enunciados reais do catálogo:
+
+```python
+from app.pipeline.intencao.preprocessamento import preprocessar
+from app.pipeline.intencao.vetorizacao import (
+    ConfiguracaoVetorizador,
+    construir_vetorizador_contagem,
+    construir_vetorizador_tfidf,
+)
+
+exemplo = [
+    preprocessar("Qual o status do projeto XPTO?").texto_classificador,
+    preprocessar("Qual o avanço do projeto 123XXX?").texto_classificador,
+]
+# ['Qual o status do projeto ⟨PROJETO⟩?', 'Qual o avanço do projeto ⟨PROJETO⟩?']
+# Os dois códigos de projeto diferentes já chegam aqui como o mesmo token.
+
+bow = construir_vetorizador_contagem(ConfiguracaoVetorizador())
+matriz_bow = bow.fit_transform(exemplo)
+list(bow.get_feature_names_out())
+# ['?', 'Qual', 'avanço', 'do', 'o', 'projeto', 'status', '⟨PROJETO⟩']
+matriz_bow.toarray()
+# [[1, 1, 0, 1, 1, 1, 1, 1],
+#  [1, 1, 1, 1, 1, 1, 0, 1]]
+
+tfidf = construir_vetorizador_tfidf(ConfiguracaoVetorizador())
+matriz_tfidf = tfidf.fit_transform(exemplo)
+matriz_tfidf.toarray().round(2)
+# [[0.35, 0.35, 0.  , 0.35, 0.35, 0.35, 0.5 , 0.35],
+#  [0.35, 0.35, 0.5 , 0.35, 0.35, 0.35, 0.  , 0.35]]
+```
+
+O Bag of Words só conta presença/ausência; o TF-IDF já diferencia: `"?"`,
+`"Qual"`, `"do"`, `"o"`, `"projeto"` e `"⟨PROJETO⟩"` aparecem nos dois
+enunciados e recebem peso 0,35, enquanto `"status"` e `"avanço"` — cada um
+exclusivo de um enunciado — recebem o peso mais alto (0,50). É esse
+contraste que se espera que ajude o classificador a discriminar intenção.
+
+**Comparação de configurações.** Rodada sobre o corpus completo de
+[testes-catalogo-intencoes.csv](testes-catalogo-intencoes.csv) (67
+enunciados, 27 classes — 26 intenções mais `fora_de_escopo`), via
+`comparar_configuracoes`:
+
+| Configuração | n-grama | `min_df` | `max_features` | Vocabulário | Esparsidade |
+|---|---|---|---|---|---|
+| unigrama | (1, 1) | 1 | — | 206 | 96,5% |
+| unigrama_bigrama | (1, 2) | 1 | — | 534 | 97,5% |
+| **unigrama_min_df_2** | (1, 1) | **2** | — | **59** | **91,6%** |
+| unigrama_vocab_200 | (1, 1) | 1 | 200 | 200 | 96,5% |
+
+**Escolha registrada: `unigrama_min_df_2`** (unigrama, `min_df=2`, sem
+limite de vocabulário) — `CONFIGURACAO_PADRAO` no módulo.
+
+- **Bigramas quase triplicam o vocabulário (534 termos) sem ganho
+  evidente**: com 67 documentos, a maioria dos bigramas ocorre uma única
+  vez — vira um traço do exemplo específico, não um padrão que se repete
+  entre enunciados da mesma intenção. É o oposto do que se quer de uma
+  *feature* de generalização.
+- **`min_df=2` é o único parâmetro que muda a esparsidade de forma
+  relevante** (96,5% → 91,6%), porque remove justamente os termos
+  singleton — presentes em um só documento, portanto incapazes de ajudar a
+  classificar qualquer outro exemplo. A amostra de vocabulário resultante
+  já é reconhecível como sinal de intenção: `%`, `?`, `Atualiza`, `Como`,
+  `Gera`, `Marca`, `Monta`, `Prepara`, `Quais` — verbos no imperativo
+  (transação) ao lado de interrogativos (consulta).
+- **Limitar `max_features` a 200 quase não tem efeito** (206 → 200): o
+  vocabulário do corpus atual já é pequeno; o parâmetro só passa a importar
+  se a base de enunciados crescer bastante.
+
+Esta comparação é indicativa, não conclusiva: 67 exemplos para 27 classes
+(pouco mais de 2 por classe, em média) é pequeno demais para uma métrica de
+classificação supervisionada ser decisiva. A palavra final sobre BoW/TF-IDF
+como linha de base — e sobre como ela se compara ao classificador de
+produção — depende da bancada de avaliação (RNF03, seção 5.4.8).
+
 ## 5.2 Diagrama de Componentes da UML
 
 Um Diagrama de Componentes UML é uma representação visual que descreve a organização dos principais módulos de um sistema de software, suas responsabilidades e as interfaces por meio das quais se comunicam. Esse tipo de diagrama permite visualizar, de forma modular, como cada parte do sistema interage com as demais, garantindo organização, coesão e clareza arquitetural, e servindo como referência para o desenvolvimento, integração e implantação da solução.
