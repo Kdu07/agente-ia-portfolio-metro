@@ -65,7 +65,6 @@
   - [4.2 Modelo Conceitual de Dados](#42-modelo-conceitual-de-dados)
   - [4.3 Modelo Lógico de Dados](#43-modelo-lógico-de-dados)
   - [4.4 Modelo Físico de Dados](#44-modelo-físico-de-dados)
-  - [4.5 Matriz de Rastreabilidade](#45-matriz-de-rastreabilidade)
 - [5. Solução Técnica](#5-solução-técnica)
   - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
@@ -1544,13 +1543,74 @@ O modelo conceitual define as entidades fundamentais do ecossistema do Middlewar
 
 ## 4.3 Modelo Lógico de Dados
 
-[Preencher]
+O modelo lógico traduz o domínio conceitual em uma estrutura relacional formal, definindo chaves primárias (PK), chaves estrangeiras (FK), tipos de dados abstratos, restrições de integridade e a validação do processo de normalização.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Lógica.png)
+*Figura X — Modelagem Lógica.*
+
+### Esquema Relacional e Dicionário de Dados
+
+#### Tabela: `USUARIO`
+Armazena os dados dos usuários autenticados via Microsoft Entra ID e seus privilégios de acesso.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_usuario` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único interno do usuário. |
+| `entra_id` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Identificador único federado no Microsoft Entra ID. |
+| `email` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Endereço de e-mail corporativo do usuário. |
+| `perfil` | `VARCHAR(50)` | `NOT NULL` | Papel funcional do colaborador (ex.: `DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`). |
+| `pode_ver_intencoes` | `BOOLEAN` | `NOT NULL`, `DEFAULT FALSE` | Flag de permissão para visualização de logs/painéis de intenções de todos os usuários. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora de inclusão do registro no sistema. |
+
+---
+
+#### Tabela: `INTENCAO`
+Registra e audita cada prompt de entrada, sua classificação e a sessão de diálogo associada.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_intencao` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único da intenção registrada. |
+| `id_usuario` | `INT` | `FK (USUARIO.id_usuario)`, `NOT NULL` | Chave estrangeira que referencia o usuário autor da mensagem. |
+| `id_conversa` | `INT` | `NOT NULL` | Identificador numérico da sessão de conversa/thread. |
+| `prompt` | `TEXT` | `NOT NULL` | Conteúdo textual completo da instrução/mensagem enviada. |
+| `classificacao_intencao` | `VARCHAR(100)` | `NULL` | Categoria de intenção atribuída pelo classificador supervisionado. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora do envio e processamento da mensagem. |
+
+---
+
+#### Tabela: `ROTINA`
+Centraliza as instruções de prompts agendados/pré-programados cadastrados pelos usuários.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_rotina` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único da rotina pré-configurada. |
+| `id_usuario` | `INT` | `FK (USUARIO.id_usuario)`, `NOT NULL` | Chave estrangeira que referencia o usuário criador da rotina. |
+| `prompt` | `TEXT` | `NOT NULL` | Instrução textual que será executada de forma automatizada. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora de cadastro da rotina. |
+
+### Integridade Referencial e Restrições
+
+- **Integridade de Chave Primária:** Todas as entidades possuem chaves primárias numéricas inteiras (`id_usuario`, `id_intencao`, `id_rotina`), garantindo unicidade e eficiência em indexações.
+- **Integridade Referencial:**
+  * `INTENCAO.id_usuario` $\rightarrow$ `USUARIO.id_usuario` (`ON DELETE RESTRICT`): Impede a exclusão acidental de registros de usuários que possuam histórico de interações auditadas.
+  * `ROTINA.id_usuario` $\rightarrow$ `USUARIO.id_usuario` (`ON DELETE CASCADE` ou `RESTRICT`): Garante que toda rotina esteja obrigatoriamente vinculada a um autor existente.
+- **Unicidade de Identidade:** `entra_id` e `email` possuem restrição de unicidade (`UNIQUE`), impedindo contas duplicadas para o mesmo usuário corporativo.
+
+### Justificativa de Normalização (3FN)
+
+O esquema relacional atende rigorosamente aos critérios da **Terceira Forma Normal (3FN)**:
+
+1. **Primeira Forma Normal (1FN):**
+   * Todos os atributos são atômicos (indivisíveis).
+   * Não existem colunas multivaloradas ou vetores/listas repetidas dentro de um mesmo registro.
+2. **Segunda Forma Normal (2FN):**
+   * O modelo está na 1FN.
+   * Todas as chaves primárias são simples (coluna única `INT`). Portanto, não há dependência parcial, todos os atributos não-chave dependem integralmente da chave primária da tabela.
+3. **Terceira Forma Normal (3FN):**
+   * O modelo está na 2FN.
+   * Não existem dependências transitivas entre atributos não-chave (nenhum atributo não-chave depende de outro atributo não-chave; todos dependem exclusivamente da chave primária correspondente).
 
 ## 4.4 Modelo Físico de Dados
-
-[Preencher]
-
-## 4.5 Matriz de Rastreabilidade
 
 [Preencher]
 
