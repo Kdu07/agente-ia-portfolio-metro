@@ -1612,7 +1612,80 @@ O esquema relacional atende rigorosamente aos critérios da **Terceira Forma Nor
 
 ## 4.4 Modelo Físico de Dados
 
-[Preencher]
+O modelo físico implementa o esquema relacional para o Sistema Gerenciador de Banco de Dados **PostgreSQL 16**. A implementação contempla scripts DDL com constraints de integridade, valores padrão, tipos de dados otimizados e índices estratégicos para acelerar consultas analíticas e filtros de auditoria.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Física.png)
+*Figura X — Modelagem Física.*
+
+### Script DDL (Data Definition Language)
+
+```sql
+-- Habilita extensões úteis caso necessário
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- TABELA: usuario
+CREATE TABLE usuario (
+    id_usuario SERIAL PRIMARY KEY,
+    entra_id VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    perfil VARCHAR(50) NOT NULL,
+    pode_ver_intencoes BOOLEAN NOT NULL DEFAULT FALSE,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_usuario_entra_id UNIQUE (entra_id),
+    CONSTRAINT uk_usuario_email UNIQUE (email)
+);
+
+-- TABELA: intencao
+CREATE TABLE intencao (
+    id_intencao SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_conversa INT NOT NULL,
+    prompt TEXT NOT NULL,
+    classificacao_intencao VARCHAR(100) NULL,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_intencao_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
+        ON UPDATE CASCADE 
+        ON DELETE RESTRICT
+);
+
+-- TABELA: rotina
+CREATE TABLE rotina (
+    id_rotina SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    prompt TEXT NOT NULL,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_rotina_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
+        ON UPDATE CASCADE 
+        ON DELETE CASCADE
+);
+
+-- ÍNDICES DE PERFORMANCE E CONSULTA
+
+-- Índices na tabela 'intencao' para relatórios analíticos, filtros temporais e sessões
+CREATE INDEX idx_intencao_usuario ON intencao (id_usuario);
+CREATE INDEX idx_intencao_conversa ON intencao (id_conversa);
+CREATE INDEX idx_intencao_criado_em ON intencao (criado_em DESC);
+CREATE INDEX idx_intencao_classificacao ON intencao (classificacao_intencao) WHERE classificacao_intencao IS NOT NULL;
+CREATE INDEX idx_intencao_analise_temporal ON intencao (classificacao_intencao, criado_em);
+
+-- Índice na tabela 'rotina' para busca por usuário criador
+CREATE INDEX idx_rotina_usuario ON rotina (id_usuario);
+```
+
+### Decisões Técnicas de Implementação
+
+- Tipos Temporais (`TIMESTAMP WITH TIME ZONE`): Garante a gravação consistente de datas e fusos horários (`America/Sao_Paulo`), prevenindo inconsistências em auditorias e agendamentos.
+
+- Integridade Referencial e Políticas de Deleção:
+    - Em `intencao`, a regra `ON DELETE RESTRICT` impede a exclusão acidental de registros de usuários que possuam logs de auditoria vinculados.
+    - Em `rotina`, a regra `ON DELETE CASCADE` garante que, se um usuário for expressamente removido, suas rotinas associadas sejam excluídas em cascata.`
+
+- Estratégia de Indexação:
+    - `idx_intencao_criado_em`: Otimiza a ordenação temporal e a exibição cronológica de históricos e sessões.
+    - `idx_intencao_analise_temporal`: Índice composto `(classificacao_intencao, criado_em)` voltado a acelerar consultas agregadas de volumetria por intenção e períodos no dashboard analítico.
+    - `idx_intencao_classificacao`: Índice parcial (partial index) ignorando valores nulos para economizar espaço em disco e acelerar a filtragem de prompts classificados.
 
 # 5. Solução Técnica
 
