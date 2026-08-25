@@ -1849,6 +1849,28 @@ flowchart TB
 *Figura X — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
 Fonte: Material produzido pelos autores (2026).
 
+#### 5.2.3.1 Responsabilidades dos componentes
+
+| Agrupamento | Componentes | Responsabilidade principal |
+|---|---|---|
+| Interface web | Páginas de Chat, Histórico, Intenções e Rotinas | Oferece os fluxos de conversa, retomada de sessões, consulta de métricas e gerenciamento de rotinas. O acesso às páginas de Intenções e Rotinas depende das permissões correspondentes. |
+| Entrada | Nginx | Entrega os arquivos estáticos da aplicação web e encaminha as chamadas `/api` para a API. |
+| API e identidade | `api/` e `auth/` | Expõe as rotas HTTP, resolve sessão, perfil e permissões e integra a autenticação OAuth com o Entra ID, mantendo a sessão no cookie `httpOnly`. |
+| Orquestração | `pipeline/orquestrador.py` | Coordena as etapas da mensagem em ordem fixa, garantindo que as guardas sejam executadas antes da chamada ao Copilot e do registro do desfecho. |
+| Guardas | `pipeline/guardas/injecao/`, `abuso/` e `saida.py` | Detectam injeção direta, abuso e injeção indireta na resposta. As avaliações que dependem de serviço externo usam o Azure AI Content Safety. |
+| Intenção | `pipeline/intencao/` | Pré-processa a mensagem, consulta o catálogo e classifica a intenção que será usada pelo orquestrador. |
+| Integração Copilot | `copilot/client.py` | Centraliza a comunicação com o Copilot Studio por Direct Line, evitando que outras partes da aplicação criem integrações paralelas. |
+| Persistência e analytics | `persistence/` e `analytics/` | Persiste sessões, mensagens e desfechos no PostgreSQL; as consultas analíticas produzem recortes somente para leitura. |
+| Voz | `voz/` e Azure Speech | Emite token efêmero para a transcrição em tempo real, sem transferir a responsabilidade de autenticação do middleware para o navegador. |
+| Rotinas | `rotinas/` e worker APScheduler | Valida prompts no cadastro, armazena o job e executa a rotina na data programada, reutilizando o orquestrador com `canal=rotina`. |
+| Serviços do tenant | Entra ID, Azure AI Content Safety, Azure Speech, Copilot Studio e conectores Microsoft | Fornece identidade, avaliação de conteúdo, transcrição, execução conversacional e acesso às fontes corporativas conforme o menor privilégio. |
+
+As setas entre agrupamentos representam contratos de integração, e não
+necessariamente chamadas síncronas. Por exemplo, o agendador dispara uma
+execução no worker, enquanto o jobstore e os registros de conversa permanecem
+no banco. Da mesma forma, o navegador acessa o Speech para o áudio, mas recebe
+do middleware o token efêmero que autoriza essa sessão.
+
 ## 5.3 Diagramas de Sequência da UML
 
 A seção 3.2.2 — *Modelagem estática — Diagrama de classes* — apresentou a modelagem estática do domínio — quais conceitos existem e como se relacionam. Esta seção apresenta a modelagem dinâmica correspondente: **como esses conceitos são produzidos e consumidos ao longo do tempo**, quais componentes trocam mensagens entre si, em que ordem e sob quais condições.
