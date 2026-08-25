@@ -61,10 +61,11 @@
   - [3.5 Casos de Uso](#35-casos-de-uso)
   - [3.6 Casos de Uso x Requisitos Funcionais](#36-casos-de-uso-x-requisitos-funcionais)
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
-  - [4.1 Especificação da Base de Dados](#41-especificação-da-base-de-dados)
+  - [4.1 Visão Geral do Domínio](#41-visao-geral-do-dominio)
   - [4.2 Modelo Conceitual de Dados](#42-modelo-conceitual-de-dados)
   - [4.3 Modelo Lógico de Dados](#43-modelo-lógico-de-dados)
   - [4.4 Modelo Físico de Dados](#44-modelo-físico-de-dados)
+  - [4.5 Matriz de Rastreabilidade](#45-matriz-de-rastreabilidade)
 - [5. Solução Técnica](#5-solução-técnica)
   - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
@@ -1495,19 +1496,61 @@ Esta seção será desenvolvida na Sprint 2, em conjunto com 3.5, consolidando a
 
 # 4. Modelagem de Dados
 
-## 4.1 Especificação da Base de Dados
+## 4.1 Visão Geral do Domínio
 
-[Descreva a proposta de estrutura de dados e o contexto de uso.]
+A solução atua como um middleware de segurança, governança e orquestração posicionado entre o usuário e o Copilot Studio no ambiente corporativo do Metrô. Ela centraliza o controle de acesso corporativo via Microsoft Entra ID, inspeciona e audita prompts para classificação e segurança, e gerencia automações periódicas por meio de rotinas agendadas.
+
+### Atores e Entidades do Negócio
+
+- Usuário: Colaborador autenticado via Entra ID, caracterizado por seu perfil corporativo (`DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`) e pelo privilégio booleano pode_ver_intencoes para visualização analítica.
+
+- Intenção (Interação): Registro auditável de cada prompt submetido, contendo a categorização resolvida pelo classificador, a identificação da sessão (id_conversa) e a data/hora do disparo.
+
+- Rotina: Definição de prompt automatizado cadastrado por um usuário para reexecução planejada sob sua identidade e permissões.
+
+### Fluxo Principais de Dados
+
+1. Identificação e Autorização: O usuário autentica-se pelo Entra ID. O sistema mapeia o identificador único (`entra_id`), perfil corporativo e a permissão booleana pode_ver_intencoes para liberar rotas analíticas e de auditoria.
+
+2. Ciclo de Mensagem e Auditoria: Toda entrada submetida via chat ou voz gera um registro na tabela de intenções associado ao `id_usuario` e ao `id_conversa`, armazenando o prompt e sua respectiva classificação.
+
+3. Parametrização de Rotinas: Usuários cadastram instruções persistentes na tabela de rotinas para disparos sem intervenção manual em tela.
 
 ## 4.2 Modelo Conceitual de Dados
 
-[Preencher]
+O modelo conceitual define as entidades fundamentais do ecossistema do Middleware do Metrô, seus papéis de negócio e as associações estruturais que garantem a rastreabilidade das interações e das rotinas cadastradas.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Conceitual.png)
+*Figura X — Modelagem Conceitual.*
+
+### Entidades do Domínio
+
+- `USUARIO`: Representa o colaborador autenticado no tenant Microsoft corporativo. Centraliza a identidade institucional (`entra_id`), dados de contato, papéis de negócio e o privilégio explícito de controle de acesso para auditoria.  
+
+- `INTENCAO`: Registro auditável de cada mensagem submetida à aplicação. Armazena o prompt, a classificação atribuída pelo catálogo de intenções, a sessão de diálogo à qual pertence e a estampa temporal.  
+
+- `ROTINA`: Automação cadastrada com instruções pré-programadas para execução recorrente sob as permissões do usuário criador.
+
+### Regras de Negócio e Cardinalidades
+
+- Associação `USUARIO` - `INTENÇÃO` (1: N):
+    - Um usuário pode gerar zero ou múltiplos registros de intenções ao longo de suas sessões de uso.  
+    - Cada registro de intenção deve estar estritamente vinculado a um único usuário remetente.  
+    - Controle de Visualização: O atributo booleano de permissão no usuário determina se o colaborador tem acesso irrestrito de leitura a todas as intenções registradas no sistema (para dashboards de monitoramento) ou se sua visualização é restrita ao próprio escopo. 
+
+- Associação `USUARIO` - `ROTINA` (1: N):
+    - Um usuário pode cadastrar zero ou múltiplas rotinas para automatização.
+    - Cada rotina pertence de forma exclusiva a um único usuário (dono/autor), garantindo que ela seja executada sob a identidade e credenciais desse criador. 
 
 ## 4.3 Modelo Lógico de Dados
 
 [Preencher]
 
 ## 4.4 Modelo Físico de Dados
+
+[Preencher]
+
+## 4.5 Matriz de Rastreabilidade
 
 [Preencher]
 
