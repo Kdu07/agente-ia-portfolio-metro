@@ -68,6 +68,7 @@
 - [5. Solução Técnica](#5-solução-técnica)
   - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
+    - [5.2.3 Diagrama atual da Sprint 2](#523-diagrama-atual-da-sprint-2)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
         - [5.4.11 Diagrama de Classes UML — Sprint 2](#5411-diagrama-de-classes-uml--sprint-2)
@@ -1725,6 +1726,200 @@ Em paralelo, a busca semântica (C5) consulta o índice vetorial e a base de nor
 C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio — e o repassa a A4, que formata a resposta conforme o perfil do usuário e a entrega em linguagem natural.
 
 > Fonte: Material produzido pelos autores (2026).
+
+### 5.2.3 Diagrama atual da Sprint 2
+
+Esta subseção registra a versão atual do diagrama de componentes UML, elaborada
+na Sprint 2 a partir da arquitetura implementada no repositório. Ela complementa
+a versão anterior apresentada em 5.2: enquanto aquela descreve a separação
+conceitual entre o pipeline de PLN e os serviços do ecossistema Microsoft, esta
+vista detalha os módulos efetivamente previstos para o middleware, o worker e a
+infraestrutura de execução.
+
+O diagrama adota três agrupamentos principais. O `src/web` concentra a
+experiência do usuário; o `src/middleware` recebe as requisições e aplica o
+orquestrador; e o worker executa as rotinas agendadas pelo mesmo fluxo do chat.
+PostgreSQL e os serviços do tenant Microsoft aparecem como dependências externas
+ou compartilhadas, deixando explícitos os limites de responsabilidade da equipe.
+
+```mermaid
+flowchart TB
+  ATOR([Usuário<br/>Diretoria / Líder / Membro])
+
+  subgraph WEBAPP["src/web — React + TypeScript + Vite"]
+    direction TB
+    P_CHAT["Página: Chat<br/><i>conversa + microfone</i>"]
+    P_HIST["Página: Histórico<br/><i>lista e retomada de conversas</i>"]
+    P_INT["Página: Intenções<br/><i>dashboard — requer VER_INTENCOES</i>"]
+    P_ROT["Página: Rotinas<br/><i>agenda e execuções — requer GERIR_ROTINAS</i>"]
+  end
+
+  NGX["Nginx<br/><i>estáticos + proxy /api</i>"]
+
+  subgraph MIDDLEWARE["src/middleware — FastAPI (docker: api)"]
+    direction TB
+    C_API["api/<br/><i>rotas HTTP, deps.py resolve<br/>sessão/perfil/permissões</i>"]
+    C_AUTH["auth/<br/><i>OAuth Entra ID, sessão<br/>cookie httpOnly</i>"]
+    C_ORQ["pipeline/orquestrador.py<br/><i>encadeia as etapas,<br/>ordem fixa</i>"]
+    C_GINJ["pipeline/guardas/injecao/<br/><i>regras + classificador</i>"]
+    C_GABU["pipeline/guardas/abuso/<br/><i>categorias + política de uso</i>"]
+    C_GSAI["pipeline/guardas/saida.py<br/><i>injeção indireta</i>"]
+    C_INT["pipeline/intencao/<br/><i>catálogo + classificador</i>"]
+    C_ANL["analytics/<br/><i>agregações SQL,<br/>somente leitura</i>"]
+    C_VOZ["voz/<br/><i>token efêmero</i>"]
+    C_COP["copilot/client.py<br/><i>único ponto que fala<br/>com o Copilot</i>"]
+    C_PER["persistence/<br/><i>modelos e repositórios</i>"]
+  end
+
+  subgraph WORKER["docker: worker — APScheduler"]
+    direction TB
+    C_AGD["rotinas/agendador.py<br/><i>jobstore no banco</i>"]
+    C_EXE["rotinas/execucao.py<br/><i>executa PELO orquestrador,<br/>canal=rotina</i>"]
+    C_VAL["rotinas/validacao.py<br/><i>valida prompt no cadastro</i>"]
+  end
+
+  DB[("docker: db<br/>PostgreSQL 16")]
+
+  subgraph TENANT["Tenant Microsoft do parceiro"]
+    direction TB
+    ENTRA["Entra ID<br/><i>Authorization Code + PKCE</i>"]
+    SAFE["Azure AI Content Safety<br/><i>Prompt Shields</i>"]
+    SPEECH["Azure Speech<br/><i>transcrição em tempo real</i>"]
+    CS["Copilot Studio<br/><i>Direct Line</i>"]
+    CN["SharePoint · Power BI ·<br/>Power Automate<br/><i>conectores, menor privilégio</i>"]
+  end
+
+  %% Frontend
+  ATOR --> P_CHAT & P_HIST & P_INT & P_ROT
+  P_CHAT & P_HIST & P_INT & P_ROT --> NGX
+  NGX -->|"/api"| C_API
+
+  %% Autenticação
+  C_API --> C_AUTH
+  C_AUTH -->|"Authorization Code + PKCE"| ENTRA
+  ENTRA -.->|"claims de grupo"| C_AUTH
+
+  %% Pipeline principal (trajeto da mensagem)
+  C_API -->|"1. sessão/perfil/permissões"| C_ORQ
+  C_ORQ -->|"2. guarda de injeção"| C_GINJ
+  C_GINJ -->|"classificador"| SAFE
+  C_ORQ -->|"3. guarda de abuso"| C_GABU
+  C_GABU -->|"categorias de conteúdo"| SAFE
+  C_ORQ -->|"4. classificação de intenção"| C_INT
+  C_ORQ -->|"5. execução (prompt rotulado)"| C_COP
+  C_COP -->|"Direct Line"| CS
+  CS --> CN
+  C_ORQ -->|"6. guarda de saída"| C_GSAI
+  C_GSAI -->|"avalia resposta"| SAFE
+  C_ORQ -->|"7. registro"| C_PER
+  C_PER --> DB
+
+  %% Voz
+  P_CHAT -.->|"áudio"| SPEECH
+  C_VOZ -.->|"emite token efêmero"| SPEECH
+  C_API --> C_VOZ
+
+  %% Rotinas
+  P_ROT -->|"cadastra rotina"| C_API
+  C_API --> C_VAL
+  C_VAL -->|"valida via pipeline"| C_ORQ
+  C_VAL --> DB
+  C_AGD --> DB
+  C_AGD -->|"na data programada"| C_EXE
+  C_EXE -->|"mesmo orquestrador,<br/>canal=rotina"| C_ORQ
+
+  %% Analytics
+  P_INT -->|"solicita recortes"| C_API
+  C_API --> C_ANL
+  C_ANL --> DB
+  C_ANL -->|"volume, desfechos,<br/>bloqueios, confiança"| C_API
+  C_API --> P_INT
+
+  classDef web fill:#e8f0fe,stroke:#3a5a8f,stroke-width:1px;
+  classDef mid fill:#eef3fb,stroke:#3a5a8f,stroke-width:1px;
+  classDef wrk fill:#eaf7ec,stroke:#2f7a3d,stroke-width:1px;
+  classDef db fill:#fdf3e3,stroke:#b5822a,stroke-width:1px;
+  classDef ext fill:#f4e3f4,stroke:#8f3a8f,stroke-width:1px;
+  class P_CHAT,P_HIST,P_INT,P_ROT,NGX web;
+  class C_API,C_AUTH,C_ORQ,C_GINJ,C_GABU,C_GSAI,C_INT,C_ANL,C_VOZ,C_COP,C_PER mid;
+  class C_AGD,C_EXE,C_VAL wrk;
+  class DB db;
+  class ENTRA,SAFE,SPEECH,CS,CN ext;
+```
+
+*Figura X — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
+Fonte: Material produzido pelos autores (2026).
+
+#### 5.2.3.1 Responsabilidades dos componentes
+
+| Agrupamento | Componentes | Responsabilidade principal |
+|---|---|---|
+| Interface web | Páginas de Chat, Histórico, Intenções e Rotinas | Oferece os fluxos de conversa, retomada de sessões, consulta de métricas e gerenciamento de rotinas. O acesso às páginas de Intenções e Rotinas depende das permissões correspondentes. |
+| Entrada | Nginx | Entrega os arquivos estáticos da aplicação web e encaminha as chamadas `/api` para a API. |
+| API e identidade | `api/` e `auth/` | Expõe as rotas HTTP, resolve sessão, perfil e permissões e integra a autenticação OAuth com o Entra ID, mantendo a sessão no cookie `httpOnly`. |
+| Orquestração | `pipeline/orquestrador.py` | Coordena as etapas da mensagem em ordem fixa, garantindo que as guardas sejam executadas antes da chamada ao Copilot e do registro do desfecho. |
+| Guardas | `pipeline/guardas/injecao/`, `abuso/` e `saida.py` | Detectam injeção direta, abuso e injeção indireta na resposta. As avaliações que dependem de serviço externo usam o Azure AI Content Safety. |
+| Intenção | `pipeline/intencao/` | Pré-processa a mensagem, consulta o catálogo e classifica a intenção que será usada pelo orquestrador. |
+| Integração Copilot | `copilot/client.py` | Centraliza a comunicação com o Copilot Studio por Direct Line, evitando que outras partes da aplicação criem integrações paralelas. |
+| Persistência e analytics | `persistence/` e `analytics/` | Persiste sessões, mensagens e desfechos no PostgreSQL; as consultas analíticas produzem recortes somente para leitura. |
+| Voz | `voz/` e Azure Speech | Emite token efêmero para a transcrição em tempo real, sem transferir a responsabilidade de autenticação do middleware para o navegador. |
+| Rotinas | `rotinas/` e worker APScheduler | Valida prompts no cadastro, armazena o job e executa a rotina na data programada, reutilizando o orquestrador com `canal=rotina`. |
+| Serviços do tenant | Entra ID, Azure AI Content Safety, Azure Speech, Copilot Studio e conectores Microsoft | Fornece identidade, avaliação de conteúdo, transcrição, execução conversacional e acesso às fontes corporativas conforme o menor privilégio. |
+
+As setas entre agrupamentos representam contratos de integração, e não
+necessariamente chamadas síncronas. Por exemplo, o agendador dispara uma
+execução no worker, enquanto o jobstore e os registros de conversa permanecem
+no banco. Da mesma forma, o navegador acessa o Speech para o áudio, mas recebe
+do middleware o token efêmero que autoriza essa sessão.
+
+#### 5.2.3.2 Fluxos representados
+
+**Fluxo principal de conversa.** O usuário inicia a interação em Chat ou
+Histórico. O Nginx encaminha a requisição para a API, que resolve a sessão, o
+perfil e as permissões antes de entregar a mensagem ao orquestrador. O
+orquestrador aplica, em ordem, as guardas de injeção e abuso, classifica a
+intenção, envia ao Copilot um prompt rotulado, avalia a resposta e registra o
+desfecho no PostgreSQL.
+
+**Autenticação e proteção.** A autenticação usa Authorization Code com PKCE no
+Entra ID. Os claims de grupo retornam para a camada de autenticação e são
+convertidos em permissões de aplicação. O Azure AI Content Safety participa das
+avaliações de entrada e saída; assim, uma mensagem bloqueada não é enviada ao
+Copilot e uma resposta com indício de injeção indireta não é apresentada sem
+tratamento.
+
+**Voz.** A página Chat encaminha o áudio ao Azure Speech. A API emite um token
+efêmero para limitar a exposição das credenciais e o texto transcrito volta a
+seguir o mesmo pipeline da mensagem textual. A voz, portanto, não cria um
+caminho alternativo de autorização ou de registro.
+
+**Rotinas agendadas.** A página Rotinas cadastra a configuração na API. O
+prompt é validado pelo pipeline antes de ser persistido; o APScheduler grava e
+recupera o job no PostgreSQL. Na data programada, o worker executa a solicitação
+por meio do mesmo orquestrador do chat, identificando a origem com
+`canal=rotina`.
+
+**Analytics.** A página Intenções solicita recortes à API, que consulta o
+PostgreSQL por meio do módulo `analytics/`. O módulo é somente leitura e
+retorna volume, desfechos, bloqueios e confiança, mantendo a separação entre
+consulta analítica e alteração de dados operacionais.
+
+#### 5.2.3.3 Relação com requisitos e decisões arquiteturais
+
+| Elemento do diagrama | Requisitos ou decisões atendidos |
+|---|---|
+| Sessão, Entra ID e permissões | RF01 e RNF01: autenticação e autorização ocorrem antes do acesso aos dados. |
+| Guardas de injeção, abuso e saída | RNF01 e RNF04: reduzem o risco de conteúdo malicioso na entrada, no contexto e na resposta. |
+| Catálogo e classificação de intenção | RF02, RF03 e RNF03: direcionam a solicitação e permitem recusar intenções fora do escopo. |
+| Copilot Studio como integração única | Pilar 2 da arquitetura: o middleware controla o ponto de comunicação com o agente e os conectores corporativos. |
+| Persistência e registro de desfechos | RNF02: preserva contexto, rastreabilidade e evidências de bloqueios e execuções. |
+| Worker usando o orquestrador | RF06: mantém as rotinas agendadas sujeitas às mesmas regras de segurança do chat. |
+| Analytics somente leitura | Permite acompanhar volume, confiança e bloqueios sem conceder à camada de indicadores permissão de escrita. |
+
+Esta versão é a referência arquitetural da Sprint 2 para a implementação do
+MVP. Alterações na divisão de responsabilidades, nos serviços externos ou no
+fluxo fixo do orquestrador devem ser refletidas neste diagrama e nas vistas
+relacionadas de 5.3 e 5.6.
 
 ## 5.3 Diagramas de Sequência da UML
 
