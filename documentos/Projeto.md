@@ -1693,21 +1693,6 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 
 > Fonte: Material produzido pelos autores (2026).
 
-### 5.2.3 Diagrama atual da Sprint 2
-
-Esta subseção registra a versão atual do diagrama de componentes UML, elaborada
-na Sprint 2 a partir da arquitetura implementada no repositório. Ela complementa
-a versão anterior apresentada em 5.2: enquanto aquela descreve a separação
-conceitual entre o pipeline de PLN e os serviços do ecossistema Microsoft, esta
-vista detalha os módulos efetivamente previstos para o middleware, o worker e a
-infraestrutura de execução.
-
-O diagrama adota três agrupamentos principais. O `src/web` concentra a
-experiência do usuário; o `src/middleware` recebe as requisições e aplica o
-orquestrador; e o worker executa as rotinas agendadas pelo mesmo fluxo do chat.
-PostgreSQL e os serviços do tenant Microsoft aparecem como dependências externas
-ou compartilhadas, deixando explícitos os limites de responsabilidade da equipe.
-
 ---
 
 ### 5.2.2 Interfaces e Relacionamentos entre Componentes
@@ -1740,6 +1725,129 @@ Em paralelo, a busca semântica (C5) consulta o índice vetorial e a base de nor
 C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio — e o repassa a A4, que formata a resposta conforme o perfil do usuário e a entrega em linguagem natural.
 
 > Fonte: Material produzido pelos autores (2026).
+
+### 5.2.3 Diagrama atual da Sprint 2
+
+Esta subseção registra a versão atual do diagrama de componentes UML, elaborada
+na Sprint 2 a partir da arquitetura implementada no repositório. Ela complementa
+a versão anterior apresentada em 5.2: enquanto aquela descreve a separação
+conceitual entre o pipeline de PLN e os serviços do ecossistema Microsoft, esta
+vista detalha os módulos efetivamente previstos para o middleware, o worker e a
+infraestrutura de execução.
+
+O diagrama adota três agrupamentos principais. O `src/web` concentra a
+experiência do usuário; o `src/middleware` recebe as requisições e aplica o
+orquestrador; e o worker executa as rotinas agendadas pelo mesmo fluxo do chat.
+PostgreSQL e os serviços do tenant Microsoft aparecem como dependências externas
+ou compartilhadas, deixando explícitos os limites de responsabilidade da equipe.
+
+```mermaid
+flowchart TB
+  ATOR([Usuário<br/>Diretoria / Líder / Membro])
+
+  subgraph WEBAPP["src/web — React + TypeScript + Vite"]
+    direction TB
+    P_CHAT["Página: Chat<br/><i>conversa + microfone</i>"]
+    P_HIST["Página: Histórico<br/><i>lista e retomada de conversas</i>"]
+    P_INT["Página: Intenções<br/><i>dashboard — requer VER_INTENCOES</i>"]
+    P_ROT["Página: Rotinas<br/><i>agenda e execuções — requer GERIR_ROTINAS</i>"]
+  end
+
+  NGX["Nginx<br/><i>estáticos + proxy /api</i>"]
+
+  subgraph MIDDLEWARE["src/middleware — FastAPI (docker: api)"]
+    direction TB
+    C_API["api/<br/><i>rotas HTTP, deps.py resolve<br/>sessão/perfil/permissões</i>"]
+    C_AUTH["auth/<br/><i>OAuth Entra ID, sessão<br/>cookie httpOnly</i>"]
+    C_ORQ["pipeline/orquestrador.py<br/><i>encadeia as etapas,<br/>ordem fixa</i>"]
+    C_GINJ["pipeline/guardas/injecao/<br/><i>regras + classificador</i>"]
+    C_GABU["pipeline/guardas/abuso/<br/><i>categorias + política de uso</i>"]
+    C_GSAI["pipeline/guardas/saida.py<br/><i>injeção indireta</i>"]
+    C_INT["pipeline/intencao/<br/><i>catálogo + classificador</i>"]
+    C_ANL["analytics/<br/><i>agregações SQL,<br/>somente leitura</i>"]
+    C_VOZ["voz/<br/><i>token efêmero</i>"]
+    C_COP["copilot/client.py<br/><i>único ponto que fala<br/>com o Copilot</i>"]
+    C_PER["persistence/<br/><i>modelos e repositórios</i>"]
+  end
+
+  subgraph WORKER["docker: worker — APScheduler"]
+    direction TB
+    C_AGD["rotinas/agendador.py<br/><i>jobstore no banco</i>"]
+    C_EXE["rotinas/execucao.py<br/><i>executa PELO orquestrador,<br/>canal=rotina</i>"]
+    C_VAL["rotinas/validacao.py<br/><i>valida prompt no cadastro</i>"]
+  end
+
+  DB[("docker: db<br/>PostgreSQL 16")]
+
+  subgraph TENANT["Tenant Microsoft do parceiro"]
+    direction TB
+    ENTRA["Entra ID<br/><i>Authorization Code + PKCE</i>"]
+    SAFE["Azure AI Content Safety<br/><i>Prompt Shields</i>"]
+    SPEECH["Azure Speech<br/><i>transcrição em tempo real</i>"]
+    CS["Copilot Studio<br/><i>Direct Line</i>"]
+    CN["SharePoint · Power BI ·<br/>Power Automate<br/><i>conectores, menor privilégio</i>"]
+  end
+
+  %% Frontend
+  ATOR --> P_CHAT & P_HIST & P_INT & P_ROT
+  P_CHAT & P_HIST & P_INT & P_ROT --> NGX
+  NGX -->|"/api"| C_API
+
+  %% Autenticação
+  C_API --> C_AUTH
+  C_AUTH -->|"Authorization Code + PKCE"| ENTRA
+  ENTRA -.->|"claims de grupo"| C_AUTH
+
+  %% Pipeline principal (trajeto da mensagem)
+  C_API -->|"1. sessão/perfil/permissões"| C_ORQ
+  C_ORQ -->|"2. guarda de injeção"| C_GINJ
+  C_GINJ -->|"classificador"| SAFE
+  C_ORQ -->|"3. guarda de abuso"| C_GABU
+  C_GABU -->|"categorias de conteúdo"| SAFE
+  C_ORQ -->|"4. classificação de intenção"| C_INT
+  C_ORQ -->|"5. execução (prompt rotulado)"| C_COP
+  C_COP -->|"Direct Line"| CS
+  CS --> CN
+  C_ORQ -->|"6. guarda de saída"| C_GSAI
+  C_GSAI -->|"avalia resposta"| SAFE
+  C_ORQ -->|"7. registro"| C_PER
+  C_PER --> DB
+
+  %% Voz
+  P_CHAT -.->|"áudio"| SPEECH
+  C_VOZ -.->|"emite token efêmero"| SPEECH
+  C_API --> C_VOZ
+
+  %% Rotinas
+  P_ROT -->|"cadastra rotina"| C_API
+  C_API --> C_VAL
+  C_VAL -->|"valida via pipeline"| C_ORQ
+  C_VAL --> DB
+  C_AGD --> DB
+  C_AGD -->|"na data programada"| C_EXE
+  C_EXE -->|"mesmo orquestrador,<br/>canal=rotina"| C_ORQ
+
+  %% Analytics
+  P_INT -->|"solicita recortes"| C_API
+  C_API --> C_ANL
+  C_ANL --> DB
+  C_ANL -->|"volume, desfechos,<br/>bloqueios, confiança"| C_API
+  C_API --> P_INT
+
+  classDef web fill:#e8f0fe,stroke:#3a5a8f,stroke-width:1px;
+  classDef mid fill:#eef3fb,stroke:#3a5a8f,stroke-width:1px;
+  classDef wrk fill:#eaf7ec,stroke:#2f7a3d,stroke-width:1px;
+  classDef db fill:#fdf3e3,stroke:#b5822a,stroke-width:1px;
+  classDef ext fill:#f4e3f4,stroke:#8f3a8f,stroke-width:1px;
+  class P_CHAT,P_HIST,P_INT,P_ROT,NGX web;
+  class C_API,C_AUTH,C_ORQ,C_GINJ,C_GABU,C_GSAI,C_INT,C_ANL,C_VOZ,C_COP,C_PER mid;
+  class C_AGD,C_EXE,C_VAL wrk;
+  class DB db;
+  class ENTRA,SAFE,SPEECH,CS,CN ext;
+```
+
+*Figura X — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
+Fonte: Material produzido pelos autores (2026).
 
 ## 5.3 Diagramas de Sequência da UML
 
