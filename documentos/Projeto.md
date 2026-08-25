@@ -1871,6 +1871,55 @@ execução no worker, enquanto o jobstore e os registros de conversa permanecem
 no banco. Da mesma forma, o navegador acessa o Speech para o áudio, mas recebe
 do middleware o token efêmero que autoriza essa sessão.
 
+#### 5.2.3.2 Fluxos representados
+
+**Fluxo principal de conversa.** O usuário inicia a interação em Chat ou
+Histórico. O Nginx encaminha a requisição para a API, que resolve a sessão, o
+perfil e as permissões antes de entregar a mensagem ao orquestrador. O
+orquestrador aplica, em ordem, as guardas de injeção e abuso, classifica a
+intenção, envia ao Copilot um prompt rotulado, avalia a resposta e registra o
+desfecho no PostgreSQL.
+
+**Autenticação e proteção.** A autenticação usa Authorization Code com PKCE no
+Entra ID. Os claims de grupo retornam para a camada de autenticação e são
+convertidos em permissões de aplicação. O Azure AI Content Safety participa das
+avaliações de entrada e saída; assim, uma mensagem bloqueada não é enviada ao
+Copilot e uma resposta com indício de injeção indireta não é apresentada sem
+tratamento.
+
+**Voz.** A página Chat encaminha o áudio ao Azure Speech. A API emite um token
+efêmero para limitar a exposição das credenciais e o texto transcrito volta a
+seguir o mesmo pipeline da mensagem textual. A voz, portanto, não cria um
+caminho alternativo de autorização ou de registro.
+
+**Rotinas agendadas.** A página Rotinas cadastra a configuração na API. O
+prompt é validado pelo pipeline antes de ser persistido; o APScheduler grava e
+recupera o job no PostgreSQL. Na data programada, o worker executa a solicitação
+por meio do mesmo orquestrador do chat, identificando a origem com
+`canal=rotina`.
+
+**Analytics.** A página Intenções solicita recortes à API, que consulta o
+PostgreSQL por meio do módulo `analytics/`. O módulo é somente leitura e
+retorna volume, desfechos, bloqueios e confiança, mantendo a separação entre
+consulta analítica e alteração de dados operacionais.
+
+#### 5.2.3.3 Relação com requisitos e decisões arquiteturais
+
+| Elemento do diagrama | Requisitos ou decisões atendidos |
+|---|---|
+| Sessão, Entra ID e permissões | RF01 e RNF01: autenticação e autorização ocorrem antes do acesso aos dados. |
+| Guardas de injeção, abuso e saída | RNF01 e RNF04: reduzem o risco de conteúdo malicioso na entrada, no contexto e na resposta. |
+| Catálogo e classificação de intenção | RF02, RF03 e RNF03: direcionam a solicitação e permitem recusar intenções fora do escopo. |
+| Copilot Studio como integração única | Pilar 2 da arquitetura: o middleware controla o ponto de comunicação com o agente e os conectores corporativos. |
+| Persistência e registro de desfechos | RNF02: preserva contexto, rastreabilidade e evidências de bloqueios e execuções. |
+| Worker usando o orquestrador | RF06: mantém as rotinas agendadas sujeitas às mesmas regras de segurança do chat. |
+| Analytics somente leitura | Permite acompanhar volume, confiança e bloqueios sem conceder à camada de indicadores permissão de escrita. |
+
+Esta versão é a referência arquitetural da Sprint 2 para a implementação do
+MVP. Alterações na divisão de responsabilidades, nos serviços externos ou no
+fluxo fixo do orquestrador devem ser refletidas neste diagrama e nas vistas
+relacionadas de 5.3 e 5.6.
+
 ## 5.3 Diagramas de Sequência da UML
 
 A seção 3.2.2 — *Modelagem estática — Diagrama de classes* — apresentou a modelagem estática do domínio — quais conceitos existem e como se relacionam. Esta seção apresenta a modelagem dinâmica correspondente: **como esses conceitos são produzidos e consumidos ao longo do tempo**, quais componentes trocam mensagens entre si, em que ordem e sob quais condições.
