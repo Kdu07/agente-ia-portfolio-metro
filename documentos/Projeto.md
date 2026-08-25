@@ -70,6 +70,7 @@
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
+        - [5.4.11 Diagrama de Classes UML — Sprint 2](#5411-diagrama-de-classes-uml--sprint-2)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
@@ -2402,6 +2403,259 @@ O catálogo é artefato vivo. Três mecanismos sustentam sua manutenção:
 - **Limiar de confiança.** O valor que separa a classificação aceita do pedido de reformulação é o mesmo ponto em aberto registrado em 5.3.7 e será definido na bancada de avaliação, não por arbitragem prévia.
 - **Estabilidade do número de classes.** Os 17 rótulos do MVP são uma hipótese de trabalho derivada do critério de granularidade, e não um resultado medido. A confirmação depende dos indicadores de 3.1.5 apurados sobre o primeiro conjunto sintético.
 - **Efeito do canal de voz.** Os exemplos de enunciado desta seção foram escritos como texto digitado. A transcrição introduz erro sistemático em siglas e códigos de projeto (risco R03), e o conjunto de treino deve incorporar variantes transcritas para que a degradação ponta a ponta prevista em 3.1.5 seja efetivamente medida.
+
+### 5.4.11 Diagrama de Classes UML — Sprint 2
+
+O diagrama de classes abaixo apresenta a modelagem técnica atual do middleware responsável por intermediar as solicitações entre os usuários e o Copilot Studio. Diferentemente do modelo conceitual apresentado na seção 3.2.2, elaborado na Sprint 1, esta versão detalha os componentes de processamento, as guardas de segurança, a persistência das interações e a execução de rotinas agendadas previstos para a Sprint 2.
+
+O modelo mantém o catálogo de intenções como referência para a classificação e o roteamento, mas explicita as decisões que acontecem antes e depois da chamada ao Copilot Studio: detecção de injeção, controle de abuso, verificação da saída, registro do desfecho e associação com o perfil do usuário. A representação é conceitual-técnica; os identificadores UUID, os tipos de dados e os nomes das classes servem para orientar a implementação e ainda podem ser refinados durante a evolução da arquitetura.
+
+```mermaid
+classDiagram
+    class Usuario {
+        +UUID id
+        +String nome
+        +String email
+        +String entraObjectId
+        +Perfil perfil
+        +List~Permissao~ permissoes
+        +DateTime criadoEm
+        +possuiPermissao(permissao) Boolean
+    }
+
+    class Perfil {
+        <<enumeration>>
+        DIRETORIA
+        LIDER_PROJETO
+        MEMBRO_EQUIPE
+    }
+
+    class Permissao {
+        <<enumeration>>
+        VER_INTENCOES
+        GERIR_ROTINAS
+    }
+
+    class Conversa {
+        +UUID id
+        +UUID usuarioId
+        +String titulo
+        +String conversaExternaId
+        +DateTime arquivadaEm
+        +DateTime criadaEm
+        +gerarTitulo(primeiroTurno) String
+    }
+
+    class Interacao {
+        +UUID id
+        +UUID conversaId
+        +UUID usuarioId
+        +String prompt
+        +String resposta
+        +UUID intencaoId
+        +Float confianca
+        +Desfecho desfecho
+        +Perfil perfil
+        +Canal canal
+        +UUID rotinaId
+        +Integer latenciaMs
+        +DateTime criadaEm
+        +persistir() Void
+    }
+
+    class Canal {
+        <<enumeration>>
+        CHAT
+        VOZ
+        ROTINA
+    }
+
+    class Desfecho {
+        <<enumeration>>
+        SUCESSO
+        BLOQUEADA_INJECAO
+        BLOQUEADA_ABUSO
+        RECUSADA_FORA_ESCOPO
+        RECUSADA_BAIXA_CONFIANCA
+        FALHA_EXECUTOR
+        BLOQUEADA_SAIDA
+    }
+
+    class IntencaoCatalogo {
+        +UUID id
+        +String codigo
+        +String nome
+        +String descricao
+        +Float limiarConfianca
+        +Boolean ehForaDeEscopo
+        +DateTime versaoAtualizadaEm
+    }
+
+    class GuardaInjecao {
+        +avaliarRegrasDeterministicas(texto) Boolean
+        +avaliarClassificador(texto) Float
+        +decidir(texto) Desfecho
+    }
+
+    class GuardaAbuso {
+        +avaliarCategoriasConteudo(texto) Boolean
+        +avaliarPoliticaUsoCorporativo(usuario, texto) Boolean
+        +decidir(usuario, texto) Desfecho
+    }
+
+    class GuardaSaida {
+        +avaliarRespostaCopilot(resposta) Boolean
+        +decidir(resposta) Desfecho
+    }
+
+    class ClassificadorIntencao {
+        +classificar(texto) IntencaoCatalogo
+        +calcularConfianca(texto, intencao) Float
+    }
+
+    class Orquestrador {
+        +processar(mensagem, usuario, canal) Interacao
+        -resolverSessao(usuario) Void
+        -executarGuardaInjecao(texto) Desfecho
+        -executarGuardaAbuso(usuario, texto) Desfecho
+        -executarClassificacao(texto) IntencaoCatalogo
+        -executarNoCopilot(promptValidado, intencao) String
+        -executarGuardaSaida(resposta) Desfecho
+        -registrarInteracao(dados) Interacao
+    }
+
+    class ClienteCopilotStudio {
+        +String directLineToken
+        +enviarPromptRotulado(prompt, intencaoMetadados) String
+    }
+
+    class Rotina {
+        +UUID id
+        +String nome
+        +String prompt
+        +String agendaCron
+        +String timezone
+        +UUID donoId
+        +UUID intencaoPrevista
+        +Boolean ativa
+        +DateTime criadaEm
+        +validarNoCadastro() Boolean
+    }
+
+    class ExecucaoRotina {
+        +UUID id
+        +UUID rotinaId
+        +DateTime iniciadaEm
+        +DateTime concluidaEm
+        +StatusExecucao status
+        +UUID interacaoId
+        +String erro
+    }
+
+    class StatusExecucao {
+        <<enumeration>>
+        SUCESSO
+        FALHA
+        EM_EXECUCAO
+    }
+
+    class RecorteAnalitico {
+        +UUID id
+        +String tipo
+        +DateTime periodoInicio
+        +DateTime periodoFim
+        +Map dados
+        +gerarVolumePorIntencao() Map
+        +gerarDistribuicaoDesfechos() Map
+        +gerarSerieBloqueiosPorGuarda() Map
+        +gerarAgrupamentoForaDeEscopo() Map
+        +gerarConfiancaMediaPorIntencao() Map
+    }
+
+    Usuario "1" --> "1" Perfil : possui
+    Usuario "1" --> "*" Permissao : possui
+    Usuario "1" --> "*" Conversa : inicia
+    Conversa "1" --> "*" Interacao : contém
+    Usuario "1" --> "*" Interacao : gera
+    Interacao "1" --> "1" Canal : ocorre via
+    Interacao "1" --> "1" Desfecho : resulta em
+    Interacao "*" --> "0..1" IntencaoCatalogo : classificada como
+
+    Orquestrador "1" --> "1" GuardaInjecao : aciona
+    Orquestrador "1" --> "1" GuardaAbuso : aciona
+    Orquestrador "1" --> "1" GuardaSaida : aciona
+    Orquestrador "1" --> "1" ClassificadorIntencao : aciona
+    Orquestrador "1" --> "1" ClienteCopilotStudio : aciona
+    Orquestrador "1" --> "*" Interacao : produz
+    ClassificadorIntencao "*" --> "*" IntencaoCatalogo : consulta
+
+    Usuario "1" --> "*" Rotina : possui (dono)
+    Rotina "1" --> "*" ExecucaoRotina : gera
+    ExecucaoRotina "1" --> "1" StatusExecucao : possui
+    ExecucaoRotina "1" --> "0..1" Interacao : associada a
+    Rotina "1" --> "0..1" IntencaoCatalogo : prevê
+
+    RecorteAnalitico "*" --> "*" Interacao : agrega
+```
+
+*Figura X — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
+
+#### 5.4.11.1 Classes e responsabilidades
+
+| Classe | Responsabilidade na solução |
+|---|---|
+| `Usuario` | Representar a identidade autenticada, o perfil e as permissões que determinam o acesso às funcionalidades. |
+| `Perfil` | Enumerar os perfis corporativos considerados no controle de acesso: Diretoria, liderança de projeto e membro de equipe. |
+| `Permissao` | Enumerar as capacidades administrativas previstas para o usuário, como visualizar intenções e gerir rotinas. |
+| `Conversa` | Manter a sessão conversacional, seu título, identificador externo e ciclo de vida. |
+| `Interacao` | Registrar cada solicitação processada, sua resposta, intenção, confiança, canal, desfecho, latência e contexto de usuário. |
+| `Canal` | Identificar se a interação veio por chat, voz ou execução de rotina. |
+| `Desfecho` | Padronizar o resultado do processamento, incluindo sucesso, recusas, bloqueios e falha do executor. |
+| `IntencaoCatalogo` | Representar uma intenção versionada do catálogo, seu limiar de confiança e a indicação de fora de escopo. |
+| `GuardaInjecao` | Avaliar regras determinísticas e o classificador de injeção antes do processamento da solicitação. |
+| `GuardaAbuso` | Verificar categorias de conteúdo e a política de uso corporativo aplicada ao usuário e ao texto. |
+| `GuardaSaida` | Avaliar a resposta produzida pelo Copilot antes de sua entrega ao usuário. |
+| `ClassificadorIntencao` | Classificar o texto em uma intenção do catálogo e calcular a confiança associada. |
+| `Orquestrador` | Coordenar sessão, guardas, classificação, chamada ao Copilot, guarda de saída e registro da interação. |
+| `ClienteCopilotStudio` | Encapsular o envio do prompt validado e dos metadados de intenção ao Copilot Studio por Direct Line. |
+| `Rotina` | Definir um prompt agendado, sua expressão cron, fuso horário, intenção prevista e responsável. |
+| `ExecucaoRotina` | Registrar uma execução de rotina, seu estado, os horários, eventual erro e a interação gerada. |
+| `StatusExecucao` | Enumerar os estados de uma execução: em execução, sucesso ou falha. |
+| `RecorteAnalitico` | Agregar interações em um período e produzir indicadores de volume, desfecho, bloqueios, escopo e confiança. |
+
+#### 5.4.11.2 Relações e decisões de modelagem
+
+`Usuario` possui um único `Perfil` e pode possuir várias `Permissao`, `Conversa`, `Interacao` e `Rotina`. O perfil é armazenado também em `Interacao` para preservar o contexto de autorização no momento do processamento, mesmo que a configuração do usuário seja alterada posteriormente. A rotina tem um usuário como dono, e a permissão `GERIR_ROTINAS` representa a capacidade administrativa relacionada a esse recurso.
+
+Uma `Conversa` agrupa uma ou mais `Interacao`. Cada interação ocorre por um `Canal` e termina em um `Desfecho`; a associação opcional com `IntencaoCatalogo` permite registrar bloqueios que ocorreram antes da classificação ou que não produziram uma intenção válida. O `Orquestrador` produz as interações e coordena todas as guardas, o classificador e o cliente de integração.
+
+As três guardas representam pontos de decisão distintos. `GuardaInjecao` protege a entrada contra instruções de manipulação; `GuardaAbuso` aplica as políticas de conteúdo e de uso corporativo; e `GuardaSaida` verifica o retorno do Copilot antes da entrega. A separação permite que o `Desfecho` identifique a etapa responsável pelo bloqueio, sustentando a auditoria e os recortes analíticos.
+
+`ClassificadorIntencao` consulta várias entradas do `IntencaoCatalogo`, mas a interação registra no máximo uma intenção resultante. O `ClienteCopilotStudio` recebe o prompt somente depois das validações do orquestrador e envia os metadados da intenção para manter o roteamento coerente com o catálogo definido em 5.4.4.
+
+Uma `Rotina` pode gerar várias `ExecucaoRotina`. Cada execução possui um `StatusExecucao` e pode estar associada a uma `Interacao` quando o processamento chega ao pipeline. A associação é opcional para permitir registrar falhas de agendamento ou de inicialização que não produziram uma interação completa. `RecorteAnalitico` agrega múltiplas interações para apoiar a observabilidade do middleware, sem alterar os registros de origem.
+
+#### 5.4.11.3 Rastreabilidade e integração com as demais vistas
+
+| Elemento do diagrama | Requisitos ou artefatos relacionados | Papel na Sprint 2 |
+|---|---|---|
+| `Usuario`, `Perfil` e `Permissao` | RF01, RNF05, INT-08 | Identidade, escopo autorizado e controle de operações administrativas. |
+| `Conversa` e `Interacao` | RF02, RF03, RNF02, INT-10 | Contexto conversacional, registro de auditoria e rastreabilidade dos desfechos. |
+| `IntencaoCatalogo` e `ClassificadorIntencao` | RF03, seção 5.4.4, bloco C2 | Classificação fechada, confiança e roteamento baseado no catálogo. |
+| `GuardaInjecao`, `GuardaAbuso` e `GuardaSaida` | RNF01, RNF02, RNF05, risco R09 | Proteção da entrada, aplicação de política e validação da resposta. |
+| `Orquestrador` e `ClienteCopilotStudio` | Diagrama de componentes (5.2), INT-02 | Coordenação do pipeline e integração controlada com o Copilot Studio. |
+| `Rotina` e `ExecucaoRotina` | RF06, feature F1.21 | Execução agendada, registro de falhas e associação opcional ao resultado. |
+| `RecorteAnalitico` | RNF02, INT-10 | Indicadores para monitorar volume, confiança, bloqueios e desfechos. |
+
+O modelo complementa, e não substitui, o diagrama de componentes da seção 5.2: os componentes descrevem módulos e interfaces, enquanto as classes descrevem os dados e comportamentos que esses módulos manipulam. Também complementa os diagramas de sequência da seção 5.3: o `Orquestrador` e as guardas aparecem como participantes de um fluxo temporal, enquanto aqui são detalhados por atributos, operações e relações. A versão conceitual da seção 3.2.2 permanece como histórico da Sprint 1 e não deve ser interpretada como contrato atualizado da implementação do middleware.
+
+#### 5.4.11.4 Limitações e refinamentos futuros
+
+- **Persistência.** O diagrama representa entidades persistidas e serviços em uma mesma vista lógica. A separação entre modelos de domínio, schemas de API e tabelas do banco deverá ser definida no projeto físico.
+- **Integração externa.** `ClienteCopilotStudio` expõe o token Direct Line como atributo conceitual; o armazenamento, a renovação e a proteção desse segredo devem ser definidos na configuração segura do ambiente, sem persistência em `Interacao`.
+- **Execução assíncrona.** O modelo não detalha filas, workers, retentativas ou concorrência das `ExecucaoRotina`. Esses elementos pertencem ao desenho de implantação e podem exigir estados adicionais.
+- **Políticas.** As categorias de abuso, regras de injeção e critérios da guarda de saída são abstraídos como operações. Seus catálogos, limiares e versões devem ser governados fora do diagrama e registrados para auditoria.
+- **Evolução do catálogo.** `IntencaoCatalogo` admite versionamento e limiar próprio, mas o modelo ainda não define histórico de versões, aprovação ou publicação. Esses pontos dependem da governança do catálogo descrita em 5.4.9.
 
 ## 5.5 Integrações com o Ecossistema Microsoft
 
