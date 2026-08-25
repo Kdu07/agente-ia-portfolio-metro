@@ -3497,6 +3497,8 @@ A tela a seguir ilustra como essa lacuna se manifestaria em uma interface real: 
 
 O Protótipo B representa uma interação por voz com o agente Prata por meio de um crachá físico. O roteiro de demonstração ocorre em um escritório, durante uma conversa em uma mesa de reunião, e envolve três personagens: Fernanda, que utiliza o crachá, Carlos e Roberto. A gravação é organizada em quatro cenas, desde a sinalização silenciosa da pendência até a confirmação de uma atualização solicitada em linguagem natural.
 
+O vídeo e a imagem conceitual utilizados nesta exploração foram gerados com apoio de inteligência artificial. Esses recursos simulam a experiência de uso e permitem investigar o comportamento esperado, os turnos da conversa e os riscos de privacidade, sem representar a construção de um dispositivo eletrônico funcional. Fernanda é a personagem focal do fluxo, enquanto Carlos e Roberto representam pessoas presentes no ambiente compartilhado.
+
 **Cena 1 · Alerta** - Fernanda, Carlos e Roberto estão sentados conversando. A luz vermelha do crachá de Fernanda acende sem emitir uma mensagem de voz. O sinal indica a existência de uma pendência, mas não revela seu conteúdo às demais pessoas presentes.
 
 **Cena 2 · Reconhecimento** - Fernanda toca o crachá para reconhecer o alerta e iniciar a interação. Somente após essa ação intencional o dispositivo apresenta a mensagem: "Prata aqui. Você tem uma pendência aberta. Quer que eu conte agora ou prefere ver no Teams?". A espera pelo toque evita que o conteúdo seja reproduzido automaticamente em um ambiente compartilhado.
@@ -3586,9 +3588,19 @@ As imagens a seguir compõem o registro visual completo do Protótipo A. Todas a
 
 ### 7.8.2 Registro visual — Protótipo B
 
-O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecimento por toque, a interação por voz e a solicitação de confirmação antes do registro de uma atualização. O vídeo deve ser disponibilizado com permissão de visualização para as pessoas que possuem o link, sem exigir acesso de edição.
+O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecimento por toque, a interação por voz e a solicitação de confirmação antes do registro de uma atualização. A imagem conceitual a seguir foi utilizada como referência para definir os personagens, o contexto de escritório e os elementos visuais do crachá apresentados no vídeo.
 
-**Vídeo da demonstração:** [Inserir link compartilhável do Google Drive após a publicação do vídeo.]
+<div align="center">
+
+![Representação conceitual dos personagens e do crachá inteligente utilizados na simulação do Protótipo B.](../documentos/imagens/personagens-video.png)
+
+*Figura — Representação conceitual gerada por IA utilizada como referência visual para o vídeo do Protótipo B. A imagem não representa um dispositivo funcional.*
+
+</div>
+
+**Vídeo da demonstração:** [Simulação audiovisual do Protótipo B no Google Drive](https://drive.google.com/file/d/1hPUkd5Oy0xpxVWg3wGdZTzWAJ6t0pF9p/view?usp=sharing)
+
+O vídeo também foi gerado com apoio de inteligência artificial e representa uma encenação do comportamento projetado. Seu objetivo é permitir a observação do fluxo de interação, e não comprovar a implementação de hardware, reconhecimento de voz ou integração funcional com os sistemas do projeto.
 
 | Cena | Conteúdo demonstrado | Evidência esperada no vídeo |
 |---|---|---|
@@ -3597,7 +3609,9 @@ O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecim
 | 3 · Resposta breve | Fernanda solicita que o agente conte a pendência | Resposta genérica e direcionamento dos detalhes ao Teams |
 | 4 · Atualização | Fernanda dita o motivo e o agente solicita confirmação | Interpretação do contexto e prevenção de alteração sem confirmação explícita |
 
-O arquivo de vídeo não deve apresentar credenciais, dados pessoais reais, telas corporativas sensíveis ou informações de projetos reais do Metrô. Caso o vídeo seja armazenado fora do repositório devido ao tamanho, o link compartilhável deverá permanecer nesta seção como referência estável da evidência.
+Embora a imagem apresente a possibilidade de alerta sonoro, o fluxo demonstrado começa apenas com a luz vermelha. A reprodução de voz ocorre depois que Fernanda toca o crachá, evitando que o conteúdo da pendência seja anunciado automaticamente no ambiente compartilhado. Os nomes e as características visuais apresentados correspondem a personagens da simulação e não identificam integrantes reais do Metrô.
+
+O arquivo de vídeo não deve apresentar credenciais, dados pessoais reais, telas corporativas sensíveis ou informações de projetos reais do Metrô. Como o vídeo está armazenado externamente devido ao tamanho, o link compartilhável é mantido nesta seção como referência da evidência audiovisual.
 
 # 8. Projeto Visual da Solução
 
