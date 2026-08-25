@@ -264,7 +264,7 @@ controle de acesso.
 | Banco | PostgreSQL 16 | Registro de interações e agregações do dashboard |
 | Agendador | APScheduler 3, jobstore SQLAlchemy | Agenda persistida no banco que já existe; sem Redis, sem broker |
 | Guardas (modelo) | Azure AI Content Safety | Prompt Shields cobre injeção direta e indireta; as categorias de conteúdo cobrem abuso. Uma API para as duas features, dentro do tenant homologado |
-| Classificação de intenção | Embeddings + classificador supervisionado | Devolve probabilidade *calibrada*, requisito do limiar por intenção já previsto no catálogo |
+| Classificação de intenção | Ensemble: TF-IDF (palavra + caractere) e embeddings `multilingual-e5-large`, ambos com regressão logística | Devolve probabilidade *calibrada*, requisito do limiar por intenção já previsto no catálogo. Escolhido por medição, não por preferência — ver 5.4.11 de [Projeto.md](Projeto.md) |
 | Voz | Azure Speech, token efêmero emitido pelo backend | Transcrição parcial em tempo real, chave nunca exposta, áudio dentro do perímetro do parceiro |
 | Executor | Copilot Studio via Direct Line | Inalterado em relação ao escopo anterior |
 | Testes | pytest, pytest-asyncio, Vitest, Testing Library | Espelham a separação backend/frontend |
@@ -505,11 +505,28 @@ pipeline. Os testes usam dublês para todas as etapas e verificam, além de um
 caso por desfecho, invariantes de ordem e de registro. Ele é o ponto de partida
 da adaptação: ganha as etapas de abuso e de saída, e perde a de mascaramento.
 
-O **catálogo de intenções** está completo, com 26 intenções mais a classe
-negativa `fora_de_escopo`, derivado da seção 5.4.4 de [Projeto.md](Projeto.md)
-e de [testes-catalogo-intencoes.csv](testes-catalogo-intencoes.csv). O limiar de
-confiança segue indefinido: depende da bancada de avaliação, que agora ganha um
-insumo a mais — os agrupamentos de `baixa_confianca` do próprio dashboard.
+O **catálogo de intenções** está completo, com 26 intenções mais as classes
+negativas `fora_de_escopo` e `tentativa_injecao`, derivado da seção 5.4.4 de
+[Projeto.md](Projeto.md) e de
+[testes-catalogo-intencoes.csv](testes-catalogo-intencoes.csv).
+
+O **classificador de intenção está implementado, treinado e medido**. A bancada
+de avaliação (F1.21) roda com `python -m app.pipeline.intencao.avaliacao` sobre
+431 casos de teste que nunca participaram do ajuste, e o RNF03 é atendido:
+acurácia de 0,856 e macro-F1 de 0,851. A comparação entre estratégias exigida
+pela F22 sai com `--f22`. Os resultados e o que eles revelam sobre o catálogo
+estão em 5.4.11 de [Projeto.md](Projeto.md).
+
+O **limiar de confiança deixou de ser um ponto em aberto**: é derivado por
+validação cruzada sobre o conjunto de treino, um por intenção, com alvo que
+depende da categoria — transação mira precisão, classe negativa mira recall. O
+valor calibrado tem precedência sobre o `LIMIAR_CONFIANCA_PROVISORIO` do
+catálogo, que só volta a valer se o modelo for treinado sem calibração.
+
+`tentativa_injecao` é a única classe do catálogo cujo desfecho não é uma
+recusa: o orquestrador a converte em `BLOQUEADA_INJECAO_MODELO`, com alerta de
+segurança. É rede de segurança atrás da guarda de injeção, não substituta dela
+— o que chega ao classificador já passou pelas regras e pelo Content Safety.
 
 `Desfecho.preserva_prompt` deve ser removida. Ela existe para não gravar o
 prompt de tentativas de injeção, porque a mensagem era barrada antes do
@@ -529,7 +546,7 @@ algo demonstrável ponta a ponta.
 |---|---|---|
 | 1. Fundação | Auth BFF, persistência real (SQLAlchemy + Alembic), `/chat` ponta a ponta com o Copilot dublado, esqueleto do app React | Dá para logar, conversar e ver a interação gravada |
 | 2. Guardas | Regras determinísticas, Content Safety nas duas guardas de entrada, guarda de saída, desfechos novos, testes adversariais | Proteção contra injeção e contra prompts maliciosos, mensurável |
-| 3. Intenções | Classificador, bancada de avaliação sobre o CSV de testes, limiar por intenção, registro completo | Registro de intenções fechado e RNF03 com número |
+| 3. Intenções | ~~Classificador, bancada de avaliação, limiar por intenção~~ **concluídos**; falta o registro completo da interação | RNF03 com número: acurácia 0,856, macro-F1 0,851 |
 | 4. Análise | Endpoints de agregação, dashboard responsivo, `VER_INTENCOES` aplicada nos dois lados | Análise dos dados de intenções disponível |
 | 5. Rotinas | CRUD, validação no cadastro, worker com APScheduler, execuções e aba de resultados | Rotinas em operação |
 

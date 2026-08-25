@@ -5,10 +5,15 @@ do catálogo (`src/middleware/app/pipeline/intent/catalog.py`) corresponde a um
 tópico/ação configurado no Copilot. Toda alteração no catálogo ou nos tópicos deve
 ser refletida aqui, na mesma mudança.
 
-O catálogo tem 26 intenções mais a classe negativa `fora_de_escopo` (27 classes,
-conforme a seção 5.4.8 de [Projeto.md](../documentos/Projeto.md)). As intenções
-marcadas como _documentado, não treinado_ e _pendente de validação_ não integram o
-conjunto de treino do MVP e, portanto, não precisam de tópico configurado nesta etapa.
+O catálogo tem 26 intenções mais as classes negativas `fora_de_escopo` e
+`tentativa_injecao` (28 classes, conforme a seção 5.4.8 de
+[Projeto.md](../documentos/Projeto.md)). Todas as 28 passaram a ter exemplos no
+corpus de treino, mas as intenções marcadas como _documentado, não treinado_ e
+_pendente de validação_ seguem fora do escopo de execução do MVP e, portanto, não
+precisam de tópico configurado nesta etapa.
+
+Nenhuma das duas classes negativas aciona o Copilot, e por isso nenhuma tem
+tópico. A diferença entre elas está no desfecho registrado, não no destino.
 
 ## Categoria consulta — família consulta pontual
 
@@ -70,6 +75,7 @@ No middleware, a marcação é a propriedade `Intencao.exige_confirmacao`.
 | Intenção (catálogo) | Status no MVP | Tópico no Copilot Studio | Ação executada | Conectores usados |
 |---|---|---|---|---|
 | `fora_de_escopo` | Treinado no MVP | _não se aplica_ | Recusa orientativa produzida pelo bloco C6, sem acionar o Copilot | Nenhum |
+| `tentativa_injecao` | Treinado no MVP | _não se aplica_ | Bloqueio seco com alerta de segurança (`BLOQUEADA_INJECAO_MODELO`), sem acionar o Copilot e sem revelar o motivo ao usuário | Nenhum |
 
 > Os nomes dos tópicos serão preenchidos quando o ambiente Copilot Studio for
 > provisionado no tenant do parceiro (sprints técnicas).
