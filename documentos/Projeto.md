@@ -68,6 +68,7 @@
 - [5. Solução Técnica](#5-solução-técnica)
   - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
+    - [5.2.3 Diagrama atual da Sprint 2](#523-diagrama-atual-da-sprint-2)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
@@ -1691,6 +1692,21 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 | F5. SharePoint e Listas do portfólio | Armazenamento de Dados | Fonte real de dados do portfólio do Metrô — fora do escopo do MVP, previsto como evolução ("Ir Além"). |
 
 > Fonte: Material produzido pelos autores (2026).
+
+### 5.2.3 Diagrama atual da Sprint 2
+
+Esta subseção registra a versão atual do diagrama de componentes UML, elaborada
+na Sprint 2 a partir da arquitetura implementada no repositório. Ela complementa
+a versão anterior apresentada em 5.2: enquanto aquela descreve a separação
+conceitual entre o pipeline de PLN e os serviços do ecossistema Microsoft, esta
+vista detalha os módulos efetivamente previstos para o middleware, o worker e a
+infraestrutura de execução.
+
+O diagrama adota três agrupamentos principais. O `src/web` concentra a
+experiência do usuário; o `src/middleware` recebe as requisições e aplica o
+orquestrador; e o worker executa as rotinas agendadas pelo mesmo fluxo do chat.
+PostgreSQL e os serviços do tenant Microsoft aparecem como dependências externas
+ou compartilhadas, deixando explícitos os limites de responsabilidade da equipe.
 
 ---
 
