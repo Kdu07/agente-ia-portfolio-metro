@@ -3739,7 +3739,33 @@ A tela a seguir ilustra como essa lacuna se manifestaria em uma interface real: 
 
 ### 7.5.2 Execução - Protótipo B
 
-Um integrante vestiu o crachá durante uma simulação de reunião com outros dois integrantes representando colegas de equipe. O alerta foi acionado durante a conversa para observar se o sinal físico seria percebido e como afetaria a interação. A reação foi uma pergunta direta de outro participante sobre o motivo de o crachá estar piscando, tornando a pendência socialmente visível. A situação revelou que a presença física do alerta pode produzir constrangimento e exposição, mesmo quando seu conteúdo não é apresentado aos demais.
+O Protótipo B representa uma interação por voz com o agente Prata por meio de um crachá físico. O roteiro de demonstração ocorre em um escritório, durante uma conversa em uma mesa de reunião, e envolve três personagens: Fernanda, que utiliza o crachá, Carlos e Roberto. A gravação é organizada em quatro cenas, desde a sinalização silenciosa da pendência até a confirmação de uma atualização solicitada em linguagem natural.
+
+O vídeo e a imagem conceitual utilizados nesta exploração foram gerados com apoio de inteligência artificial. Esses recursos simulam a experiência de uso e permitem investigar o comportamento esperado, os turnos da conversa e os riscos de privacidade, sem representar a construção de um dispositivo eletrônico funcional. Fernanda é a personagem focal do fluxo, enquanto Carlos e Roberto representam pessoas presentes no ambiente compartilhado.
+
+**Cena 1 · Alerta** - Fernanda, Carlos e Roberto estão sentados conversando. A luz vermelha do crachá de Fernanda acende sem emitir uma mensagem de voz. O sinal indica a existência de uma pendência, mas não revela seu conteúdo às demais pessoas presentes.
+
+**Cena 2 · Reconhecimento** - Fernanda toca o crachá para reconhecer o alerta e iniciar a interação. Somente após essa ação intencional o dispositivo apresenta a mensagem: "Prata aqui. Você tem uma pendência aberta. Quer que eu conte agora ou prefere ver no Teams?". A espera pelo toque evita que o conteúdo seja reproduzido automaticamente em um ambiente compartilhado.
+
+**Cena 3 · Resposta breve** - Fernanda responde "Conta agora". O crachá informa: "É sobre um marco de um de seus projetos ativos. Prefiro mandar os detalhes no Teams. Posso enviar?". A resposta falada permanece genérica e não expõe o nome do projeto ou dados da pendência antes da autorização da usuária. Informações detalhadas são direcionadas ao Teams como medida de privacidade.
+
+**Cena 4 · Atualização e confirmação** - Fernanda solicita: "Não precisa. Resolva agora: registre que estamos aguardando aprovação do cliente". O agente interpreta a solicitação, relaciona-a ao contexto da pendência e responde: "Entendi. Marco Entrega da Fase 2, projeto Linha 6, motivo aguardando aprovação do cliente. Confirma o registro?". A cena termina antes da efetivação da mudança, evidenciando que uma atualização não deve ser registrada sem confirmação explícita.
+
+#### 7.5.2.1 Protocolo de interação com o crachá
+
+O roteiro utiliza o toque como mecanismo de reconhecimento do alerta e de consentimento para iniciar a conversa. O crachá não mantém o microfone continuamente ativo: a captura ocorre apenas durante os momentos em que o agente aguarda uma resposta da usuária. Cada fala é encerrada por uma pausa breve, simulando a detecção do fim do enunciado; em seguida, o dispositivo interrompe a captura e processa a resposta.
+
+| Estado do crachá | Sinal ou ação | Comportamento representado |
+|---|---|---|
+| Em espera | Sem luz e sem reprodução de áudio | O crachá não captura voz nem expõe informações |
+| Pendência identificada | Luz vermelha acesa | Sinalização silenciosa de que existe uma pendência |
+| Alerta reconhecido | Um toque da usuária | Abertura da sessão e reprodução da primeira mensagem do agente |
+| Aguardando resposta | Indicação visual de escuta durante o turno da usuária | Captura temporária da fala, encerrada após uma pausa breve |
+| Processando | Indicação visual distinta da escuta | Microfone inativo enquanto o agente interpreta a solicitação |
+| Confirmação necessária | Resumo falado da alteração | Nenhuma atualização é efetivada antes da confirmação explícita |
+| Interação encerrada | Segundo toque ou término do fluxo | Interrupção da captura e retorno ao estado de espera |
+
+Os sinais visuais além da luz vermelha, o intervalo utilizado para reconhecer o fim da fala e o comportamento técnico do segundo toque são convenções de encenação do protótipo. Esses elementos deverão ser validados antes de qualquer implementação, pois a gravação demonstra o fluxo de interação e não um dispositivo eletrônico funcional.
 
 ### 7.5.3 Espaço de testagem
 
@@ -3806,7 +3832,30 @@ As imagens a seguir compõem o registro visual completo do Protótipo A. Todas a
 
 ### 7.8.2 Registro visual — Protótipo B
 
-[Inserir fotos, capturas de tela ou links para os registros visuais do Protótipo B. Armazenar arquivos na pasta `docs/prototipacao-exploratoria/protB/`.]
+O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecimento por toque, a interação por voz e a solicitação de confirmação antes do registro de uma atualização. A imagem conceitual a seguir foi utilizada como referência para definir os personagens, o contexto de escritório e os elementos visuais do crachá apresentados no vídeo.
+
+<div align="center">
+
+![Representação conceitual dos personagens e do crachá inteligente utilizados na simulação do Protótipo B.](../documentos/imagens/personagens-video.png)
+
+*Figura — Representação conceitual gerada por IA utilizada como referência visual para o vídeo do Protótipo B. A imagem não representa um dispositivo funcional.*
+
+</div>
+
+**Vídeo da demonstração:** [Simulação audiovisual do Protótipo B no Google Drive](https://drive.google.com/file/d/1hPUkd5Oy0xpxVWg3wGdZTzWAJ6t0pF9p/view?usp=sharing)
+
+O vídeo também foi gerado com apoio de inteligência artificial e representa uma encenação do comportamento projetado. Seu objetivo é permitir a observação do fluxo de interação, e não comprovar a implementação de hardware, reconhecimento de voz ou integração funcional com os sistemas do projeto.
+
+| Cena | Conteúdo demonstrado | Evidência esperada no vídeo |
+|---|---|---|
+| 1 · Alerta | Luz vermelha acende durante a reunião | Sinalização silenciosa e ausência de exposição do conteúdo da pendência |
+| 2 · Reconhecimento | Fernanda toca o crachá | Início intencional da interação e reprodução da primeira mensagem |
+| 3 · Resposta breve | Fernanda solicita que o agente conte a pendência | Resposta genérica e direcionamento dos detalhes ao Teams |
+| 4 · Atualização | Fernanda dita o motivo e o agente solicita confirmação | Interpretação do contexto e prevenção de alteração sem confirmação explícita |
+
+Embora a imagem apresente a possibilidade de alerta sonoro, o fluxo demonstrado começa apenas com a luz vermelha. A reprodução de voz ocorre depois que Fernanda toca o crachá, evitando que o conteúdo da pendência seja anunciado automaticamente no ambiente compartilhado. Os nomes e as características visuais apresentados correspondem a personagens da simulação e não identificam integrantes reais do Metrô.
+
+O arquivo de vídeo não deve apresentar credenciais, dados pessoais reais, telas corporativas sensíveis ou informações de projetos reais do Metrô. Como o vídeo está armazenado externamente devido ao tamanho, o link compartilhável é mantido nesta seção como referência da evidência audiovisual.
 
 # 8. Projeto Visual da Solução
 
