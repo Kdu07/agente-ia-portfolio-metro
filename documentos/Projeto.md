@@ -61,7 +61,7 @@
   - [3.5 Casos de Uso](#35-casos-de-uso)
   - [3.6 Casos de Uso x Requisitos Funcionais](#36-casos-de-uso-x-requisitos-funcionais)
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
-  - [4.1 Especificação da Base de Dados](#41-especificação-da-base-de-dados)
+  - [4.1 Visão Geral do Domínio](#41-visao-geral-do-dominio)
   - [4.2 Modelo Conceitual de Dados](#42-modelo-conceitual-de-dados)
   - [4.3 Modelo Lógico de Dados](#43-modelo-lógico-de-dados)
   - [4.4 Modelo Físico de Dados](#44-modelo-físico-de-dados)
@@ -1497,21 +1497,197 @@ Esta seção será desenvolvida na Sprint 2, em conjunto com 3.5, consolidando a
 
 # 4. Modelagem de Dados
 
-## 4.1 Especificação da Base de Dados
+## 4.1 Visão Geral do Domínio
 
-[Descreva a proposta de estrutura de dados e o contexto de uso.]
+A solução atua como um middleware de segurança, governança e orquestração posicionado entre o usuário e o Copilot Studio no ambiente corporativo do Metrô. Ela centraliza o controle de acesso corporativo via Microsoft Entra ID, inspeciona e audita prompts para classificação e segurança, e gerencia automações periódicas por meio de rotinas agendadas.
+
+### Atores e Entidades do Negócio
+
+- Usuário: Colaborador autenticado via Entra ID, caracterizado por seu perfil corporativo (`DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`) e pelo privilégio booleano pode_ver_intencoes para visualização analítica.
+
+- Intenção (Interação): Registro auditável de cada prompt submetido, contendo a categorização resolvida pelo classificador, a identificação da sessão (id_conversa) e a data/hora do disparo.
+
+- Rotina: Definição de prompt automatizado cadastrado por um usuário para reexecução planejada sob sua identidade e permissões.
+
+### Fluxo Principais de Dados
+
+1. Identificação e Autorização: O usuário autentica-se pelo Entra ID. O sistema mapeia o identificador único (`entra_id`), perfil corporativo e a permissão booleana pode_ver_intencoes para liberar rotas analíticas e de auditoria.
+
+2. Ciclo de Mensagem e Auditoria: Toda entrada submetida via chat ou voz gera um registro na tabela de intenções associado ao `id_usuario` e ao `id_conversa`, armazenando o prompt e sua respectiva classificação.
+
+3. Parametrização de Rotinas: Usuários cadastram instruções persistentes na tabela de rotinas para disparos sem intervenção manual em tela.
 
 ## 4.2 Modelo Conceitual de Dados
 
-[Preencher]
+O modelo conceitual define as entidades fundamentais do ecossistema do Middleware do Metrô, seus papéis de negócio e as associações estruturais que garantem a rastreabilidade das interações e das rotinas cadastradas.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Conceitual.png)
+*Figura X — Modelagem Conceitual.*
+
+### Entidades do Domínio
+
+- `USUARIO`: Representa o colaborador autenticado no tenant Microsoft corporativo. Centraliza a identidade institucional (`entra_id`), dados de contato, papéis de negócio e o privilégio explícito de controle de acesso para auditoria.  
+
+- `INTENCAO`: Registro auditável de cada mensagem submetida à aplicação. Armazena o prompt, a classificação atribuída pelo catálogo de intenções, a sessão de diálogo à qual pertence e a estampa temporal.  
+
+- `ROTINA`: Automação cadastrada com instruções pré-programadas para execução recorrente sob as permissões do usuário criador.
+
+### Regras de Negócio e Cardinalidades
+
+- Associação `USUARIO` - `INTENÇÃO` (1: N):
+    - Um usuário pode gerar zero ou múltiplos registros de intenções ao longo de suas sessões de uso.  
+    - Cada registro de intenção deve estar estritamente vinculado a um único usuário remetente.  
+    - Controle de Visualização: O atributo booleano de permissão no usuário determina se o colaborador tem acesso irrestrito de leitura a todas as intenções registradas no sistema (para dashboards de monitoramento) ou se sua visualização é restrita ao próprio escopo. 
+
+- Associação `USUARIO` - `ROTINA` (1: N):
+    - Um usuário pode cadastrar zero ou múltiplas rotinas para automatização.
+    - Cada rotina pertence de forma exclusiva a um único usuário (dono/autor), garantindo que ela seja executada sob a identidade e credenciais desse criador. 
 
 ## 4.3 Modelo Lógico de Dados
 
-[Preencher]
+O modelo lógico traduz o domínio conceitual em uma estrutura relacional formal, definindo chaves primárias (PK), chaves estrangeiras (FK), tipos de dados abstratos, restrições de integridade e a validação do processo de normalização.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Lógica.png)
+*Figura X — Modelagem Lógica.*
+
+### Esquema Relacional e Dicionário de Dados
+
+#### Tabela: `USUARIO`
+Armazena os dados dos usuários autenticados via Microsoft Entra ID e seus privilégios de acesso.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_usuario` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único interno do usuário. |
+| `entra_id` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Identificador único federado no Microsoft Entra ID. |
+| `email` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Endereço de e-mail corporativo do usuário. |
+| `perfil` | `VARCHAR(50)` | `NOT NULL` | Papel funcional do colaborador (ex.: `DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`). |
+| `pode_ver_intencoes` | `BOOLEAN` | `NOT NULL`, `DEFAULT FALSE` | Flag de permissão para visualização de logs/painéis de intenções de todos os usuários. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora de inclusão do registro no sistema. |
+
+---
+
+#### Tabela: `INTENCAO`
+Registra e audita cada prompt de entrada, sua classificação e a sessão de diálogo associada.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_intencao` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único da intenção registrada. |
+| `id_usuario` | `INT` | `FK (USUARIO.id_usuario)`, `NOT NULL` | Chave estrangeira que referencia o usuário autor da mensagem. |
+| `id_conversa` | `INT` | `NOT NULL` | Identificador numérico da sessão de conversa/thread. |
+| `prompt` | `TEXT` | `NOT NULL` | Conteúdo textual completo da instrução/mensagem enviada. |
+| `classificacao_intencao` | `VARCHAR(100)` | `NULL` | Categoria de intenção atribuída pelo classificador supervisionado. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora do envio e processamento da mensagem. |
+
+---
+
+#### Tabela: `ROTINA`
+Centraliza as instruções de prompts agendados/pré-programados cadastrados pelos usuários.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_rotina` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único da rotina pré-configurada. |
+| `id_usuario` | `INT` | `FK (USUARIO.id_usuario)`, `NOT NULL` | Chave estrangeira que referencia o usuário criador da rotina. |
+| `prompt` | `TEXT` | `NOT NULL` | Instrução textual que será executada de forma automatizada. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora de cadastro da rotina. |
+
+### Integridade Referencial e Restrições
+
+- **Integridade de Chave Primária:** Todas as entidades possuem chaves primárias numéricas inteiras (`id_usuario`, `id_intencao`, `id_rotina`), garantindo unicidade e eficiência em indexações.
+- **Integridade Referencial:**
+  * `INTENCAO.id_usuario` $\rightarrow$ `USUARIO.id_usuario` (`ON DELETE RESTRICT`): Impede a exclusão acidental de registros de usuários que possuam histórico de interações auditadas.
+  * `ROTINA.id_usuario` $\rightarrow$ `USUARIO.id_usuario` (`ON DELETE CASCADE` ou `RESTRICT`): Garante que toda rotina esteja obrigatoriamente vinculada a um autor existente.
+- **Unicidade de Identidade:** `entra_id` e `email` possuem restrição de unicidade (`UNIQUE`), impedindo contas duplicadas para o mesmo usuário corporativo.
+
+### Justificativa de Normalização (3FN)
+
+O esquema relacional atende rigorosamente aos critérios da **Terceira Forma Normal (3FN)**:
+
+1. **Primeira Forma Normal (1FN):**
+   * Todos os atributos são atômicos (indivisíveis).
+   * Não existem colunas multivaloradas ou vetores/listas repetidas dentro de um mesmo registro.
+2. **Segunda Forma Normal (2FN):**
+   * O modelo está na 1FN.
+   * Todas as chaves primárias são simples (coluna única `INT`). Portanto, não há dependência parcial, todos os atributos não-chave dependem integralmente da chave primária da tabela.
+3. **Terceira Forma Normal (3FN):**
+   * O modelo está na 2FN.
+   * Não existem dependências transitivas entre atributos não-chave (nenhum atributo não-chave depende de outro atributo não-chave; todos dependem exclusivamente da chave primária correspondente).
 
 ## 4.4 Modelo Físico de Dados
 
-[Preencher]
+O modelo físico implementa o esquema relacional para o Sistema Gerenciador de Banco de Dados **PostgreSQL 16**. A implementação contempla scripts DDL com constraints de integridade, valores padrão, tipos de dados otimizados e índices estratégicos para acelerar consultas analíticas e filtros de auditoria.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Física.png)
+*Figura X — Modelagem Física.*
+
+### Script DDL (Data Definition Language)
+
+```sql
+-- Habilita extensões úteis caso necessário
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- TABELA: usuario
+CREATE TABLE usuario (
+    id_usuario SERIAL PRIMARY KEY,
+    entra_id VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    perfil VARCHAR(50) NOT NULL,
+    pode_ver_intencoes BOOLEAN NOT NULL DEFAULT FALSE,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_usuario_entra_id UNIQUE (entra_id),
+    CONSTRAINT uk_usuario_email UNIQUE (email)
+);
+
+-- TABELA: intencao
+CREATE TABLE intencao (
+    id_intencao SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_conversa INT NOT NULL,
+    prompt TEXT NOT NULL,
+    classificacao_intencao VARCHAR(100) NULL,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_intencao_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
+        ON UPDATE CASCADE 
+        ON DELETE RESTRICT
+);
+
+-- TABELA: rotina
+CREATE TABLE rotina (
+    id_rotina SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    prompt TEXT NOT NULL,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_rotina_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
+        ON UPDATE CASCADE 
+        ON DELETE CASCADE
+);
+
+-- ÍNDICES DE PERFORMANCE E CONSULTA
+
+-- Índices na tabela 'intencao' para relatórios analíticos, filtros temporais e sessões
+CREATE INDEX idx_intencao_usuario ON intencao (id_usuario);
+CREATE INDEX idx_intencao_conversa ON intencao (id_conversa);
+CREATE INDEX idx_intencao_criado_em ON intencao (criado_em DESC);
+CREATE INDEX idx_intencao_classificacao ON intencao (classificacao_intencao) WHERE classificacao_intencao IS NOT NULL;
+CREATE INDEX idx_intencao_analise_temporal ON intencao (classificacao_intencao, criado_em);
+
+-- Índice na tabela 'rotina' para busca por usuário criador
+CREATE INDEX idx_rotina_usuario ON rotina (id_usuario);
+```
+
+### Decisões Técnicas de Implementação
+
+- Tipos Temporais (`TIMESTAMP WITH TIME ZONE`): Garante a gravação consistente de datas e fusos horários (`America/Sao_Paulo`), prevenindo inconsistências em auditorias e agendamentos.
+
+- Integridade Referencial e Políticas de Deleção:
+    - Em `intencao`, a regra `ON DELETE RESTRICT` impede a exclusão acidental de registros de usuários que possuam logs de auditoria vinculados.
+    - Em `rotina`, a regra `ON DELETE CASCADE` garante que, se um usuário for expressamente removido, suas rotinas associadas sejam excluídas em cascata.`
+
+- Estratégia de Indexação:
+    - `idx_intencao_criado_em`: Otimiza a ordenação temporal e a exibição cronológica de históricos e sessões.
+    - `idx_intencao_analise_temporal`: Índice composto `(classificacao_intencao, criado_em)` voltado a acelerar consultas agregadas de volumetria por intenção e períodos no dashboard analítico.
+    - `idx_intencao_classificacao`: Índice parcial (partial index) ignorando valores nulos para economizar espaço em disco e acelerar a filtragem de prompts classificados.
 
 # 5. Solução Técnica
 
