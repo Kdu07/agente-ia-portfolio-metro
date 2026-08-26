@@ -3777,15 +3777,92 @@ As imagens a seguir compõem o registro visual completo do Protótipo A. Todas a
 
 ## 8.1 Desenvolvimento de Wireframes
 
-[Preencher]
+Os wireframes da página principal definem a organização estrutural da experiência conversacional do Prata Agent em desktop e dispositivos móveis. Em ambas as variações, a hierarquia prioriza o contexto do projeto, o alerta ativo, o histórico da conversa e o compositor para entrada de texto ou voz. A tela de Rotinas é apresentada somente como destino da navegação, pois sua definição visual pertence a um escopo próprio.
+
+### 8.1.1 Wireframe Desktop
+
+Na versão desktop, a barra lateral permanece visível e concentra a criação de conversa, os acessos ao chat do projeto, arquivos, integrações e rotinas, o histórico recente e a identificação da conta corporativa. A área principal apresenta o Projeto X, um alerta de marco, as mensagens trocadas e o compositor fixado na parte inferior.
+
+![Wireframe desktop da página principal](./imagens/wireframe-principal-desktop.png)
+
+*Figura - Wireframe desktop da página principal do Prata Agent.*
+
+### 8.1.2 Wireframe Mobile
+
+Na versão mobile, a barra lateral persistente é substituída por um botão de menu e a conta corporativa é identificada no cabeçalho. O alerta, as mensagens e o compositor são reorganizados em uma única coluna, preservando a diferenciação entre as mensagens do agente e da usuária e mantendo as ações de voz e envio acessíveis.
+
+![Wireframe mobile da página principal](./imagens/wireframe-principal-mobile.png)
+
+*Figura - Wireframe mobile da página principal do Prata Agent.*
 
 ## 8.2 Desenvolvimento de Mockups
 
-[Preencher]
+A página principal do frontend foi concebida como uma interface conversacional para acompanhamento de projetos. O mockup organiza a experiência em uma barra lateral, que concentra identidade, navegação, histórico e autenticação, e uma área principal dedicada ao contexto do projeto, aos alertas e à troca de mensagens por texto ou voz. A tela de Rotinas aparece somente como destino de navegação, pois pertence a um escopo próprio de design e desenvolvimento.
+
+Os mockups de alta fidelidade registram os estados que orientam o fluxo principal: notificação proativa, abertura da conversa, resposta em linguagem natural, confirmação da atualização e tratamento de uma mudança de assunto não mapeada.
+
+### 8.2.1 Notificação Inicial
+
+![Mockup da notificação inicial](./imagens/tela-1-notificacao.png)
+
+### 8.2.2 Mensagem Inicial do Agente
+
+![Mockup da mensagem inicial](./imagens/tela-2-mensagem-inicial.png)
+
+### 8.2.3 Resposta da Usuária
+
+![Mockup da resposta da usuária](./imagens/tela-3-resposta-usuaria.png)
+
+### 8.2.4 Confirmação da Atualização
+
+![Mockup do cartão de confirmação](./imagens/tela-4-cartao-confirmacao.png)
+
+### 8.2.5 Ponto de Ruptura
+
+![Mockup do ponto de ruptura](./imagens/tela-5-ponto-ruptura.png)
+
+### 8.2.6 Fluxo Não Mapeado
+
+![Mockup do fluxo não mapeado](./imagens/tela-5b-fluxo-nao-mapeado.png)
+
+Os wireframes estabelecem a estrutura responsiva, enquanto os mockups detalham estados de interação e conteúdo. A implementação localizada em `src/web` utiliza esses dois níveis de representação como referência, com refinamentos de identidade visual e de contextualização realizados durante o desenvolvimento.
 
 ## 8.3 Guia Visual
 
-[Preencher]
+A identidade visual utiliza o logotipo do Prata Agent, composto pelo símbolo relacionado ao transporte metroferroviário, pela inicial do produto e por sua assinatura verbal. A versão adotada possui fundo transparente, lettering prateado e detalhes azuis, devendo ter suas proporções preservadas.
+
+![Logotipo do Prata Agent](./imagens/logo-prata-agent.png)
+
+A interface utiliza fundo predominantemente branco, barra lateral em cinza claro e azul como cor de ação, seleção e apoio à identidade. Textos principais usam tons escuros de alto contraste, enquanto descrições, horários e informações auxiliares utilizam cinza. Verde identifica o acompanhamento ativo e vermelho é reservado a atrasos e ao estado de gravação de voz.
+
+A tipografia utiliza a família `Inter`, com alternativas nativas do sistema. Títulos e ações principais recebem peso forte; rótulos de navegação utilizam caixa alta e maior espaçamento; mensagens mantêm tamanho e entrelinha adequados à leitura contínua.
+
+| Componente | Função na interface | Situação |
+|---|---|---|
+| Logotipo do Prata Agent | Identificar o produto | Implementado |
+| Nova conversa | Iniciar um novo contexto conversacional | Implementado |
+| Página principal | Acessar a experiência conversacional | Implementado |
+| Rotinas | Acessar as rotinas automatizadas | Destino mapeado; tela fora deste escopo |
+| Arquivos | Acessar documentos relacionados ao projeto | Mapeado no wireframe; implementação posterior |
+| Integrações | Acessar conexões externas | Mapeado no wireframe; implementação posterior |
+| Histórico | Retomar conversas anteriores | Implementado visualmente |
+| Acesso Microsoft | Iniciar autenticação corporativa | Integração prevista com o backend |
+| Cabeçalho contextual | Identificar o projeto acompanhado | Implementado |
+| Alerta de marco | Sinalizar uma situação que exige atenção | Implementado |
+| Campo de mensagem | Receber solicitações em linguagem natural | Implementado |
+| Entrada por voz | Permitir interação por fala | Controle visual implementado |
+
+Em larguras de até 850 pixels, a barra lateral é recolhida e aberta por um botão de menu, com sobreposição para separar a navegação do conteúdo. Em larguras de até 520 pixels, elementos secundários do compositor são reduzidos ou ocultados, o título contextual é redimensionado e o alerta ocupa a largura disponível. A interface mantém suporte a telas com largura mínima de 320 pixels.
+
+| Evidência | Status |
+|---|---|
+| Wireframe desktop exportado | Concluído |
+| Wireframe mobile exportado | Concluído |
+| Mockups de alta fidelidade do fluxo principal | Concluído |
+| Implementação correspondente em `src/web` | Concluído |
+| Regras de responsividade | Concluído |
+| Link do protótipo navegável no Figma | Pendente de registro |
+| Aprovação formal pelo time de desenvolvimento | Pendente de evidência |
 
 # 9. Desenvolvimento do Projeto
 
