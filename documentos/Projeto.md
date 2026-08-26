@@ -3644,6 +3644,50 @@ A **Web Speech API** foi eliminada pelo mesmo critério. A interface é atraente
 | C6 — Latência no Brasil | 1 | **2** — região em território nacional | **2** — região em território nacional | **1** — depende do equipamento do usuário |
 | **Total ponderado** | **24** | **22** | **17** | **10** |
 
+#### 5.7.2.5 Decisão
+
+Adota-se o **Azure AI Speech** para o reconhecimento de fala e para a síntese de voz, provisionado no nível gratuito **F0**, na região **Brazil South**, dentro do Resource Group descrito na seção 6.5.4.
+
+A decisão confirma e detalha o que a seção 5.1.2 já registrava, e se sustenta em três razões. A primeira é o vocabulário: o serviço permite fornecer, na própria requisição, uma lista de termos que orienta o reconhecimento, o que converte o glossário de domínio da companhia em mecanismo executável e transforma o risco R03 de ameaça sem tratamento em ameaça com mitigação declarada. A segunda é o perímetro: o serviço pertence ao ecossistema que o parceiro já opera, de modo que a transferência da solução após o módulo não exige homologação de fornecedor adicional. A terceira é a economia de integração: reconhecimento e síntese são atendidos por um único fornecedor, com um único mecanismo de autenticação, o que evita duplicar credenciais, tratamento de erros e procedimento operacional para atender aos dois sentidos da conversão.
+
+Registra-se que a alternativa Google Cloud é tecnicamente equivalente nos critérios de vocabulário, qualidade e latência, e superior em custo do nível pago. Sua diferença decisiva está inteiramente no critério C2. Caso a premissa de aderência ao ecossistema Microsoft seja revista pelo parceiro, esta decisão deve ser reavaliada, e o quadro acima é suficiente para conduzir a reavaliação sem repetir o levantamento.
+
+#### 5.7.2.6 Região de processamento e residência dos dados
+
+A região do recurso de fala é **Brazil South**, e não a região registrada na seção 6.5.4 para o ambiente de execução do backend. A escolha é deliberada e apoia-se em duas propriedades do serviço.
+
+A primeira é a residência dos dados: o serviço processa o áudio exclusivamente na região em que o recurso foi criado, e as chaves são escopadas por região. Provisionar o recurso fora do território nacional implicaria que o áudio de solicitações relativas a projetos do portfólio fosse processado no exterior, hipótese que o RNF01 não sustenta e que introduziria discussão de soberania de dados desnecessária ao escopo do MVP.
+
+A segunda é a latência. O tempo de transcrição e o tempo até o início da resposta falada integram os indicadores da seção 3.1.5.2. O trajeto de rede até uma região norte-americana acrescenta tempo de ida e volta que se soma ao tempo de inferência e é percebido diretamente pelo usuário no canal de voz, cuja justificativa de existência é a rapidez em relação ao canal de texto.
+
+O recurso de fala é independente do ambiente de execução da aplicação e pode residir em região distinta sem prejuízo de funcionamento. Não há, portanto, necessidade de alinhar as duas regiões, e a divergência é registrada aqui como decisão consciente e não como inconsistência. Recomenda-se, ainda assim, que a seção 6.5.4 registre a justificativa da região adotada para o ambiente de execução, hoje declarada como não documentada naquela seção.
+
+#### 5.7.2.7 Enquadramento de custo
+
+O nível gratuito F0 do serviço oferece, por mês, cinco horas de áudio para reconhecimento de fala e quinhentos mil caracteres para síntese de voz. O nível pago S0 é tarifado por hora de áudio no reconhecimento e por milhão de caracteres na síntese, cabendo confirmar os valores vigentes na calculadora do fornecedor no momento do dimensionamento, uma vez que variam por região e por eventual acordo comercial.
+
+Estimativa de consumo do MVP, considerando o uso previsto para demonstração, para os testes sistêmicos e para a bancada de avaliação de desempenho do canal de voz:
+
+| Item | Volume estimado | Base da estimativa |
+|---|---|---|
+| Reconhecimento de fala | Aproximadamente 40 minutos por mês | 200 solicitações por voz, com duração média de 12 segundos por enunciado |
+| Síntese de voz | Aproximadamente 80 mil caracteres por mês | 200 respostas, com extensão média de 400 caracteres |
+
+Ambos os volumes situam-se com folga dentro do nível gratuito, do que decorre que **o custo do canal de voz durante o MVP é nulo**, desde que respeitados os limites mensais. A projeção de custo em operação real, com volume de usuários do parceiro, pertence à análise de viabilidade financeira e deve considerar que o reconhecimento de fala é uma das operações tarifadas por requisição identificadas na seção 2.8.9, ao lado da geração de relatórios.
+
+#### 5.7.2.8 Riscos assumidos e revisão das metas de desempenho
+
+A decisão introduz e transforma riscos que devem constar do acompanhamento da matriz mantida no `GestaoProjeto.md`.
+
+| Risco | Situação após a decisão | Tratamento |
+|---|---|---|
+| R03 — baixa acurácia no jargão da companhia | Permanece aberto, com mitigação agora exequível | Consolidação do glossário de domínio e seu fornecimento como lista de frases ao serviço; medição pelo indicador de acurácia de termos de domínio |
+| Indisponibilidade do serviço de fala | Novo | O plano de resposta ao R03 já determina retorno ao canal de texto; falha na emissão do token desabilita a captura de áudio com mensagem explicativa, sem recurso a serviço alternativo fora do perímetro |
+| Esgotamento do nível gratuito | Novo | Acompanhamento pelo orçamento configurado conforme a seção 6.5.8, com alerta antes do limite |
+| Latência adicional no trajeto de ingestão | Novo | Medição comparativa entre os dois modos de consumo, conforme a subseção 5.7.6 |
+
+Quanto às metas registradas ao final da seção 3.1.5, a definição do serviço permite encerrar a ressalva ali declarada. As metas preliminares de WER inferior ou igual a 15%, acurácia de termos de domínio igual ou superior a 90% e degradação ponta a ponta de no máximo 10 pontos percentuais são **mantidas** como hipóteses quantitativas, a serem verificadas sobre o corpus de áudio de referência descrito na subseção 5.7.6. Cabe registrar que a meta de acurácia de termos de domínio só é perseguível porque o serviço escolhido admite vocabulário customizado: sob qualquer das alternativas eliminadas, ela seria inatingível por ausência de mecanismo, e não por insuficiência de qualidade do reconhecimento. Nesse sentido, a seleção do serviço não apenas atende aos indicadores já definidos — ela é a condição de existência de um deles.
+
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
