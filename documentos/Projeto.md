@@ -3574,6 +3574,39 @@ Para a Alternativa B foi escolhido um **protótipo físico não digital**: um cr
 
 Esse formato foi escolhido porque a questão investigada pela Alternativa B não se limita ao funcionamento de uma interface. O objetivo é observar o que acontece quando um alerta ocupa o ambiente físico, permanece visível e pode ser percebido por terceiros. Uma tela não reproduziria adequadamente aspectos como exposição social, constrangimento ou pressão percebida; por isso, o crachá é o protótipo não digital desta exploração.
 
+### 7.3.3 Fluxo conceitual de entrada e saída do Protótipo B
+
+Para tornar a proposta testável, foi definido um fluxo conceitual preliminar para o crachá. Essa definição não representa uma arquitetura técnica aprovada nem pressupõe que o modelo de linguagem seja executado no próprio objeto. O crachá atua como ponto de contato físico com o agente, enquanto identificação do usuário, validação de permissões, consulta às informações e processamento em linguagem natural permanecem na plataforma corporativa.
+
+O fluxo considera duas formas de início. Na primeira, o próprio agente identifica uma pendência e envia ao crachá apenas um sinal de atenção, sem expor no LED, na vibração ou no som curto qualquer informação sensível. Na segunda, o usuário inicia uma consulta pressionando um botão físico. O botão foi escolhido como hipótese de projeto porque oferece uma ação intencional e observável e evita que o microfone permaneça continuamente ativo. Após o acionamento, um indicador mostra que a captura de voz começou; um novo toque ou o fim da fala encerra a entrada.
+
+| Etapa | Entrada ou ação | Tratamento conceitual | Saída esperada |
+|---|---|---|---|
+| Alerta proativo | O agente identifica uma pendência vinculada ao usuário | A plataforma verifica responsável e permissões antes de acionar o dispositivo associado | Luz, vibração ou som curto, sem revelar o conteúdo da pendência |
+| Reconhecimento do alerta | O usuário pressiona o botão uma vez | O sinal físico é reconhecido e a sessão de interação é aberta | Confirmação visual ou tátil de que o agente está disponível |
+| Consulta por voz | O usuário mantém ou pressiona o botão e fala | O áudio é encaminhado por um canal autenticado, convertido em texto e enviado ao agente ou modelo de linguagem após a verificação do perfil | Indicação de captura e processamento em andamento |
+| Resposta | O agente interpreta a intenção e consulta somente as informações autorizadas | A resposta é produzida de acordo com o perfil e o nível de acesso | Retorno por voz para respostas breves; conteúdo detalhado ou sensível direcionado ao Teams |
+| Atualização | O usuário dita uma alteração ou responde a uma pendência | A plataforma apresenta a alteração para confirmação antes de efetivá-la e mantém a rastreabilidade prevista nos requisitos | Confirmação da operação ou orientação sobre dados ainda necessários |
+
+```mermaid
+flowchart LR
+    A[Pendência identificada pela plataforma] --> B[Validar usuário e permissões]
+    B --> C[Acionar luz, vibração ou som curto]
+    C --> D{Usuário pressiona o botão?}
+    D -- Não --> E[Manter ou repetir o sinal conforme regra a validar]
+    D -- Sim --> F[Abrir sessão e ativar captura de voz]
+    U[Usuário inicia consulta pelo botão] --> F
+    F --> G[Encaminhar áudio por canal autenticado]
+    G --> H[Converter voz em texto]
+    H --> I[Agente ou LLM interpreta a solicitação]
+    I --> J[Consultar apenas informações autorizadas]
+    J --> K{Resposta breve e não sensível?}
+    K -- Sim --> L[Responder por voz no crachá]
+    K -- Não --> M[Direcionar detalhes ao Teams]
+```
+
+Neste desenho, o botão não serve para resolver a pendência diretamente. Ele funciona como consentimento momentâneo para iniciar a escuta e como acesso à conversa. A decisão entre pressionar uma vez, manter pressionado ou utilizar outro gesto ainda deverá ser observada no protótipo físico. Também permanece em aberto se a saída por voz no próprio crachá oferece privacidade suficiente em um ambiente compartilhado; por isso, o encaminhamento de respostas detalhadas ao Teams foi mantido como hipótese de segurança e não como decisão definitiva.
+
 ## 7.4 Diário de Construção
 
 ### 7.4.1 Diário - Protótipo A
