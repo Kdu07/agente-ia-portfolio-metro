@@ -4280,7 +4280,7 @@ O arquivo de vídeo não deve apresentar credenciais, dados pessoais reais, tela
 
 ## 8.1 Desenvolvimento de Wireframes
 
-Os wireframes da página principal definem a organização estrutural da experiência conversacional do Prata Agent em desktop e dispositivos móveis. Em ambas as variações, a hierarquia prioriza o contexto do projeto, o alerta ativo, o histórico da conversa e o compositor para entrada de texto ou voz. A tela de Rotinas é apresentada somente como destino da navegação, pois sua definição visual pertence a um escopo próprio.
+Os wireframes definem a organização estrutural da experiência do Prata Agent em desktop e dispositivos móveis. A página principal prioriza o contexto do projeto, o alerta ativo, o histórico da conversa e o compositor para entrada de texto ou voz. A página de Rotinas estende o mesmo padrão de navegação para o gerenciamento de automações recorrentes.
 
 ### 8.1.1 Wireframe Desktop
 
@@ -4297,6 +4297,22 @@ Na versão mobile, a barra lateral persistente é substituída por um botão de 
 ![Wireframe mobile da página principal](./imagens/wireframe-principal-mobile.png)
 
 *Figura - Wireframe mobile da página principal do Prata Agent.*
+
+### 8.1.3 Wireframe Desktop da Página de Rotinas
+
+O wireframe desktop da página de Rotinas preserva a barra lateral e o cabeçalho do produto. A área de trabalho apresenta um resumo quantitativo, busca, filtro por status, ordenação e uma lista de rotinas. Cada item explicita nome, estado, ação em linguagem natural, frequência, próximo disparo e intenção prevista, além das ações de pausar ou ativar, editar e excluir.
+
+![Wireframe desktop da página de Rotinas](./imagens/wireframe-rotinas-desktop.svg)
+
+*Figura - Wireframe desktop da página de gerenciamento de Rotinas.*
+
+### 8.1.4 Wireframe Mobile da Página de Rotinas
+
+No wireframe mobile, a navegação é recolhida e os filtros passam a ocupar linhas independentes. Os dados de cada rotina são reorganizados verticalmente e as ações permanecem agrupadas ao final do cartão, permitindo o uso em telas estreitas sem ocultar informações necessárias à decisão.
+
+![Wireframe mobile da página de Rotinas](./imagens/wireframe-rotinas-mobile.svg)
+
+*Figura - Wireframe mobile da página de gerenciamento de Rotinas.*
 
 ## 8.2 Desenvolvimento de Mockups
 
@@ -4328,6 +4344,26 @@ Os mockups de alta fidelidade registram os estados que orientam o fluxo principa
 
 ![Mockup do fluxo não mapeado](./imagens/tela-5b-fluxo-nao-mapeado.png)
 
+### 8.2.7 Fluxo de Gerenciamento de Rotinas
+
+O fluxo de Rotinas contempla as operações de criação, consulta, edição e exclusão. A listagem permite buscar por nome, ação ou intenção, filtrar entre rotinas ativas e pausadas e ordenar por próxima execução, nome ou atualização recente. O formulário de criação e edição utiliza os campos definidos pelo contrato técnico: nome, ação em linguagem natural, expressão cron, fuso horário e estado ativo.
+
+Antes de salvar, os campos obrigatórios recebem validação local de formato. A integração definitiva deverá também chamar `POST /rotinas/validar`, pois apenas o backend pode aplicar as guardas do pipeline, verificar a expressão cron e confirmar a intenção prevista. A exclusão exige confirmação explícita e informa que a remoção do agendamento não poderá ser desfeita.
+
+![Mockup do fluxo de gerenciamento de Rotinas](./imagens/mockup-fluxo-rotinas.svg)
+
+*Figura - Board dos estados de listagem, formulário, validação, exclusão, sucesso e estado vazio da página de Rotinas.*
+
+Os estados de feedback previstos são:
+
+- **carregamento:** cartões de esqueleto enquanto a listagem é recuperada;
+- **validação:** mensagens junto aos campos inválidos, sem descartar os valores preenchidos;
+- **sucesso:** notificação temporária após criar, editar, ativar, pausar ou excluir;
+- **estado vazio:** orientação para criar a primeira rotina ou ajustar busca e filtros;
+- **confirmação destrutiva:** diálogo específico antes da exclusão.
+
+Nesta etapa, os dados utilizados na interface são demonstrativos. As rotas CRUD correspondentes já estão especificadas no FastAPI, mas permanecem com `NotImplementedError`; por isso, a documentação não afirma persistência real nem integração concluída.
+
 Os wireframes estabelecem a estrutura responsiva, enquanto os mockups detalham estados de interação e conteúdo. A implementação localizada em `src/web` utiliza esses dois níveis de representação como referência, com refinamentos de identidade visual e de contextualização realizados durante o desenvolvimento.
 
 ## 8.3 Guia Visual
@@ -4354,18 +4390,15 @@ A tipografia utiliza a família `Inter`, com alternativas nativas do sistema. T�
 | Alerta de marco | Sinalizar uma situação que exige atenção | Implementado |
 | Campo de mensagem | Receber solicitações em linguagem natural | Implementado |
 | Entrada por voz | Permitir interação por fala | Controle visual implementado |
+| Resumo de Rotinas | Informar quantidade total, ativa e pausada | Implementado visualmente |
+| Busca, filtros e ordenação | Localizar e organizar automações | Implementado com dados demonstrativos |
+| Cartão de rotina | Exibir agenda, próximo disparo e intenção prevista | Implementado com dados demonstrativos |
+| Formulário de criação e edição | Configurar os campos previstos no contrato de Rotina | Implementado visualmente |
+| Ativar ou pausar | Alterar o estado de agendamento | Implementado localmente; persistência pendente |
+| Confirmação de exclusão | Evitar remoção acidental | Implementado visualmente |
+| Feedback e estado vazio | Comunicar carregamento, validação, sucesso e ausência de dados | Implementado |
 
 Em larguras de até 850 pixels, a barra lateral é recolhida e aberta por um botão de menu, com sobreposição para separar a navegação do conteúdo. Em larguras de até 520 pixels, elementos secundários do compositor são reduzidos ou ocultados, o título contextual é redimensionado e o alerta ocupa a largura disponível. A interface mantém suporte a telas com largura mínima de 320 pixels.
-
-| Evidência | Status |
-|---|---|
-| Wireframe desktop exportado | Concluído |
-| Wireframe mobile exportado | Concluído |
-| Mockups de alta fidelidade do fluxo principal | Concluído |
-| Implementação correspondente em `src/web` | Concluído |
-| Regras de responsividade | Concluído |
-| Link do protótipo navegável no Figma | Pendente de registro |
-| Aprovação formal pelo time de desenvolvimento | Pendente de evidência |
 
 # 9. Desenvolvimento do Projeto
 
