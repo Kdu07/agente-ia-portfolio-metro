@@ -25,7 +25,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <aside className={aberto ? "sidebar sidebar--open" : "sidebar"}>
         <div className="brand-row">
           <button className="icon-button mobile-only" aria-label="Fechar menu" onClick={() => setAberto(false)}><Icone nome="menu" /></button>
-          <span className="brand-mark">✦</span><strong>Prata Agent</strong>
+          <img className="brand-logo" src="/logo-prata.png" alt="Prata Agent" />
         </div>
         <NavLink className="new-chat" to="/" onClick={() => setAberto(false)}><Icone nome="plus" /> Nova conversa</NavLink>
         <p className="nav-label">Navegação</p>
@@ -33,6 +33,21 @@ export function Layout({ children }: { children: ReactNode }) {
           <NavLink to="/" end onClick={() => setAberto(false)}><Icone nome="chat" /><span>Página principal</span></NavLink>
           <NavLink to="/rotinas" onClick={() => setAberto(false)}><Icone nome="rotinas" /><span>Rotinas</span></NavLink>
         </nav>
+
+        <section className="history-section" aria-labelledby="historico-titulo">
+          <div className="history-heading">
+            <p className="nav-label" id="historico-titulo">Histórico</p>
+            <button type="button" aria-label="Opções do histórico">•••</button>
+          </div>
+          <NavLink to="/conversas/projeto-x" onClick={() => setAberto(false)}>
+            <span className="history-icon">↺</span>
+            <span><strong>Status do Projeto X</strong><small>Hoje</small></span>
+          </NavLink>
+          <NavLink to="/conversas/riscos-linha-6" onClick={() => setAberto(false)}>
+            <span className="history-icon">↺</span>
+            <span><strong>Riscos da Linha 6</strong><small>Ontem</small></span>
+          </NavLink>
+        </section>
         <div className="sidebar-spacer" />
         {usuario ? (
           <div className="profile-card"><span className="avatar">{usuario.nome.slice(0, 2).toUpperCase()}</span><span><strong>{usuario.nome}</strong><small>{usuario.email ?? usuario.perfil}</small></span></div>
