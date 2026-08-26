@@ -2600,6 +2600,99 @@ Os diagramas desta subseção apresentam a versão atual da modelagem dinâmica 
 
 Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriormente em 5.3. Os diagramas anteriores permanecem como histórico da modelagem e enfatizam os fluxos de negócio do agente; os cenários atuais partem da implementação do repositório, incluindo a API FastAPI, o cliente do Copilot Studio, o Azure AI Content Safety e as camadas de persistência. O código-fonte Mermaid é mantido neste documento para permitir revisão e evolução do artefato.
 
+#### 5.3.8.1 Cenário 1 — Mensagem bloqueada pela guarda de injeção
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant SAFE as Azure AI Content Safety
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem
+  WEB->>API: POST /api/chat
+  API->>API: deps.py resolve sessão, perfil e permissões
+  API->>ORQ: processar(mensagem, usuário, canal=chat)
+  activate ORQ
+  ORQ->>GINJ: 2. Guarda de injeção
+  activate GINJ
+  GINJ->>GINJ: Regras determinísticas (versionadas no repo)
+  GINJ->>SAFE: Classificador por modelo (Prompt Shields)
+  SAFE-->>GINJ: Score de injeção
+
+  alt injeção detectada
+    GINJ-->>ORQ: Desfecho = BLOQUEADA_INJECAO
+    deactivate GINJ
+    ORQ->>PER: Registra interação (desfecho=BLOQUEADA_INJECAO)
+    PER-->>ORQ: Confirmado
+    ORQ-->>API: Recusa seca, sem revelar o motivo
+    API-->>WEB: Resposta de bloqueio
+    WEB-->>U: Exibe recusa padrão
+  else input aprovado
+    GINJ-->>ORQ: Desfecho = null (segue pipeline)
+    Note over ORQ: Segue para guarda de abuso (Cenário 2)
+  end
+  deactivate ORQ
+```
+
+#### 5.3.8.2 Cenário 2 — Fluxo completo de sucesso (chat)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant GABU as Guarda de Abuso
+  participant INT as Classificador de Intenção
+  participant COP as copilot/client.py
+  participant CS as Copilot Studio (Direct Line)
+  participant GSAI as Guarda de Saída
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1. sessão/perfil/permissões resolvidos
+  activate ORQ
+
+  ORQ->>GINJ: 2. Guarda de injeção
+  GINJ-->>ORQ: Aprovado
+
+  ORQ->>GABU: 3. Guarda de abuso
+  GABU->>GABU: Categorias de conteúdo + política de uso corporativo
+  GABU-->>ORQ: Aprovado
+
+  ORQ->>INT: 4. Classificação de intenção
+  INT->>INT: Compara contra catálogo, aplica limiar por intenção
+  INT-->>ORQ: Intenção + confiança
+
+  ORQ->>COP: 5. Execução — prompt como dado rotulado + intenção em metadados
+  activate COP
+  COP->>CS: Direct Line — envia prompt validado
+  CS->>CS: Executa tópico/ação correspondente
+  CS-->>COP: Resposta gerada
+  COP-->>ORQ: Resposta do Copilot
+  deactivate COP
+
+  ORQ->>GSAI: 6. Guarda de saída
+  GSAI->>GSAI: Avalia resposta antes da entrega
+  GSAI-->>ORQ: Aprovada
+
+  ORQ->>PER: 7. Registra interação completa (desfecho=SUCESSO)
+  PER-->>ORQ: Confirmado
+
+  ORQ-->>API: Resposta final
+  deactivate ORQ
+  API-->>WEB: Resposta
+  WEB-->>U: Exibe resposta
+```
+
 ## 5.4 Catálogo de Intenções do Agente
 
 ### 5.4.1 Objetivo e função do catálogo
