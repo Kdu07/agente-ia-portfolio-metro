@@ -2779,6 +2779,91 @@ sequenceDiagram
   WEB-->>U: Exibe recusa padrão
 ```
 
+#### 5.3.8.5 Cenário 5 — Disparo de rotina agendada
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário (dono, GERIR_ROTINAS)
+  participant WEB as Frontend (Rotinas)
+  participant API as api/ (FastAPI)
+  participant VAL as rotinas/validacao.py
+  participant ORQV as Orquestrador (validação)
+  participant AGD as rotinas/agendador.py<br/>(APScheduler)
+  participant DB as PostgreSQL
+  participant EXE as rotinas/execucao.py
+  participant ORQE as Orquestrador (execução)
+  participant COP as copilot/client.py
+  actor DIR as Diretoria
+
+  U->>WEB: Cadastra rotina (prompt, cron, timezone)
+  WEB->>API: POST /api/rotinas
+  API->>VAL: Valida prompt no cadastro
+  VAL->>ORQV: Passa pelas guardas e classificador
+  alt não resolve em intenção do catálogo
+    ORQV-->>VAL: Recusa
+    VAL-->>API: Cadastro recusado, com explicação
+    API-->>WEB: Erro de validação
+    WEB-->>U: Exibe motivo da recusa
+  else resolve em intenção válida
+    ORQV-->>VAL: Aprovado
+    VAL->>DB: Persiste Rotina (ativa, intencao_prevista)
+    VAL-->>API: Confirmado
+    API-->>WEB: Rotina criada
+    WEB-->>U: Exibe confirmação
+  end
+
+  Note over AGD,DB: Fuso da rotina (ex.: America/Sao_Paulo),<br/>coalesce + misfire_grace_time evitam disparo em rajada
+
+  AGD->>DB: Job persistido dispara no horário agendado
+  AGD->>EXE: Aciona execução (canal=rotina)
+  activate EXE
+  EXE->>ORQE: Reentra pelo MESMO orquestrador<br/>(permissões do dono resolvidas na execução)
+  activate ORQE
+  ORQE->>ORQE: Repassa por todas as guardas<br/>(catálogo e permissões reavaliados)
+  ORQE->>COP: 5. Execução no Copilot Studio
+  COP-->>ORQE: Resposta (relatório)
+  ORQE->>DB: Registra Interacao (canal=rotina)
+  ORQE->>DB: Registra ExecucaoRotina (status, interacao_id)
+  deactivate ORQE
+  EXE-->>AGD: Execução concluída
+  deactivate EXE
+
+  WEB->>API: Consulta histórico de execuções
+  API->>DB: SELECT execuções da rotina
+  DB-->>API: Lista de execuções
+  API-->>WEB: Exibe status na aba de resultados
+  WEB-->>DIR: Diretoria acessa relatório no app<br/>(sem depender de e-mail/Teams)
+```
+
+#### 5.3.8.6 Convenções adotadas
+
+Os cinco diagramas usam `autonumber` para numerar as mensagens e distinguem atores externos, como usuário, atacante e Diretoria, dos participantes internos do middleware. Os nomes dos participantes seguem os módulos e arquivos apresentados na estrutura do repositório, o que aproxima a documentação dinâmica da implementação sem transformar o diagrama em um mapa de funções Python.
+
+Os fragmentos `alt` representam caminhos mutuamente exclusivos: entrada bloqueada ou aprovada, uso indevido ou permitido, rotina rejeitada ou cadastrada. Os comandos `activate` e `deactivate` destacam o período em que o orquestrador, uma guarda ou uma execução permanece responsável pelo processamento. As mensagens para `persistence/` e PostgreSQL representam o contrato lógico de persistência; a implementação física pode variar sem alterar o comportamento documentado.
+
+O Cenário 2 funciona como fluxo de sucesso de referência para os Cenários 1 e 3, que interrompem o processamento antes da classificação ou da execução. O Cenário 4 evidencia que a validação da saída é necessária mesmo quando a solicitação do usuário foi legítima, pois o conteúdo recuperado de uma fonte externa pode introduzir uma instrução indireta. O Cenário 5 reusa o mesmo orquestrador na execução agendada para impedir que rotinas contornem as guardas e as permissões aplicadas ao chat.
+
+#### 5.3.8.7 Rastreabilidade dos cenários
+
+| Cenário | Requisitos e artefatos relacionados | Evidência no fluxo |
+|---|---|---|
+| 1. Bloqueio por injeção | RNF01, RNF02, risco R09, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO` sem expor o motivo. |
+| 2. Sucesso no chat | RF01 a RF03, INT-02, INT-08 e INT-10 | Sessão, permissões, guardas, classificação, execução no Copilot, validação da saída e persistência completa. |
+| 3. Bloqueio por abuso | RNF02, RNF05, `GuardaAbuso` | Azure AI Content Safety e política corporativa produzem recusa orientativa e registro nominal. |
+| 4. Injeção indireta | RNF01, RNF02, risco R09, `GuardaSaida` | Conteúdo contaminado pelo documento é bloqueado antes de chegar ao usuário e sem repetir a instrução. |
+| 5. Rotina agendada | RF06, INT-07, feature F1.21, `Rotina` e `ExecucaoRotina` | Cadastro validado, execução reprocessada pelo mesmo orquestrador, registro do resultado e consulta do histórico. |
+
+Os cenários cobrem os principais desfechos definidos no diagrama de classes da Sprint 2: `BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA` e `SUCESSO`. `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR` permanecem representados no modelo estático e devem ser detalhados em cenários complementares quando seus contratos de implementação forem definidos.
+
+#### 5.3.8.8 Limitações e refinamentos futuros
+
+- **Contratos de API.** Os diagramas mostram as chamadas principais, mas ainda não definem schemas de requisição e resposta, códigos HTTP, timeouts ou política de retentativas.
+- **Falhas intermediárias.** Os cenários de sucesso não detalham indisponibilidade do Azure AI Content Safety, do Copilot Studio, do PostgreSQL ou do APScheduler. Esses caminhos devem ser acrescentados quando os critérios de resiliência forem validados.
+- **Execução concorrente.** `coalesce` e `misfire_grace_time` são registrados como decisões do agendador, mas não substituem a definição de idempotência, bloqueio concorrente e limite de execuções simultâneas.
+- **Dados externos.** A recuperação do SharePoint aparece no Cenário 4 para evidenciar a injeção indireta; a validação de origem, o isolamento do conteúdo e a política de citações ainda precisam ser detalhados.
+- **Evolução da segurança.** Os nomes das guardas e desfechos estão alinhados ao modelo de classes, mas os limiares, versões de regras e evidências de auditoria devem acompanhar a configuração efetivamente implantada.
+
 ## 5.4 Catálogo de Intenções do Agente
 
 ### 5.4.1 Objetivo e função do catálogo
