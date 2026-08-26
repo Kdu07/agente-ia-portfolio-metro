@@ -103,6 +103,7 @@
   - [2.6 Fluxo e rastreabilidade](#26-fluxo-e-rastreabilidade)
   - [2.7 Política de commits](#27-política-de-commits)
   - [2.8 Fechamento da sprint](#28-fechamento-da-sprint)
+  - [2.9 Revisão do contrato de convivência](#29-revisão-do-contrato-de-convivência)
 - [3. Avaliação das sprints](#3-avaliação-das-sprints)
   - [3.1 Quadro evolutivo de pontos fortes e fracos](#31-quadro-evolutivo-de-pontos-fortes-e-fracos)
   - [3.2 Sprint 1](#32-sprint-1)
@@ -149,6 +150,8 @@ O board e o repositório constituem as fontes oficiais de acompanhamento do proj
 - Alterações devem respeitar o escopo do card e ser submetidas à revisão por pares.
 - A comunicação deve ser respeitosa, objetiva e direcionada à resolução do problema.
 - Integrantes devem colaborar na revisão de merge requests e no esclarecimento de dúvidas que bloqueiem o trabalho da equipe.
+- Revisões de merge requests devem ser realizadas em até 24 horas úteis, conforme SLA estabelecido.
+- Quando possível, as revisões devem ser distribuídas entre os integrantes para evitar concentração em uma única pessoa.
 
 ### 2.2 Comunicação e rituais
 
@@ -274,7 +277,33 @@ Ao final de cada sprint, a equipe deve:
 - verificar merge requests pendentes;
 - registrar a retrospectiva;
 - identificar e documentar pendências;
-- planejar e criar as issues da sprint seguinte, incluindo estimativas, labels, milestone e dependências.
+- planejar e criar as issues da sprint seguinte, incluindo estimativas, labels, milestone e dependências;
+- revisar e atualizar o contrato de convivência, quando necessário;
+- avaliar a efetividade das políticas de trabalho e realizar ajustes conforme as necessidades identificadas.
+
+### 2.9 Revisão do contrato de convivência
+
+O contrato de convivência firmado na Sprint 1 deve ser revisado ao final de cada sprint. Havendo necessidade de ajuste, as regras devem ser alteradas com o devido registro da mudança, mantendo:
+
+- a data da revisão;
+- a justificativa para a alteração;
+- a nova regra aprovada pelo grupo;
+- o impacto esperado na dinâmica da equipe.
+
+As revisões são registradas nesta seção para garantir transparência e rastreabilidade das decisões de processo ao longo do projeto.
+
+#### 2.9.1 Revisão Sprint 2
+
+**Data:** 2026-08-26
+
+**Justificativa:** Identificou-se a necessidade de reforçar políticas sobre revisão de merge requests e distribuição de carga de trabalho, baseado em evidências de revisões concentradas e atualizações mantidas até o fechamento da sprint.
+
+**Alterações aprovadas:**
+- Inclusão de diretrizes explícitas sobre distribuição de revisões de merge requests entre os integrantes.
+- Reforço do SLA de 24 horas para revisão de MRs com priorização de MRs que bloqueiem outras entregas.
+- Adição de critérios para acompanhamento de carga e dependências nas dailies.
+
+**Impacto esperado:** Melhor distribuição do trabalho de revisão, redução de concentração de revisões em uma única pessoa e identificação antecipada de bloqueios.
 
 ## 3. Avaliação das sprints
 

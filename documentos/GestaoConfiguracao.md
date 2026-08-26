@@ -153,6 +153,69 @@ git switch -c docs/gestao-projeto
 
 Para funcionalidades, correções, releases e hotfixes, deve-se utilizar o prefixo e a branch de origem indicados na tabela da seção 2.1.
 
+#### Convenções de nomenclatura
+
+Os nomes das branches devem seguir o padrão:
+
+```text
+<prefixo>/<nome-descritivo>
+```
+
+Onde:
+- `prefixo`: indica o tipo de branch (feature, bugfix, release, hotfix, docs, design, test)
+- `nome-descritivo`: breve descrição da atividade, utilizando letras minúsculas e separando palavras por hífen
+
+Exemplos válidos:
+- `feature/classificacao-intencoes`
+- `bugfix/corrige-parser-audio`
+- `release/v1.0.0`
+- `hotfix/corrige-consulta-status`
+- `docs/gestao-projeto`
+- `design/as-is-bpmn`
+- `test/integracao-pln`
+
+#### Procedimentos de criação por tipo de branch
+
+**Feature branches:**
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c feature/nome-da-feature
+git push --set-upstream origin feature/nome-da-feature
+```
+
+**Bugfix branches:**
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c bugfix/nome-do-correcao
+git push --set-upstream origin bugfix/nome-do-correcao
+```
+
+**Docs branches:**
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c docs/nome-da-documentacao
+git push --set-upstream origin docs/nome-da-documentacao
+```
+
+**Design branches:**
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c design/nome-do-artefato
+git push --set-upstream origin design/nome-do-artefato
+```
+
+**Test branches:**
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c test/nome-do-teste
+git push --set-upstream origin test/nome-do-teste
+```
+
 #### Integração e revisão
 
 - Não são permitidos commits diretos em `main` ou `develop`.
@@ -175,6 +238,122 @@ Para documentar as User Stories do card #22, o fluxo utilizado é:
 6. abrir um merge request de `docs/user-stories` para `develop`;
 7. solicitar revisão por pares;
 8. após a aprovação e o merge, excluir a branch remota.
+
+#### 2.4.1 Exemplos de aplicações práticas no projeto
+
+**Exemplo 1: Implementação de página principal do frontend**
+
+Card: #112 - Implementa página principal do frontend
+Branch: `feature/pagina-principal-frontend`
+Merge Request: !53
+Labels: FEAT, CODE, DESIGN
+Autor: Mariana Reis
+Sprint: Sprint 02
+
+Fluxo executado:
+1. Criar branch a partir de develop:
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c feature/pagina-principal-frontend
+```
+
+2. Desenvolver a funcionalidade seguindo o DoD do card #112
+
+3. Commitar as alterações:
+```bash
+git add .
+git commit -m "feat(frontend): implementa pagina principal do frontend (#112)"
+```
+
+4. Enviar para o GitLab:
+```bash
+git push --set-upstream origin feature/pagina-principal-frontend
+```
+
+5. Abrir MR no GitLab com título: `FEAT | implementa pagina principal do frontend (#112)`
+
+6. Solicitar revisão da equipe
+
+7. Após aprovação e merge, excluir a branch:
+```bash
+git switch develop
+git pull --ff-only origin develop
+git branch -d feature/pagina-principal-frontend
+git push origin --delete feature/pagina-principal-frontend
+```
+
+**Exemplo 2: Documentação de gestão de projeto**
+
+Card: #166 - Atualiza políticas de dailies e GitLab
+Branch: `docs/gestao-projeto`
+Merge Request: (a ser criado)
+Labels: DOCS
+Autor: (nome do integrante)
+Sprint: Sprint 02
+
+Fluxo executado:
+1. Criar branch a partir de develop:
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c docs/gestao-projeto
+```
+
+2. Atualizar o documento GestaoProjeto.md com as novas políticas
+
+3. Commitar as alterações:
+```bash
+git add documentos/GestaoProjeto.md
+git commit -m "docs: adiciona políticas de dailies e GitLab (#166)"
+```
+
+4. Enviar para o GitLab:
+```bash
+git push --set-upstream origin docs/gestao-projeto
+```
+
+5. Abrir MR no GitLab com título: `DOCS | atualiza políticas de dailies e GitLab (#166)`
+
+6. Solicitar revisão da equipe
+
+7. Após aprovação e merge, excluir a branch
+
+**Exemplo 3: Atualização de fluxo GitFlow**
+
+Card: #166 - Atualiza fluxo gitflow e políticas de branches
+Branch: `docs/gestao-configuracao`
+Merge Request: (a ser criado)
+Labels: DOCS
+Autor: (nome do integrante)
+Sprint: Sprint 02
+
+Fluxo executado:
+1. Criar branch a partir de develop:
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c docs/gestao-configuracao
+```
+
+2. Atualizar o documento GestaoConfiguracao.md com novos procedimentos
+
+3. Commitar as alterações:
+```bash
+git add documentos/GestaoConfiguracao.md
+git commit -m "docs: atualiza fluxo gitflow e políticas de branches (#166)"
+```
+
+4. Enviar para o GitLab:
+```bash
+git push --set-upstream origin docs/gestao-configuracao
+```
+
+5. Abrir MR no GitLab com título: `DOCS | atualiza fluxo gitflow e políticas de branches (#166)`
+
+6. Solicitar revisão da equipe
+
+7. Após aprovação e merge, excluir a branch
 
 ### 2.5 Procedimentos de release, hotfix e exclusão
 
