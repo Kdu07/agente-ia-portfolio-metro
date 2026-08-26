@@ -70,6 +70,7 @@
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
     - [5.2.3 Diagrama atual da Sprint 2](#523-diagrama-atual-da-sprint-2)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
+    - [5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2](#538-diagramas-de-sequência-de-casos-críticos--sprint-2)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
         - [5.4.11 Diagrama de Classes UML — Sprint 2](#5411-diagrama-de-classes-uml--sprint-2)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
@@ -2592,6 +2593,276 @@ Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revi
 - **Comportamento em falha parcial.** DS03 trata a gravação como atômica: ela é confirmada ou falha por inteiro. O comportamento diante de atualização parcialmente aplicada — mais de um campo alterado em uma mesma transação — ainda não foi definido e está registrado como pendência técnica em INT-05.
 - **Cobertura da trilha de auditoria.** A modelagem dinâmica evidenciou uma lacuna do mapeamento de integrações: a ficha INT-10 prevê o registro de consultas, intenções classificadas, recusas e alterações efetivadas, mas não de alertas proativos, e a rastreabilidade de 5.5.6 associa o RF06 apenas a INT-03 e INT-07. Por coerência, DS04 não registra o alerta emitido. Recomenda-se ampliar o escopo de INT-10 para cobrir as notificações do RF06, de modo que a atuação proativa também seja auditável.
 - **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
+
+### 5.3.8 Diagramas de Sequência de Casos Críticos - Sprint 2
+
+Os diagramas desta subseção apresentam a versão atual da modelagem dinâmica do middleware na Sprint 2. Eles detalham cinco casos críticos que atravessam as guardas de segurança, o classificador de intenções, a integração com o Copilot Studio, a persistência das interações e a execução de rotinas agendadas.
+
+Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriormente em 5.3. Os diagramas anteriores permanecem como histórico da modelagem e enfatizam os fluxos de negócio do agente; os cenários atuais partem da implementação do repositório, incluindo a API FastAPI, o cliente do Copilot Studio, o Azure AI Content Safety e as camadas de persistência. O código-fonte Mermaid é mantido neste documento para permitir revisão e evolução do artefato.
+
+#### 5.3.8.1 Cenário 1 - Mensagem bloqueada pela guarda de injeção
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant SAFE as Azure AI Content Safety
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem
+  WEB->>API: POST /api/chat
+  API->>API: deps.py resolve sessão, perfil e permissões
+  API->>ORQ: processar(mensagem, usuário, canal=chat)
+  activate ORQ
+  ORQ->>GINJ: 2. Guarda de injeção
+  activate GINJ
+  GINJ->>GINJ: Regras determinísticas (versionadas no repo)
+  GINJ->>SAFE: Classificador por modelo (Prompt Shields)
+  SAFE-->>GINJ: Score de injeção
+
+  alt injeção detectada
+    GINJ-->>ORQ: Desfecho = BLOQUEADA_INJECAO
+    deactivate GINJ
+    ORQ->>PER: Registra interação (desfecho=BLOQUEADA_INJECAO)
+    PER-->>ORQ: Confirmado
+    ORQ-->>API: Recusa seca, sem revelar o motivo
+    API-->>WEB: Resposta de bloqueio
+    WEB-->>U: Exibe recusa padrão
+  else input aprovado
+    GINJ-->>ORQ: Desfecho = null (segue pipeline)
+    Note over ORQ: Segue para guarda de abuso (Cenário 2)
+  end
+  deactivate ORQ
+```
+
+#### 5.3.8.2 Cenário 2 - Fluxo completo de sucesso (chat)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant GABU as Guarda de Abuso
+  participant INT as Classificador de Intenção
+  participant COP as copilot/client.py
+  participant CS as Copilot Studio (Direct Line)
+  participant GSAI as Guarda de Saída
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1. sessão/perfil/permissões resolvidos
+  activate ORQ
+
+  ORQ->>GINJ: 2. Guarda de injeção
+  GINJ-->>ORQ: Aprovado
+
+  ORQ->>GABU: 3. Guarda de abuso
+  GABU->>GABU: Categorias de conteúdo + política de uso corporativo
+  GABU-->>ORQ: Aprovado
+
+  ORQ->>INT: 4. Classificação de intenção
+  INT->>INT: Compara contra catálogo, aplica limiar por intenção
+  INT-->>ORQ: Intenção + confiança
+
+  ORQ->>COP: 5. Execução — prompt como dado rotulado + intenção em metadados
+  activate COP
+  COP->>CS: Direct Line — envia prompt validado
+  CS->>CS: Executa tópico/ação correspondente
+  CS-->>COP: Resposta gerada
+  COP-->>ORQ: Resposta do Copilot
+  deactivate COP
+
+  ORQ->>GSAI: 6. Guarda de saída
+  GSAI->>GSAI: Avalia resposta antes da entrega
+  GSAI-->>ORQ: Aprovada
+
+  ORQ->>PER: 7. Registra interação completa (desfecho=SUCESSO)
+  PER-->>ORQ: Confirmado
+
+  ORQ-->>API: Resposta final
+  deactivate ORQ
+  API-->>WEB: Resposta
+  WEB-->>U: Exibe resposta
+```
+
+#### 5.3.8.3 Cenário 3 - Mensagem bloqueada pela guarda de abuso
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário autenticado
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant GABU as Guarda de Abuso
+  participant SAFE as Azure AI Content Safety
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem com uso indevido<br/>(fora do escopo corporativo)
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1. sessão/perfil/permissões
+  activate ORQ
+  ORQ->>GINJ: 2. Guarda de injeção
+  GINJ-->>ORQ: Aprovado (nenhuma injeção detectada)
+
+  ORQ->>GABU: 3. Guarda de abuso
+  activate GABU
+  GABU->>SAFE: Avalia categorias de conteúdo
+  SAFE-->>GABU: Classificação
+  GABU->>GABU: Avalia política de uso corporativo
+
+  alt uso indevido confirmado
+    GABU-->>ORQ: Desfecho = BLOQUEADA_ABUSO
+    deactivate GABU
+    ORQ->>PER: Registra interação nominal<br/>(usuário é autenticado e conhecido)
+    PER-->>ORQ: Confirmado
+    ORQ-->>API: Recusa orientativa
+    API-->>WEB: Resposta de bloqueio
+    WEB-->>U: Exibe recusa com orientação
+  else uso dentro da política
+    GABU-->>ORQ: Aprovado
+    Note over ORQ: Segue para classificação de intenção (Cenário 2)
+  end
+  deactivate ORQ
+```
+
+#### 5.3.8.4 Cenário 4 - Guarda de saída bloqueia injeção indireta
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor ATK as Atacante
+  participant SP as SharePoint
+  actor U as Usuário legítimo
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant COP as copilot/client.py
+  participant CS as Copilot Studio
+  participant GSAI as Guarda de Saída
+  participant PER as persistence/
+
+  ATK->>SP: Deposita documento com<br/>instrução maliciosa embutida
+  Note over ATK,SP: Ataque não passa pelo campo de texto —<br/>a entrada do usuário é inocente
+
+  U->>WEB: Faz pergunta legítima sobre o portfólio
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1–4. sessão, guardas de entrada e<br/>classificação (todas aprovadas)
+  activate ORQ
+  ORQ->>COP: 5. Execução — prompt rotulado
+  COP->>CS: Direct Line
+  CS->>SP: Recupera documento para compor resposta
+  SP-->>CS: Conteúdo do documento (com instrução embutida)
+  CS-->>COP: Resposta contaminada pela instrução do documento
+  COP-->>ORQ: Resposta do Copilot
+
+  ORQ->>GSAI: 6. Guarda de saída
+  activate GSAI
+  GSAI->>GSAI: Avalia a resposta antes da entrega
+  GSAI-->>ORQ: Desfecho = BLOQUEADA_SAIDA
+  deactivate GSAI
+
+  ORQ->>PER: 7. Registra interação (desfecho=BLOQUEADA_SAIDA)
+  PER-->>ORQ: Confirmado
+  ORQ-->>API: Recusa seca, sem repetir a instrução recebida
+  deactivate ORQ
+  API-->>WEB: Resposta de bloqueio
+  WEB-->>U: Exibe recusa padrão
+```
+
+#### 5.3.8.5 Cenário 5 - Disparo de rotina agendada
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário (dono, GERIR_ROTINAS)
+  participant WEB as Frontend (Rotinas)
+  participant API as api/ (FastAPI)
+  participant VAL as rotinas/validacao.py
+  participant ORQV as Orquestrador (validação)
+  participant AGD as rotinas/agendador.py<br/>(APScheduler)
+  participant DB as PostgreSQL
+  participant EXE as rotinas/execucao.py
+  participant ORQE as Orquestrador (execução)
+  participant COP as copilot/client.py
+  actor DIR as Diretoria
+
+  U->>WEB: Cadastra rotina (prompt, cron, timezone)
+  WEB->>API: POST /api/rotinas
+  API->>VAL: Valida prompt no cadastro
+  VAL->>ORQV: Passa pelas guardas e classificador
+  alt não resolve em intenção do catálogo
+    ORQV-->>VAL: Recusa
+    VAL-->>API: Cadastro recusado, com explicação
+    API-->>WEB: Erro de validação
+    WEB-->>U: Exibe motivo da recusa
+  else resolve em intenção válida
+    ORQV-->>VAL: Aprovado
+    VAL->>DB: Persiste Rotina (ativa, intencao_prevista)
+    VAL-->>API: Confirmado
+    API-->>WEB: Rotina criada
+    WEB-->>U: Exibe confirmação
+  end
+
+  Note over AGD,DB: Fuso da rotina (ex.: America/Sao_Paulo),<br/>coalesce + misfire_grace_time evitam disparo em rajada
+
+  AGD->>DB: Job persistido dispara no horário agendado
+  AGD->>EXE: Aciona execução (canal=rotina)
+  activate EXE
+  EXE->>ORQE: Reentra pelo MESMO orquestrador<br/>(permissões do dono resolvidas na execução)
+  activate ORQE
+  ORQE->>ORQE: Repassa por todas as guardas<br/>(catálogo e permissões reavaliados)
+  ORQE->>COP: 5. Execução no Copilot Studio
+  COP-->>ORQE: Resposta (relatório)
+  ORQE->>DB: Registra Interacao (canal=rotina)
+  ORQE->>DB: Registra ExecucaoRotina (status, interacao_id)
+  deactivate ORQE
+  EXE-->>AGD: Execução concluída
+  deactivate EXE
+
+  WEB->>API: Consulta histórico de execuções
+  API->>DB: SELECT execuções da rotina
+  DB-->>API: Lista de execuções
+  API-->>WEB: Exibe status na aba de resultados
+  WEB-->>DIR: Diretoria acessa relatório no app<br/>(sem depender de e-mail/Teams)
+```
+
+#### 5.3.8.6 Convenções adotadas
+
+Os cinco diagramas usam `autonumber` para numerar as mensagens e distinguem atores externos, como usuário, atacante e Diretoria, dos participantes internos do middleware. Os nomes dos participantes seguem os módulos e arquivos apresentados na estrutura do repositório, o que aproxima a documentação dinâmica da implementação sem transformar o diagrama em um mapa de funções Python.
+
+Os fragmentos `alt` representam caminhos mutuamente exclusivos: entrada bloqueada ou aprovada, uso indevido ou permitido, rotina rejeitada ou cadastrada. Os comandos `activate` e `deactivate` destacam o período em que o orquestrador, uma guarda ou uma execução permanece responsável pelo processamento. As mensagens para `persistence/` e PostgreSQL representam o contrato lógico de persistência; a implementação física pode variar sem alterar o comportamento documentado.
+
+O Cenário 2 funciona como fluxo de sucesso de referência para os Cenários 1 e 3, que interrompem o processamento antes da classificação ou da execução. O Cenário 4 evidencia que a validação da saída é necessária mesmo quando a solicitação do usuário foi legítima, pois o conteúdo recuperado de uma fonte externa pode introduzir uma instrução indireta. O Cenário 5 reusa o mesmo orquestrador na execução agendada para impedir que rotinas contornem as guardas e as permissões aplicadas ao chat.
+
+#### 5.3.8.7 Rastreabilidade dos cenários
+
+| Cenário | Requisitos e artefatos relacionados | Evidência no fluxo |
+|---|---|---|
+| 1. Bloqueio por injeção | RNF01, RNF02, risco R09, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO` sem expor o motivo. |
+| 2. Sucesso no chat | RF01 a RF03, INT-02, INT-08 e INT-10 | Sessão, permissões, guardas, classificação, execução no Copilot, validação da saída e persistência completa. |
+| 3. Bloqueio por abuso | RNF02, RNF05, `GuardaAbuso` | Azure AI Content Safety e política corporativa produzem recusa orientativa e registro nominal. |
+| 4. Injeção indireta | RNF01, RNF02, risco R09, `GuardaSaida` | Conteúdo contaminado pelo documento é bloqueado antes de chegar ao usuário e sem repetir a instrução. |
+| 5. Rotina agendada | RF06, INT-07, feature F1.21, `Rotina` e `ExecucaoRotina` | Cadastro validado, execução reprocessada pelo mesmo orquestrador, registro do resultado e consulta do histórico. |
+
+Os cenários cobrem os principais desfechos definidos no diagrama de classes da Sprint 2: `BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA` e `SUCESSO`. `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR` permanecem representados no modelo estático e devem ser detalhados em cenários complementares quando seus contratos de implementação forem definidos.
+
+#### 5.3.8.8 Limitações e refinamentos futuros
+
+- **Contratos de API.** Os diagramas mostram as chamadas principais, mas ainda não definem schemas de requisição e resposta, códigos HTTP, timeouts ou política de retentativas.
+- **Falhas intermediárias.** Os cenários de sucesso não detalham indisponibilidade do Azure AI Content Safety, do Copilot Studio, do PostgreSQL ou do APScheduler. Esses caminhos devem ser acrescentados quando os critérios de resiliência forem validados.
+- **Execução concorrente.** `coalesce` e `misfire_grace_time` são registrados como decisões do agendador, mas não substituem a definição de idempotência, bloqueio concorrente e limite de execuções simultâneas.
+- **Dados externos.** A recuperação do SharePoint aparece no Cenário 4 para evidenciar a injeção indireta; a validação de origem, o isolamento do conteúdo e a política de citações ainda precisam ser detalhados.
+- **Evolução da segurança.** Os nomes das guardas e desfechos estão alinhados ao modelo de classes, mas os limiares, versões de regras e evidências de auditoria devem acompanhar a configuração efetivamente implantada.
 
 ## 5.4 Catálogo de Intenções do Agente
 
