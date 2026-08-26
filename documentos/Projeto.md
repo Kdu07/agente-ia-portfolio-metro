@@ -74,6 +74,7 @@
         - [5.4.11 Diagrama de Classes UML — Sprint 2](#5411-diagrama-de-classes-uml--sprint-2)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
+  - [5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto](#57-canal-de-voz-ingestão-de-áudio-e-conversão-entre-fala-e-texto)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
   - [6.1 Diagrama de Implantação da UML](#61-diagrama-de-implantação-da-uml)
   - [6.2 Justificativa das Escolhas de Implantação](#62-justificativa-das-escolhas-de-implantação)
@@ -3551,6 +3552,70 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 | RNF03. Precisão na classificação de intenções | C1, C2, C3 |
 | RNF04. Disponibilidade do agente | C0, E1 |
 | RNF05. Adequação da resposta ao perfil | B2, A4 |
+
+## 5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto
+
+Esta seção registra a definição técnica do canal de voz da solução, atendendo aos elementos de detalhamento da API de conversão de áudio em texto e de texto em áudio e da API de recebimento dos áudios enviados pelo usuário. O canal de voz materializa o RF02 e a US02, ambos priorizados como MVP, e é a origem do risco R03 registrado na seção 2.6.2.
+
+A seção parte de três definições já estabelecidas neste documento e as detalha, sem contradizê-las. A seção 5.1.2 fixou o Azure Speech Services como tecnologia do canal de voz, consumido pelo navegador mediante emissão de tokens efêmeros pelo backend. As seções 5.2, 5.3 e 5.6 situam a captura de áudio (bloco A2) e a conversão de fala em texto (bloco A3) dentro da camada de Canal. A seção 3.1.5.2 estabeleceu os indicadores de conversão entre voz e texto e registrou que suas metas seriam revisadas quando o serviço de fala fosse definido — pendência que a subseção 5.7.2 encerra.
+
+A organização da seção acompanha a ordem em que as decisões se condicionam:
+
+| Subseção | Conteúdo |
+|---|---|
+| 5.7.1 | Topologia do canal de voz: por qual caminho o áudio trafega e por quê |
+| 5.7.2 | Seleção dos serviços de conversão entre fala e texto |
+| 5.7.3 | API de recebimento de áudios do usuário |
+| 5.7.4 | API de conversão de fala em texto |
+| 5.7.5 | API de conversão de texto em fala |
+| 5.7.6 | Catálogo de erros, limites operacionais e registro |
+| 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções |
+
+### 5.7.1 Topologia do canal de voz
+
+Esta subseção será desenvolvida em conjunto com a especificação da API de recebimento de áudios, registrando as alternativas de trajeto do áudio, a escolha adotada, suas consequências e a política de retenção aplicável.
+
+### 5.7.2 Seleção dos serviços de conversão entre fala e texto
+
+A escolha do serviço de fala condiciona toda a camada de voz: define os formatos de áudio que a API de recebimento pode aceitar, os limites de duração e tamanho por requisição, o mecanismo de autenticação exposto ao navegador, o custo variável de operação e a viabilidade de tratar o vocabulário específico da companhia. Por essa razão a seleção precede as demais subseções.
+
+#### 5.7.2.1 Critérios de seleção
+
+Os critérios foram derivados das restrições de negócio da seção 3.1.4, do RNF01, do risco R03 e das características do canal descritas na seção 5.1.1. Eles se organizam em dois grupos. Os **critérios eliminatórios** expressam condições sem as quais a alternativa não pode ser adotada, independentemente de suas demais qualidades. Os **critérios classificatórios** ordenam as alternativas remanescentes segundo pesos que refletem a criticidade de cada aspecto para o projeto.
+
+**Critérios eliminatórios**
+
+| ID | Critério | Origem |
+|---|---|---|
+| E1 | Não exigir que credencial de longa duração seja exposta no cliente | RNF01 e boas práticas de gestão de segredos registradas na seção 6.5.6 |
+| E2 | Permitir a escolha explícita da região de processamento do áudio | RNF01, quanto à delimitação do ambiente em que os dados são processados |
+| E3 | Suportar português brasileiro tanto no reconhecimento quanto na síntese | RF02 e US02 |
+
+**Critérios classificatórios**
+
+| ID | Critério | Peso | Justificativa do peso |
+|---|---|:-:|---|
+| C1 | Suporte a vocabulário customizado do domínio | 3 | É a única mitigação técnica disponível para o risco R03, cuja severidade é 9, e a condição de possibilidade do indicador de acurácia de termos de domínio da seção 3.1.5.2 |
+| C2 | Aderência ao ecossistema homologado e caminho de transferência ao parceiro | 3 | Decorre da premissa do TAPI de operação dentro do ambiente Microsoft e determina o esforço de homologação após o módulo |
+| C3 | Qualidade e maturidade do reconhecimento em português brasileiro | 2 | Condiciona o WER e, por consequência, a degradação ponta a ponta da classificação de intenções |
+| C4 | Custo no MVP e previsibilidade da tarifa | 2 | O custo de operação é variável e cresce com a adoção, conforme registrado na seção 2.8.9 |
+| C5 | Cobertura de navegadores e maturidade do SDK | 1 | A interface é uma aplicação web responsiva, conforme a seção 5.1.1 |
+| C6 | Latência esperada para usuários no Brasil | 1 | Integra os indicadores de conversão entre voz e texto da seção 3.1.5.2 |
+
+A pontuação atribui 2 ao atendimento pleno, 1 ao atendimento parcial e 0 ao não atendimento, ponderados pelos pesos acima. A pontuação máxima possível é 24.
+
+#### 5.7.2.2 Alternativas avaliadas
+
+Foram avaliadas cinco alternativas, escolhidas por representarem estratégias distintas de solução, e não apenas fornecedores distintos: dois serviços de nuvem de grande porte, um serviço de nuvem especializado em transcrição, a interface nativa dos navegadores e a execução local do modelo no dispositivo do usuário.
+
+| Alternativa | Estratégia | Reconhecimento e síntese |
+|---|---|---|
+| Azure AI Speech | Serviço de nuvem do ecossistema Microsoft | Ambos |
+| Google Cloud Speech-to-Text e Text-to-Speech | Serviço de nuvem de fornecedor concorrente | Ambos |
+| Whisper por API (OpenAI ou Groq) | Serviço de nuvem especializado em transcrição | Apenas reconhecimento no Groq; ambos na OpenAI |
+| Web Speech API | Interface nativa do navegador, sem serviço contratado | Ambos |
+| Whisper em execução local (transformers.js) | Modelo executado no dispositivo do usuário | Apenas reconhecimento |
+
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
