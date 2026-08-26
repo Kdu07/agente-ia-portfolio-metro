@@ -1693,43 +1693,78 @@ CREATE INDEX idx_rotina_usuario ON rotina (id_usuario);
 
 ## 5.1 Visão inicial: tecnologias e ferramentas
 
-Esta seção apresenta uma estimativa inicial das tecnologias e ferramentas que o grupo pretende utilizar na construção da solução, considerando a arquitetura em dois pilares definida para o projeto. Trata-se de uma visão preliminar, sujeita a ajustes ao longo do desenvolvimento conforme validações técnicas e restrições impostas pelo Metrô.
+Esta seção apresenta a especificação consolidada da pilha de tecnologias para a implementação da solução, alinhada à evolução arquitetural do projeto. O escopo posiciona o **Middleware de PLN próprio (Pilar 1)** como o produto central da aplicação, integrando interface web responsiva, módulo analítico de intenções, guardas de segurança em profundidade e um agendador de rotinas autônomas, o qual se conecta ao **Copilot Studio / Ecossistema Microsoft (Pilar 2)** como executor de ações e consultas corporativas sobre a base de dados do portfólio.
 
-### 5.1.1 Tecnologias do Pilar 1 — PLN Próprio da Equipe
+### 5.1.1 Plataformas de Execução (Solução Integrada Web e Mobile)
 
-Responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
+A plataforma de acesso foi desenhada em arquitetura de Single Page Application (SPA) responsiva, eliminando a fragmentação de código e garantindo operação uniforme em qualquer dispositivo:
 
-- **Linguagem de programação**: Python, pela ampla disponibilidade de bibliotecas voltadas a PLN e facilidade de integração com APIs de LLM.
-- **Bibliotecas de NLP**: spaCy e/ou NLTK, para tarefas de pré-processamento textual, tokenização, classificação de intenções e extração de entidades.
-- **API de LLM**: modelo de linguagem via API (ex.: OpenAI ou Azure OpenAI), utilizado para tarefas de compreensão e geração de linguagem natural mais complexas, respeitando a restrição de que nenhum dado sensível real seja enviado a serviços externos não homologados — reforçando o uso de dados sintéticos no MVP.
+- **Interface Web Própria (Desktop e Mobile Web):** Desenvolvida como aplicação web responsiva servida por Nginx, acessível via navegadores em estações de trabalho (Desktop) e dispositivos móveis.
+- **Design Adaptativo e Acessibilidade:** Construída com Tailwind CSS e primitivos de interface acessíveis, com quebras de layout dinâmicas que organizam o chat conversacional, a barra de histórico, a gestão de rotinas e os gráficos analíticos em telas de qualquer dimensão sem exigir bases de código mobile dedicadas.
+- **Canal de Voz Unificado:** Entrada multimodal por áudio diretamente pelo navegador via Azure Speech SDK, com transcrição em tempo real consumida pelo mesmo endpoint conversacional.
 
-### 5.1.2 Tecnologias do Pilar 2 — Integração com Ecossistema Microsoft
+### 5.1.2 Tecnologias do Pilar 1 — Middleware Próprio, Frontend e Serviços Locais
 
-Responsável por conectar o agente à infraestrutura corporativa já adotada pelo Metrô, garantindo aderência aos sistemas existentes.
+Composto pelo frontend estático, pela API backend assíncrona, pelo worker agendador de rotinas e pela persistência local:
 
-- **Copilot Studio**: construção e orquestração do agente conversacional dentro do ecossistema Microsoft.
-- **Power Platform**: integração com fluxos de automação (Power Automate) e possível consumo/exposição de dados via Power Apps/Power BI, conforme necessidade identificada ao longo do projeto.
+- **Frontend / Camada de Apresentação (`src/web/`):**
+  - *Core & Build:* **React 18**, **TypeScript** e **Vite**, gerando artefatos estáticos leves sem dependência de runtime Node.js em produção.
+  - *Estilização & UI:* **Tailwind CSS** para design responsivo e componentes acessíveis.
+  - *Gerenciamento de Estado de Servidor:* **TanStack Query** para controle de cache, sincronização e revalidação do histórico de conversas e execuções de rotinas.
+  - *Visualização de Dados:* **Recharts** para exibição do dashboard de telemetria, análise de distribuição de intenções e monitoramento das guardas de segurança.
+- **Backend, API e Orquestração (`src/middleware/`):**
+  - *Linguagem & Runtime:* **Python 3.12**, garantindo compatibilidade com o ecossistema moderno de PLN e tipagem estrita.
+  - *Framework Web:* **FastAPI** (com servidor **Uvicorn**), atuando como Backend for Frontend (BFF) com I/O assíncrono não bloqueante e validação automática de contratos via **Pydantic v2**.
+  - *Autenticação & Identidade (`auth/`):* Integração com **Microsoft Entra ID** via fluxo OAuth 2.0 (*Authorization Code + PKCE*) no backend, armazenando a sessão do usuário em cookies seguros (`httpOnly`, `SameSite=Strict`), isolando credenciais do navegador.
+- **Pipeline de Segurança e Processamento de Linguagem Natural (`pipeline/`):**
+  - *Guarda de Injeção (`guardas/injecao/`):* Regras determinísticas de regex e heurísticas combinadas ao **Azure AI Content Safety (Prompt Shields)** para barrar tentativas de manipulação direta de instruções.
+  - *Guarda de Abuso (`guardas/abuso/`):* Políticas corporativas e classificação de conteúdo indevido via Azure AI Content Safety.
+  - *Guarda de Saída (`guardas/saida.py`):* Avaliação da resposta devolvida pelo Copilot Studio antes da entrega ao usuário, mitigando injeções indiretas originadas de documentos do SharePoint.
+  - *Classificador de Intenções (`intencao/`):* Vetorização por embeddings semânticos e classificador supervisionado leve, aplicando limiares de confiança calibrados por intenção sobre o catálogo fechado do portfólio.
+  - *Entrada por Voz (`voz/`):* **Azure Speech Services**, consumido pelo navegador por meio de emissão de tokens de acesso efêmeros de curta duração pelo backend, preservando as chaves do tenant.
+- **Rotinas Agendadas e Processamento em Segundo Plano (`rotinas/`):**
+  - *Agendador:* **APScheduler 3** com persistência de jobs no banco relacional, executando disparos temporais recorrentes (ex.: fechamentos mensais) no contêiner dedicado `worker`, passando pelo mesmo orquestrador de segurança com fuso horário `America/Sao_Paulo`.
+- **Persistência, Auditoria e Migrações (`persistence/`):**
+  - *Banco de Dados Relacional:* **PostgreSQL 16**, armazenando conversas, interações auditadas (com prompt, resposta, intenção, desfecho e latência) e definições de rotinas.
+  - *ORM & Migrações:* **SQLAlchemy 2 (Async)** com driver **asyncpg** e controle de versionamento de esquema via **Alembic**.
+- **Testes e Qualidade:**
+  - *Backend:* **pytest**, **pytest-asyncio** e **pytest-cov** para testes unitários das guardas e testes de integração com os serviços de tenant mockados.
+  - *Frontend:* **Vitest** e **Testing Library** para testes unitários de componentes e hooks de interface.
 
-### 5.1.3 Ferramentas de Apoio ao Desenvolvimento
+### 5.1.3 Tecnologias do Pilar 2 — Ecossistema Microsoft e Execução Corporativa
 
-- **Controle de versão**: Git/GitLab, para versionamento do código e colaboração entre os integrantes do grupo.
-- **Ambiente de desenvolvimento**: ambiente Python (ex.: Jupyter Notebook ou IDE como VS Code) para prototipagem e testes do Pilar 1.
-- **Documentação e gestão do projeto**: ferramentas colaborativas (ex.: Gitlab) para organização de entregas e alinhamento entre a equipe e o parceiro.
+Serviços homologados no tenant do parceiro que recebem requisições validadas pelo middleware e operam as fontes de dados corporativas:
 
-### 5.1.4 Listagem Organizada dos Recursos
+- **Microsoft Copilot Studio:** Plataforma de execução corporativa acionada via **Direct Line API** (`copilot/client.py`), recebendo prompts já rotulados e sanitizados com a intenção resolvida em metadados.
+- **Microsoft Power Platform (Power Automate):** Execução de fluxos automatizados de atualização, leitura e conectores disparados pelos tópicos do agente.
+- **Fontes de Dados Corporativas:** Conectores operando sob menor privilégio para **SharePoint Online (Listas e Documentos)** e conjuntos de dados do **Power BI**.
 
-| Categoria | Tecnologia/Ferramenta | Finalidade |
-|---|---|---|
-| Linguagem | Python | Desenvolvimento do Pilar 1 (PLN próprio) |
-| Biblioteca de NLP | spaCy / NLTK | Pré-processamento, tokenização e classificação de intenções |
-| API de LLM | OpenAI / Azure OpenAI | Compreensão e geração de linguagem natural |
-| Plataforma low-code | Copilot Studio | Construção do agente conversacional (Pilar 2) |
-| Automação | Power Platform (Power Automate) | Integração com sistemas corporativos do Metrô |
-| Versionamento | Git/GitLab | Controle de versão e colaboração |
-| Ambiente de desenvolvimento | VS Code / Jupyter Notebook | Prototipagem e testes |
-| Gestão e documentação | GitLab | Organização de entregas e alinhamento da equipe |
+### 5.1.4 Confiabilidade e Escalabilidade
 
-> **Observação**: esta listagem representa uma visão inicial e poderá ser refinada conforme o projeto evolua, especialmente à medida que forem definidos com mais precisão os requisitos de integração com os sistemas homologados do Metrô.
+- **Containerização e Isolamento de Serviços:** Toda a pilha de desenvolvimento e produção é isolada em contêineres gerenciados por `Dockerfile` e `docker-compose.yml`, separando `web` (Nginx), `middleware` (FastAPI), `worker` (APScheduler) e `db` (PostgreSQL). A separação do `worker` mantém a API *stateless*, viabilizando escalabilidade horizontal sem duplicação de rotinas agendadas.
+- **Confiabilidade por Defesa em Profundidade e Perímetro Seguro:** 
+  - Pipeline executado em ordem estrita invariável (`Sessão → Injeção → Abuso → Intenção → Execução → Saída → Registro`).
+  - Mitigação de injeção indireta via inspeção da saída gerada a partir de documentos.
+  - Todos os serviços de IA (Content Safety, Speech e Copilot Studio) residem no tenant homologado da organização, garantindo a conformidade do perímetro de segurança.
+- **Auditoria Universal e Rastreabilidade:** Cada mensagem processada, independentemente de ter sido aprovada, bloqueada por injeção, barrada por abuso ou recusada por baixa confiança, grava um registro imutável em banco, viabilizando o monitoramento contínuo da saúde do sistema e a evolução do catálogo de intenções.
+
+### 5.1.5 Matriz Consolidada da Pilha de Tecnologias
+
+| Camada | Tecnologia / Ferramenta | Papel na Solução | Critério / Justificativa |
+|---|---|---|---|
+| **Interface / Frontend** | React 18 / TypeScript / Vite / Tailwind CSS | Interface Web Unificada (Desktop e Mobile) | SPA leve, responsiva, estática e sem runtime Node.js em produção. |
+| **Servidor Web / Proxy** | Nginx | Servir estáticos da SPA e proxy reverso para `/api` | Elimina problemas de CORS e gerencia rotas estáticas em mesma origem. |
+| **Backend & API (BFF)** | Python 3.12 / FastAPI / Pydantic v2 | API REST assíncrona, orquestrador e controle de sessão | Alta performance Input/Output, tipagem forte e controle centralizado em `deps.py`. |
+| **Autenticação** | Microsoft Entra ID (OAuth PKCE) | Gestão de identidade, perfis e permissões | Autenticação corporativa com sessão segura em cookies `httpOnly`. |
+| **Segurança (Injeção/Abuso)** | Regras Regex + Azure AI Content Safety | Guardas de injeção direta/indireta e abuso | Análise adversarial em profundidade dentro do tenant homologado. |
+| **PLN / Intenções** | Embeddings + Classificador Supervisionado | Reconhecimento do catálogo e extração de entidades | Calibração de limiares de confiança probabilísticos por intenção. |
+| **Canal de Voz** | Azure Speech Services SDK | Transcrição de áudio em tempo real na interface web | Áudio processado no tenant; tokens de curta duração gerados no backend. |
+| **Agendador de Rotinas** | APScheduler 3 (Worker em contêiner) | Disparo autônomo de rotinas pré-programadas | Execução desassistida passando pelo mesmo orquestrador de segurança. |
+| **Integração Copilot** | Direct Line API (`copilot/client.py`) | Comunicação assíncrona com o Copilot Studio | Desacoplamento entre o produto analítico/guardas e as ações no portfólio. |
+| **Banco de Dados & ORM** | PostgreSQL 16 + SQLAlchemy 2 + Alembic | Persistência de auditoria, rotinas e conversas | Modelo relacional assíncrono robusto e versionamento de esquema. |
+| **Executor Corporativo** | Copilot Studio / Power Platform | Execução de tópicos, conectores e fluxos | Plataforma oficial do parceiro para ações sobre SharePoint e Power BI. |
+| **Ambiente & Deploy** | Docker / Docker Compose | Empacotamento dos 4 serviços (`web`, `api`, `worker`, `db`) | Reprodutibilidade total do ambiente e separação de processos. |
+| **Testes** | Pytest / Vitest / Testing Library | Testes unitários e de integração (frontend/backend) | Cobertura de guardas, orquestrador e componentes de interface. |
 
 ### 5.1.5 Vetorização de texto: Bag of Words e TF-IDF (linha de base clássica)
 
