@@ -9,7 +9,7 @@ interface Mensagem {
 const INICIAIS: Mensagem[] = [
   {
     autor: "agente",
-    texto: "Olá! Eu sou o Prata, seu assistente de projetos. Posso ajudar com status, riscos, marcos e pendências do portfólio.",
+    texto: "Olá! O acompanhamento do Projeto X está ativo. Posso ajudar a consultar status, revisar riscos, acompanhar marcos ou registrar uma pendência.",
     horario: "10:00",
   },
 ];
@@ -47,10 +47,10 @@ export function Principal() {
     <div className="page conversation-page">
       <header className="topbar">
         <div className="assistant-title">
-          <span className="brand-mark brand-mark--image"><img src="/logo-prata.png" alt="" /></span>
+          <span className="brand-mark brand-mark--letter" aria-hidden="true">P</span>
           <span>
-            <strong>Prata • Assistente de Projetos</strong>
-            <small><i /> Ativa no canal do Projeto X</small>
+            <strong>Projeto X</strong>
+            <small><i /> Acompanhamento ativo no portfólio</small>
           </span>
         </div>
       </header>
@@ -59,7 +59,7 @@ export function Principal() {
         <div className="messages" aria-live="polite">
           {mensagens.map((mensagem, indice) => (
             <div className={`message-row message-row--${mensagem.autor}`} key={`${mensagem.horario}-${indice}`}>
-              {mensagem.autor === "agente" ? <span className="message-avatar brand-mark--image"><img src="/logo-prata.png" alt="" /></span> : null}
+              {mensagem.autor === "agente" ? <span className="message-avatar brand-mark--letter" aria-label="Prata">P</span> : null}
               <div>
                 <article className="message-bubble">{mensagem.texto}</article>
                 <time>{mensagem.horario}</time>
@@ -72,7 +72,7 @@ export function Principal() {
         {notificacao ? (
           <aside className="notification-card" role="dialog" aria-label="Notificação do assistente">
             <button className="notification-close" onClick={() => setNotificacao(false)} aria-label="Fechar">×</button>
-            <strong><span className="mini-mark brand-mark--image"><img src="/logo-prata.png" alt="" /></span> Notificação do Assistente</strong>
+            <strong><span className="mini-mark brand-mark--letter" aria-hidden="true">P</span> Alerta de marco</strong>
             <p>O marco <b>“Entrega da Fase 2”</b> do Projeto X está com atraso de <em>3 dias</em>. Quer atualizar agora?</p>
             <div>
               <button className="primary-button" onClick={verDetalhes}>Ver detalhes</button>
