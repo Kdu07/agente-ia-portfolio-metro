@@ -70,6 +70,7 @@
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
     - [5.2.3 Diagrama atual da Sprint 2](#523-diagrama-atual-da-sprint-2)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
+    - [5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2](#538-diagramas-de-sequência-de-casos-críticos--sprint-2)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
         - [5.4.11 Diagrama de Classes UML — Sprint 2](#5411-diagrama-de-classes-uml--sprint-2)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
@@ -2592,6 +2593,12 @@ Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revi
 - **Comportamento em falha parcial.** DS03 trata a gravação como atômica: ela é confirmada ou falha por inteiro. O comportamento diante de atualização parcialmente aplicada — mais de um campo alterado em uma mesma transação — ainda não foi definido e está registrado como pendência técnica em INT-05.
 - **Cobertura da trilha de auditoria.** A modelagem dinâmica evidenciou uma lacuna do mapeamento de integrações: a ficha INT-10 prevê o registro de consultas, intenções classificadas, recusas e alterações efetivadas, mas não de alertas proativos, e a rastreabilidade de 5.5.6 associa o RF06 apenas a INT-03 e INT-07. Por coerência, DS04 não registra o alerta emitido. Recomenda-se ampliar o escopo de INT-10 para cobrir as notificações do RF06, de modo que a atuação proativa também seja auditável.
 - **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
+
+### 5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2
+
+Os diagramas desta subseção apresentam a versão atual da modelagem dinâmica do middleware na Sprint 2. Eles detalham cinco casos críticos que atravessam as guardas de segurança, o classificador de intenções, a integração com o Copilot Studio, a persistência das interações e a execução de rotinas agendadas.
+
+Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriormente em 5.3. Os diagramas anteriores permanecem como histórico da modelagem e enfatizam os fluxos de negócio do agente; os cenários atuais partem da implementação do repositório, incluindo a API FastAPI, o cliente do Copilot Studio, o Azure AI Content Safety e as camadas de persistência. O código-fonte Mermaid é mantido neste documento para permitir revisão e evolução do artefato.
 
 ## 5.4 Catálogo de Intenções do Agente
 
