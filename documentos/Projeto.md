@@ -3557,7 +3557,7 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 Esta seção registra a definição técnica do canal de voz da solução, atendendo aos elementos de detalhamento da API de conversão de áudio em texto e de texto em áudio e da API de recebimento dos áudios enviados pelo usuário. O canal de voz materializa o RF02 e a US02, ambos priorizados como MVP, e é a origem do risco R03 registrado na seção 2.6.2.
 
-A seção parte de três definições já estabelecidas neste documento e as detalha, sem contradizê-las. A seção 5.1.2 fixou o Azure Speech Services como tecnologia do canal de voz, consumido pelo navegador mediante emissão de tokens efêmeros pelo backend. As seções 5.2, 5.3 e 5.6 situam a captura de áudio (bloco A2) e a conversão de fala em texto (bloco A3) dentro da camada de Canal. A seção 3.1.5.2 estabeleceu os indicadores de conversão entre voz e texto e registrou que suas metas seriam revisadas quando o serviço de fala fosse definido — pendência que a subseção 5.7.2 encerra.
+A seção parte de três definições já estabelecidas neste documento e as detalha, sem contradizê-las. A seção 5.1.2 fixou o Azure Speech Services, também designado Azure AI Speech, nome atual do produto, como tecnologia do canal de voz, consumido pelo navegador mediante emissão de tokens efêmeros pelo backend. As seções 5.2, 5.3 e 5.6 situam a captura de áudio (bloco A2) e a conversão de fala em texto (bloco A3) dentro da camada de Canal. A seção 3.1.5.2 estabeleceu os indicadores de conversão entre voz e texto e registrou que suas metas seriam revisadas quando o serviço de fala fosse definido — pendência que a subseção 5.7.2 encerra.
 
 A organização da seção acompanha a ordem em que as decisões se condicionam:
 
@@ -3620,7 +3620,7 @@ Foram avaliadas cinco alternativas, escolhidas por representarem estratégias di
 
 | Alternativa | E1 | E2 | E3 | Resultado |
 |---|:-:|:-:|:-:|---|
-| Azure AI Speech | Atende | Atende | Atende | Classificada |
+| Azure Speech | Atende | Atende | Atende | Classificada |
 | Google Cloud Speech e TTS | Atende | Atende | Atende | Classificada |
 | Whisper por API | Atende | **Não atende** | Atende | **Eliminada** |
 | Web Speech API | Atende | **Não atende** | Atende | **Eliminada** |
