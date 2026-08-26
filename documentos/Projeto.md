@@ -3616,6 +3616,34 @@ Foram avaliadas cinco alternativas, escolhidas por representarem estratégias di
 | Web Speech API | Interface nativa do navegador, sem serviço contratado | Ambos |
 | Whisper em execução local (transformers.js) | Modelo executado no dispositivo do usuário | Apenas reconhecimento |
 
+#### 5.7.2.3 Aplicação dos critérios eliminatórios
+
+| Alternativa | E1 | E2 | E3 | Resultado |
+|---|:-:|:-:|:-:|---|
+| Azure AI Speech | Atende | Atende | Atende | Classificada |
+| Google Cloud Speech e TTS | Atende | Atende | Atende | Classificada |
+| Whisper por API | Atende | **Não atende** | Atende | **Eliminada** |
+| Web Speech API | Atende | **Não atende** | Atende | **Eliminada** |
+| Whisper em execução local | Atende | Atende | Atende parcialmente | Classificada |
+
+Duas eliminações merecem registro explícito.
+
+O **Whisper por API** foi eliminado por E2: os provedores avaliados não oferecem escolha da região em que o áudio é processado, o que impede delimitar o ambiente de processamento exigido pelo RNF01. O critério E1 é atendido apenas porque a chamada seria intermediada pelo backend, jamais pelo navegador.
+
+A **Web Speech API** foi eliminada pelo mesmo critério. A interface é atraente por não exigir credencial nem infraestrutura, mas o reconhecimento é executado, por padrão, em servidores do fornecedor do navegador, sem que a aplicação possa determinar onde. A partir do Chrome 139 existe um modo de reconhecimento local, controlado pela propriedade `processLocally` e consultável por `SpeechRecognition.available()`, que atenderia E2. A disponibilidade de pacote de idioma local, contudo, depende do navegador, e não foi possível confirmar a existência de pacote para português brasileiro. Registra-se como verificação a ser realizada e documentada na Sprint 3, sem que ela reabra a decisão: mesmo confirmada, a alternativa permaneceria com pontuação baixa em C1, conforme a subseção 5.7.2.6.
+
+#### 5.7.2.4 Quadro comparativo das alternativas classificadas
+
+| Critério | Peso | Azure AI Speech | Google Cloud | Whisper local |
+|---|:-:|---|---|---|
+| C1 — Vocabulário de domínio | 3 | **2** — listas de frases por requisição e treinamento de modelo customizado | **2** — adaptação de fala com conjuntos de frases | **0** — sem mecanismo de viés de vocabulário |
+| C2 — Ecossistema e transferência | 3 | **2** — o serviço pertence ao ecossistema já adotado pelo parceiro | **0** — exigiria homologação de fornecedor adicional | **1** — não introduz serviço externo, mas tampouco é auditável pelo parceiro |
+| C3 — Qualidade em pt-BR | 2 | **2** — suporte nativo e maduro | **2** — suporte nativo e maduro | **1** — o modelo `base` é mediano; o `small` exige transferência de porte elevado |
+| C4 — Custo no MVP | 2 | **1** — nível gratuito generoso, tarifa do nível pago acima da concorrência | **2** — franquia mensal e tarifa por minuto competitiva | **2** — sem custo de serviço |
+| C5 — Navegadores e SDK | 1 | **2** — SDK JavaScript oficial, já declarado nas dependências da interface | **1** — consumo por REST, sem SDK de navegador equivalente | **0** — aceleração por GPU restrita a Chrome e Edge |
+| C6 — Latência no Brasil | 1 | **2** — região em território nacional | **2** — região em território nacional | **1** — depende do equipamento do usuário |
+| **Total ponderado** | **24** | **22** | **17** | **10** |
+
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
