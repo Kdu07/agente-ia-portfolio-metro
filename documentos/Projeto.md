@@ -2693,6 +2693,92 @@ sequenceDiagram
   WEB-->>U: Exibe resposta
 ```
 
+#### 5.3.8.3 Cenário 3 — Mensagem bloqueada pela guarda de abuso
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário autenticado
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant GABU as Guarda de Abuso
+  participant SAFE as Azure AI Content Safety
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem com uso indevido<br/>(fora do escopo corporativo)
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1. sessão/perfil/permissões
+  activate ORQ
+  ORQ->>GINJ: 2. Guarda de injeção
+  GINJ-->>ORQ: Aprovado (nenhuma injeção detectada)
+
+  ORQ->>GABU: 3. Guarda de abuso
+  activate GABU
+  GABU->>SAFE: Avalia categorias de conteúdo
+  SAFE-->>GABU: Classificação
+  GABU->>GABU: Avalia política de uso corporativo
+
+  alt uso indevido confirmado
+    GABU-->>ORQ: Desfecho = BLOQUEADA_ABUSO
+    deactivate GABU
+    ORQ->>PER: Registra interação nominal<br/>(usuário é autenticado e conhecido)
+    PER-->>ORQ: Confirmado
+    ORQ-->>API: Recusa orientativa
+    API-->>WEB: Resposta de bloqueio
+    WEB-->>U: Exibe recusa com orientação
+  else uso dentro da política
+    GABU-->>ORQ: Aprovado
+    Note over ORQ: Segue para classificação de intenção (Cenário 2)
+  end
+  deactivate ORQ
+```
+
+#### 5.3.8.4 Cenário 4 — Guarda de saída bloqueia injeção indireta
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor ATK as Atacante
+  participant SP as SharePoint
+  actor U as Usuário legítimo
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant COP as copilot/client.py
+  participant CS as Copilot Studio
+  participant GSAI as Guarda de Saída
+  participant PER as persistence/
+
+  ATK->>SP: Deposita documento com<br/>instrução maliciosa embutida
+  Note over ATK,SP: Ataque não passa pelo campo de texto —<br/>a entrada do usuário é inocente
+
+  U->>WEB: Faz pergunta legítima sobre o portfólio
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1–4. sessão, guardas de entrada e<br/>classificação (todas aprovadas)
+  activate ORQ
+  ORQ->>COP: 5. Execução — prompt rotulado
+  COP->>CS: Direct Line
+  CS->>SP: Recupera documento para compor resposta
+  SP-->>CS: Conteúdo do documento (com instrução embutida)
+  CS-->>COP: Resposta contaminada pela instrução do documento
+  COP-->>ORQ: Resposta do Copilot
+
+  ORQ->>GSAI: 6. Guarda de saída
+  activate GSAI
+  GSAI->>GSAI: Avalia a resposta antes da entrega
+  GSAI-->>ORQ: Desfecho = BLOQUEADA_SAIDA
+  deactivate GSAI
+
+  ORQ->>PER: 7. Registra interação (desfecho=BLOQUEADA_SAIDA)
+  PER-->>ORQ: Confirmado
+  ORQ-->>API: Recusa seca, sem repetir a instrução recebida
+  deactivate ORQ
+  API-->>WEB: Resposta de bloqueio
+  WEB-->>U: Exibe recusa padrão
+```
+
 ## 5.4 Catálogo de Intenções do Agente
 
 ### 5.4.1 Objetivo e função do catálogo
