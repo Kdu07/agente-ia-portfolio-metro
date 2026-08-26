@@ -2594,13 +2594,13 @@ Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revi
 - **Cobertura da trilha de auditoria.** A modelagem dinâmica evidenciou uma lacuna do mapeamento de integrações: a ficha INT-10 prevê o registro de consultas, intenções classificadas, recusas e alterações efetivadas, mas não de alertas proativos, e a rastreabilidade de 5.5.6 associa o RF06 apenas a INT-03 e INT-07. Por coerência, DS04 não registra o alerta emitido. Recomenda-se ampliar o escopo de INT-10 para cobrir as notificações do RF06, de modo que a atuação proativa também seja auditável.
 - **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
 
-### 5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2
+### 5.3.8 Diagramas de Sequência de Casos Críticos - Sprint 2
 
 Os diagramas desta subseção apresentam a versão atual da modelagem dinâmica do middleware na Sprint 2. Eles detalham cinco casos críticos que atravessam as guardas de segurança, o classificador de intenções, a integração com o Copilot Studio, a persistência das interações e a execução de rotinas agendadas.
 
 Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriormente em 5.3. Os diagramas anteriores permanecem como histórico da modelagem e enfatizam os fluxos de negócio do agente; os cenários atuais partem da implementação do repositório, incluindo a API FastAPI, o cliente do Copilot Studio, o Azure AI Content Safety e as camadas de persistência. O código-fonte Mermaid é mantido neste documento para permitir revisão e evolução do artefato.
 
-#### 5.3.8.1 Cenário 1 — Mensagem bloqueada pela guarda de injeção
+#### 5.3.8.1 Cenário 1 - Mensagem bloqueada pela guarda de injeção
 
 ```mermaid
 sequenceDiagram
@@ -2639,7 +2639,7 @@ sequenceDiagram
   deactivate ORQ
 ```
 
-#### 5.3.8.2 Cenário 2 — Fluxo completo de sucesso (chat)
+#### 5.3.8.2 Cenário 2 - Fluxo completo de sucesso (chat)
 
 ```mermaid
 sequenceDiagram
@@ -2693,7 +2693,7 @@ sequenceDiagram
   WEB-->>U: Exibe resposta
 ```
 
-#### 5.3.8.3 Cenário 3 — Mensagem bloqueada pela guarda de abuso
+#### 5.3.8.3 Cenário 3 - Mensagem bloqueada pela guarda de abuso
 
 ```mermaid
 sequenceDiagram
@@ -2735,7 +2735,7 @@ sequenceDiagram
   deactivate ORQ
 ```
 
-#### 5.3.8.4 Cenário 4 — Guarda de saída bloqueia injeção indireta
+#### 5.3.8.4 Cenário 4 - Guarda de saída bloqueia injeção indireta
 
 ```mermaid
 sequenceDiagram
@@ -2779,7 +2779,7 @@ sequenceDiagram
   WEB-->>U: Exibe recusa padrão
 ```
 
-#### 5.3.8.5 Cenário 5 — Disparo de rotina agendada
+#### 5.3.8.5 Cenário 5 - Disparo de rotina agendada
 
 ```mermaid
 sequenceDiagram
