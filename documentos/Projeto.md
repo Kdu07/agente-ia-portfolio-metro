@@ -5172,6 +5172,123 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 - Escalação de privilégio em rotinas antigas
 - Disparos duplicados ou perdidos por falha do worker
 
+### 9.1.3 Integração com Voz
+
+A funcionalidade de voz não depende de nenhuma onda específica e nenhuma onda depende dela. Deve ser encaixada onde houver folga na Sprint 3 ou 4, preferencialmente na Onda 1, já que a transcrição alimenta o mesmo `/chat`.
+
+**Escopo da voz:**
+- Emissão de token efêmero do Azure Speech pelo backend
+- Integração do Speech SDK no frontend
+- Transcrição parcial em tempo real
+- Áudio dentro do perímetro do tenant do parceiro
+
+**Critérios de aceite:**
+- Chave do Azure Speech nunca exposta ao frontend
+- Token efêmero tem curta duração e é renovado quando necessário
+- Transcrição é enviada ao endpoint `/chat` como texto
+- Interface mostra feedback visual de gravação
+
+### 9.1.4 Estratégia de Testes
+
+A qualidade é garantida através de uma pirâmide de testes bem definida:
+
+**Testes unitários:**
+- Cada guarda possui sua própria suíte de testes
+- Classificador testado com casos de treino e de teste separados
+- Componentes do React testados com Vitest + Testing Library
+- Cobertura mínima de 80% para código crítico
+
+**Testes de integração:**
+- Fluxo completo do orquestrador com serviços externos dublados
+- Integração com banco de dados real (container de teste)
+- Integração frontend-backend com contratos validados
+- Testes de autenticação ponta a ponta
+
+**Testes adversariais:**
+- Casos de ataque de prompt injection
+- Tentativas de abuso com conteúdo ofensivo
+- Injeção indireta via respostas maliciosas
+- Tentativas de escalonamento de privilégio em rotinas
+
+**Testes de usabilidade:**
+- Testes com usuários do Metrô (quando possível)
+- Validação de fluxos críticos (chat, rotinas, dashboard)
+- Acessibilidade (WCAG 2.1 AA)
+- Responsividade em diferentes dispositivos
+
+### 9.1.5 Estratégia de Implantação
+
+**Ambientes:**
+- **Desenvolvimento:** Docker Compose local (web + middleware + worker + db)
+- **Homologação:** Ambiente no tenant Microsoft do parceiro (quando disponível)
+- **Produção:** Definida em conjunto com o Metrô, respeitando políticas corporativas
+
+**Pipeline de CI/CD:**
+- Branches `feat`, `fix`, `docs`, `design`, `test` integram à `develop`
+- Branches `release` integram à `main` e `develop` após validação
+- Hotfixes partem de `main` e integram de volta
+- Testes automatizados executados em cada merge request
+- Builds de frontend e backend gerados automaticamente
+
+**Rollback:**
+- Cada release é tagada no Git (ex: `v3.0.0` para Sprint 3)
+- Migrações do banco são versionadas com Alembic
+- Capacidade de reverter para versão anterior em caso de problema crítico
+- Procedimento documentado no [GestaoConfiguracao.md](GestaoConfiguracao.md)
+
+### 9.1.6 Dependências Externas em Caminho Crítico
+
+Quatro recursos precisam ser provisionados no tenant do parceiro antes do início da Sprint 3:
+
+| Recurso | Necessário para | Prioridade |
+|---|---|---|
+| Entra ID — registro de aplicação | Autenticação, perfis e permissões (onda 1) | Alta |
+| Azure AI Content Safety | Guardas de injeção, abuso e saída (onda 2) | Alta |
+| Copilot Studio com Direct Line habilitado | Execução das ações (onda 1 em diante) | Alta |
+| Azure Speech | Entrada por voz (flexível) | Média |
+
+**Ação mitigatória:** Caso algum recurso não esteja disponível no início da Sprint 3, a equipe deve priorizar outras ondas que não dependam desse recurso específico, ou implementar versões mockadas para permitir progresso técnico enquanto aguarda provisionamento.
+
+### 9.1.7 Integração Contínua entre Sprints
+
+**Transição Sprint 3 → Sprint 4:**
+- Onda 1 (Fundação) e Onda 2 (Guardas) devem estar concluídas
+- Sistema autenticado e protegido operacional
+- Testes de segurança validados
+- Dashboard básico de bloqueios funcionando
+
+**Transição Sprint 4 → Sprint 5:**
+- Onda 3 (Intenções) e Onda 4 (Análise) devem estar concluídas
+- Classificador integrado e calibrado
+- Dashboard de intenções operacional
+- Backlog de novas intenções alimentado
+
+**Entrega final Sprint 5:**
+- Onda 5 (Rotinas) concluída
+- Voz integrada (se encaixada)
+- Sistema completo ponta a ponta
+- Documentação atualizada
+- Manual de instalação funcional
+
+### 9.1.8 Métricas de Qualidade e Sucesso
+
+**Métricas técnicas:**
+- Cobertura de testes ≥ 80% para código crítico
+- Latência p50 do chat < 3 segundos, p95 < 8 segundos
+- Tempo de build < 5 minutos
+- Zero vulnerabilidades críticas em dependências
+
+**Métricas de produto:**
+- Acurácia do classificador ≥ 0.85 (já atingida em validação)
+- Taxa de bloqueios falsos positivos < 5%
+- Tempo médio de resposta a consultas reduzido em 30% (baseline a ser estabelecida)
+- Satisfação dos usuários do Metrô (pesquisa pós-implementação)
+
+**Métricas de processo:**
+- SLA de revisão de merge requests: 24 horas úteis
+- Taxa de bugs em produção < 10% das issues
+- Tempo de resolução de incidentes críticos < 4 horas
+
 ## 9.2 Arquitetura de Codificação e Estrutura de Diretórios
 
 ## 9.2 Modelo de Recomendação
