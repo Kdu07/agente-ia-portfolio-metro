@@ -65,3 +65,88 @@ A escala de criticidade tem três níveis.
 **Média** — o erro degrada a extração de entidades, mas o contexto do enunciado ou a confirmação prévia da transação permitem recuperação. É o caso do vocabulário metodológico de gestão.
 
 **Baixa** — o erro afeta a fluência da transcrição sem alterar intenção nem entidade. Verbetes de criticidade baixa são registrados por completude do vocabulário, mas são os primeiros a sair da lista de frases quando o teto for atingido.
+
+## 5. Termos
+
+As subseções seguintes organizam os verbetes por natureza do termo, e não por intenção ou por área do portfólio. A escolha é deliberada: o que determina se um termo precisa de auxílio no reconhecimento é a sua forma — sigla, código, expressão composta, nome próprio —, não o assunto de que trata. Um agrupamento por intenção repetiria o mesmo termo em várias listas e dificultaria a verificação do teto de quinhentas entradas.
+
+As contagens de ocorrência citadas referem-se ao corpus de treino do classificador, `src/middleware/dados/treino-intencoes.csv`, com 1.779 enunciados, e somam as variações de caixa alta e baixa do mesmo termo.
+
+### 5.1 Siglas institucionais e de gestão
+
+| Termo | Variantes faladas | Origem | Criticidade |
+|---|---|---|---|
+| `CCO` | "cê cê ó" | Corpus (37 ocorrências); Anexo 3 | Alta |
+| `CBTC` | "cê bê tê cê"; "cibitici" | Corpus (31) | Alta |
+| `TAP` | "tap"; "tê a pê" | Corpus (13); Anexo 1; catálogo 5.4.4 (`atualizar_termo_abertura`) | Alta |
+| `CFTV` | "cê éfe tê vê" | Corpus (4) | Alta |
+| `EAP` | "e a pê"; "eap" | Corpus (6) | Média |
+| `CPI` | "cê pê i" | Corpus (5) | Alta |
+| `SPI` | "esse pê i" | Corpus (2) | Alta |
+| `KPI` | "cá pê i"; "kei pi ai" | Corpus (2) | Média |
+| `PMO` | "pê ême ó" | Corpus (1); catálogo 5.4.4 (`consultar_conceito_gestao`) | Média |
+| `GPM` | "gê pê ême" | Anexo 1 | Média |
+| `CETESB` | "cetésbi" | Corpus (1) | Média |
+| `ART` | "a érre tê"; "arte" | Corpus (1) | Alta |
+| `GoA3` | "gô a três"; "gôa três" | Anexo 3 | Média |
+| `HIS` | "agá i esse"; "is" | Anexo 3 | Média |
+| `DUP` | "dupi"; "dê u pê" | Anexo 3 | Média |
+
+Três observações sobre esta tabela.
+
+`ART` recebe criticidade alta por um motivo que não é a sua frequência, que é mínima, mas a sua **colisão com uma palavra comum**. A leitura soletrada "a érre tê" e a leitura silábica "arte" são ambas plausíveis para o falante, e a segunda é homófona de um substantivo corrente do português. O modelo base, sem auxílio, tenderá sempre à palavra comum, porque é ela que tem probabilidade a priori mais alta. É exatamente o caso em que a injeção do termo muda o resultado, e é o caso que a segunda condição da seção 3 pretende capturar.
+
+`CBTC` admite duas leituras igualmente correntes entre profissionais do setor — a soletrada e a aglutinada —, e o campo de variantes registra ambas para que a regra de aceitação do indicador não penalize a transcrição que corresponde à pronúncia efetivamente usada.
+
+`GPM` entra pela origem verificável no Anexo 1, que a menciona como a equipe de apoio técnico e metodológico aos subportfólios, mas **sua expansão não está declarada em nenhum documento disponível à equipe**. O verbete é registrado com a sigla e sem expansão, e a confirmação do nome por extenso fica pendente de validação com o parceiro. Registrar a lacuna é preferível a preenchê-la por inferência: uma expansão inventada entraria na documentação com aparência de fato apurado.
+
+Não entram nesta tabela as siglas que aparecem exclusivamente nos enunciados da classe `tentativa_injecao` — `SQL`, `DROP`, `TABLE`. São vocabulário de ataque, presentes no corpus porque o classificador precisa aprender a reconhecê-las como tal, e não terminologia do domínio. Injetá-las na lista de frases elevaria a probabilidade de o reconhecedor produzir justamente as sequências que o pipeline existe para barrar.
+
+### 5.2 Padrões de código e identificadores
+
+| Padrão | Exemplos observados | Como é falado | Criticidade |
+|---|---|---|---|
+| `PRJ-AAAA-NNN` — código de projeto | `PRJ-2024-018` (47 ocorrências); `PRJ-2025-042` (43); `PRJ-2026-001` (6); `PRJ-2026-077` (6); `PRJ-2025-190` (5) | "pê érre jota dois mil e vinte e quatro zero dezoito"; "projeto dois mil e vinte e quatro traço zero dezoito" | Alta |
+| `NOR-NN-NNN` — normativo interno | `NOR-07-041` (3); `NOR-00-223` (3); `NOR-01-105` (3); `NOR-12-008` (1) | "nor zero sete zero quarenta e um"; "ene ó érre zero sete zero quatro um" | Alta |
+| `IN-NN/AAAA` — instrução normativa | `IN-04/2023` (4); `IN-11/2024` (4) | "i ene zero quatro barra dois mil e vinte e três"; "instrução normativa zero quatro de dois mil e vinte e três" | Alta |
+
+Estes três padrões exigem tratamento distinto do restante do glossário, por uma limitação do mecanismo descrito em 2.1: **a lista de frases aceita cadeias literais, não expressões regulares**. Não é possível injetar `PRJ-AAAA-NNN` como padrão e esperar que o reconhecedor generalize para qualquer ano e qualquer número sequencial. A parte variável do código pertence a um conjunto aberto que cresce a cada projeto aberto no portfólio.
+
+A estratégia adotada é, portanto, em duas camadas. A primeira injeta **os prefixos isolados** — `PRJ`, `NOR`, `IN` —, que são a parte foneticamente frágil: são siglas soletradas de três letras ou menos, e é nelas que o modelo base erra, produzindo "por dois mil e vinte e quatro" ou "projeto dois mil e vinte e quatro" onde deveria haver `PRJ-2024`. A segunda injeta **o conjunto finito de códigos que existem no ambiente de teste**, listados na coluna de exemplos acima, que é pequeno o bastante para caber no orçamento e cobre integralmente os enunciados do corpus de avaliação. A parte numérica fica a cargo do modelo base, que reconhece dígitos e numerais em português brasileiro com qualidade suficiente e não se beneficia da injeção.
+
+Esta estratégia tem uma consequência que precisa ficar registrada: **ela não escala para a base real de projetos do parceiro**. Quando a solução passar a operar sobre o portfólio efetivo, a lista de códigos concretos deixará de ser um conjunto fixo redigido à mão e precisará ser gerada a partir da base de projetos a cada sessão, ou substituída por modelo customizado, se o volume de códigos ultrapassar o teto. O ponto está registrado aqui e retomado na política de manutenção da seção 7.
+
+Há ainda uma regra de comparação que decorre destes padrões. A mesma referência pode ser transcrita como `PRJ-2024-018`, `PRJ 2024 018`, `prj-2024-018` ou `PRJ2024018`, e todas as quatro correspondem ao mesmo objeto do portfólio. A regra de aceitação do indicador de 3.1.5.2 **normaliza caixa, hífens, barras e espaços antes de comparar**, contabilizando como erro apenas a divergência nos caracteres significativos. Sem essa normalização, o indicador mediria a formatação da transcrição e não o reconhecimento do código, que é o que ele existe para medir.
+
+### 5.3 Vocabulário de gestão de portfólio
+
+| Termo | Variantes faladas | Origem | Criticidade |
+|---|---|---|---|
+| `subportfólio` | "subportifólio"; "sub portfólio"; "subiportifólio" | Catálogo 5.4.4 (entidade `subportfolio`, 246 ocorrências no corpus); Anexos 1 e 3 | Alta |
+| `portfólio` | "portifólio"; "portifolio" | Catálogo 5.4.4; TAPI | Média |
+| `marco` | "marco"; "marcos" | Catálogo 5.4.4 (entidade `marco`, 134 ocorrências); Anexo 1 | Alta |
+| `entrega` | "entrega"; "entregas" | Catálogo 5.4.4 (entidade `entrega`, 120); Anexo 1 | Média |
+| `mapa de benefícios` | "mapa de benefícios" | Catálogo 5.4.4 (`atualizar_mapa_beneficios`); Anexo 1 | Média |
+| `termo de abertura` | "termo de abertura"; "termo de abertura do projeto" | Catálogo 5.4.4 (`atualizar_termo_abertura`); Anexo 1 | Média |
+| `aderência normativa` | "aderência normativa"; "aderência às normas" | Catálogo 5.4.4 (`consultar_aderencia_normativa`) | Alta |
+| `aderência física` | "aderência física" | Anexo 3 | Média |
+| `aderência econômica` | "aderência econômica" | Anexo 3 | Média |
+| `avanço físico` | "avanço físico" | Corpus; Anexo 1 | Média |
+| `criticidade` | "criticidade" | Corpus; documento de histórias de usuário | Média |
+| `severidade` | "severidade" | Catálogo 5.4.4 (entidade `severidade`, 60) | Média |
+| `escalonamento` | "escalonamento"; "escalar para a diretoria" | Documento de histórias de usuário | Média |
+| `plano de ação` | "plano de ação" | Documento de histórias de usuário | Baixa |
+| `solução de contorno` | "solução de contorno" | Documento de histórias de usuário | Média |
+| `partida do portfólio` | "partida do portfólio" | Anexo 1 | Média |
+| `balanço do portfólio` | "balanço do portfólio" | Anexo 2 | Média |
+| `fechamento do portfólio` | "fechamento do portfólio"; "relatório anual de fechamento" | Anexos 3 e 4; catálogo 5.4.4 (`gerar_relatorio_encerramento`) | Média |
+| `fase de comissionamento` | "fase de comissionamento" | Corpus (4) | Alta |
+| `fase de licenciamento` | "fase de licenciamento" | Corpus (8) | Média |
+
+Dois verbetes desta tabela recebem criticidade alta por razões que merecem registro, porque nenhuma delas é a frequência.
+
+`subportfólio` é a unidade de agregação do domínio, e sua distinção de `portfólio` repousa inteiramente sobre um prefixo de duas sílabas átonas, pronunciadas rapidamente e frequentemente elididas na fala corrente. Uma consulta como "como está o portfólio de expansão" e outra como "como está o subportfólio de expansão" referem-se a níveis diferentes de agregação e devem produzir respostas diferentes; perder o prefixo na transcrição não gera erro visível, gera uma resposta correta para a pergunta errada. É o mesmo padrão de falha descrito na seção 1 — o erro que não se anuncia.
+
+`marco` é criticidade alta pela **proximidade fonética com "março"**. Em fala rápida, "o marco de conclusão" e "o março de conclusão" são difíceis de separar, e o domínio torna as duas leituras plausíveis: uma consulta de cronograma pode legitimamente mencionar tanto um marco quanto um mês. A ambiguidade não se resolve pelo contexto sintático, porque ambos ocupam a mesma posição na frase. É exatamente o tipo de caso em que elevar a probabilidade a priori do termo do domínio altera o desfecho.
+
+`fase de comissionamento` entra com criticidade alta porque *comissionamento* é termo técnico de baixa frequência no português geral, e a transcrição incorreta desloca a entidade `fase` para um valor inexistente no catálogo, o que faz a consulta de cronograma retornar vazio em vez de retornar errado — falha menos perigosa que a de `marco`, mas ainda assim uma falha que o usuário não consegue diagnosticar.
