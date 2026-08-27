@@ -75,6 +75,7 @@
         - [5.4.11 Diagrama de Classes UML — Sprint 2](#5411-diagrama-de-classes-uml--sprint-2)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
+  - [5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto](#57-canal-de-voz-ingestão-de-áudio-e-conversão-entre-fala-e-texto)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
   - [6.1 Diagrama de Implantação da UML](#61-diagrama-de-implantação-da-uml)
   - [6.2 Justificativa das Escolhas de Implantação](#62-justificativa-das-escolhas-de-implantação)
@@ -3822,6 +3823,142 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 | RNF03. Precisão na classificação de intenções | C1, C2, C3 |
 | RNF04. Disponibilidade do agente | C0, E1 |
 | RNF05. Adequação da resposta ao perfil | B2, A4 |
+
+## 5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto
+
+Esta seção registra a definição técnica do canal de voz da solução, atendendo aos elementos de detalhamento da API de conversão de áudio em texto e de texto em áudio e da API de recebimento dos áudios enviados pelo usuário. O canal de voz materializa o RF02 e a US02, ambos priorizados como MVP, e é a origem do risco R03 registrado na seção 2.6.2.
+
+A seção parte de três definições já estabelecidas neste documento e as detalha, sem contradizê-las. A seção 5.1.2 fixou o Azure Speech Services, também designado Azure AI Speech, nome atual do produto, como tecnologia do canal de voz, consumido pelo navegador mediante emissão de tokens efêmeros pelo backend. As seções 5.2, 5.3 e 5.6 situam a captura de áudio (bloco A2) e a conversão de fala em texto (bloco A3) dentro da camada de Canal. A seção 3.1.5.2 estabeleceu os indicadores de conversão entre voz e texto e registrou que suas metas seriam revisadas quando o serviço de fala fosse definido — pendência que a subseção 5.7.2 encerra.
+
+A organização da seção acompanha a ordem em que as decisões se condicionam:
+
+| Subseção | Conteúdo |
+|---|---|
+| 5.7.1 | Topologia do canal de voz: por qual caminho o áudio trafega e por quê |
+| 5.7.2 | Seleção dos serviços de conversão entre fala e texto |
+| 5.7.3 | API de recebimento de áudios do usuário |
+| 5.7.4 | API de conversão de fala em texto |
+| 5.7.5 | API de conversão de texto em fala |
+| 5.7.6 | Catálogo de erros, limites operacionais e registro |
+| 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções |
+
+### 5.7.1 Topologia do canal de voz
+
+Esta subseção será desenvolvida em conjunto com a especificação da API de recebimento de áudios, registrando as alternativas de trajeto do áudio, a escolha adotada, suas consequências e a política de retenção aplicável.
+
+### 5.7.2 Seleção dos serviços de conversão entre fala e texto
+
+A escolha do serviço de fala condiciona toda a camada de voz: define os formatos de áudio que a API de recebimento pode aceitar, os limites de duração e tamanho por requisição, o mecanismo de autenticação exposto ao navegador, o custo variável de operação e a viabilidade de tratar o vocabulário específico da companhia. Por essa razão a seleção precede as demais subseções.
+
+#### 5.7.2.1 Critérios de seleção
+
+Os critérios foram derivados das restrições de negócio da seção 3.1.4, do RNF01, do risco R03 e das características do canal descritas na seção 5.1.1. Eles se organizam em dois grupos. Os **critérios eliminatórios** expressam condições sem as quais a alternativa não pode ser adotada, independentemente de suas demais qualidades. Os **critérios classificatórios** ordenam as alternativas remanescentes segundo pesos que refletem a criticidade de cada aspecto para o projeto.
+
+**Critérios eliminatórios**
+
+| ID | Critério | Origem |
+|---|---|---|
+| E1 | Não exigir que credencial de longa duração seja exposta no cliente | RNF01 e boas práticas de gestão de segredos registradas na seção 6.5.6 |
+| E2 | Permitir a escolha explícita da região de processamento do áudio | RNF01, quanto à delimitação do ambiente em que os dados são processados |
+| E3 | Suportar português brasileiro tanto no reconhecimento quanto na síntese | RF02 e US02 |
+
+**Critérios classificatórios**
+
+| ID | Critério | Peso | Justificativa do peso |
+|---|---|:-:|---|
+| C1 | Suporte a vocabulário customizado do domínio | 3 | É a única mitigação técnica disponível para o risco R03, cuja severidade é 9, e a condição de possibilidade do indicador de acurácia de termos de domínio da seção 3.1.5.2 |
+| C2 | Aderência ao ecossistema homologado e caminho de transferência ao parceiro | 3 | Decorre da premissa do TAPI de operação dentro do ambiente Microsoft e determina o esforço de homologação após o módulo |
+| C3 | Qualidade e maturidade do reconhecimento em português brasileiro | 2 | Condiciona o WER e, por consequência, a degradação ponta a ponta da classificação de intenções |
+| C4 | Custo no MVP e previsibilidade da tarifa | 2 | O custo de operação é variável e cresce com a adoção, conforme registrado na seção 2.8.9 |
+| C5 | Cobertura de navegadores e maturidade do SDK | 1 | A interface é uma aplicação web responsiva, conforme a seção 5.1.1 |
+| C6 | Latência esperada para usuários no Brasil | 1 | Integra os indicadores de conversão entre voz e texto da seção 3.1.5.2 |
+
+A pontuação atribui 2 ao atendimento pleno, 1 ao atendimento parcial e 0 ao não atendimento, ponderados pelos pesos acima. A pontuação máxima possível é 24.
+
+#### 5.7.2.2 Alternativas avaliadas
+
+Foram avaliadas cinco alternativas, escolhidas por representarem estratégias distintas de solução, e não apenas fornecedores distintos: dois serviços de nuvem de grande porte, um serviço de nuvem especializado em transcrição, a interface nativa dos navegadores e a execução local do modelo no dispositivo do usuário.
+
+| Alternativa | Estratégia | Reconhecimento e síntese |
+|---|---|---|
+| Azure AI Speech | Serviço de nuvem do ecossistema Microsoft | Ambos |
+| Google Cloud Speech-to-Text e Text-to-Speech | Serviço de nuvem de fornecedor concorrente | Ambos |
+| Whisper por API (OpenAI ou Groq) | Serviço de nuvem especializado em transcrição | Apenas reconhecimento no Groq; ambos na OpenAI |
+| Web Speech API | Interface nativa do navegador, sem serviço contratado | Ambos |
+| Whisper em execução local (transformers.js) | Modelo executado no dispositivo do usuário | Apenas reconhecimento |
+
+#### 5.7.2.3 Aplicação dos critérios eliminatórios
+
+| Alternativa | E1 | E2 | E3 | Resultado |
+|---|:-:|:-:|:-:|---|
+| Azure Speech | Atende | Atende | Atende | Classificada |
+| Google Cloud Speech e TTS | Atende | Atende | Atende | Classificada |
+| Whisper por API | Atende | **Não atende** | Atende | **Eliminada** |
+| Web Speech API | Atende | **Não atende** | Atende | **Eliminada** |
+| Whisper em execução local | Atende | Atende | Atende parcialmente | Classificada |
+
+Duas eliminações merecem registro explícito.
+
+O **Whisper por API** foi eliminado por E2: os provedores avaliados não oferecem escolha da região em que o áudio é processado, o que impede delimitar o ambiente de processamento exigido pelo RNF01. O critério E1 é atendido apenas porque a chamada seria intermediada pelo backend, jamais pelo navegador.
+
+A **Web Speech API** foi eliminada pelo mesmo critério. A interface é atraente por não exigir credencial nem infraestrutura, mas o reconhecimento é executado, por padrão, em servidores do fornecedor do navegador, sem que a aplicação possa determinar onde. A partir do Chrome 139 existe um modo de reconhecimento local, controlado pela propriedade `processLocally` e consultável por `SpeechRecognition.available()`, que atenderia E2. A disponibilidade de pacote de idioma local, contudo, depende do navegador, e não foi possível confirmar a existência de pacote para português brasileiro. Registra-se como verificação a ser realizada e documentada na Sprint 3, sem que ela reabra a decisão: mesmo confirmada, a alternativa permaneceria com pontuação baixa em C1, conforme a subseção 5.7.2.6.
+
+#### 5.7.2.4 Quadro comparativo das alternativas classificadas
+
+| Critério | Peso | Azure AI Speech | Google Cloud | Whisper local |
+|---|:-:|---|---|---|
+| C1 — Vocabulário de domínio | 3 | **2** — listas de frases por requisição e treinamento de modelo customizado | **2** — adaptação de fala com conjuntos de frases | **0** — sem mecanismo de viés de vocabulário |
+| C2 — Ecossistema e transferência | 3 | **2** — o serviço pertence ao ecossistema já adotado pelo parceiro | **0** — exigiria homologação de fornecedor adicional | **1** — não introduz serviço externo, mas tampouco é auditável pelo parceiro |
+| C3 — Qualidade em pt-BR | 2 | **2** — suporte nativo e maduro | **2** — suporte nativo e maduro | **1** — o modelo `base` é mediano; o `small` exige transferência de porte elevado |
+| C4 — Custo no MVP | 2 | **1** — nível gratuito generoso, tarifa do nível pago acima da concorrência | **2** — franquia mensal e tarifa por minuto competitiva | **2** — sem custo de serviço |
+| C5 — Navegadores e SDK | 1 | **2** — SDK JavaScript oficial, já declarado nas dependências da interface | **1** — consumo por REST, sem SDK de navegador equivalente | **0** — aceleração por GPU restrita a Chrome e Edge |
+| C6 — Latência no Brasil | 1 | **2** — região em território nacional | **2** — região em território nacional | **1** — depende do equipamento do usuário |
+| **Total ponderado** | **24** | **22** | **17** | **10** |
+
+#### 5.7.2.5 Decisão
+
+Adota-se o **Azure AI Speech** para o reconhecimento de fala e para a síntese de voz, provisionado no nível gratuito **F0**, na região **Brazil South**, dentro do Resource Group descrito na seção 6.5.4.
+
+A decisão confirma e detalha o que a seção 5.1.2 já registrava, e se sustenta em três razões. A primeira é o vocabulário: o serviço permite fornecer, na própria requisição, uma lista de termos que orienta o reconhecimento, o que converte o glossário de domínio da companhia em mecanismo executável e transforma o risco R03 de ameaça sem tratamento em ameaça com mitigação declarada. A segunda é o perímetro: o serviço pertence ao ecossistema que o parceiro já opera, de modo que a transferência da solução após o módulo não exige homologação de fornecedor adicional. A terceira é a economia de integração: reconhecimento e síntese são atendidos por um único fornecedor, com um único mecanismo de autenticação, o que evita duplicar credenciais, tratamento de erros e procedimento operacional para atender aos dois sentidos da conversão.
+
+Registra-se que a alternativa Google Cloud é tecnicamente equivalente nos critérios de vocabulário, qualidade e latência, e superior em custo do nível pago. Sua diferença decisiva está inteiramente no critério C2. Caso a premissa de aderência ao ecossistema Microsoft seja revista pelo parceiro, esta decisão deve ser reavaliada, e o quadro acima é suficiente para conduzir a reavaliação sem repetir o levantamento.
+
+#### 5.7.2.6 Região de processamento e residência dos dados
+
+A região do recurso de fala é **Brazil South**, e não a região registrada na seção 6.5.4 para o ambiente de execução do backend. A escolha é deliberada e apoia-se em duas propriedades do serviço.
+
+A primeira é a residência dos dados: o serviço processa o áudio exclusivamente na região em que o recurso foi criado, e as chaves são escopadas por região. Provisionar o recurso fora do território nacional implicaria que o áudio de solicitações relativas a projetos do portfólio fosse processado no exterior, hipótese que o RNF01 não sustenta e que introduziria discussão de soberania de dados desnecessária ao escopo do MVP.
+
+A segunda é a latência. O tempo de transcrição e o tempo até o início da resposta falada integram os indicadores da seção 3.1.5.2. O trajeto de rede até uma região norte-americana acrescenta tempo de ida e volta que se soma ao tempo de inferência e é percebido diretamente pelo usuário no canal de voz, cuja justificativa de existência é a rapidez em relação ao canal de texto.
+
+O recurso de fala é independente do ambiente de execução da aplicação e pode residir em região distinta sem prejuízo de funcionamento. Não há, portanto, necessidade de alinhar as duas regiões, e a divergência é registrada aqui como decisão consciente e não como inconsistência. Recomenda-se, ainda assim, que a seção 6.5.4 registre a justificativa da região adotada para o ambiente de execução, hoje declarada como não documentada naquela seção.
+
+#### 5.7.2.7 Enquadramento de custo
+
+O nível gratuito F0 do serviço oferece, por mês, cinco horas de áudio para reconhecimento de fala e quinhentos mil caracteres para síntese de voz. O nível pago S0 é tarifado por hora de áudio no reconhecimento e por milhão de caracteres na síntese, cabendo confirmar os valores vigentes na calculadora do fornecedor no momento do dimensionamento, uma vez que variam por região e por eventual acordo comercial.
+
+Estimativa de consumo do MVP, considerando o uso previsto para demonstração, para os testes sistêmicos e para a bancada de avaliação de desempenho do canal de voz:
+
+| Item | Volume estimado | Base da estimativa |
+|---|---|---|
+| Reconhecimento de fala | Aproximadamente 40 minutos por mês | 200 solicitações por voz, com duração média de 12 segundos por enunciado |
+| Síntese de voz | Aproximadamente 80 mil caracteres por mês | 200 respostas, com extensão média de 400 caracteres |
+
+Ambos os volumes situam-se com folga dentro do nível gratuito, do que decorre que **o custo do canal de voz durante o MVP é nulo**, desde que respeitados os limites mensais. A projeção de custo em operação real, com volume de usuários do parceiro, pertence à análise de viabilidade financeira e deve considerar que o reconhecimento de fala é uma das operações tarifadas por requisição identificadas na seção 2.8.9, ao lado da geração de relatórios.
+
+#### 5.7.2.8 Riscos assumidos e revisão das metas de desempenho
+
+A decisão introduz e transforma riscos que devem constar do acompanhamento da matriz mantida no `GestaoProjeto.md`.
+
+| Risco | Situação após a decisão | Tratamento |
+|---|---|---|
+| R03 — baixa acurácia no jargão da companhia | Permanece aberto, com mitigação agora exequível | Consolidação do glossário de domínio e seu fornecimento como lista de frases ao serviço; medição pelo indicador de acurácia de termos de domínio |
+| Indisponibilidade do serviço de fala | Novo | O plano de resposta ao R03 já determina retorno ao canal de texto; falha na emissão do token desabilita a captura de áudio com mensagem explicativa, sem recurso a serviço alternativo fora do perímetro |
+| Esgotamento do nível gratuito | Novo | Acompanhamento pelo orçamento configurado conforme a seção 6.5.8, com alerta antes do limite |
+| Latência adicional no trajeto de ingestão | Novo | Medição comparativa entre os dois modos de consumo, conforme a subseção 5.7.6 |
+
+Quanto às metas registradas ao final da seção 3.1.5, a definição do serviço permite encerrar a ressalva ali declarada. As metas preliminares de WER inferior ou igual a 15%, acurácia de termos de domínio igual ou superior a 90% e degradação ponta a ponta de no máximo 10 pontos percentuais são **mantidas** como hipóteses quantitativas, a serem verificadas sobre o corpus de áudio de referência descrito na subseção 5.7.6. Cabe registrar que a meta de acurácia de termos de domínio só é perseguível porque o serviço escolhido admite vocabulário customizado: sob qualquer das alternativas eliminadas, ela seria inatingível por ausência de mecanismo, e não por insuficiência de qualidade do reconhecimento. Nesse sentido, a seleção do serviço não apenas atende aos indicadores já definidos — ela é a condição de existência de um deles.
+
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
