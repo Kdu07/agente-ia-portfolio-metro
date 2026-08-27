@@ -4020,13 +4020,13 @@ Registra-se que a alternativa Google Cloud é tecnicamente equivalente nos crit�
 
 #### 5.7.2.6 Região de processamento e residência dos dados
 
-A região do recurso de fala é **Brazil South**, e não a região registrada na seção 6.5.4 para o ambiente de execução do backend. A escolha é deliberada e apoia-se em duas propriedades do serviço.
+A região do recurso de fala é **Brazil South**, a mesma definida para o ambiente definitivo de execução do backend na seção 6.5.4. O alinhamento regional apoia-se em duas propriedades do serviço.
 
 A primeira é a residência dos dados: o serviço processa o áudio exclusivamente na região em que o recurso foi criado, e as chaves são escopadas por região. Provisionar o recurso fora do território nacional implicaria que o áudio de solicitações relativas a projetos do portfólio fosse processado no exterior, hipótese que o RNF01 não sustenta e que introduziria discussão de soberania de dados desnecessária ao escopo do MVP.
 
 A segunda é a latência. O tempo de transcrição e o tempo até o início da resposta falada integram os indicadores da seção 3.1.5.2. O trajeto de rede até uma região norte-americana acrescenta tempo de ida e volta que se soma ao tempo de inferência e é percebido diretamente pelo usuário no canal de voz, cuja justificativa de existência é a rapidez em relação ao canal de texto.
 
-O recurso de fala é independente do ambiente de execução da aplicação e pode residir em região distinta sem prejuízo de funcionamento. Não há, portanto, necessidade de alinhar as duas regiões, e a divergência é registrada aqui como decisão consciente e não como inconsistência. Recomenda-se, ainda assim, que a seção 6.5.4 registre a justificativa da região adotada para o ambiente de execução, hoje declarada como não documentada naquela seção.
+O recurso de fala é tecnicamente independente do ambiente de execução da aplicação, mas a centralização em `brazilsouth` reduz tráfego entre regiões e mantém o processamento principal da solução no Brasil. O ambiente utilizado na validação da quickstart também está nessa região, mantendo coerência com a implantação prevista para o backend definitivo.
 
 #### 5.7.2.7 Enquadramento de custo
 
@@ -4493,20 +4493,25 @@ Quanto à segurança e à confidencialidade, permanecem aplicáveis os RNFs e as
 
 ### 6.5.4 Organização da Infraestrutura
 
-O ambiente foi criado no Microsoft Azure, com os recursos agrupados no **Resource Group `METROSP`**, localizado na região **West US 2 (`westus2`)**. A região originalmente considerada era **Brazil South**; a adoção de `westus2` poderá ser reavaliada em fases seguintes. O motivo operacional da alteração de região não foi registrado nesta versão do documento, pois não foi fornecida evidência suficiente para documentá-lo.
+O ambiente foi criado no Microsoft Azure, com os recursos agrupados no **Resource Group `METROSP`**, localizado em **Brazil South (`brazilsouth`)**. O Azure Container Apps Environment e o Container App utilizados na validação da quickstart também estão nessa região, conforme a configuração verificada no Portal do Azure.
+
+Para o backend real, permanece definida a região **Brazil South (`brazilsouth`)**. A API FastAPI, o worker, o PostgreSQL Flexible Server e eventual Azure Container Registry deverão permanecer nessa região, mantendo próximos os componentes que trocam dados com frequência. O ambiente já criado poderá receber os Container Apps definitivos, sujeito à validação de capacidade, permissões e configuração.
+
+Os demais recursos regionais deverão acompanhar `brazilsouth` quando o serviço e a subscription oferecerem suporte. Serviços de escopo global, como identidade pelo Entra ID e acompanhamento pelo Azure Cost Management, não recebem a mesma classificação regional. A disponibilidade, a cota e os requisitos de residência de cada serviço deverão ser confirmados antes do provisionamento.
 
 O Azure Container Apps Environment e o Container App foram criados para a validação inicial, porém seus nomes não foram informados para registro neste artefato. O Container App utilizou a imagem oficial de quickstart `mcr.microsoft.com/k8se/quickstart:latest`, que não corresponde ao backend definitivo do pipeline de PLN.
 
 ```text
 Azure Subscription
-└── Resource Group: METROSP (westus2)
-    ├── Azure Container Apps Environment [obrigatório; nome não informado]
-    │   └── Container App [obrigatório; nome não informado]
-    │       ├── Imagem de validação: mcr.microsoft.com/k8se/quickstart:latest
-    │       └── Secrets do Container App [obrigatórios quando houver credenciais]
-    ├── Azure Container Registry [condicional]
-    ├── Azure Key Vault [condicional]
-    └── Azure Cost Management / Budget [acompanhamento obrigatório quando disponível]
+└── Resource Group: METROSP
+    └── Ambiente em brazilsouth
+        ├── Container App com mcr.microsoft.com/k8se/quickstart:latest [validado]
+        ├── Container App da API de PLN [planejado; obrigatório]
+        ├── Container App do worker [planejado; obrigatório para as rotinas]
+        ├── PostgreSQL Flexible Server [planejado; obrigatório]
+        ├── Azure Container Registry [condicional]
+        ├── Azure Key Vault [condicional]
+        └── Azure Cost Management / Budget [acompanhamento obrigatório quando disponível]
 ```
 
 O Azure Container Registry e o Azure Key Vault permanecem condicionais. A imagem de quickstart foi obtida diretamente do Microsoft Container Registry e, portanto, sua validação não comprova a necessidade de um registro privado. A adoção dos recursos condicionais depende do fluxo de publicação, da gestão de segredos e dos requisitos de governança do backend definitivo.
@@ -4518,13 +4523,13 @@ Os recursos da arquitetura, sua classificação e a configuração registrada s�
 | Recurso | Papel no ambiente | Classificação | Configuração registrada |
 |---|---|---|---|
 | Azure Subscription | Limite administrativo, de cobrança e governança dos recursos | Obrigatório | Subscription utilizada na configuração inicial; identificador não registrado neste documento |
-| Azure Resource Group | Agrupamento dos recursos relacionados ao backend de PLN | Obrigatório | `METROSP`, região `westus2` |
-| Azure Container Apps Environment | Limite operacional compartilhado para o Container App | Obrigatório | Criado; nome não informado |
-| Azure Container App | Execução da API/backend conteinerizada | Obrigatório | Criado para validação; nome não informado |
+| Azure Resource Group | Agrupamento dos recursos relacionados ao backend de PLN | Obrigatório | `METROSP`, localizado em `brazilsouth` |
+| Azure Container Apps Environment | Limite operacional compartilhado para o Container App | Obrigatório | Criado e validado em `brazilsouth`; nome não registrado neste documento |
+| Azure Container App | Execução da API/backend conteinerizada | Obrigatório | Quickstart validada em `brazilsouth`; API e worker definitivos ainda planejados |
 | Docker | Empacotamento reproduzível da aplicação Python e de suas dependências | Obrigatório para o deploy | Backend definitivo ainda não disponibilizado; validação realizada com imagem oficial de quickstart |
-| Azure Container Registry | Armazenamento privado das imagens Docker | Condicional ao fluxo de publicação escolhido | Não necessário para a imagem de quickstart; adoção não definida para o backend definitivo |
+| Azure Container Registry | Armazenamento privado das imagens Docker | Condicional ao fluxo de publicação escolhido | Não necessário para a imagem de quickstart; caso adotado, deverá ser criado em `brazilsouth` |
 | Secrets do Azure Container Apps | Injeção segura de valores sensíveis na aplicação | Obrigatório quando a aplicação consumir credenciais | Funcionalidade conferida e disponível; nenhum segredo real cadastrado |
-| Azure Key Vault | Centralização e governança avançada de segredos | Condicional às necessidades de integração, rotação e governança | Adoção não informada |
+| Azure Key Vault | Centralização e governança avançada de segredos | Condicional às necessidades de integração, rotação e governança | Caso adotado, deverá acompanhar o ambiente definitivo em `brazilsouth` |
 | Azure Cost Management | Acompanhamento do consumo, orçamento e alertas de gasto | Obrigatório quando disponível na subscription | Orçamento informado como configurado; limite, percentual de alerta e destinatário não fornecidos |
 
 ### 6.5.6 Gestão de Segredos e Credenciais
@@ -4581,7 +4586,7 @@ Os registros técnicos do ambiente devem ser acompanhados de uma breve descriç�
 | Registro técnico | Status | Situação documentada |
 |---|---|---|
 | Plataforma Microsoft Azure | Concluído | Ambiente inicialmente configurado |
-| Resource Group | Concluído | `METROSP`, região `westus2` |
+| Resource Group | Concluído | `METROSP`, localizado em `brazilsouth` |
 | Azure Container Apps Environment e Container App | Concluído | Recursos criados; nomes não informados para registro |
 | Imagem de validação publicada | Concluído | `mcr.microsoft.com/k8se/quickstart:latest` |
 | Resposta da URL da quickstart | Pendente | Resposta real não fornecida para documentação |
@@ -4598,7 +4603,7 @@ Os registros técnicos do ambiente devem ser acompanhados de uma breve descriç�
 
 Esta seção descreve o procedimento previsto para implantar o backend/API de PLN no Azure Container Apps. O processo foi definido a partir da estrutura existente em `src/middleware`, composta por FastAPI, Uvicorn, Python, classificador de intenções, PostgreSQL e um worker separado para rotinas agendadas. A descrição constitui um guia de reprodução para a implantação futura e não representa evidência de que o backend definitivo já esteja publicado.
 
-O ambiente básico de Azure Container Apps já foi validado no Resource Group `METROSP`, na região `westus2`, com a imagem oficial `mcr.microsoft.com/k8se/quickstart:latest`. A subscription utilizada foi disponibilizada com crédito de USD 200 por 30 dias. Essa validação comprovou a disponibilidade inicial da plataforma, mas não exercitou o FastAPI, o classificador de intenções, o PostgreSQL, o worker nem as integrações externas da solução.
+O ambiente básico de Azure Container Apps já foi validado no Resource Group `METROSP`, na região `brazilsouth`, com a imagem oficial `mcr.microsoft.com/k8se/quickstart:latest`. A subscription utilizada foi disponibilizada com crédito de USD 200 por 30 dias. Essa validação comprovou a disponibilidade inicial da plataforma, mas não exercitou o FastAPI, o classificador de intenções, o PostgreSQL, o worker nem as integrações externas da solução. Os componentes definitivos deverão permanecer em `brazilsouth`, aproveitando a centralização regional já adotada.
 
 ### 6.6.1 Visão Geral do Processo
 
@@ -4645,6 +4650,7 @@ Antes da implantação, devem estar disponíveis:
 - pasta `src/middleware/dados` contendo o corpus e `classificador.joblib` gerado e validado;
 - decisão sobre o registro que armazenará a imagem;
 - definição dos nomes dos novos recursos, sem reutilizar exemplos desta documentação como nomes reais;
+- criação dos recursos definitivos em `brazilsouth`, mantendo API, worker e banco na mesma região;
 - Azure Database for PostgreSQL Flexible Server provisionado e acessível pelos Container Apps;
 - valores reais das variáveis de ambiente e dos segredos, mantidos fora do repositório;
 - permissões para atualizar o Container App de teste ou criar os Container Apps definitivos.
@@ -4737,7 +4743,7 @@ $postgresPassword = Read-Host "Senha administrativa"
 az postgres flexible-server create `
   --resource-group METROSP `
   --name $postgresServer `
-  --location westus2 `
+  --location brazilsouth `
   --tier Burstable `
   --sku-name Standard_B1ms `
   --admin-user $postgresAdmin `
@@ -4888,8 +4894,10 @@ O acesso a `/docs` comprova que a aplicação FastAPI foi iniciada e expôs seu 
 
 | Etapa | Status | Evidência ou condição atual |
 |---|---|---|
-| Subscription e Resource Group `METROSP` em `westus2` | Executado | Ambiente básico utilizado na validação inicial |
+| Subscription, Resource Group `METROSP` e ambiente em `brazilsouth` | Executado | Ambiente básico utilizado na validação da quickstart |
 | Container App com imagem de quickstart | Executado | Imagem `mcr.microsoft.com/k8se/quickstart:latest` disponibilizada e endpoint testado |
+| Definição de `brazilsouth` para o ambiente definitivo | Definido | API, worker, PostgreSQL e eventual registro regional deverão permanecer na mesma região |
+| Azure Container Apps Environment em `brazilsouth` | Executado | Ambiente já criado e validado com a imagem de quickstart; backend real ainda não implantado |
 | Correção do Dockerfile para copiar `dados` | Preparado na branch de deploy | Alteração ainda não representa imagem publicada no Azure |
 | Download do modelo E5 durante o build | Preparado e validado localmente | Etapa de build executada localmente; imagem definitiva ainda não publicada |
 | Geração de `classificador.joblib` | Preparado e validado localmente | Artefato gerado a partir do corpus; inclusão definitiva depende de versionamento e integração da branch |
