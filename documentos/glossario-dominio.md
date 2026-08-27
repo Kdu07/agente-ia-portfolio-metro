@@ -150,3 +150,83 @@ Dois verbetes desta tabela recebem criticidade alta por razões que merecem regi
 `marco` é criticidade alta pela **proximidade fonética com "março"**. Em fala rápida, "o marco de conclusão" e "o março de conclusão" são difíceis de separar, e o domínio torna as duas leituras plausíveis: uma consulta de cronograma pode legitimamente mencionar tanto um marco quanto um mês. A ambiguidade não se resolve pelo contexto sintático, porque ambos ocupam a mesma posição na frase. É exatamente o tipo de caso em que elevar a probabilidade a priori do termo do domínio altera o desfecho.
 
 `fase de comissionamento` entra com criticidade alta porque *comissionamento* é termo técnico de baixa frequência no português geral, e a transcrição incorreta desloca a entidade `fase` para um valor inexistente no catálogo, o que faz a consulta de cronograma retornar vazio em vez de retornar errado — falha menos perigosa que a de `marco`, mas ainda assim uma falha que o usuário não consegue diagnosticar.
+
+### 5.4 Vocabulário público da rede metroviária
+
+Os termos desta subseção são informação de domínio público, divulgada pela própria companhia em seus canais e sinalização. Entram no glossário por serem os topônimos e designações que o usuário efetivamente pronuncia ao se referir a um projeto, e não por qualquer conteúdo dos anexos classificados.
+
+| Termo | Variantes faladas | Origem | Criticidade |
+|---|---|---|---|
+| `Linha 2-Verde` | "linha dois verde"; "linha dois" | Anexo 3 | Alta |
+| `Linha 4-Amarela` | "linha quatro amarela"; "linha quatro" | Anexo 3; corpus | Alta |
+| `Linha 15-Prata` | "linha quinze prata"; "linha quinze" | Anexo 3 | Alta |
+| `Linha 17-Ouro` | "linha dezessete ouro"; "linha dezessete" | Anexo 3; corpus | Alta |
+| `Linha 19-Celeste` | "linha dezenove celeste" | Anexo 3 | Alta |
+| `Linha 22-Marrom` | "linha vinte e dois marrom" | Anexo 3 | Alta |
+| `Estação Vila Prudente` | "estação vila prudente" | Anexo 3 | Média |
+| `Estação São Joaquim` | "estação são joaquim" | Anexo 3 | Média |
+| `Estação Morumbi` | "estação morumbi" | Corpus (28) | Média |
+| `Estação Brooklin` | "estação bruclim"; "estação brooklin" | Corpus (24) | Alta |
+| `Sé` | "sé"; "estação sé" | Corpus (24) | Alta |
+| `Vila Sônia` | "vila sônia" | Corpus (25) | Média |
+| `Jabaquara` | "jabaquara" | Corpus (28) | Média |
+| `Itaquera` | "itaquera" | Corpus (26) | Média |
+| `Água Espraiada` | "água espraiada" | Corpus (25); Anexo 3 | Média |
+| `Pátio Oratório` | "pátio oratório" | Anexo 3 | Média |
+| `Pátio Vila Medeiros` | "pátio vila medeiros" | Anexo 3 | Média |
+
+Duas observações.
+
+A designação das linhas segue o padrão **número mais cor**, e essa composição é redundante por construção: o número identifica a linha sozinho, e a cor também. A redundância é uma vantagem para o reconhecimento, e o glossário a preserva injetando **a forma composta inteira** — `Linha 15-Prata` — em vez do número e da cor separadamente. O motivo é prático: se o reconhecedor errar o numeral, transcrevendo "linha cinquenta" onde se disse "linha quinze", a cor remanescente ainda identifica o objeto e permite que a extração de entidades reconcilie. Injetar as partes isoladas destruiria essa propriedade, porque o reconhecedor deixaria de tratar o par como unidade.
+
+`Sé` e `Estação Brooklin` recebem criticidade alta por razões opostas e igualmente instrutivas. `Sé` é um monossílabo homófono do verbo *sê* e próximo de *se*, a conjunção mais frequente do português — o pior cenário possível para um reconhecedor, porque a alternativa errada é ao mesmo tempo curta e altíssima em frequência. `Brooklin` é estrangeirismo com grafia que não corresponde à pronúncia brasileira corrente e que colide com o topônimo internacional *Brooklyn*, grafado com *y*; o campo de variantes registra as duas leituras para que a regra de aceitação não penalize a correta.
+
+### 5.5 Vocabulário de engenharia e sistemas
+
+| Termo | Variantes faladas | Origem | Criticidade |
+|---|---|---|---|
+| `via permanente` | "via permanente" | Corpus (26); Anexo 3 | Alta |
+| `material rodante` | "material rodante" | Corpus; Anexo 3 | Alta |
+| `portas de plataforma` | "portas de plataforma" | Anexo 3 | Média |
+| `monotrilho` | "monotrilho" | Corpus (26) | Média |
+| `subestação` | "subestação" | Corpus (25) | Média |
+| `bilhetagem` | "bilhetagem" | Corpus (3) | Média |
+| `sinalização` | "sinalização" | Corpus (30) | Baixa |
+| `comissionamento` | "comissionamento" | Corpus (4) | Alta |
+| `desapropriação` | "desapropriação" | Anexo 3 | Média |
+| `licenciamento ambiental` | "licenciamento ambiental" | Corpus (8) | Média |
+| `obras civis` | "obras civis" | Corpus (8) | Baixa |
+| `interligação` | "interligação" | Anexo 3 | Baixa |
+
+`via permanente` e `material rodante` são os dois casos de criticidade alta desta tabela, e pela mesma razão: **são termos técnicos compostos por palavras comuns do português**. Cada um dos quatro vocábulos — via, permanente, material, rodante — é reconhecido sem dificuldade isoladamente, e é justamente por isso que o modelo base tende a transcrevê-los como sequência de palavras avulsas em vez de unidade terminológica. O erro não aparece na transcrição, que sai correta caractere a caractere; aparece adiante, quando a extração de entidades procura um termo do domínio e encontra dois adjetivos. É a falha mais difícil de diagnosticar de todas as descritas neste documento, porque não há nada de errado no texto produzido.
+
+### 5.6 Nomes de projeto do ambiente de teste
+
+Os nomes desta subseção **não correspondem a projetos reais do parceiro**. São designações sintéticas, construídas para o ambiente de teste combinando topônimos públicos da rede com verbos de ação de projeto, e é a elas que os enunciados do corpus de treino e do corpus de avaliação de áudio se referem.
+
+| Nome | Ocorrências no corpus | Criticidade |
+|---|---|---|
+| `Modernização do Trecho Sul` | 32 | Alta |
+| `Terminal Jabaquara` | 28 | Alta |
+| `Acessibilidade Linha 4` | 27 | Alta |
+| `Monotrilho Ouro` | 26 | Alta |
+| `Reforma do Pátio Itaquera` | 26 | Alta |
+| `Via Permanente Trecho Norte` | 26 | Alta |
+| `Sistema de Sinalização` | 30 | Alta |
+| `Estação Morumbi` | 28 | Alta |
+| `Estação Brooklin` | 24 | Alta |
+| `Pátio Água Espraiada` | 25 | Alta |
+| `Subestação Vila Sônia` | 25 | Alta |
+| `Requalificação da Sé` | 24 | Alta |
+| `Expansão Leste` | 23 | Alta |
+| `Ampliação do Terminal Norte` | 5 | Média |
+| `Duplicação do Trecho Oeste` | 3 | Média |
+| `Reforma da Estação Central` | 3 | Média |
+| `Projeto Piloto de Bilhetagem` | 3 | Média |
+| `Implantação de CFTV` | 3 | Média |
+
+Todos recebem criticidade alta ou média pela mesma razão estrutural: são **valores da entidade `projeto`**, que é a entidade mais frequente do catálogo, esperada por vinte e uma das vinte e oito intenções e presente em 1.326 dos 1.779 enunciados do corpus. Errar o nome do projeto não degrada a resposta — inutiliza a consulta inteira, porque não há sobre o que responder.
+
+Registram-se aqui também os subportfólios mencionados nos enunciados: `obras civis`, `sistemas`, `expansão`, `manutenção` e `material rodante`. São designações genéricas do ambiente de teste. As denominações oficiais dos subportfólios do parceiro **não foram incorporadas ao glossário** nesta versão: constam de anexos classificados como Corporativo, e sua inclusão será submetida à validação do parceiro antes de entrar, conforme a terceira exclusão da seção 3. A decisão é conservadora por escolha — o custo de omitir um termo é uma acurácia menor no indicador, mensurável e corrigível; o custo de publicar uma designação interna indevidamente não é reversível.
+
+Esta subseção inteira tem **prazo de validade**. Ela existe porque o ambiente de teste é sintético e porque os indicadores de 3.1.5.2 precisam ser calculáveis sobre ele. No momento em que a solução passar a operar sobre o portfólio real do parceiro, estes dezoito nomes deixam de descrever qualquer objeto existente e a subseção deve ser **substituída, não estendida** — mantê-los ao lado dos nomes reais gastaria orçamento da lista de frases favorecendo sequências que ninguém mais pronuncia, que é exatamente o defeito apontado na exclusão de `XPTO` na seção 3. O procedimento de substituição está na seção 7.
