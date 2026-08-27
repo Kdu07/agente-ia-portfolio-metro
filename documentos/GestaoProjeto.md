@@ -673,7 +673,9 @@ O planejamento operacional da Sprint 3 está registrado no [Kanban do GitLab](ht
 
 ## 4. Gestão de riscos e oportunidades
 
-A partir da Sprint 2, a matriz de risco do projeto passa a ser **registrada e mantida neste documento**. O `Projeto.md` conserva apenas a referência ao artefato de entendimento de negócio, no qual os riscos foram originalmente identificados. Esta seção concentra o registro vivo: escalas de avaliação, matriz consolidada com histórico por sprint, riscos materializados, efetividade das respostas, matriz probabilidade × impacto e análise dos itens mais críticos.
+Os dois documentos tratam do mesmo conjunto de riscos, com recortes distintos e complementares. A **seção 2.6 de [Projeto.md](Projeto.md)** registra a identificação: metodologia, descrição de cada item, avaliação vigente, planos de resposta e análise dos mais críticos. **Esta seção** registra o acompanhamento ao longo do tempo: a evolução das notas entre sprints e a justificativa de cada reavaliação, os itens materializados e a efetividade das respostas efetivamente acionadas.
+
+A divisão evita a duplicação que importa. O que raramente muda — o que é cada risco e como se responde a ele — fica no `Projeto.md`; o que muda a cada ciclo — quanto vale hoje, o que aconteceu e o que a resposta produziu — fica aqui. Os identificadores são compartilhados, e a avaliação vigente da seção 4.2 é a mesma apresentada em 2.6.2: quando uma reavaliação alterar uma nota, os dois pontos devem ser atualizados na mesma passada.
 
 ### 4.1 Metodologia de avaliação
 
@@ -727,7 +729,7 @@ A matriz abaixo mantém o histórico de avaliação desde a identificação inic
 | ID | Categoria | Tipo | Descrição (causa → efeito) | P·I (S1) | Sev. S1 | P·I (S2) | Sev. S2 | Criticidade | Responsável | Status na Sprint 2 |
 |---|---|---|---|:-:|:-:|:-:|:-:|---|---|---|
 | R01 | Dados (parceiro) | Ameaça | Dados sintéticos pouco representativos do portfólio real → métricas do pipeline de PLN enganosas e baixa aderência no uso real | 4·4 | 16 | 5·4 | **20** | 🔴 Crítica | Resp. dados | Em Monitoramento |
-| R02 | Fornecedor / Tecnologia | Ameaça | Restrições do ecossistema Microsoft e ausência de acesso ao ambiente do parceiro (licenças, conectores e permissões) → orquestração inviabilizada ou tardia | 3·4 | 12 | 5·4 | **20** | 🔴 Crítica | Resp. integração Microsoft | **Materializado** |
+| R02 | Fornecedor / Tecnologia | Ameaça | Restrições do ecossistema Microsoft e ausência de acesso ao ambiente do parceiro (licenças, Direct Line, conectores e permissões) → o executor das ações sobre o portfólio fica indisponível e RF04 a RF08 não podem ser demonstrados | 3·4 | 12 | 5·4 | **20** | 🔴 Crítica | Resp. integração Microsoft | **Materializado** |
 | R03 | Técnico (voz) | Ameaça | Reconhecimento de fala com baixa acurácia para o jargão do Metrô → intenções mal classificadas no canal de áudio | 3·3 | 9 | 3·3 | **9** | 🟡 Moderada | Resp. PLN | Em Monitoramento |
 | R04 | Técnico (arquitetura) | Ameaça | Classificador de intenções não atinge acurácia aceitável → perda de confiança na demonstração e invalidação da métrica exigida | 2·4 | 8 | 2·4 | **8** | 🟡 Moderada | Resp. PLN | Em Monitoramento |
 | R05 | Cronograma | Ameaça | Janela curta somada à curva de aprendizado em PLN → atraso em marcos de sprint e MVP incompleto | 3·3 | 9 | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
@@ -737,12 +739,16 @@ A matriz abaixo mantém o histórico de avaliação desde a identificação inic
 | R09 | Escopo / Compliance | Ameaça | Processamento acidental de dado sensível em serviço não homologado → violação das restrições de confidencialidade | 2·5 | 10 | 2·5 | **10** | 🟠 Alta | Product Owner | Em Monitoramento |
 | R10 | Custo / Orçamento | Ameaça | Consumo de créditos de nuvem e serviços de IA excede o disponibilizado → interrupção do ambiente e do desenvolvimento | 2·2 | 4 | 3·3 | **9** | 🟡 Moderada | Product Owner | Em Monitoramento |
 | **R11** | **Infraestrutura / Acesso** | **Ameaça** | **Ausência de credenciais corporativas para o ambiente de nuvem → provisionamento sustentado pela conta pessoal de um integrante, vinculando a infraestrutura do projeto a uma pessoa física** | — | — | **5·3** | **15** | 🟠 Alta | Resp. infraestrutura | **Materializado** |
+| **R12** | **Escopo / Compliance** | **Ameaça** | **Content Safety e Speech provisionados no tenant da equipe, e não no do parceiro: prompt e áudio deixam o perímetro homologado por desenho → objeção de compliance no handover, com reprovisionamento dos dois serviços exigido antes de qualquer uso com dado real** | — | — | **4·3** | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
+| **R13** | **Segurança (dados)** | **Ameaça** | **Remoção da camada de mascaramento de PII na revisão de escopo → a tabela de interações passa a reter o prompt em claro, inclusive o das tentativas de ataque, criando um repositório de conteúdo de usuário que antes não existia** | — | — | **3·4** | **12** | 🟠 Alta | Resp. infraestrutura | Aberto |
 | O01 | Stakeholders / Negócio | Oportunidade | MVP com valor demonstrado → internalização e evolução da solução pelo parceiro | 3·4 | 12 | 3·4 | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
 | O02 | Técnica / Reuso | Oportunidade | Reuso dos artefatos do Módulo 8/2025 → decisões de engenharia aceleradas e maior maturidade da solução | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Resp. PLN | Em Monitoramento |
 | O03 | Equipe / Capacitação | Oportunidade | Domínio de tecnologias de alta demanda → equipe mais qualificada e portfólio fortalecido | 4·2 | 8 | 5·2 | **10** | 🟠 Alta | Scrum Master | Em Monitoramento |
-| **O04** | **Técnica / Arquitetura** | **Oportunidade** | **Desacoplamento forçado pela indisponibilidade do ambiente do parceiro → MVP demonstrável de forma autônoma, por API própria, e handover documentado independente do ecossistema corporativo** | — | — | **4·3** | **12** | 🟠 Alta | Resp. integração Microsoft | Em Monitoramento |
+| **O04** | **Técnica / Arquitetura** | **Oportunidade** | **Desacoplamento forçado pela indisponibilidade do ambiente do parceiro → MVP demonstrável de forma autônoma, pela interface web própria, e handover documentado independente do ecossistema corporativo** | — | — | **4·3** | **12** | 🟠 Alta | Resp. integração Microsoft | Em Monitoramento |
 
-**Itens novos nesta sprint:** `R11` e `O04`, ambos decorrentes da indisponibilidade de acesso ao ambiente do parceiro.
+**Itens novos nesta sprint:** `R11` e `O04`, ambos decorrentes da indisponibilidade de acesso ao ambiente do parceiro, e `R12` e `R13`, ambos decorrentes da revisão de escopo que reposicionou o middleware como produto e removeu a camada de mascaramento de PII.
+
+A descrição de `R02` foi reescrita nesta sprint sem alteração de pontuação. O texto anterior falava em "orquestração inviabilizada ou tardia", formulação que pressupunha o Copilot Studio como camada de orquestração consumindo a API da equipe. Com a inversão registrada em [Arquitetura.md](Arquitetura.md), o Copilot passou a ser o **executor** das ações sobre o portfólio, e sua ausência deixa de adiar uma integração para remover requisitos inteiros da demonstração — o que também explica por que a contingência descrita em 4.4 precisou ser reformulada.
 
 ### 4.3 Histórico de acompanhamento
 
@@ -761,6 +767,8 @@ O histórico registra, por item, a evolução desde a identificação inicial, d
 | R09 | Sev. 10 — Aberto, com prevenção ativa | Sev. 10 — Em Monitoramento | Nenhum incidente registrado. A regra de uso exclusivo de dados sintéticos permanece em vigor e a ausência de acesso a dados reais reduz a exposição prática, sem alterar as notas |
 | R10 | Sev. 4 — Aberto | Sev. 9 — Em Monitoramento | O provisionamento em conta pessoal transfere o consumo para uma pessoa física, elevando probabilidade e impacto. Item passa a ser acompanhado junto a R11 |
 | R11 | — | Sev. 15 — **Materializado** | Item novo. Surgiu como consequência direta da indisponibilidade de credenciais corporativas |
+| R12 | — | Sev. 12 — Em Monitoramento | Item novo. A revisão de escopo definiu que Content Safety e Speech ficam no tenant da equipe, enquanto Entra ID e Copilot Studio permanecem no do parceiro. A probabilidade é 4 porque a exposição é estrutural, e não eventual: ela ocorre em toda mensagem processada. O impacto é 3 porque, no MVP, o conteúdo que atravessa esses serviços é sintético |
+| R13 | — | Sev. 12 — Aberto | Item novo. A remoção do mascaramento de PII fechou o RNF01 sobre perímetro, mas abriu a retenção: o prompt passa a ser gravado em claro. As respostas — retenção declarada e cifra em repouso — foram promovidas a requisito próprio (RNF07 do `Projeto.md`) e ainda não estão implementadas, o que mantém o item em Aberto |
 | O01 | Sev. 12 — Aberto | Sev. 12 — Em Monitoramento | Estratégia de aproveitamento em execução por meio dos artefatos de implantação; sem evidência para reavaliar |
 | O02 | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | O reuso permanece relevante e continua exigindo revisão no contexto atual |
 | O03 | Sev. 8 — Aberto | Sev. 10 — Em Monitoramento | A rotação de papéis da Sprint 2 colocou todos os integrantes em frentes técnicas distintas das anteriores, elevando a probabilidade de captura de 4 para 5 |
@@ -770,7 +778,7 @@ O histórico registra, por item, a evolução desde a identificação inicial, d
 
 | Item | O que ocorreu | Contingência acionada | Efetividade observada | Encaminhamento |
 |---|---|---|---|---|
-| **R02** — Restrições do ecossistema Microsoft | O acesso ao ambiente do parceiro não foi obtido no ciclo, impedindo a prova de integração prevista | Conforme planejado: manter o pipeline exposto por API própria e converter a integração em guia documentado de implantação | **Efetiva.** A contingência estava previamente definida e pôde ser acionada sem replanejar o MVP; a arquitetura desacoplada preservou a entrega | Reduzir a dependência do ambiente do parceiro nas próximas sprints e manter o guia de implantação atualizado |
+| **R02** — Restrições do ecossistema Microsoft | O acesso ao ambiente do parceiro não foi obtido no ciclo, impedindo a prova de integração prevista | Conforme planejado: sustentar a demonstração pelo que a equipe constrói — guardas, registro, análise e rotinas, com o executor substituído por um duplo de teste — e converter a configuração do Copilot em guia documentado | **Efetiva.** A contingência estava previamente definida e pôde ser acionada sem replanejar o MVP; a arquitetura desacoplada preservou a entrega | Reduzir a dependência do ambiente do parceiro nas próximas sprints e manter o guia de implantação atualizado |
 | **R08** — Desalinhamento de expectativas | Mudança significativa de escopo na primeira semana da sprint, com necessidade de redefinição e propagação nos artefatos | Realinhamento com registro do escopo acordado e reorganização do `Projeto.md` | **Parcialmente efetiva.** O realinhamento ocorreu, mas o custo em retrabalho e o bloqueio das tarefas dependentes não foram evitados | Ação `AM09`: issue de propagação obrigatória a cada mudança de escopo ou arquitetura, identificando previamente os artefatos afetados |
 | **R11** — Credenciais de nuvem | Não havia credenciais corporativas disponíveis para provisionar o ambiente | Provisionamento realizado na conta pessoal de um integrante | **Efetiva quanto à continuidade, com exposição residual relevante.** O trabalho não parou, mas a infraestrutura do projeto passou a depender de uma pessoa física, com implicações de custo, continuidade de acesso e handover | Documentar a dependência no guia de implantação, manter os recursos reproduzíveis por script e retomar a solicitação de credenciais institucionais |
 
@@ -790,7 +798,7 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | ID | Mitigação (preventiva) | Contingência (se materializar) |
 |---|---|---|
 | R01 | Ampliar a base sintética com vocabulário, estrutura e ruído típicos dos documentos do PMO; incluir casos de falha; validar amostras com o parceiro assim que o acesso for restabelecido | Recalibração emergencial do dataset com o feedback disponível, reexecução da avaliação de desempenho e registro explícito dos desvios e das limitações de validação |
-| R02 | Manter a arquitetura desacoplada e a API própria como caminho principal; documentar os pré-requisitos de licenciamento e acesso | **Acionada.** Pipeline exposto por API própria e integração convertida em guia documentado de implantação para a equipe do Metrô |
+| R02 | Manter a arquitetura desacoplada e a API própria como caminho principal; documentar os pré-requisitos de licenciamento e acesso | **Acionada.** Demonstração sustentada pela interface web própria e pelo middleware, com o Copilot substituído por um duplo de teste; RF04 a RF08 documentados como dependentes de ambiente |
 | R03 | Tratar voz como incremento, com fallback em texto; consolidar glossário de domínio e corpus de áudio de referência; testar com diferentes falantes e ambientes | Priorizar o canal de texto no MVP, documentar as limitações medidas do áudio e propor plano de evolução |
 | R04 | Definir métrica e limiar de aceite; ampliar a base com ruído e erros de digitação; analisar a matriz de confusão por intenção | Implementar fallback explícito para intenção não reconhecida |
 | R05 | Estudo dirigido em paralelo às entregas; margem de segurança nas sprints finais; acompanhamento de dependências na daily | Renegociar o escopo com a orientadora e o parceiro, preservando o essencial e cortando itens `could` e `should` |
@@ -800,6 +808,8 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | R09 | Uso exclusivo de dados sintéticos ou anonimizados; revisão por pares antes do uso de qualquer serviço externo; proteções no catálogo de intenções | Comunicação imediata à orientadora e ao parceiro; remoção dos dados expostos; registro do incidente e reforço dos controles |
 | R10 | Acompanhar o consumo a cada sprint review; concentrar testes pesados em execução local; dimensionar recursos para o mínimo necessário | Suspender recursos não essenciais e sustentar a demonstração do MVP em ambiente local, registrando a limitação nos entregáveis |
 | R11 | Manter a infraestrutura descrita de forma reproduzível; documentar todos os recursos e suas dependências; retomar a solicitação de credenciais institucionais | Recriar o ambiente sob credencial institucional ou de outro integrante a partir da documentação, sem depender do acesso original |
+| R12 | Declarar a alocação de tenant no RNF01 do `Projeto.md` em vez de omiti-la; restringir o MVP a dados sintéticos, de modo que o conteúdo que sai do perímetro não seja informação real; isolar Content Safety e Speech atrás de módulos próprios (`pipeline/guardas/` e `voz/`), para que a troca de tenant seja mudança de configuração e não de código | Solicitar à TI do Metrô o provisionamento dos dois recursos no tenant homologado; enquanto não ocorrer, registrar a exposição como condição declarada de uso e não promover a solução a dado real |
+| R13 | Política de retenção declarada, com expurgo automático ao término do prazo; cifra em repouso no PostgreSQL; leitura restrita pela permissão `VER_INTENCOES`, verificada no servidor; segredos fora do código | Rotacionar credenciais, expurgar o histórico afetado, comunicar o incidente ao parceiro e reavaliar o prazo de retenção |
 
 ### 4.6 Estratégia de aproveitamento — oportunidades
 
@@ -808,15 +818,15 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | O01 | Caprichar nos entregáveis de implantação e manutenção; preparar demonstração executiva orientada a valor; construir seguindo padrões que facilitem o handover à equipe interna |
 | O02 | Converter os artefatos herdados em implementações verificáveis; registrar o que foi reaproveitado, adaptado ou descartado |
 | O03 | Manter a rotação de papéis entre sprints, com sessões de compartilhamento por trilha e registro dos aprendizados como guias reutilizáveis |
-| O04 | Consolidar a API própria como interface estável do MVP; documentar o guia de implantação de modo que a solução possa ser executada tanto de forma autônoma quanto integrada ao ecossistema do parceiro |
+| O04 | Consolidar a interface web própria e o middleware como o produto estável do MVP; documentar o guia de implantação de modo que a solução possa ser executada tanto de forma autônoma quanto integrada ao ecossistema do parceiro |
 
 ### 4.7 Matriz probabilidade × impacto — Sprint 2
 
 | P \ I | 1 | 2 | 3 | 4 | 5 |
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | **5** | | O03 | R08, R11 | R01, R02 | |
-| **4** | | | R05, R07, O02, O04 | R06 | |
-| **3** | | | R03, R10 | O01 | |
+| **4** | | | R05, R07, R12, O02, O04 | R06 | |
+| **3** | | | R03, R10 | R13, O01 | |
 | **2** | | | | R04 | R09 |
 | **1** | | | | | |
 
@@ -830,7 +840,7 @@ A distribuição deslocou-se para cima em relação à Sprint 1: dois itens entr
 
 **1º — R01 · Representatividade dos dados sintéticos (Sev. 20, 🔴 crítica).** Continua sendo o item de maior exposição e, nesta sprint, passou à faixa crítica. A razão não é uma piora do dado em si, mas o colapso da sua mitigação: a estratégia previa validar as amostras com especialistas do Metrô a cada ciclo, e essa validação depende justamente do acesso que não se concretizou. O projeto passa a construir e avaliar o classificador sobre uma base cuja aderência ao real não pode ser confirmada por ninguém de fora da equipe. Como toda a avaliação de desempenho do pipeline é entregável central do módulo, um desvio aqui contamina classificação de intenções, extração de informação e análise comparativa simultaneamente. A resposta para a Sprint 3 é dupla: enriquecer a base com vocabulário e ruído documentados a partir dos materiais já disponíveis do parceiro e registrar de forma explícita, nos entregáveis, o limite de validação assumido.
 
-**2º — R02 · Restrições do ecossistema Microsoft e acesso ao ambiente (Sev. 20, 🔴 crítica, materializado).** O risco ocorreu: o ambiente do parceiro não esteve disponível para a prova de integração prevista. O ponto positivo é que a contingência havia sido desenhada desde a Sprint 1 e pôde ser acionada sem renegociar o MVP — o pipeline permanece exposto por API própria e a integração vira guia documentado de implantação. O efeito residual é de natureza diferente do previsto: em vez de bloquear a entrega, o risco transferiu incerteza para o momento do handover, quando a solução precisará ser conectada a um ambiente que a equipe nunca operou. Por isso o item permanece crítico mesmo após a contingência, e por isso originou a oportunidade `O04`, que trata o desacoplamento como característica a ser consolidada e não como remendo.
+**2º — R02 · Restrições do ecossistema Microsoft e acesso ao ambiente (Sev. 20, 🔴 crítica, materializado).** O risco ocorreu: o ambiente do parceiro não esteve disponível para a prova de integração prevista. O ponto positivo é que a contingência havia sido desenhada desde a Sprint 1 e pôde ser acionada sem renegociar o MVP — o middleware e sua interface permanecem demonstráveis com o executor dublado, e a configuração do Copilot vira guia documentado de implantação. O efeito residual é de natureza diferente do previsto: em vez de bloquear a entrega, o risco transferiu incerteza para o momento do handover, quando a solução precisará ser conectada a um ambiente que a equipe nunca operou. Por isso o item permanece crítico mesmo após a contingência, e por isso originou a oportunidade `O04`, que trata o desacoplamento como característica a ser consolidada e não como remendo.
 
 **3º — R06 · Disponibilidade do parceiro (Sev. 16, 🟠 alta).** É o item que mais subiu na reavaliação, de 8 para 16, e é também a causa-raiz compartilhada dos dois anteriores. As premissas em aberto desde a Sprint 1 — níveis de acesso, licenciamento, homologação de serviços — permanecem paradas, e o efeito previsto no registro original ("decisões travadas, esperas e retrabalho") descreve com precisão o que ocorreu na primeira semana da Sprint 2. A resposta adotada é reduzir a dependência: assumir premissas documentadas, seguir com decisões reversíveis e projetar a solução para funcionar sem pressupor o ambiente corporativo. Trata-se de uma mudança de postura em relação à Sprint 1, quando a estratégia era esperar a validação; a partir da Sprint 3, a ausência de retorno passa a ser tratada como condição de contorno do projeto, e não como impedimento.
 
