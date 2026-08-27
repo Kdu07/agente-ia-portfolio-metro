@@ -23,3 +23,6 @@ src/middleware/dados/classificador.joblib
 
 # Docker
 dbdata/
+
+# Claude
+.claude

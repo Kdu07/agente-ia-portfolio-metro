@@ -1,8 +1,8 @@
 /**
  * Rotas do app.
  *
- * Quatro telas, correspondentes às capacidades acordadas. Duas delas são
- * restritas e ficam atrás de `<RotaProtegida>`.
+ * Duas telas compõem o escopo inicial do frontend: a página principal do
+ * agente e a gestão de rotinas, protegida por permissão.
  *
  * AVISO que precisa sobreviver a qualquer refatoração: `RotaProtegida`
  * é conveniência de navegação, NÃO controle de acesso. Ela evita que o
@@ -17,9 +17,7 @@ import type { ReactNode } from "react";
 
 import { useUsuario } from "@/hooks/useUsuario";
 import type { Permissao } from "@/tipos";
-import { Chat } from "@/paginas/Chat";
-import { Historico } from "@/paginas/Historico";
-import { Intencoes } from "@/paginas/Intencoes";
+import { Principal } from "@/paginas/Principal";
 import { Rotinas } from "@/paginas/Rotinas";
 
 function RotaProtegida({
@@ -41,17 +39,8 @@ function RotaProtegida({
 export function Rotas() {
   return (
     <Routes>
-      <Route path="/" element={<Chat />} />
-      <Route path="/conversas/:conversaId" element={<Chat />} />
-      <Route path="/historico" element={<Historico />} />
-      <Route
-        path="/intencoes"
-        element={
-          <RotaProtegida permissao="ver_intencoes">
-            <Intencoes />
-          </RotaProtegida>
-        }
-      />
+      <Route path="/" element={<Principal />} />
+      <Route path="/conversas/:conversaId" element={<Principal />} />
       <Route
         path="/rotinas"
         element={

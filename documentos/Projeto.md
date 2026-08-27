@@ -50,7 +50,6 @@
   - [2.3 Visão do Projeto e do Produto](#23-visão-do-projeto-e-do-produto)
   - [2.4 Personas e Jornadas do Usuário](#24-personas-e-jornadas-do-usuário)
   - [2.5 Modelagem do Fluxo de Negócio](#25-modelagem-do-fluxo-de-negócio)
-  - [2.6 Matriz de Risco do Projeto](#26-matriz-de-risco-do-projeto)
   - [2.7 Ideação](#27-ideação)
   - [2.8 Canvas do Projeto](#28-canvas-do-projeto)
 - [3. Requisitos do Projeto](#3-requisitos-do-projeto)
@@ -61,24 +60,29 @@
   - [3.5 Casos de Uso](#35-casos-de-uso)
   - [3.6 Casos de Uso x Requisitos Funcionais](#36-casos-de-uso-x-requisitos-funcionais)
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
-  - [4.1 Especificação da Base de Dados](#41-especificação-da-base-de-dados)
+  - [4.1 Visão Geral do Domínio](#41-visao-geral-do-dominio)
   - [4.2 Modelo Conceitual de Dados](#42-modelo-conceitual-de-dados)
   - [4.3 Modelo Lógico de Dados](#43-modelo-lógico-de-dados)
   - [4.4 Modelo Físico de Dados](#44-modelo-físico-de-dados)
 - [5. Solução Técnica](#5-solução-técnica)
   - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
+    - [5.2.3 Diagrama atual da Sprint 2](#523-diagrama-atual-da-sprint-2)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
+    - [5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2](#538-diagramas-de-sequência-de-casos-críticos--sprint-2)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
+    - [5.4.11 Diagrama de Classes UML — Sprint 2](#5411-diagrama-de-classes-uml--sprint-2)
     - [5.4.12 Resultado da bancada de avaliação (F1.21) e da comparação de estratégias (F22)](#5412-resultado-da-bancada-de-avaliação-f121-e-da-comparação-de-estratégias-f22)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
+  - [5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto](#57-canal-de-voz-ingestão-de-áudio-e-conversão-entre-fala-e-texto)
   - [5.8 Algoritmo de classificação de intenção: escolha, princípios e implementação](#58-algoritmo-de-classificação-de-intenção-escolha-princípios-e-implementação)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
   - [6.1 Diagrama de Implantação da UML](#61-diagrama-de-implantação-da-uml)
   - [6.2 Justificativa das Escolhas de Implantação](#62-justificativa-das-escolhas-de-implantação)
   - [6.3 Considerações sobre Desempenho e Segurança](#63-considerações-sobre-desempenho-e-segurança)
   - [6.4 Diagrama de Implantação de Infraestrutura](#64-diagrama-de-implantação-de-infraestrutura)
+  - [6.5 Preparação do Ambiente de Nuvem e das Credenciais de Deploy](#65-preparação-do-ambiente-de-nuvem-e-das-credenciais-de-deploy)
 - [7. Prototipação Exploratória](#7-prototipação-exploratória)
   - [7.1 Questão de Projeto](#71-questão-de-projeto)
   - [7.2 Alternativas Divergentes](#72-alternativas-divergentes)
@@ -585,127 +589,6 @@ O viés de Tempo e Cronograma tem como foco o acompanhamento contínuo do progre
 
 **Consórcio Construtor:** Executa as etapas sequenciais das obras civis e montagem de sistemas em campo, realiza o comissionamento e os testes dinâmicos de rodagem na via e submete formalmente a Solicitação de Vistoria de Homologação da Via para a fiscalização de engenharia.
 
-## 2.6 Matriz de Risco do Projeto
-
-### 2.6.1 Metodologia de avaliação
-
-**Escala de probabilidade (P)**
-
-| Nota | Classificação | Critério |
-|:---:|---|---|
-| 1 | Muito baixa | Ocorrência remota no horizonte do projeto (< 10%) |
-| 2 | Baixa | Pouco provável (10–30%) |
-| 3 | Média | Pode ocorrer (30–50%) |
-| 4 | Alta | Provável (50–70%) |
-| 5 | Muito alta | Ocorrência quase certa (> 70%) |
-
----
-
-**Escala de impacto (I)**
-
-| Nota | Classificação | Critério (efeito sobre o projeto) |
-|:---:|---|---|
-| 1 | Muito baixo | Efeito marginal, absorvido na rotina da sprint |
-| 2 | Baixo | Pequenos ajustes de tarefas, sem afetar marcos |
-| 3 | Moderado | Compromete parte de uma sprint; exige replanejamento pontual |
-| 4 | Alto | Compromete entregáveis-chave do MVP ou um marco de sprint |
-| 5 | Muito alto | Inviabiliza o MVP ou viola restrição de compliance/confidencialidade do TAPI |
-
----
-
-**Regra de severidade e faixas de criticidade**
-
-**Severidade = Probabilidade × Impacto** (resultado de 1 a 25).
-
-| Faixa | Criticidade | Diretriz de tratamento |
-|:---:|---|---|
-| 1–4 | 🟢 Baixa | Aceitar e observar; revisão a cada sprint review |
-| 5–9 | 🟡 Moderada | Monitorar; mitigação acionada conforme gatilhos definidos |
-| 10–16 | 🟠 Alta | Dono ativo, mitigação em execução e reavaliação semanal |
-| 17–25 | 🔴 Crítica | Ação imediata, escalada à orientadora e ao parceiro |
-
-Para **oportunidades (riscos positivos)** aplica-se a mesma regra: a severidade expressa a **prioridade de captura**.
-
----
-
-**Status possíveis**
-
-| Status | Definição |
-|---|---|
-| Aberto | Item identificado; resposta planejada, mas ainda não iniciada |
-| Em Monitoramento | Resposta em execução e acompanhamento ativo do item |
-| Mitigado | Ações preventivas concluídas; exposição residual aceita |
-| Materializado | O evento ocorreu; plano de contingência acionado |
-| Encerrado | Item deixou de ser relevante ou teve seu ciclo concluído |
-
----
-
-### 2.6.2 Registro de riscos e oportunidades
-
-| ID | Categoria | Tipo | Descrição (causa → efeito) | P | I | Sev. | Criticidade | Responsável | Status |
-|---|---|---|---|:-:|:-:|:-:|---|---|---|
-| R01 | Dados (parceiro) | Ameaça | Dados sintéticos pouco representativos do portfólio real (vocabulário, estrutura dos documentos, ruído típico) → métricas do pipeline de PLN enganosas na validação e baixa aderência no uso real | 4 | 4 | **16** | 🟠 Alta | Resp. dados | Em Monitoramento |
-| R02 | Fornecedor / Tecnologia | Ameaça | Restrições do Copilot Studio e ecossistema Microsoft (licenças, conectores e permissões) → orquestração do pipeline de PLN inviabilizada ou tardia | 3 | 4 | **12** | 🟠 Alta | Resp. integração Microsoft | Aberto |
-| R03 | Técnico (voz) | Ameaça | Reconhecimento de fala (áudio → texto) com baixa acurácia para o jargão do Metrô (siglas, nomes de projetos, códigos) → intenções mal classificadas no canal de áudio | 3 | 3 | **9** | 🟡 Moderada | Resp. PLN | Aberto |
-| R04 | Técnico (arquitetura) | Ameaça | Classificador de intenções não atinge acurácia aceitável e o agente responde à intenção errada → Perda de confiança do PMO na demonstração final e invalidação da métrica de desempenho exigida nos entregáveis | 2 | 4 | **8** | 🟡 Moderada | Resp. PLN | Aberto |
-| R05 | Cronograma | Ameaça | Janela curta (10 semanas) somada à curva de aprendizado em PLN → atraso em marcos de sprint e MVP incompleto | 3 | 3 | **9** | 🟡 Moderada | Scrum Master | Em Monitoramento |
-| R06 | Stakeholders | Ameaça | Baixa disponibilidade do PMO/TI do Metrô para validações, dúvidas e insumos → decisões travadas, esperas e retrabalho | 2 | 4 | **8** | 🟡 Moderada | Product Owner | Em Monitoramento |
-| R07 | Equipe | Ameaça | Desnivelamento técnico e sobrecarga dos integrantes, paralelismo com outras entregas do módulo → gargalos em componentes críticos do pipeline | 3 | 3 | **9** | 🟡 Moderada | Scrum Master | Aberto |
-| R08 | Comunicação | Ameaça | Desalinhamento de expectativas entre equipe, orientadora e parceiro sobre o alcance do MVP → mudanças tardias de escopo e frustração | 3 | 3 | **9** | 🟡 Moderada | Product Owner | Aberto |
-| R09 | Escopo / Compliance | Ameaça | Processamento acidental de dado sensível em serviço não homologado (ex.: teste com LLM externo) → violação das restrições de confidencialidade e quebra de confiança com o parceiro | 2 | 5 | **10** | 🟠 Alta | Product Owner | Aberto |
-| R10 | Custo / Orçamento | Ameaça | Consumo de créditos de Power Platform e serviços de IA excede o disponibilizado para o ambiente acadêmico → Interrupção do ambiente e impossibilidade de continuar o desenvolvimento | 2 | 2 | **4** | 🟢 Baixa | Product Owner | Aberto |
-| O01 | Stakeholders / Negócio | Oportunidade | MVP com valor demonstrado → abre caminho para "Ir Além": internalização e evolução da solução pelo parceiro, com visibilidade para a equipe | 3 | 4 | **12** | 🟠 Alta | Product Owner | Aberto |
-| O02 | Técnica / Reuso | Oportunidade | Reuso dos artefatos do Módulo 8/2025 (mesma empresa parceira) → decisões de engenharia aceleradas e maior maturidade da solução desde a Sprint 1 | 4 | 3 | **12** | 🟠 Alta | Resp. PLN | Em Monitoramento |
-| O03 | Equipe / Capacitação | Oportunidade | Domínio de tecnologias de alta demanda (PLN aplicado, Copilot Studio / Power Platform) → equipe mais qualificada e portfólio profissional fortalecido | 4 | 2 | **8** | 🟡 Moderada | Scrum Master | Aberto |
-
----
-
-### 2.6.3 Plano de resposta — ameaças
-
-Cada risco negativo possui uma **ação de mitigação** (preventiva, que reduz probabilidade e/ou impacto antes da ocorrência) e uma **ação de contingência** (resposta caso o risco se materialize).
-
-| ID | Mitigação (preventiva) | Contingência (se materializar) |
-|---|---|---|
-| R01 | Validar amostras com especialistas do Metrô a cada sprint review; incluir casos de falha (documentos incompletos, ruído de preenchimento) | Rodada emergencial de recalibração: ajustar o dataset com feedback do parceiro, reexecutar a avaliação de desempenho do pipeline e registrar os desvios na documentação |
-| R02 | Prova mínima de integração nas duas primeiras sprints (Copilot Studio e API do pipeline) | Entregar o pipeline exposto por API e transformar a integração ao Copilot Studio em guia documentado de implantação para a equipe do Metrô |
-| R03 | Tratar voz como incremento (fallback sempre em texto); montar vocabulário de domínio e testar o reconhecimento com diferentes falantes e ambientes | Priorizar o canal de texto no MVP, documentar as limitações medidas do áudio e propor plano de evolução com serviço de fala |
-| R04 | Definir métrica e limiar de aceite; ampliar a base sintética com ruído e erros de digitação; analisar matriz de confusão por intenção a cada sprint | Implementar fallback explícito para intenção não reconhecida |
-| R05 | Estudo dirigido dos materiais em paralelo às entregas; margem de segurança reservada nas sprints finais | Renegociar o escopo com a orientadora e o parceiro preservando o mais importante e cortando itens "could/should" |
-| R06 | Lista única de dúvidas priorizadas por sprint; registro de decisões compartilhado com o parceiro | Escalar via professora orientadora; assumir premissas e decisões documentadas e revalidá-las no encontro seguinte |
-| R07 | Pair programming e rodízio entre trilhas (PLN, dados, integração, UX conversacional); documentação contínua para reduzir dependência de indivíduos | Redistribuir tarefas, acionar monitoria e professores, e simplificar componentes não essenciais ao MVP |
-| R08 | Usar o TAPI como contrato de escopo (seção "O projeto não contempla"); atas e comunicação assíncrona centralizada | Reunião de realinhamento, com registro formal do escopo acordado e do impacto de eventuais mudanças |
-| R09 | Uso exclusivo de dados sintéticos/anonimizados; revisão por pares antes do uso de qualquer serviço externo; proteções no catálogo de intenções (detecção e descarte de interações fora de contexto) | Comunicação imediata à orientadora e ao parceiro; remoção dos dados expostos; registro do incidente e reforço dos controles |
-| R10 | Levantar na Sprint 1 os limites de licença e crédito do ambiente; acompanhar o consumo a cada sprint review; concentrar os testes pesados do pipeline em execução local | Solicitar ampliação de cota à TI do Metrô e à coordenação do Inteli; se indisponível, sustentar a demonstração do MVP em ambiente local e registrar a limitação nos entregáveis de implantação |
-
----
-
-### 2.6.4 Estratégia de aproveitamento — oportunidades
-
-| ID | Estratégia de aproveitamento |
-|---|---|
-| O01 | Caprichar nos entregáveis de implantação e manutenção; preparar uma demo executiva orientada a valor para a diretoria; construir seguindo os padrões do ecossistema Microsoft para facilitar o handover à equipe interna |
-| O02 | Revisar os projetos do Módulo 8 já na Sprint 1; converter os artefatos herdados em implementações verificáveis; registrar o que foi reaproveitado e o que foi revisto |
-| O03 | Distribuir os estudos por trilha com sessões de compartilhamento entre os integrantes; documentar os aprendizados como guias reutilizáveis |
-
----
-
-### 2.6.5 Matriz probabilidade × impacto
-
-<img src="imagens/matriz-risco.png" alt="Matriz de probabilidade × impacto do projeto" width="50%">
-
-*Figura X — Matriz de probabilidade × impacto.*
-
-A distribuição concentra-se nas faixas moderada e alta: nenhum item ocupa a faixa crítica (17–25) e apenas R10 permanece na faixa baixa. R01 é o item isolado de maior severidade, em (P4, I4), e R09 é o único da coluna de impacto muito alto (I5) — o que explica sua entrada na análise da seção 6 mesmo com probabilidade baixa.
-
----
-
-### 2.6.6 Análise das três ameaças mais críticas
-
-**1º — R01 · Representatividade dos dados sintéticos (Sev. 16).** É o item de maior severidade e o único na célula (P4, I4). Por restrição de compliance do TAPI, o MVP é validado exclusivamente sobre dados sintéticos; se a equipe não espelhar o vocabulário, a estrutura e o ruído dos documentos reais do PMO, toda a avaliação de desempenho do pipeline (entregável central do módulo) perde validade. Afeta classificação de intenções, extração de informações, busca semântica e análise comparativa ao mesmo tempo. Por isso a mitigação (co-criação dos templates com o PMO) já está em execução.
-
-**2º — R02 · Restrições do Copilot Studio / Power Platform (Sev. 12, impacto 4).** É priorizado pelo impacto 4 e pelo papel estrutural: a premissa tecnológica do TAPI coloca o Copilot Studio como camada de orquestração, e a sustentação pela equipe interna do Metrô é um dos benefícios-chave. Um bloqueio de licenciamento, conector ou política segurança ataca diretamente essa proposta de valor. A boa notícia é que a incerteza pode ser eliminada cedo e barato: o teste de integração nas duas primeiras sprints converte "risco desconhecido" em fato de engenharia, e a arquitetura desacoplada garante um plano B (API própria + guia de implantação).
-
-**3º — R09 · Processamento de dado sensível em serviço não homologado (Sev. 10, impacto 5).** É a terceira ameaça em severidade e o único item da matriz com impacto 5. A chance é baixa (P2), porque o MVP foi desenhado desde o início para operar exclusivamente sobre dados sintéticos, mas a materialização viola uma restrição explícita do TAPI, segundo a qual nenhum dado sensível de projeto pode ser processado por serviços externos não homologados pelos setores técnicos e de compliance. Diferentemente de R01 e R02, cujos efeitos são técnicos e corrigíveis dentro do ciclo do projeto, o dano aqui é irreversível: uma vez que a informação sai do perímetro homologado, nenhuma contingência a traz de volta, restando apenas comunicar o incidente, remover o que for possível e absorver a perda de confiança. Os vetores mais prováveis não são maliciosos, e sim de conveniência, exemplo: testar um trecho de documento em uma API pública, subir arquivo de exemplo em ferramenta externa, versionar amostras em repositório aberto. Por isso a resposta é de procedimento: regra explícita de uso exclusivo de dados sintéticos, revisão por pares antes de acionar qualquer serviço externo e proteções no próprio catálogo de intenções, que deve detectar e descartar interações fora do contexto de portfólio.
 
 
 ## 2.7 Ideação
@@ -1497,63 +1380,274 @@ Esta seção será desenvolvida na Sprint 2, em conjunto com 3.5, consolidando a
 
 # 4. Modelagem de Dados
 
-## 4.1 Especificação da Base de Dados
+## 4.1 Visão Geral do Domínio
 
-[Descreva a proposta de estrutura de dados e o contexto de uso.]
+A solução atua como um middleware de segurança, governança e orquestração posicionado entre o usuário e o Copilot Studio no ambiente corporativo do Metrô. Ela centraliza o controle de acesso corporativo via Microsoft Entra ID, inspeciona e audita prompts para classificação e segurança, e gerencia automações periódicas por meio de rotinas agendadas.
+
+### Atores e Entidades do Negócio
+
+- Usuário: Colaborador autenticado via Entra ID, caracterizado por seu perfil corporativo (`DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`) e pelo privilégio booleano pode_ver_intencoes para visualização analítica.
+
+- Intenção (Interação): Registro auditável de cada prompt submetido, contendo a categorização resolvida pelo classificador, a identificação da sessão (id_conversa) e a data/hora do disparo.
+
+- Rotina: Definição de prompt automatizado cadastrado por um usuário para reexecução planejada sob sua identidade e permissões.
+
+### Fluxo Principais de Dados
+
+1. Identificação e Autorização: O usuário autentica-se pelo Entra ID. O sistema mapeia o identificador único (`entra_id`), perfil corporativo e a permissão booleana pode_ver_intencoes para liberar rotas analíticas e de auditoria.
+
+2. Ciclo de Mensagem e Auditoria: Toda entrada submetida via chat ou voz gera um registro na tabela de intenções associado ao `id_usuario` e ao `id_conversa`, armazenando o prompt e sua respectiva classificação.
+
+3. Parametrização de Rotinas: Usuários cadastram instruções persistentes na tabela de rotinas para disparos sem intervenção manual em tela.
 
 ## 4.2 Modelo Conceitual de Dados
 
-[Preencher]
+O modelo conceitual define as entidades fundamentais do ecossistema do Middleware do Metrô, seus papéis de negócio e as associações estruturais que garantem a rastreabilidade das interações e das rotinas cadastradas.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Conceitual.png)
+*Figura X — Modelagem Conceitual.*
+
+### Entidades do Domínio
+
+- `USUARIO`: Representa o colaborador autenticado no tenant Microsoft corporativo. Centraliza a identidade institucional (`entra_id`), dados de contato, papéis de negócio e o privilégio explícito de controle de acesso para auditoria.  
+
+- `INTENCAO`: Registro auditável de cada mensagem submetida à aplicação. Armazena o prompt, a classificação atribuída pelo catálogo de intenções, a sessão de diálogo à qual pertence e a estampa temporal.  
+
+- `ROTINA`: Automação cadastrada com instruções pré-programadas para execução recorrente sob as permissões do usuário criador.
+
+### Regras de Negócio e Cardinalidades
+
+- Associação `USUARIO` - `INTENÇÃO` (1: N):
+    - Um usuário pode gerar zero ou múltiplos registros de intenções ao longo de suas sessões de uso.  
+    - Cada registro de intenção deve estar estritamente vinculado a um único usuário remetente.  
+    - Controle de Visualização: O atributo booleano de permissão no usuário determina se o colaborador tem acesso irrestrito de leitura a todas as intenções registradas no sistema (para dashboards de monitoramento) ou se sua visualização é restrita ao próprio escopo. 
+
+- Associação `USUARIO` - `ROTINA` (1: N):
+    - Um usuário pode cadastrar zero ou múltiplas rotinas para automatização.
+    - Cada rotina pertence de forma exclusiva a um único usuário (dono/autor), garantindo que ela seja executada sob a identidade e credenciais desse criador. 
 
 ## 4.3 Modelo Lógico de Dados
 
-[Preencher]
+O modelo lógico traduz o domínio conceitual em uma estrutura relacional formal, definindo chaves primárias (PK), chaves estrangeiras (FK), tipos de dados abstratos, restrições de integridade e a validação do processo de normalização.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Lógica.png)
+*Figura X — Modelagem Lógica.*
+
+### Esquema Relacional e Dicionário de Dados
+
+#### Tabela: `USUARIO`
+Armazena os dados dos usuários autenticados via Microsoft Entra ID e seus privilégios de acesso.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_usuario` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único interno do usuário. |
+| `entra_id` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Identificador único federado no Microsoft Entra ID. |
+| `email` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Endereço de e-mail corporativo do usuário. |
+| `perfil` | `VARCHAR(50)` | `NOT NULL` | Papel funcional do colaborador (ex.: `DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`). |
+| `pode_ver_intencoes` | `BOOLEAN` | `NOT NULL`, `DEFAULT FALSE` | Flag de permissão para visualização de logs/painéis de intenções de todos os usuários. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora de inclusão do registro no sistema. |
+
+---
+
+#### Tabela: `INTENCAO`
+Registra e audita cada prompt de entrada, sua classificação e a sessão de diálogo associada.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_intencao` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único da intenção registrada. |
+| `id_usuario` | `INT` | `FK (USUARIO.id_usuario)`, `NOT NULL` | Chave estrangeira que referencia o usuário autor da mensagem. |
+| `id_conversa` | `INT` | `NOT NULL` | Identificador numérico da sessão de conversa/thread. |
+| `prompt` | `TEXT` | `NOT NULL` | Conteúdo textual completo da instrução/mensagem enviada. |
+| `classificacao_intencao` | `VARCHAR(100)` | `NULL` | Categoria de intenção atribuída pelo classificador supervisionado. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora do envio e processamento da mensagem. |
+
+---
+
+#### Tabela: `ROTINA`
+Centraliza as instruções de prompts agendados/pré-programados cadastrados pelos usuários.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_rotina` | `INT` | `PK`, `AUTO_INCREMENT` | Identificador único da rotina pré-configurada. |
+| `id_usuario` | `INT` | `FK (USUARIO.id_usuario)`, `NOT NULL` | Chave estrangeira que referencia o usuário criador da rotina. |
+| `prompt` | `TEXT` | `NOT NULL` | Instrução textual que será executada de forma automatizada. |
+| `criado_em` | `TIMESTAMP` | `NOT NULL`, `DEFAULT CURRENT_TIMESTAMP` | Data e hora de cadastro da rotina. |
+
+### Integridade Referencial e Restrições
+
+- **Integridade de Chave Primária:** Todas as entidades possuem chaves primárias numéricas inteiras (`id_usuario`, `id_intencao`, `id_rotina`), garantindo unicidade e eficiência em indexações.
+- **Integridade Referencial:**
+  * `INTENCAO.id_usuario` $\rightarrow$ `USUARIO.id_usuario` (`ON DELETE RESTRICT`): Impede a exclusão acidental de registros de usuários que possuam histórico de interações auditadas.
+  * `ROTINA.id_usuario` $\rightarrow$ `USUARIO.id_usuario` (`ON DELETE CASCADE` ou `RESTRICT`): Garante que toda rotina esteja obrigatoriamente vinculada a um autor existente.
+- **Unicidade de Identidade:** `entra_id` e `email` possuem restrição de unicidade (`UNIQUE`), impedindo contas duplicadas para o mesmo usuário corporativo.
+
+### Justificativa de Normalização (3FN)
+
+O esquema relacional atende rigorosamente aos critérios da **Terceira Forma Normal (3FN)**:
+
+1. **Primeira Forma Normal (1FN):**
+   * Todos os atributos são atômicos (indivisíveis).
+   * Não existem colunas multivaloradas ou vetores/listas repetidas dentro de um mesmo registro.
+2. **Segunda Forma Normal (2FN):**
+   * O modelo está na 1FN.
+   * Todas as chaves primárias são simples (coluna única `INT`). Portanto, não há dependência parcial, todos os atributos não-chave dependem integralmente da chave primária da tabela.
+3. **Terceira Forma Normal (3FN):**
+   * O modelo está na 2FN.
+   * Não existem dependências transitivas entre atributos não-chave (nenhum atributo não-chave depende de outro atributo não-chave; todos dependem exclusivamente da chave primária correspondente).
 
 ## 4.4 Modelo Físico de Dados
 
-[Preencher]
+O modelo físico implementa o esquema relacional para o Sistema Gerenciador de Banco de Dados **PostgreSQL 16**. A implementação contempla scripts DDL com constraints de integridade, valores padrão, tipos de dados otimizados e índices estratégicos para acelerar consultas analíticas e filtros de auditoria.
+
+![Descrição da imagem](/documentos/imagens/Modelagem%20Física.png)
+*Figura X — Modelagem Física.*
+
+### Script DDL (Data Definition Language)
+
+```sql
+-- Habilita extensões úteis caso necessário
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- TABELA: usuario
+CREATE TABLE usuario (
+    id_usuario SERIAL PRIMARY KEY,
+    entra_id VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    perfil VARCHAR(50) NOT NULL,
+    pode_ver_intencoes BOOLEAN NOT NULL DEFAULT FALSE,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_usuario_entra_id UNIQUE (entra_id),
+    CONSTRAINT uk_usuario_email UNIQUE (email)
+);
+
+-- TABELA: intencao
+CREATE TABLE intencao (
+    id_intencao SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_conversa INT NOT NULL,
+    prompt TEXT NOT NULL,
+    classificacao_intencao VARCHAR(100) NULL,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_intencao_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
+        ON UPDATE CASCADE 
+        ON DELETE RESTRICT
+);
+
+-- TABELA: rotina
+CREATE TABLE rotina (
+    id_rotina SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    prompt TEXT NOT NULL,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_rotina_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
+        ON UPDATE CASCADE 
+        ON DELETE CASCADE
+);
+
+-- ÍNDICES DE PERFORMANCE E CONSULTA
+
+-- Índices na tabela 'intencao' para relatórios analíticos, filtros temporais e sessões
+CREATE INDEX idx_intencao_usuario ON intencao (id_usuario);
+CREATE INDEX idx_intencao_conversa ON intencao (id_conversa);
+CREATE INDEX idx_intencao_criado_em ON intencao (criado_em DESC);
+CREATE INDEX idx_intencao_classificacao ON intencao (classificacao_intencao) WHERE classificacao_intencao IS NOT NULL;
+CREATE INDEX idx_intencao_analise_temporal ON intencao (classificacao_intencao, criado_em);
+
+-- Índice na tabela 'rotina' para busca por usuário criador
+CREATE INDEX idx_rotina_usuario ON rotina (id_usuario);
+```
+
+### Decisões Técnicas de Implementação
+
+- Tipos Temporais (`TIMESTAMP WITH TIME ZONE`): Garante a gravação consistente de datas e fusos horários (`America/Sao_Paulo`), prevenindo inconsistências em auditorias e agendamentos.
+
+- Integridade Referencial e Políticas de Deleção:
+    - Em `intencao`, a regra `ON DELETE RESTRICT` impede a exclusão acidental de registros de usuários que possuam logs de auditoria vinculados.
+    - Em `rotina`, a regra `ON DELETE CASCADE` garante que, se um usuário for expressamente removido, suas rotinas associadas sejam excluídas em cascata.`
+
+- Estratégia de Indexação:
+    - `idx_intencao_criado_em`: Otimiza a ordenação temporal e a exibição cronológica de históricos e sessões.
+    - `idx_intencao_analise_temporal`: Índice composto `(classificacao_intencao, criado_em)` voltado a acelerar consultas agregadas de volumetria por intenção e períodos no dashboard analítico.
+    - `idx_intencao_classificacao`: Índice parcial (partial index) ignorando valores nulos para economizar espaço em disco e acelerar a filtragem de prompts classificados.
 
 # 5. Solução Técnica
 
 ## 5.1 Visão inicial: tecnologias e ferramentas
 
-Esta seção apresenta uma estimativa inicial das tecnologias e ferramentas que o grupo pretende utilizar na construção da solução, considerando a arquitetura em dois pilares definida para o projeto. Trata-se de uma visão preliminar, sujeita a ajustes ao longo do desenvolvimento conforme validações técnicas e restrições impostas pelo Metrô.
+Esta seção apresenta a especificação consolidada da pilha de tecnologias para a implementação da solução, alinhada à evolução arquitetural do projeto. O escopo posiciona o **Middleware de PLN próprio (Pilar 1)** como o produto central da aplicação, integrando interface web responsiva, módulo analítico de intenções, guardas de segurança em profundidade e um agendador de rotinas autônomas, o qual se conecta ao **Copilot Studio / Ecossistema Microsoft (Pilar 2)** como executor de ações e consultas corporativas sobre a base de dados do portfólio.
 
-### 5.1.1 Tecnologias do Pilar 1 — PLN Próprio da Equipe
+### 5.1.1 Plataformas de Execução (Solução Integrada Web e Mobile)
 
-Responsável pela identificação de intenções, classificação de solicitações e tratamento de confidencialidade das informações antes de qualquer processamento adicional.
+A plataforma de acesso foi desenhada em arquitetura de Single Page Application (SPA) responsiva, eliminando a fragmentação de código e garantindo operação uniforme em qualquer dispositivo:
 
-- **Linguagem de programação**: Python, pela ampla disponibilidade de bibliotecas voltadas a PLN e facilidade de integração com APIs de LLM.
-- **Bibliotecas de NLP**: previstas inicialmente como spaCy e/ou NLTK, para pré-processamento textual, tokenização, classificação de intenções e extração de entidades. A implementação fechou em scikit-learn e sentence-transformers, com tokenização própria — a justificativa da troca está em 5.8.4.
-- **API de LLM**: modelo de linguagem via API (ex.: OpenAI ou Azure OpenAI), utilizado para tarefas de compreensão e geração de linguagem natural mais complexas, respeitando a restrição de que nenhum dado sensível real seja enviado a serviços externos não homologados — reforçando o uso de dados sintéticos no MVP.
+- **Interface Web Própria (Desktop e Mobile Web):** Desenvolvida como aplicação web responsiva servida por Nginx, acessível via navegadores em estações de trabalho (Desktop) e dispositivos móveis.
+- **Design Adaptativo e Acessibilidade:** Construída com Tailwind CSS e primitivos de interface acessíveis, com quebras de layout dinâmicas que organizam o chat conversacional, a barra de histórico, a gestão de rotinas e os gráficos analíticos em telas de qualquer dimensão sem exigir bases de código mobile dedicadas.
+- **Canal de Voz Unificado:** Entrada multimodal por áudio diretamente pelo navegador via Azure Speech SDK, com transcrição em tempo real consumida pelo mesmo endpoint conversacional.
 
-### 5.1.2 Tecnologias do Pilar 2 — Integração com Ecossistema Microsoft
+### 5.1.2 Tecnologias do Pilar 1 — Middleware Próprio, Frontend e Serviços Locais
 
-Responsável por conectar o agente à infraestrutura corporativa já adotada pelo Metrô, garantindo aderência aos sistemas existentes.
+Composto pelo frontend estático, pela API backend assíncrona, pelo worker agendador de rotinas e pela persistência local:
 
-- **Copilot Studio**: construção e orquestração do agente conversacional dentro do ecossistema Microsoft.
-- **Power Platform**: integração com fluxos de automação (Power Automate) e possível consumo/exposição de dados via Power Apps/Power BI, conforme necessidade identificada ao longo do projeto.
+- **Frontend / Camada de Apresentação (`src/web/`):**
+  - *Core & Build:* **React 18**, **TypeScript** e **Vite**, gerando artefatos estáticos leves sem dependência de runtime Node.js em produção.
+  - *Estilização & UI:* **Tailwind CSS** para design responsivo e componentes acessíveis.
+  - *Gerenciamento de Estado de Servidor:* **TanStack Query** para controle de cache, sincronização e revalidação do histórico de conversas e execuções de rotinas.
+  - *Visualização de Dados:* **Recharts** para exibição do dashboard de telemetria, análise de distribuição de intenções e monitoramento das guardas de segurança.
+- **Backend, API e Orquestração (`src/middleware/`):**
+  - *Linguagem & Runtime:* **Python 3.12**, garantindo compatibilidade com o ecossistema moderno de PLN e tipagem estrita.
+  - *Framework Web:* **FastAPI** (com servidor **Uvicorn**), atuando como Backend for Frontend (BFF) com I/O assíncrono não bloqueante e validação automática de contratos via **Pydantic v2**.
+  - *Autenticação & Identidade (`auth/`):* Integração com **Microsoft Entra ID** via fluxo OAuth 2.0 (*Authorization Code + PKCE*) no backend, armazenando a sessão do usuário em cookies seguros (`httpOnly`, `SameSite=Strict`), isolando credenciais do navegador.
+- **Pipeline de Segurança e Processamento de Linguagem Natural (`pipeline/`):**
+  - *Guarda de Injeção (`guardas/injecao/`):* Regras determinísticas de regex e heurísticas combinadas ao **Azure AI Content Safety (Prompt Shields)** para barrar tentativas de manipulação direta de instruções.
+  - *Guarda de Abuso (`guardas/abuso/`):* Políticas corporativas e classificação de conteúdo indevido via Azure AI Content Safety.
+  - *Guarda de Saída (`guardas/saida.py`):* Avaliação da resposta devolvida pelo Copilot Studio antes da entrega ao usuário, mitigando injeções indiretas originadas de documentos do SharePoint.
+  - *Classificador de Intenções (`intencao/`):* Vetorização por embeddings semânticos e classificador supervisionado leve, aplicando limiares de confiança calibrados por intenção sobre o catálogo fechado do portfólio. O algoritmo, as bibliotecas e a reprodução do modelo estão detalhados em 5.8.
+  - *Entrada por Voz (`voz/`):* **Azure Speech Services**, consumido pelo navegador por meio de emissão de tokens de acesso efêmeros de curta duração pelo backend, preservando as chaves do tenant.
+- **Rotinas Agendadas e Processamento em Segundo Plano (`rotinas/`):**
+  - *Agendador:* **APScheduler 3** com persistência de jobs no banco relacional, executando disparos temporais recorrentes (ex.: fechamentos mensais) no contêiner dedicado `worker`, passando pelo mesmo orquestrador de segurança com fuso horário `America/Sao_Paulo`.
+- **Persistência, Auditoria e Migrações (`persistence/`):**
+  - *Banco de Dados Relacional:* **PostgreSQL 16**, armazenando conversas, interações auditadas (com prompt, resposta, intenção, desfecho e latência) e definições de rotinas.
+  - *ORM & Migrações:* **SQLAlchemy 2 (Async)** com driver **asyncpg** e controle de versionamento de esquema via **Alembic**.
+- **Testes e Qualidade:**
+  - *Backend:* **pytest**, **pytest-asyncio** e **pytest-cov** para testes unitários das guardas e testes de integração com os serviços de tenant mockados.
+  - *Frontend:* **Vitest** e **Testing Library** para testes unitários de componentes e hooks de interface.
 
-### 5.1.3 Ferramentas de Apoio ao Desenvolvimento
+### 5.1.3 Tecnologias do Pilar 2 — Ecossistema Microsoft e Execução Corporativa
 
-- **Controle de versão**: Git/GitLab, para versionamento do código e colaboração entre os integrantes do grupo.
-- **Ambiente de desenvolvimento**: ambiente Python (ex.: Jupyter Notebook ou IDE como VS Code) para prototipagem e testes do Pilar 1.
-- **Documentação e gestão do projeto**: ferramentas colaborativas (ex.: Gitlab) para organização de entregas e alinhamento entre a equipe e o parceiro.
+Serviços homologados no tenant do parceiro que recebem requisições validadas pelo middleware e operam as fontes de dados corporativas:
 
-### 5.1.4 Listagem Organizada dos Recursos
+- **Microsoft Copilot Studio:** Plataforma de execução corporativa acionada via **Direct Line API** (`copilot/client.py`), recebendo prompts já rotulados e sanitizados com a intenção resolvida em metadados.
+- **Microsoft Power Platform (Power Automate):** Execução de fluxos automatizados de atualização, leitura e conectores disparados pelos tópicos do agente.
+- **Fontes de Dados Corporativas:** Conectores operando sob menor privilégio para **SharePoint Online (Listas e Documentos)** e conjuntos de dados do **Power BI**.
 
-| Categoria | Tecnologia/Ferramenta | Finalidade |
-|---|---|---|
-| Linguagem | Python | Desenvolvimento do Pilar 1 (PLN próprio) |
-| Biblioteca de NLP | scikit-learn / sentence-transformers | Pré-processamento, tokenização e classificação de intenções (escolha final registrada em 5.8.4) |
-| API de LLM | OpenAI / Azure OpenAI | Compreensão e geração de linguagem natural |
-| Plataforma low-code | Copilot Studio | Construção do agente conversacional (Pilar 2) |
-| Automação | Power Platform (Power Automate) | Integração com sistemas corporativos do Metrô |
-| Versionamento | Git/GitLab | Controle de versão e colaboração |
-| Ambiente de desenvolvimento | VS Code / Jupyter Notebook | Prototipagem e testes |
-| Gestão e documentação | GitLab | Organização de entregas e alinhamento da equipe |
+### 5.1.4 Confiabilidade e Escalabilidade
 
-> **Observação**: esta listagem representa uma visão inicial e poderá ser refinada conforme o projeto evolua, especialmente à medida que forem definidos com mais precisão os requisitos de integração com os sistemas homologados do Metrô.
+- **Containerização e Isolamento de Serviços:** Toda a pilha de desenvolvimento e produção é isolada em contêineres gerenciados por `Dockerfile` e `docker-compose.yml`, separando `web` (Nginx), `middleware` (FastAPI), `worker` (APScheduler) e `db` (PostgreSQL). A separação do `worker` mantém a API *stateless*, viabilizando escalabilidade horizontal sem duplicação de rotinas agendadas.
+- **Confiabilidade por Defesa em Profundidade e Perímetro Seguro:** 
+  - Pipeline executado em ordem estrita invariável (`Sessão → Injeção → Abuso → Intenção → Execução → Saída → Registro`).
+  - Mitigação de injeção indireta via inspeção da saída gerada a partir de documentos.
+  - Todos os serviços de IA (Content Safety, Speech e Copilot Studio) residem no tenant homologado da organização, garantindo a conformidade do perímetro de segurança.
+- **Auditoria Universal e Rastreabilidade:** Cada mensagem processada, independentemente de ter sido aprovada, bloqueada por injeção, barrada por abuso ou recusada por baixa confiança, grava um registro imutável em banco, viabilizando o monitoramento contínuo da saúde do sistema e a evolução do catálogo de intenções.
+
+### 5.1.5 Matriz Consolidada da Pilha de Tecnologias
+
+| Camada | Tecnologia / Ferramenta | Papel na Solução | Critério / Justificativa |
+|---|---|---|---|
+| **Interface / Frontend** | React 18 / TypeScript / Vite / Tailwind CSS | Interface Web Unificada (Desktop e Mobile) | SPA leve, responsiva, estática e sem runtime Node.js em produção. |
+| **Servidor Web / Proxy** | Nginx | Servir estáticos da SPA e proxy reverso para `/api` | Elimina problemas de CORS e gerencia rotas estáticas em mesma origem. |
+| **Backend & API (BFF)** | Python 3.12 / FastAPI / Pydantic v2 | API REST assíncrona, orquestrador e controle de sessão | Alta performance Input/Output, tipagem forte e controle centralizado em `deps.py`. |
+| **Autenticação** | Microsoft Entra ID (OAuth PKCE) | Gestão de identidade, perfis e permissões | Autenticação corporativa com sessão segura em cookies `httpOnly`. |
+| **Segurança (Injeção/Abuso)** | Regras Regex + Azure AI Content Safety | Guardas de injeção direta/indireta e abuso | Análise adversarial em profundidade dentro do tenant homologado. |
+| **PLN / Intenções** | scikit-learn + sentence-transformers (ensemble TF-IDF + embeddings) | Reconhecimento do catálogo e extração de entidades | Calibração de limiares de confiança probabilísticos por intenção; a escolha das bibliotecas está justificada em 5.8.4. |
+| **Canal de Voz** | Azure Speech Services SDK | Transcrição de áudio em tempo real na interface web | Áudio processado no tenant; tokens de curta duração gerados no backend. |
+| **Agendador de Rotinas** | APScheduler 3 (Worker em contêiner) | Disparo autônomo de rotinas pré-programadas | Execução desassistida passando pelo mesmo orquestrador de segurança. |
+| **Integração Copilot** | Direct Line API (`copilot/client.py`) | Comunicação assíncrona com o Copilot Studio | Desacoplamento entre o produto analítico/guardas e as ações no portfólio. |
+| **Banco de Dados & ORM** | PostgreSQL 16 + SQLAlchemy 2 + Alembic | Persistência de auditoria, rotinas e conversas | Modelo relacional assíncrono robusto e versionamento de esquema. |
+| **Executor Corporativo** | Copilot Studio / Power Platform | Execução de tópicos, conectores e fluxos | Plataforma oficial do parceiro para ações sobre SharePoint e Power BI. |
+| **Ambiente & Deploy** | Docker / Docker Compose | Empacotamento dos 4 serviços (`web`, `api`, `worker`, `db`) | Reprodutibilidade total do ambiente e separação de processos. |
+| **Testes** | Pytest / Vitest / Testing Library | Testes unitários e de integração (frontend/backend) | Cobertura de guardas, orquestrador e componentes de interface. |
 
 ### 5.1.5 Vetorização de texto: Bag of Words e TF-IDF (linha de base clássica)
 
@@ -1726,6 +1820,200 @@ Em paralelo, a busca semântica (C5) consulta o índice vetorial e a base de nor
 C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio — e o repassa a A4, que formata a resposta conforme o perfil do usuário e a entrega em linguagem natural.
 
 > Fonte: Material produzido pelos autores (2026).
+
+### 5.2.3 Diagrama atual da Sprint 2
+
+Esta subseção registra a versão atual do diagrama de componentes UML, elaborada
+na Sprint 2 a partir da arquitetura implementada no repositório. Ela complementa
+a versão anterior apresentada em 5.2: enquanto aquela descreve a separação
+conceitual entre o pipeline de PLN e os serviços do ecossistema Microsoft, esta
+vista detalha os módulos efetivamente previstos para o middleware, o worker e a
+infraestrutura de execução.
+
+O diagrama adota três agrupamentos principais. O `src/web` concentra a
+experiência do usuário; o `src/middleware` recebe as requisições e aplica o
+orquestrador; e o worker executa as rotinas agendadas pelo mesmo fluxo do chat.
+PostgreSQL e os serviços do tenant Microsoft aparecem como dependências externas
+ou compartilhadas, deixando explícitos os limites de responsabilidade da equipe.
+
+```mermaid
+flowchart TB
+  ATOR([Usuário<br/>Diretoria / Líder / Membro])
+
+  subgraph WEBAPP["src/web — React + TypeScript + Vite"]
+    direction TB
+    P_CHAT["Página: Chat<br/><i>conversa + microfone</i>"]
+    P_HIST["Página: Histórico<br/><i>lista e retomada de conversas</i>"]
+    P_INT["Página: Intenções<br/><i>dashboard — requer VER_INTENCOES</i>"]
+    P_ROT["Página: Rotinas<br/><i>agenda e execuções — requer GERIR_ROTINAS</i>"]
+  end
+
+  NGX["Nginx<br/><i>estáticos + proxy /api</i>"]
+
+  subgraph MIDDLEWARE["src/middleware — FastAPI (docker: api)"]
+    direction TB
+    C_API["api/<br/><i>rotas HTTP, deps.py resolve<br/>sessão/perfil/permissões</i>"]
+    C_AUTH["auth/<br/><i>OAuth Entra ID, sessão<br/>cookie httpOnly</i>"]
+    C_ORQ["pipeline/orquestrador.py<br/><i>encadeia as etapas,<br/>ordem fixa</i>"]
+    C_GINJ["pipeline/guardas/injecao/<br/><i>regras + classificador</i>"]
+    C_GABU["pipeline/guardas/abuso/<br/><i>categorias + política de uso</i>"]
+    C_GSAI["pipeline/guardas/saida.py<br/><i>injeção indireta</i>"]
+    C_INT["pipeline/intencao/<br/><i>catálogo + classificador</i>"]
+    C_ANL["analytics/<br/><i>agregações SQL,<br/>somente leitura</i>"]
+    C_VOZ["voz/<br/><i>token efêmero</i>"]
+    C_COP["copilot/client.py<br/><i>único ponto que fala<br/>com o Copilot</i>"]
+    C_PER["persistence/<br/><i>modelos e repositórios</i>"]
+  end
+
+  subgraph WORKER["docker: worker — APScheduler"]
+    direction TB
+    C_AGD["rotinas/agendador.py<br/><i>jobstore no banco</i>"]
+    C_EXE["rotinas/execucao.py<br/><i>executa PELO orquestrador,<br/>canal=rotina</i>"]
+    C_VAL["rotinas/validacao.py<br/><i>valida prompt no cadastro</i>"]
+  end
+
+  DB[("docker: db<br/>PostgreSQL 16")]
+
+  subgraph TENANT["Tenant Microsoft do parceiro"]
+    direction TB
+    ENTRA["Entra ID<br/><i>Authorization Code + PKCE</i>"]
+    SAFE["Azure AI Content Safety<br/><i>Prompt Shields</i>"]
+    SPEECH["Azure Speech<br/><i>transcrição em tempo real</i>"]
+    CS["Copilot Studio<br/><i>Direct Line</i>"]
+    CN["SharePoint · Power BI ·<br/>Power Automate<br/><i>conectores, menor privilégio</i>"]
+  end
+
+  %% Frontend
+  ATOR --> P_CHAT & P_HIST & P_INT & P_ROT
+  P_CHAT & P_HIST & P_INT & P_ROT --> NGX
+  NGX -->|"/api"| C_API
+
+  %% Autenticação
+  C_API --> C_AUTH
+  C_AUTH -->|"Authorization Code + PKCE"| ENTRA
+  ENTRA -.->|"claims de grupo"| C_AUTH
+
+  %% Pipeline principal (trajeto da mensagem)
+  C_API -->|"1. sessão/perfil/permissões"| C_ORQ
+  C_ORQ -->|"2. guarda de injeção"| C_GINJ
+  C_GINJ -->|"classificador"| SAFE
+  C_ORQ -->|"3. guarda de abuso"| C_GABU
+  C_GABU -->|"categorias de conteúdo"| SAFE
+  C_ORQ -->|"4. classificação de intenção"| C_INT
+  C_ORQ -->|"5. execução (prompt rotulado)"| C_COP
+  C_COP -->|"Direct Line"| CS
+  CS --> CN
+  C_ORQ -->|"6. guarda de saída"| C_GSAI
+  C_GSAI -->|"avalia resposta"| SAFE
+  C_ORQ -->|"7. registro"| C_PER
+  C_PER --> DB
+
+  %% Voz
+  P_CHAT -.->|"áudio"| SPEECH
+  C_VOZ -.->|"emite token efêmero"| SPEECH
+  C_API --> C_VOZ
+
+  %% Rotinas
+  P_ROT -->|"cadastra rotina"| C_API
+  C_API --> C_VAL
+  C_VAL -->|"valida via pipeline"| C_ORQ
+  C_VAL --> DB
+  C_AGD --> DB
+  C_AGD -->|"na data programada"| C_EXE
+  C_EXE -->|"mesmo orquestrador,<br/>canal=rotina"| C_ORQ
+
+  %% Analytics
+  P_INT -->|"solicita recortes"| C_API
+  C_API --> C_ANL
+  C_ANL --> DB
+  C_ANL -->|"volume, desfechos,<br/>bloqueios, confiança"| C_API
+  C_API --> P_INT
+
+  classDef web fill:#e8f0fe,stroke:#3a5a8f,stroke-width:1px;
+  classDef mid fill:#eef3fb,stroke:#3a5a8f,stroke-width:1px;
+  classDef wrk fill:#eaf7ec,stroke:#2f7a3d,stroke-width:1px;
+  classDef db fill:#fdf3e3,stroke:#b5822a,stroke-width:1px;
+  classDef ext fill:#f4e3f4,stroke:#8f3a8f,stroke-width:1px;
+  class P_CHAT,P_HIST,P_INT,P_ROT,NGX web;
+  class C_API,C_AUTH,C_ORQ,C_GINJ,C_GABU,C_GSAI,C_INT,C_ANL,C_VOZ,C_COP,C_PER mid;
+  class C_AGD,C_EXE,C_VAL wrk;
+  class DB db;
+  class ENTRA,SAFE,SPEECH,CS,CN ext;
+```
+
+*Figura X — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
+Fonte: Material produzido pelos autores (2026).
+
+#### 5.2.3.1 Responsabilidades dos componentes
+
+| Agrupamento | Componentes | Responsabilidade principal |
+|---|---|---|
+| Interface web | Páginas de Chat, Histórico, Intenções e Rotinas | Oferece os fluxos de conversa, retomada de sessões, consulta de métricas e gerenciamento de rotinas. O acesso às páginas de Intenções e Rotinas depende das permissões correspondentes. |
+| Entrada | Nginx | Entrega os arquivos estáticos da aplicação web e encaminha as chamadas `/api` para a API. |
+| API e identidade | `api/` e `auth/` | Expõe as rotas HTTP, resolve sessão, perfil e permissões e integra a autenticação OAuth com o Entra ID, mantendo a sessão no cookie `httpOnly`. |
+| Orquestração | `pipeline/orquestrador.py` | Coordena as etapas da mensagem em ordem fixa, garantindo que as guardas sejam executadas antes da chamada ao Copilot e do registro do desfecho. |
+| Guardas | `pipeline/guardas/injecao/`, `abuso/` e `saida.py` | Detectam injeção direta, abuso e injeção indireta na resposta. As avaliações que dependem de serviço externo usam o Azure AI Content Safety. |
+| Intenção | `pipeline/intencao/` | Pré-processa a mensagem, consulta o catálogo e classifica a intenção que será usada pelo orquestrador. |
+| Integração Copilot | `copilot/client.py` | Centraliza a comunicação com o Copilot Studio por Direct Line, evitando que outras partes da aplicação criem integrações paralelas. |
+| Persistência e analytics | `persistence/` e `analytics/` | Persiste sessões, mensagens e desfechos no PostgreSQL; as consultas analíticas produzem recortes somente para leitura. |
+| Voz | `voz/` e Azure Speech | Emite token efêmero para a transcrição em tempo real, sem transferir a responsabilidade de autenticação do middleware para o navegador. |
+| Rotinas | `rotinas/` e worker APScheduler | Valida prompts no cadastro, armazena o job e executa a rotina na data programada, reutilizando o orquestrador com `canal=rotina`. |
+| Serviços do tenant | Entra ID, Azure AI Content Safety, Azure Speech, Copilot Studio e conectores Microsoft | Fornece identidade, avaliação de conteúdo, transcrição, execução conversacional e acesso às fontes corporativas conforme o menor privilégio. |
+
+As setas entre agrupamentos representam contratos de integração, e não
+necessariamente chamadas síncronas. Por exemplo, o agendador dispara uma
+execução no worker, enquanto o jobstore e os registros de conversa permanecem
+no banco. Da mesma forma, o navegador acessa o Speech para o áudio, mas recebe
+do middleware o token efêmero que autoriza essa sessão.
+
+#### 5.2.3.2 Fluxos representados
+
+**Fluxo principal de conversa.** O usuário inicia a interação em Chat ou
+Histórico. O Nginx encaminha a requisição para a API, que resolve a sessão, o
+perfil e as permissões antes de entregar a mensagem ao orquestrador. O
+orquestrador aplica, em ordem, as guardas de injeção e abuso, classifica a
+intenção, envia ao Copilot um prompt rotulado, avalia a resposta e registra o
+desfecho no PostgreSQL.
+
+**Autenticação e proteção.** A autenticação usa Authorization Code com PKCE no
+Entra ID. Os claims de grupo retornam para a camada de autenticação e são
+convertidos em permissões de aplicação. O Azure AI Content Safety participa das
+avaliações de entrada e saída; assim, uma mensagem bloqueada não é enviada ao
+Copilot e uma resposta com indício de injeção indireta não é apresentada sem
+tratamento.
+
+**Voz.** A página Chat encaminha o áudio ao Azure Speech. A API emite um token
+efêmero para limitar a exposição das credenciais e o texto transcrito volta a
+seguir o mesmo pipeline da mensagem textual. A voz, portanto, não cria um
+caminho alternativo de autorização ou de registro.
+
+**Rotinas agendadas.** A página Rotinas cadastra a configuração na API. O
+prompt é validado pelo pipeline antes de ser persistido; o APScheduler grava e
+recupera o job no PostgreSQL. Na data programada, o worker executa a solicitação
+por meio do mesmo orquestrador do chat, identificando a origem com
+`canal=rotina`.
+
+**Analytics.** A página Intenções solicita recortes à API, que consulta o
+PostgreSQL por meio do módulo `analytics/`. O módulo é somente leitura e
+retorna volume, desfechos, bloqueios e confiança, mantendo a separação entre
+consulta analítica e alteração de dados operacionais.
+
+#### 5.2.3.3 Relação com requisitos e decisões arquiteturais
+
+| Elemento do diagrama | Requisitos ou decisões atendidos |
+|---|---|
+| Sessão, Entra ID e permissões | RF01 e RNF01: autenticação e autorização ocorrem antes do acesso aos dados. |
+| Guardas de injeção, abuso e saída | RNF01 e RNF04: reduzem o risco de conteúdo malicioso na entrada, no contexto e na resposta. |
+| Catálogo e classificação de intenção | RF02, RF03 e RNF03: direcionam a solicitação e permitem recusar intenções fora do escopo. |
+| Copilot Studio como integração única | Pilar 2 da arquitetura: o middleware controla o ponto de comunicação com o agente e os conectores corporativos. |
+| Persistência e registro de desfechos | RNF02: preserva contexto, rastreabilidade e evidências de bloqueios e execuções. |
+| Worker usando o orquestrador | RF06: mantém as rotinas agendadas sujeitas às mesmas regras de segurança do chat. |
+| Analytics somente leitura | Permite acompanhar volume, confiança e bloqueios sem conceder à camada de indicadores permissão de escrita. |
+
+Esta versão é a referência arquitetural da Sprint 2 para a implementação do
+MVP. Alterações na divisão de responsabilidades, nos serviços externos ou no
+fluxo fixo do orquestrador devem ser refletidas neste diagrama e nas vistas
+relacionadas de 5.3 e 5.6.
 
 ## 5.3 Diagramas de Sequência da UML
 
@@ -2187,6 +2475,276 @@ Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revi
 - **Cobertura da trilha de auditoria.** A modelagem dinâmica evidenciou uma lacuna do mapeamento de integrações: a ficha INT-10 prevê o registro de consultas, intenções classificadas, recusas e alterações efetivadas, mas não de alertas proativos, e a rastreabilidade de 5.5.6 associa o RF06 apenas a INT-03 e INT-07. Por coerência, DS04 não registra o alerta emitido. Recomenda-se ampliar o escopo de INT-10 para cobrir as notificações do RF06, de modo que a atuação proativa também seja auditável.
 - **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
 
+### 5.3.8 Diagramas de Sequência de Casos Críticos - Sprint 2
+
+Os diagramas desta subseção apresentam a versão atual da modelagem dinâmica do middleware na Sprint 2. Eles detalham cinco casos críticos que atravessam as guardas de segurança, o classificador de intenções, a integração com o Copilot Studio, a persistência das interações e a execução de rotinas agendadas.
+
+Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriormente em 5.3. Os diagramas anteriores permanecem como histórico da modelagem e enfatizam os fluxos de negócio do agente; os cenários atuais partem da implementação do repositório, incluindo a API FastAPI, o cliente do Copilot Studio, o Azure AI Content Safety e as camadas de persistência. O código-fonte Mermaid é mantido neste documento para permitir revisão e evolução do artefato.
+
+#### 5.3.8.1 Cenário 1 - Mensagem bloqueada pela guarda de injeção
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant SAFE as Azure AI Content Safety
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem
+  WEB->>API: POST /api/chat
+  API->>API: deps.py resolve sessão, perfil e permissões
+  API->>ORQ: processar(mensagem, usuário, canal=chat)
+  activate ORQ
+  ORQ->>GINJ: 2. Guarda de injeção
+  activate GINJ
+  GINJ->>GINJ: Regras determinísticas (versionadas no repo)
+  GINJ->>SAFE: Classificador por modelo (Prompt Shields)
+  SAFE-->>GINJ: Score de injeção
+
+  alt injeção detectada
+    GINJ-->>ORQ: Desfecho = BLOQUEADA_INJECAO
+    deactivate GINJ
+    ORQ->>PER: Registra interação (desfecho=BLOQUEADA_INJECAO)
+    PER-->>ORQ: Confirmado
+    ORQ-->>API: Recusa seca, sem revelar o motivo
+    API-->>WEB: Resposta de bloqueio
+    WEB-->>U: Exibe recusa padrão
+  else input aprovado
+    GINJ-->>ORQ: Desfecho = null (segue pipeline)
+    Note over ORQ: Segue para guarda de abuso (Cenário 2)
+  end
+  deactivate ORQ
+```
+
+#### 5.3.8.2 Cenário 2 - Fluxo completo de sucesso (chat)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant GABU as Guarda de Abuso
+  participant INT as Classificador de Intenção
+  participant COP as copilot/client.py
+  participant CS as Copilot Studio (Direct Line)
+  participant GSAI as Guarda de Saída
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1. sessão/perfil/permissões resolvidos
+  activate ORQ
+
+  ORQ->>GINJ: 2. Guarda de injeção
+  GINJ-->>ORQ: Aprovado
+
+  ORQ->>GABU: 3. Guarda de abuso
+  GABU->>GABU: Categorias de conteúdo + política de uso corporativo
+  GABU-->>ORQ: Aprovado
+
+  ORQ->>INT: 4. Classificação de intenção
+  INT->>INT: Compara contra catálogo, aplica limiar por intenção
+  INT-->>ORQ: Intenção + confiança
+
+  ORQ->>COP: 5. Execução — prompt como dado rotulado + intenção em metadados
+  activate COP
+  COP->>CS: Direct Line — envia prompt validado
+  CS->>CS: Executa tópico/ação correspondente
+  CS-->>COP: Resposta gerada
+  COP-->>ORQ: Resposta do Copilot
+  deactivate COP
+
+  ORQ->>GSAI: 6. Guarda de saída
+  GSAI->>GSAI: Avalia resposta antes da entrega
+  GSAI-->>ORQ: Aprovada
+
+  ORQ->>PER: 7. Registra interação completa (desfecho=SUCESSO)
+  PER-->>ORQ: Confirmado
+
+  ORQ-->>API: Resposta final
+  deactivate ORQ
+  API-->>WEB: Resposta
+  WEB-->>U: Exibe resposta
+```
+
+#### 5.3.8.3 Cenário 3 - Mensagem bloqueada pela guarda de abuso
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário autenticado
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant GINJ as Guarda de Injeção
+  participant GABU as Guarda de Abuso
+  participant SAFE as Azure AI Content Safety
+  participant PER as persistence/
+
+  U->>WEB: Envia mensagem com uso indevido<br/>(fora do escopo corporativo)
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1. sessão/perfil/permissões
+  activate ORQ
+  ORQ->>GINJ: 2. Guarda de injeção
+  GINJ-->>ORQ: Aprovado (nenhuma injeção detectada)
+
+  ORQ->>GABU: 3. Guarda de abuso
+  activate GABU
+  GABU->>SAFE: Avalia categorias de conteúdo
+  SAFE-->>GABU: Classificação
+  GABU->>GABU: Avalia política de uso corporativo
+
+  alt uso indevido confirmado
+    GABU-->>ORQ: Desfecho = BLOQUEADA_ABUSO
+    deactivate GABU
+    ORQ->>PER: Registra interação nominal<br/>(usuário é autenticado e conhecido)
+    PER-->>ORQ: Confirmado
+    ORQ-->>API: Recusa orientativa
+    API-->>WEB: Resposta de bloqueio
+    WEB-->>U: Exibe recusa com orientação
+  else uso dentro da política
+    GABU-->>ORQ: Aprovado
+    Note over ORQ: Segue para classificação de intenção (Cenário 2)
+  end
+  deactivate ORQ
+```
+
+#### 5.3.8.4 Cenário 4 - Guarda de saída bloqueia injeção indireta
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor ATK as Atacante
+  participant SP as SharePoint
+  actor U as Usuário legítimo
+  participant WEB as Frontend (Chat)
+  participant API as api/ (FastAPI)
+  participant ORQ as Orquestrador
+  participant COP as copilot/client.py
+  participant CS as Copilot Studio
+  participant GSAI as Guarda de Saída
+  participant PER as persistence/
+
+  ATK->>SP: Deposita documento com<br/>instrução maliciosa embutida
+  Note over ATK,SP: Ataque não passa pelo campo de texto —<br/>a entrada do usuário é inocente
+
+  U->>WEB: Faz pergunta legítima sobre o portfólio
+  WEB->>API: POST /api/chat
+  API->>ORQ: 1–4. sessão, guardas de entrada e<br/>classificação (todas aprovadas)
+  activate ORQ
+  ORQ->>COP: 5. Execução — prompt rotulado
+  COP->>CS: Direct Line
+  CS->>SP: Recupera documento para compor resposta
+  SP-->>CS: Conteúdo do documento (com instrução embutida)
+  CS-->>COP: Resposta contaminada pela instrução do documento
+  COP-->>ORQ: Resposta do Copilot
+
+  ORQ->>GSAI: 6. Guarda de saída
+  activate GSAI
+  GSAI->>GSAI: Avalia a resposta antes da entrega
+  GSAI-->>ORQ: Desfecho = BLOQUEADA_SAIDA
+  deactivate GSAI
+
+  ORQ->>PER: 7. Registra interação (desfecho=BLOQUEADA_SAIDA)
+  PER-->>ORQ: Confirmado
+  ORQ-->>API: Recusa seca, sem repetir a instrução recebida
+  deactivate ORQ
+  API-->>WEB: Resposta de bloqueio
+  WEB-->>U: Exibe recusa padrão
+```
+
+#### 5.3.8.5 Cenário 5 - Disparo de rotina agendada
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Usuário (dono, GERIR_ROTINAS)
+  participant WEB as Frontend (Rotinas)
+  participant API as api/ (FastAPI)
+  participant VAL as rotinas/validacao.py
+  participant ORQV as Orquestrador (validação)
+  participant AGD as rotinas/agendador.py<br/>(APScheduler)
+  participant DB as PostgreSQL
+  participant EXE as rotinas/execucao.py
+  participant ORQE as Orquestrador (execução)
+  participant COP as copilot/client.py
+  actor DIR as Diretoria
+
+  U->>WEB: Cadastra rotina (prompt, cron, timezone)
+  WEB->>API: POST /api/rotinas
+  API->>VAL: Valida prompt no cadastro
+  VAL->>ORQV: Passa pelas guardas e classificador
+  alt não resolve em intenção do catálogo
+    ORQV-->>VAL: Recusa
+    VAL-->>API: Cadastro recusado, com explicação
+    API-->>WEB: Erro de validação
+    WEB-->>U: Exibe motivo da recusa
+  else resolve em intenção válida
+    ORQV-->>VAL: Aprovado
+    VAL->>DB: Persiste Rotina (ativa, intencao_prevista)
+    VAL-->>API: Confirmado
+    API-->>WEB: Rotina criada
+    WEB-->>U: Exibe confirmação
+  end
+
+  Note over AGD,DB: Fuso da rotina (ex.: America/Sao_Paulo),<br/>coalesce + misfire_grace_time evitam disparo em rajada
+
+  AGD->>DB: Job persistido dispara no horário agendado
+  AGD->>EXE: Aciona execução (canal=rotina)
+  activate EXE
+  EXE->>ORQE: Reentra pelo MESMO orquestrador<br/>(permissões do dono resolvidas na execução)
+  activate ORQE
+  ORQE->>ORQE: Repassa por todas as guardas<br/>(catálogo e permissões reavaliados)
+  ORQE->>COP: 5. Execução no Copilot Studio
+  COP-->>ORQE: Resposta (relatório)
+  ORQE->>DB: Registra Interacao (canal=rotina)
+  ORQE->>DB: Registra ExecucaoRotina (status, interacao_id)
+  deactivate ORQE
+  EXE-->>AGD: Execução concluída
+  deactivate EXE
+
+  WEB->>API: Consulta histórico de execuções
+  API->>DB: SELECT execuções da rotina
+  DB-->>API: Lista de execuções
+  API-->>WEB: Exibe status na aba de resultados
+  WEB-->>DIR: Diretoria acessa relatório no app<br/>(sem depender de e-mail/Teams)
+```
+
+#### 5.3.8.6 Convenções adotadas
+
+Os cinco diagramas usam `autonumber` para numerar as mensagens e distinguem atores externos, como usuário, atacante e Diretoria, dos participantes internos do middleware. Os nomes dos participantes seguem os módulos e arquivos apresentados na estrutura do repositório, o que aproxima a documentação dinâmica da implementação sem transformar o diagrama em um mapa de funções Python.
+
+Os fragmentos `alt` representam caminhos mutuamente exclusivos: entrada bloqueada ou aprovada, uso indevido ou permitido, rotina rejeitada ou cadastrada. Os comandos `activate` e `deactivate` destacam o período em que o orquestrador, uma guarda ou uma execução permanece responsável pelo processamento. As mensagens para `persistence/` e PostgreSQL representam o contrato lógico de persistência; a implementação física pode variar sem alterar o comportamento documentado.
+
+O Cenário 2 funciona como fluxo de sucesso de referência para os Cenários 1 e 3, que interrompem o processamento antes da classificação ou da execução. O Cenário 4 evidencia que a validação da saída é necessária mesmo quando a solicitação do usuário foi legítima, pois o conteúdo recuperado de uma fonte externa pode introduzir uma instrução indireta. O Cenário 5 reusa o mesmo orquestrador na execução agendada para impedir que rotinas contornem as guardas e as permissões aplicadas ao chat.
+
+#### 5.3.8.7 Rastreabilidade dos cenários
+
+| Cenário | Requisitos e artefatos relacionados | Evidência no fluxo |
+|---|---|---|
+| 1. Bloqueio por injeção | RNF01, RNF02, risco R09, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO` sem expor o motivo. |
+| 2. Sucesso no chat | RF01 a RF03, INT-02, INT-08 e INT-10 | Sessão, permissões, guardas, classificação, execução no Copilot, validação da saída e persistência completa. |
+| 3. Bloqueio por abuso | RNF02, RNF05, `GuardaAbuso` | Azure AI Content Safety e política corporativa produzem recusa orientativa e registro nominal. |
+| 4. Injeção indireta | RNF01, RNF02, risco R09, `GuardaSaida` | Conteúdo contaminado pelo documento é bloqueado antes de chegar ao usuário e sem repetir a instrução. |
+| 5. Rotina agendada | RF06, INT-07, feature F1.21, `Rotina` e `ExecucaoRotina` | Cadastro validado, execução reprocessada pelo mesmo orquestrador, registro do resultado e consulta do histórico. |
+
+Os cenários cobrem os principais desfechos definidos no diagrama de classes da Sprint 2: `BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA` e `SUCESSO`. `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR` permanecem representados no modelo estático e devem ser detalhados em cenários complementares quando seus contratos de implementação forem definidos.
+
+#### 5.3.8.8 Limitações e refinamentos futuros
+
+- **Contratos de API.** Os diagramas mostram as chamadas principais, mas ainda não definem schemas de requisição e resposta, códigos HTTP, timeouts ou política de retentativas.
+- **Falhas intermediárias.** Os cenários de sucesso não detalham indisponibilidade do Azure AI Content Safety, do Copilot Studio, do PostgreSQL ou do APScheduler. Esses caminhos devem ser acrescentados quando os critérios de resiliência forem validados.
+- **Execução concorrente.** `coalesce` e `misfire_grace_time` são registrados como decisões do agendador, mas não substituem a definição de idempotência, bloqueio concorrente e limite de execuções simultâneas.
+- **Dados externos.** A recuperação do SharePoint aparece no Cenário 4 para evidenciar a injeção indireta; a validação de origem, o isolamento do conteúdo e a política de citações ainda precisam ser detalhados.
+- **Evolução da segurança.** Os nomes das guardas e desfechos estão alinhados ao modelo de classes, mas os limiares, versões de regras e evidências de auditoria devem acompanhar a configuração efetivamente implantada.
+
 ## 5.4 Catálogo de Intenções do Agente
 
 ### 5.4.1 Objetivo e função do catálogo
@@ -2408,6 +2966,259 @@ O catálogo é artefato vivo. Três mecanismos sustentam sua manutenção:
 - ~~**Limiar de confiança.**~~ **Resolvido em 5.4.12.** O valor deixou de ser arbitrado: é derivado por validação cruzada sobre o conjunto de treino, um por intenção, com alvo que depende da categoria.
 - **Estabilidade do número de classes.** O conjunto sintético passou a cobrir as 28 classes, e não apenas os 17 rótulos do MVP. A medição de 5.4.12 confirma a maioria das fronteiras e questiona três delas, que ficam registradas ali como candidatas a revisão.
 - **Efeito do canal de voz.** O conjunto de treino passou a incorporar variantes degradadas — 49% dos enunciados têm perda de caixa, de acentuação, de pontuação ou erro de digitação — e 5.4.12 mede o custo dessa degradação sobre a classificação. A medição continua sendo uma aproximação: o WER real só pode ser apurado quando o serviço de fala estiver definido.
+
+### 5.4.11 Diagrama de Classes UML — Sprint 2
+
+O diagrama de classes abaixo apresenta a modelagem técnica atual do middleware responsável por intermediar as solicitações entre os usuários e o Copilot Studio. Diferentemente do modelo conceitual apresentado na seção 3.2.2, elaborado na Sprint 1, esta versão detalha os componentes de processamento, as guardas de segurança, a persistência das interações e a execução de rotinas agendadas previstos para a Sprint 2.
+
+O modelo mantém o catálogo de intenções como referência para a classificação e o roteamento, mas explicita as decisões que acontecem antes e depois da chamada ao Copilot Studio: detecção de injeção, controle de abuso, verificação da saída, registro do desfecho e associação com o perfil do usuário. A representação é conceitual-técnica; os identificadores UUID, os tipos de dados e os nomes das classes servem para orientar a implementação e ainda podem ser refinados durante a evolução da arquitetura.
+
+```mermaid
+classDiagram
+    class Usuario {
+        +UUID id
+        +String nome
+        +String email
+        +String entraObjectId
+        +Perfil perfil
+        +List~Permissao~ permissoes
+        +DateTime criadoEm
+        +possuiPermissao(permissao) Boolean
+    }
+
+    class Perfil {
+        <<enumeration>>
+        DIRETORIA
+        LIDER_PROJETO
+        MEMBRO_EQUIPE
+    }
+
+    class Permissao {
+        <<enumeration>>
+        VER_INTENCOES
+        GERIR_ROTINAS
+    }
+
+    class Conversa {
+        +UUID id
+        +UUID usuarioId
+        +String titulo
+        +String conversaExternaId
+        +DateTime arquivadaEm
+        +DateTime criadaEm
+        +gerarTitulo(primeiroTurno) String
+    }
+
+    class Interacao {
+        +UUID id
+        +UUID conversaId
+        +UUID usuarioId
+        +String prompt
+        +String resposta
+        +UUID intencaoId
+        +Float confianca
+        +Desfecho desfecho
+        +Perfil perfil
+        +Canal canal
+        +UUID rotinaId
+        +Integer latenciaMs
+        +DateTime criadaEm
+        +persistir() Void
+    }
+
+    class Canal {
+        <<enumeration>>
+        CHAT
+        VOZ
+        ROTINA
+    }
+
+    class Desfecho {
+        <<enumeration>>
+        SUCESSO
+        BLOQUEADA_INJECAO
+        BLOQUEADA_ABUSO
+        RECUSADA_FORA_ESCOPO
+        RECUSADA_BAIXA_CONFIANCA
+        FALHA_EXECUTOR
+        BLOQUEADA_SAIDA
+    }
+
+    class IntencaoCatalogo {
+        +UUID id
+        +String codigo
+        +String nome
+        +String descricao
+        +Float limiarConfianca
+        +Boolean ehForaDeEscopo
+        +DateTime versaoAtualizadaEm
+    }
+
+    class GuardaInjecao {
+        +avaliarRegrasDeterministicas(texto) Boolean
+        +avaliarClassificador(texto) Float
+        +decidir(texto) Desfecho
+    }
+
+    class GuardaAbuso {
+        +avaliarCategoriasConteudo(texto) Boolean
+        +avaliarPoliticaUsoCorporativo(usuario, texto) Boolean
+        +decidir(usuario, texto) Desfecho
+    }
+
+    class GuardaSaida {
+        +avaliarRespostaCopilot(resposta) Boolean
+        +decidir(resposta) Desfecho
+    }
+
+    class ClassificadorIntencao {
+        +classificar(texto) IntencaoCatalogo
+        +calcularConfianca(texto, intencao) Float
+    }
+
+    class Orquestrador {
+        +processar(mensagem, usuario, canal) Interacao
+        -resolverSessao(usuario) Void
+        -executarGuardaInjecao(texto) Desfecho
+        -executarGuardaAbuso(usuario, texto) Desfecho
+        -executarClassificacao(texto) IntencaoCatalogo
+        -executarNoCopilot(promptValidado, intencao) String
+        -executarGuardaSaida(resposta) Desfecho
+        -registrarInteracao(dados) Interacao
+    }
+
+    class ClienteCopilotStudio {
+        +String directLineToken
+        +enviarPromptRotulado(prompt, intencaoMetadados) String
+    }
+
+    class Rotina {
+        +UUID id
+        +String nome
+        +String prompt
+        +String agendaCron
+        +String timezone
+        +UUID donoId
+        +UUID intencaoPrevista
+        +Boolean ativa
+        +DateTime criadaEm
+        +validarNoCadastro() Boolean
+    }
+
+    class ExecucaoRotina {
+        +UUID id
+        +UUID rotinaId
+        +DateTime iniciadaEm
+        +DateTime concluidaEm
+        +StatusExecucao status
+        +UUID interacaoId
+        +String erro
+    }
+
+    class StatusExecucao {
+        <<enumeration>>
+        SUCESSO
+        FALHA
+        EM_EXECUCAO
+    }
+
+    class RecorteAnalitico {
+        +UUID id
+        +String tipo
+        +DateTime periodoInicio
+        +DateTime periodoFim
+        +Map dados
+        +gerarVolumePorIntencao() Map
+        +gerarDistribuicaoDesfechos() Map
+        +gerarSerieBloqueiosPorGuarda() Map
+        +gerarAgrupamentoForaDeEscopo() Map
+        +gerarConfiancaMediaPorIntencao() Map
+    }
+
+    Usuario "1" --> "1" Perfil : possui
+    Usuario "1" --> "*" Permissao : possui
+    Usuario "1" --> "*" Conversa : inicia
+    Conversa "1" --> "*" Interacao : contém
+    Usuario "1" --> "*" Interacao : gera
+    Interacao "1" --> "1" Canal : ocorre via
+    Interacao "1" --> "1" Desfecho : resulta em
+    Interacao "*" --> "0..1" IntencaoCatalogo : classificada como
+
+    Orquestrador "1" --> "1" GuardaInjecao : aciona
+    Orquestrador "1" --> "1" GuardaAbuso : aciona
+    Orquestrador "1" --> "1" GuardaSaida : aciona
+    Orquestrador "1" --> "1" ClassificadorIntencao : aciona
+    Orquestrador "1" --> "1" ClienteCopilotStudio : aciona
+    Orquestrador "1" --> "*" Interacao : produz
+    ClassificadorIntencao "*" --> "*" IntencaoCatalogo : consulta
+
+    Usuario "1" --> "*" Rotina : possui (dono)
+    Rotina "1" --> "*" ExecucaoRotina : gera
+    ExecucaoRotina "1" --> "1" StatusExecucao : possui
+    ExecucaoRotina "1" --> "0..1" Interacao : associada a
+    Rotina "1" --> "0..1" IntencaoCatalogo : prevê
+
+    RecorteAnalitico "*" --> "*" Interacao : agrega
+```
+
+*Figura X — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
+
+#### 5.4.11.1 Classes e responsabilidades
+
+| Classe | Responsabilidade na solução |
+|---|---|
+| `Usuario` | Representar a identidade autenticada, o perfil e as permissões que determinam o acesso às funcionalidades. |
+| `Perfil` | Enumerar os perfis corporativos considerados no controle de acesso: Diretoria, liderança de projeto e membro de equipe. |
+| `Permissao` | Enumerar as capacidades administrativas previstas para o usuário, como visualizar intenções e gerir rotinas. |
+| `Conversa` | Manter a sessão conversacional, seu título, identificador externo e ciclo de vida. |
+| `Interacao` | Registrar cada solicitação processada, sua resposta, intenção, confiança, canal, desfecho, latência e contexto de usuário. |
+| `Canal` | Identificar se a interação veio por chat, voz ou execução de rotina. |
+| `Desfecho` | Padronizar o resultado do processamento, incluindo sucesso, recusas, bloqueios e falha do executor. |
+| `IntencaoCatalogo` | Representar uma intenção versionada do catálogo, seu limiar de confiança e a indicação de fora de escopo. |
+| `GuardaInjecao` | Avaliar regras determinísticas e o classificador de injeção antes do processamento da solicitação. |
+| `GuardaAbuso` | Verificar categorias de conteúdo e a política de uso corporativo aplicada ao usuário e ao texto. |
+| `GuardaSaida` | Avaliar a resposta produzida pelo Copilot antes de sua entrega ao usuário. |
+| `ClassificadorIntencao` | Classificar o texto em uma intenção do catálogo e calcular a confiança associada. |
+| `Orquestrador` | Coordenar sessão, guardas, classificação, chamada ao Copilot, guarda de saída e registro da interação. |
+| `ClienteCopilotStudio` | Encapsular o envio do prompt validado e dos metadados de intenção ao Copilot Studio por Direct Line. |
+| `Rotina` | Definir um prompt agendado, sua expressão cron, fuso horário, intenção prevista e responsável. |
+| `ExecucaoRotina` | Registrar uma execução de rotina, seu estado, os horários, eventual erro e a interação gerada. |
+| `StatusExecucao` | Enumerar os estados de uma execução: em execução, sucesso ou falha. |
+| `RecorteAnalitico` | Agregar interações em um período e produzir indicadores de volume, desfecho, bloqueios, escopo e confiança. |
+
+#### 5.4.11.2 Relações e decisões de modelagem
+
+`Usuario` possui um único `Perfil` e pode possuir várias `Permissao`, `Conversa`, `Interacao` e `Rotina`. O perfil é armazenado também em `Interacao` para preservar o contexto de autorização no momento do processamento, mesmo que a configuração do usuário seja alterada posteriormente. A rotina tem um usuário como dono, e a permissão `GERIR_ROTINAS` representa a capacidade administrativa relacionada a esse recurso.
+
+Uma `Conversa` agrupa uma ou mais `Interacao`. Cada interação ocorre por um `Canal` e termina em um `Desfecho`; a associação opcional com `IntencaoCatalogo` permite registrar bloqueios que ocorreram antes da classificação ou que não produziram uma intenção válida. O `Orquestrador` produz as interações e coordena todas as guardas, o classificador e o cliente de integração.
+
+As três guardas representam pontos de decisão distintos. `GuardaInjecao` protege a entrada contra instruções de manipulação; `GuardaAbuso` aplica as políticas de conteúdo e de uso corporativo; e `GuardaSaida` verifica o retorno do Copilot antes da entrega. A separação permite que o `Desfecho` identifique a etapa responsável pelo bloqueio, sustentando a auditoria e os recortes analíticos.
+
+`ClassificadorIntencao` consulta várias entradas do `IntencaoCatalogo`, mas a interação registra no máximo uma intenção resultante. O `ClienteCopilotStudio` recebe o prompt somente depois das validações do orquestrador e envia os metadados da intenção para manter o roteamento coerente com o catálogo definido em 5.4.4.
+
+Uma `Rotina` pode gerar várias `ExecucaoRotina`. Cada execução possui um `StatusExecucao` e pode estar associada a uma `Interacao` quando o processamento chega ao pipeline. A associação é opcional para permitir registrar falhas de agendamento ou de inicialização que não produziram uma interação completa. `RecorteAnalitico` agrega múltiplas interações para apoiar a observabilidade do middleware, sem alterar os registros de origem.
+
+#### 5.4.11.3 Rastreabilidade e integração com as demais vistas
+
+| Elemento do diagrama | Requisitos ou artefatos relacionados | Papel na Sprint 2 |
+|---|---|---|
+| `Usuario`, `Perfil` e `Permissao` | RF01, RNF05, INT-08 | Identidade, escopo autorizado e controle de operações administrativas. |
+| `Conversa` e `Interacao` | RF02, RF03, RNF02, INT-10 | Contexto conversacional, registro de auditoria e rastreabilidade dos desfechos. |
+| `IntencaoCatalogo` e `ClassificadorIntencao` | RF03, seção 5.4.4, bloco C2 | Classificação fechada, confiança e roteamento baseado no catálogo. |
+| `GuardaInjecao`, `GuardaAbuso` e `GuardaSaida` | RNF01, RNF02, RNF05, risco R09 | Proteção da entrada, aplicação de política e validação da resposta. |
+| `Orquestrador` e `ClienteCopilotStudio` | Diagrama de componentes (5.2), INT-02 | Coordenação do pipeline e integração controlada com o Copilot Studio. |
+| `Rotina` e `ExecucaoRotina` | RF06, feature F1.21 | Execução agendada, registro de falhas e associação opcional ao resultado. |
+| `RecorteAnalitico` | RNF02, INT-10 | Indicadores para monitorar volume, confiança, bloqueios e desfechos. |
+
+O modelo complementa, e não substitui, o diagrama de componentes da seção 5.2: os componentes descrevem módulos e interfaces, enquanto as classes descrevem os dados e comportamentos que esses módulos manipulam. Também complementa os diagramas de sequência da seção 5.3: o `Orquestrador` e as guardas aparecem como participantes de um fluxo temporal, enquanto aqui são detalhados por atributos, operações e relações. A versão conceitual da seção 3.2.2 permanece como histórico da Sprint 1 e não deve ser interpretada como contrato atualizado da implementação do middleware.
+
+#### 5.4.11.4 Limitações e refinamentos futuros
+
+- **Persistência.** O diagrama representa entidades persistidas e serviços em uma mesma vista lógica. A separação entre modelos de domínio, schemas de API e tabelas do banco deverá ser definida no projeto físico.
+- **Integração externa.** `ClienteCopilotStudio` expõe o token Direct Line como atributo conceitual; o armazenamento, a renovação e a proteção desse segredo devem ser definidos na configuração segura do ambiente, sem persistência em `Interacao`.
+- **Execução assíncrona.** O modelo não detalha filas, workers, retentativas ou concorrência das `ExecucaoRotina`. Esses elementos pertencem ao desenho de implantação e podem exigir estados adicionais.
+- **Políticas.** As categorias de abuso, regras de injeção e critérios da guarda de saída são abstraídos como operações. Seus catálogos, limiares e versões devem ser governados fora do diagrama e registrados para auditoria.
+- **Evolução do catálogo.** `IntencaoCatalogo` admite versionamento e limiar próprio, mas o modelo ainda não define histórico de versões, aprovação ou publicação. Esses pontos dependem da governança do catálogo descrita em 5.4.9.
 
 ### 5.4.12 Resultado da bancada de avaliação (F1.21) e da comparação de estratégias (F22)
 
@@ -3040,6 +3851,141 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 | RNF04. Disponibilidade do agente | C0, E1 |
 | RNF05. Adequação da resposta ao perfil | B2, A4 |
 
+## 5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto
+
+Esta seção registra a definição técnica do canal de voz da solução, atendendo aos elementos de detalhamento da API de conversão de áudio em texto e de texto em áudio e da API de recebimento dos áudios enviados pelo usuário. O canal de voz materializa o RF02 e a US02, ambos priorizados como MVP, e é a origem do risco R03 registrado na seção 2.6.2.
+
+A seção parte de três definições já estabelecidas neste documento e as detalha, sem contradizê-las. A seção 5.1.2 fixou o Azure Speech Services, também designado Azure AI Speech, nome atual do produto, como tecnologia do canal de voz, consumido pelo navegador mediante emissão de tokens efêmeros pelo backend. As seções 5.2, 5.3 e 5.6 situam a captura de áudio (bloco A2) e a conversão de fala em texto (bloco A3) dentro da camada de Canal. A seção 3.1.5.2 estabeleceu os indicadores de conversão entre voz e texto e registrou que suas metas seriam revisadas quando o serviço de fala fosse definido — pendência que a subseção 5.7.2 encerra.
+
+A organização da seção acompanha a ordem em que as decisões se condicionam:
+
+| Subseção | Conteúdo |
+|---|---|
+| 5.7.1 | Topologia do canal de voz: por qual caminho o áudio trafega e por quê |
+| 5.7.2 | Seleção dos serviços de conversão entre fala e texto |
+| 5.7.3 | API de recebimento de áudios do usuário |
+| 5.7.4 | API de conversão de fala em texto |
+| 5.7.5 | API de conversão de texto em fala |
+| 5.7.6 | Catálogo de erros, limites operacionais e registro |
+| 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções |
+
+### 5.7.1 Topologia do canal de voz
+
+Esta subseção será desenvolvida em conjunto com a especificação da API de recebimento de áudios, registrando as alternativas de trajeto do áudio, a escolha adotada, suas consequências e a política de retenção aplicável.
+
+### 5.7.2 Seleção dos serviços de conversão entre fala e texto
+
+A escolha do serviço de fala condiciona toda a camada de voz: define os formatos de áudio que a API de recebimento pode aceitar, os limites de duração e tamanho por requisição, o mecanismo de autenticação exposto ao navegador, o custo variável de operação e a viabilidade de tratar o vocabulário específico da companhia. Por essa razão a seleção precede as demais subseções.
+
+#### 5.7.2.1 Critérios de seleção
+
+Os critérios foram derivados das restrições de negócio da seção 3.1.4, do RNF01, do risco R03 e das características do canal descritas na seção 5.1.1. Eles se organizam em dois grupos. Os **critérios eliminatórios** expressam condições sem as quais a alternativa não pode ser adotada, independentemente de suas demais qualidades. Os **critérios classificatórios** ordenam as alternativas remanescentes segundo pesos que refletem a criticidade de cada aspecto para o projeto.
+
+**Critérios eliminatórios**
+
+| ID | Critério | Origem |
+|---|---|---|
+| E1 | Não exigir que credencial de longa duração seja exposta no cliente | RNF01 e boas práticas de gestão de segredos registradas na seção 6.5.6 |
+| E2 | Permitir a escolha explícita da região de processamento do áudio | RNF01, quanto à delimitação do ambiente em que os dados são processados |
+| E3 | Suportar português brasileiro tanto no reconhecimento quanto na síntese | RF02 e US02 |
+
+**Critérios classificatórios**
+
+| ID | Critério | Peso | Justificativa do peso |
+|---|---|:-:|---|
+| C1 | Suporte a vocabulário customizado do domínio | 3 | É a única mitigação técnica disponível para o risco R03, cuja severidade é 9, e a condição de possibilidade do indicador de acurácia de termos de domínio da seção 3.1.5.2 |
+| C2 | Aderência ao ecossistema homologado e caminho de transferência ao parceiro | 3 | Decorre da premissa do TAPI de operação dentro do ambiente Microsoft e determina o esforço de homologação após o módulo |
+| C3 | Qualidade e maturidade do reconhecimento em português brasileiro | 2 | Condiciona o WER e, por consequência, a degradação ponta a ponta da classificação de intenções |
+| C4 | Custo no MVP e previsibilidade da tarifa | 2 | O custo de operação é variável e cresce com a adoção, conforme registrado na seção 2.8.9 |
+| C5 | Cobertura de navegadores e maturidade do SDK | 1 | A interface é uma aplicação web responsiva, conforme a seção 5.1.1 |
+| C6 | Latência esperada para usuários no Brasil | 1 | Integra os indicadores de conversão entre voz e texto da seção 3.1.5.2 |
+
+A pontuação atribui 2 ao atendimento pleno, 1 ao atendimento parcial e 0 ao não atendimento, ponderados pelos pesos acima. A pontuação máxima possível é 24.
+
+#### 5.7.2.2 Alternativas avaliadas
+
+Foram avaliadas cinco alternativas, escolhidas por representarem estratégias distintas de solução, e não apenas fornecedores distintos: dois serviços de nuvem de grande porte, um serviço de nuvem especializado em transcrição, a interface nativa dos navegadores e a execução local do modelo no dispositivo do usuário.
+
+| Alternativa | Estratégia | Reconhecimento e síntese |
+|---|---|---|
+| Azure AI Speech | Serviço de nuvem do ecossistema Microsoft | Ambos |
+| Google Cloud Speech-to-Text e Text-to-Speech | Serviço de nuvem de fornecedor concorrente | Ambos |
+| Whisper por API (OpenAI ou Groq) | Serviço de nuvem especializado em transcrição | Apenas reconhecimento no Groq; ambos na OpenAI |
+| Web Speech API | Interface nativa do navegador, sem serviço contratado | Ambos |
+| Whisper em execução local (transformers.js) | Modelo executado no dispositivo do usuário | Apenas reconhecimento |
+
+#### 5.7.2.3 Aplicação dos critérios eliminatórios
+
+| Alternativa | E1 | E2 | E3 | Resultado |
+|---|:-:|:-:|:-:|---|
+| Azure Speech | Atende | Atende | Atende | Classificada |
+| Google Cloud Speech e TTS | Atende | Atende | Atende | Classificada |
+| Whisper por API | Atende | **Não atende** | Atende | **Eliminada** |
+| Web Speech API | Atende | **Não atende** | Atende | **Eliminada** |
+| Whisper em execução local | Atende | Atende | Atende parcialmente | Classificada |
+
+Duas eliminações merecem registro explícito.
+
+O **Whisper por API** foi eliminado por E2: os provedores avaliados não oferecem escolha da região em que o áudio é processado, o que impede delimitar o ambiente de processamento exigido pelo RNF01. O critério E1 é atendido apenas porque a chamada seria intermediada pelo backend, jamais pelo navegador.
+
+A **Web Speech API** foi eliminada pelo mesmo critério. A interface é atraente por não exigir credencial nem infraestrutura, mas o reconhecimento é executado, por padrão, em servidores do fornecedor do navegador, sem que a aplicação possa determinar onde. A partir do Chrome 139 existe um modo de reconhecimento local, controlado pela propriedade `processLocally` e consultável por `SpeechRecognition.available()`, que atenderia E2. A disponibilidade de pacote de idioma local, contudo, depende do navegador, e não foi possível confirmar a existência de pacote para português brasileiro. Registra-se como verificação a ser realizada e documentada na Sprint 3, sem que ela reabra a decisão: mesmo confirmada, a alternativa permaneceria com pontuação baixa em C1, conforme a subseção 5.7.2.6.
+
+#### 5.7.2.4 Quadro comparativo das alternativas classificadas
+
+| Critério | Peso | Azure AI Speech | Google Cloud | Whisper local |
+|---|:-:|---|---|---|
+| C1 — Vocabulário de domínio | 3 | **2** — listas de frases por requisição e treinamento de modelo customizado | **2** — adaptação de fala com conjuntos de frases | **0** — sem mecanismo de viés de vocabulário |
+| C2 — Ecossistema e transferência | 3 | **2** — o serviço pertence ao ecossistema já adotado pelo parceiro | **0** — exigiria homologação de fornecedor adicional | **1** — não introduz serviço externo, mas tampouco é auditável pelo parceiro |
+| C3 — Qualidade em pt-BR | 2 | **2** — suporte nativo e maduro | **2** — suporte nativo e maduro | **1** — o modelo `base` é mediano; o `small` exige transferência de porte elevado |
+| C4 — Custo no MVP | 2 | **1** — nível gratuito generoso, tarifa do nível pago acima da concorrência | **2** — franquia mensal e tarifa por minuto competitiva | **2** — sem custo de serviço |
+| C5 — Navegadores e SDK | 1 | **2** — SDK JavaScript oficial, já declarado nas dependências da interface | **1** — consumo por REST, sem SDK de navegador equivalente | **0** — aceleração por GPU restrita a Chrome e Edge |
+| C6 — Latência no Brasil | 1 | **2** — região em território nacional | **2** — região em território nacional | **1** — depende do equipamento do usuário |
+| **Total ponderado** | **24** | **22** | **17** | **10** |
+
+#### 5.7.2.5 Decisão
+
+Adota-se o **Azure AI Speech** para o reconhecimento de fala e para a síntese de voz, provisionado no nível gratuito **F0**, na região **Brazil South**, dentro do Resource Group descrito na seção 6.5.4.
+
+A decisão confirma e detalha o que a seção 5.1.2 já registrava, e se sustenta em três razões. A primeira é o vocabulário: o serviço permite fornecer, na própria requisição, uma lista de termos que orienta o reconhecimento, o que converte o glossário de domínio da companhia em mecanismo executável e transforma o risco R03 de ameaça sem tratamento em ameaça com mitigação declarada. A segunda é o perímetro: o serviço pertence ao ecossistema que o parceiro já opera, de modo que a transferência da solução após o módulo não exige homologação de fornecedor adicional. A terceira é a economia de integração: reconhecimento e síntese são atendidos por um único fornecedor, com um único mecanismo de autenticação, o que evita duplicar credenciais, tratamento de erros e procedimento operacional para atender aos dois sentidos da conversão.
+
+Registra-se que a alternativa Google Cloud é tecnicamente equivalente nos critérios de vocabulário, qualidade e latência, e superior em custo do nível pago. Sua diferença decisiva está inteiramente no critério C2. Caso a premissa de aderência ao ecossistema Microsoft seja revista pelo parceiro, esta decisão deve ser reavaliada, e o quadro acima é suficiente para conduzir a reavaliação sem repetir o levantamento.
+
+#### 5.7.2.6 Região de processamento e residência dos dados
+
+A região do recurso de fala é **Brazil South**, e não a região registrada na seção 6.5.4 para o ambiente de execução do backend. A escolha é deliberada e apoia-se em duas propriedades do serviço.
+
+A primeira é a residência dos dados: o serviço processa o áudio exclusivamente na região em que o recurso foi criado, e as chaves são escopadas por região. Provisionar o recurso fora do território nacional implicaria que o áudio de solicitações relativas a projetos do portfólio fosse processado no exterior, hipótese que o RNF01 não sustenta e que introduziria discussão de soberania de dados desnecessária ao escopo do MVP.
+
+A segunda é a latência. O tempo de transcrição e o tempo até o início da resposta falada integram os indicadores da seção 3.1.5.2. O trajeto de rede até uma região norte-americana acrescenta tempo de ida e volta que se soma ao tempo de inferência e é percebido diretamente pelo usuário no canal de voz, cuja justificativa de existência é a rapidez em relação ao canal de texto.
+
+O recurso de fala é independente do ambiente de execução da aplicação e pode residir em região distinta sem prejuízo de funcionamento. Não há, portanto, necessidade de alinhar as duas regiões, e a divergência é registrada aqui como decisão consciente e não como inconsistência. Recomenda-se, ainda assim, que a seção 6.5.4 registre a justificativa da região adotada para o ambiente de execução, hoje declarada como não documentada naquela seção.
+
+#### 5.7.2.7 Enquadramento de custo
+
+O nível gratuito F0 do serviço oferece, por mês, cinco horas de áudio para reconhecimento de fala e quinhentos mil caracteres para síntese de voz. O nível pago S0 é tarifado por hora de áudio no reconhecimento e por milhão de caracteres na síntese, cabendo confirmar os valores vigentes na calculadora do fornecedor no momento do dimensionamento, uma vez que variam por região e por eventual acordo comercial.
+
+Estimativa de consumo do MVP, considerando o uso previsto para demonstração, para os testes sistêmicos e para a bancada de avaliação de desempenho do canal de voz:
+
+| Item | Volume estimado | Base da estimativa |
+|---|---|---|
+| Reconhecimento de fala | Aproximadamente 40 minutos por mês | 200 solicitações por voz, com duração média de 12 segundos por enunciado |
+| Síntese de voz | Aproximadamente 80 mil caracteres por mês | 200 respostas, com extensão média de 400 caracteres |
+
+Ambos os volumes situam-se com folga dentro do nível gratuito, do que decorre que **o custo do canal de voz durante o MVP é nulo**, desde que respeitados os limites mensais. A projeção de custo em operação real, com volume de usuários do parceiro, pertence à análise de viabilidade financeira e deve considerar que o reconhecimento de fala é uma das operações tarifadas por requisição identificadas na seção 2.8.9, ao lado da geração de relatórios.
+
+#### 5.7.2.8 Riscos assumidos e revisão das metas de desempenho
+
+A decisão introduz e transforma riscos que devem constar do acompanhamento da matriz mantida no `GestaoProjeto.md`.
+
+| Risco | Situação após a decisão | Tratamento |
+|---|---|---|
+| R03 — baixa acurácia no jargão da companhia | Permanece aberto, com mitigação agora exequível | Consolidação do glossário de domínio e seu fornecimento como lista de frases ao serviço; medição pelo indicador de acurácia de termos de domínio |
+| Indisponibilidade do serviço de fala | Novo | O plano de resposta ao R03 já determina retorno ao canal de texto; falha na emissão do token desabilita a captura de áudio com mensagem explicativa, sem recurso a serviço alternativo fora do perímetro |
+| Esgotamento do nível gratuito | Novo | Acompanhamento pelo orçamento configurado conforme a seção 6.5.8, com alerta antes do limite |
+| Latência adicional no trajeto de ingestão | Novo | Medição comparativa entre os dois modos de consumo, conforme a subseção 5.7.6 |
+
+Quanto às metas registradas ao final da seção 3.1.5, a definição do serviço permite encerrar a ressalva ali declarada. As metas preliminares de WER inferior ou igual a 15%, acurácia de termos de domínio igual ou superior a 90% e degradação ponta a ponta de no máximo 10 pontos percentuais são **mantidas** como hipóteses quantitativas, a serem verificadas sobre o corpus de áudio de referência descrito na subseção 5.7.6. Cabe registrar que a meta de acurácia de termos de domínio só é perseguível porque o serviço escolhido admite vocabulário customizado: sob qualquer das alternativas eliminadas, ela seria inatingível por ausência de mecanismo, e não por insuficiência de qualidade do reconhecimento. Nesse sentido, a seleção do serviço não apenas atende aos indicadores já definidos — ela é a condição de existência de um deles.
+
 ## 5.8 Algoritmo de classificação de intenção: escolha, princípios e implementação
 
 Esta seção documenta o algoritmo que resolve a etapa de intenção do
@@ -3433,6 +4379,153 @@ if intencao.id == catalogo.TENTATIVA_INJECAO:
 
 [Preencher]
 
+## 6.5 Preparação do Ambiente de Nuvem e das Credenciais de Deploy
+
+Esta seção documenta a infraestrutura de nuvem e os controles de credenciais adotados para a solução. O ambiente Azure recebeu uma configuração inicial, e o Azure Container Apps foi definido como serviço de hospedagem do backend/API do núcleo de PLN. Os detalhes operacionais devem ser mantidos nesta documentação conforme a infraestrutura for consolidada, sem exposição de identificadores ou informações sensíveis.
+
+### 6.5.1 Arquitetura de Implantação
+
+A arquitetura mantém a separação entre o canal conversacional do ecossistema Microsoft e o núcleo analítico desenvolvido pela equipe. O Copilot Studio e os componentes do Power Platform atuam como consumidores da API por HTTPS; o Azure Container Apps é exclusivamente o ambiente de execução do backend que encapsula o pipeline de PLN em Python, e não o ambiente responsável pelo Copilot Studio.
+
+```text
+Copilot Studio / Power Platform
+              |
+              | HTTPS
+              v
+      API do núcleo de PLN
+              |
+              v
+     Azure Container Apps
+              |
+              v
+       Container Docker
+              |
+              v
+    Pipeline de PLN em Python
+              |
+              v
+Classificação de intenções / processamento
+```
+
+Essa topologia representa a organização de referência para a infraestrutura da solução e orienta a consolidação do ambiente inicialmente configurado no Azure.
+
+### 6.5.2 Justificativa da Plataforma Escolhida
+
+A plataforma definida para hospedar a API/backend do núcleo de PLN é o **Microsoft Azure**, por meio do **Azure Container Apps**. A decisão preserva a coerência com o ecossistema Microsoft utilizado pelo Metrô e favorece a integração futura da API com Copilot Studio e Power Platform.
+
+O Azure Container Apps é adequado à execução de APIs em Python empacotadas em containers. O uso de Docker torna o ambiente do pipeline reproduzível entre desenvolvimento e nuvem, reduz diferenças de configuração e permite que as dependências de classificação de intenções e demais etapas de PLN sejam distribuídas junto à aplicação. O serviço também oferece escalabilidade automática e modelo de consumo compatível com o volume inicialmente esperado para o MVP acadêmico.
+
+A escolha ainda permite centralizar identidade, permissões, segredos e monitoramento no ecossistema Azure. Essa decisão não transfere ao Azure Container Apps as atribuições do Copilot Studio: o primeiro executará o backend/API, enquanto o segundo permanecerá como parte da camada de interação e orquestração do ecossistema Microsoft.
+
+### 6.5.3 Considerações sobre Desempenho e Segurança
+
+A aplicação conteinerizada pode ajustar sua quantidade de réplicas conforme a demanda. O modelo priorizado é o *Consumption*, inclusive pela possibilidade de *scale-to-zero* quando não houver requisições, característica coerente com o baixo volume esperado para o MVP. Os parâmetros de escala, limites de CPU e memória e tempos de resposta são definidos a partir de medições do container e do pipeline completo.
+
+Quanto à segurança e à confidencialidade, permanecem aplicáveis os RNFs e as delimitações já estabelecidas neste documento: uso de dados sintéticos ou anonimizados no MVP, comunicação da API por HTTPS, autenticação e autorização nas integrações e rastreabilidade das operações. O ambiente deverá adotar o princípio do menor privilégio, manter credenciais fora do código e do repositório e utilizar mecanismos próprios do Azure para armazenar segredos. Dados sensíveis reais não deverão ser processados fora de ambientes homologados pelo Metrô.
+
+### 6.5.4 Organização da Infraestrutura
+
+O ambiente foi criado no Microsoft Azure, com os recursos agrupados no **Resource Group `METROSP`**, localizado na região **West US 2 (`westus2`)**. A região originalmente considerada era **Brazil South**; a adoção de `westus2` poderá ser reavaliada em fases seguintes. O motivo operacional da alteração de região não foi registrado nesta versão do documento, pois não foi fornecida evidência suficiente para documentá-lo.
+
+O Azure Container Apps Environment e o Container App foram criados para a validação inicial, porém seus nomes não foram informados para registro neste artefato. O Container App utilizou a imagem oficial de quickstart `mcr.microsoft.com/k8se/quickstart:latest`, que não corresponde ao backend definitivo do pipeline de PLN.
+
+```text
+Azure Subscription
+└── Resource Group: METROSP (westus2)
+    ├── Azure Container Apps Environment [obrigatório; nome não informado]
+    │   └── Container App [obrigatório; nome não informado]
+    │       ├── Imagem de validação: mcr.microsoft.com/k8se/quickstart:latest
+    │       └── Secrets do Container App [obrigatórios quando houver credenciais]
+    ├── Azure Container Registry [condicional]
+    ├── Azure Key Vault [condicional]
+    └── Azure Cost Management / Budget [acompanhamento obrigatório quando disponível]
+```
+
+O Azure Container Registry e o Azure Key Vault permanecem condicionais. A imagem de quickstart foi obtida diretamente do Microsoft Container Registry e, portanto, sua validação não comprova a necessidade de um registro privado. A adoção dos recursos condicionais depende do fluxo de publicação, da gestão de segredos e dos requisitos de governança do backend definitivo.
+
+### 6.5.5 Recursos do Ambiente de Nuvem
+
+Os recursos da arquitetura, sua classificação e a configuração registrada são apresentados a seguir.
+
+| Recurso | Papel no ambiente | Classificação | Configuração registrada |
+|---|---|---|---|
+| Azure Subscription | Limite administrativo, de cobrança e governança dos recursos | Obrigatório | Subscription utilizada na configuração inicial; identificador não registrado neste documento |
+| Azure Resource Group | Agrupamento dos recursos relacionados ao backend de PLN | Obrigatório | `METROSP`, região `westus2` |
+| Azure Container Apps Environment | Limite operacional compartilhado para o Container App | Obrigatório | Criado; nome não informado |
+| Azure Container App | Execução da API/backend conteinerizada | Obrigatório | Criado para validação; nome não informado |
+| Docker | Empacotamento reproduzível da aplicação Python e de suas dependências | Obrigatório para o deploy | Backend definitivo ainda não disponibilizado; validação realizada com imagem oficial de quickstart |
+| Azure Container Registry | Armazenamento privado das imagens Docker | Condicional ao fluxo de publicação escolhido | Não necessário para a imagem de quickstart; adoção não definida para o backend definitivo |
+| Secrets do Azure Container Apps | Injeção segura de valores sensíveis na aplicação | Obrigatório quando a aplicação consumir credenciais | Funcionalidade conferida e disponível; nenhum segredo real cadastrado |
+| Azure Key Vault | Centralização e governança avançada de segredos | Condicional às necessidades de integração, rotação e governança | Adoção não informada |
+| Azure Cost Management | Acompanhamento do consumo, orçamento e alertas de gasto | Obrigatório quando disponível na subscription | Orçamento informado como configurado; limite, percentual de alerta e destinatário não fornecidos |
+
+### 6.5.6 Gestão de Segredos e Credenciais
+
+Nenhuma senha, token, chave de API ou credencial poderá ser versionada. Credenciais individuais não deverão ser compartilhadas entre integrantes. No desenvolvimento local, valores sensíveis poderão ser fornecidos por variáveis de ambiente e arquivos `.env` locais; esses arquivos deverão permanecer ignorados pelo Git, por exemplo:
+
+```gitignore
+.env
+.env.*
+```
+
+Em nuvem, os valores deverão ser cadastrados nos secrets do Azure Container Apps e referenciados como variáveis de ambiente, sem inserção direta no código ou na imagem Docker. O Azure Key Vault poderá ser adotado quando forem necessários controle centralizado, rotação, auditoria ou compartilhamento seguro entre serviços. O procedimento operacional deverá registrar, sem expor os valores: finalidade do segredo, serviço consumidor, responsável pela concessão de acesso, mecanismo de rotação e forma de revogação.
+
+O acesso aos segredos deverá ocorrer por permissões individuais ou identidades gerenciadas, quando aplicável. A recuperação de um segredo para uso local somente deverá ser permitida a integrantes autorizados e nunca deverá resultar em sua inclusão em logs, capturas de tela, documentação ou histórico do repositório.
+
+### 6.5.7 Controle de Acesso
+
+O ambiente deverá aplicar o princípio do menor privilégio por meio dos mecanismos de controle de acesso do Azure. Cada integrante deverá utilizar identidade individual; contas e credenciais compartilhadas não serão aceitas. As permissões deverão ser concedidas no menor escopo suficiente — preferencialmente no Resource Group ou no recurso específico — e revisadas quando houver mudança de responsabilidade.
+
+Ao menos dois integrantes devem conseguir acessar e operar o ambiente, com validação individual da autenticação e das operações administrativas necessárias. Esse procedimento evita dependência de uma única pessoa e preserva a proibição de contas ou credenciais compartilhadas.
+
+### 6.5.8 Estratégia de Custos
+
+Será priorizado o modelo **Consumption** do Azure Container Apps. Nesse modelo, o custo depende do consumo efetivo de recursos e pode ser reduzido pela capacidade de *scale-to-zero* em períodos sem requisições, o que é adequado ao baixo volume esperado para o MVP acadêmico. Essa característica não permite afirmar que a operação terá custo zero.
+
+Recursos auxiliares, como Azure Container Registry, Azure Key Vault, armazenamento, tráfego, logs e monitoramento, também podem gerar custos. A estimativa quantitativa mensal deve utilizar a região, o dimensionamento e os recursos condicionais da configuração efetiva, evitando valores sem base na infraestrutura utilizada.
+
+Deverá ser criado um orçamento no Azure Cost Management, com limite e alerta de gasto quando esse recurso estiver disponível na subscription utilizada. A evidência deverá registrar a configuração do orçamento e dos destinatários do alerta, sem expor dados pessoais ou financeiros desnecessários.
+
+### 6.5.9 Validação Inicial do Ambiente
+
+A validação inicial utilizou a imagem oficial `mcr.microsoft.com/k8se/quickstart:latest` no Container App. Essa imagem foi empregada exclusivamente para verificar a disponibilização de um container no Azure Container Apps e não contém o backend nem o pipeline de PLN desenvolvido pela equipe.
+
+A quickstart não expõe o endpoint `GET /health` previsto para a API definitiva. A resposta efetivamente apresentada pela URL da aplicação não foi fornecida para inclusão neste documento e, por isso, não é reproduzida nem presumida. O registro dessa resposta deverá ser acrescentado a partir da evidência real do teste.
+
+A validação do endpoint abaixo permanece aplicável ao backend definitivo, quando ele estiver disponível:
+
+```http
+GET /health
+```
+
+```json
+{
+  "status": "ok"
+}
+```
+
+Assim, o teste com a quickstart valida somente a etapa inicial de hospedagem da imagem de exemplo. Ele não valida o funcionamento do backend, o pipeline de PLN, a classificação de intenções nem o contrato do endpoint `/health`.
+
+### 6.5.10 Registro e Evidências do Ambiente
+
+Os registros técnicos do ambiente devem ser acompanhados de uma breve descrição que permita reproduzir a configuração. O conjunto de evidências inclui a configuração do Resource Group, do Container App, das permissões, dos secrets, do orçamento/alerta no Cost Management e a chamada bem-sucedida ao endpoint `/health`. Capturas de tela devem ocultar identificadores, credenciais e demais informações sensíveis.
+
+| Registro técnico | Status | Situação documentada |
+|---|---|---|
+| Plataforma Microsoft Azure | Concluído | Ambiente inicialmente configurado |
+| Resource Group | Concluído | `METROSP`, região `westus2` |
+| Azure Container Apps Environment e Container App | Concluído | Recursos criados; nomes não informados para registro |
+| Imagem de validação publicada | Concluído | `mcr.microsoft.com/k8se/quickstart:latest` |
+| Resposta da URL da quickstart | Pendente | Resposta real não fornecida para documentação |
+| Acesso individual de ao menos dois integrantes | Concluído com dados a complementar | Acesso validado individualmente via IAM com papel Contributor no Resource Group; nomes não fornecidos |
+| Funcionalidade de secrets do Container App | Concluído | Aba conferida e disponível; nenhum segredo real cadastrado porque a API ainda não existe |
+| Azure Container Registry | Condicional | Necessidade será definida para a imagem do backend definitivo |
+| Azure Key Vault | Condicional | Adoção não informada |
+| Estimativa quantitativa de custo mensal | Pendente | Valor não fornecido |
+| Budget/alerta no Azure Cost Management | Concluído com dados a complementar | Limite, percentual de alerta e destinatário não fornecidos |
+| Endpoint `/health` do backend por HTTPS | Pendente | Backend e pipeline de PLN ainda não disponíveis |
+| Capturas de tela e guia de reprodução | Pendente | Lista de arquivos anexados não fornecida |
+
 # 7. Prototipação Exploratória
 Esta seção apresenta a prototipação exploratória realizada para investigar alternativas de interação e identificar lacunas, ambiguidades e impactos das diferentes propostas de solução.
 
@@ -3473,6 +4566,39 @@ Mockup interativo simulando telas reais do Teams: uma conversa com o agente, uma
 Para a Alternativa B foi escolhido um **protótipo físico não digital**: um crachá confeccionado em papelão ou cartolina, com dimensões próximas às de um crachá corporativo. O estado do alerta poderá ser representado por um LED simples ou, na ausência de componentes eletrônicos, por um indicador manual controlado por outro integrante segundo a técnica *Wizard of Oz*. O objeto deverá ser vestido por um integrante durante uma simulação de expediente.
 
 Esse formato foi escolhido porque a questão investigada pela Alternativa B não se limita ao funcionamento de uma interface. O objetivo é observar o que acontece quando um alerta ocupa o ambiente físico, permanece visível e pode ser percebido por terceiros. Uma tela não reproduziria adequadamente aspectos como exposição social, constrangimento ou pressão percebida; por isso, o crachá é o protótipo não digital desta exploração.
+
+### 7.3.3 Fluxo conceitual de entrada e saída do Protótipo B
+
+Para tornar a proposta testável, foi definido um fluxo conceitual preliminar para o crachá. Essa definição não representa uma arquitetura técnica aprovada nem pressupõe que o modelo de linguagem seja executado no próprio objeto. O crachá atua como ponto de contato físico com o agente, enquanto identificação do usuário, validação de permissões, consulta às informações e processamento em linguagem natural permanecem na plataforma corporativa.
+
+O fluxo considera duas formas de início. Na primeira, o próprio agente identifica uma pendência e envia ao crachá apenas um sinal de atenção, sem expor no LED, na vibração ou no som curto qualquer informação sensível. Na segunda, o usuário inicia uma consulta pressionando um botão físico. O botão foi escolhido como hipótese de projeto porque oferece uma ação intencional e observável e evita que o microfone permaneça continuamente ativo. Após o acionamento, um indicador mostra que a captura de voz começou; um novo toque ou o fim da fala encerra a entrada.
+
+| Etapa | Entrada ou ação | Tratamento conceitual | Saída esperada |
+|---|---|---|---|
+| Alerta proativo | O agente identifica uma pendência vinculada ao usuário | A plataforma verifica responsável e permissões antes de acionar o dispositivo associado | Luz, vibração ou som curto, sem revelar o conteúdo da pendência |
+| Reconhecimento do alerta | O usuário pressiona o botão uma vez | O sinal físico é reconhecido e a sessão de interação é aberta | Confirmação visual ou tátil de que o agente está disponível |
+| Consulta por voz | O usuário mantém ou pressiona o botão e fala | O áudio é encaminhado por um canal autenticado, convertido em texto e enviado ao agente ou modelo de linguagem após a verificação do perfil | Indicação de captura e processamento em andamento |
+| Resposta | O agente interpreta a intenção e consulta somente as informações autorizadas | A resposta é produzida de acordo com o perfil e o nível de acesso | Retorno por voz para respostas breves; conteúdo detalhado ou sensível direcionado ao Teams |
+| Atualização | O usuário dita uma alteração ou responde a uma pendência | A plataforma apresenta a alteração para confirmação antes de efetivá-la e mantém a rastreabilidade prevista nos requisitos | Confirmação da operação ou orientação sobre dados ainda necessários |
+
+```mermaid
+flowchart LR
+    A[Pendência identificada pela plataforma] --> B[Validar usuário e permissões]
+    B --> C[Acionar luz, vibração ou som curto]
+    C --> D{Usuário pressiona o botão?}
+    D -- Não --> E[Manter ou repetir o sinal conforme regra a validar]
+    D -- Sim --> F[Abrir sessão e ativar captura de voz]
+    U[Usuário inicia consulta pelo botão] --> F
+    F --> G[Encaminhar áudio por canal autenticado]
+    G --> H[Converter voz em texto]
+    H --> I[Agente ou LLM interpreta a solicitação]
+    I --> J[Consultar apenas informações autorizadas]
+    J --> K{Resposta breve e não sensível?}
+    K -- Sim --> L[Responder por voz no crachá]
+    K -- Não --> M[Direcionar detalhes ao Teams]
+```
+
+Neste desenho, o botão não serve para resolver a pendência diretamente. Ele funciona como consentimento momentâneo para iniciar a escuta e como acesso à conversa. A decisão entre pressionar uma vez, manter pressionado ou utilizar outro gesto ainda deverá ser observada no protótipo físico. Também permanece em aberto se a saída por voz no próprio crachá oferece privacidade suficiente em um ambiente compartilhado; por isso, o encaminhamento de respostas detalhadas ao Teams foi mantido como hipótese de segurança e não como decisão definitiva.
 
 ## 7.4 Diário de Construção
 
@@ -3571,7 +4697,33 @@ A tela a seguir ilustra como essa lacuna se manifestaria em uma interface real: 
 
 ### 7.5.2 Execução - Protótipo B
 
-Um integrante vestiu o crachá durante uma simulação de reunião com outros dois integrantes representando colegas de equipe. O alerta foi acionado durante a conversa para observar se o sinal físico seria percebido e como afetaria a interação. A reação foi uma pergunta direta de outro participante sobre o motivo de o crachá estar piscando, tornando a pendência socialmente visível. A situação revelou que a presença física do alerta pode produzir constrangimento e exposição, mesmo quando seu conteúdo não é apresentado aos demais.
+O Protótipo B representa uma interação por voz com o agente Prata por meio de um crachá físico. O roteiro de demonstração ocorre em um escritório, durante uma conversa em uma mesa de reunião, e envolve três personagens: Fernanda, que utiliza o crachá, Carlos e Roberto. A gravação é organizada em quatro cenas, desde a sinalização silenciosa da pendência até a confirmação de uma atualização solicitada em linguagem natural.
+
+O vídeo e a imagem conceitual utilizados nesta exploração foram gerados com apoio de inteligência artificial. Esses recursos simulam a experiência de uso e permitem investigar o comportamento esperado, os turnos da conversa e os riscos de privacidade, sem representar a construção de um dispositivo eletrônico funcional. Fernanda é a personagem focal do fluxo, enquanto Carlos e Roberto representam pessoas presentes no ambiente compartilhado.
+
+**Cena 1 · Alerta** - Fernanda, Carlos e Roberto estão sentados conversando. A luz vermelha do crachá de Fernanda acende sem emitir uma mensagem de voz. O sinal indica a existência de uma pendência, mas não revela seu conteúdo às demais pessoas presentes.
+
+**Cena 2 · Reconhecimento** - Fernanda toca o crachá para reconhecer o alerta e iniciar a interação. Somente após essa ação intencional o dispositivo apresenta a mensagem: "Prata aqui. Você tem uma pendência aberta. Quer que eu conte agora ou prefere ver no Teams?". A espera pelo toque evita que o conteúdo seja reproduzido automaticamente em um ambiente compartilhado.
+
+**Cena 3 · Resposta breve** - Fernanda responde "Conta agora". O crachá informa: "É sobre um marco de um de seus projetos ativos. Prefiro mandar os detalhes no Teams. Posso enviar?". A resposta falada permanece genérica e não expõe o nome do projeto ou dados da pendência antes da autorização da usuária. Informações detalhadas são direcionadas ao Teams como medida de privacidade.
+
+**Cena 4 · Atualização e confirmação** - Fernanda solicita: "Não precisa. Resolva agora: registre que estamos aguardando aprovação do cliente". O agente interpreta a solicitação, relaciona-a ao contexto da pendência e responde: "Entendi. Marco Entrega da Fase 2, projeto Linha 6, motivo aguardando aprovação do cliente. Confirma o registro?". A cena termina antes da efetivação da mudança, evidenciando que uma atualização não deve ser registrada sem confirmação explícita.
+
+#### 7.5.2.1 Protocolo de interação com o crachá
+
+O roteiro utiliza o toque como mecanismo de reconhecimento do alerta e de consentimento para iniciar a conversa. O crachá não mantém o microfone continuamente ativo: a captura ocorre apenas durante os momentos em que o agente aguarda uma resposta da usuária. Cada fala é encerrada por uma pausa breve, simulando a detecção do fim do enunciado; em seguida, o dispositivo interrompe a captura e processa a resposta.
+
+| Estado do crachá | Sinal ou ação | Comportamento representado |
+|---|---|---|
+| Em espera | Sem luz e sem reprodução de áudio | O crachá não captura voz nem expõe informações |
+| Pendência identificada | Luz vermelha acesa | Sinalização silenciosa de que existe uma pendência |
+| Alerta reconhecido | Um toque da usuária | Abertura da sessão e reprodução da primeira mensagem do agente |
+| Aguardando resposta | Indicação visual de escuta durante o turno da usuária | Captura temporária da fala, encerrada após uma pausa breve |
+| Processando | Indicação visual distinta da escuta | Microfone inativo enquanto o agente interpreta a solicitação |
+| Confirmação necessária | Resumo falado da alteração | Nenhuma atualização é efetivada antes da confirmação explícita |
+| Interação encerrada | Segundo toque ou término do fluxo | Interrupção da captura e retorno ao estado de espera |
+
+Os sinais visuais além da luz vermelha, o intervalo utilizado para reconhecer o fim da fala e o comportamento técnico do segundo toque são convenções de encenação do protótipo. Esses elementos deverão ser validados antes de qualquer implementação, pois a gravação demonstra o fluxo de interação e não um dispositivo eletrônico funcional.
 
 ### 7.5.3 Espaço de testagem
 
@@ -3638,21 +4790,154 @@ As imagens a seguir compõem o registro visual completo do Protótipo A. Todas a
 
 ### 7.8.2 Registro visual — Protótipo B
 
-[Inserir fotos, capturas de tela ou links para os registros visuais do Protótipo B. Armazenar arquivos na pasta `docs/prototipacao-exploratoria/protB/`.]
+O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecimento por toque, a interação por voz e a solicitação de confirmação antes do registro de uma atualização. A imagem conceitual a seguir foi utilizada como referência para definir os personagens, o contexto de escritório e os elementos visuais do crachá apresentados no vídeo.
+
+<div align="center">
+
+![Representação conceitual dos personagens e do crachá inteligente utilizados na simulação do Protótipo B.](../documentos/imagens/personagens-video.png)
+
+*Figura — Representação conceitual gerada por IA utilizada como referência visual para o vídeo do Protótipo B. A imagem não representa um dispositivo funcional.*
+
+</div>
+
+**Vídeo da demonstração:** [Simulação audiovisual do Protótipo B no Google Drive](https://drive.google.com/file/d/1hPUkd5Oy0xpxVWg3wGdZTzWAJ6t0pF9p/view?usp=sharing)
+
+O vídeo também foi gerado com apoio de inteligência artificial e representa uma encenação do comportamento projetado. Seu objetivo é permitir a observação do fluxo de interação, e não comprovar a implementação de hardware, reconhecimento de voz ou integração funcional com os sistemas do projeto.
+
+| Cena | Conteúdo demonstrado | Evidência esperada no vídeo |
+|---|---|---|
+| 1 · Alerta | Luz vermelha acende durante a reunião | Sinalização silenciosa e ausência de exposição do conteúdo da pendência |
+| 2 · Reconhecimento | Fernanda toca o crachá | Início intencional da interação e reprodução da primeira mensagem |
+| 3 · Resposta breve | Fernanda solicita que o agente conte a pendência | Resposta genérica e direcionamento dos detalhes ao Teams |
+| 4 · Atualização | Fernanda dita o motivo e o agente solicita confirmação | Interpretação do contexto e prevenção de alteração sem confirmação explícita |
+
+Embora a imagem apresente a possibilidade de alerta sonoro, o fluxo demonstrado começa apenas com a luz vermelha. A reprodução de voz ocorre depois que Fernanda toca o crachá, evitando que o conteúdo da pendência seja anunciado automaticamente no ambiente compartilhado. Os nomes e as características visuais apresentados correspondem a personagens da simulação e não identificam integrantes reais do Metrô.
+
+O arquivo de vídeo não deve apresentar credenciais, dados pessoais reais, telas corporativas sensíveis ou informações de projetos reais do Metrô. Como o vídeo está armazenado externamente devido ao tamanho, o link compartilhável é mantido nesta seção como referência da evidência audiovisual.
 
 # 8. Projeto Visual da Solução
 
 ## 8.1 Desenvolvimento de Wireframes
 
-[Preencher]
+Os wireframes definem a organização estrutural da experiência do Prata Agent em desktop e dispositivos móveis. A página principal prioriza o contexto do projeto, o alerta ativo, o histórico da conversa e o compositor para entrada de texto ou voz. A página de Rotinas estende o mesmo padrão de navegação para o gerenciamento de automações recorrentes.
+
+### 8.1.1 Wireframe Desktop
+
+Na versão desktop, a barra lateral permanece visível e concentra a criação de conversa, os acessos ao chat do projeto, arquivos, integrações e rotinas, o histórico recente e a identificação da conta corporativa. A área principal apresenta o Projeto X, um alerta de marco, as mensagens trocadas e o compositor fixado na parte inferior.
+
+![Wireframe desktop da página principal](./imagens/wireframe-principal-desktop.png)
+
+*Figura - Wireframe desktop da página principal do Prata Agent.*
+
+### 8.1.2 Wireframe Mobile
+
+Na versão mobile, a barra lateral persistente é substituída por um botão de menu e a conta corporativa é identificada no cabeçalho. O alerta, as mensagens e o compositor são reorganizados em uma única coluna, preservando a diferenciação entre as mensagens do agente e da usuária e mantendo as ações de voz e envio acessíveis.
+
+![Wireframe mobile da página principal](./imagens/wireframe-principal-mobile.png)
+
+*Figura - Wireframe mobile da página principal do Prata Agent.*
+
+### 8.1.3 Wireframe Desktop da Página de Rotinas
+
+O wireframe desktop da página de Rotinas preserva a barra lateral e o cabeçalho do produto. A área de trabalho apresenta um resumo quantitativo, busca, filtro por status, ordenação e uma lista de rotinas. Cada item explicita nome, estado, ação em linguagem natural, frequência, próximo disparo e intenção prevista, além das ações de pausar ou ativar, editar e excluir.
+
+![Wireframe desktop da página de Rotinas](./imagens/wireframe-rotinas-desktop.svg)
+
+*Figura - Wireframe desktop da página de gerenciamento de Rotinas.*
+
+### 8.1.4 Wireframe Mobile da Página de Rotinas
+
+No wireframe mobile, a navegação é recolhida e os filtros passam a ocupar linhas independentes. Os dados de cada rotina são reorganizados verticalmente e as ações permanecem agrupadas ao final do cartão, permitindo o uso em telas estreitas sem ocultar informações necessárias à decisão.
+
+![Wireframe mobile da página de Rotinas](./imagens/wireframe-rotinas-mobile.svg)
+
+*Figura - Wireframe mobile da página de gerenciamento de Rotinas.*
 
 ## 8.2 Desenvolvimento de Mockups
 
-[Preencher]
+A página principal do frontend foi concebida como uma interface conversacional para acompanhamento de projetos. O mockup organiza a experiência em uma barra lateral, que concentra identidade, navegação, histórico e autenticação, e uma área principal dedicada ao contexto do projeto, aos alertas e à troca de mensagens por texto ou voz. A tela de Rotinas aparece somente como destino de navegação, pois pertence a um escopo próprio de design e desenvolvimento.
+
+Os mockups de alta fidelidade registram os estados que orientam o fluxo principal: notificação proativa, abertura da conversa, resposta em linguagem natural, confirmação da atualização e tratamento de uma mudança de assunto não mapeada.
+
+### 8.2.1 Notificação Inicial
+
+![Mockup da notificação inicial](./imagens/tela-1-notificacao.png)
+
+### 8.2.2 Mensagem Inicial do Agente
+
+![Mockup da mensagem inicial](./imagens/tela-2-mensagem-inicial.png)
+
+### 8.2.3 Resposta da Usuária
+
+![Mockup da resposta da usuária](./imagens/tela-3-resposta-usuaria.png)
+
+### 8.2.4 Confirmação da Atualização
+
+![Mockup do cartão de confirmação](./imagens/tela-4-cartao-confirmacao.png)
+
+### 8.2.5 Ponto de Ruptura
+
+![Mockup do ponto de ruptura](./imagens/tela-5-ponto-ruptura.png)
+
+### 8.2.6 Fluxo Não Mapeado
+
+![Mockup do fluxo não mapeado](./imagens/tela-5b-fluxo-nao-mapeado.png)
+
+### 8.2.7 Fluxo de Gerenciamento de Rotinas
+
+O fluxo de Rotinas contempla as operações de criação, consulta, edição e exclusão. A listagem permite buscar por nome, ação ou intenção, filtrar entre rotinas ativas e pausadas e ordenar por próxima execução, nome ou atualização recente. O formulário de criação e edição utiliza os campos definidos pelo contrato técnico: nome, ação em linguagem natural, expressão cron, fuso horário e estado ativo.
+
+Antes de salvar, os campos obrigatórios recebem validação local de formato. A integração definitiva deverá também chamar `POST /rotinas/validar`, pois apenas o backend pode aplicar as guardas do pipeline, verificar a expressão cron e confirmar a intenção prevista. A exclusão exige confirmação explícita e informa que a remoção do agendamento não poderá ser desfeita.
+
+![Mockup do fluxo de gerenciamento de Rotinas](./imagens/mockup-fluxo-rotinas.svg)
+
+*Figura - Board dos estados de listagem, formulário, validação, exclusão, sucesso e estado vazio da página de Rotinas.*
+
+Os estados de feedback previstos são:
+
+- **carregamento:** cartões de esqueleto enquanto a listagem é recuperada;
+- **validação:** mensagens junto aos campos inválidos, sem descartar os valores preenchidos;
+- **sucesso:** notificação temporária após criar, editar, ativar, pausar ou excluir;
+- **estado vazio:** orientação para criar a primeira rotina ou ajustar busca e filtros;
+- **confirmação destrutiva:** diálogo específico antes da exclusão.
+
+Nesta etapa, os dados utilizados na interface são demonstrativos. As rotas CRUD correspondentes já estão especificadas no FastAPI, mas permanecem com `NotImplementedError`; por isso, a documentação não afirma persistência real nem integração concluída.
+
+Os wireframes estabelecem a estrutura responsiva, enquanto os mockups detalham estados de interação e conteúdo. A implementação localizada em `src/web` utiliza esses dois níveis de representação como referência, com refinamentos de identidade visual e de contextualização realizados durante o desenvolvimento.
 
 ## 8.3 Guia Visual
 
-[Preencher]
+A identidade visual utiliza o logotipo do Prata Agent, composto pelo símbolo relacionado ao transporte metroferroviário, pela inicial do produto e por sua assinatura verbal. A versão adotada possui fundo transparente, lettering prateado e detalhes azuis, devendo ter suas proporções preservadas.
+
+![Logotipo do Prata Agent](./imagens/logo-prata-agent.png)
+
+A interface utiliza fundo predominantemente branco, barra lateral em cinza claro e azul como cor de ação, seleção e apoio à identidade. Textos principais usam tons escuros de alto contraste, enquanto descrições, horários e informações auxiliares utilizam cinza. Verde identifica o acompanhamento ativo e vermelho é reservado a atrasos e ao estado de gravação de voz.
+
+A tipografia utiliza a família `Inter`, com alternativas nativas do sistema. Títulos e ações principais recebem peso forte; rótulos de navegação utilizam caixa alta e maior espaçamento; mensagens mantêm tamanho e entrelinha adequados à leitura contínua.
+
+| Componente | Função na interface | Situação |
+|---|---|---|
+| Logotipo do Prata Agent | Identificar o produto | Implementado |
+| Nova conversa | Iniciar um novo contexto conversacional | Implementado |
+| Página principal | Acessar a experiência conversacional | Implementado |
+| Rotinas | Acessar as rotinas automatizadas | Destino mapeado; tela fora deste escopo |
+| Arquivos | Acessar documentos relacionados ao projeto | Mapeado no wireframe; implementação posterior |
+| Integrações | Acessar conexões externas | Mapeado no wireframe; implementação posterior |
+| Histórico | Retomar conversas anteriores | Implementado visualmente |
+| Acesso Microsoft | Iniciar autenticação corporativa | Integração prevista com o backend |
+| Cabeçalho contextual | Identificar o projeto acompanhado | Implementado |
+| Alerta de marco | Sinalizar uma situação que exige atenção | Implementado |
+| Campo de mensagem | Receber solicitações em linguagem natural | Implementado |
+| Entrada por voz | Permitir interação por fala | Controle visual implementado |
+| Resumo de Rotinas | Informar quantidade total, ativa e pausada | Implementado visualmente |
+| Busca, filtros e ordenação | Localizar e organizar automações | Implementado com dados demonstrativos |
+| Cartão de rotina | Exibir agenda, próximo disparo e intenção prevista | Implementado com dados demonstrativos |
+| Formulário de criação e edição | Configurar os campos previstos no contrato de Rotina | Implementado visualmente |
+| Ativar ou pausar | Alterar o estado de agendamento | Implementado localmente; persistência pendente |
+| Confirmação de exclusão | Evitar remoção acidental | Implementado visualmente |
+| Feedback e estado vazio | Comunicar carregamento, validação, sucesso e ausência de dados | Implementado |
+
+Em larguras de até 850 pixels, a barra lateral é recolhida e aberta por um botão de menu, com sobreposição para separar a navegação do conteúdo. Em larguras de até 520 pixels, elementos secundários do compositor são reduzidos ou ocultados, o título contextual é redimensionado e o alerta ocupa a largura disponível. A interface mantém suporte a telas com largura mínima de 320 pixels.
 
 # 9. Desenvolvimento do Projeto
 
