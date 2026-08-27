@@ -3871,7 +3871,75 @@ A organização da seção acompanha a ordem em que as decisões se condicionam:
 
 ### 5.7.1 Topologia do canal de voz
 
-Esta subseção será desenvolvida em conjunto com a especificação da API de recebimento de áudios, registrando as alternativas de trajeto do áudio, a escolha adotada, suas consequências e a política de retenção aplicável.
+#### 5.7.1.1 O que a topologia decide
+
+Definido o serviço de fala em 5.7.2, resta decidir por qual trajeto o áudio capturado no dispositivo do usuário alcança esse serviço. A pergunta parece de implementação, mas é de arquitetura: o trajeto determina se o áudio atravessa ou não a camada de aplicação da equipe e, por consequência, se existe um ponto no sistema em que ele possa ser validado, registrado, retido e reprocessado.
+
+A decisão precede a especificação da API de recebimento de áudios porque é ela que estabelece se essa API é o caminho principal do canal de voz, um caminho secundário ou uma peça sem função. Precede também o tratamento de erros, os limites operacionais e a rastreabilidade, todos condicionados a onde o áudio efetivamente passa.
+
+A seção 3.2.2 já havia diferido esta decisão, ao registrar que a conversão de voz em texto não foi transformada em classe do modelo por corresponder a um comportamento técnico a ser detalhado na arquitetura. Esta subseção é esse detalhamento.
+
+#### 5.7.1.2 Alternativas de trajeto
+
+Existem dois trajetos possíveis, e apenas dois. As demais configurações imagináveis são combinações destes.
+
+**Trajeto A — transmissão contínua a partir do navegador.** A interface solicita ao servidor um token de curta duração e, de posse dele, estabelece conexão direta com o serviço de fala, recebendo a transcrição à medida que o usuário fala. O áudio não atravessa a camada de aplicação da equipe; o servidor participa apenas da emissão da credencial temporária. É o trajeto representado no diagrama de 5.2.3 pela aresta que liga a página de conversa diretamente ao serviço de fala, e é o que os módulos `voz/` e `api/routes/voz.py` do middleware já esboçam.
+
+**Trajeto B — ingestão pela camada de aplicação.** A interface grava o áudio e o submete a um endpoint próprio. O servidor recebe o arquivo, valida formato, tamanho e duração, aciona o serviço de fala e devolve a transcrição. O áudio atravessa o mesmo ponto em que a interação é registrada.
+
+| Aspecto | Trajeto A — transmissão contínua | Trajeto B — ingestão |
+|---|---|---|
+| Percepção do usuário | Transcrição parcial durante a fala | Espera até o fim do processamento |
+| Retenção do áudio | Inexistente na infraestrutura da equipe | Sob controle da política definida em 5.7.1.5 |
+| Validação de formato, tamanho e duração | Impossível no servidor | Aplicável antes do envio ao serviço |
+| Registro da requisição | Apenas o texto resultante | Requisição completa, com origem e duração |
+| Medição do WER de 3.1.5.2 | **Inviável**, por ausência do áudio a comparar com a referência | Viável sobre o áudio retido |
+| Canais atendidos | Apenas os que executam o SDK no cliente | Qualquer cliente capaz de enviar um arquivo |
+| Custo de operação | Uma chamada ao serviço de fala | Uma chamada ao serviço de fala, mais tráfego e armazenamento temporário |
+| Exposição de credencial | Token de curta duração no cliente | Nenhuma credencial no cliente |
+
+A limitação registrada na quinta linha merece destaque, por não ser evidente. O *Word Error Rate* é calculado comparando a transcrição produzida com uma transcrição de referência do mesmo áudio. Sem reter o áudio, não há sobre o que aplicar a comparação de forma reprodutível, e a meta de WER inferior ou igual a 15% estabelecida em 3.1.5.2 permanece declarada sem meio de verificação.
+
+#### 5.7.1.3 Decisão
+
+Adota-se a **topologia híbrida**: o trajeto de ingestão constitui o contrato canônico do canal de voz, especificado em 5.7.3, e o trajeto de transmissão contínua permanece como modo de consumo otimizado da interface web, mantido conforme registrado em 5.1.1 e no diagrama de 5.2.3.
+
+A decisão não revoga nada do que foi estabelecido anteriormente: acrescenta um trajeto que não existia. A transmissão contínua continua sendo o que a interface de conversa utiliza, porque a transcrição parcial durante a fala é a propriedade que justifica oferecer o canal de voz em vez de apenas o de texto. O que a ingestão acrescenta é o ponto de passagem que torna o áudio observável.
+
+Três razões sustentam a escolha, em ordem de peso.
+
+A primeira é a **verificabilidade**. Os indicadores de conversão entre voz e texto de 3.1.5.2 — *Word Error Rate*, acurácia de termos de domínio e degradação ponta a ponta — pressupõem o confronto entre o que foi dito e o que foi transcrito. Adotar exclusivamente a transmissão contínua tornaria esses três indicadores inverificáveis, e um requisito que não pode ser medido não pode ser aceito nem recusado.
+
+A segunda é a **cobertura de canais**. O escopo previsto na seção 5.5.5.1 inclui a publicação do agente em canal conversacional corporativo, além da interface própria. Um trajeto que dependa da execução de um SDK no navegador não atende clientes que apenas submetem um arquivo de áudio, e tampouco os enunciados extensos previstos na *feature* F79.
+
+A terceira é a **rastreabilidade**. O RNF02 exige registro de origem, autoria e momento das alterações efetivadas. Uma solicitação por voz que chega ao pipeline já como texto perde a informação de sua origem sonora e não permite reconstruir o que foi efetivamente dito quando uma transcrição incorreta produzir uma ação indevida.
+
+O custo assumido é duplo: dois trajetos a documentar e a testar, e a necessidade de declarar qual deles constitui a fonte de verdade do registro. Fixa-se que **o registro da interação é único e independe do trajeto**: em ambos os casos grava-se a interação com o canal marcado como voz, conforme as classes `Interacao` e `Canal` do diagrama de classes registrado em 5.4.11. O que distingue os trajetos é a existência do áudio de origem, presente apenas na ingestão.
+
+#### 5.7.1.4 Consequências para a arquitetura
+
+A topologia híbrida acrescenta um componente de ingestão de áudio à camada de aplicação, hoje ausente nas três vistas arquiteturais. As divergências abaixo são registradas nominalmente e devem ser corrigidas nas respectivas seções, e não nesta.
+
+| Seção | Registro atual | Ajuste necessário |
+|---|---|---|
+| 5.2.1, blocos A2 e A3 | Situa a captura e a conversão como componentes de interface e de processamento, sem contraparte no servidor | Acrescentar o componente de ingestão de áudio na camada de aplicação |
+| 5.2.3, diagrama da Sprint 2 | A aresta entre a página de conversa e o serviço de fala representa apenas o trajeto direto | Acrescentar o trajeto que passa pelo módulo `api/` antes de alcançar o serviço de fala |
+| 5.3.2, diagrama DS01 | O fragmento opcional de entrada por voz resolve a conversão dentro da própria linha de vida do canal | Representar a ingestão como alternativa, com o servidor como participante |
+| 5.6.4, blocos A2 e A3 | Situa captura e conversão integralmente na camada de Canal | Registrar que a conversão pode ocorrer na camada de aplicação |
+
+Nenhum desses ajustes contradiz o que as seções afirmam sobre o trajeto de transmissão contínua: todos são acréscimos do segundo trajeto às representações existentes.
+
+#### 5.7.1.5 Política de retenção do áudio
+
+O áudio recebido pelo trajeto de ingestão é **descartado imediatamente após a conclusão da transcrição**, permanecendo apenas o texto resultante e os metadados da requisição. A exceção é a marcação explícita de retenção, aplicável exclusivamente aos áudios destinados ao conjunto de avaliação descrito em 5.7.6, que são produzidos pela própria equipe e não contêm dados de projeto reais.
+
+A política decorre do RNF01. Áudio é dado não estruturado cuja inspeção prévia é custosa, e mantê-lo em repouso ampliaria a superfície de exposição sem contrapartida funcional: uma vez transcrito, o valor do áudio para o pipeline se esgota. O conjunto de avaliação constitui exceção justificada porque é sintético por construção e porque sua ausência inviabilizaria os indicadores de 3.1.5.2.
+
+Durante o intervalo entre a recepção e o descarte, o áudio permanece no mesmo perímetro de execução da aplicação, sem trânsito por armazenamento externo, e é submetido ao serviço de fala na região definida em 5.7.2.6.
+
+#### 5.7.1.6 Efeito sobre a especificação subsequente
+
+Da decisão decorrem três definições que a especificação da API em 5.7.3 deve observar. O contrato adota **modelo assíncrono**, com aceitação da submissão e consulta posterior do resultado, porque a transcrição de um enunciado extenso não se conclui no tempo de uma requisição síncrona. A validação de formato, tamanho e duração ocorre **antes** do acionamento do serviço de fala, para que um arquivo inválido não consuma cota nem tempo. E a resposta ao cliente distingue a submissão aceita da transcrição concluída, estados que o modelo síncrono confundiria em um único código de retorno.
 
 ### 5.7.2 Seleção dos serviços de conversão entre fala e texto
 
