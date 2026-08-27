@@ -102,6 +102,7 @@
   - [2.4 Exemplo prático](#24-exemplo-prático)
   - [2.5 Procedimentos de release, hotfix e exclusão](#25-procedimentos-de-release-hotfix-e-exclusão)
 - [3. Políticas de commit](#3-políticas-de-commit)
+  - [3.1 Identidade de autoria](#31-identidade-de-autoria)
 - [4. Política de push e Merge Requests](#4-política-de-push-e-merge-requests)
 - [5. Infraestrutura como código](#5-infraestrutura-como-código)
 - [6. Gestão de arquivos sensíveis](#6-gestão-de-arquivos-sensíveis)
@@ -129,15 +130,17 @@ O projeto adota um fluxo baseado em GitFlow, no qual o trabalho é desenvolvido 
 |---|---|---|---|
 | `main` | Versão estável destinada às entregas do projeto | — | — |
 | `develop` | Integração contínua do trabalho em desenvolvimento | `main` | `main`, nos marcos de entrega |
-| `feature/<nome>` | Desenvolvimento de funcionalidades | `develop` | `develop` |
-| `bugfix/<nome>` | Correção de defeitos identificados durante o desenvolvimento | `develop` | `develop` |
+| `feat/<nome>` | Desenvolvimento de funcionalidades | `develop` | `develop` |
+| `fix/<nome>` | Correção de defeitos identificados durante o desenvolvimento | `develop` | `develop` |
 | `release/<versão>` | Preparação e estabilização de uma entrega | `develop` | `main` e `develop` |
 | `hotfix/<nome>` | Correção urgente de uma versão estável | `main` | `main` e `develop` |
 | `docs/<nome>` | Criação ou atualização de documentação | `develop` | `develop` |
 | `design/<nome>` | Criação ou atualização de artefatos de design e modelagem | `develop` | `develop` |
 | `test/<nome>` | Criação ou atualização de testes | `develop` | `develop` |
 
-Exemplos: `feature/classificacao-intencoes`, `bugfix/corrige-parser-audio`, `release/v1.0.0`, `hotfix/corrige-consulta-status`, `docs/gestao-projeto`, `design/as-is-bpmn` e `test/classificacao-intencoes`.
+Exemplos: `feat/classificacao-intencoes`, `fix/corrige-parser-audio`, `release/v1.0.0`, `hotfix/corrige-consulta-status`, `docs/gestao-projeto`, `design/as-is-bpmn` e `test/classificacao-intencoes`.
+
+> **Revisão da Sprint 2.** Os prefixos de funcionalidade e de correção passaram de `feature/` e `bugfix/` para **`feat/` e `fix/`**, alinhando a nomenclatura de branch aos tipos já utilizados nas mensagens de commit do padrão *Conventional Commits* e à prática efetivamente adotada pela equipe no repositório. Branches criadas antes desta revisão permanecem com o nome original em seu histórico; a convenção vale para as branches criadas a partir da Sprint 3.
 
 ### 2.3 Diretrizes de uso das branches
 
@@ -162,34 +165,43 @@ Os nomes das branches devem seguir o padrão:
 ```
 
 Onde:
-- `prefixo`: indica o tipo de branch (feature, bugfix, release, hotfix, docs, design, test)
-- `nome-descritivo`: breve descrição da atividade, utilizando letras minúsculas e separando palavras por hífen
+- `prefixo`: indica o tipo de branch (`feat`, `fix`, `release`, `hotfix`, `docs`, `design`, `test`)
+- `nome-descritivo`: breve descrição da atividade, utilizando **apenas letras minúsculas sem acento, números e hífen**, sem espaços, sem caracteres especiais e sem sinais diacríticos
 
 Exemplos válidos:
-- `feature/classificacao-intencoes`
-- `bugfix/corrige-parser-audio`
+- `feat/classificacao-intencoes`
+- `fix/corrige-parser-audio`
 - `release/v1.0.0`
 - `hotfix/corrige-consulta-status`
 - `docs/gestao-projeto`
 - `design/as-is-bpmn`
 - `test/integracao-pln`
 
+Exemplos inválidos e o motivo:
+
+| Nome | Problema |
+|---|---|
+| `feat/organização-pastas` | Contém acento; o nome deve ser escrito sem sinais diacríticos (`feat/organizacao-pastas`) |
+| `feature/classificador` | Prefixo descontinuado na revisão da Sprint 2; usar `feat/` |
+| `Feat/Novo-Endpoint` | Uso de letras maiúsculas |
+| `feat/ajustes` | Descrição genérica, que não identifica a entrega |
+
 #### Procedimentos de criação por tipo de branch
 
-**Feature branches:**
+**Branches de funcionalidade (`feat`):**
 ```bash
 git switch develop
 git pull --ff-only origin develop
-git switch -c feature/nome-da-feature
-git push --set-upstream origin feature/nome-da-feature
+git switch -c feat/nome-da-funcionalidade
+git push --set-upstream origin feat/nome-da-funcionalidade
 ```
 
-**Bugfix branches:**
+**Branches de correção (`fix`):**
 ```bash
 git switch develop
 git pull --ff-only origin develop
-git switch -c bugfix/nome-do-correcao
-git push --set-upstream origin bugfix/nome-do-correcao
+git switch -c fix/nome-da-correcao
+git push --set-upstream origin fix/nome-da-correcao
 ```
 
 **Docs branches:**
@@ -223,7 +235,7 @@ git push --set-upstream origin test/nome-do-teste
 - O merge request deve ser revisado por pelo menos uma pessoa diferente da autora.
 - A revisão deve confirmar que a mudança atende ao card, não introduz alterações fora do escopo e preserva a documentação ou o comportamento existente.
 - Verificações automatizadas disponíveis no repositório devem ser executadas antes do merge.
-- Após a aprovação, branches `feature`, `bugfix`, `docs`, `design` e `test` devem ser integradas à `develop`.
+- Após a aprovação, branches `feat`, `fix`, `docs`, `design` e `test` devem ser integradas à `develop`.
 - Branches já integradas devem ser excluídas do repositório remoto para evitar acúmulo de branches obsoletas.
 
 ### 2.4 Exemplo prático
@@ -244,7 +256,7 @@ Para documentar as User Stories do card #22, o fluxo utilizado é:
 **Exemplo 1: Implementação de página principal do frontend**
 
 Card: #112 - Implementa página principal do frontend
-Branch: `feature/pagina-principal-frontend`
+Branch: `feat/pagina-principal-frontend`
 Merge Request: !53
 Labels: FEAT, CODE, DESIGN
 Autor: Mariana Reis
@@ -255,7 +267,7 @@ Fluxo executado:
 ```bash
 git switch develop
 git pull --ff-only origin develop
-git switch -c feature/pagina-principal-frontend
+git switch -c feat/pagina-principal-frontend
 ```
 
 2. Desenvolver a funcionalidade seguindo o DoD do card #112
@@ -268,7 +280,7 @@ git commit -m "feat(frontend): implementa pagina principal do frontend (#112)"
 
 4. Enviar para o GitLab:
 ```bash
-git push --set-upstream origin feature/pagina-principal-frontend
+git push --set-upstream origin feat/pagina-principal-frontend
 ```
 
 5. Abrir MR no GitLab com título: `FEAT | implementa pagina principal do frontend (#112)`
@@ -279,8 +291,8 @@ git push --set-upstream origin feature/pagina-principal-frontend
 ```bash
 git switch develop
 git pull --ff-only origin develop
-git branch -d feature/pagina-principal-frontend
-git push origin --delete feature/pagina-principal-frontend
+git branch -d feat/pagina-principal-frontend
+git push origin --delete feat/pagina-principal-frontend
 ```
 
 **Exemplo 2: Documentação de gestão de projeto**
@@ -435,6 +447,38 @@ docs: adiciona user stories e critérios de aceitação (#22)
 ```
 
 Não devem ser usadas mensagens vagas, como “ajustes”, “melhorias” ou “update”, nem commits que misturem mudanças sem relação entre si.
+
+### 3.1 Identidade de autoria
+
+A rastreabilidade das contribuições depende de que cada commit seja atribuível a uma única pessoa. Na Sprint 2, a extração de métricas identificou o mesmo integrante registrado sob nomes diferentes, o que fragmentou a contagem individual de commits e comprometeu a leitura da distribuição de carga.
+
+**Configuração obrigatória.** Antes do primeiro commit no repositório, cada integrante deve configurar sua identidade com o nome completo e o e-mail institucional utilizado no GitLab:
+
+```bash
+git config user.name "Nome Sobrenome"
+git config user.email "nome.sobrenome@sou.inteli.edu.br"
+```
+
+A verificação pode ser feita a qualquer momento com:
+
+```bash
+git config user.name
+git config user.email
+```
+
+**Regras.**
+
+- O nome deve ser o nome completo utilizado na matriz de papéis, sem apelidos, abreviações ou identificadores de usuário.
+- O e-mail deve ser o mesmo cadastrado na conta do GitLab, garantindo que o commit seja associado ao perfil correto.
+- A configuração deve ser feita por repositório ou globalmente, mas nunca deixada em branco, sob risco de os commits serem atribuídos a uma identidade genérica.
+
+**Arquivo `.mailmap`.** As variações de autoria já existentes no histórico são reconciliadas pelo arquivo [`.mailmap`](../.mailmap), mantido na raiz do repositório. O Git o utiliza automaticamente em `git log`, `git shortlog` e `git blame`, sem reescrever o histórico. A conferência das identidades reconhecidas é feita com:
+
+```bash
+git shortlog -sne --all
+```
+
+Sempre que uma nova variação de autoria for identificada, a linha correspondente deve ser acrescentada ao `.mailmap`. Commits registrados sob a conta técnica `Administrator` do GitLab não são atribuíveis a um integrante e devem ser contabilizados apenas no total geral do relatório da sprint.
 
 ## 4. Política de push e Merge Requests
 

@@ -1,0 +1,23 @@
+# Identidade canônica de autoria do repositório.
+#
+# Este arquivo reconcilia identidades Git divergentes (nomes diferentes para a
+# mesma pessoa) de modo que os relatórios de contribuição — `git shortlog -sne`,
+# `git log`, `git blame` e as extrações de métricas da sprint — atribuam cada
+# commit a uma única pessoa.
+#
+# Formato:
+#   Nome Canônico <email-canônico> Nome Antigo <email-antigo>
+#   Nome Canônico <email-canônico> <email-alternativo>
+#
+# Ao entrar um novo integrante ou surgir uma nova variação de autoria, a linha
+# correspondente deve ser adicionada aqui. A política está registrada na seção
+# 3.1 do documento documentos/GestaoConfiguracao.md.
+
+Alexsander Barbosa <alexsander.barbosa@sou.inteli.edu.br> Alex Silva <alexsander.barbosa@sou.inteli.edu.br>
+Carlos Eduardo Serrano Quaglia <carlos.quaglia@sou.inteli.edu.br> CaduQuaglia <carlos.quaglia@sou.inteli.edu.br>
+Eduardo Casarini <eduardo.casarini@sou.inteli.edu.br> <eduardoalonso.casarini@gmail.com>
+Mirela Bianchi <mirela.bianchi@sou.inteli.edu.br> mirela <mirela.bianchi@sou.inteli.edu.br>
+
+# Observação: commits registrados sob a conta técnica `Administrator`
+# (gitlab_admin_*@example.com) não são atribuíveis a um integrante e permanecem
+# fora do mapeamento. Devem ser contabilizados apenas no total geral.
