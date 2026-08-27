@@ -4693,6 +4693,10 @@ Neste desenho, o botão não serve para resolver a pendência diretamente. Ele f
 
 O protótipo A foi executado como um mockup interativo que simula o fluxo conversacional proativo do agente Prata dentro do Microsoft Teams. A figura a seguir apresenta o storyboard completo do fluxo, composto por cinco frames que representam a jornada desde a notificação inicial até o ponto de ruptura.
 
+[Acessar o vídeo desenvolvido para o Protótipo A](https://drive.google.com/file/d/1i8gJux-svrldd1OrkpJKvStBlHGnVkWR/view?usp=sharing)
+
+Gerado com apoio de inteligência artificial, o protótipo tem caráter exploratório: busca evidenciar a necessidade da solução e permitir uma avaliação preliminar de sua usabilidade e do fluxo de interação.
+
 <div align="center">
 
 ![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](../documentos/imagens/storyboard-fluxo-prata.png)
@@ -4777,6 +4781,8 @@ O vídeo e a imagem conceitual utilizados nesta exploração foram gerados com a
 
 **Cena 4 · Atualização e confirmação** - Fernanda solicita: "Não precisa. Resolva agora: registre que estamos aguardando aprovação do cliente". O agente interpreta a solicitação, relaciona-a ao contexto da pendência e responde: "Entendi. Marco Entrega da Fase 2, projeto Linha 6, motivo aguardando aprovação do cliente. Confirma o registro?". A cena termina antes da efetivação da mudança, evidenciando que uma atualização não deve ser registrada sem confirmação explícita.
 
+**Cena 5 · Ruptura** - Após o registro da atualização, Fernanda é chamada para uma reunião em outra sala e deixa o crachá sobre a mesa, ainda vestido pelo desligamento do turno anterior. Minutos depois, uma nova pendência é identificada pela plataforma e o sinal luminoso é acionado normalmente. Como o crachá permanece imóvel sobre a mesa, o alerta segue piscando sem que Fernanda esteja por perto para reconhecê-lo. Carlos, sentado próximo, percebe a luz acesa e pergunta diretamente: "Isso é seu, Fernanda? Tá alertando alguma coisa?" - mas Fernanda não está na sala para responder. O grupo não havia definido se o sistema deveria detectar a ausência do usuário e suspender o sinal, ou se o alerta deveria simplesmente continuar até alguém tocá-lo. Diante da pergunta de Carlos, o "roteirista" precisou improvisar uma resposta na hora, admitindo que esse comportamento não fora desenhado - expondo uma lacuna real sobre o vínculo entre o dispositivo e a presença física do responsável, algo que nenhum RF atual cobre.
+
 #### 7.5.2.1 Protocolo de interação com o crachá
 
 O roteiro utiliza o toque como mecanismo de reconhecimento do alerta e de consentimento para iniciar a conversa. O crachá não mantém o microfone continuamente ativo: a captura ocorre apenas durante os momentos em que o agente aguarda uma resposta da usuária. Cada fala é encerrada por uma pausa breve, simulando a detecção do fim do enunciado; em seguida, o dispositivo interrompe a captura e processa a resposta.
@@ -4794,6 +4800,8 @@ O roteiro utiliza o toque como mecanismo de reconhecimento do alerta e de consen
 Os sinais visuais além da luz vermelha, o intervalo utilizado para reconhecer o fim da fala e o comportamento técnico do segundo toque são convenções de encenação do protótipo. Esses elementos deverão ser validados antes de qualquer implementação, pois a gravação demonstra o fluxo de interação e não um dispositivo eletrônico funcional.
 
 ### 7.5.3 Espaço de testagem
+
+Os protótipos físicos foram apresentados a colegas de outras turmas do Inteli, que atuaram como testers externos em um teste inicial. A atividade teve como objetivo observar a compreensão dos protótipos e verificar sua usabilidade preliminar, sem pretensão de representar uma validação formal ou estatisticamente significativa.
 
 | Protótipo | Situação testada | O que aconteceu | Onde falhou/precisou de improviso |
 |---|---|---|---|
@@ -4845,6 +4853,12 @@ Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o
 
 As imagens a seguir compõem o registro visual completo do Protótipo A. Todas as telas foram criadas como mockups de alta fidelidade simulando a interface do agente Prata dentro do Microsoft Teams.
 
+O registro fotográfico abaixo foi realizado durante o teste inicial com testers externos. Trata-se de uma fotografia bruta do protótipo em uso, sem geração ou edição por inteligência artificial.
+
+![Registro fotográfico bruto do Protótipo A em uso durante o teste inicial de usabilidade com colegas do Inteli.](../documentos/imagens/prototipoa.jpeg)
+
+*Figura - Protótipo A apresentado a testers externos durante o teste inicial de usabilidade.*
+
 | Arquivo | Descrição |
 |---|---|
 | `storyboard-fluxo-prata.png` | Storyboard completo do fluxo de chat do Prata AI Agent, com os cinco frames da jornada conversacional |
@@ -4859,6 +4873,12 @@ As imagens a seguir compõem o registro visual completo do Protótipo A. Todas a
 ### 7.8.2 Registro visual — Protótipo B
 
 O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecimento por toque, a interação por voz e a solicitação de confirmação antes do registro de uma atualização. A imagem conceitual a seguir foi utilizada como referência para definir os personagens, o contexto de escritório e os elementos visuais do crachá apresentados no vídeo.
+
+Além do registro audiovisual, a fotografia a seguir documenta o protótipo físico do crachá durante sua apresentação. A imagem é um registro bruto, produzido sem uso de inteligência artificial para sua geração ou edição, e foi feita durante o teste inicial com testers externos.
+
+![Registro fotográfico bruto do Protótipo B, representado pelo crachá físico, durante o teste inicial de usabilidade com colegas do Inteli.](../documentos/imagens/prototipob.jpeg)
+
+*Figura - Protótipo B físico apresentado a testers externos durante o teste inicial de usabilidade.*
 
 <div align="center">
 
