@@ -4054,6 +4054,102 @@ A decisão introduz e transforma riscos que devem constar do acompanhamento da m
 
 Quanto às metas registradas ao final da seção 3.1.5, a definição do serviço permite encerrar a ressalva ali declarada. As metas preliminares de WER inferior ou igual a 15%, acurácia de termos de domínio igual ou superior a 90% e degradação ponta a ponta de no máximo 10 pontos percentuais são **mantidas** como hipóteses quantitativas, a serem verificadas sobre o corpus de áudio de referência descrito na subseção 5.7.6. Cabe registrar que a meta de acurácia de termos de domínio só é perseguível porque o serviço escolhido admite vocabulário customizado: sob qualquer das alternativas eliminadas, ela seria inatingível por ausência de mecanismo, e não por insuficiência de qualidade do reconhecimento. Nesse sentido, a seleção do serviço não apenas atende aos indicadores já definidos — ela é a condição de existência de um deles.
 
+### 5.7.3 API de recebimento de áudios do usuário
+
+Esta subseção especifica o contrato da API que recebe os áudios enviados pelo usuário — o trajeto de ingestão adotado em 5.7.1.3 como caminho canônico do canal de voz. É o contrato entre a interface de voz e o pipeline de PLN: o que a interface pode enviar, o que o servidor garante devolver e o que acontece quando algo dá errado.
+
+As três definições derivadas em 5.7.1.6 são premissas desta especificação, e não são revisitadas aqui: o contrato é assíncrono, a validação precede o acionamento do serviço de fala, e a submissão aceita é um estado distinto da transcrição concluída.
+
+Os caminhos declarados abaixo são os da aplicação. O navegador os alcança sob o prefixo `/api`, acrescentado pelo proxy reverso descrito em 5.1.5 — `POST /voz/audios` na aplicação corresponde a `POST /api/voz/audios` no cliente. O prefixo `/voz` já existe no roteador do middleware, hoje com o endpoint de emissão de token.
+
+#### 5.7.3.1 Princípios do contrato
+
+**A submissão é assíncrona.** O envio do áudio e a obtenção da transcrição são operações separadas. Um enunciado de doze segundos transcreve em tempo compatível com uma requisição síncrona, mas o mesmo contrato precisa atender ao ditado extenso previsto na *feature* F79, cuja transcrição não se conclui nesse prazo. Um contrato síncrono precisaria ser substituído quando aquele incremento entrasse; um contrato assíncrono absorve os dois casos sem alteração, ao custo de uma requisição a mais no caso curto.
+
+**A validação precede o acionamento do serviço de fala.** Formato, tamanho e duração são verificados antes de qualquer chamada externa. A ordem não é detalhe de implementação: o serviço é tarifado por hora de áudio e opera sob a franquia mensal registrada em 5.7.2.7, de modo que enviar um arquivo inválido consome cota e tempo para receber um erro que o servidor já poderia ter emitido. É a mesma lógica da ordem das guardas descrita em 5.2: barrar cedo o que não deve prosseguir.
+
+**A submissão aceita não é a transcrição concluída.** São dois estados, com códigos de resposta distintos. Confundi-los obrigaria o cliente a distinguir pelo corpo da resposta se a operação terminou, e tornaria impossível representar o intervalo em que o áudio já é responsabilidade do servidor mas ainda não produziu texto — exatamente o intervalo em que a interface precisa exibir progresso.
+
+**O registro da interação independe do trajeto.** Conforme fixado em 5.7.1.3, tanto a ingestão quanto o modo de transmissão contínua gravam uma única interação, com o canal marcado como voz. Esta API não cria um segundo registro: ela produz o texto que, submetido ao endpoint de conversação, origina a interação. O que a ingestão acrescenta ao registro é a existência do áudio de origem durante o intervalo previsto na política de retenção de 5.7.1.5.
+
+#### 5.7.3.2 Endpoints
+
+| Método | Caminho | Propósito | Sucesso |
+|---|---|---|:-:|
+| `POST` | `/voz/audios` | Submeter um áudio para transcrição | `202` |
+| `GET` | `/voz/audios/{id_audio}/transcricao` | Consultar o resultado da transcrição | `200` |
+| `GET` | `/voz/token` | Obter credencial temporária do modo de transmissão contínua | `200` |
+
+Os dois primeiros compõem o trajeto de ingestão. O terceiro documenta o modo de transmissão contínua, mantido conforme 5.7.1.3 e já esboçado no middleware; sua especificação está em 5.7.4, junto da API de conversão de fala em texto que ele credencia.
+
+#### 5.7.3.3 Submissão do áudio
+
+`POST /voz/audios`, com corpo `multipart/form-data`.
+
+**Campos do corpo**
+
+| Campo | Tipo | Obrigatório | Descrição |
+|---|---|:-:|---|
+| `audio` | arquivo | sim | O áudio capturado. Formatos e limites em 5.7.3.6 |
+| `idioma` | texto | não | Código BCP 47. Ausente, assume `pt-BR`, conforme a configuração do serviço |
+| `conversa_id` | texto | não | Vincula a transcrição a uma conversa existente. Ausente ou não pertencente ao usuário, o vínculo é resolvido na etapa de conversação, e não aqui |
+
+**Cabeçalhos**
+
+| Cabeçalho | Obrigatório | Descrição |
+|---|:-:|---|
+| `Cookie` | sim | Cookie de sessão emitido pela autenticação. A resolução de identidade é a mesma de todas as rotas, descrita em 5.2 |
+| `Idempotency-Key` | não | Identificador da submissão gerado pelo cliente. Ver 5.7.3.7 |
+
+**Exemplo de requisição**
+
+```http
+POST /voz/audios HTTP/1.1
+Host: agente-portfolio.exemplo
+Content-Type: multipart/form-data; boundary=----limite
+Cookie: sessao=<cookie httpOnly>
+Idempotency-Key: 9f2c1b7e-4a30-4d81-9e2f-77c0b1e5a3d4
+
+------limite
+Content-Disposition: form-data; name="audio"; filename="enunciado.webm"
+Content-Type: audio/webm;codecs=opus
+
+<bytes do áudio>
+------limite
+Content-Disposition: form-data; name="idioma"
+
+pt-BR
+------limite--
+```
+
+**Resposta de aceitação**
+
+```http
+HTTP/1.1 202 Accepted
+Content-Type: application/json
+Location: /voz/audios/a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19/transcricao
+```
+
+```json
+{
+  "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+  "estado": "recebido",
+  "duracao_segundos": 11.4,
+  "consultar_em": "/voz/audios/a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19/transcricao",
+  "expira_em": "2026-08-27T18:42:10Z"
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `id_audio` | Identificador da submissão, usado na consulta |
+| `estado` | Sempre `recebido` nesta resposta. Os demais estados estão em 5.7.3.4 |
+| `duracao_segundos` | Duração apurada na validação, devolvida para que o cliente estime a espera |
+| `consultar_em` | Caminho da consulta, repetido no corpo para clientes que não leem o `Location` |
+| `expira_em` | Momento a partir do qual o resultado deixa de estar disponível, conforme a política de retenção de 5.7.1.5 |
+
+O `202` afirma que o áudio foi aceito e será transcrito — não que a transcrição existe. Qualquer condição que impeça a aceitação produz um dos erros catalogados em 5.7.3.8, e nenhum áudio recusado chega ao serviço de fala.
+
 ## 5.8 Algoritmo de classificação de intenção: escolha, princípios e implementação
 
 Esta seção documenta o algoritmo que resolve a etapa de intenção do
