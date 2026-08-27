@@ -1,3 +1,13 @@
+# Sem build-system, `pip install -e .` não tem como construir o pacote e
+# falha sem instalar nada — inclusive as dependências.
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+# O pacote é `app`; `dados/` e `tests/` ficam de fora do que se instala.
+[tool.setuptools.packages.find]
+include = ["app*"]
+
 [project]
 name = "middleware-pln"
 version = "0.2.0"
@@ -20,9 +30,13 @@ dependencies = [
     "msal>=1.28",
     # Assinatura do cookie de sessão
     "itsdangerous>=2.2",
-    # Vetorização (Bag of Words / TF-IDF) da linha de base clássica do
-    # classificador de intenção — ver pipeline/intencao/vetorizacao.py.
+    # Classificador de intenção. scikit-learn cobre a vetorização
+    # (BoW/TF-IDF) e os estimadores; sentence-transformers traz o modelo
+    # de sentença multilíngue do ramo de embeddings; joblib serializa o
+    # artefato treinado. Ver pipeline/intencao/modelo.py.
     "scikit-learn>=1.4",
+    "sentence-transformers>=3.0",
+    "joblib>=1.4",
 ]
 
 [project.optional-dependencies]
@@ -31,11 +45,6 @@ dev = [
     "pytest-asyncio>=0.23",
     "ruff>=0.5",
 ]
-
-# Dependências do classificador de intenção em produção (embeddings +
-# classificador supervisionado, ver Arquitetura.md seção 7) ainda serão
-# adicionadas quando essa escolha for fechada. scikit-learn acima cobre só
-# a linha de base clássica (TF-IDF/BoW) usada na comparação da feature F22.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

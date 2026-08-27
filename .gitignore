@@ -16,6 +16,11 @@ dist/
 *.local
 .eslintcache
 
+# Modelo treinado do classificador de intenção: artefato gerado, ~4 MB,
+# reproduzível com `python -m app.pipeline.intencao.treino`. O corpus e o
+# código que o produzem são versionados; o binário não.
+src/middleware/dados/classificador.joblib
+
 # Docker
 dbdata/
 

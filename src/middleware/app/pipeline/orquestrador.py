@@ -162,8 +162,31 @@ class Orquestrador:
         # classificação incerta não sustenta nem a recusa categórica. Pedir
         # reformulação é o tratamento correto para incerteza, e continua sem
         # acionar o Copilot.
-        if resultado.confianca < intencao.limiar_confianca:
+        #
+        # O limiar calibrado do artefato tem precedência sobre o do
+        # catálogo: aquele veio da validação cruzada da bancada (F1.21),
+        # este é o valor provisório que 5.3.7 registrou até a bancada
+        # existir. Quando o modelo é treinado sem calibração, o valor do
+        # catálogo volta a valer, e o comportamento é o de antes.
+        limiar = intencao_classificador.limiar_de(intencao.id)
+        if limiar is None:
+            limiar = intencao.limiar_confianca
+        if resultado.confianca < limiar:
             return await self._encerrar(ctx, Desfecho.RECUSADA_BAIXA_CONFIANCA)
+
+        if intencao.id == catalogo.TENTATIVA_INJECAO:
+            # Rede de segurança atrás da guarda de injeção: o que chega aqui
+            # é o que as regras e o Content Safety deixaram passar. Vira
+            # bloqueio com alerta, e não a recusa orientativa da classe
+            # negativa vizinha — as duas classes são negativas, mas só esta
+            # é ataque. Registrado como bloqueio por modelo porque foi um
+            # classificador, e não uma regra, que o identificou.
+            logger.warning(
+                "Injeção detectada pelo classificador de intenção (interacao=%s, usuario=%s)",
+                ctx.interacao_id,
+                ctx.usuario.id,
+            )
+            return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
 
         if intencao.id == catalogo.FORA_DE_ESCOPO:
             # Classe treinada do catálogo, não um erro: a recusa é

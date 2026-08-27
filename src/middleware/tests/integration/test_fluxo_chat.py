@@ -97,6 +97,12 @@ def dublar_pipeline(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(orq.injecao_classificador, "classificar", _sem_injecao)
     monkeypatch.setattr(orq.abuso_classificador, "classificar", _sem_abuso)
     monkeypatch.setattr(orq.intencao_classificador, "classificar", _intencao)
+    # O orquestrador consulta o módulo de intenção duas vezes: a segunda é
+    # `limiar_de`, que carrega o artefato do disco. Sem o dublê, a suíte
+    # passaria a exigir `dados/classificador.joblib`. None é o contrato do
+    # modelo sem calibração — faz o orquestrador cair no limiar do catálogo,
+    # que é o caminho de fallback exercitado aqui.
+    monkeypatch.setattr(orq.intencao_classificador, "limiar_de", lambda intencao_id: None)
     monkeypatch.setattr(orq.guarda_saida, "verificar", _saida_limpa)
 
 

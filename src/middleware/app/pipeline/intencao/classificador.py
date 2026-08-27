@@ -1,15 +1,39 @@
 """Classificador de intenções.
 
-Mapeia a mensagem (já sanitizada) para uma intenção do catálogo.
-Candidatos a implementação (decisão de stack na Sprint 2): fine-tuning
-de modelo pt-BR (ex.: BERTimbau) ou classificação zero-shot via LLM.
-A interface abaixo é estável independente da escolha.
+Mapeia a mensagem (já aprovada pelas guardas de entrada) para uma
+intenção do catálogo, devolvendo o rótulo e a confiança que o
+orquestrador compara com `Intencao.limiar_confianca`.
 
-Regra de decisão: intenção fora do catálogo ou com confiança abaixo do
-limiar é recusada pelo orquestrador antes de chegar ao Copilot.
+O modelo é o ensemble de TF-IDF com embeddings multilíngues descrito em
+modelo.py, treinado por treino.py e carregado uma única vez por processo.
+O carregamento é preguiçoso e protegido por lock: sob concorrência, a
+primeira requisição que chega inicializa e as demais esperam, em vez de
+cada uma instanciar um encoder de 2 GB.
+
+**Por que a inferência sai da thread do event loop.** `predict_proba` é
+CPU-bound e leva centenas de milissegundos; executá-la direto numa
+corrotina bloquearia o event loop inteiro do FastAPI, e o efeito
+apareceria como latência em toda requisição concorrente, não só nesta.
+`asyncio.to_thread` a joga num worker — e o GIL é liberado durante a
+inferência do torch e do numpy, então o paralelismo é real.
+
+O pré-processamento acontece dentro do pipeline (primeiro passo), e não
+aqui: é o que garante que treino e inferência não divirjam. Este módulo
+recebe o texto como o usuário o escreveu.
 """
 
+import asyncio
+import logging
+import threading
 from dataclasses import dataclass
+
+from app.pipeline.intencao import treino
+from app.pipeline.intencao.treino import ArtefatoTreinado
+
+logger = logging.getLogger(__name__)
+
+_artefato: ArtefatoTreinado | None = None
+_lock = threading.Lock()
 
 
 @dataclass
@@ -20,6 +44,49 @@ class ResultadoIntencao:
     confianca: float  # 0.0 a 1.0
 
 
+def obter_artefato() -> ArtefatoTreinado:
+    """Devolve o modelo treinado, carregando-o na primeira chamada."""
+    global _artefato
+    if _artefato is None:
+        with _lock:
+            # Segunda checagem sob o lock: entre a primeira e a aquisição,
+            # outra thread pode já ter carregado.
+            if _artefato is None:
+                _artefato = treino.carregar()
+                logger.info(
+                    "Classificador carregado (%d classes, treinado em %s)",
+                    len(_artefato.classes),
+                    _artefato.treinado_em,
+                )
+    return _artefato
+
+
+def limiar_de(intencao_id: str) -> float | None:
+    """Limiar calibrado para uma intenção, se o artefato trouxer um.
+
+    Devolve None quando o modelo foi treinado sem calibração — nesse caso
+    quem chama deve cair no `Intencao.limiar_confianca` do catálogo.
+    """
+    return obter_artefato().limiares.get(intencao_id)
+
+
+def _classificar_sincrono(texto: str) -> ResultadoIntencao:
+    artefato = obter_artefato()
+    probabilidades = artefato.pipeline.predict_proba([texto])[0]
+    indice = int(probabilidades.argmax())
+    return ResultadoIntencao(
+        intencao_id=str(artefato.pipeline.classes_[indice]),
+        confianca=float(probabilidades[indice]),
+    )
+
+
 async def classificar(texto: str) -> ResultadoIntencao:
-    """Classifica o texto contra o catálogo de intenções."""
-    raise NotImplementedError("Modelo de classificação a definir na Sprint 2")
+    """Classifica o texto contra o catálogo de intenções.
+
+    Uma mensagem vazia não é classificada: devolve `intencao_id=None`,
+    que o orquestrador já trata como fora de escopo. Chamar o modelo com
+    string vazia produziria uma classe arbitrária com confiança alta.
+    """
+    if not texto or not texto.strip():
+        return ResultadoIntencao(intencao_id=None, confianca=0.0)
+    return await asyncio.to_thread(_classificar_sincrono, texto)
