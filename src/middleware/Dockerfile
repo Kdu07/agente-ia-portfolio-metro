@@ -9,8 +9,10 @@ WORKDIR /app
 # reaproveitada quando só a aplicação muda.
 COPY pyproject.toml ./
 RUN pip install --no-cache-dir .
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large')"
 
 COPY app ./app
+COPY dados ./dados
 COPY migrations ./migrations
 COPY alembic.ini ./alembic.ini
 

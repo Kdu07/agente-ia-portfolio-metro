@@ -4594,6 +4594,345 @@ Os registros técnicos do ambiente devem ser acompanhados de uma breve descriç�
 | Endpoint `/health` do backend por HTTPS | Pendente | Backend e pipeline de PLN ainda não disponíveis |
 | Capturas de tela e guia de reprodução | Pendente | Lista de arquivos anexados não fornecida |
 
+## 6.6 Processo de Deploy do Backend/API de PLN
+
+Esta seção descreve o procedimento previsto para implantar o backend/API de PLN no Azure Container Apps. O processo foi definido a partir da estrutura existente em `src/middleware`, composta por FastAPI, Uvicorn, Python, classificador de intenções, PostgreSQL e um worker separado para rotinas agendadas. A descrição constitui um guia de reprodução para a implantação futura e não representa evidência de que o backend definitivo já esteja publicado.
+
+O ambiente básico de Azure Container Apps já foi validado no Resource Group `METROSP`, na região `westus2`, com a imagem oficial `mcr.microsoft.com/k8se/quickstart:latest`. A subscription utilizada foi disponibilizada com crédito de USD 200 por 30 dias. Essa validação comprovou a disponibilidade inicial da plataforma, mas não exercitou o FastAPI, o classificador de intenções, o PostgreSQL, o worker nem as integrações externas da solução.
+
+### 6.6.1 Visão Geral do Processo
+
+O fluxo previsto parte do código versionado e produz uma imagem que contém a aplicação, o artefato treinado do classificador e o modelo de embeddings. Após a publicação em um registro de containers, a imagem será utilizada por dois Container Apps: um para a API HTTP e outro para o worker de rotinas.
+
+```text
+Código em src/middleware
+          |
+          v
+Preparação do artefato classificador.joblib
+          |
+          v
+Docker build + modelo multilingual-e5-large
+          |
+          v
+Registro de containers
+          |
+          v
+Azure Container Apps
+    |                 |
+    v                 v
+API FastAPI        Worker de rotinas
+porta 8000         python -m app.worker
+    |                 |
+    +--------+--------+
+             |
+             v
+Azure Database for PostgreSQL Flexible Server
+             |
+             v
+Validação por HTTPS: /health e /docs
+```
+
+O registro de containers ainda não foi criado. O Azure Container Registry é a alternativa prevista caso o time adote um registro privado no próprio ecossistema Azure; seu nome, SKU e configuração definitiva deverão ser decididos antes da publicação. O mesmo princípio se aplica aos nomes definitivos do Container App da API, do Container App do worker e do servidor PostgreSQL.
+
+### 6.6.2 Pré-requisitos
+
+Antes da implantação, devem estar disponíveis:
+
+- acesso individual autorizado à subscription Azure e ao Resource Group `METROSP`;
+- Docker em execução na máquina responsável pelo build;
+- Azure CLI autenticada, ou acesso equivalente ao Portal do Azure;
+- Dockerfile localizado em `src/middleware/Dockerfile`;
+- pasta `src/middleware/dados` contendo o corpus e `classificador.joblib` gerado e validado;
+- decisão sobre o registro que armazenará a imagem;
+- definição dos nomes dos novos recursos, sem reutilizar exemplos desta documentação como nomes reais;
+- Azure Database for PostgreSQL Flexible Server provisionado e acessível pelos Container Apps;
+- valores reais das variáveis de ambiente e dos segredos, mantidos fora do repositório;
+- permissões para atualizar o Container App de teste ou criar os Container Apps definitivos.
+
+Para uso da Azure CLI, o operador deverá autenticar-se e selecionar explicitamente a subscription correta:
+
+```powershell
+az login
+az account set --subscription $subscriptionId
+az account show --output table
+```
+
+O valor de `$subscriptionId` deverá ser obtido no ambiente autorizado e não deve ser registrado neste documento.
+
+### 6.6.3 Procedimento de Implantação
+
+#### 6.6.3.1 Preparação da Imagem e do Classificador
+
+O Dockerfile deve copiar a pasta `dados` para `/app/dados`, pois o classificador procura o artefato em `dados/classificador.joblib`. O modelo `intfloat/multilingual-e5-large` também deve ser carregado durante o build, evitando que a primeira requisição em produção tenha de baixar aproximadamente 2 GB em tempo de execução. Os trechos necessários são:
+
+```dockerfile
+RUN pip install --no-cache-dir .
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large')"
+
+COPY app ./app
+COPY dados ./dados
+```
+
+Quando `classificador.joblib` ainda não estiver disponível, o artefato deverá ser produzido a partir de `src/middleware`:
+
+```powershell
+cd src/middleware
+python -m app.pipeline.intencao.treino
+```
+
+O resultado esperado é `src/middleware/dados/classificador.joblib`. Antes do build definitivo, o arquivo deverá ser validado quanto à existência, origem no corpus versionado e compatibilidade com a versão do código. A preparação desse arquivo e a correção do Dockerfile foram realizadas na branch de deploy, mas ainda não constituem publicação de imagem nem implantação no Azure.
+
+#### 6.6.3.2 Build Local da Imagem Docker
+
+O contexto do build deve ser `src/middleware`, pois o Dockerfile copia `pyproject.toml`, `app`, `dados`, `migrations` e `alembic.ini` desse diretório. A partir da raiz do repositório:
+
+```powershell
+docker build `
+  --file src/middleware/Dockerfile `
+  --tag middleware-pln:local `
+  src/middleware
+```
+
+Alternativamente, após entrar no diretório:
+
+```powershell
+cd src/middleware
+docker build --tag middleware-pln:local .
+```
+
+O build precisa de acesso ao repositório do modelo de embeddings. O log deverá demonstrar a instalação das dependências, o carregamento de `intfloat/multilingual-e5-large` e a cópia da pasta `dados`. Como as dependências Python são declaradas por faixas de versão e não existe lock file, builds realizados em datas diferentes podem resolver versões distintas; a criação de um mecanismo de lock permanece recomendada antes da implantação definitiva.
+
+#### 6.6.3.3 Publicação da Imagem
+
+Caso o Azure Container Registry seja adotado, primeiro deverão ser definidos seu nome globalmente único e o SKU adequado. Esses valores não estão definidos nesta etapa. Depois de criado o recurso, a imagem poderá ser construída e publicada diretamente pelo ACR:
+
+```powershell
+$resourceGroup = "METROSP"
+$acrName = "<DEFINIR_NOME_DO_REGISTRY>"
+$imageTag = "<DEFINIR_TAG_IMUTAVEL>"
+
+az acr build `
+  --resource-group $resourceGroup `
+  --registry $acrName `
+  --image "middleware-pln:$imageTag" `
+  --file src/middleware/Dockerfile `
+  src/middleware
+```
+
+O marcador `<DEFINIR_TAG_IMUTAVEL>` deverá ser substituído por uma identificação rastreável, como uma versão ou hash de commit aprovado. A utilização exclusiva de `latest` não é recomendada para o deploy definitivo, pois dificulta identificar e restaurar a versão efetivamente implantada. Se outro registro for selecionado, o procedimento equivalente deverá ser registrado antes da implantação.
+
+Antes de associar uma imagem privada ao Container App, deverá ser configurada a permissão de leitura no registro. Preferencialmente, essa autorização utilizará uma identidade gerenciada com acesso de leitura equivalente ao papel `AcrPull`, evitando o cadastro de usuário e senha do registro. O tipo e o escopo da identidade deverão ser definidos quando o Azure Container Registry e os Container Apps definitivos existirem.
+
+#### 6.6.3.4 Provisionamento do PostgreSQL
+
+O banco previsto é o Azure Database for PostgreSQL Flexible Server, inicialmente no tier **Burstable**, SKU **`Standard_B1ms`**, por ser compatível com o volume esperado para o MVP. O nome do servidor, o usuário administrativo, a senha, a versão do PostgreSQL, a capacidade de armazenamento e a política de acesso de rede ainda deverão ser definidos e validados pelo time.
+
+O comando de referência é:
+
+```powershell
+$postgresServer = "<DEFINIR_NOME_DO_SERVIDOR>"
+$postgresAdmin = "<DEFINIR_USUARIO_ADMINISTRATIVO>"
+$postgresPassword = Read-Host "Senha administrativa"
+
+az postgres flexible-server create `
+  --resource-group METROSP `
+  --name $postgresServer `
+  --location westus2 `
+  --tier Burstable `
+  --sku-name Standard_B1ms `
+  --admin-user $postgresAdmin `
+  --admin-password $postgresPassword
+```
+
+A forma de conectividade deve ser escolhida antes da criação. A exposição pública ampla não deve ser adotada como padrão; regras de firewall, acesso privado ou outra configuração de rede devem permitir somente os fluxos necessários entre os Container Apps e o banco. A string de conexão resultante será armazenada no secret associado a `DATABASE_URL`, no formato aceito por SQLAlchemy e `asyncpg`.
+
+Para reduzir o consumo do crédito durante períodos de inatividade do MVP, o servidor poderá ser interrompido quando não estiver em uso:
+
+```powershell
+az postgres flexible-server stop `
+  --resource-group METROSP `
+  --name $postgresServer
+```
+
+Antes de novos testes, será necessário iniciá-lo novamente:
+
+```powershell
+az postgres flexible-server start `
+  --resource-group METROSP `
+  --name $postgresServer
+```
+
+Essa estratégia reduz o custo de computação, mas não implica custo zero e não elimina cobranças aplicáveis a armazenamento, backup ou outros componentes. O comportamento e as limitações de parada automática deverão ser conferidos na subscription utilizada.
+
+#### 6.6.3.5 Aplicação das Migrações
+
+Com `DATABASE_URL` configurada e o banco acessível, as migrações deverão ser aplicadas uma vez para cada nova versão que altere o esquema:
+
+```powershell
+alembic upgrade head
+```
+
+O comando poderá ser executado em ambiente local autorizado com conectividade ao banco ou por uma execução controlada no Azure. Caso seja executado no Container App da API, a referência é:
+
+```powershell
+az containerapp exec `
+  --resource-group METROSP `
+  --name $apiAppName `
+  --command "alembic upgrade head"
+```
+
+O mecanismo definitivo de execução das migrações deverá ser escolhido antes da implantação. O comando não deve ser executado simultaneamente por múltiplas réplicas, e sua saída deverá ser registrada como evidência sem expor a string de conexão.
+
+#### 6.6.3.6 Atualização do Container App da API
+
+Após a publicação, a imagem do Container App da API deverá ser atualizada. Os valores ainda não definidos são representados por variáveis:
+
+```powershell
+$apiAppName = "<DEFINIR_NOME_DO_CONTAINER_APP_DA_API>"
+$imageReference = "<REFERENCIA_COMPLETA_DA_IMAGEM_PUBLICADA>"
+
+az containerapp update `
+  --resource-group METROSP `
+  --name $apiAppName `
+  --image $imageReference
+```
+
+O ingress da API deverá ser externo somente quando necessário à integração e deverá encaminhar o tráfego para a porta `8000`:
+
+```powershell
+az containerapp ingress enable `
+  --resource-group METROSP `
+  --name $apiAppName `
+  --type external `
+  --target-port 8000 `
+  --transport auto
+```
+
+A autorização para acessar as rotas funcionais não deve depender apenas da disponibilidade do ingress. A autenticação pelo Entra ID, as permissões por grupo e as proteções específicas da API deverão permanecer ativas. A URL atribuída pelo Azure somente será registrada após a implantação real.
+
+#### 6.6.3.7 Configuração de Secrets e Variáveis de Ambiente
+
+Valores sensíveis deverão ser cadastrados nos mecanismos de secrets do Azure Container Apps. A tabela separa os valores secretos das configurações não secretas, sem registrar seus conteúdos.
+
+| Classificação | Variáveis |
+|---|---|
+| Secrets | `DIRECTLINE_SECRET`, `DATABASE_URL`, `ENTRA_CLIENT_SECRET`, `SESSION_SECRET`, `CONTENT_SAFETY_KEY`, `SPEECH_KEY` |
+| Variáveis comuns | `DIRECTLINE_ENDPOINT`, `COPILOT_TIMEOUT_SECONDS`, `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_REDIRECT_URI`, `ENTRA_GRUPO_DIRETORIA`, `ENTRA_GRUPO_LIDER_PROJETO`, `ENTRA_GRUPO_MEMBRO_EQUIPE`, `ENTRA_GRUPO_VER_INTENCOES`, `ENTRA_GRUPO_GERIR_ROTINAS`, `SESSION_MAX_AGE_SECONDS`, `SESSION_COOKIE_SECURE`, `CONTENT_SAFETY_ENDPOINT`, `CONTENT_SAFETY_LIMIAR_SEVERIDADE`, `SPEECH_REGION`, `SPEECH_IDIOMA` |
+
+O cadastro segue o padrão abaixo, substituindo os marcadores somente no terminal autorizado e evitando que os valores apareçam no histórico de comandos, em logs ou em capturas de tela:
+
+```powershell
+az containerapp secret set `
+  --resource-group METROSP `
+  --name $apiAppName `
+  --secrets "<nome-do-secret>=<valor-obtido-de-forma-segura>"
+
+az containerapp update `
+  --resource-group METROSP `
+  --name $apiAppName `
+  --set-env-vars "NOME_DA_VARIAVEL=secretref:<nome-do-secret>"
+```
+
+As configurações não secretas podem ser fornecidas com `--set-env-vars "NOME=VALOR"`. Os mesmos secrets e variáveis necessários ao worker deverão ser configurados no Container App correspondente, sem compartilhamento de credenciais individuais. O Azure Key Vault poderá substituir ou complementar os secrets nativos quando os requisitos de rotação, auditoria e governança justificarem sua adoção.
+
+#### 6.6.3.8 Implantação do Worker
+
+O worker utiliza a mesma imagem do backend, mas não atende requisições HTTP. Ele deverá ser criado como um Container App separado, sem ingress, com o comando sobrescrito para:
+
+```text
+python -m app.worker
+```
+
+O procedimento de referência é:
+
+```powershell
+$workerAppName = "<DEFINIR_NOME_DO_CONTAINER_APP_DO_WORKER>"
+$containerAppsEnvironment = "<INFORMAR_AMBIENTE_CONTAINER_APPS_EXISTENTE>"
+
+az containerapp create `
+  --resource-group METROSP `
+  --name $workerAppName `
+  --environment $containerAppsEnvironment `
+  --image $imageReference `
+  --command "python" `
+  --args "-m" "app.worker"
+```
+
+O worker deverá utilizar a mesma `DATABASE_URL` para persistência e jobstore. Antes de aumentar a quantidade de réplicas, o time deverá validar o comportamento do agendador e impedir disparos duplicados. O Container App da API e o do worker permanecem componentes distintos mesmo utilizando a mesma imagem.
+
+#### 6.6.3.9 Validação da Implantação
+
+Depois de aplicar as migrações e publicar a revisão da API, a validação mínima deverá consultar o endpoint de saúde por HTTPS:
+
+```http
+GET /health
+```
+
+Resposta esperada:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+Também deverá ser verificada a documentação OpenAPI gerada automaticamente pelo FastAPI:
+
+```http
+GET /docs
+```
+
+O acesso a `/docs` comprova que a aplicação FastAPI foi iniciada e expôs seu contrato, mas não demonstra que todas as rotas estão implementadas. As rotas de `/intencoes` e `/rotinas` ainda possuem operações com `NotImplementedError` e, portanto, não deverão ser declaradas funcionais de ponta a ponta. A validação definitiva deverá incluir logs de inicialização, carregamento do classificador, conectividade com PostgreSQL e testes controlados das integrações externas.
+
+### 6.6.4 Status de Implementação
+
+| Etapa | Status | Evidência ou condição atual |
+|---|---|---|
+| Subscription e Resource Group `METROSP` em `westus2` | Executado | Ambiente básico utilizado na validação inicial |
+| Container App com imagem de quickstart | Executado | Imagem `mcr.microsoft.com/k8se/quickstart:latest` disponibilizada e endpoint testado |
+| Correção do Dockerfile para copiar `dados` | Preparado na branch de deploy | Alteração ainda não representa imagem publicada no Azure |
+| Download do modelo E5 durante o build | Preparado e validado localmente | Etapa de build executada localmente; imagem definitiva ainda não publicada |
+| Geração de `classificador.joblib` | Preparado e validado localmente | Artefato gerado a partir do corpus; inclusão definitiva depende de versionamento e integração da branch |
+| Registro de containers | Planejado | Recurso e nomenclatura ainda não definidos |
+| Publicação da imagem definitiva | Planejado | Nenhuma imagem do backend real foi publicada |
+| PostgreSQL Flexible Server | Planejado | Servidor, rede, armazenamento e credenciais ainda não configurados |
+| Aplicação das migrações | Planejado | Depende do PostgreSQL provisionado |
+| Container App da API com FastAPI | Planejado | O ambiente validado utiliza apenas a quickstart |
+| Secrets e variáveis do backend | Planejado | Nenhum segredo funcional da API foi cadastrado |
+| Container App separado para o worker | Planejado | Recurso ainda não criado |
+| Validação de `GET /health` do backend | Planejado | O endpoint existe no código, mas não foi validado no Azure |
+| Validação de `GET /docs` no Azure | Planejado | Depende do deploy do FastAPI |
+| Pipeline automatizado de CI/CD | Não implementado | Não existe `.gitlab-ci.yml`; procedimento atual é manual |
+
+### 6.6.5 Evidências para Reprodução
+
+Após a implantação real, deverão ser adicionadas capturas de tela ou saídas sanitizadas que registrem:
+
+- resultado do build da imagem, incluindo a camada de carregamento do modelo de embeddings;
+- imagem e tag presentes no registro escolhido;
+- configuração do PostgreSQL Flexible Server, sem credenciais ou string de conexão;
+- execução bem-sucedida de `alembic upgrade head`;
+- revisão do Container App da API e porta de destino `8000`;
+- configuração dos nomes de secrets, sem exibição dos valores;
+- Container App separado do worker, sem ingress;
+- resposta HTTPS de `GET /health`;
+- carregamento da interface Swagger em `GET /docs`;
+- logs de inicialização da API e do worker sem dados sensíveis.
+
+Cada evidência deverá informar data, versão ou tag da imagem e etapa demonstrada. URLs, identificadores da subscription, endereços de e-mail, tokens, chaves e credenciais deverão ser ocultados.
+
+### 6.6.6 Limitações e Próximos Passos
+
+As limitações conhecidas para a implantação definitiva são:
+
+1. **Empacotamento dos dados:** a correção para copiar `dados` foi preparada na branch de deploy, mas precisa ser versionada, revisada e integrada antes da publicação da imagem.
+2. **Modelo de embeddings:** o carregamento durante o build foi preparado para evitar download na primeira inferência. Ainda deverão ser avaliados o tamanho final da imagem, o tempo de build e a adequação das dependências de PyTorch a um ambiente CPU.
+3. **PostgreSQL:** o Azure Database for PostgreSQL Flexible Server ainda não foi provisionado. A configuração de rede, credenciais, armazenamento, backup e política de parada deverá ser validada antes do uso.
+4. **Worker separado:** o processo `python -m app.worker` ainda não foi implantado como Container App independente. A estratégia de réplica única e prevenção de disparos duplicados deverá ser confirmada.
+5. **Cobertura funcional:** parte das rotas de `/intencoes` e `/rotinas` ainda lança `NotImplementedError`. O deploy inicial não poderá ser utilizado como evidência de funcionamento completo dessas funcionalidades.
+
+Além desses pontos, deverão ser definidos o registro de containers, uma estratégia de versões imutáveis para as imagens, o procedimento definitivo de migração e o pipeline de CI/CD. Até que essas etapas sejam executadas e acompanhadas por evidências, a implantação do backend/API de PLN permanece documentada e tecnicamente preparada, mas não concluída no Azure.
+
 # 7. Prototipação Exploratória
 Esta seção apresenta a prototipação exploratória realizada para investigar alternativas de interação e identificar lacunas, ambiguidades e impactos das diferentes propostas de solução.
 
