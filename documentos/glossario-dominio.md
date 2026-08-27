@@ -230,3 +230,89 @@ Todos recebem criticidade alta ou média pela mesma razão estrutural: são **va
 Registram-se aqui também os subportfólios mencionados nos enunciados: `obras civis`, `sistemas`, `expansão`, `manutenção` e `material rodante`. São designações genéricas do ambiente de teste. As denominações oficiais dos subportfólios do parceiro **não foram incorporadas ao glossário** nesta versão: constam de anexos classificados como Corporativo, e sua inclusão será submetida à validação do parceiro antes de entrar, conforme a terceira exclusão da seção 3. A decisão é conservadora por escolha — o custo de omitir um termo é uma acurácia menor no indicador, mensurável e corrigível; o custo de publicar uma designação interna indevidamente não é reversível.
 
 Esta subseção inteira tem **prazo de validade**. Ela existe porque o ambiente de teste é sintético e porque os indicadores de 3.1.5.2 precisam ser calculáveis sobre ele. No momento em que a solução passar a operar sobre o portfólio real do parceiro, estes dezoito nomes deixam de descrever qualquer objeto existente e a subseção deve ser **substituída, não estendida** — mantê-los ao lado dos nomes reais gastaria orçamento da lista de frases favorecendo sequências que ninguém mais pronuncia, que é exatamente o defeito apontado na exclusão de `XPTO` na seção 3. O procedimento de substituição está na seção 7.
+
+## 6. Restrições operacionais
+
+### 6.1 Orçamento atual
+
+A tabela abaixo consolida o estado do glossário nesta versão e o compara ao teto de quinhentas entradas do mecanismo descrito em 2.1.
+
+| Subseção | Verbetes | Frases geradas | Alta | Média | Baixa |
+|---|---|---|---|---|---|
+| 5.1 — Siglas institucionais e de gestão | 15 | 15 | 7 | 8 | 0 |
+| 5.2 — Padrões de código e identificadores | 3 | 14 | 14 | 0 | 0 |
+| 5.3 — Vocabulário de gestão de portfólio | 20 | 20 | 4 | 15 | 1 |
+| 5.4 — Vocabulário público da rede metroviária | 17 | 17 | 8 | 9 | 0 |
+| 5.5 — Vocabulário de engenharia e sistemas | 12 | 12 | 3 | 6 | 3 |
+| 5.6 — Nomes de projeto do ambiente de teste | 18 | 23 | 13 | 10 | 0 |
+| **Total** | **85** | **101** | **49** | **48** | **4** |
+
+A coluna **verbetes** conta as linhas das tabelas da seção 5; a coluna **frases geradas** conta o que efetivamente é enviado ao serviço. As duas divergem em dois pontos. Em 5.2, cada padrão gera o prefixo isolado mais os códigos concretos listados na coluna de exemplos, conforme a estratégia em duas camadas ali descrita: três padrões produzem três prefixos e onze códigos. Em 5.6, os cinco subportfólios registrados em prosa ao final da subseção somam-se aos dezoito nomes tabelados.
+
+O glossário ocupa, portanto, **101 das 500 posições disponíveis**, ou pouco mais de um quinto do teto. A folga é deliberada e tem duas destinações previstas: o corpus de áudio de referência da subseção 5.7.6, cuja gravação pode revelar termos que a análise textual não antecipou, e a eventual substituição dos nomes sintéticos de 5.6 por nomes reais, que tende a ser mais numerosa do que o conjunto atual.
+
+### 6.2 Política de seleção
+
+Se uma versão futura ultrapassar o teto, a redução obedece a esta ordem, e não ao julgamento pontual de quem estiver editando:
+
+1. Removem-se primeiro os verbetes de **criticidade baixa**, na ordem inversa de frequência de ocorrência. São quatro nesta versão, e por definição seu erro não altera intenção nem entidade.
+2. Removem-se em seguida os verbetes de **criticidade média** cuja origem seja exclusivamente o corpus de treino, preservando os que têm origem em documento do parceiro. O critério é a evidência de uso real: um termo que só existe no corpus sintético tem menos garantia de ser efetivamente pronunciado.
+3. Consolidam-se os verbetes de 5.6 que compartilham topônimo, mantendo o nome completo do projeto e dispensando a forma curta.
+4. Só então se avalia a migração para modelo customizado, que é decisão de custo e de prazo, e não de redação deste documento.
+
+Os verbetes de **criticidade alta nunca são removidos** para caber no teto. Se a lista de alta criticidade sozinha ultrapassar quinhentas entradas, o mecanismo deixou de ser adequado ao problema, e a resposta correta é o modelo customizado — não uma seleção arbitrária entre termos que, por definição, produzem resposta errada quando mal transcritos.
+
+### 6.3 O que o mecanismo não faz
+
+Três limitações precisam estar registradas, porque a ausência delas produziria expectativa equivocada sobre o indicador.
+
+**A lista de frases não garante o reconhecimento.** Ela eleva a probabilidade a priori das sequências listadas; não as impõe. Um termo do glossário pronunciado de forma muito distante da esperada continuará sendo transcrito errado, e a meta de noventa por cento de acurácia — e não de cem — reflete exatamente isso.
+
+**A lista não aceita padrões.** O ponto está desenvolvido em 5.2 e é repetido aqui porque é a limitação com maior consequência prática: nenhum conjunto aberto de identificadores pode ser coberto por este mecanismo.
+
+**O suporte do mecanismo ao português brasileiro não está declarado na documentação consultada.** A documentação do fornecedor descreve o recurso e seu teto sem enumerar os idiomas em que ele opera. Não há motivo para supor que `pt-BR` esteja fora — o serviço o suporta plenamente para reconhecimento —, mas **supor não é verificar**. A confirmação depende de teste empírico sobre o recurso provisionado, e está registrada como pendência em 7.4. Enquanto não for feita, todo o efeito atribuído a este glossário permanece uma hipótese de projeto, ainda que bem fundamentada.
+
+## 7. Manutenção e rastreabilidade
+
+### 7.1 Gatilhos de revisão
+
+O glossário é revisado quando ocorre qualquer um destes eventos, e não em cadência de calendário:
+
+| Evento | Efeito sobre o glossário |
+|---|---|
+| Alteração no catálogo de intenções (5.4.4) | Revisar as entidades esperadas; termo de entidade nova pode exigir verbete |
+| Ampliação do corpus de treino | Reexecutar a extração de candidatos e avaliar os termos novos pelos critérios da seção 3 |
+| Gravação do corpus de áudio (5.7.6) | Incorporar termos cuja fragilidade só se revele na fala |
+| Medição do indicador abaixo da meta | Analisar quais verbetes falharam e se a falha é de cobertura ou de mecanismo |
+| Migração para dados reais do parceiro | Substituir integralmente a subseção 5.6, conforme 7.2 |
+| Novo documento normativo do parceiro | Avaliar siglas e códigos introduzidos |
+
+### 7.2 Procedimento de substituição da subseção 5.6
+
+Quando a solução passar a operar sobre o portfólio real, a subseção 5.6 é **substituída, e não estendida**. O procedimento tem quatro passos.
+
+Primeiro, extrair da base de projetos do parceiro os nomes e códigos vigentes. Segundo, aplicar a eles os critérios da seção 3 — em especial o terceiro, de consequência do erro, que os classifica todos como criticidade alta por serem valores da entidade `projeto`. Terceiro, remover integralmente os dezoito nomes sintéticos e os cinco subportfólios genéricos da versão atual. Quarto, verificar o orçamento contra o teto de 6.1 e, se ultrapassado, aplicar a política de 6.2 ou decidir pela migração ao modelo customizado.
+
+O terceiro passo é o que exige disciplina, porque é o único que não acrescenta nada e por isso é o que se esquece. Manter os nomes sintéticos ao lado dos reais não é conservadorismo inofensivo: é gastar orçamento elevando a probabilidade de sequências que nenhum usuário pronunciará, exatamente o defeito que motivou a exclusão de `XPTO` na seção 3.
+
+Se o volume de códigos reais exceder o que cabe na lista, a geração deixa de ser manual: a lista de frases passa a ser montada por consulta à base de projetos no momento da emissão do token de voz, restringindo-se aos projetos sob a permissão do usuário da sessão. Esta alternativa tem a vantagem de reduzir a lista ao subconjunto relevante para cada usuário, mas **acopla a emissão do token a uma consulta de dados**, com efeito sobre a latência descrita em 5.7.3 e sobre o que o token revela — a própria lista de frases informaria ao navegador quais projetos existem. A decisão não pertence a este documento e fica registrada como alternativa avaliada, não adotada.
+
+### 7.3 Versionamento e vínculo com a medição
+
+O glossário é versionado junto com o repositório, e cada medição do indicador de acurácia de termos de domínio deve registrar **contra qual estado do glossário foi computada**, identificado pelo commit.
+
+A exigência não é burocrática. O glossário define o denominador do indicador: acrescentar verbetes aumenta o número de ocorrências contabilizadas, e removê-los o reduz. Duas medições feitas contra glossários diferentes **não são comparáveis**, e uma série histórica que ignore isso registraria como melhora ou piora do reconhecimento aquilo que foi apenas mudança do que se decidiu medir. Registrar o commit junto do resultado é o que permite distinguir as duas coisas depois.
+
+Pela mesma razão, **o glossário não deve ser alterado entre a gravação do corpus de áudio e a medição sobre ele**. Alterá-lo nesse intervalo permitiria ajustar o conjunto de referência à vista dos resultados, o que invalidaria o indicador — é o ponto já registrado em 2.2, aqui convertido em regra de procedimento.
+
+### 7.4 Pendências abertas
+
+| Pendência | O que falta | Bloqueia |
+|---|---|---|
+| Expansão da sigla `GPM` | Confirmar o nome por extenso com o parceiro; o Anexo 1 usa a sigla sem defini-la | Nada; o verbete opera sem a expansão |
+| Denominações oficiais dos subportfólios | Submeter à validação do parceiro, por constarem de anexo classificado como Corporativo | Cobertura do glossário para consultas agregadas |
+| Suporte da lista de frases a `pt-BR` | Verificação empírica sobre o recurso provisionado | Toda a eficácia atribuída ao glossário |
+| Substituição da subseção 5.6 | Disponibilidade de dados reais do parceiro | Uso do glossário fora do ambiente de teste |
+| Geração dinâmica dos códigos de projeto | Decisão sobre acoplar a emissão do token a consulta de dados | Escala do glossário para a base real |
+
+As três primeiras pendências são de verificação e não impedem a versão atual de cumprir sua função. A terceira, porém, é qualitativamente diferente das demais e merece o registro explícito: enquanto ela estiver aberta, este documento descreve um mecanismo cuja aplicabilidade ao idioma do projeto é presumida a partir da documentação do fornecedor, e não observada. É a primeira coisa a testar assim que o recurso da tarefa de provisionamento estiver disponível.
