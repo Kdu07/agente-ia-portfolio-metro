@@ -61,7 +61,7 @@
   - [3.5 Casos de Uso](#35-casos-de-uso)
   - [3.6 Casos de Uso x Requisitos Funcionais](#36-casos-de-uso-x-requisitos-funcionais)
 - [4. Modelagem de Dados](#4-modelagem-de-dados)
-  - [4.1 Visão Geral do Domínio](#41-visao-geral-do-dominio)
+  - [4.1 Visão Geral do Domínio](#41-visão-geral-do-domínio)
   - [4.2 Modelo Conceitual de Dados](#42-modelo-conceitual-de-dados)
   - [4.3 Modelo Lógico de Dados](#43-modelo-lógico-de-dados)
   - [4.4 Modelo Físico de Dados](#44-modelo-físico-de-dados)
@@ -70,7 +70,7 @@
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
     - [5.2.3 Diagrama atual da Sprint 2](#523-diagrama-atual-da-sprint-2)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
-    - [5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2](#538-diagramas-de-sequência-de-casos-críticos--sprint-2)
+    - [5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2](#538-diagramas-de-sequência-de-casos-críticos---sprint-2)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
@@ -970,7 +970,7 @@ O escopo indica onde cada *feature* será construída e utiliza o mesmo vocabul�
 
 | Escopo | Significado |
 |---|---|
-| **MVP** | Integra a prova de conceito do Módulo 7. Corresponde aos requisitos RF01 a RF06, priorizados como MVP na seção 3.2.1 |
+| **MVP** | Integra a prova de conceito do Módulo 7. Corresponde aos requisitos RF01 a RF06 e RF09 a RF12, priorizados como MVP na seção 3.2.1 |
 | Desejável | Construída caso haja folga de cronograma. Corresponde aos requisitos RF07 e RF08 e a refinamentos das demais capacidades |
 | Ir Além | Desejo válido do parceiro, fora do escopo deste módulo, por depender de ambiente homologado, de integração com o legado ou de dados indisponíveis ao projeto |
 
@@ -1604,7 +1604,7 @@ O **RNF07 (retenção e proteção do registro)** decorre do **RF10** e do **RF1
 
 *RF07 (análise comparativa entre projetos) está fora do escopo do MVP (2.7.2 e 2.7.5) e por isso ainda não possui RNF associado nesta versão da especificação.*
 
-**Nota de revisão.** Esta matriz foi refeita na revisão de escopo que acrescentou RF09 a RF12 e RNF06 e RNF07. A rastreabilidade que liga requisitos a *features* (2.7.5), a integrações (5.5.6) e a blocos de arquitetura (5.6.6) ainda reflete o recorte anterior e será reconciliada na sequência, junto com a revisão das vistas técnicas.
+**Nota de revisão.** Esta matriz foi refeita na revisão de escopo que acrescentou RF09 a RF12 e RNF06 e RNF07. A rastreabilidade que liga requisitos a *features* (2.7.5) e a integrações (5.5.6) já foi reconciliada com esse recorte. A cobertura por blocos de arquitetura de 5.6.6 permanece no recorte anterior por integrar uma vista da Sprint 1, mantida como histórico; a cobertura vigente dos requisitos pela arquitetura está em 5.2.3.3.
 
 ## 3.5 Casos de Uso
 
@@ -2246,7 +2246,7 @@ Serviços homologados no tenant do parceiro que recebem requisições validadas 
 - **Confiabilidade por Defesa em Profundidade e Perímetro Seguro:** 
   - Pipeline executado em ordem estrita invariável (`Sessão → Injeção → Abuso → Intenção → Execução → Saída → Registro`).
   - Mitigação de injeção indireta via inspeção da saída gerada a partir de documentos.
-  - Todos os serviços de IA (Content Safety, Speech e Copilot Studio) residem no tenant homologado da organização, garantindo a conformidade do perímetro de segurança.
+  - Perímetro de serviços externos declarado e verificável por inspeção de configuração (3.3.1.1): Entra ID e Copilot Studio residem no tenant homologado do parceiro; Content Safety e Speech foram provisionados no tenant da equipe, exposição registrada como risco R12 e contida no MVP pelo uso exclusivo de dados sintéticos.
 - **Auditoria Universal e Rastreabilidade:** Cada mensagem processada, independentemente de ter sido aprovada, bloqueada por injeção, barrada por abuso ou recusada por baixa confiança, grava um registro imutável em banco, viabilizando o monitoramento contínuo da saúde do sistema e a evolução do catálogo de intenções.
 
 ### 5.1.5 Matriz Consolidada da Pilha de Tecnologias
@@ -2267,7 +2267,7 @@ Serviços homologados no tenant do parceiro que recebem requisições validadas 
 | **Ambiente & Deploy** | Docker / Docker Compose | Empacotamento dos 4 serviços (`web`, `api`, `worker`, `db`) | Reprodutibilidade total do ambiente e separação de processos. |
 | **Testes** | Pytest / Vitest / Testing Library | Testes unitários e de integração (frontend/backend) | Cobertura de guardas, orquestrador e componentes de interface. |
 
-### 5.1.5 Vetorização de texto: Bag of Words e TF-IDF (linha de base clássica)
+### 5.1.6 Vetorização de texto: Bag of Words e TF-IDF (linha de base clássica)
 
 A feature F22 (seção 2.7) prevê registrar o desempenho de pelo menos duas
 estratégias — uma linha de base por vetorização clássica e um modelo de
@@ -2499,10 +2499,14 @@ flowchart TB
   subgraph TENANT["Tenant Microsoft do parceiro"]
     direction TB
     ENTRA["Entra ID<br/><i>Authorization Code + PKCE</i>"]
-    SAFE["Azure AI Content Safety<br/><i>Prompt Shields</i>"]
-    SPEECH["Azure Speech<br/><i>transcrição em tempo real</i>"]
     CS["Copilot Studio<br/><i>Direct Line</i>"]
     CN["SharePoint · Power BI ·<br/>Power Automate<br/><i>conectores, menor privilégio</i>"]
+  end
+
+  subgraph TEQUIPE["Tenant da equipe — fora do perímetro homologado (R12)"]
+    direction TB
+    SAFE["Azure AI Content Safety<br/><i>Prompt Shields</i>"]
+    SPEECH["Azure Speech<br/><i>transcrição em tempo real</i>"]
   end
 
   %% Frontend
@@ -2580,7 +2584,7 @@ Fonte: Material produzido pelos autores (2026).
 | Persistência e analytics | `persistence/` e `analytics/` | Persiste sessões, mensagens e desfechos no PostgreSQL; as consultas analíticas produzem recortes somente para leitura. |
 | Voz | `voz/` e Azure Speech | Emite token efêmero para a transcrição em tempo real, sem transferir a responsabilidade de autenticação do middleware para o navegador. |
 | Rotinas | `rotinas/` e worker APScheduler | Valida prompts no cadastro, armazena o job e executa a rotina na data programada, reutilizando o orquestrador com `canal=rotina`. |
-| Serviços do tenant | Entra ID, Azure AI Content Safety, Azure Speech, Copilot Studio e conectores Microsoft | Fornece identidade, avaliação de conteúdo, transcrição, execução conversacional e acesso às fontes corporativas conforme o menor privilégio. |
+| Serviços externos | Entra ID, Copilot Studio e conectores Microsoft, no tenant do parceiro; Azure AI Content Safety e Azure Speech, no tenant da equipe | Fornece identidade, execução conversacional e acesso às fontes corporativas conforme o menor privilégio, além da avaliação de conteúdo e da transcrição. A alocação de tenant é a declarada em 3.3.1.1 e a exposição correspondente é o risco R12. |
 
 As setas entre agrupamentos representam contratos de integração, e não
 necessariamente chamadas síncronas. Por exemplo, o agendador dispara uma
@@ -2624,13 +2628,15 @@ consulta analítica e alteração de dados operacionais.
 
 | Elemento do diagrama | Requisitos ou decisões atendidos |
 |---|---|
-| Sessão, Entra ID e permissões | RF01 e RNF01: autenticação e autorização ocorrem antes do acesso aos dados. |
-| Guardas de injeção, abuso e saída | RNF01 e RNF04: reduzem o risco de conteúdo malicioso na entrada, no contexto e na resposta. |
+| Sessão, Entra ID e permissões | RF01 e RNF05: autenticação e autorização ocorrem antes do acesso aos dados. |
+| Guardas de injeção, abuso e saída | RF09 e RNF06: barram manipulação, uso indevido e injeção indireta, com detecção e falso positivo medidos por barreira. |
 | Catálogo e classificação de intenção | RF02, RF03 e RNF03: direcionam a solicitação e permitem recusar intenções fora do escopo. |
-| Copilot Studio como integração única | Pilar 2 da arquitetura: o middleware controla o ponto de comunicação com o agente e os conectores corporativos. |
-| Persistência e registro de desfechos | RNF02: preserva contexto, rastreabilidade e evidências de bloqueios e execuções. |
-| Worker usando o orquestrador | RF06: mantém as rotinas agendadas sujeitas às mesmas regras de segurança do chat. |
-| Analytics somente leitura | Permite acompanhar volume, confiança e bloqueios sem conceder à camada de indicadores permissão de escrita. |
+| Copilot Studio como integração única | Pilar 2 da arquitetura (INT-02): o middleware controla o ponto de comunicação com o agente e os conectores corporativos. |
+| Persistência e registro de desfechos | RF10, RNF02 e RNF07: uma linha por solicitação, com retenção declarada e cifra em repouso. |
+| Histórico e retomada de conversas | RF12: a conversa agrupa as interações e o acesso é restrito ao seu autor. |
+| Worker usando o orquestrador | RF11 e RF06: mantém as rotinas agendadas sujeitas às mesmas regras de segurança do chat, incluindo a varredura periódica de pendências. |
+| Analytics somente leitura | RF10: permite acompanhar volume, confiança e bloqueios sem conceder à camada de indicadores permissão de escrita. |
+| Alocação de tenant dos serviços externos | RNF01: o perímetro declarado em 3.3.1.1 nomeia cada serviço e o tenant em que ele executa. |
 
 Esta versão é a referência arquitetural da Sprint 2 para a implementação do
 MVP. Alterações na divisão de responsabilidades, nos serviços externos ou no
@@ -3091,7 +3097,7 @@ A tabela a seguir liga cada cenário aos requisitos que o originaram, às classe
 
 Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revistos à medida que as decisões técnicas se consolidarem. Permanecem em aberto:
 
-- **Limiar de confiança da classificação.** O valor que separa a resposta direta do pedido de reformulação em DS01 (passo 12) será definido a partir da bancada de avaliação prevista na *feature* F1.21 e calibrado contra as metas iniciais da seção 3.1.5, e não por arbitragem prévia. A calibração envolve um compromisso explícito: elevar o limiar aumenta a precisão nas transações, mas desloca solicitações legítimas para o segundo ramo do `alt`, reduzindo o recall das consultas.
+- **Limiar de confiança da classificação.** O valor que separa a resposta direta do pedido de reformulação em DS01 (passo 12) será definido a partir da bancada de avaliação prevista na *feature* F21 e calibrado contra as metas iniciais da seção 3.1.5, e não por arbitragem prévia. A calibração envolve um compromisso explícito: elevar o limiar aumenta a precisão nas transações, mas desloca solicitações legítimas para o segundo ramo do `alt`, reduzindo o recall das consultas.
 - **Autenticação efetiva.** DS01 representa a autenticação via Entra ID como já disponível. No MVP, conforme INT-08, os perfis são simulados sobre a base sintética, e a integração real depende do ambiente a ser disponibilizado pela TI do Metrô.
 - **Granularidade da permissão.** Os diagramas distinguem permissão de leitura (DS02) e de escrita (DS03), mas o mapeamento entre grupos corporativos e perfis do agente ainda depende do documento de níveis de acesso a ser fornecido pelo parceiro.
 - **Regras de pendência e política de notificação.** A frequência da varredura, os critérios de pendência e o mecanismo para evitar excesso de notificações em DS04 dependem de validação com o PMO.
@@ -3353,11 +3359,11 @@ O Cenário 2 funciona como fluxo de sucesso de referência para os Cenários 1 e
 
 | Cenário | Requisitos e artefatos relacionados | Evidência no fluxo |
 |---|---|---|
-| 1. Bloqueio por injeção | RNF01, RNF02, risco R09, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO` sem expor o motivo. |
-| 2. Sucesso no chat | RF01 a RF03, INT-02, INT-08 e INT-10 | Sessão, permissões, guardas, classificação, execução no Copilot, validação da saída e persistência completa. |
-| 3. Bloqueio por abuso | RNF02, RNF05, `GuardaAbuso` | Azure AI Content Safety e política corporativa produzem recusa orientativa e registro nominal. |
-| 4. Injeção indireta | RNF01, RNF02, risco R09, `GuardaSaida` | Conteúdo contaminado pelo documento é bloqueado antes de chegar ao usuário e sem repetir a instrução. |
-| 5. Rotina agendada | RF06, INT-07, feature F1.21, `Rotina` e `ExecucaoRotina` | Cadastro validado, execução reprocessada pelo mesmo orquestrador, registro do resultado e consulta do histórico. |
+| 1. Bloqueio por injeção | RF09, RF10, RNF06, INT-11, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO` sem expor o motivo. |
+| 2. Sucesso no chat | RF01 a RF03, RF10, INT-02, INT-08 e INT-10 | Sessão, permissões, guardas, classificação, execução no Copilot, validação da saída e persistência completa. |
+| 3. Bloqueio por abuso | RF09, RF10, RNF06, INT-11, `GuardaAbuso` | Azure AI Content Safety e política corporativa produzem recusa orientativa e registro nominal. |
+| 4. Injeção indireta | RF09, RNF06, INT-04, `GuardaSaida` | Conteúdo contaminado pelo documento é bloqueado antes de chegar ao usuário e sem repetir a instrução. |
+| 5. Rotina agendada | RF11, RF06, RF10, INT-07, *feature* F101, `Rotina` e `ExecucaoRotina` | Cadastro validado, execução reprocessada pelo mesmo orquestrador, registro do resultado e consulta do histórico. |
 
 Os cenários cobrem os principais desfechos definidos no diagrama de classes da Sprint 2: `BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA` e `SUCESSO`. `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR` permanecem representados no modelo estático e devem ser detalhados em cenários complementares quando seus contratos de implementação forem definidos.
 
@@ -3568,7 +3574,7 @@ Três consequências diretas para o trabalho das próximas sprints:
 - **Desequilíbrio entre classes.** As intenções de consulta tendem a concentrar mais exemplos naturais do que as de transação. Como 3.1.5 estabelece precisão mínima de 0,90 nas transações, o conjunto sintético deve compensar deliberadamente esse desequilíbrio, e os resultados devem ser reportados por intenção e em macro-média, e não apenas pela acurácia global.
 - **Confusões previsíveis.** O catálogo antecipa pares de risco que deverão ser observados na matriz de confusão: `consultar_avanco` e `atualizar_avanco`, `consultar_cronograma` e `atualizar_cronograma`, `consultar_riscos` e `registrar_risco`, `consultar_aderencia_normativa` e `consultar_pendencias`, `consultar_status_projeto` e `gerar_relatorio_status`. Em cada par, o erro tem custo assimétrico: confundir consulta com transação leva o agente a propor alteração de dado a partir de uma pergunta, o que é mais grave do que o inverso.
 
-A avaliação desses indicadores é objeto da bancada prevista na *feature* F1.21, e o resultado deve realimentar este catálogo: intenções sistematicamente confundidas são candidatas a fusão, e intenções com recall baixo por excesso de escopo são candidatas a divisão.
+A avaliação desses indicadores é objeto da bancada prevista na *feature* F21, e o resultado deve realimentar este catálogo: intenções sistematicamente confundidas são candidatas a fusão, e intenções com recall baixo por excesso de escopo são candidatas a divisão.
 
 ### 5.4.9 Governança e evolução do catálogo
 
@@ -4132,11 +4138,13 @@ A organização da seção acompanha a ordem em que as decisões se condicionam:
 |---|---|
 | 5.7.1 | Topologia do canal de voz: por qual caminho o áudio trafega e por quê |
 | 5.7.2 | Seleção dos serviços de conversão entre fala e texto |
-| 5.7.3 | API de recebimento de áudios do usuário |
-| 5.7.4 | API de conversão de fala em texto |
-| 5.7.5 | API de conversão de texto em fala |
-| 5.7.6 | Catálogo de erros, limites operacionais e registro |
-| 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções |
+| 5.7.3 | API de recebimento de áudios do usuário — **pendente de redação** |
+| 5.7.4 | API de conversão de fala em texto — **pendente de redação** |
+| 5.7.5 | API de conversão de texto em fala — **pendente de redação** |
+| 5.7.6 | Catálogo de erros, limites operacionais e registro — **pendente de redação** |
+| 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções — **pendente de redação** |
+
+> **Pendência de seção.** As subseções 5.7.3 a 5.7.7 estão previstas nesta organização e são referenciadas ao longo de 5.7.1 e 5.7.2 — o contrato canônico da API de ingestão (5.7.3) e o corpus de áudio de referência que sustenta os indicadores de 3.1.5.2 (5.7.6) —, mas ainda não foram redigidas. Enquanto isso não ocorrer, as decisões de 5.7.1.6 permanecem sem especificação correspondente e as metas de WER, de acurácia de termos de domínio e de degradação ponta a ponta permanecem declaradas sem procedimento de verificação escrito.
 
 ### 5.7.1 Topologia do canal de voz
 
@@ -4223,7 +4231,7 @@ Os critérios foram derivados das restrições de negócio da seção 3.1.4, do 
 
 | ID | Critério | Origem |
 |---|---|---|
-| E1 | Não exigir que credencial de longa duração seja exposta no cliente | RNF01 e boas práticas de gestão de segredos registradas na seção 6.5.6 |
+| E1 | Não exigir que credencial de longa duração seja exposta no cliente | RNF01 e boas práticas de gestão de segredos registradas na seção 6.5.3 |
 | E2 | Permitir a escolha explícita da região de processamento do áudio | RNF01, quanto à delimitação do ambiente em que os dados são processados |
 | E3 | Suportar português brasileiro tanto no reconhecimento quanto na síntese | RF02 e US02 |
 
@@ -4282,7 +4290,7 @@ A **Web Speech API** foi eliminada pelo mesmo critério. A interface é atraente
 
 #### 5.7.2.5 Decisão
 
-Adota-se o **Azure AI Speech** para o reconhecimento de fala e para a síntese de voz, provisionado no nível gratuito **F0**, na região **Brazil South**, dentro do Resource Group descrito na seção 6.5.4.
+Adota-se o **Azure AI Speech** para o reconhecimento de fala e para a síntese de voz, provisionado no nível gratuito **F0**, na região **Brazil South**, dentro do Resource Group descrito na seção 6.5.1.
 
 A decisão confirma e detalha o que a seção 5.1.2 já registrava, e se sustenta em três razões. A primeira é o vocabulário: o serviço permite fornecer, na própria requisição, uma lista de termos que orienta o reconhecimento, o que converte o glossário de domínio da companhia em mecanismo executável e transforma o risco R03 de ameaça sem tratamento em ameaça com mitigação declarada. A segunda é o perímetro: o serviço pertence ao ecossistema que o parceiro já opera, de modo que a transferência da solução após o módulo não exige homologação de fornecedor adicional. A terceira é a economia de integração: reconhecimento e síntese são atendidos por um único fornecedor, com um único mecanismo de autenticação, o que evita duplicar credenciais, tratamento de erros e procedimento operacional para atender aos dois sentidos da conversão.
 
@@ -4290,13 +4298,13 @@ Registra-se que a alternativa Google Cloud é tecnicamente equivalente nos crit�
 
 #### 5.7.2.6 Região de processamento e residência dos dados
 
-A região do recurso de fala é **Brazil South**, e não a região registrada na seção 6.5.4 para o ambiente de execução do backend. A escolha é deliberada e apoia-se em duas propriedades do serviço.
+A região do recurso de fala é **Brazil South**, a mesma definida para o ambiente de execução do backend nas seções 6.5.1 e 6.5.2. O alinhamento regional apoia-se em duas propriedades do serviço.
 
 A primeira é a residência dos dados: o serviço processa o áudio exclusivamente na região em que o recurso foi criado, e as chaves são escopadas por região. Provisionar o recurso fora do território nacional implicaria que o áudio de solicitações relativas a projetos do portfólio fosse processado no exterior, hipótese que o RNF01 não sustenta e que introduziria discussão de soberania de dados desnecessária ao escopo do MVP.
 
 A segunda é a latência. O tempo de transcrição e o tempo até o início da resposta falada integram os indicadores da seção 3.1.5.2. O trajeto de rede até uma região norte-americana acrescenta tempo de ida e volta que se soma ao tempo de inferência e é percebido diretamente pelo usuário no canal de voz, cuja justificativa de existência é a rapidez em relação ao canal de texto.
 
-O recurso de fala é independente do ambiente de execução da aplicação e pode residir em região distinta sem prejuízo de funcionamento. Não há, portanto, necessidade de alinhar as duas regiões, e a divergência é registrada aqui como decisão consciente e não como inconsistência. Recomenda-se, ainda assim, que a seção 6.5.4 registre a justificativa da região adotada para o ambiente de execução, hoje declarada como não documentada naquela seção.
+O recurso de fala é tecnicamente independente do ambiente de execução da aplicação, mas a centralização em `brazilsouth` reduz o tráfego entre regiões e mantém no Brasil o processamento principal da solução. O ambiente utilizado na validação da *quickstart* também está nessa região, mantendo coerência com a implantação prevista para o backend definitivo.
 
 #### 5.7.2.7 Enquadramento de custo
 
@@ -4319,7 +4327,7 @@ A decisão introduz e transforma riscos que devem constar do acompanhamento da m
 |---|---|---|
 | R03 — baixa acurácia no jargão da companhia | Permanece aberto, com mitigação agora exequível | Consolidação do glossário de domínio e seu fornecimento como lista de frases ao serviço; medição pelo indicador de acurácia de termos de domínio |
 | Indisponibilidade do serviço de fala | Novo | O plano de resposta ao R03 já determina retorno ao canal de texto; falha na emissão do token desabilita a captura de áudio com mensagem explicativa, sem recurso a serviço alternativo fora do perímetro |
-| Esgotamento do nível gratuito | Novo | Acompanhamento pelo orçamento configurado conforme a seção 6.5.8, com alerta antes do limite |
+| Esgotamento do nível gratuito | Novo | Acompanhamento pelo orçamento configurado conforme a seção 6.5.5, com alerta antes do limite |
 | Latência adicional no trajeto de ingestão | Novo | Medição comparativa entre os dois modos de consumo, conforme a subseção 5.7.6 |
 
 Quanto às metas registradas ao final da seção 3.1.5, a definição do serviço permite encerrar a ressalva ali declarada. As metas preliminares de WER inferior ou igual a 15%, acurácia de termos de domínio igual ou superior a 90% e degradação ponta a ponta de no máximo 10 pontos percentuais são **mantidas** como hipóteses quantitativas, a serem verificadas sobre o corpus de áudio de referência descrito na subseção 5.7.6. Cabe registrar que a meta de acurácia de termos de domínio só é perseguível porque o serviço escolhido admite vocabulário customizado: sob qualquer das alternativas eliminadas, ela seria inatingível por ausência de mecanismo, e não por insuficiência de qualidade do reconhecimento. Nesse sentido, a seleção do serviço não apenas atende aos indicadores já definidos — ela é a condição de existência de um deles.
@@ -4560,12 +4568,12 @@ Uma `Rotina` pode gerar várias `ExecucaoRotina`. Cada execução possui um `Sta
 | Elemento do diagrama | Requisitos ou artefatos relacionados | Papel na Sprint 2 |
 |---|---|---|
 | `Usuario`, `Perfil` e `Permissao` | RF01, RNF05, INT-08 | Identidade, escopo autorizado e controle de operações administrativas. |
-| `Conversa` e `Interacao` | RF02, RF03, RNF02, INT-10 | Contexto conversacional, registro de auditoria e rastreabilidade dos desfechos. |
+| `Conversa` e `Interacao` | RF02, RF03, RF10, RF12, RNF02, RNF07, INT-10 | Contexto conversacional, registro de auditoria, retomada e rastreabilidade dos desfechos. |
 | `IntencaoCatalogo` e `ClassificadorIntencao` | RF03, seção 5.4.4, bloco C2 | Classificação fechada, confiança e roteamento baseado no catálogo. |
-| `GuardaInjecao`, `GuardaAbuso` e `GuardaSaida` | RNF01, RNF02, RNF05, risco R09 | Proteção da entrada, aplicação de política e validação da resposta. |
+| `GuardaInjecao`, `GuardaAbuso` e `GuardaSaida` | RF09, RNF06, INT-11, riscos R09 e R12 | Proteção da entrada, aplicação de política e validação da resposta. |
 | `Orquestrador` e `ClienteCopilotStudio` | Diagrama de componentes (5.2), INT-02 | Coordenação do pipeline e integração controlada com o Copilot Studio. |
-| `Rotina` e `ExecucaoRotina` | RF06, feature F1.21 | Execução agendada, registro de falhas e associação opcional ao resultado. |
-| `RecorteAnalitico` | RNF02, INT-10 | Indicadores para monitorar volume, confiança, bloqueios e desfechos. |
+| `Rotina` e `ExecucaoRotina` | RF11, RF06, INT-07, *feature* F101 | Execução agendada, registro de falhas e associação opcional ao resultado. |
+| `RecorteAnalitico` | RF10, RNF02, INT-10 | Indicadores para monitorar volume, confiança, bloqueios e desfechos. |
 
 O modelo complementa, e não substitui, o diagrama de componentes da seção 5.2: os componentes descrevem módulos e interfaces, enquanto as classes descrevem os dados e comportamentos que esses módulos manipulam. Também complementa os diagramas de sequência da seção 5.3: o `Orquestrador` e as guardas aparecem como participantes de um fluxo temporal, enquanto aqui são detalhados por atributos, operações e relações. A versão conceitual da seção 3.2.2 permanece como histórico da Sprint 1 e não deve ser interpretada como contrato atualizado da implementação do middleware.
 
@@ -4693,7 +4701,7 @@ Esta seção documenta o estado do ambiente e os controles de credenciais, sem e
 | Recurso | Papel | Classificação | Estado registrado |
 |---|---|---|---|
 | Azure Subscription | Limite administrativo, de cobrança e governança | Obrigatório | Em uso; identificador não registrado neste documento |
-| Resource Group | Agrupamento dos recursos da solução | Obrigatório | `METROSP`, região `westus2` |
+| Resource Group | Agrupamento dos recursos da solução | Obrigatório | `METROSP`, região `brazilsouth` (Brazil South) |
 | Container Apps Environment | Limite operacional compartilhado dos três contêineres | Obrigatório | Criado |
 | Container App `web` | Nginx com os estáticos e o proxy | Obrigatório | **Pendente** — depende da imagem do frontend |
 | Container App `middleware` | API e orquestrador | Obrigatório | **Pendente** — depende da imagem do backend |
@@ -4723,7 +4731,7 @@ GET /health
 
 | Registro técnico | Status | Situação |
 |---|---|---|
-| Plataforma Azure e Resource Group | Concluído | `METROSP`, região `westus2` |
+| Plataforma Azure e Resource Group | Concluído | `METROSP`, região `brazilsouth` (Brazil South) |
 | Container Apps Environment | Concluído | Criado |
 | Imagem de validação publicada | Concluído | Imagem de exemplo; não corresponde à solução |
 | Acesso individual de ao menos dois integrantes | Concluído | Validado via IAM, papel Contributor no Resource Group |
@@ -4735,7 +4743,7 @@ GET /health
 | Estimativa quantitativa de custo mensal | **Pendente** | Valor não fornecido |
 | Capturas de tela e guia de reprodução | **Pendente** | Não fornecidos |
 
-**Sobre a região.** O ambiente foi criado em `westus2`, embora `Brazil South` fosse a região originalmente considerada, e o motivo da alteração não foi registrado. A definição deixou de ser indiferente: o canal de voz tem requisito de residência de dados tratado em 5.7.2.6, e a latência do pedágio do middleware é medida pelos indicadores do RF10. A escolha deve ser reavaliada antes da implantação definitiva.
+**Sobre a região.** O ambiente está em `brazilsouth` (Brazil South), a mesma região definida para os componentes do backend definitivo — API, `worker` e PostgreSQL Flexible Server —, o que mantém próximos os serviços que trocam dados com frequência. A definição deixou de ser indiferente quando o canal de voz passou a ter requisito de residência de dados (5.7.2.6) e a latência do pedágio do middleware passou a ser medida pelos indicadores do RF10. Serviços de escopo global, como o Entra ID e o Azure Cost Management, não recebem classificação regional; a disponibilidade, a cota e os requisitos de residência dos demais recursos devem ser confirmados antes do provisionamento.
 
 ### 6.5.3 Gestão de segredos e credenciais
 
