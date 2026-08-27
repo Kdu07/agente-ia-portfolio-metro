@@ -4060,7 +4060,7 @@ Esta subseção especifica o contrato da API que recebe os áudios enviados pelo
 
 As três definições derivadas em 5.7.1.6 são premissas desta especificação, e não são revisitadas aqui: o contrato é assíncrono, a validação precede o acionamento do serviço de fala, e a submissão aceita é um estado distinto da transcrição concluída.
 
-Os caminhos declarados abaixo são os da aplicação. O navegador os alcança sob o prefixo `/api`, acrescentado pelo proxy reverso descrito em 5.1.5 — `POST /voz/audios` na aplicação corresponde a `POST /api/voz/audios` no cliente. O prefixo `/voz` já existe no roteador do middleware, hoje com o endpoint de emissão de token.
+Os caminhos declarados abaixo são os da aplicação. O navegador os alcança sob o prefixo `/api`, acrescentado pelo proxy reverso descrito em 5.2.3.1 — `POST /voz/audios` na aplicação corresponde a `POST /api/voz/audios` no cliente. O prefixo `/voz` já existe no roteador do middleware, hoje com o endpoint de emissão de token.
 
 #### 5.7.3.1 Princípios do contrato
 
@@ -4149,6 +4149,141 @@ Location: /voz/audios/a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19/transcricao
 | `expira_em` | Momento a partir do qual o resultado deixa de estar disponível, conforme a política de retenção de 5.7.1.5 |
 
 O `202` afirma que o áudio foi aceito e será transcrito — não que a transcrição existe. Qualquer condição que impeça a aceitação produz um dos erros catalogados em 5.7.3.8, e nenhum áudio recusado chega ao serviço de fala.
+
+#### 5.7.3.4 Consulta da transcrição e estados da submissão
+
+`GET /voz/audios/{id_audio}/transcricao`, com o mesmo cookie de sessão da submissão. Um identificador que não pertença ao usuário autenticado produz o mesmo erro de recurso inexistente, e não um erro de autorização: distinguir os dois permitiria a alguém confirmar, por tentativa, que uma submissão alheia existe.
+
+A submissão percorre quatro estados, e apenas estes:
+
+| Estado | Significado | Resposta | Próxima ação do cliente |
+|---|---|:-:|---|
+| `recebido` | Áudio aceito e validado, transcrição ainda não iniciada | `200` | Consultar novamente após o intervalo sugerido |
+| `transcrevendo` | Chamada ao serviço de fala em andamento | `200` | Consultar novamente após o intervalo sugerido |
+| `concluida` | Texto disponível | `200` | Encaminhar o texto conforme 5.7.3.5 |
+| `falhou` | Transcrição não pôde ser produzida | `200` | Exibir a orientação e oferecer o canal de texto |
+
+O estado `falhou` responde `200`, e não um código de erro: a consulta foi atendida com sucesso e informa corretamente o desfecho. Tratar um desfecho negativo como falha de requisição faria o cliente exibir "algo deu errado" no lugar da orientação — a mesma razão pela qual mensagens bloqueadas retornam `200` no endpoint de conversação, conforme registrado em 5.2.
+
+**Consulta antes da conclusão**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Retry-After: 2
+```
+
+```json
+{
+  "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+  "estado": "transcrevendo"
+}
+```
+
+O cabeçalho `Retry-After` traz o intervalo em segundos sugerido para a próxima consulta. O cliente deve respeitá-lo em vez de fixar um intervalo próprio: uma sondagem mais frequente não acelera a transcrição e multiplica requisições sem efeito.
+
+**Consulta após a conclusão**
+
+```json
+{
+  "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+  "estado": "concluida",
+  "texto": "Qual o avanço do projeto da Linha 15 Prata?",
+  "idioma": "pt-BR",
+  "confianca": 0.94,
+  "duracao_segundos": 11.4,
+  "latencia_ms": 1830
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `texto` | Transcrição produzida, já com pontuação e capitalização aplicadas pelo serviço |
+| `confianca` | Grau de confiança devolvido pelo serviço de fala, entre 0 e 1. Não se confunde com a confiança da classificação de intenção, apurada adiante no pipeline |
+| `duracao_segundos` | Duração do áudio submetido |
+| `latencia_ms` | Tempo entre a aceitação e a conclusão. Alimenta o indicador de latência de 3.1.5.2 e permite comparar o custo dos dois trajetos de 5.7.1.2 |
+
+**Consulta após a expiração**
+
+Decorrido o prazo devolvido em `expira_em`, o resultado deixa de estar disponível e a consulta produz o erro de recurso inexistente catalogado em 5.7.3.8. O áudio já foi descartado conforme 5.7.1.5, e o texto não é retido nesta API — quando encaminhado à conversação, ele passa a viver no registro da interação, que é onde a rastreabilidade do RNF02 se apoia.
+
+#### 5.7.3.5 Encaminhamento ao pipeline de conversação
+
+Esta API **não aciona o pipeline**. Ela produz texto; o texto é submetido ao endpoint de conversação pelo cliente, como qualquer outra mensagem, com o canal marcado como voz.
+
+A escolha preserva um invariante da arquitetura descrita em 5.2: o orquestrador é o único ponto de entrada do pipeline, e é essa unicidade que garante que as guardas, a classificação e o registro sejam obrigatórios para toda solicitação. Uma API de áudio que chamasse o pipeline por conta própria criaria um segundo caminho de entrada — e um segundo caminho é, por construção, um caminho que alguém pode esquecer de proteger quando o primeiro mudar.
+
+Há uma consequência de interface que decorre disso, e que atende ao risco R03. Entre a transcrição e o envio existe um momento em que o texto está visível e ainda não foi processado. A interface apresenta a transcrição no campo de mensagem antes do envio, de modo que a pessoa veja o que foi entendido e possa corrigir. Uma sigla transcrita errada deixa de se propagar como intenção mal classificada, que é precisamente o encadeamento que o R03 descreve. Para as intenções que alteram dados, soma-se a esta verificação a confirmação já exigida pelo RF05, resultando em duas oportunidades de interceptar um erro de transcrição antes que ele produza efeito.
+
+O texto encaminhado é indistinguível, para o pipeline, de um texto digitado. É o que sustenta a afirmação de 5.3.2 de que a classificação é a mesma para os dois canais, e o que permite que a medição de degradação ponta a ponta de 3.1.5.2 compare os dois caminhos sobre o mesmo classificador.
+
+#### 5.7.3.6 Formatos, limites e sua justificativa
+
+**Formatos aceitos**
+
+| Tipo de conteúdo | Origem típica |
+|---|---|
+| `audio/webm;codecs=opus` | Captura no Chrome e no Edge |
+| `audio/ogg;codecs=opus` | Captura no Firefox |
+| `audio/mp4` | Captura no Safari |
+| `audio/wav` | Arquivos do conjunto de avaliação e submissões automatizadas |
+
+O conjunto não foi escolhido por generosidade: é exatamente o que os navegadores produzem ao gravar, e é um subconjunto do que o serviço de fala aceita. Com isso, **nenhuma conversão de formato acontece** — nem no cliente antes de enviar, nem no servidor antes de encaminhar. Transcodificar áudio é custoso, introduz perda e é uma fonte de defeito que a especificação evita simplesmente por não precisar dela.
+
+O conjunto de referência descrito em 5.7.6 é mantido em `audio/wav` mono a 16 kHz, formato sem compressão, para que medições feitas sobre ele não carreguem o efeito de um codec específico.
+
+**Limites**
+
+| Limite | Valor | Razão |
+|---|---|---|
+| Tamanho do arquivo | 25 MB | Delimita o custo de transferência. Cinco minutos em Opus ocupam cerca de 1 MB, de modo que o limite é folgado em relação à duração e serve apenas de proteção contra envio anômalo |
+| Duração do áudio | 5 minutos | É o limite que efetivamente restringe o escopo, e decorre dele |
+| Submissões simultâneas por usuário | 1 | Ver adiante |
+
+Os limites **não são o teto técnico do serviço**, que aceita arquivos muito maiores e mais longos. São uma decisão de escopo. O enunciado típico previsto na estimativa de 5.7.2.7 dura cerca de doze segundos; o ditado extenso, que justificaria minutos de áudio, é a *feature* F79, classificada como "Ir Além" em 2.7.1. Cinco minutos cobrem com folga o enunciado mais longo do escopo atual e mantêm o consumo dentro da franquia mensal — um único arquivo no teto do serviço esgotaria sozinho a franquia inteira.
+
+**Concorrência.** O nível gratuito adotado em 5.7.2.5 admite **uma requisição simultânea** de reconhecimento. A API serializa as transcrições por essa razão, e não por escolha de projeto: duas submissões concorrentes fariam a segunda ser recusada pelo serviço. Na prática isso significa que a demonstração não comporta duas pessoas falando ao mesmo tempo. É limitação do nível gratuito, não do contrato, e desaparece com a migração para o nível pago, que admite cem requisições simultâneas. Fica registrado aqui porque é o tipo de restrição que só aparece na primeira demonstração com plateia.
+
+#### 5.7.3.7 Autenticação, autorização e idempotência
+
+**Autenticação.** Ambos os endpoints exigem sessão válida, resolvida pelo mesmo mecanismo de todas as rotas descrito em 5.2. A exigência não é formalidade: um endpoint aberto seria um proxy gratuito para um serviço tarifado por hora de áudio, custeado pelo parceiro.
+
+**Autorização.** Não há permissão específica. Quem pode conversar com o agente pode ditar — a voz é uma forma de entrada, não uma capacidade adicional, e as permissões que importam são aplicadas adiante, sobre a intenção classificada, conforme o RF01. O que existe é vínculo de propriedade: um `id_audio` só é consultável por quem o submeteu, e a consulta alheia produz o erro de recurso inexistente, nunca o de autorização negada.
+
+**Idempotência.** O cabeçalho opcional `Idempotency-Key` traz um identificador gerado pelo cliente para a submissão. Recebida uma chave já vista dentro do prazo de retenção, o servidor devolve o `id_audio` original em vez de iniciar nova transcrição.
+
+O mecanismo existe por uma razão concreta do canal de voz. A captura acontece em dispositivo móvel, com rede instável, e o reenvio automático após uma resposta perdida é comportamento normal de cliente HTTP. Sem idempotência, cada reenvio transcreveria o mesmo áudio de novo — consumindo duas vezes a franquia e, pior, produzindo duas interações registradas para uma única fala do usuário, o que corromperia tanto o histórico da conversa quanto os dados de análise de intenções.
+
+#### 5.7.3.8 Catálogo de erros
+
+Toda resposta de erro tem o mesmo corpo: um código interno estável, destinado ao cliente e aos registros, e uma mensagem destinada à pessoa.
+
+```json
+{
+  "codigo": "AUDIO_MUITO_LONGO",
+  "mensagem": "O áudio tem mais de 5 minutos. Grave um trecho mais curto ou digite a solicitação.",
+  "detalhe": { "duracao_segundos": 412.7, "limite_segundos": 300 }
+}
+```
+
+| Código | HTTP | Quando ocorre | Mensagem à pessoa | Ação sugerida |
+|---|:-:|---|---|---|
+| `NAO_AUTENTICADO` | 401 | Sessão ausente, expirada ou inválida | Sua sessão expirou. Entre novamente para continuar. | Refazer a autenticação |
+| `AUDIO_AUSENTE` | 400 | Requisição sem o campo `audio` | Não recebi nenhum áudio. Tente gravar de novo. | Repetir a gravação |
+| `AUDIO_FORMATO_NAO_SUPORTADO` | 415 | Tipo de conteúdo fora da tabela de 5.7.3.6 | Não consigo ler esse formato de áudio. | Usar a gravação da própria interface |
+| `AUDIO_MUITO_GRANDE` | 413 | Arquivo acima de 25 MB | O arquivo é grande demais. | Gravar um trecho mais curto |
+| `AUDIO_MUITO_LONGO` | 400 | Duração acima de 5 minutos | O áudio tem mais de 5 minutos. Grave um trecho mais curto ou digite a solicitação. | Dividir a fala ou usar o canal de texto |
+| `AUDIO_ILEGIVEL` | 400 | Arquivo corrompido, vazio ou sem trilha de áudio | Não consegui abrir esse áudio. Tente gravar de novo. | Repetir a gravação |
+| `AUDIO_NAO_ENCONTRADO` | 404 | `id_audio` inexistente, expirado ou de outro usuário | Esse áudio não está mais disponível. | Enviar novamente |
+| `COTA_EXCEDIDA` | 429 | Franquia mensal esgotada ou submissão simultânea | O serviço de voz está ocupado. Tente em instantes ou digite a solicitação. | Aguardar e repetir, ou usar o canal de texto |
+
+Duas propriedades atravessam a tabela.
+
+**Nenhuma mensagem revela o funcionamento interno.** O usuário não é informado sobre franquia, fornecedor, região ou limite de concorrência — recebe o que aconteceu e o que fazer a seguir. É a mesma orientação sem exposição que o RF03 exige das recusas de intenção e que a seção 5.3.3 estabelece para a recusa que não confirma a existência de um projeto fora do escopo autorizado.
+
+**Toda mensagem oferece uma saída.** Em cinco dos oito casos a saída inclui o canal de texto, o que operacionaliza no nível da interface o plano de resposta ao risco R03 registrado em 2.6.3: tratar a voz como incremento, com retorno sempre possível ao texto.
+
+**Falha de transcrição não é erro de requisição.** A indisponibilidade do serviço de fala, o tempo esgotado e o áudio sem fala reconhecível não aparecem nesta tabela: eles ocorrem depois da aceitação e se manifestam como o estado `falhou` descrito em 5.7.3.4, com resposta `200`. Um erro de requisição informa que o pedido não pôde ser atendido; um estado informa o desfecho de um pedido que foi atendido.
 
 ## 5.8 Algoritmo de classificação de intenção: escolha, princípios e implementação
 
