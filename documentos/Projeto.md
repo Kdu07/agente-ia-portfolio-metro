@@ -97,10 +97,19 @@
   - [8.2 Desenvolvimento de Mockups](#82-desenvolvimento-de-mockups)
   - [8.3 Guia Visual](#83-guia-visual)
 - [9. Desenvolvimento do Projeto](#9-desenvolvimento-do-projeto)
-  - [9.1 Arquitetura de Codificação e Estrutura de Diretórios](#91-arquitetura-de-codificação-e-estrutura-de-diretórios)
-  - [9.2 Modelo de Recomendação](#92-modelo-de-recomendação)
-  - [9.3 Desenvolvimento de Features](#93-desenvolvimento-de-features)
-  - [9.4 Testes Unitários e de Integração](#94-testes-unitários-e-de-integração)
+  - [9.1 Estratégia de Entrega para as Sprints 3, 4 e 5](#91-estratégia-de-entrega-para-as-sprints-3-4-e-5)
+    - [9.1.1 Visão Geral da Abordagem](#911-visão-geral-da-abordagem)
+    - [9.1.2 Ondas de Construção](#912-ondas-de-construção)
+    - [9.1.3 Integração com Voz](#913-integração-com-voz)
+    - [9.1.4 Estratégia de Testes](#914-estratégia-de-testes)
+    - [9.1.5 Estratégia de Implantação](#915-estratégia-de-implantação)
+    - [9.1.6 Dependências Externas em Caminho Crítico](#916-dependências-externas-em-caminho-crítico)
+    - [9.1.7 Integração Contínua entre Sprints](#917-integração-contínua-entre-sprints)
+    - [9.1.8 Métricas de Qualidade e Sucesso](#918-métricas-de-qualidade-e-sucesso)
+  - [9.2 Arquitetura de Codificação e Estrutura de Diretórios](#92-arquitetura-de-codificação-e-estrutura-de-diretórios)
+  - [9.3 Modelo de Recomendação](#93-modelo-de-recomendação)
+  - [9.4 Desenvolvimento de Features](#94-desenvolvimento-de-features)
+  - [9.5 Testes Unitários e de Integração](#95-testes-unitários-e-de-integração)
 - [10. Planejamento e Execução de Testes](#10-planejamento-e-execução-de-testes)
   - [10.1 Testes Funcionais](#101-testes-funcionais)
   - [10.2 Testes de RNFs](#102-testes-de-rnfs)
@@ -5291,15 +5300,17 @@ Quatro recursos precisam ser provisionados no tenant do parceiro antes do iníci
 
 ## 9.2 Arquitetura de Codificação e Estrutura de Diretórios
 
-## 9.2 Modelo de Recomendação
+[Preencher]
+
+## 9.3 Modelo de Recomendação
 
 [Preencher]
 
-## 9.3 Desenvolvimento de Features
+## 9.4 Desenvolvimento de Features
 
 [Preencher]
 
-## 9.4 Testes Unitários e de Integração
+## 9.5 Testes Unitários e de Integração
 
 [Preencher]
 
