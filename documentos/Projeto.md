@@ -5009,9 +5009,170 @@ Em larguras de até 850 pixels, a barra lateral é recolhida e aberta por um bot
 
 # 9. Desenvolvimento do Projeto
 
-## 9.1 Arquitetura de Codificação e Estrutura de Diretórios
+## 9.1 Estratégia de Entrega para as Sprints 3, 4 e 5
 
-[Preencher]
+Esta seção define a estratégia de desenvolvimento e integração da solução ao longo das Sprints 3, 4 e 5, estabelecendo como as etapas de design, desenvolvimento, testes e implantação serão executadas para otimizar o processo e garantir a qualidade do sistema. A estratégia está alinhada à arquitetura detalhada no documento [Arquitetura.md](Arquitetura.md) e segue uma abordagem em ondas de construção, onde cada onda produz entregas demonstráveis ponta a ponta.
+
+### 9.1.1 Visão Geral da Abordagem
+
+A estratégia de entrega adota um modelo iterativo e incremental, organizado em **ondas de construção** que permitem validar componentes críticos antes de prosseguir para camadas mais complexas. Cada onda termina com algo demonstrável ponta a ponta, reduzindo o risco de integração tardia e permitindo ajustes de curso baseados em evidências reais.
+
+**Princípios orientadores:**
+
+- **Defesa em profundidade:** Cada camada (autenticação, guardas, classificação, execução) é testada isoladamente antes da integração
+- **Integração contínua:** O middleware e o frontend evoluem em paralelo, com contratos bem definidos entre API e interface
+- **Qualidade embutida:** Testes unitários, de integração e adversariais são desenvolvidos junto com o código, não como afterthought
+- **Governança de dados:** Todas as interações são registradas, permitindo análise de uso e evolução do catálogo de intenções
+- **Segurança first:** Guardas de injeção, abuso e saída são implementadas antes da expansão de funcionalidades
+
+### 9.1.2 Ondas de Construção
+
+As ondas seguem a ordem de dependência técnica, não de importância funcional. Cada onda produz um incremento verificável que pode ser demonstrado e testado.
+
+#### Onda 1: Fundação (Sprint 3)
+
+**Objetivo:** Estabelecer a base técnica que permitirá login, conversação básica e registro de interações.
+
+**Escopo:**
+- Implementação do Auth BFF (Backend for Frontend) com Entra ID
+- Configuração da persistência real com SQLAlchemy 2 (async) + Alembic
+- Endpoint `/chat` ponta a ponta com o Copilot dublado
+- Esqueleto do app React com navegação básica
+
+**Entregas:**
+- Usuário consegue logar via Entra ID e ter sua identidade resolvida
+- Mensagem enviada pelo frontend atravessa o middleware e é gravada no banco
+- Interface web básica funcional (chat, navegação, autenticação)
+
+**Critérios de aceite:**
+- Login funcional com token JWT emitido pelo backend
+- Cookie de sessão httpOnly + SameSite=Strict configurado
+- Tabela `Interacao` populada com campos básicos
+- Frontend exibe mensagem enviada e resposta (mockada)
+- Testes de integração do fluxo de autenticação
+
+**Riscos mitigados:**
+- Configuração incorreta do Entra ID no tenant do parceiro
+- Problemas de CORS ou cookie entre frontend e backend
+- Schema do banco não suportando o fluxo completo
+
+#### Onda 2: Guardas (Sprint 3 - continuação / Sprint 4)
+
+**Objetivo:** Implementar as barreiras de segurança contra injeção e prompts maliciosos.
+
+**Escopo:**
+- Regras determinísticas para guarda de injeção (padrões conhecidos)
+- Integração com Azure AI Content Safety nas duas guardas de entrada
+- Implementação da guarda de saída (injeção indireta)
+- Desfechos novos no orquestrador (BLOQUEADA_INJECAO, BLOQUEADA_ABUSO, BLOQUEADA_SAIDA)
+- Testes adversariais para validar as barreiras
+
+**Entregas:**
+- Pipeline de segurança operacional com ordem fixa
+- Mensagens maliciosas são bloqueadas antes de chegar ao classificador
+- Respostas do Copilot são verificadas antes da entrega
+- Dashboard básico mostra bloqueios por tipo
+
+**Critérios de aceite:**
+- Guarda de injeção bloqueia padrões conhecidos e usa Content Safety
+- Guarda de abuso aplica políticas corporativas via Content Safety
+- Guarda de saída detecta instruções embutidas em respostas
+- Testes adversariais cobrem vetores de ataque principais
+- Latência adicional das guardas mensurada e aceitável
+
+**Riscos mitigados:**
+- Ataques de prompt injection comprometendo o sistema
+- Uso indevido do agente por usuários autenticados
+- Injeção indireta via documentos do SharePoint
+
+#### Onda 3: Intenções (Sprint 4)
+
+**Objetivo:** Integrar o classificador de intenções já treinado ao pipeline.
+
+**Escopo:**
+- Integração do classificador ensemble (TF-IDF + embeddings)
+- Aplicação de limiares de confiança por intenção (já calibrados)
+- Registro completo da interação com intenção classificada
+- Tratamento de desfechos de baixa confiança e fora de escopo
+- Matriz de confusão para RNF03
+
+**Entregas:**
+- Intenção do usuário é classificada com acurácia ≥ 0.856
+- Intenções fora do catálogo são identificadas e alimentam backlog
+- Limiares por intenção aplicados corretamente
+- Dashboard mostra volume por intenção e distribuição de desfechos
+
+**Critérios de aceite:**
+- Classificador integrado ao orquestrador com limiares calibrados
+- RNF03 atendido com número (acurácia 0.856, macro-F1 0.851)
+- Intenções `fora_de_escopo` e `baixa_confianca` geram recusas apropriadas
+- Matriz de confusão gerada e analisada
+- Testes de classificação cobrem as 26 intenções + classes negativas
+
+**Riscos mitigados:**
+- Classificador não performando em produção como em validação
+- Limiares muito altos/altos causando excesso de recusas
+- Catálogo de intenções desatualizado com uso real
+
+#### Onda 4: Análise (Sprint 4 - continuação / Sprint 5)
+
+**Objetivo:** Implementar o dashboard de análise de intenções.
+
+**Escopo:**
+- Endpoints de agregação SQL sobre a tabela de interações
+- Dashboard responsivo com gráficos (Recharts)
+- Aplicação da permissão `VER_INTENCOES` nos dois lados (frontend + backend)
+- Recortes por período, perfil, canal e desfecho
+- Séries temporais de bloqueios por guarda
+
+**Entregas:**
+- Dashboard operacional com métricas-chave do volume de uso
+- Usuários com permissão conseguem ver análises de intenções
+- Backlog de novas intenções alimentado por agrupamento de `fora_de_escopo`
+- Indicadores de segurança visíveis (pico de bloqueios = incidente)
+
+**Critérios de aceite:**
+- Endpoints de agregação performáticos (índices adequados)
+- Gráficos carregam corretamente com dados reais
+- Permissão `VER_INTENCOES` aplicada no backend e esconde rotas no frontend
+- Recorte de `fora_de_escopo` gera lista de candidatas a novas intenções
+- Dashboard responsivo em desktop e mobile
+
+**Riscos mitigados:**
+- Agregações SQL pesarem demais com volume crescente
+- Permissões não sendo respeitadas no frontend
+- Dashboard não gerar insights acionáveis
+
+#### Onda 5: Rotinas (Sprint 5)
+
+**Objetivo:** Implementar o sistema de prompts agendados.
+
+**Escopo:**
+- CRUD de rotinas com validação no cadastro
+- Worker com APScheduler e jobstore no banco
+- Execução de rotinas pelo mesmo orquestrador (não atalho)
+- Resolução de permissões na execução (não no cadastro)
+- Aba de resultados com histórico de execuções
+
+**Entregas:**
+- Usuários conseguem criar, editar, pausar e excluir rotinas
+- Rotinas executam nos horários agendados com fuso correto
+- Execuções são rastreáveis e vinculadas às interações
+- Permissão `GERIR_ROTINAS` controla acesso
+
+**Critérios de aceite:**
+- Validação no cadastro passa pelas guardas e classificador
+- Worker persiste agenda no banco e recupera após reinício
+- Execução usa identidade e permissões do dono no momento do disparo
+- Tratamento de disparos perdidos (coalesce + misfire_grace_time)
+- Interface de rotinas funcional com todos os estados
+
+**Riscos mitigados:**
+- Rotinas contornando as guardas de segurança
+- Escalação de privilégio em rotinas antigas
+- Disparos duplicados ou perdidos por falha do worker
+
+## 9.2 Arquitetura de Codificação e Estrutura de Diretórios
 
 ## 9.2 Modelo de Recomendação
 
