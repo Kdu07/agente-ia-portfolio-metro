@@ -3573,7 +3573,34 @@ A organização da seção acompanha a ordem em que as decisões se condicionam:
 
 ### 5.7.1 Topologia do canal de voz
 
-Esta subseção será desenvolvida em conjunto com a especificação da API de recebimento de áudios, registrando as alternativas de trajeto do áudio, a escolha adotada, suas consequências e a política de retenção aplicável.
+#### 5.7.1.1 O que a topologia decide
+
+Definido o serviço de fala em 5.7.2, resta decidir por qual trajeto o áudio capturado no dispositivo do usuário alcança esse serviço. A pergunta parece de implementação, mas é de arquitetura: o trajeto determina se o áudio atravessa ou não a camada de aplicação da equipe e, por consequência, se existe um ponto no sistema em que ele possa ser validado, registrado, retido e reprocessado.
+
+A decisão precede a especificação da API de recebimento de áudios porque é ela que estabelece se essa API é o caminho principal do canal de voz, um caminho secundário ou uma peça sem função. Precede também o tratamento de erros, os limites operacionais e a rastreabilidade, todos condicionados a onde o áudio efetivamente passa.
+
+A seção 3.2.2 já havia diferido esta decisão, ao registrar que a conversão de voz em texto não foi transformada em classe do modelo por corresponder a um comportamento técnico a ser detalhado na arquitetura. Esta subseção é esse detalhamento.
+
+#### 5.7.1.2 Alternativas de trajeto
+
+Existem dois trajetos possíveis, e apenas dois. As demais configurações imagináveis são combinações destes.
+
+**Trajeto A — transmissão contínua a partir do navegador.** A interface solicita ao servidor um token de curta duração e, de posse dele, estabelece conexão direta com o serviço de fala, recebendo a transcrição à medida que o usuário fala. O áudio não atravessa a camada de aplicação da equipe; o servidor participa apenas da emissão da credencial temporária. É o trajeto representado no diagrama de 5.2.3 pela aresta que liga a página de conversa diretamente ao serviço de fala, e é o que os módulos `voz/` e `api/routes/voz.py` do middleware já esboçam.
+
+**Trajeto B — ingestão pela camada de aplicação.** A interface grava o áudio e o submete a um endpoint próprio. O servidor recebe o arquivo, valida formato, tamanho e duração, aciona o serviço de fala e devolve a transcrição. O áudio atravessa o mesmo ponto em que a interação é registrada.
+
+| Aspecto | Trajeto A — transmissão contínua | Trajeto B — ingestão |
+|---|---|---|
+| Percepção do usuário | Transcrição parcial durante a fala | Espera até o fim do processamento |
+| Retenção do áudio | Inexistente na infraestrutura da equipe | Sob controle da política definida em 5.7.1.5 |
+| Validação de formato, tamanho e duração | Impossível no servidor | Aplicável antes do envio ao serviço |
+| Registro da requisição | Apenas o texto resultante | Requisição completa, com origem e duração |
+| Medição do WER de 3.1.5.2 | **Inviável**, por ausência do áudio a comparar com a referência | Viável sobre o áudio retido |
+| Canais atendidos | Apenas os que executam o SDK no cliente | Qualquer cliente capaz de enviar um arquivo |
+| Custo de operação | Uma chamada ao serviço de fala | Uma chamada ao serviço de fala, mais tráfego e armazenamento temporário |
+| Exposição de credencial | Token de curta duração no cliente | Nenhuma credencial no cliente |
+
+A limitação registrada na quinta linha merece destaque, por não ser evidente. O *Word Error Rate* é calculado comparando a transcrição produzida com uma transcrição de referência do mesmo áudio. Sem reter o áudio, não há sobre o que aplicar a comparação de forma reprodutível, e a meta de WER inferior ou igual a 15% estabelecida em 3.1.5.2 permanece declarada sem meio de verificação.
 
 ### 5.7.2 Seleção dos serviços de conversão entre fala e texto
 
