@@ -3616,7 +3616,7 @@ A segunda é a **cobertura de canais**. O escopo previsto na seção 5.5.5.1 inc
 
 A terceira é a **rastreabilidade**. O RNF02 exige registro de origem, autoria e momento das alterações efetivadas. Uma solicitação por voz que chega ao pipeline já como texto perde a informação de sua origem sonora e não permite reconstruir o que foi efetivamente dito quando uma transcrição incorreta produzir uma ação indevida.
 
-O custo assumido é duplo: dois trajetos a documentar e a testar, e a necessidade de declarar qual deles constitui a fonte de verdade do registro. Fixa-se que **o registro da interação é único e independe do trajeto**: em ambos os casos grava-se a interação com o canal marcado como voz, conforme o modelo descrito em 4.3. O que distingue os trajetos é a existência do áudio de origem, presente apenas na ingestão.
+O custo assumido é duplo: dois trajetos a documentar e a testar, e a necessidade de declarar qual deles constitui a fonte de verdade do registro. Fixa-se que **o registro da interação é único e independe do trajeto**: em ambos os casos grava-se a interação com o canal marcado como voz, conforme as classes `Interacao` e `Canal` do diagrama de classes registrado em 5.4.11. O que distingue os trajetos é a existência do áudio de origem, presente apenas na ingestão.
 
 #### 5.7.1.4 Consequências para a arquitetura
 
