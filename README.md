@@ -93,13 +93,15 @@
 
 Este repositório reúne os artefatos do projeto do Módulo 7 de Engenharia de Software do Inteli, desenvolvido em parceria com o Metrô de São Paulo. O projeto tem como objetivo desenvolver uma solução de Inteligência Artificial aplicada à gestão do portfólio de projetos, tendo o Processamento de Linguagem Natural (PLN) como núcleo para a interação dos usuários com as informações do portfólio.
 
-A proposta explora capacidades de interação em linguagem natural, identificação e classificação de intenções, consulta e análise de informações de projetos e apoio à gestão do portfólio. As interações são previstas por texto e, dentro do escopo definido, por voz. Essas capacidades representam objetivos do projeto em desenvolvimento e não devem ser interpretadas como funcionalidades já concluídas.
+A proposta explora capacidades de interação em linguagem natural, identificação e classificação de intenções, consulta e análise de informações de projetos e apoio à gestão do portfólio. As interações são previstas por texto e, dentro do escopo definido, por voz.
 
-
+Além da documentação, o repositório contém o código da solução. Parte dela já está implementada, enquanto outras frentes ainda estão em construção — o quadro por frente está em [Estado atual](#estado-atual).
 
 ## A solução
 
-A solução proposta consiste em um agente de IA capaz de interpretar solicitações em linguagem natural e auxiliar na obtenção e na análise de informações relacionadas aos projetos. O agente deverá apoiar usuários com diferentes responsabilidades na gestão do portfólio, adequando suas respostas ao contexto de uso e às permissões de acesso.
+A solução é um agente de IA capaz de interpretar solicitações em linguagem natural e auxiliar na obtenção e na análise de informações relacionadas aos projetos. O agente apoia usuários com diferentes responsabilidades na gestão do portfólio, adequando suas respostas ao contexto de uso e às permissões de acesso.
+
+O produto é um middleware próprio, posicionado entre o usuário e o Copilot Studio. O usuário nunca fala diretamente com o Copilot: toda entrada passa antes pelo middleware, que protege o agente contra tentativas de manipulação, barra o uso indevido, registra e analisa as intenções de cada mensagem e executa rotinas agendadas. Ao Copilot Studio cabe o papel de executor: ele recebe a solicitação já validada e realiza a ação correspondente no ambiente Microsoft do Metrô.
 
 Conforme os requisitos levantados, o projeto prevê:
 
@@ -112,28 +114,76 @@ Conforme os requisitos levantados, o projeto prevê:
 - análise comparativa do portfólio;
 - geração de informações e prévias de relatórios gerenciais.
 
-O desenvolvimento considera a integração com o ecossistema Microsoft já utilizado pelo Metrô, incluindo SharePoint, Power BI, Power Automate e Copilot Studio. A forma e os limites dessas integrações deverão respeitar as definições de segurança, governança e escopo do projeto.
+O desenvolvimento considera a integração com o ecossistema Microsoft já utilizado pelo Metrô, incluindo SharePoint, Power BI, Power Automate e Copilot Studio. A forma e os limites dessas integrações respeitam as definições de segurança, governança e escopo do projeto.
+
+A arquitetura da solução, as tecnologias adotadas e as decisões que as sustentam estão descritas em [Arquitetura da solução](documentos/Arquitetura.md).
 
 ## Estrutura de pastas
 
 ```text
 g02/
-├── documentos/
-│   ├── imagens/                # Imagens de apoio (canvas, SWOT, diagramas, personas) usadas na documentação
-│   ├── Projeto.md              # Documentação geral do projeto
-│   ├── GestaoProjeto.md        # Gestão de projeto e das sprints
-│   ├── GestaoConfiguracao.md   # Gestão de configuração e versionamento
-│   ├── GuiaPadroesDesenvolvimento.md  # Padrões de desenvolvimento (a ser detalhado nas sprints técnicas)
-│   ├── Manual-instalacao.md    # Manual de instalação (a ser detalhado nas sprints técnicas)
-│   └── Index.md                # Índice da documentação
+├── src/
+│   ├── middleware/      # Backend: API, pipeline de PLN, guardas, rotinas e persistência
+│   └── web/             # Frontend: chat, histórico, intenções e rotinas
+├── copilot/             # Configuração versionada do Copilot Studio
+├── infra/               # Ambiente de desenvolvimento local
+├── documentos/          # Documentação do projeto e imagens de apoio
 └── README.md
 ```
 
+## Como executar
+
+**Pré-requisitos.** Para a execução em contêiner, apenas Docker. Para a execução local, Python 3.11 ou superior e Node 18 ou superior.
+
+Em ambos os casos, crie antes o arquivo de variáveis de ambiente a partir do modelo e preencha os valores. O `.env` não é versionado:
+
+```powershell
+cp src/middleware/.env.example src/middleware/.env
+```
+
+### Em contêiner
+
+```powershell
+docker compose -f infra/docker-compose.yml up --build
+```
+
+A interface fica disponível em `http://localhost:5173`.
+
+### Localmente
+
+O backend tem exigências próprias de ambiente e depende de um modelo que precisa ser treinado uma vez após o clone. O passo a passo está em [src/middleware/README.md](src/middleware/README.md) — comece por ele.
+
+O frontend, a partir de `src/web/`:
+
+```powershell
+npm install
+npm run dev     # interface em http://localhost:5173
+npm run test    # suíte de testes
+```
+
+## Estado atual
+
+| Frente | Estado |
+|---|---|
+| Orquestração do pipeline | Implementada e coberta por testes |
+| Catálogo de intenções | Completo |
+| Classificador de intenções | Treinado e avaliado, atendendo ao RNF03 |
+| Pré-processamento e vetorização | Implementados |
+| Interface — Chat e Rotinas | Telas implementadas |
+| Interface — Histórico e Intenções | Em construção |
+| Autenticação, persistência, guardas, análise de intenções e voz | Em construção |
+
+O planejamento das frentes pendentes está em [Arquitetura da solução](documentos/Arquitetura.md).
+
 ## 📝 Documentação
 
-- [Documentação geral do projeto](documentos/Projeto.md): entendimento do negócio, visão do produto, personas, jornadas, fluxos, riscos e requisitos do projeto.
-- [Gestão do projeto](documentos/GestaoProjeto.md): diretrizes de branches, commits, revisão e organização do trabalho da equipe, além da avaliação e retrospectiva de cada sprint.
-- [Gestão de configuração](documentos/GestaoConfiguracao.md): orientações para configuração e manutenção dos artefatos do projeto, incluindo a política de branches, commits e releases.
+- [Documentação geral do projeto](documentos/Projeto.md): entendimento do negócio, visão do produto, personas, jornadas, fluxos, riscos e requisitos do projeto, além do catálogo de intenções, das integrações Microsoft e do canal de voz.
+- [Arquitetura da solução](documentos/Arquitetura.md): visão da arquitetura, barreiras de segurança, tecnologias, estrutura detalhada de pastas e modelo de dados.
+- [Middleware — guia de execução](src/middleware/README.md): preparação do ambiente, treino e avaliação do classificador, testes e execução da API.
+- [Gestão do projeto](documentos/GestaoProjeto.md): organização da equipe, rituais, SLA, avaliação e retrospectiva de cada sprint, gestão de riscos e indicadores de processo.
+- [Gestão de configuração](documentos/GestaoConfiguracao.md): política de branches, commits, merge requests, arquivos sensíveis, rollback e variáveis de ambiente.
+
+Três arquivos de `documentos/` ainda são templates não preenchidos, mantidos no repositório para uso nas próximas sprints: `Index.md`, `GuiaPadroesDesenvolvimento.md` e `Manual-instalacao.md`. Até que sejam escritos, a instalação está descrita em [Como executar](#como-executar) e no [guia do middleware](src/middleware/README.md).
 
 ## 🚀 Versionamento
 
@@ -146,7 +196,7 @@ O projeto segue [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-B
 | Versão | Sprint | Status | Escopo |
 |---|---|---|---|
 | `v1.0.0` | Sprint 1 | ✅ Lançada | Entendimento do negócio, visão do produto, personas, jornadas, requisitos (RF/RNF), modelagem estática, diagramas UML e artefatos de gestão do projeto. |
-| `v2.0.0` | Sprint 2 | 🔜 Planejada | Estratégia técnica da solução (APIs de voz, pipeline de PLN, stack, dados), modelagem UML complementar e planejamento das Sprints 3 a 5. |
+| `v2.0.0` | Sprint 2 | 🚧 Em fechamento | Arquitetura da solução revisada, pipeline de PLN com classificador treinado e avaliado, catálogo de intenções, wireframes, mockups e protótipos, canal de voz, modelagem de dados, implantação em nuvem e planejamento das Sprints 3 a 5. |
 | `v3.0.0` | Sprint 3 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 3. |
 | `v4.0.0` | Sprint 4 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 4. |
 | `v5.0.0` | Sprint 5 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 5. |
