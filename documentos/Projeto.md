@@ -68,9 +68,7 @@
 - [5. Solução Técnica](#5-solução-técnica)
   - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
-    - [5.2.3 Diagrama atual da Sprint 2](#523-diagrama-atual-da-sprint-2)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
-    - [5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2](#538-diagramas-de-sequência-de-casos-críticos---sprint-2)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
   - [5.5 Integrações com o Ecossistema Microsoft](#55-integrações-com-o-ecossistema-microsoft)
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
@@ -97,14 +95,6 @@
   - [8.3 Guia Visual](#83-guia-visual)
 - [9. Desenvolvimento do Projeto](#9-desenvolvimento-do-projeto)
   - [9.1 Estratégia de Entrega para as Sprints 3, 4 e 5](#91-estratégia-de-entrega-para-as-sprints-3-4-e-5)
-    - [9.1.1 Visão Geral da Abordagem](#911-visão-geral-da-abordagem)
-    - [9.1.2 Ondas de Construção](#912-ondas-de-construção)
-    - [9.1.3 Integração com Voz](#913-integração-com-voz)
-    - [9.1.4 Estratégia de Testes](#914-estratégia-de-testes)
-    - [9.1.5 Estratégia de Implantação](#915-estratégia-de-implantação)
-    - [9.1.6 Dependências Externas em Caminho Crítico](#916-dependências-externas-em-caminho-crítico)
-    - [9.1.7 Integração Contínua entre Sprints](#917-integração-contínua-entre-sprints)
-    - [9.1.8 Métricas de Qualidade e Sucesso](#918-métricas-de-qualidade-e-sucesso)
   - [9.2 Arquitetura de Codificação e Estrutura de Diretórios](#92-arquitetura-de-codificação-e-estrutura-de-diretórios)
   - [9.3 Modelo de Recomendação](#93-modelo-de-recomendação)
   - [9.4 Desenvolvimento de Features](#94-desenvolvimento-de-features)
@@ -171,31 +161,31 @@ Essa tendência é particularmente relevante para o contexto do Metrô, uma vez 
 
 ### 2.1.1 Análise das 5 Forças de Porter
 
-#### Rivalidade entre concorrentes
+#### 2.1.1.1 Rivalidade entre concorrentes
 
 A rivalidade direta no setor metroviário é limitada pela natureza do serviço e pela atuação institucional do Metrô. A organização possui uma função específica dentro do sistema de transporte metropolitano e atua de forma integrada a outros modos de transporte, em vez de competir diretamente com eles como empresas em um mercado convencional. Entretanto, existe competição pela demanda dos passageiros entre diferentes alternativas de deslocamento, como transporte sobre trilhos, ônibus e transporte individual.
 
 **Classificação: Baixa a moderada.**
 
-#### Poder de barganha dos fornecedores
+#### 2.1.1.2 Poder de barganha dos fornecedores
 
 A operação e expansão de sistemas metroviários dependem de fornecedores especializados em infraestrutura, equipamentos, tecnologia, manutenção e serviços técnicos. A complexidade e a especialização desses componentes podem aumentar a dependência de fornecedores com competências específicas, especialmente em projetos de modernização e expansão da infraestrutura.
 
 **Classificação: Moderada a alta.**
 
-#### Poder de barganha dos clientes
+#### 2.1.1.3 Poder de barganha dos clientes
 
 Os passageiros constituem os principais usuários do sistema, porém o transporte metroviário possui características de serviço público essencial e está inserido em um ambiente regulado, com políticas públicas, estrutura tarifária e integração com outros sistemas de transporte. Dessa forma, o poder de barganha dos usuários não ocorre da mesma maneira que em mercados privados convencionais.
 
 **Classificação: Moderada.**
 
-#### Ameaça de novos entrantes
+#### 2.1.1.4 Ameaça de novos entrantes
 
 A entrada de novos operadores no transporte metroviário apresenta barreiras elevadas devido ao alto volume de investimentos necessários, à complexidade da infraestrutura, aos requisitos regulatórios e ao longo prazo necessário para implantação de sistemas de transporte de alta capacidade. Esses fatores dificultam a entrada de novos participantes capazes de oferecer infraestrutura metroviária equivalente.
 
 **Classificação: Baixa.**
 
-#### Ameaça de produtos substitutos
+#### 2.1.1.5 Ameaça de produtos substitutos
 
 O transporte metroviário está sujeito à existência de diferentes alternativas de mobilidade, como ônibus, automóveis, motocicletas, bicicletas e outros serviços de transporte. A existência desses modais representa uma alternativa para os usuários, embora a integração entre os diferentes modos seja também um elemento fundamental do planejamento da mobilidade metropolitana.
 
@@ -222,7 +212,7 @@ Embora o PMO já conte com um agente para apoiar consultas ao portfólio, ele at
 ### 2.2.3 Matriz SWOT
 
 ![Descrição da imagem](imagens/swot.png)
-*Figura X — Matriz SWOT do parceiro.*
+*Figura 1 — Matriz SWOT do parceiro.*
 
 #### 2.2.3.1 Forças
 
@@ -290,53 +280,53 @@ Para viabilizar essa proposta, a solução é organizada em dois pilares complem
 
 ### 2.3.2 O que o produto faz
 
-#### Interação em linguagem natural
+#### 2.3.2.1 Interação em linguagem natural
 
 O produto permite que os usuários façam perguntas e solicitações em linguagem natural, sem depender de caminhos previamente definidos. O agente interpreta a intenção da solicitação e direciona o processamento de acordo com o tipo de demanda, tornando a interação mais simples e flexível para diferentes perfis de usuário.
 
-#### Consulta e análise do portfólio
+#### 2.3.2.2 Consulta e análise do portfólio
 
 O produto consulta informações dos projetos e analisa documentos relacionados para responder perguntas sobre temas como status, cronograma, entregas, riscos, marcos, indicadores e aderência a normativos. Também realiza consultas que envolvem diferentes projetos, reunindo informações que estão distribuídas entre as fontes utilizadas pelo PMO.
 
-#### Acompanhamento dos projetos
+#### 2.3.2.3 Acompanhamento dos projetos
 
 O produto monitora informações relevantes dos projetos e emite alertas sobre pendências, prazos, riscos, desvios e possíveis inconformidades que demandem atenção. Dessa forma, apoia o acompanhamento contínuo das iniciativas e facilita a identificação antecipada de pontos que precisam ser avaliados pela equipe responsável.
 
-#### Apoio à gestão e à tomada de decisão
+#### 2.3.2.4 Apoio à gestão e à tomada de decisão
 
 O produto identifica e sinaliza riscos, pendências e pontos de atenção a partir das informações disponíveis no portfólio. Também realiza análises comparativas entre projetos e consolida informações relevantes para diferentes níveis de gestão, oferecendo subsídios para que gestores e equipes avaliem situações e tomem decisões com maior agilidade.
 
-#### Relatórios e informações para acompanhamento
+#### 2.3.2.5 Relatórios e informações para acompanhamento
 
 O produto gera prévias de relatórios e apresentações a partir das informações disponíveis no ambiente do PMO, organizando dados relevantes para o acompanhamento do portfólio. Essa capacidade reduz o esforço necessário para consolidar informações que já estão distribuídas entre diferentes fontes.
 
-#### Segurança e rastreabilidade
+#### 2.3.2.6 Segurança e rastreabilidade
 
 O produto aplica os controles de acesso definidos para cada perfil de usuário e mantém o registro das interações realizadas. Dessa forma, o acesso às informações é condicionado às permissões do usuário e as consultas realizadas permanecem rastreáveis, considerando os requisitos de segurança e governança do ambiente corporativo.
 
 ### 2.3.3 O que o produto não faz
 
-#### Interação em linguagem natural
+#### 2.3.3.1 Interação em linguagem natural
 
 O produto não interpreta solicitações fora do domínio da gestão de portfólio nem executa comandos que não estejam previstos em seu catálogo de intenções. Solicitações não reconhecidas recebem retorno explícito, sem tentativa de gerar uma resposta especulativa.
 
-#### Consulta e análise do portfólio
+#### 2.3.3.2 Consulta e análise do portfólio
 
 O produto não realiza integrações com sistemas fora do escopo definido para o MVP. Nesta etapa, sua atuação está concentrada no ecossistema Microsoft utilizado pelo projeto, especialmente SharePoint, Lists e Copilot Studio, não contemplando uma integração completa com todos os sistemas corporativos do Metrô.
 
-#### Atualização e acompanhamento dos projetos
+#### 2.3.3.3 Atualização e acompanhamento dos projetos
 
 O produto não gera nem edita cronogramas de projeto e não realiza previsão estatística de prazo ou custo. Seu papel é acompanhar e analisar as informações disponíveis, sinalizando situações que demandem atenção, sem assumir a gestão operacional dos projetos.
 
-#### Apoio à gestão e à tomada de decisão
+#### 2.3.3.4 Apoio à gestão e à tomada de decisão
 
 O produto não toma decisões automaticamente nem substitui os responsáveis pela gestão dos projetos. As informações, análises e alertas fornecidos servem como subsídio para a avaliação dos usuários, mantendo a decisão final sob responsabilidade humana. O produto também não executa aprovações formais previstas no processo de gestão, como a aprovação do TAP ou a passagem entre fases.
 
-#### Relatórios e informações para acompanhamento
+#### 2.3.3.5 Relatórios e informações para acompanhamento
 
 O produto não substitui os relatórios, apresentações ou ferramentas corporativas utilizadas oficialmente pelo PMO. As prévias geradas pelo produto servem como apoio ao processo de acompanhamento e podem exigir revisão e validação dos responsáveis antes de sua utilização oficial.
 
-#### Segurança e rastreabilidade
+#### 2.3.3.6 Segurança e rastreabilidade
 
 O produto não altera registros no SharePoint nem atualiza diretamente os dados do portfólio. No MVP, também não processa dados sensíveis reais fora dos ambientes homologados pelo Metrô, sendo utilizados dados sintéticos ou anonimizados para a validação da solução. O produto não contempla, nesta etapa, um aplicativo móvel nativo.
 
@@ -365,7 +355,7 @@ Embora o gestor do portfólio, associado ao PMO, seja um ator recorrente nas his
 <div align="center">
   <img src="imagens/Roberto.png" width="35%" alt="Persona Roberto Nogueira">
   <br>
-  <sub>Figura X — Persona Roberto Nogueira.</sub>
+  <sub>Figura 2 — Persona Roberto Nogueira.</sub>
 </div>
 
 Roberto Nogueira tem 48 anos, nível de familiaridade tecnológica intermediário e representa o usuário de nível estratégico. Em seu papel na Diretoria, utiliza as informações do portfólio como subsídio para decisões, priorizações e acompanhamento institucional. No cenário atual, não opera diretamente as ferramentas de gestão: recebe do PMO relatórios, indicadores e apresentações previamente consolidados. Assim, seu contato com o portfólio é orientado à leitura executiva, e não ao acompanhamento das atividades rotineiras de cada projeto.
@@ -381,7 +371,7 @@ O nível de informação disponibilizado deve ser compatível com as atribuiçõ
 <div align="center">
   <img src="imagens/Fernanda.png" width="35%" alt="Persona Fernanda Medina">
   <br>
-  <sub>Figura X — Persona Fernanda Medina.</sub>
+  <sub>Figura 3 — Persona Fernanda Medina.</sub>
 </div>
 
 Fernanda Medina tem 39 anos, nível de familiaridade tecnológica intermediário e representa o nível gerencial ou tático. Como líder de projeto, acompanha o avanço, o cronograma, as entregas, os riscos e as pendências, além de manter interlocução com o PMO. Diferentemente do perfil da Diretoria, sua atuação exige acesso recorrente a informações detalhadas dos projetos sob sua responsabilidade e participação ativa na atualização dos respectivos dados.
@@ -397,7 +387,7 @@ Fernanda deve visualizar informações suficientemente detalhadas sobre os proje
 <div align="center">
   <img src="imagens/Carlos.png" width="35%" alt="Persona Carlos Mendes">
   <br>
-  <sub>Figura X — Persona Carlos Mendes.</sub>
+  <sub>Figura 4 — Persona Carlos Mendes.</sub>
 </div>
 
 Carlos Mendes tem 34 anos, nível de familiaridade tecnológica básico e representa o nível operacional. Como membro de uma equipe de projeto, participa da execução das atividades e precisa compreender as informações que afetam diretamente seu trabalho. Sua interação com a gestão do portfólio é mais delimitada que a dos demais perfis: ele necessita consultar o projeto do qual participa, identificar pendências e contribuir com atualizações pertinentes, sem precisar conhecer a arquitetura dos sistemas ou a organização das bases de dados.
@@ -433,7 +423,7 @@ Esses artefatos apoiam decisões de UX e de produto ao evidenciar diferenças en
 <div align="center">
   <img src="imagens/jornadaRoberto.png" width="90%" alt="Jornada do usuário Roberto Nogueira">
   <br>
-  <sub>Figura X — Jornada de Roberto Nogueira.</sub>
+  <sub>Figura 5 — Jornada de Roberto Nogueira.</sub>
 </div>
 
 A jornada de Roberto tem como objetivo obter uma visão executiva do portfólio que apoie a tomada de decisão. Seus principais momentos de interação com o agente envolvem a consulta de informações consolidadas, a identificação de projetos ou subportfólios que exigem atenção e o aprofundamento dos riscos mais relevantes. A principal dor está na dependência de informações previamente consolidadas e na dificuldade de localizar, em meio ao volume de dados, os pontos que demandam ação estratégica.
@@ -445,7 +435,7 @@ Como oportunidade de produto, o agente pode reduzir o esforço necessário para 
 <div align="center">
   <img src="imagens/jornadaFernanda.png" width="90%" alt="Jornada da usuária Fernanda Medina">
   <br>
-  <sub>Figura X — Jornada de Fernanda Medina.</sub>
+  <sub>Figura 6 — Jornada de Fernanda Medina.</sub>
 </div>
 
 A jornada de Fernanda está orientada ao acompanhamento do projeto e à manutenção da qualidade das informações gerenciais. A interação com o agente ocorre durante consultas sobre avanço, cronograma, entregas, riscos e pendências, na verificação de informações e normativos e no registro de atualizações. Entre as dores mais relevantes estão a recorrência de atividades manuais de acompanhamento e cobrança, o esforço para localizar orientações normativas e a necessidade de manter os dados atualizados e verificáveis.
@@ -457,7 +447,7 @@ Oportunidades para o produto incluem facilitar consultas e atualizações em lin
 <div align="center">
   <img src="imagens/jornadaCarlos.png" width="90%" alt="Jornada do usuário Carlos Mendes">
   <br>
-  <sub>Figura X — Jornada de Carlos Mendes.</sub>
+  <sub>Figura 7 — Jornada de Carlos Mendes.</sub>
 </div>
 
 A jornada de Carlos tem como objetivo consultar e contribuir com informações do projeto em que atua. Seus momentos de interação concentram-se na busca de informações necessárias à execução, na compreensão de pendências e no fornecimento de atualizações autorizadas. As principais dores estão associadas à dificuldade de localizar conteúdos relevantes, compreender o que precisa ser realizado e interagir com sistemas cuja estrutura técnica não lhe é familiar.
@@ -501,7 +491,7 @@ Essa cadeia de valor gera valor para o parceiro em diferentes níveis. Ela reduz
 
 O mapeamento BPMN abaixo segue o modelo convencional de raias (pool/lane), com eventos de início e fim, tarefas e gateway exclusivo, comparando o processo atual de consulta de portfólio com o comportamento proposto após a implantação do agente de IA conversacional do Metrô de São Paulo.
 
-#### Fluxo AS-IS — cenário atual
+#### 2.5.2.1 Fluxo AS-IS — cenário atual
 
 **Raias:** Gestor · Equipe
 
@@ -513,12 +503,12 @@ O processo começa quando o gestor de portfólio precisa consultar o status de u
 <div align="center">
   <img src="imagens/asis.png" width="80%" alt="Fluxo AS-IS">
   <br>
-  <sub>Figura X — Fluxo AS-IS.</sub>
+  <sub>Figura 8 — Fluxo AS-IS.</sub>
 </div>
 
 Não existe, nesse cenário, um canal único de consulta em linguagem natural, nem verificação automática de confidencialidade dos dados: tudo depende de onde a informação está armazenada e da disponibilidade de terceiros para respondê-la.
 
-#### Fluxo TO-BE — cenário proposto
+#### 2.5.2.2 Fluxo TO-BE — cenário proposto
 
 **Raias:** Gestor · Pilar 1 (PLN) · Pilar 2 (Copilot Studio/Power Platform)
 
@@ -534,14 +524,14 @@ Em todos os caminhos, o Pilar 1 grava exatamente um registro da interação, com
 <div align="center">
   <img src="imagens/tobe.png" width="80%" alt="Fluxo TO-BE">
   <br>
-  <sub>Figura X — Fluxo TO-BE.</sub>
+  <sub>Figura 9 — Fluxo TO-BE.</sub>
 </div>
 
 > **Pendência de artefato.** A figura acima ainda representa o gateway anterior ("dado sensível sem homologação?") e não contém a guarda de saída no retorno do Pilar 2. Precisa ser regerada conforme a descrição desta seção.
 
 Em ambos os desfechos, é o Gestor específico quem recebe o resultado final — a diferença está em qual dos dois pilares processou o pedido e se ele foi autorizado a prosseguir.
 
-#### Leitura comparativa
+#### 2.5.2.3 Leitura comparativa
 
 | Aspecto | AS-IS | TO-BE |
 |---|---|---|
@@ -573,7 +563,7 @@ O viés de Orçamento tem como foco o rastreamento do capital investido (CAPEX -
 O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebimento do TAP Aprovado emitido pelo Poder Público, passando pelas medições de engenharia para apuração dos Custos de Estações e Custos de Túneis, até o encerramento com a emissão do Termo de Aceite Financeiro e Imobilização para a Operação.
 
 ![Descrição da imagem](imagens/Fluxo%20Orçamento.jpg)
-*Figura X — Fluxo do viés de orçamento.*
+*Figura 10 — Fluxo do viés de orçamento.*
 
 ##### Detalhamento das raias e governança do fluxo
 
@@ -590,7 +580,7 @@ O diagrama abaixo ilustra a esteira completa do fluxo financeiro: desde o recebi
 O viés de Tempo e Cronograma tem como foco o acompanhamento contínuo do progresso físico e o controle do caminho crítico do empreendimento no contexto da Linha 6-Laranja do Metrô de São Paulo. Esta perspectiva responde às perguntas operacionais sobre o cumprimento dos marcos contratuais (Milestones), o desempenho dos prazos via Índice de Desempenho de Prazos (SPI) e os ritos de governança para mitigação e aceleração de frentes de obra.
 
 ![Descrição da imagem](imagens/Fluxo%20Tempo.jpg)
-*Figura X — Fluxo do viés de gestão do tempo.*
+*Figura 11 — Fluxo do viés de gestão do tempo.*
 
 ##### Detalhamento das raias e governança do fluxo
 
@@ -601,8 +591,6 @@ O viés de Tempo e Cronograma tem como foco o acompanhamento contínuo do progre
 **Engenharia & Fiscalização:** Emite a Autorização de Liberação de Frentes de Trabalho e conduz as vistorias técnicas de campo para Fiscalizar o Cumprimento do Cronograma Físico, apurando os dados de avanço referentes ao Status dos Marcos Críticos (Tatueté e Pátios).
 
 **Consórcio Construtor:** Executa as etapas sequenciais das obras civis e montagem de sistemas em campo, realiza o comissionamento e os testes dinâmicos de rodagem na via e submete formalmente a Solicitação de Vistoria de Homologação da Via para a fiscalização de engenharia.
-
-
 
 ## 2.6 Matriz de Risco do Projeto
 
@@ -736,7 +724,7 @@ Cada risco negativo possui uma **ação de mitigação** (preventiva, que reduz 
 
 <img src="imagens/matriz-risco.png" alt="Matriz de probabilidade × impacto do projeto" width="50%">
 
-*Figura X — Matriz de probabilidade × impacto.*
+*Figura 12 — Matriz de probabilidade × impacto.*
 
 > **Pendência de artefato.** A figura reflete a avaliação da identificação inicial e não contém R11 a R13 nem O04. Precisa ser regerada a partir da tabela acima.
 
@@ -758,14 +746,13 @@ R12 é uma exposição **estrutural, não acidental** — e é essa a diferença
 
 R13 decorre de o registro passar a guardar o prompt em claro. Antes, a mensagem seguia mascarada para o banco; agora a tabela de interações concentra o que o usuário digitou, incluindo deliberadamente as tentativas de ataque, que são o insumo mais valioso do recorte de segurança do dashboard. O ganho analítico foi uma escolha consciente, mas cria um repositório que antes não existia. Por isso os dois controles de resposta — retenção declarada e cifra em repouso — deixaram de ser recomendação e passaram a constar de requisito próprio, o RNF07.
 
-
 ## 2.7 Ideação
 
 ### 2.7.1 Features levantadas
 
 As *features* estão agrupadas em onze épicos — dez do levantamento original e o EP11, acrescentado na revisão de escopo. A coluna **Origem** indica a fonte da ideia: `TAPI` para o Termo de Abertura do Projeto Inteli, `HU` para o documento de Histórias de Usuário do parceiro, `AX` para os Anexos 1 a 4 e `EQ` para proposta da equipe. As colunas de importância, viabilidade, prioridade e escopo seguem os critérios declarados na seção 2.7.2.
 
-#### EP01 — Núcleo de Processamento de Linguagem Natural
+#### 2.7.1.1 EP01 — Núcleo de Processamento de Linguagem Natural
 
 *Entendimento da intenção*
 
@@ -805,7 +792,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F22 | Registro comparativo de abordagens | Documentação do desempenho de ao menos duas estratégias — linha de base por regras ou vetorização clássica e modelo de linguagem — de modo a justificar a escolha final. | TAPI | Alta | Alta | 9 | **MVP** |
 | F23 | Painel de erros e casos difíceis | Coleção mantida ao longo do projeto com as falhas do classificador, utilizada para orientar as iterações seguintes. | EQ | Média | Alta | 6 | Desejável |
 
-#### EP02 — Entrada de dados guiada por entrevista
+#### 2.7.1.2 EP02 — Entrada de dados guiada por entrevista
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -829,7 +816,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F41 | Criação de projeto a partir de documento | "Criar projeto segundo arquivo em anexo" — extrair nome, código, descrição, prazo e valor de um documento e pré-preencher o artefato. Exemplo literal do Apêndice do TAPI. | TAPI | Média | Baixa | 2 | Ir Além |
 | F42 | Diretriz de comunicação | Requisito de estilo declarado pelo parceiro: comunicação clara, objetiva e empática. Tratado como diretriz de persona do agente. | HU | Média | Alta | 6 | **MVP** |
 
-#### EP03 — Consulta, status e análise do portfólio
+#### 2.7.1.3 EP03 — Consulta, status e análise do portfólio
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -842,7 +829,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F49 | Conexão com estratégia e indicadores | Relacionar o projeto aos objetivos estratégicos e aos indicadores do Plano de Negócios. Citado no escopo macro do TAPI. | TAPI | Média | Baixa | 2 | Ir Além |
 | F50 | Consulta a portfólios de exercícios anteriores | Comparar o portfólio corrente com os de anos anteriores. | EQ | Baixa | Baixa | 1 | Ir Além |
 
-#### EP04 — Base de conhecimento normativa
+#### 2.7.1.4 EP04 — Base de conhecimento normativa
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -852,7 +839,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F54 | Verificação de aderência a normativo | Avaliar se um artefato preenchido atende ao que a norma exige e apontar as lacunas identificadas. | TAPI | Alta | Média | 6 | **MVP** |
 | F55 | Consulta às atribuições das áreas | Sugerir partes interessadas a partir do cadastro de atribuições das gerências, marcado como fonte no roteiro do TAP. | HU | Baixa | Baixa | 1 | Ir Além |
 
-#### EP05 — Proatividade, pendências e alertas
+#### 2.7.1.5 EP05 — Proatividade, pendências e alertas
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -864,7 +851,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F61 | Oferta proativa de apoio | Ao detectar a pendência, o agente não se limita a avisar: abre a entrevista de preenchimento na mesma conversa. | HU | Alta | Média | 6 | **MVP** |
 | F62 | Alerta de desvio de indicador | Sinalização quando a aderência física de um subportfólio recua abaixo da margem de tolerância. | AX | Média | Média | 4 | Desejável |
 
-#### EP06 — Geração de documentos e relatórios
+#### 2.7.1.6 EP06 — Geração de documentos e relatórios
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -876,7 +863,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F68 | Marcação explícita de lacunas | Sinalizar o que o agente não conseguiu preencher, em vez de completar por inferência. Decisão de projeto destinada a evitar conteúdo incorreto em documento oficial. | EQ | Alta | Alta | 9 | Desejável |
 | F69 | Geração de painel sob demanda | "Montar um dashboard de compliance financeiro de 123XXX", exemplo constante do Apêndice do TAPI. | TAPI | Baixa | Baixa | 1 | Ir Além |
 
-#### EP07 — Segurança, permissões e rastreabilidade
+#### 2.7.1.7 EP07 — Segurança, permissões e rastreabilidade
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -888,7 +875,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F75 | Verificação do termo de confidencialidade | Condicionar o acesso à informação à assinatura do termo, tal como ocorre no fluxo vigente do SharePoint. | AX | Média | Baixa | 2 | Ir Além |
 | F76 | Mascaramento de dados no registro | Anonimização do conteúdo antes da gravação no registro de auditoria. | EQ | Média | Média | 4 | Desejável |
 
-#### EP08 — Voz e multimodalidade
+#### 2.7.1.8 EP08 — Voz e multimodalidade
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -898,7 +885,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F80 | Resposta falada | Conversão da resposta em áudio, útil para consulta em campo. | EQ | Baixa | Média | 2 | Ir Além |
 | F81 | Entrada por documento anexado | Envio de arquivo como fonte de contexto para a conversa. | HU | Média | Média | 4 | Desejável |
 
-#### EP09 — Plataforma e integração
+#### 2.7.1.9 EP09 — Plataforma e integração
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -913,7 +900,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F90 | Verificação de conformidade financeira no legado | "Verificar compliance financeira de 123XXX", relativo à adequação a normas financeiras. Exemplo do Apêndice do TAPI. | TAPI | Baixa | Baixa | 1 | Ir Além |
 | F91 | Adoção futura de IA generativa homologada | Substituição de componentes do pipeline por serviços generativos, uma vez homologados pelo compliance do Metrô. Registrada no TAPI como evolução. | TAPI | Média | Baixa | 2 | Ir Além |
 
-#### EP10 — Experiência de uso e sustentação
+#### 2.7.1.10 EP10 — Experiência de uso e sustentação
 
 | ID | *Feature* | Descrição | Origem | Import. | Viab. | Pri. | Escopo |
 |---|---|---|---|---|---|:-:|---|
@@ -923,7 +910,7 @@ As *features* estão agrupadas em onze épicos — dez do levantamento original 
 | F95 | Manual de operação e sustentação | Documentação de implantação, operação e evolução no ecossistema Microsoft. Entregável obrigatório previsto no TAPI. | TAPI | Alta | Alta | 9 | **MVP** |
 | F96 | Atendimento multilíngue | Interação em outros idiomas além do português. | EQ | Baixa | Média | 2 | Ir Além |
 
-#### EP11 — Middleware: proteção, registro e automação
+#### 2.7.1.11 EP11 — Middleware: proteção, registro e automação
 
 As *features* deste épico foram acrescentadas na revisão de escopo que reposicionou o middleware como produto da solução. Elas não constavam do levantamento original porque as capacidades correspondentes não existiam no desenho anterior, em que o middleware era camada de passagem. Todas nascem no MVP: são o que a equipe efetivamente constrói, e sustentam os requisitos RF09 a RF12.
 
@@ -988,7 +975,7 @@ O escopo indica onde cada *feature* será construída e utiliza o mesmo vocabul�
 <div align="center">
   <img src="imagens/matriz-features.png" width="85%" alt="Matriz de priorização das features por importância e viabilidade, com a contagem de features em cada uma das nove células">
   <br>
-  <sub>Figura X — Matriz de priorização de <i>features</i> (importância × viabilidade).</sub>
+  <sub>Figura 13 — Matriz de priorização de <i>features</i> (importância × viabilidade).</sub>
 </div>
 
 As *features* de prioridade máxima correspondem quase integralmente ao núcleo de Processamento de Linguagem Natural somado às fundações de segurança e rastreabilidade — o que confirma o alinhamento entre o que o parceiro mais valoriza e o que o módulo avalia. Merece registro o contraste entre duas células de mesma prioridade 6: as de alta importância e viabilidade média constituem o esforço principal do MVP, enquanto as de importância média e alta viabilidade são acréscimos baratos que elevam a percepção de qualidade sem competir por espaço no cronograma. As *features* que combinam alta importância e baixa viabilidade dependem todas do ambiente Microsoft homologado — o que as torna candidatas naturais ao "Ir Além" descrito no TAPI, e não itens a serem forçados para dentro do MVP.
@@ -1064,7 +1051,6 @@ A sequência abaixo é de dependência, não de importância. Cada onda termina 
 
 **O que saiu do sequenciamento anterior.** A versão anterior desta seção organizava o MVP em três ondas e previa, para a última, um "sistema de troca de mensagens assíncronas" e *webhooks*. Nenhum dos dois faz parte da solução: a arquitetura resolve o agendamento com APScheduler e *jobstore* no banco que já existe, explicitamente **sem broker e sem Redis**, e a entrega do resultado ocorre na própria aplicação, sem integração de mensageria. A dependência foi removida junto com a *feature* que a motivava (`F57`, reclassificada em 2.7.3).
 
-
 ### 2.7.5 Rastreabilidade com os requisitos funcionais
 
 Toda *feature* levantada foi associada a um dos requisitos funcionais consolidados na seção [3.2 Requisitos Funcionais](#32-requisitos-funcionais-rfs), de modo que a lista desta seção e a especificação de requisitos não divirjam. A classificação de escopo obedece à priorização das *user stories* da seção 3.2.1: nenhuma *feature* vinculada a RF07 ou RF08, cujas histórias estão marcadas como desejáveis, foi admitida no MVP. Requisitos priorizados como MVP não são necessariamente cobertos em sua totalidade — o RF05 é o caso mais relevante, uma vez que o assistente completo de cronograma (F27) permanece registrado como Ir Além pelas razões apresentadas na seção 2.7.6, enquanto os demais artefatos de entrada previstos no requisito são contemplados.
@@ -1102,7 +1088,6 @@ As demais *features* não correspondem a requisitos funcionais por descreverem p
 
 `F73` (registro de auditoria) deixou este quadro na revisão de escopo: com a criação do RF10, o registro passou a ser requisito funcional próprio, e não apenas um meio de atender ao RNF02.
 
-
 ### 2.7.6 Desejos do parceiro registrados fora do MVP
 
 Esta seção preserva as solicitações manifestadas pelo Metrô que não integrarão a prova de conceito. Todos os itens permanecem documentados como insumo para as próximas etapas do projeto e para eventual continuidade em módulos posteriores.
@@ -1129,7 +1114,7 @@ Esta seção preserva as solicitações manifestadas pelo Metrô que não integr
 <div align="center">
   <img src="imagens/business-model-canvas.png" width="90%" alt="Business Model Canvas do projeto">
   <br>
-  <sub>Figura X — Business Model Canvas do projeto.</sub>
+  <sub>Figura 14 — Business Model Canvas do projeto.</sub>
 </div>
 
 ### 2.8.1 Proposta de Valor
@@ -1446,7 +1431,7 @@ classDiagram
     PreviaMaterialGerencial -- Projeto : utiliza informações de
 ```
 
-*Figura X — Diagrama de classes conceitual do domínio do agente.*
+*Figura 15 — Diagrama de classes conceitual do domínio do agente.*
 
 #### 3.2.2.1 Classes do domínio
 
@@ -1683,13 +1668,13 @@ flowchart LR
     UC05 --- CS
 ```
 
-*Figura X — Casos de uso do Agente de Portfólio.*
+*Figura 16 — Casos de uso do Agente de Portfólio.*
 
 A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC11 são incluídos por UC02**, e não casos alternativos ao lado dele: toda solicitação passa pelas barreiras e toda solicitação é registrada, qualquer que seja seu desfecho. Pela mesma razão, **UC08 inclui UC02**: a rotina agendada não é um caminho paralelo ao chat, é a mesma solicitação com outro gatilho. Fosse modelada como caso de uso independente, o diagrama admitiria uma rotina que contorna as barreiras — exatamente o que a arquitetura impede.
 
 ### 3.5.3 Especificação dos casos de uso
 
-#### UC01 — Autenticar e resolver permissões
+#### 3.5.3.1 UC01 — Autenticar e resolver permissões
 
 | Campo | Conteúdo |
 |---|---|
@@ -1701,7 +1686,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 4a. *Claims* não correspondem a nenhum perfil conhecido: o acesso é negado e o evento registrado. |
 | **Requisitos** | RF01 · RNF05 |
 
-#### UC02 — Enviar solicitação em linguagem natural
+#### 3.5.3.2 UC02 — Enviar solicitação em linguagem natural
 
 | Campo | Conteúdo |
 |---|---|
@@ -1713,7 +1698,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 5a. O executor falha ou não responde: mensagem de indisponibilidade, desfecho `FALHA_EXECUTOR`, segue para o passo 7. |
 | **Requisitos** | RF02 · RF03 · RF09 · RF10 |
 
-#### UC03 — Enviar solicitação por voz
+#### 3.5.3.3 UC03 — Enviar solicitação por voz
 
 | Campo | Conteúdo |
 |---|---|
@@ -1724,7 +1709,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 2a. Falha ao emitir o token: o sistema mantém o canal de texto disponível e informa a indisponibilidade da voz. |
 | **Requisitos** | RF02 |
 
-#### UC04 — Consultar informações do portfólio
+#### 3.5.3.4 UC04 — Consultar informações do portfólio
 
 | Campo | Conteúdo |
 |---|---|
@@ -1734,7 +1719,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Fluxo alternativo** | 3a. O projeto informado não é acessível ao perfil: recusa que não revela a existência do recurso. |
 | **Requisitos** | RF04 · RNF05 |
 
-#### UC05 — Atualizar informações do projeto
+#### 3.5.3.5 UC05 — Atualizar informações do projeto
 
 | Campo | Conteúdo |
 |---|---|
@@ -1745,7 +1730,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 5a. A gravação falha: o sistema informa que nada foi alterado, sem deixar estado parcial. |
 | **Requisitos** | RF05 · RNF02 |
 
-#### UC06 — Retomar conversa anterior
+#### 3.5.3.6 UC06 — Retomar conversa anterior
 
 | Campo | Conteúdo |
 |---|---|
@@ -1754,7 +1739,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 3a. A conversa pertence a outro usuário: o acesso é negado no servidor, independentemente do que a interface exiba. |
 | **Requisitos** | RF12 |
 
-#### UC07 — Cadastrar rotina agendada
+#### 3.5.3.7 UC07 — Cadastrar rotina agendada
 
 | Campo | Conteúdo |
 |---|---|
@@ -1765,7 +1750,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 1a. O usuário não possui `GERIR_ROTINAS`: a operação é negada no servidor. |
 | **Requisitos** | RF11 · RF09 |
 
-#### UC08 — Executar rotina agendada
+#### 3.5.3.8 UC08 — Executar rotina agendada
 
 | Campo | Conteúdo |
 |---|---|
@@ -1777,7 +1762,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 1a. O *worker* esteve indisponível no horário: o disparo é tratado conforme a tolerância configurada, sem reexecução em rajada. |
 | **Requisitos** | RF11 · RF06 · RNF02 · RNF04 |
 
-#### UC09 — Consultar análise de intenções
+#### 3.5.3.9 UC09 — Consultar análise de intenções
 
 | Campo | Conteúdo |
 |---|---|
@@ -1787,7 +1772,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 1a. O usuário não possui `VER_INTENCOES`: a rota é negada no servidor, e não apenas escondida na interface. |
 | **Requisitos** | RF10 |
 
-#### UC10 — Barrar solicitação ou resposta hostil
+#### 3.5.3.10 UC10 — Barrar solicitação ou resposta hostil
 
 | Campo | Conteúdo |
 |---|---|
@@ -1797,7 +1782,7 @@ A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC
 | **Exceção** | 2b. O serviço de avaliação está indisponível: a solicitação não segue adiante. A indisponibilidade de uma barreira não pode resultar em passagem livre. |
 | **Requisitos** | RF09 · RNF06 |
 
-#### UC11 — Registrar a interação
+#### 3.5.3.11 UC11 — Registrar a interação
 
 | Campo | Conteúdo |
 |---|---|
@@ -1833,7 +1818,6 @@ A matriz confronta os casos de uso com os requisitos de 3.2, verificando que nen
 
 **Concentração em UC02.** Sete dos onze casos de uso incluem ou estendem UC02, direta ou indiretamente. Isso não é redundância de modelagem: é a expressão, no nível dos casos de uso, da mesma invariante que a arquitetura codifica no orquestrador — existe um único caminho pelo qual uma solicitação atravessa o sistema, e ele passa obrigatoriamente pelas barreiras e pelo registro.
 
-
 # 4. Modelagem de Dados
 
 ## 4.1 Visão Geral do Domínio
@@ -1844,7 +1828,7 @@ Essa posição determina o que o banco de dados guarda, e o que ele **não** gua
 
 A distinção é a decisão estruturante desta seção. Um modelo que tentasse espelhar o portfólio criaria uma segunda fonte de verdade, com todos os problemas de sincronização que a arquitetura evita justamente ao delegar a execução (ver [Arquitetura.md](Arquitetura.md), seção 1).
 
-### Atores e entidades do negócio
+### 4.1.1 Atores e entidades do negócio
 
 - **Usuário** — colaborador autenticado no Entra ID, caracterizado por um perfil corporativo (`DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`) e por um conjunto de permissões administrativas (`VER_INTENCOES`, `GERIR_ROTINAS`). Perfil e permissões derivam de *claims* de grupo do Entra ID; o registro local é uma projeção, e não a fonte de verdade.
 - **Conversa** — sessão de diálogo na identidade do middleware, que agrupa as mensagens de um mesmo contexto e guarda a correspondência com a sessão do Direct Line.
@@ -1853,7 +1837,7 @@ A distinção é a decisão estruturante desta seção. Um modelo que tentasse e
 - **Rotina** — solicitação em linguagem natural agendada para execução automática sob a identidade do seu dono.
 - **Execução de rotina** — um disparo dessa rotina, com estado e resultado.
 
-### Fluxos principais de dados
+### 4.1.2 Fluxos principais de dados
 
 1. **Identificação e autorização.** O usuário autentica-se pelo Entra ID. O middleware projeta o identificador federado, o perfil e as permissões no registro local e resolve o escopo antes de qualquer processamento.
 2. **Ciclo de mensagem e registro.** Toda entrada por chat, voz ou rotina atravessa o orquestrador em ordem fixa e produz **exatamente uma** linha de `interacao`, vinculada a uma `conversa` e ao usuário, com a intenção classificada, a confiança, o canal e o desfecho.
@@ -1865,11 +1849,11 @@ A distinção é a decisão estruturante desta seção. Um modelo que tentasse e
 O modelo conceitual define as entidades do middleware, seus papéis e as associações que garantem a rastreabilidade das interações e das rotinas.
 
 ![Modelagem conceitual do domínio do middleware](/documentos/imagens/Modelagem%20Conceitual.png)
-*Figura X — Modelagem Conceitual.*
+*Figura 17 — Modelagem Conceitual.*
 
 > **Pendência de artefato.** As três figuras desta seção refletem o modelo de três entidades anterior à revisão de escopo e precisam ser regeradas a partir das tabelas abaixo e do diagrama de classes de 5.8.
 
-### Entidades do domínio
+### 4.2.1 Entidades do domínio
 
 | Entidade | Papel |
 |---|---|
@@ -1880,7 +1864,7 @@ O modelo conceitual define as entidades do middleware, seus papéis e as associa
 | `ROTINA` | Solicitação agendada, com expressão *cron*, fuso horário, dono e intenção prevista. |
 | `EXECUCAO_ROTINA` | Um disparo de rotina, com estado, horários, erro e a interação que produziu. |
 
-### Regras de negócio e cardinalidades
+### 4.2.2 Regras de negócio e cardinalidades
 
 - **`USUARIO` — `CONVERSA` (1:N).** Um usuário mantém zero ou mais conversas; cada conversa pertence a exatamente um usuário e é acessível apenas a ele.
 - **`CONVERSA` — `INTERACAO` (1:N).** Uma conversa agrupa uma ou mais interações, ordenadas no tempo. Toda interação pertence a uma conversa, inclusive as originadas por rotina — nesse caso, a conversa é criada pelo próprio disparo, de modo que o resultado seja consultável como qualquer outro diálogo.
@@ -1895,15 +1879,15 @@ O modelo conceitual define as entidades do middleware, seus papéis e as associa
 O modelo lógico traduz o domínio em estrutura relacional, com chaves, tipos, restrições de integridade e a validação da normalização.
 
 ![Modelagem lógica do middleware](/documentos/imagens/Modelagem%20Lógica.png)
-*Figura X — Modelagem Lógica.*
+*Figura 18 — Modelagem Lógica.*
 
 **Decisão sobre identificadores.** As chaves primárias são `UUID`, e não inteiros sequenciais, acompanhando o diagrama de classes de 5.8. A razão é operacional: identificadores de conversa e de interação aparecem em URLs da interface e em correlação de logs, e um inteiro sequencial nesses lugares revela volume de uso e permite enumeração de registros alheios. O custo — índices maiores e ordenação não cronológica — é irrelevante no volume de um MVP.
 
 **Decisão sobre enumerações.** `perfil`, `canal`, `desfecho` e `status_execucao` são tipos enumerados do próprio PostgreSQL, e não colunas de texto livre. O desfecho é um vocabulário fechado definido no orquestrador (`pipeline/desfechos.py`), e o banco deve recusar um valor que o código não produz. É a mesma razão pela qual o catálogo de intenções é fechado.
 
-### Esquema relacional e dicionário de dados
+### 4.3.1 Esquema relacional e dicionário de dados
 
-#### Tabela: `usuario`
+#### 4.3.1.1 Tabela: `usuario`
 
 Projeção local da identidade federada. Não é a fonte de verdade da autorização: perfil e permissões são resolvidos a cada requisição a partir dos *claims* de grupo do Entra ID, e as colunas abaixo registram o último valor observado, para exibição e para consultas analíticas.
 
@@ -1917,7 +1901,7 @@ Projeção local da identidade federada. Não é a fonte de verdade da autoriza�
 | `criado_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Primeiro acesso registrado. |
 | `visto_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Último acesso, base para a projeção. |
 
-#### Tabela: `usuario_permissao`
+#### 4.3.1.2 Tabela: `usuario_permissao`
 
 Permissões administrativas do usuário. Tabela associativa porque `Permissao` é multivalorada — um usuário pode ter nenhuma, uma ou ambas, e um booleano por permissão exigiria alterar o esquema a cada nova capacidade.
 
@@ -1926,7 +1910,7 @@ Permissões administrativas do usuário. Tabela associativa porque `Permissao` �
 | `usuario_id` | `UUID` | `PK`, `FK (usuario.id)` | Usuário titular. |
 | `permissao` | `permissao` (enum) | `PK` | `VER_INTENCOES` ou `GERIR_ROTINAS`. |
 
-#### Tabela: `conversa`
+#### 4.3.1.3 Tabela: `conversa`
 
 | Coluna | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
@@ -1937,7 +1921,7 @@ Permissões administrativas do usuário. Tabela associativa porque `Permissao` �
 | `arquivada_em` | `TIMESTAMPTZ` | `NULL` | Preenchido quando a conversa sai da lista ativa. |
 | `criada_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Início da sessão. |
 
-#### Tabela: `interacao`
+#### 4.3.1.4 Tabela: `interacao`
 
 Entidade central. Uma linha é gravada em **todos** os desfechos, inclusive nos bloqueios — as tentativas de ataque são o dado mais valioso do recorte de segurança do dashboard.
 
@@ -1959,7 +1943,7 @@ Entidade central. Uma linha é gravada em **todos** os desfechos, inclusive nos 
 
 O campo `canal` parece pequeno e não é: é ele que permite ao dashboard separar voz de texto de rotina, e é ele que torna cada disparo agendado rastreável até a mensagem que gerou. Sem ele, uma execução de rotina fica indistinguível de alguém digitando.
 
-#### Tabela: `intencao_catalogo`
+#### 4.3.1.5 Tabela: `intencao_catalogo`
 
 | Coluna | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
@@ -1971,7 +1955,7 @@ O campo `canal` parece pequeno e não é: é ele que permite ao dashboard separa
 | `eh_fora_de_escopo` | `BOOLEAN` | `NOT NULL`, `DEFAULT FALSE` | Marca a classe negativa. |
 | `versao_atualizada_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Última revisão do catálogo. |
 
-#### Tabela: `rotina`
+#### 4.3.1.6 Tabela: `rotina`
 
 | Coluna | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
@@ -1987,7 +1971,7 @@ O campo `canal` parece pequeno e não é: é ele que permite ao dashboard separa
 
 O `timezone` é coluna da rotina, e não constante do sistema. "Todo dia 5 às 8h" significa 8h em `America/Sao_Paulo`; uma expressão *cron* interpretada em UTC dispara na hora errada durante metade do ano.
 
-#### Tabela: `execucao_rotina`
+#### 4.3.1.7 Tabela: `execucao_rotina`
 
 | Coluna | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
@@ -1999,11 +1983,11 @@ O `timezone` é coluna da rotina, e não constante do sistema. "Todo dia 5 às 8
 | `interacao_id` | `UUID` | `FK (interacao.id)`, `NULL` | Interação gerada; nula quando a falha antecedeu o pipeline. |
 | `erro` | `TEXT` | `NULL` | Mensagem de falha, quando houver. |
 
-#### Tabelas do agendador
+#### 4.3.1.8 Tabelas do agendador
 
 O APScheduler mantém o estado dos *jobs* no mesmo banco, por meio do seu *jobstore* SQLAlchemy. Essas tabelas são criadas e mantidas pela própria biblioteca, não são modeladas pela equipe e não devem ser alteradas por migração própria. Ficam registradas aqui porque compartilham o banco e entram no dimensionamento e no *backup*.
 
-### Integridade referencial e restrições
+### 4.3.2 Integridade referencial e restrições
 
 - **Unicidade de identidade.** `usuario.entra_object_id` e `usuario.email` são únicos, impedindo duplicação do mesmo colaborador.
 - **`interacao` → `usuario` e `conversa` (`ON DELETE RESTRICT`).** O registro de auditoria não pode ser removido por efeito colateral da exclusão de um usuário ou de uma conversa. Preservar a trilha prevalece sobre a conveniência da limpeza.
@@ -2013,7 +1997,7 @@ O APScheduler mantém o estado dos *jobs* no mesmo banco, por meio do seu *jobst
 - **`interacao.rotina_id`** é obrigatório quando `canal = 'ROTINA'` e nulo nos demais casos, garantido por `CHECK`.
 - **`interacao.confianca`** é restrita ao intervalo `[0, 1]` por `CHECK`, e `intencao_catalogo.limiar_confianca` também.
 
-### Justificativa de normalização (3FN)
+### 4.3.3 Justificativa de normalização (3FN)
 
 1. **Primeira Forma Normal.** Todos os atributos são atômicos. O caso que exigiria atenção — as permissões, naturalmente multivaloradas — foi resolvido pela tabela associativa `usuario_permissao`, em vez de uma coluna de lista ou de um conjunto de booleanos.
 2. **Segunda Forma Normal.** Todas as chaves primárias são simples, exceto a de `usuario_permissao`, que é composta por `(usuario_id, permissao)` e não possui atributos não-chave. Logo, não há dependência parcial em nenhuma tabela.
@@ -2026,9 +2010,9 @@ O APScheduler mantém o estado dos *jobs* no mesmo banco, por meio do seu *jobst
 O modelo físico implementa o esquema para **PostgreSQL 16**, com os tipos enumerados, as restrições de integridade e os índices que sustentam o histórico e as agregações do dashboard.
 
 ![Modelagem física do middleware](/documentos/imagens/Modelagem%20Física.png)
-*Figura X — Modelagem Física.*
+*Figura 19 — Modelagem Física.*
 
-### Script DDL
+### 4.4.1 Script DDL
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";  -- gen_random_uuid()
@@ -2189,7 +2173,7 @@ CREATE INDEX idx_rotina_dono     ON rotina (dono_id) WHERE ativa;
 CREATE INDEX idx_execucao_rotina ON execucao_rotina (rotina_id, iniciada_em DESC);
 ```
 
-### Decisões técnicas de implementação
+### 4.4.2 Decisões técnicas de implementação
 
 - **`TIMESTAMPTZ` em todas as colunas temporais.** Grava o instante absoluto, independentemente do fuso da sessão. É o que permite ao agendador respeitar `America/Sao_Paulo` sem que os registros fiquem ambíguos no horário de verão, e o que torna comparável a latência medida em máquinas distintas.
 - **Índices derivados dos recortes, não do palpite.** Cada índice acima corresponde a uma consulta nomeada em [Arquitetura.md](Arquitetura.md), seção 5. O índice parcial sobre `RECUSADA_FORA_ESCOPO` serve especificamente ao agrupamento que alimenta o backlog de novas intenções — a consulta que sustenta a evolução do catálogo.
@@ -2197,7 +2181,6 @@ CREATE INDEX idx_execucao_rotina ON execucao_rotina (rotina_id, iniciada_em DESC
 - **Sem vista materializada nesta etapa.** Para o volume esperado de um MVP, a agregação em SQL sobre `interacao` é suficiente. Materializar antes de medir seria otimização especulativa, com custo de atualização e de invalidação.
 - **Cifra em repouso e retenção (RNF07).** Sem a camada de mascaramento removida na revisão de escopo, `interacao.prompt` guarda o texto do usuário em claro, inclusive o das tentativas de ataque. Duas medidas são parte do esquema, e não recomendações: a cifra em repouso é habilitada no nível da instância PostgreSQL, e o expurgo das interações além do prazo de retenção é executado como tarefa periódica do próprio agendador. O risco correspondente é o R13, registrado na seção 2.6.
 - **Migrações versionadas.** O esquema evolui por Alembic. Como o modelo passou a mudar em várias frentes ao mesmo tempo, versionar é o que permite reverter uma alteração sem recriar o banco.
-
 
 # 5. Solução Técnica
 
@@ -2252,7 +2235,7 @@ Serviços homologados no tenant do parceiro que recebem requisições validadas 
 ### 5.1.4 Confiabilidade e Escalabilidade
 
 - **Containerização e Isolamento de Serviços:** Toda a pilha de desenvolvimento e produção é isolada em contêineres gerenciados por `Dockerfile` e `docker-compose.yml`, separando `web` (Nginx), `middleware` (FastAPI), `worker` (APScheduler) e `db` (PostgreSQL). A separação do `worker` mantém a API *stateless*, viabilizando escalabilidade horizontal sem duplicação de rotinas agendadas.
-- **Confiabilidade por Defesa em Profundidade e Perímetro Seguro:** 
+- **Confiabilidade por Defesa em Profundidade e Perímetro Seguro:**
   - Pipeline executado em ordem estrita invariável (`Sessão → Injeção → Abuso → Intenção → Execução → Saída → Registro`).
   - Mitigação de injeção indireta via inspeção da saída gerada a partir de documentos.
   - Perímetro de serviços externos declarado e verificável por inspeção de configuração (3.3.1.1): Entra ID e Copilot Studio residem no tenant homologado do parceiro; Content Safety e Speech foram provisionados no tenant da equipe, exposição registrada como risco R12 e contida no MVP pelo uso exclusivo de dados sintéticos.
@@ -2431,7 +2414,7 @@ flowchart TB
     CLIENT -.->|Evolução: API Rest / Dataverse| P2["Dynamics 365 Project Operations / Novo ERP"]
 ```
 
-1. **Ponto Único de Acoplamento:** O módulo `copilot/client.py` é o **único** ponto do middleware que conhece a API Direct Line e o Copilot Studio. 
+1. **Ponto Único de Acoplamento:** O módulo `copilot/client.py` é o **único** ponto do middleware que conhece a API Direct Line e o Copilot Studio.
 2. **Preservação dos Ativos de PLN e Segurança:** Se a plataforma de portfólio mudar:
    - Todo o frontend, guardas de injeção/abuso, banco de dados, motor de agendamento de rotinas e o classificador de intenções permanecem **100% inalterados**.
    - Apenas o cliente executor (`client.py`) e a tabela de mapeamento de contratos (`copilot/topicos.md`) são reescritos para dialogar com a nova API do ERP/Dynamics.
@@ -2449,9 +2432,8 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 <div align="center">
   <img src="imagens/diagrama_componentes.png" width="85%" alt="Diagrama de Componentes UML">
   <br>
-  <sub>Figura X — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
+  <sub>Figura 20 — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
 </div>
-
 
 ---
 
@@ -2634,7 +2616,7 @@ flowchart TB
   class SAFE,SPEECH extEquipe;
 ```
 
-*Figura X — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
+*Figura 21 — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
 Fonte: Material produzido pelos autores (2026).
 
 #### 5.2.3.1 Responsabilidades dos componentes
@@ -2791,7 +2773,7 @@ Os cenários de análise comparativa (RF07) e de geração de prévias de relat�
 <div align="center">
   <img src="imagens/ds01-classificacao-intencao.png" width="95%" alt="Diagrama de sequência DS01: o usuário envia uma solicitação pelo canal Teams ou web; o Copilot Studio autentica o usuário no Entra ID e chama a API de PLN, que pré-processa o enunciado, classifica a intenção, rotula o tipo, extrai e normaliza entidades; conforme a confiança e a aderência ao catálogo, o fluxo segue para o roteamento, para um pedido de reformulação ou para uma recusa orientativa, sempre com registro na trilha de auditoria">
   <br>
-  <sub>Figura X — DS01: classificação de intenção e controle de escopo.</sub>
+  <sub>Figura 22 — DS01: classificação de intenção e controle de escopo.</sub>
 </div>
 
 <details>
@@ -2886,7 +2868,7 @@ O registro na trilha de auditoria (23) está **fora** do fragmento `alt`, e essa
 <div align="center">
   <img src="imagens/ds02-consulta-status.png" width="95%" alt="Diagrama de sequência DS02: após a classificação da intenção referenciada de DS01, o Copilot Studio verifica se o projeto está no escopo autorizado do perfil; se não estiver, recusa sem revelar a existência do projeto; se estiver, o Power Automate consulta as listas do SharePoint, a API de PLN realiza busca semântica nos documentos quando necessário e compõe a resposta com referência de origem">
   <br>
-  <sub>Figura X — DS02: consulta de status de projeto.</sub>
+  <sub>Figura 23 — DS02: consulta de status de projeto.</sub>
 </div>
 
 <details>
@@ -2976,7 +2958,7 @@ sequenceDiagram
 <div align="center">
   <img src="imagens/ds03-atualizacao-avanco.png" width="95%" alt="Diagrama de sequência DS03: após a classificação referenciada de DS01, o Copilot Studio verifica a permissão de escrita do perfil; completa os parâmetros ausentes em ciclo de perguntas; lê o valor atual no SharePoint via Power Automate; apresenta a prévia da alteração ao usuário e só efetiva a gravação após confirmação explícita, registrando origem, autoria e momento, com tratamento de falha de gravação e de cancelamento pelo usuário">
   <br>
-  <sub>Figura X — DS03: atualização de avanço com confirmação do usuário.</sub>
+  <sub>Figura 24 — DS03: atualização de avanço com confirmação do usuário.</sub>
 </div>
 
 <details>
@@ -3092,7 +3074,7 @@ sequenceDiagram
 <div align="center">
   <img src="imagens/ds04-alerta-proativo.png" width="95%" alt="Diagrama de sequência DS04: um fluxo agendado do Power Automate varre as listas do SharePoint, aplica as regras de pendência projeto a projeto e, ao identificar uma pendência, aciona o Copilot Studio para compor a mensagem e entrega a notificação ao responsável pelo canal; caso o usuário responda ao alerta, a atualização segue o fluxo transacional de DS03">
   <br>
-  <sub>Figura X — DS04: alerta proativo de pendência, iniciado pelo sistema.</sub>
+  <sub>Figura 25 — DS04: alerta proativo de pendência, iniciado pelo sistema.</sub>
 </div>
 
 <details>
@@ -3172,13 +3154,13 @@ Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revi
 - **Cobertura da trilha de auditoria.** A modelagem dinâmica evidenciou uma lacuna do mapeamento de integrações: a ficha INT-10 prevê o registro de consultas, intenções classificadas, recusas e alterações efetivadas, mas não de alertas proativos, e a rastreabilidade de 5.5.6 associa o RF06 apenas a INT-03 e INT-07. Por coerência, DS04 não registra o alerta emitido. Recomenda-se ampliar o escopo de INT-10 para cobrir as notificações do RF06, de modo que a atuação proativa também seja auditável.
 - **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
 
-### 5.3.8 Diagramas de Sequência de Casos Críticos - Sprint 2
+### 5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2
 
 Os diagramas desta subseção apresentam a versão atual da modelagem dinâmica do middleware na Sprint 2. Eles detalham cinco casos críticos que atravessam as guardas de segurança, o classificador de intenções, a integração com o Copilot Studio, a persistência das interações e a execução de rotinas agendadas.
 
 Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriormente em 5.3. Os diagramas anteriores permanecem como histórico da modelagem e enfatizam os fluxos de negócio do agente; os cenários atuais partem da implementação do repositório, incluindo a API FastAPI, o cliente do Copilot Studio, o Azure AI Content Safety e as camadas de persistência. O código-fonte Mermaid é mantido neste documento para permitir revisão e evolução do artefato.
 
-#### 5.3.8.1 Cenário 1 - Mensagem bloqueada pela guarda de injeção
+#### 5.3.8.1 Cenário 1 — Mensagem bloqueada pela guarda de injeção
 
 ```mermaid
 sequenceDiagram
@@ -3212,7 +3194,7 @@ sequenceDiagram
   WEB-->>U: Exibe recusa sem expor regras internas
 ```
 
-#### 5.3.8.2 Cenário 2 - Fluxo completo de sucesso (chat)
+#### 5.3.8.2 Cenário 2 — Fluxo completo de sucesso (chat)
 
 ```mermaid
 sequenceDiagram
@@ -3263,7 +3245,7 @@ sequenceDiagram
   WEB-->>U: Renderiza resposta contextualizada e fontes
 ```
 
-#### 5.3.8.3 Cenário 3 - Mensagem bloqueada pela guarda de abuso
+#### 5.3.8.3 Cenário 3 — Mensagem bloqueada pela guarda de abuso
 
 ```mermaid
 sequenceDiagram
@@ -3305,7 +3287,7 @@ sequenceDiagram
   deactivate ORQ
 ```
 
-#### 5.3.8.4 Cenário 4 - Guarda de saída bloqueia injeção indireta
+#### 5.3.8.4 Cenário 4 — Guarda de saída bloqueia injeção indireta
 
 ```mermaid
 sequenceDiagram
@@ -3348,7 +3330,7 @@ sequenceDiagram
   API-->>U: Exibe recusa padrão sem executar comando injetado
 ```
 
-#### 5.3.8.5 Cenário 5 - Disparo de rotina agendada
+#### 5.3.8.5 Cenário 5 — Disparo de rotina agendada
 
 ```mermaid
 sequenceDiagram
@@ -3670,7 +3652,7 @@ A arquitetura de integração organiza-se em seis camadas. Diferentemente da ver
 <div align="center">
   <img src="imagens/integracoes-microsoft.png" width="70%" alt="Diagrama das integrações entre a solução e o ecossistema Microsoft do Metrô de São Paulo, organizado em camadas de canal, orquestração e segurança, execução, automação, fontes de dados e identidade">
   <br>
-  <sub>Figura X — Visão das integrações entre a solução e os serviços externos.</sub>
+  <sub>Figura 26 — Visão das integrações entre a solução e os serviços externos.</sub>
 </div>
 
 > **Pendência de artefato.** A figura reflete a topologia anterior, em que o Copilot Studio ocupava a camada de orquestração. Precisa ser regerada conforme a tabela de camadas acima e o quadro-resumo de 5.5.5.1.
@@ -3816,6 +3798,17 @@ A coluna de tenant materializa o perímetro declarado no RNF01 (3.3.1.1): Conten
 | **Pré-requisitos** | Modelos oficiais dos relatórios e da apresentação mensal |
 | **Tratamento no MVP** | Parcial. RF08 está classificado como desejável (3.2.1) |
 
+##### INT-10 — Registro das interações
+
+| Campo | Conteúdo |
+|---|---|
+| **Propósito** | Persistir uma linha por solicitação processada, qualquer que seja o desfecho, sustentando a rastreabilidade (RNF02) e a análise de intenções (RF10) |
+| **Direção** | Interna |
+| **Mecanismo** | Persistência em PostgreSQL conforme o modelo da seção 4, escrita pelo orquestrador como última etapa do pipeline |
+| **Dados trafegados** | Prompt, resposta, intenção, confiança, perfil, canal, desfecho, latência e vínculo com a rotina de origem |
+| **Pré-requisitos** | Política de retenção definida e cifra em repouso habilitada (RNF07) |
+| **Tratamento no MVP** | Integral. Diferentemente da versão anterior, o escopo **inclui os disparos agendados**, por meio do campo `canal` — lacuna que havia sido apontada em 5.3.7 e que o modelo de dados atual fecha. O cuidado registrado anteriormente permanece e ganhou requisito próprio: o log não pode se tornar, ele mesmo, um repositório de conteúdo desprotegido |
+
 ##### INT-11 — Avaliação de conteúdo
 
 | Campo | Conteúdo |
@@ -3837,17 +3830,6 @@ A coluna de tenant materializa o perímetro declarado no RNF01 (3.3.1.1): Conten
 | **Dados trafegados** | Áudio do usuário e texto transcrito |
 | **Pré-requisitos** | Recurso provisionado, região definida conforme 5.7.2.6 e glossário de domínio consolidado. **Provisionado no tenant da equipe** |
 | **Tratamento no MVP** | Integral. O áudio recebido pela ingestão é descartado após a transcrição, conforme a política de retenção de 5.7.1.5 |
-
-##### INT-10 — Registro das interações
-
-| Campo | Conteúdo |
-|---|---|
-| **Propósito** | Persistir uma linha por solicitação processada, qualquer que seja o desfecho, sustentando a rastreabilidade (RNF02) e a análise de intenções (RF10) |
-| **Direção** | Interna |
-| **Mecanismo** | Persistência em PostgreSQL conforme o modelo da seção 4, escrita pelo orquestrador como última etapa do pipeline |
-| **Dados trafegados** | Prompt, resposta, intenção, confiança, perfil, canal, desfecho, latência e vínculo com a rotina de origem |
-| **Pré-requisitos** | Política de retenção definida e cifra em repouso habilitada (RNF07) |
-| **Tratamento no MVP** | Integral. Diferentemente da versão anterior, o escopo **inclui os disparos agendados**, por meio do campo `canal` — lacuna que havia sido apontada em 5.3.7 e que o modelo de dados atual fecha. O cuidado registrado anteriormente permanece e ganhou requisito próprio: o log não pode se tornar, ele mesmo, um repositório de conteúdo desprotegido |
 
 ### 5.5.6 Rastreabilidade: requisitos funcionais × integrações
 
@@ -3915,7 +3897,6 @@ O TAPI estabelece como premissa que a plataforma de portfólio pode ser modifica
 | Q10 | Content Safety e Speech precisam ser reprovisionados no tenant do parceiro antes de qualquer uso com dado real? | Determina o esforço de migração no handover e a validade do perímetro declarado em 3.3.1.1 | INT-11, INT-12 |
 
 A questão anterior sobre políticas de DLP e conectores personalizados foi encerrada pela inversão da arquitetura: não há mais conector personalizado apontando do Copilot para um endpoint externo, porque o Copilot deixou de chamar a solução. Em seu lugar entra Q02, sobre a habilitação do Direct Line, e Q10, sobre a alocação de tenant dos serviços de IA.
-
 
 ## 5.6 Visão preliminar da arquitetura em blocos conectados
 
@@ -4050,7 +4031,7 @@ flowchart TB
     class F1,F2,F3,F4,F5 base
 ```
 
-*Figura X — Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
+*Figura 27 — Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
 
 A correspondência com a Figura 01 do TAPI é direta: a camada 3 equivale à caixa "Processo PLN", as camadas 4 e 5 equivalem ao núcleo de transação, consulta, alertas e IA, e a camada 6 equivale ao bloco "Portfólio de Projetos". No MVP, a camada 6 é atendida por dados sintéticos, e o bloco F5 permanece previsto como evolução do tipo "Ir Além".
 
@@ -4763,7 +4744,7 @@ classDiagram
     OrquestradorPipeline ..> Interacao : 6. persiste auditoria
 ```
 
-*Figura X — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
+*Figura 28 — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
 
 ### 5.8.1 Classes e responsabilidades
 
@@ -4822,7 +4803,6 @@ O modelo complementa, e não substitui, o diagrama de componentes da seção 5.2
 - **Políticas.** As categorias de abuso, regras de injeção e critérios da guarda de saída são abstraídos como operações. Seus catálogos, limiares e versões devem ser governados fora do diagrama e registrados para auditoria.
 - **Evolução do catálogo.** `IntencaoCatalogo` admite versionamento e limiar próprio, mas o modelo ainda não define histórico de versões, aprovação ou publicação. Esses pontos dependem da governança do catálogo descrita em 5.4.9.
 
-
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
 ## 6.1 Diagrama de Implantação da UML
@@ -4865,7 +4845,7 @@ flowchart TB
     NAV -.->|"áudio"| SPEECH
 ```
 
-*Figura X — Diagrama de implantação da solução.*
+*Figura 29 — Diagrama de implantação da solução.*
 
 Dois pontos do diagrama merecem leitura atenta.
 
@@ -5022,25 +5002,27 @@ O modelo priorizado é o **Consumption** do Azure Container Apps, cujo custo dep
 
 A estimativa quantitativa mensal deve considerar a região, o dimensionamento e esses três itens. Deve ser criado orçamento no Azure Cost Management, com limite e alerta, e a evidência registrada sem expor dados pessoais ou financeiros desnecessários. O risco **R10** acompanha esse item.
 
-
 # 7. Prototipação Exploratória
+
 Esta seção apresenta a prototipação exploratória realizada para investigar alternativas de interação e identificar lacunas, ambiguidades e impactos das diferentes propostas de solução.
 
 ## 7.1 Questão de Projeto
 
 ### 7.1.1 Enunciado da questão
+
 O agente deve viver exclusivamente dentro dos canais digitais que a equipe já utiliza (Teams / Copilot Studio), confinado a interações que o usuário escolhe abrir, ou deve ter presença física e ambiente no espaço de trabalho, manifestando-se por conta própria independentemente de o usuário estar com algum aplicativo aberto?
 
 ### 7.1.2 Justificativa
+
 O TAPI define o Copilot Studio e o Teams como plataforma de orquestração (3.1.3), mas não define se o agente deve ser algo que o usuário *procura* ou algo que *o procura*. A seção 2.8.3 já identifica um problema de descoberta e aprendizagem no canal puramente conversacional, e o RF06 exige proatividade - mas proatividade dentro de um app fechado é diferente de proatividade que ocupa o espaço físico do escritório. Essa tensão entre presença opcional e presença ambiente nunca foi resolvida nos artefatos do parceiro, e muda diretamente como as três personas percebem o agente: como ferramenta ou como colega presente.
 
 ## 7.2 Alternativas Divergentes
 
-### 7.2.1 Alternativa A - descrição
+### 7.2.1 Alternativa A — descrição
 
 O agente existe como um bot dentro do Teams, no mesmo ambiente onde o PMO já trabalha (SharePoint, Power BI, Outlook). Toda interação é iniciada pelo usuário abrindo uma conversa, ou recebida como uma notificação padrão do Teams, que o usuário pode silenciar, adiar ou ignorar como qualquer outra mensagem. A presença do agente é indistinguível, em termos de interação, de qualquer outro colega ou bot corporativo — ele "mora" dentro da caixa de ferramentas já existente.
 
-### 7.2.2 Alternativa B - descrição
+### 7.2.2 Alternativa B — descrição
 
 O agente ganha uma presença física por meio de um crachá utilizado pelos funcionários. O objeto reage por luz, vibração ou som curto quando existe algo que exige atenção, como uma pendência, um marco em risco ou um alerta de conformidade. O crachá não substitui a conversa em linguagem natural, que ainda pode ocorrer por voz ao se aproximar ou tocar o dispositivo. Sua função é tornar o alerta presente no ambiente físico, antes mesmo de qualquer interação verbal.
 
@@ -5099,7 +5081,7 @@ Neste desenho, o botão não serve para resolver a pendência diretamente. Ele f
 
 ## 7.4 Diário de Construção
 
-### 7.4.1 Diário - Protótipo A
+### 7.4.1 Diário — Protótipo A
 
 > Ao montar o cartão adaptável de pendência, percebemos que não havíamos decidido se o botão de ação deveria dizer "Atualizar agora" (levando direto à entrevista guiada) ou "Ver detalhes" (abrindo antes um resumo) — o TAPI não especifica isso, e tivemos que escolher no momento pela opção mais direta, mesmo sem validar com o parceiro.
 >
@@ -5107,8 +5089,7 @@ Neste desenho, o botão não serve para resolver a pendência diretamente. Ele f
 >
 > Uma impossibilidade do formato: o mockup estático não deixa claro se a notificação "empurra" o usuário para fora do que ele estava fazendo (como uma chamada) ou se fica silenciosamente na lista — isso só seria testável com o bot rodando de verdade dentro do Teams real, algo fora do alcance deste protótipo.
 
-
-### 7.4.2 Diário - Protótipo B
+### 7.4.2 Diário — Protótipo B
 
 > Ao montar o crachá físico, a primeira decisão necessária foi definir se o alerta deveria piscar continuamente até a resolução da pendência ou emitir apenas um sinal e depois permanecer apagado. O alerta contínuo seria mais eficaz para a cobrança, mas também mais constrangedor. Para viabilizar a observação da reação das pessoas durante a simulação, foi adotado provisoriamente o sinal contínuo, sem considerar essa escolha uma decisão definitiva do produto.
 >
@@ -5118,7 +5099,7 @@ Neste desenho, o botão não serve para resolver a pendência diretamente. Ele f
 
 ## 7.5 Execução dos Protótipos
 
-### 7.5.1 Execução - Protótipo A
+### 7.5.1 Execução — Protótipo A
 
 O protótipo A foi executado como um mockup interativo que simula o fluxo conversacional proativo do agente Prata dentro do Microsoft Teams. A figura a seguir apresenta o storyboard completo do fluxo, composto por cinco frames que representam a jornada desde a notificação inicial até o ponto de ruptura.
 
@@ -5130,7 +5111,7 @@ Gerado com apoio de inteligência artificial, o protótipo tem caráter explorat
 
 ![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](../documentos/imagens/storyboard-fluxo-prata.png)
 
-*Figura - Storyboard do fluxo de chat do Prata AI Agent.*
+*Figura 30 — Storyboard do fluxo de chat do Prata AI Agent.*
 
 </div>
 
@@ -5142,7 +5123,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 1 — Notificação proativa do agente Prata sobre atraso no marco "Entrega da Fase 2" do Projeto X, com opções para "Ver detalhes" ou "Ignorar".](../documentos/imagens/tela-1-notificacao.png)
 
-*Figura - Tela de notificação proativa do agente Prata.*
+*Figura 31 — Tela de notificação proativa do agente Prata.*
 
 </div>
 
@@ -5152,7 +5133,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 2 — Mensagem inicial do agente informando que o marco "Entrega da Fase 2" está atrasado, oferecendo botões "Contar o motivo" e "Ver histórico".](../documentos/imagens/tela-2-mensagem-inicial.png)
 
-*Figura - Mensagem inicial do agente sobre o atraso.*
+*Figura 32 — Mensagem inicial do agente sobre o atraso.*
 
 </div>
 
@@ -5162,7 +5143,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 3 - Resposta da usuária informando o motivo do atraso e confirmação do agente perguntando se deve registrar e notificar o responsável.](../documentos/imagens/tela-3-resposta-usuaria.png)
 
-*Figura - Resposta da usuária e confirmação do agente.*
+*Figura 33 — Resposta da usuária e confirmação do agente.*
 
 </div>
 
@@ -5172,7 +5153,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 4 - Cartão adaptável de confirmação mostrando a pendência atualizada com marco, motivo registrado e notificação enviada ao Roberto.](../documentos/imagens/tela-4-cartao-confirmacao.png)
 
-*Figura - Cartão adaptável de confirmação da pendência atualizada.*
+*Figura 34 — Cartão adaptável de confirmação da pendência atualizada.*
 
 </div>
 
@@ -5182,7 +5163,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 5 — Ponto de ruptura: a usuária tenta mudar de assunto perguntando sobre o Projeto Y enquanto a conversa sobre o Projeto X ainda está ativa.](../documentos/imagens/tela-5-ponto-ruptura.png)
 
-*Figura - Ponto de ruptura: mudança de assunto durante a conversa.*
+*Figura 35 — Ponto de ruptura: mudança de assunto durante a conversa.*
 
 </div>
 
@@ -5192,11 +5173,11 @@ A tela a seguir ilustra como essa lacuna se manifestaria em uma interface real: 
 
 ![Tela 5b — Tela de fluxo não mapeado com anotação de UX indicando lacuna no comportamento do agente para mudanças de assunto fora do escopo planejado.](../documentos/imagens/tela-5b-fluxo-nao-mapeado.png)
 
-*Figura - Tela de fluxo não mapeado identificada durante a execução do protótipo.*
+*Figura 36 — Tela de fluxo não mapeado identificada durante a execução do protótipo.*
 
 </div>
 
-### 7.5.2 Execução - Protótipo B
+### 7.5.2 Execução — Protótipo B
 
 O Protótipo B representa uma interação por voz com o agente Prata por meio de um crachá físico. O roteiro de demonstração ocorre em um escritório, durante uma conversa em uma mesa de reunião, e envolve três personagens: Fernanda, que utiliza o crachá, Carlos e Roberto. A gravação é organizada em quatro cenas, desde a sinalização silenciosa da pendência até a confirmação de uma atualização solicitada em linguagem natural.
 
@@ -5278,7 +5259,7 @@ Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o
 
 ## 7.8 Documentação Visual
 
-### 7.8.1 Registro visual - Protótipo A
+### 7.8.1 Registro visual — Protótipo A
 
 As imagens a seguir compõem o registro visual completo do Protótipo A. Todas as telas foram criadas como mockups de alta fidelidade simulando a interface do agente Prata dentro do Microsoft Teams.
 
@@ -5286,7 +5267,7 @@ O registro fotográfico abaixo foi realizado durante o teste inicial com testers
 
 ![Registro fotográfico bruto do Protótipo A em uso durante o teste inicial de usabilidade com colegas do Inteli.](../documentos/imagens/prototipoa.jpeg)
 
-*Figura - Protótipo A apresentado a testers externos durante o teste inicial de usabilidade.*
+*Figura 37 — Protótipo A apresentado a testers externos durante o teste inicial de usabilidade.*
 
 | Arquivo | Descrição |
 |---|---|
@@ -5298,7 +5279,6 @@ O registro fotográfico abaixo foi realizado durante o teste inicial com testers
 | `tela-5-ponto-ruptura.png` | Ponto de ruptura: tentativa de mudança de assunto durante a conversa |
 | `tela-5b-fluxo-nao-mapeado.png` | Tela de fluxo não mapeado com anotação de UX sobre lacuna no RF03 |
 
-
 ### 7.8.2 Registro visual — Protótipo B
 
 O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecimento por toque, a interação por voz e a solicitação de confirmação antes do registro de uma atualização. A imagem conceitual a seguir foi utilizada como referência para definir os personagens, o contexto de escritório e os elementos visuais do crachá apresentados no vídeo.
@@ -5307,13 +5287,13 @@ Além do registro audiovisual, a fotografia a seguir documenta o protótipo fís
 
 ![Registro fotográfico bruto do Protótipo B, representado pelo crachá físico, durante o teste inicial de usabilidade com colegas do Inteli.](../documentos/imagens/prototipob.jpeg)
 
-*Figura - Protótipo B físico apresentado a testers externos durante o teste inicial de usabilidade.*
+*Figura 38 — Protótipo B físico apresentado a testers externos durante o teste inicial de usabilidade.*
 
 <div align="center">
 
 ![Representação conceitual dos personagens e do crachá inteligente utilizados na simulação do Protótipo B.](../documentos/imagens/personagens-video.png)
 
-*Figura — Representação conceitual gerada por IA utilizada como referência visual para o vídeo do Protótipo B. A imagem não representa um dispositivo funcional.*
+*Figura 39 — Representação conceitual gerada por IA utilizada como referência visual para o vídeo do Protótipo B. A imagem não representa um dispositivo funcional.*
 
 </div>
 
@@ -5344,7 +5324,7 @@ Na versão desktop, a barra lateral permanece visível e concentra a criação d
 
 ![Wireframe desktop da página principal](./imagens/wireframe-principal-desktop.png)
 
-*Figura - Wireframe desktop da página principal do Prata Agent.*
+*Figura 40 — Wireframe desktop da página principal do Prata Agent.*
 
 ### 8.1.2 Wireframe Mobile
 
@@ -5352,7 +5332,7 @@ Na versão mobile, a barra lateral persistente é substituída por um botão de 
 
 ![Wireframe mobile da página principal](./imagens/wireframe-principal-mobile.png)
 
-*Figura - Wireframe mobile da página principal do Prata Agent.*
+*Figura 41 — Wireframe mobile da página principal do Prata Agent.*
 
 ### 8.1.3 Wireframe Desktop da Página de Rotinas
 
@@ -5360,7 +5340,7 @@ O wireframe desktop da página de Rotinas preserva a barra lateral e o cabeçalh
 
 ![Wireframe desktop da página de Rotinas](./imagens/wireframe-rotinas-desktop.svg)
 
-*Figura - Wireframe desktop da página de gerenciamento de Rotinas.*
+*Figura 42 — Wireframe desktop da página de gerenciamento de Rotinas.*
 
 ### 8.1.4 Wireframe Mobile da Página de Rotinas
 
@@ -5368,7 +5348,7 @@ No wireframe mobile, a navegação é recolhida e os filtros passam a ocupar lin
 
 ![Wireframe mobile da página de Rotinas](./imagens/wireframe-rotinas-mobile.svg)
 
-*Figura - Wireframe mobile da página de gerenciamento de Rotinas.*
+*Figura 43 — Wireframe mobile da página de gerenciamento de Rotinas.*
 
 ## 8.2 Desenvolvimento de Mockups
 
@@ -5408,7 +5388,7 @@ Antes de salvar, os campos obrigatórios recebem validação local de formato. A
 
 ![Mockup do fluxo de gerenciamento de Rotinas](./imagens/mockup-fluxo-rotinas.svg)
 
-*Figura - Board dos estados de listagem, formulário, validação, exclusão, sucesso e estado vazio da página de Rotinas.*
+*Figura 44 — Board dos estados de listagem, formulário, validação, exclusão, sucesso e estado vazio da página de Rotinas.*
 
 Os estados de feedback previstos são:
 
@@ -5478,7 +5458,7 @@ A estratégia de entrega adota um modelo iterativo e incremental, organizado em 
 
 As ondas seguem a ordem de dependência técnica, não de importância funcional. Cada onda produz um incremento verificável que pode ser demonstrado e testado.
 
-#### Onda 1: Fundação (Sprint 3)
+#### 9.1.2.1 Onda 1: Fundação (Sprint 3)
 
 **Objetivo:** Estabelecer a base técnica que permitirá login, conversação básica e registro de interações.
 
@@ -5505,7 +5485,7 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 - Problemas de CORS ou cookie entre frontend e backend
 - Schema do banco não suportando o fluxo completo
 
-#### Onda 2: Guardas (Sprint 3 - continuação / Sprint 4)
+#### 9.1.2.2 Onda 2: Guardas (Sprint 3 — continuação / Sprint 4)
 
 **Objetivo:** Implementar as barreiras de segurança contra injeção e prompts maliciosos.
 
@@ -5534,7 +5514,7 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 - Uso indevido do agente por usuários autenticados
 - Injeção indireta via documentos do SharePoint
 
-#### Onda 3: Intenções (Sprint 4)
+#### 9.1.2.3 Onda 3: Intenções (Sprint 4)
 
 **Objetivo:** Integrar o classificador de intenções já treinado ao pipeline.
 
@@ -5563,7 +5543,7 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 - Limiares muito altos/altos causando excesso de recusas
 - Catálogo de intenções desatualizado com uso real
 
-#### Onda 4: Análise (Sprint 4 - continuação / Sprint 5)
+#### 9.1.2.4 Onda 4: Análise (Sprint 4 — continuação / Sprint 5)
 
 **Objetivo:** Implementar o dashboard de análise de intenções.
 
@@ -5592,7 +5572,7 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 - Permissões não sendo respeitadas no frontend
 - Dashboard não gerar insights acionáveis
 
-#### Onda 5: Rotinas (Sprint 5)
+#### 9.1.2.5 Onda 5: Rotinas (Sprint 5)
 
 **Objetivo:** Implementar o sistema de prompts agendados.
 
@@ -5800,14 +5780,14 @@ Quatro recursos precisam ser provisionados no tenant do parceiro antes do iníci
 
 # Referências
 
-- MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
-- MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
-- MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/
-- MICROSOFT. *Conectar o agente do Copilot Studio a um aplicativo próprio (canal Direct Line)*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/publication-connect-bot-to-custom-application
-- MICROSOFT. *Azure AI Content Safety — detecção de ataques por prompt (Prompt Shields)*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/content-safety/concepts/jailbreak-detection
-- MICROSOFT. *Azure AI Speech — documentação do serviço de fala*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/speech-service/
-- MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
-- MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
 - DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot
 - JURAFSKY, D.; MARTIN, J. H. *Speech and Language Processing*. 3. ed. (rascunho). Cap. 4 (avaliação de classificadores: precisão, recall e F1) e Cap. 16 (reconhecimento automático de fala e *Word Error Rate*). Disponível em: https://web.stanford.edu/~jurafsky/slp3/
+- MICROSOFT. *Azure AI Content Safety — detecção de ataques por prompt (Prompt Shields)*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/content-safety/concepts/jailbreak-detection
+- MICROSOFT. *Azure AI Speech — documentação do serviço de fala*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/speech-service/
+- MICROSOFT. *Conectar o agente do Copilot Studio a um aplicativo próprio (canal Direct Line)*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/publication-connect-bot-to-custom-application
+- MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/
+- MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
+- MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
+- MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
+- MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
 - SCIKIT-LEARN. *Metrics and scoring: quantifying the quality of predictions*. Disponível em: https://scikit-learn.org/stable/modules/model_evaluation.html
