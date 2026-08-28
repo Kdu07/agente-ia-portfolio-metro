@@ -4178,11 +4178,11 @@ A organização da seção acompanha a ordem em que as decisões se condicionam:
 | 5.7.2 | Seleção dos serviços de conversão entre fala e texto |
 | 5.7.3 | API de recebimento de áudios do usuário |
 | 5.7.4 | API de conversão de fala em texto |
-| 5.7.5 | API de conversão de texto em fala — **pendente de redação** |
+| 5.7.5 | API de conversão de texto em fala |
 | 5.7.6 | Corpus de áudio de referência e procedimento de verificação — **pendente de redação** |
 | 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções — **pendente de redação** |
 
-> **Pendência de seção.** As subseções 5.7.5 a 5.7.7 estão previstas nesta organização e são referenciadas ao longo de 5.7.1, 5.7.2 e 5.7.4 — em especial o corpus de áudio de referência que sustenta os indicadores de 3.1.5.2 (5.7.6) —, mas ainda não foram redigidas. Enquanto isso não ocorrer, as metas de WER, de acurácia de termos de domínio e de degradação ponta a ponta permanecem declaradas sem procedimento de verificação escrito.
+> **Pendência de seção.** As subseções 5.7.6 e 5.7.7 estão previstas nesta organização e são referenciadas ao longo de 5.7.1, 5.7.2, 5.7.4 e 5.7.5 — em especial o corpus de áudio de referência que sustenta os indicadores de 3.1.5.2 (5.7.6) —, mas ainda não foram redigidas. Enquanto isso não ocorrer, as metas de WER, de acurácia de termos de domínio e de degradação ponta a ponta permanecem declaradas sem procedimento de verificação escrito.
 
 ### 5.7.1 Topologia do canal de voz
 
@@ -4718,6 +4718,112 @@ O `429` reaproveita o código já existente porque, do ponto de vista da pessoa,
 #### 5.7.4.8 O que esta subseção deixa por verificar
 
 Três afirmações desta subseção são hipóteses fundamentadas, e não observações, e ficam registradas como tais: que a lista de frases opera na interface de transcrição rápida com o mesmo efeito observado no SDK; que os quatro formatos de 5.7.3.6 são aceitos por ela sem conversão, incluído o MP4 do Safari; e que a latência da chamada síncrona cabe no intervalo que a interface de submissão consegue exibir como progresso. As três se resolvem por medição sobre o corpus de referência de 5.7.6, e nenhuma delas se resolve por leitura de documentação.
+
+### 5.7.5 API de conversão de texto em fala
+
+Esta subseção especifica o contrato da conversão de texto em fala e registra o plano de sua implementação. A ordem das duas coisas é deliberada, e a razão precisa ficar explícita logo no início.
+
+O elemento de detalhamento do artefato exige a especificação da API que converte **texto em áudio**, e esta subseção a entrega. Nenhum artefato de desenvolvimento exige que ela seja construída no MVP: a *feature* correspondente, **F80 — Resposta falada**, está classificada como "Ir Além" na seção 2.7.1, com prioridade 2. A subseção, portanto, **especifica sem implementar**, e declara isso em vez de sugerir uma entrega que não ocorrerá. O que ela produz é o contrato que permite implementar sem redecidir — e as decisões que, se ficassem para o momento da implementação, seriam tomadas às pressas.
+
+#### 5.7.5.1 Onde a síntese ocorre
+
+A síntese pode ser executada no servidor, que devolveria o áudio pronto, ou no navegador, que o produziria a partir da credencial temporária de 5.7.4.6. A escolha determina por onde trafegam os bytes de áudio e onde vive a lógica que prepara o texto.
+
+**A síntese ocorre no navegador; a marcação do texto ocorre no servidor.**
+
+A divisão não é de conveniência. A preparação do texto — descrita em 5.7.5.3 — exige conhecer o glossário de domínio e a estrutura da resposta produzida pelo pipeline, e as duas coisas estão no servidor, que acabou de gerar aquela resposta. Duplicar essa lógica no cliente significaria manter dois lugares que precisam concordar sobre como se pronuncia um código de projeto, e eles divergiriam na primeira alteração feita em apenas um deles.
+
+Os bytes de áudio, por sua vez, não têm razão para passar pelo servidor. Uma resposta falada de quatrocentos caracteres produz alguns segundos de áudio; encaminhá-los pelo servidor acrescentaria latência e consumo de banda para transportar um conteúdo que o serviço entrega diretamente ao cliente que o solicitou. A credencial que autoriza essa chamada é a mesma de 5.7.4.6 — o token efêmero vale para reconhecimento e para síntese, o que dispensa um segundo mecanismo.
+
+Como o texto marcado é produzido no servidor e a síntese ocorre no cliente, resta definir **por onde a marcação viaja até o navegador**. A resposta natural é acompanhar a própria resposta de conversação, num campo opcional, mas o contrato daquela resposta não pertence a esta seção. O ponto fica registrado em 5.7.7 como conciliação necessária com o contrato de conversação, e não é decidido aqui para não fixar unilateralmente a forma de um contrato que outra seção governa.
+
+#### 5.7.5.2 A chamada ao serviço
+
+```http
+POST https://{regiao}.tts.speech.microsoft.com/cognitiveservices/v1
+Authorization: Bearer {token efêmero de 5.7.4.6}
+Content-Type: application/ssml+xml
+X-Microsoft-OutputFormat: audio-24khz-48kbitrate-mono-mp3
+```
+
+O corpo é um documento SSML. O formato de saída é MP3 a 24 kHz: comprimido, porque o áudio atravessa a rede até o navegador e não será medido em nenhuma análise que dependa de fidelidade de forma de onda; e a 24 kHz porque é a taxa em que as vozes neurais são produzidas, de modo que pedir menos degrada sem economizar proporcionalmente.
+
+A voz é escolhida entre as vozes neurais de `pt-BR` disponíveis, consultadas pelo endpoint de listagem do serviço, e **fixada na configuração**. Fixá-la não é preciosismo: a voz altera a duração e a prosódia do áudio produzido, e portanto altera o indicador de inteligibilidade descrito em 5.7.5.5. Trocar de voz sem registrar a troca invalidaria a comparação entre medições, pelo mesmo motivo que a seção 7.3 do glossário exige registrar sua versão.
+
+#### 5.7.5.3 Marcação do vocabulário de domínio
+
+Aqui o glossário de domínio ganha seu terceiro uso, e o mais direto dos três.
+
+O problema é o mesmo de 5.7.4, invertido. Se o reconhecimento erra ao ouvir `PRJ-2024-018`, a síntese erra ao dizê-lo: entregue como texto simples, o serviço tende a ler o prefixo como palavra e o hífen como sinal aritmético, produzindo algo que o ouvinte não consegue reconstituir. Uma resposta falada que enuncia mal o código do projeto sobre o qual ela versa é pior do que nenhuma resposta falada, porque parece correta.
+
+A solução é a marcação SSML, que o serviço interpreta:
+
+```xml
+<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="pt-BR">
+  <voice name="{voz configurada}">
+    O projeto
+    <say-as interpret-as="characters">PRJ</say-as>
+    <say-as interpret-as="number_digit">2024</say-as>
+    <say-as interpret-as="number_digit">018</say-as>
+    está com avanço de <say-as interpret-as="cardinal">60</say-as> por cento.
+  </voice>
+</speak>
+```
+
+As regras de marcação decorrem das categorias já estabelecidas na seção 5 do glossário, e não de julgamento caso a caso:
+
+| Categoria do glossário | Marcação | Efeito |
+|---|---|---|
+| Siglas institucionais (5.1) | `interpret-as="characters"` | Soletra `CCO`, `CBTC`, `ART` em vez de tentar pronunciá-las como palavras |
+| Padrões de código (5.2) | Prefixo como `characters`, segmentos numéricos como `number_digit` | `PRJ-2024-018` é dito como o usuário o diria, e não como expressão aritmética |
+| Nomes próprios da rede (5.4) e de projeto (5.6) | Sem marcação, salvo exceção registrada | O modelo os pronuncia corretamente por serem português corrente |
+| Vocabulário de gestão (5.3) e engenharia (5.5) | Sem marcação | Idem |
+
+Duas observações fecham o assunto.
+
+A primeira é que **o serviço oferece um segundo mecanismo, o léxico customizado, e ele é descartado aqui pela mesma razão que eliminou a transcrição em lote em 5.7.4.2**: o léxico é referenciado por URI e precisa estar publicamente acessível, o que exigiria armazenamento fora do perímetro de 5.7.1.4. A marcação em linha resolve o mesmo problema sem acrescentar recurso, e mantém a regra de pronúncia versionada junto ao código que a aplica.
+
+A segunda é uma assimetria que vale registrar. No reconhecimento, o serviço decide e o sistema apenas influencia — a verificação da seção 8 do glossário mostrou que a influência tem alcance limitado. Na síntese, o sistema controla integralmente a entrada: se um termo é dito errado, é porque a marcação não foi aplicada, e não porque o modelo falhou. **O problema do vocabulário de domínio, insolúvel de um lado, é inteiramente solúvel do outro.**
+
+#### 5.7.5.4 O que é falado
+
+A síntese incide sobre a resposta produzida pelo pipeline, cuja extensão média de quatrocentos caracteres sustenta a estimativa de consumo de 5.7.2.7. Duas restrições delimitam o que efetivamente vira áudio.
+
+**A síntese é acionada pelo usuário, e não automática.** Uma resposta falada que começa sozinha atrapalha quem está lendo e surpreende quem está em reunião. O acionamento explícito também é o que mantém o consumo dentro da estimativa: sem ele, toda resposta consumiria caracteres da franquia, inclusive as que ninguém ouviria.
+
+**Conteúdo tabular é anunciado, não lido.** Parte das respostas do agente é uma tabela ou uma lista de projetos, e ler uma tabela célula a célula produz áudio que ninguém acompanha. A regra é que a síntese cobre a parte em prosa da resposta e substitui a parte tabular por seu enunciado — "seis projetos atendem ao critério, listados na tela". Isso é coerente com o que a seção 2.4 estabelece para o perfil de Diretoria, que pede síntese executiva com aprofundamento sob demanda: a leitura integral de uma tabela é o oposto de uma síntese executiva.
+
+#### 5.7.5.5 Verificação, e o que o indicador atual confunde
+
+A seção 3.1.5.2 já definiu o indicador de inteligibilidade da síntese: o ***round-trip WER***, que sintetiza a resposta, transcreve o áudio de volta e compara o texto obtido com o original. É um indicador econômico, porque dispensa avaliação humana, e essa qualidade é real.
+
+Cabe registrar, porém, uma limitação que só fica visível depois de 5.7.4 estar escrita: **o percurso de ida e volta atravessa dois serviços, e o indicador não distingue de qual deles veio o erro.** Se a resposta menciona `PRJ-2024-018` e o texto final diverge, a causa pode ser a síntese que o pronunciou mal ou o reconhecimento que o ouviu mal — e a verificação registrada na seção 8 do glossário mostrou que o segundo erra nesses termos com frequência.
+
+A separação é possível e barata, e fica proposta aqui para 5.7.6. Mede-se primeiro o reconhecimento isoladamente, sobre o corpus de referência, cujo texto de partida é conhecido; conhecida a taxa de erro do reconhecimento sobre aqueles termos, o excedente observado no percurso de ida e volta é atribuível à síntese. O indicador não muda; muda a ordem em que se mede, e é ela que torna o resultado interpretável.
+
+#### 5.7.5.6 Limites e falhas
+
+| Limite | Valor | Origem |
+|---|---|---|
+| Caracteres por mês | 500 mil no nível gratuito | 5.7.2.7. A estimativa de consumo é de 80 mil, com folga de mais de seis vezes |
+| Transações por minuto | 20, não ajustável no nível gratuito | Limite do nível F0. Vinte respostas faladas por minuto **no recurso inteiro**, não por usuário |
+| Duração do áudio por requisição | 10 minutos, com truncamento acima disso | Limite do serviço. Inalcançável no escopo: quatrocentos caracteres produzem segundos de áudio |
+
+As falhas seguem o tratamento definido em 5.7.4.7, com uma diferença que decorre da natureza da funcionalidade: **a indisponibilidade da síntese não impede o uso do agente.** A resposta já está na tela; o que falhou foi lê-la em voz alta. A interface registra a falha discretamente e mantém a resposta, sem oferecer o canal de texto como alternativa — porque o canal de texto é onde o usuário já está.
+
+#### 5.7.5.7 Plano de implementação
+
+A implementação, quando ocorrer, tem quatro passos, e a ordem entre eles importa menos que o fato de nenhum depender de decisão ainda não tomada:
+
+Primeiro, a rotina que converte a resposta em SSML, no servidor, aplicando as regras de 5.7.5.3 a partir do glossário. É o único passo com lógica própria, e é testável isoladamente: dado um texto com termos do domínio, produz o documento SSML esperado.
+
+Segundo, o transporte da marcação até o cliente, conforme a conciliação registrada em 5.7.7.
+
+Terceiro, o acionamento na interface e a chamada ao serviço pelo SDK do navegador, reutilizando a credencial de 5.7.4.6 sem mecanismo adicional.
+
+Quarto, a medição do indicador de 3.1.5.2 pelo procedimento de 5.7.5.5, sobre o corpus de 5.7.6.
+
+O primeiro passo é o único que pode ser feito e verificado **antes** de haver interface, e é também o que carrega o risco real da funcionalidade. Se a implementação vier a ser priorizada com prazo curto, é por ele que se começa.
 
 ## 5.8 Diagrama de Classes da Solução — Sprint 2
 
