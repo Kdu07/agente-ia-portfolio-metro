@@ -4180,9 +4180,7 @@ A organização da seção acompanha a ordem em que as decisões se condicionam:
 | 5.7.4 | API de conversão de fala em texto |
 | 5.7.5 | API de conversão de texto em fala |
 | 5.7.6 | Corpus de áudio de referência e procedimento de verificação |
-| 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções — **pendente de redação** |
-
-> **Pendência de seção.** A subseção 5.7.7 está prevista nesta organização e ainda não foi redigida. Enquanto isso não ocorrer, permanecem sem consolidação a rastreabilidade da seção 5.7 para os requisitos e demais vistas, as pendências que ela acumula e os impactos que impõe a outras seções deste documento.
+| 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções |
 
 ### 5.7.1 Topologia do canal de voz
 
@@ -4940,6 +4938,108 @@ Fica registrado que a voz gravada é dado pessoal dos próprios membros da equip
 **Encerra:** a magnitude do efeito da lista de frases; a confirmação ou refutação da hipótese de segmentação e substituição; a estimativa dos três indicadores de 3.1.5.2 com precisão declarada; a separação entre erro de síntese e erro de reconhecimento no percurso de ida e volta; e o custo do ruído ambiente.
 
 **Permanece aberto:** qual forma de pronúncia de código as pessoas do parceiro efetivamente usam, que depende de observação de campo; e a aceitação dos formatos comprimidos pela interface de transcrição rápida, registrada em 5.7.4.8 — porque o corpus é mantido em `audio/wav` mono a 16 kHz, conforme 5.7.3.6, e **um conjunto todo em WAV não testa o que acontece com WebM ou MP4**. Essa verificação é uma submissão de cada formato pela interface de ingestão, feita uma vez, e não depende do corpus.
+
+### 5.7.7 Rastreabilidade, pendências e impactos sobre outras seções
+
+As seis subseções anteriores decidem. Esta não decide nada de novo: ela fecha a seção prestando contas de três coisas — para onde o canal de voz aponta nos artefatos que o precedem, o que ele deixou em aberto e o que ele obriga outras seções deste documento a mudar.
+
+A prestação de contas não é formalidade de encerramento. Uma seção técnica que decide sem registrar o que suas decisões desfazem em outros lugares produz coerência aparente: cada trecho permanece correto isoladamente e o documento, como um todo, passa a afirmar duas coisas incompatíveis. As duas primeiras subseções abaixo tratam da rastreabilidade; a terceira e a quarta, das duas conciliações que a seção 5.7 deve explicitamente a outros contratos; a quinta e a sexta, do que fica pendente e do que fica estabelecido.
+
+#### 5.7.7.1 Rastreabilidade para os artefatos que precedem a seção
+
+| Artefato | O que ele exige | Onde a seção 5.7 o atende |
+|---|---|---|
+| **RF02** — Interação em linguagem natural por texto e voz | Que a voz seja um canal de entrada equivalente ao texto | 5.7.1 a 5.7.5; a equivalência é o que 5.7.3.5 fixa ao entregar ao pipeline um texto indistinguível do digitado |
+| **US02** — priorizada como MVP | Que o usuário fale e obtenha resposta | 5.7.1.3, que mantém os dois trajetos, e 5.7.3, que especifica o de ingestão |
+| **F79** — enunciados extensos | Que o canal aceite fala longa, não apenas comandos curtos | 5.7.1.2 e 5.7.3.6, que fixam o limite de cinco minutos e recusam a interface de áudio curto de sessenta segundos |
+| **F80** — Resposta falada, "Ir Além", prioridade 2 | Que exista contrato para a síntese | 5.7.5, que **especifica sem implementar** e declara isso em 5.7.5 |
+| **F05** — Normalização e correspondência de nomes, MVP | Que "L15", "Linha 15" e "15-Prata" apontem para a mesma entidade | Recebe de 5.7.4.5 uma exigência nova, desenvolvida em 5.7.7.2 |
+| **RNF01** — segurança e proteção de dados | Que o dado sensível não se acumule nem circule sem necessidade | 5.7.1.5, política de descarte imediato do áudio; 5.7.2.1, critérios eliminatórios E1 e E2; 5.7.3.7, exigência de sessão |
+| **RF03** — identificação e controle de intenções | Que a recusa oriente sem expor funcionamento interno | 5.7.3.8 e 5.7.4.7, cujo catálogo de erros aplica ao canal de voz a mesma regra |
+| **R03** — baixa acurácia no jargão da companhia, severidade 9 | Mitigação técnica declarada e mensurável | 5.7.2.5, que escolhe o serviço pela existência do mecanismo; 5.7.4.5, que o aciona; 5.7.6, que o mede |
+| **Indicadores de 3.1.5.2** | *Word Error Rate*, acurácia de termos de domínio e degradação ponta a ponta | 5.7.2.8 mantém as metas e encerra a ressalva; 5.7.6 define o procedimento que as verifica |
+| **INT-12**, ficha de integração de 5.5.5 | Registro da integração do canal de voz | 5.7.1.4 e 5.7.4.6, que detalham os dois trajetos e a emissão do token efêmero |
+
+O elemento de detalhamento do artefato de desenvolvimento exige três APIs, e as três estão entregues: o recebimento dos áudios do usuário em 5.7.3, a conversão de áudio em texto em 5.7.4 e a conversão de texto em áudio em 5.7.5.
+
+As outras três subseções não são exigidas pelo artefato, e convém dizer por que existem. A seção 5.7.1 antecede as APIs porque a topologia determina o que cada contrato precisa resolver: um trajeto único de navegador dispensaria a API de ingestão inteira. A seção 5.7.2 antecede porque a interface disponível depende do fornecedor, e especificar contrato antes de escolher serviço é especificar contra um serviço imaginado. E a seção 5.7.6 sucede porque três das quatro afirmações centrais das APIs são hipóteses até serem medidas — sem ela, a seção 5.7 entregaria contratos corretos e nenhuma evidência de que funcionam.
+
+#### 5.7.7.2 Primeira conciliação: o erro de substituição pertence à extração de entidades
+
+A subseção 5.7.4.5 registrou a advertência e remeteu seu tratamento a esta. A verificação da seção 8 do glossário de domínio estabeleceu que a lista de frases **corrige erros de segmentação e não corrige erros de substituição**: `subportfólio` deixou de ser transcrito como *sub portfólio*, mas `ART` continuou sendo transcrito como *arte*, e `Via Permanente` como *Vila permanente*.
+
+A consequência para a arquitetura é direta e não pertence à seção 5.7. O texto entregue ao pipeline pode conter termos do domínio trocados por palavras comuns, e nenhuma configuração da API de 5.7.4 elimina essa classe de erro — ela é residual por construção do mecanismo, não defeito de sua aplicação. O tratamento cabe à etapa de extração de entidades, componente C3 de 5.2.2, materializada na *feature* F05.
+
+O que muda em F05 é o **tipo de variação que ela precisa absorver**. A ficha de F05 justifica a correspondência aproximada pela variação da forma escrita: "L15", "Linha 15" e "15-Prata" são grafias diferentes da mesma entidade, e a distância entre elas é pequena e sistemática. A variação introduzida pelo reconhecimento é de outra natureza: *arte* não é uma grafia de `ART`, é outra palavra, com significado próprio e frequência alta no português corrente. Correspondência aproximada por distância de edição não a recupera sem produzir falsos positivos em toda ocorrência legítima da palavra *arte*.
+
+Fica registrada, portanto, uma exigência que a seção 5.7 identifica e não resolve: **o dicionário de F05 precisa incorporar, além dos nomes do portfólio, as substituições efetivamente observadas na transcrição**, tratadas como entradas com origem declarada. O corpus de 5.7.6 fornece a entrada desse trabalho — cada erro de substituição observado nas medições é um candidato a entrada, e a medição de segunda passagem descrita em 5.7.6.6 é o que produz a lista.
+
+Cabe ser explícito quanto ao alcance disso, para não registrar como solução o que é deslocamento do problema. Uma entrada de dicionário que mapeie *arte* para `ART` só é aplicável quando o contexto distingue os dois usos — e a decisão de aplicá-la ou não é do classificador, não do canal. A seção 5.7 estabelece que o erro existe, quanto ele custa e de onde vêm os dados para tratá-lo. Não estabelece que ele será eliminado.
+
+#### 5.7.7.3 Segunda conciliação: por onde a marcação viaja até o navegador
+
+A subseção 5.7.5.1 decidiu que a síntese ocorre no navegador e a marcação do texto ocorre no servidor, e deixou registrado que o transporte da marcação seria conciliado aqui.
+
+A forma natural é um campo opcional na própria resposta de conversação: a mesma resposta, com um campo a mais, ausente quando a síntese não é solicitada. Esta subseção **não fixa esse campo**, e a razão é de governança do documento, não de indecisão técnica. O contrato de `POST /api/chat` aparece nos cenários vigentes de 5.3.8 e na especificação de interface do diretório `documentos/api/`; acrescentar-lhe um campo de dentro da seção 5.7 colocaria o mesmo contrato sob duas autoridades, e a divergência entre elas apareceria na primeira alteração feita em apenas uma.
+
+O que esta subseção fixa é a **condição que a forma escolhida precisa satisfazer**, e ela pode ser enunciada sem decidir a forma: o texto marcado viaja junto da resposta que ele marca, na mesma requisição, e não por uma segunda chamada. Uma segunda chamada permitiria que o cliente exibisse um texto e falasse outro, quando uma das duas falhasse — e duplicaria os pontos de falha de uma funcionalidade classificada como "Ir Além".
+
+Como F80 tem prioridade 2 e a subseção 5.7.5 especifica sem implementar, esta conciliação não bloqueia o MVP. Ela bloqueia o segundo passo do plano de implementação de 5.7.5.7, e apenas quando esse plano for acionado.
+
+#### 5.7.7.4 Impactos sobre outras seções deste documento
+
+| Seção | O que a seção 5.7 impõe a ela | Situação |
+|---|---|---|
+| 5.2.3 — diagrama vigente da Sprint 2 | Acrescentar o trajeto que passa pelo módulo `api/` antes de alcançar o serviço de fala | **Pendente**, conforme já registrado em 5.7.1.4. É a única vista vigente afetada |
+| 3.1.5.2 — indicadores | A ressalva sobre a revisão das metas está encerrada por 5.7.2.8, com as três metas mantidas. O indicador de *round-trip WER*, porém, atravessa dois serviços e não distingue de qual deles veio o erro | **Atualização requerida**: a ressalva de 5.7.5.5 precisa acompanhar o indicador onde ele é definido |
+| 2.6.2 — matriz de risco | O R03 passa de ameaça sem tratamento a ameaça com mitigação exequível e mensurável; e a decisão de 5.7.2 introduz dois riscos novos, o esgotamento do nível gratuito e a latência adicional do trajeto de ingestão | **Atualização requerida, não realizada aqui** |
+| 5.5.5 — ficha INT-12 | Registrar os dois trajetos e a emissão do token efêmero pelo backend | **Resolvido** |
+| 5.8 — diagrama de classes | Que os dois trajetos produzam um único registro de interação, com o canal marcado como voz | **Sem impacto**: as classes `Interacao` e `Canal` já comportam a decisão de 5.7.1.3 sem alteração |
+| 5.4 e componente C3 — extração de entidades | Absorver o erro de substituição residual, conforme 5.7.7.2 | **Conciliação registrada**, a executar pela seção que governa o pipeline |
+| 5.3.8 e `documentos/api/` — contrato de conversação | Comportar o transporte da marcação de síntese, conforme 5.7.7.3 | **Conciliação registrada**, condicionada à priorização de F80 |
+| 6.5.5 — orçamento e alertas | Configurar alerta antes do limite do nível gratuito F0 | **Requerido**, decorrente de 5.7.2.7 |
+| `documentos/glossario-dominio.md` | A decisão de 5.7.4.6 põe o glossário em operação simultânea sob duas versões possíveis, uma no servidor e outra no pacote publicado do frontend | **Afeta a regra da seção 7.3 daquele documento**, que exige registrar a versão contra a qual cada medição foi feita |
+
+Duas dessas linhas merecem palavra explícita.
+
+**A matriz de risco da seção 2.6 não foi alterada por esta subseção.** O que está registrado acima é o impacto identificado, e sua incorporação à matriz é trabalho da seção que a governa. Alterá-la de dentro da seção 5.7 produziria uma matriz cujo conteúdo não corresponde ao seu próprio histórico de revisão — e o valor de uma matriz de risco está tanto no que ela lista quanto em quando cada item entrou nela.
+
+**A ressalva sobre o *round-trip WER* não é objeção ao indicador.** Ele continua sendo a forma econômica de estimar inteligibilidade da síntese sem avaliação humana. O que 5.7.5.5 acrescenta é que seu resultado só é interpretável se a medição de reconhecimento isolado tiver sido feita antes, sobre o mesmo material — e é exatamente por isso que a ordem das quatro medições de 5.7.6.6 é fixa.
+
+#### 5.7.7.5 Pendências acumuladas pela seção
+
+| Pendência | Onde foi registrada | O que falta | O que ela condiciona |
+|---|---|---|---|
+| Ajuste do diagrama de componentes | 5.7.1.4 | Acrescentar o trajeto de ingestão à vista de 5.2.3 | Coerência entre a vista vigente e a topologia decidida |
+| Reconhecimento local da Web Speech API em `pt-BR` | 5.7.2.2 | Confirmar a existência de pacote de idioma local e documentar na Sprint 3 | Nada. A verificação não reabre a decisão de 5.7.2.5 |
+| Aceitação dos formatos comprimidos pela transcrição rápida | 5.7.4.8 | Uma submissão de cada formato de 5.7.3.6 pela interface de ingestão | A afirmação de que o servidor encaminha os bytes sem convertê-los |
+| Efeito da lista de frases na interface de transcrição rápida | 5.7.4.8 e 7.4 do glossário | Medição sobre o corpus, com a amostra dimensionada em 5.7.6.3 | A magnitude da mitigação do R03 |
+| Latência da chamada síncrona | 5.7.4.8 | Medição sobre o corpus | A exibição de progresso prevista em 5.7.3.4 |
+| Duas versões do glossário em operação simultânea | 5.7.4.6 | Política que vincule a publicação do frontend à alteração do glossário | Comparabilidade entre as medições dos dois trajetos |
+| Transporte da marcação de síntese | 5.7.5.1 e 5.7.7.3 | Campo no contrato de conversação, definido pela seção que o governa | Segundo passo do plano de 5.7.5.7 |
+| Ordem de pronúncia dos códigos de projeto | 5.7.6.6 e 7.4 do glossário | Observação de campo junto ao parceiro. O corpus mede o custo de cada forma, não qual delas se usa | Validade da estratégia da seção 5.2 do glossário |
+| Ruído ambiente e fala de terceiros | 7.4 do glossário | Especificar qualidade mínima do áudio e comportamento diante de fala não pertencente ao usuário | Confiabilidade da transcrição fora de ambiente controlado |
+| Denominações oficiais dos subportfólios e expansão de `GPM` | 7.4 do glossário | Validação do parceiro | Cobertura do glossário para consultas agregadas |
+| Substituição da subseção 5.6 do glossário | 7.4 do glossário | Disponibilidade de dados reais do parceiro | Uso do glossário fora do ambiente de teste |
+| Atualização da matriz de risco | 5.7.2.8 e 5.7.7.4 | Incorporação dos dois riscos novos e da mitigação do R03 pela seção 2.6 | Acompanhamento dos riscos que a decisão introduziu |
+
+As doze pendências se separam em três grupos, e a distinção importa porque só um deles depende da equipe.
+
+Cinco delas — as três de 5.7.4.8, a magnitude do efeito da lista de frases e metade da pendência sobre a pronúncia dos códigos — **resolvem-se por medição sobre o corpus de 5.7.6**, cujo procedimento já está definido. São as únicas cuja resolução esta seção já programou, e é isso que justifica a existência da subseção 5.7.6.
+
+Quatro dependem do parceiro: as denominações oficiais, a expansão de `GPM`, a substituição do ambiente de teste e a outra metade da pronúncia dos códigos. Nenhuma se resolve por leitura de documentação, e nenhuma tem prazo sob controle da equipe.
+
+Três são trabalho de outras seções deste documento: o diagrama de 5.2.3, a matriz de 2.6 e o contrato de conversação.
+
+Nenhuma delas bloqueia a **construção** do trajeto de ingestão, que pode ser implementado integralmente a partir do que 5.7.3 e 5.7.4 especificam. O que as pendências de medição condicionam é a **aceitação** dos indicadores — isto é, a afirmação de que o canal atinge as metas, e não a existência do canal.
+
+#### 5.7.7.6 O que a seção 5.7 estabelece, e sob que condição
+
+A seção estabelece cinco coisas. Por qual trajeto o áudio circula e por quê, com os dois modos mantidos e a fonte de verdade do registro declarada. Qual serviço executa a conversão nos dois sentidos, escolhido por critérios explícitos e com a região fixada. Os contratos das três APIs, incluídos os estados, os limites, o comportamento diante de falha e as mensagens que orientam sem expor. O mecanismo que converte o glossário de domínio de documento em instrumento executável. E o procedimento que mede se tudo isso funciona, com a amostra dimensionada e a ordem das medições justificada.
+
+Estabelece essas cinco coisas sob uma condição que prefere declarar a omitir: **tudo o que a seção afirma sobre a qualidade do reconhecimento é hipótese até que o corpus de 5.7.6 seja gravado e medido.** A verificação de cinco enunciados registrada na seção 8 do glossário é o que existe hoje de observação, e ela basta para estabelecer duas coisas — que o mecanismo opera em português brasileiro, e que ele não opera sobre tudo. Não basta para número nenhum.
+
+A seção 5.7 optou por dizer isso onde a afirmação é feita, em 5.7.4.8, em 5.7.5.5 e aqui, em vez de apresentar como resultado o que ainda é expectativa. É a mesma escolha que a subseção 8.3 do glossário fez ao delimitar o alcance de sua própria verificação, e ela tem um custo: a seção entrega menos certeza do que poderia aparentar entregar. O que ela ganha em troca é que cada certeza que entrega pode ser conferida.
 
 ## 5.8 Diagrama de Classes da Solução — Sprint 2
 
