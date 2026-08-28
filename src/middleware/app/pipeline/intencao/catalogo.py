@@ -21,15 +21,19 @@ Fora do escopo deste módulo (ver 5.4.6 do Projeto.md):
 - Permissão por perfil. O catálogo é único para todos os perfis; quem barra
   uma consulta legítima de usuário sem acesso é a checagem de permissão, não
   o classificador.
-- Limiar de confiança. Continua em aberto (5.3.7): será definido na bancada
-  de avaliação (feature F1.21), não por arbitragem prévia. Até lá o
-  orquestrador usa LIMIAR_CONFIANCA_PROVISORIO.
+- Limiar de confiança. Definido pela bancada de avaliação (feature F21) e
+  calibrado por intenção, não por arbitragem prévia — ver 5.4.11 do
+  Projeto.md. O valor calibrado vem do artefato treinado e tem precedência
+  sobre o LIMIAR_CONFIANCA_PROVISORIO abaixo, que só volta a valer quando o
+  modelo é treinado sem calibração.
 """
 
 from dataclasses import dataclass
 from enum import Enum
 
-# Valor provisório, substituir pelo resultado da bancada de avaliação.
+# Piso usado apenas quando o artefato não traz limiar calibrado para a
+# intenção — isto é, quando o modelo foi treinado com --sem-calibracao.
+# Em produção quem manda é o limiar por intenção derivado pela bancada.
 LIMIAR_CONFIANCA_PROVISORIO = 0.7
 
 
@@ -461,7 +465,7 @@ CATALOGO: dict[str, Intencao] = {
             # erro assimétrico aqui é o inverso do das transações: deixar um
             # ataque passar por falta de confiança custa mais do que bloquear
             # uma mensagem legítima que se pareça com um. Valor provisório —
-            # a bancada de avaliação (F1.21) o substitui pela curva de
+            # a bancada de avaliação (F21) o substitui pela curva de
             # rejeição, como para as demais classes.
             limiar_confianca=0.5,
             exemplos=(
@@ -486,7 +490,7 @@ def esta_no_catalogo(intencao_id: str) -> bool:
 
 
 def intencoes_por_status(status: StatusTreino) -> list[Intencao]:
-    """Intenções em um estágio do conjunto de treino (ex.: as 17 do MVP)."""
+    """Intenções em um estágio do conjunto de treino (ex.: as 18 do MVP)."""
     return [i for i in CATALOGO.values() if i.status_treino is status]
 
 

@@ -1,7 +1,7 @@
 # Mapeamento intenção → tópico/ação do Copilot Studio
 
 Este arquivo é o **contrato entre o middleware e o Copilot Studio**: cada intenção
-do catálogo (`src/middleware/app/pipeline/intent/catalog.py`) corresponde a um
+do catálogo (`src/middleware/app/pipeline/intencao/catalogo.py`) corresponde a um
 tópico/ação configurado no Copilot. Toda alteração no catálogo ou nos tópicos deve
 ser refletida aqui, na mesma mudança.
 

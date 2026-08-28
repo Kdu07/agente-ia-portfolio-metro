@@ -217,7 +217,7 @@ análise vira relatório e o catálogo envelhece.
 
 | Recorte | Decisão que habilita |
 |---|---|
-| Volume por intenção, por período | Mostra o que o agente realmente faz — e quais das 27 classes nunca são acionadas |
+| Volume por intenção, por período | Mostra o que o agente realmente faz — e quais das 28 classes nunca são acionadas |
 | Distribuição de desfechos | Saúde geral: quanto é atendido, quanto é bloqueado, quanto falha |
 | Série de bloqueios por guarda | Indicador de segurança; um pico em injeção é incidente, não estatística |
 | Agrupamento de `fora_de_escopo` | **Backlog de novas intenções** — o que os usuários pedem e o agente não faz |
@@ -433,12 +433,20 @@ e evita disparo duplicado de rotinas quando ela reinicia ou escala.
 
 ## 9. Modelo de dados
 
+A modelagem entregue na Sprint 2 tem três entidades, detalhadas no capítulo 4
+de [Projeto.md](Projeto.md):
+
 | Entidade | Papel |
 |---|---|
-| `Conversa` | Sessão de conversa na identidade do middleware. Guarda `titulo` (gerado do primeiro turno, para a lista de histórico), `arquivada_em` e o `conversa_externa_id` do Direct Line |
-| `Interacao` | Uma mensagem e seu desfecho: `prompt`, `resposta`, `intencao_id`, `confianca`, `desfecho`, `perfil`, `canal` (`chat` · `voz` · `rotina`), `rotina_id`, `latencia_ms` |
-| `Rotina` | Prompt agendado: `nome`, `prompt`, `agenda_cron`, `timezone`, `dono_id`, `intencao_prevista`, `ativa` |
-| `ExecucaoRotina` | Um disparo: `rotina_id`, `iniciada_em`, `concluida_em`, `status`, `interacao_id`, `erro` |
+| `Usuario` | Identidade projetada do Entra ID: `entra_id`, `email`, `perfil` e a permissão `pode_ver_intencoes` |
+| `Intencao` | Uma solicitação processada: `id_conversa`, `prompt`, `classificacao_intencao` e o momento |
+| `Rotina` | Prompt agendado, com o usuário sob cuja identidade executa |
+
+O esqueleto em `persistence/models.py` antecipa desdobramentos que este modelo
+ainda não representa — a conversa como entidade própria, o histórico de
+execuções de rotina e o vocabulário fechado de desfechos. Eles são evolução
+prevista, cada um ligado a um requisito já registrado (RF11, RF12), e entram
+por migração versionada na onda que os construir.
 
 O campo `canal` parece pequeno e não é: é ele que permite ao dashboard separar
 voz de texto de rotina, e é ele que torna cada disparo agendado rastreável até
@@ -477,26 +485,39 @@ recorte de segurança do dashboard.
 ## 11. Consequências em aberto
 
 A revisão de escopo removeu a camada de mascaramento reversível de PII e a
-cifra dos valores em repouso. Isso deixa dois pontos que precisam de decisão
-registrada fora deste documento:
+cifra dos valores em repouso. As consequências que isso abriu foram todas
+encaminhadas, e ficam registradas aqui com seu desfecho — o histórico importa
+tanto quanto o estado atual, porque é ele que mostra o que a remoção custou.
 
-- **RNF01 sem implementação correspondente.** O requisito de confidencialidade
-  — hoje o mais crítico do projeto, com meta de 100% e "zero ocorrência de dado
-  sensível real em serviço externo não homologado" — era atendido exatamente
-  pelo mascaramento. Precisa ser reescrito na seção 3.3 de
-  [Projeto.md](Projeto.md) apoiado em **perímetro**: Entra ID, Content Safety,
-  Speech e Copilot Studio, todos no tenant homologado do parceiro, e nenhum
-  serviço externo a ele no caminho da mensagem.
-- **Prompt em claro no banco.** Sem mascaramento, e agora gravando também as
-  tentativas de ataque, a tabela de interações passa a conter o que o usuário
-  digitou. Pede política de retenção declarada e cifra em repouso no nível do
-  PostgreSQL. O acesso de leitura já é restrito por `VER_INTENCOES`.
+- **RNF01 sem implementação correspondente.** ✅ **Resolvido.** O requisito era
+  atendido exatamente pelo mascaramento e ficou sem componente responsável. Foi
+  reescrito como propriedade das **rotas**, e não dos dados: a seção 3.3.1.1 de
+  [Projeto.md](Projeto.md) enumera os sete serviços que participam do caminho de
+  uma mensagem, com o tenant de cada um, e a verificação passou a ser por
+  inspeção de configuração em vez de amostragem. A reescrita tornou visível o
+  que a formulação anterior escondia: Content Safety e Speech ficaram no tenant
+  da equipe, e não no do parceiro — exposição declarada e registrada como risco
+  R12.
+- **Prompt em claro no banco.** ✅ **Resolvido.** Retenção declarada com expurgo
+  automático e cifra em repouso deixaram de ser recomendação em prosa e viraram
+  requisito próprio, o **RNF07**, com métrica e critério de aceitação. O risco
+  correspondente é o R13, e o acesso de leitura continua restrito pela permissão
+  de visualização, verificada no servidor.
+- **Rastreabilidade da mudança de responsabilidade.** ✅ **Resolvido.** **RF04 a
+  RF08** passaram a ser executados pelo Copilot Studio, cabendo à equipe as
+  guardas, o registro, a análise e as rotinas. A matriz de correlação de 3.4 do
+  [Projeto.md](Projeto.md) foi refeita para esse recorte, com nota de revisão
+  explícita.
+- **`Desfecho.preserva_prompt`.** ✅ **Removida.** A propriedade existia para não
+  gravar o prompt de tentativas de injeção, porque a mensagem era barrada antes
+  do mascaramento e não havia versão segura dela. Sem a camada de PII a
+  justificativa caiu, e a propriedade passou a atrapalhar a análise de
+  segurança. Resta apenas a nota histórica em `pipeline/desfechos.py`.
 
-Há ainda uma mudança de responsabilidade a refletir na rastreabilidade: **RF04
-a RF08** (consultar portfólio, atualizar projeto, alertar pendência, comparar e
-gerar relatório) passam a ser executados pelo Copilot Studio. A equipe entrega
-as guardas, o registro, a análise e as rotinas. A matriz de rastreabilidade de
-[Projeto.md](Projeto.md) precisa refletir isso.
+Permanece em aberto **um** ponto, e ele não decorre da remoção do mascaramento:
+o reprovisionamento de Content Safety e Speech no tenant do parceiro, que é
+pré-condição para qualquer uso com dado real. Enquanto não ocorrer, o MVP opera
+sob a condição declarada de processar exclusivamente dados sintéticos.
 
 ## 12. Estado atual e próximos passos
 
@@ -511,7 +532,7 @@ negativas `fora_de_escopo` e `tentativa_injecao`, derivado da seção 5.4.4 de
 [testes-catalogo-intencoes.csv](testes-catalogo-intencoes.csv).
 
 O **classificador de intenção está implementado, treinado e medido**. A bancada
-de avaliação (F1.21) roda com `python -m app.pipeline.intencao.avaliacao` sobre
+de avaliação (F21) roda com `python -m app.pipeline.intencao.avaliacao` sobre
 431 casos de teste que nunca participaram do ajuste, e o RNF03 é atendido:
 acurácia de 0,856 e macro-F1 de 0,851. A comparação entre estratégias exigida
 pela F22 sai com `--f22`. Os resultados e o que eles revelam sobre o catálogo
@@ -527,11 +548,6 @@ catálogo, que só volta a valer se o modelo for treinado sem calibração.
 recusa: o orquestrador a converte em `BLOQUEADA_INJECAO_MODELO`, com alerta de
 segurança. É rede de segurança atrás da guarda de injeção, não substituta dela
 — o que chega ao classificador já passou pelas regras e pelo Content Safety.
-
-`Desfecho.preserva_prompt` deve ser removida. Ela existe para não gravar o
-prompt de tentativas de injeção, porque a mensagem era barrada antes do
-mascaramento e não havia versão segura dela. Sem a camada de PII a
-justificativa cai, e a propriedade passa a atrapalhar a análise de segurança.
 
 O restante da estrutura contém **esqueletos documentados**: interfaces,
 contratos e regras de decisão estão definidos, com implementações marcadas por
@@ -556,12 +572,20 @@ transcrição alimenta o mesmo `/chat`.
 
 ### 12.2 Dependências externas em caminho crítico
 
-Quatro recursos precisam ser provisionados no tenant do parceiro, e o pedido
-deveria anteceder o código:
+Quatro serviços externos estão no caminho crítico, e o pedido deveria anteceder
+o código. Dois seguem pendentes no tenant do parceiro; dois já operam, mas no
+tenant da equipe:
 
-| Recurso | Necessário para |
-|---|---|
-| Entra ID — registro de aplicação | Autenticação, perfis e permissões (onda 1) |
-| Azure AI Content Safety | Guardas de injeção, abuso e saída (onda 2) |
-| Copilot Studio com Direct Line habilitado | Execução das ações (onda 1 em diante) |
-| Azure Speech | Entrada por voz |
+| Recurso | Necessário para | Onde está |
+|---|---|---|
+| Entra ID — registro de aplicação | Autenticação, perfis e permissões (onda 1) | **Pendente** — tenant do parceiro |
+| Copilot Studio com Direct Line habilitado | Execução das ações (onda 1 em diante) | **Pendente** — tenant do parceiro |
+| Azure AI Content Safety | Guardas de injeção, abuso e saída (onda 2) | Em operação — tenant da equipe |
+| Azure Speech | Entrada por voz | Em operação — tenant da equipe |
+
+Os dois últimos não bloqueiam nenhuma onda. O que eles introduzem é a exposição
+de perímetro registrada como risco R12: prompt e áudio deixam o ambiente
+homologado por desenho. Ficam isolados atrás de `pipeline/guardas/` e `voz/`,
+de modo que reprovisioná-los no tenant do parceiro seja mudança de configuração
+e não de código — pré-condição para qualquer uso com dado real. O perímetro
+completo está em 3.3.1.1 de [Projeto.md](Projeto.md).
