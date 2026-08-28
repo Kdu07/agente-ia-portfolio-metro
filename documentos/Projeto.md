@@ -4138,13 +4138,13 @@ A organização da seção acompanha a ordem em que as decisões se condicionam:
 |---|---|
 | 5.7.1 | Topologia do canal de voz: por qual caminho o áudio trafega e por quê |
 | 5.7.2 | Seleção dos serviços de conversão entre fala e texto |
-| 5.7.3 | API de recebimento de áudios do usuário — **pendente de redação** |
+| 5.7.3 | API de recebimento de áudios do usuário |
 | 5.7.4 | API de conversão de fala em texto — **pendente de redação** |
 | 5.7.5 | API de conversão de texto em fala — **pendente de redação** |
 | 5.7.6 | Catálogo de erros, limites operacionais e registro — **pendente de redação** |
 | 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções — **pendente de redação** |
 
-> **Pendência de seção.** As subseções 5.7.3 a 5.7.7 estão previstas nesta organização e são referenciadas ao longo de 5.7.1 e 5.7.2 — o contrato canônico da API de ingestão (5.7.3) e o corpus de áudio de referência que sustenta os indicadores de 3.1.5.2 (5.7.6) —, mas ainda não foram redigidas. Enquanto isso não ocorrer, as decisões de 5.7.1.6 permanecem sem especificação correspondente e as metas de WER, de acurácia de termos de domínio e de degradação ponta a ponta permanecem declaradas sem procedimento de verificação escrito.
+> **Pendência de seção.** As subseções 5.7.4 a 5.7.7 estão previstas nesta organização e são referenciadas ao longo de 5.7.1 e 5.7.2 — o corpus de áudio de referência que sustenta os indicadores de 3.1.5.2 (5.7.6) —, mas ainda não foram redigidas. Enquanto isso não ocorrer, as metas de WER, de acurácia de termos de domínio e de degradação ponta a ponta permanecem declaradas sem procedimento de verificação escrito.
 
 ### 5.7.1 Topologia do canal de voz
 
@@ -4331,6 +4331,237 @@ A decisão introduz e transforma riscos que devem constar do acompanhamento da m
 | Latência adicional no trajeto de ingestão | Novo | Medição comparativa entre os dois modos de consumo, conforme a subseção 5.7.6 |
 
 Quanto às metas registradas ao final da seção 3.1.5, a definição do serviço permite encerrar a ressalva ali declarada. As metas preliminares de WER inferior ou igual a 15%, acurácia de termos de domínio igual ou superior a 90% e degradação ponta a ponta de no máximo 10 pontos percentuais são **mantidas** como hipóteses quantitativas, a serem verificadas sobre o corpus de áudio de referência descrito na subseção 5.7.6. Cabe registrar que a meta de acurácia de termos de domínio só é perseguível porque o serviço escolhido admite vocabulário customizado: sob qualquer das alternativas eliminadas, ela seria inatingível por ausência de mecanismo, e não por insuficiência de qualidade do reconhecimento. Nesse sentido, a seleção do serviço não apenas atende aos indicadores já definidos — ela é a condição de existência de um deles.
+
+### 5.7.3 API de recebimento de áudios do usuário
+
+Esta subseção especifica o contrato da API que recebe os áudios enviados pelo usuário — o trajeto de ingestão adotado em 5.7.1.3 como caminho canônico do canal de voz. É o contrato entre a interface de voz e o pipeline de PLN: o que a interface pode enviar, o que o servidor garante devolver e o que acontece quando algo dá errado.
+
+As três definições derivadas em 5.7.1.6 são premissas desta especificação, e não são revisitadas aqui: o contrato é assíncrono, a validação precede o acionamento do serviço de fala, e a submissão aceita é um estado distinto da transcrição concluída.
+
+Os caminhos declarados abaixo são os da aplicação. O navegador os alcança sob o prefixo `/api`, acrescentado pelo proxy reverso descrito em 5.2.3.1 — `POST /voz/audios` na aplicação corresponde a `POST /api/voz/audios` no cliente. O prefixo `/voz` já existe no roteador do middleware, hoje com o endpoint de emissão de token.
+
+#### 5.7.3.1 Princípios do contrato
+
+**A submissão é assíncrona.** O envio do áudio e a obtenção da transcrição são operações separadas. Um enunciado de doze segundos transcreve em tempo compatível com uma requisição síncrona, mas o mesmo contrato precisa atender ao ditado extenso previsto na *feature* F79, cuja transcrição não se conclui nesse prazo. Um contrato síncrono precisaria ser substituído quando aquele incremento entrasse; um contrato assíncrono absorve os dois casos sem alteração, ao custo de uma requisição a mais no caso curto.
+
+**A validação precede o acionamento do serviço de fala.** Formato, tamanho e duração são verificados antes de qualquer chamada externa. A ordem não é detalhe de implementação: o serviço é tarifado por hora de áudio e opera sob a franquia mensal registrada em 5.7.2.7, de modo que enviar um arquivo inválido consome cota e tempo para receber um erro que o servidor já poderia ter emitido. É a mesma lógica da ordem das guardas descrita em 5.2: barrar cedo o que não deve prosseguir.
+
+**A submissão aceita não é a transcrição concluída.** São dois estados, com códigos de resposta distintos. Confundi-los obrigaria o cliente a distinguir pelo corpo da resposta se a operação terminou, e tornaria impossível representar o intervalo em que o áudio já é responsabilidade do servidor mas ainda não produziu texto — exatamente o intervalo em que a interface precisa exibir progresso.
+
+**O registro da interação independe do trajeto.** Conforme fixado em 5.7.1.3, tanto a ingestão quanto o modo de transmissão contínua gravam uma única interação, com o canal marcado como voz. Esta API não cria um segundo registro: ela produz o texto que, submetido ao endpoint de conversação, origina a interação. O que a ingestão acrescenta ao registro é a existência do áudio de origem durante o intervalo previsto na política de retenção de 5.7.1.5.
+
+#### 5.7.3.2 Endpoints
+
+| Método | Caminho | Propósito | Sucesso |
+|---|---|---|:-:|
+| `POST` | `/voz/audios` | Submeter um áudio para transcrição | `202` |
+| `GET` | `/voz/audios/{id_audio}/transcricao` | Consultar o resultado da transcrição | `200` |
+| `GET` | `/voz/token` | Obter credencial temporária do modo de transmissão contínua | `200` |
+
+Os dois primeiros compõem o trajeto de ingestão. O terceiro documenta o modo de transmissão contínua, mantido conforme 5.7.1.3 e já esboçado no middleware; sua especificação está em 5.7.4, junto da API de conversão de fala em texto que ele credencia.
+
+#### 5.7.3.3 Submissão do áudio
+
+`POST /voz/audios`, com corpo `multipart/form-data`.
+
+**Campos do corpo**
+
+| Campo | Tipo | Obrigatório | Descrição |
+|---|---|:-:|---|
+| `audio` | arquivo | sim | O áudio capturado. Formatos e limites em 5.7.3.6 |
+| `idioma` | texto | não | Código BCP 47. Ausente, assume `pt-BR`, conforme a configuração do serviço |
+| `conversa_id` | texto | não | Vincula a transcrição a uma conversa existente. Ausente ou não pertencente ao usuário, o vínculo é resolvido na etapa de conversação, e não aqui |
+
+**Cabeçalhos**
+
+| Cabeçalho | Obrigatório | Descrição |
+|---|:-:|---|
+| `Cookie` | sim | Cookie de sessão emitido pela autenticação. A resolução de identidade é a mesma de todas as rotas, descrita em 5.2 |
+| `Idempotency-Key` | não | Identificador da submissão gerado pelo cliente. Ver 5.7.3.7 |
+
+**Exemplo de requisição**
+
+```http
+POST /voz/audios HTTP/1.1
+Host: agente-portfolio.exemplo
+Content-Type: multipart/form-data; boundary=----limite
+Cookie: sessao=<cookie httpOnly>
+Idempotency-Key: 9f2c1b7e-4a30-4d81-9e2f-77c0b1e5a3d4
+
+------limite
+Content-Disposition: form-data; name="audio"; filename="enunciado.webm"
+Content-Type: audio/webm;codecs=opus
+
+<bytes do áudio>
+------limite
+Content-Disposition: form-data; name="idioma"
+
+pt-BR
+------limite--
+```
+
+**Resposta de aceitação**
+
+```http
+HTTP/1.1 202 Accepted
+Content-Type: application/json
+Location: /voz/audios/a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19/transcricao
+```
+
+```json
+{
+  "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+  "estado": "recebido",
+  "duracao_segundos": 11.4,
+  "consultar_em": "/voz/audios/a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19/transcricao",
+  "expira_em": "2026-08-27T18:42:10Z"
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `id_audio` | Identificador da submissão, usado na consulta |
+| `estado` | Sempre `recebido` nesta resposta. Os demais estados estão em 5.7.3.4 |
+| `duracao_segundos` | Duração apurada na validação, devolvida para que o cliente estime a espera |
+| `consultar_em` | Caminho da consulta, repetido no corpo para clientes que não leem o `Location` |
+| `expira_em` | Momento a partir do qual o resultado deixa de estar disponível, conforme a política de retenção de 5.7.1.5 |
+
+O `202` afirma que o áudio foi aceito e será transcrito — não que a transcrição existe. Qualquer condição que impeça a aceitação produz um dos erros catalogados em 5.7.3.8, e nenhum áudio recusado chega ao serviço de fala.
+
+#### 5.7.3.4 Consulta da transcrição e estados da submissão
+
+`GET /voz/audios/{id_audio}/transcricao`, com o mesmo cookie de sessão da submissão. Um identificador que não pertença ao usuário autenticado produz o mesmo erro de recurso inexistente, e não um erro de autorização: distinguir os dois permitiria a alguém confirmar, por tentativa, que uma submissão alheia existe.
+
+A submissão percorre quatro estados, e apenas estes:
+
+| Estado | Significado | Resposta | Próxima ação do cliente |
+|---|---|:-:|---|
+| `recebido` | Áudio aceito e validado, transcrição ainda não iniciada | `200` | Consultar novamente após o intervalo sugerido |
+| `transcrevendo` | Chamada ao serviço de fala em andamento | `200` | Consultar novamente após o intervalo sugerido |
+| `concluida` | Texto disponível | `200` | Encaminhar o texto conforme 5.7.3.5 |
+| `falhou` | Transcrição não pôde ser produzida | `200` | Exibir a orientação e oferecer o canal de texto |
+
+O estado `falhou` responde `200`, e não um código de erro: a consulta foi atendida com sucesso e informa corretamente o desfecho. Tratar um desfecho negativo como falha de requisição faria o cliente exibir "algo deu errado" no lugar da orientação — a mesma razão pela qual mensagens bloqueadas retornam `200` no endpoint de conversação, conforme registrado em 5.2.
+
+**Consulta antes da conclusão**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Retry-After: 2
+```
+
+```json
+{
+  "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+  "estado": "transcrevendo"
+}
+```
+
+O cabeçalho `Retry-After` traz o intervalo em segundos sugerido para a próxima consulta. O cliente deve respeitá-lo em vez de fixar um intervalo próprio: uma sondagem mais frequente não acelera a transcrição e multiplica requisições sem efeito.
+
+**Consulta após a conclusão**
+
+```json
+{
+  "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+  "estado": "concluida",
+  "texto": "Qual o avanço do projeto da Linha 15 Prata?",
+  "idioma": "pt-BR",
+  "confianca": 0.94,
+  "duracao_segundos": 11.4,
+  "latencia_ms": 1830
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `texto` | Transcrição produzida, já com pontuação e capitalização aplicadas pelo serviço |
+| `confianca` | Grau de confiança devolvido pelo serviço de fala, entre 0 e 1. Não se confunde com a confiança da classificação de intenção, apurada adiante no pipeline |
+| `duracao_segundos` | Duração do áudio submetido |
+| `latencia_ms` | Tempo entre a aceitação e a conclusão. Alimenta o indicador de latência de 3.1.5.2 e permite comparar o custo dos dois trajetos de 5.7.1.2 |
+
+**Consulta após a expiração**
+
+Decorrido o prazo devolvido em `expira_em`, o resultado deixa de estar disponível e a consulta produz o erro de recurso inexistente catalogado em 5.7.3.8. O áudio já foi descartado conforme 5.7.1.5, e o texto não é retido nesta API — quando encaminhado à conversação, ele passa a viver no registro da interação, que é onde a rastreabilidade do RNF02 se apoia.
+
+#### 5.7.3.5 Encaminhamento ao pipeline de conversação
+
+Esta API **não aciona o pipeline**. Ela produz texto; o texto é submetido ao endpoint de conversação pelo cliente, como qualquer outra mensagem, com o canal marcado como voz.
+
+A escolha preserva um invariante da arquitetura descrita em 5.2: o orquestrador é o único ponto de entrada do pipeline, e é essa unicidade que garante que as guardas, a classificação e o registro sejam obrigatórios para toda solicitação. Uma API de áudio que chamasse o pipeline por conta própria criaria um segundo caminho de entrada — e um segundo caminho é, por construção, um caminho que alguém pode esquecer de proteger quando o primeiro mudar.
+
+Há uma consequência de interface que decorre disso, e que atende ao risco R03. Entre a transcrição e o envio existe um momento em que o texto está visível e ainda não foi processado. A interface apresenta a transcrição no campo de mensagem antes do envio, de modo que a pessoa veja o que foi entendido e possa corrigir. Uma sigla transcrita errada deixa de se propagar como intenção mal classificada, que é precisamente o encadeamento que o R03 descreve. Para as intenções que alteram dados, soma-se a esta verificação a confirmação já exigida pelo RF05, resultando em duas oportunidades de interceptar um erro de transcrição antes que ele produza efeito.
+
+O texto encaminhado é indistinguível, para o pipeline, de um texto digitado. É o que sustenta a afirmação de 5.3.2 de que a classificação é a mesma para os dois canais, e o que permite que a medição de degradação ponta a ponta de 3.1.5.2 compare os dois caminhos sobre o mesmo classificador.
+
+#### 5.7.3.6 Formatos, limites e sua justificativa
+
+**Formatos aceitos**
+
+| Tipo de conteúdo | Origem típica |
+|---|---|
+| `audio/webm;codecs=opus` | Captura no Chrome e no Edge |
+| `audio/ogg;codecs=opus` | Captura no Firefox |
+| `audio/mp4` | Captura no Safari |
+| `audio/wav` | Arquivos do conjunto de avaliação e submissões automatizadas |
+
+O conjunto não foi escolhido por generosidade: é exatamente o que os navegadores produzem ao gravar, e é um subconjunto do que o serviço de fala aceita. Com isso, **nenhuma conversão de formato acontece** — nem no cliente antes de enviar, nem no servidor antes de encaminhar. Transcodificar áudio é custoso, introduz perda e é uma fonte de defeito que a especificação evita simplesmente por não precisar dela.
+
+O conjunto de referência descrito em 5.7.6 é mantido em `audio/wav` mono a 16 kHz, formato sem compressão, para que medições feitas sobre ele não carreguem o efeito de um codec específico.
+
+**Limites**
+
+| Limite | Valor | Razão |
+|---|---|---|
+| Tamanho do arquivo | 25 MB | Delimita o custo de transferência. Cinco minutos em Opus ocupam cerca de 1 MB, de modo que o limite é folgado em relação à duração e serve apenas de proteção contra envio anômalo |
+| Duração do áudio | 5 minutos | É o limite que efetivamente restringe o escopo, e decorre dele |
+| Submissões simultâneas por usuário | 1 | Ver adiante |
+
+Os limites **não são o teto técnico do serviço**, que aceita arquivos muito maiores e mais longos. São uma decisão de escopo. O enunciado típico previsto na estimativa de 5.7.2.7 dura cerca de doze segundos; o ditado extenso, que justificaria minutos de áudio, é a *feature* F79, classificada como "Ir Além" em 2.7.1. Cinco minutos cobrem com folga o enunciado mais longo do escopo atual e mantêm o consumo dentro da franquia mensal — um único arquivo no teto do serviço esgotaria sozinho a franquia inteira.
+
+**Concorrência.** O nível gratuito adotado em 5.7.2.5 admite **uma requisição simultânea** de reconhecimento. A API serializa as transcrições por essa razão, e não por escolha de projeto: duas submissões concorrentes fariam a segunda ser recusada pelo serviço. Na prática isso significa que a demonstração não comporta duas pessoas falando ao mesmo tempo. É limitação do nível gratuito, não do contrato, e desaparece com a migração para o nível pago, que admite cem requisições simultâneas. Fica registrado aqui porque é o tipo de restrição que só aparece na primeira demonstração com plateia.
+
+#### 5.7.3.7 Autenticação, autorização e idempotência
+
+**Autenticação.** Ambos os endpoints exigem sessão válida, resolvida pelo mesmo mecanismo de todas as rotas descrito em 5.2. A exigência não é formalidade: um endpoint aberto seria um proxy gratuito para um serviço tarifado por hora de áudio, custeado pelo parceiro.
+
+**Autorização.** Não há permissão específica. Quem pode conversar com o agente pode ditar — a voz é uma forma de entrada, não uma capacidade adicional, e as permissões que importam são aplicadas adiante, sobre a intenção classificada, conforme o RF01. O que existe é vínculo de propriedade: um `id_audio` só é consultável por quem o submeteu, e a consulta alheia produz o erro de recurso inexistente, nunca o de autorização negada.
+
+**Idempotência.** O cabeçalho opcional `Idempotency-Key` traz um identificador gerado pelo cliente para a submissão. Recebida uma chave já vista dentro do prazo de retenção, o servidor devolve o `id_audio` original em vez de iniciar nova transcrição.
+
+O mecanismo existe por uma razão concreta do canal de voz. A captura acontece em dispositivo móvel, com rede instável, e o reenvio automático após uma resposta perdida é comportamento normal de cliente HTTP. Sem idempotência, cada reenvio transcreveria o mesmo áudio de novo — consumindo duas vezes a franquia e, pior, produzindo duas interações registradas para uma única fala do usuário, o que corromperia tanto o histórico da conversa quanto os dados de análise de intenções.
+
+#### 5.7.3.8 Catálogo de erros
+
+Toda resposta de erro tem o mesmo corpo: um código interno estável, destinado ao cliente e aos registros, e uma mensagem destinada à pessoa.
+
+```json
+{
+  "codigo": "AUDIO_MUITO_LONGO",
+  "mensagem": "O áudio tem mais de 5 minutos. Grave um trecho mais curto ou digite a solicitação.",
+  "detalhe": { "duracao_segundos": 412.7, "limite_segundos": 300 }
+}
+```
+
+| Código | HTTP | Quando ocorre | Mensagem à pessoa | Ação sugerida |
+|---|:-:|---|---|---|
+| `NAO_AUTENTICADO` | 401 | Sessão ausente, expirada ou inválida | Sua sessão expirou. Entre novamente para continuar. | Refazer a autenticação |
+| `AUDIO_AUSENTE` | 400 | Requisição sem o campo `audio` | Não recebi nenhum áudio. Tente gravar de novo. | Repetir a gravação |
+| `AUDIO_FORMATO_NAO_SUPORTADO` | 415 | Tipo de conteúdo fora da tabela de 5.7.3.6 | Não consigo ler esse formato de áudio. | Usar a gravação da própria interface |
+| `AUDIO_MUITO_GRANDE` | 413 | Arquivo acima de 25 MB | O arquivo é grande demais. | Gravar um trecho mais curto |
+| `AUDIO_MUITO_LONGO` | 400 | Duração acima de 5 minutos | O áudio tem mais de 5 minutos. Grave um trecho mais curto ou digite a solicitação. | Dividir a fala ou usar o canal de texto |
+| `AUDIO_ILEGIVEL` | 400 | Arquivo corrompido, vazio ou sem trilha de áudio | Não consegui abrir esse áudio. Tente gravar de novo. | Repetir a gravação |
+| `AUDIO_NAO_ENCONTRADO` | 404 | `id_audio` inexistente, expirado ou de outro usuário | Esse áudio não está mais disponível. | Enviar novamente |
+| `COTA_EXCEDIDA` | 429 | Franquia mensal esgotada ou submissão simultânea | O serviço de voz está ocupado. Tente em instantes ou digite a solicitação. | Aguardar e repetir, ou usar o canal de texto |
+
+Duas propriedades atravessam a tabela.
+
+**Nenhuma mensagem revela o funcionamento interno.** O usuário não é informado sobre franquia, fornecedor, região ou limite de concorrência — recebe o que aconteceu e o que fazer a seguir. É a mesma orientação sem exposição que o RF03 exige das recusas de intenção e que a seção 5.3.3 estabelece para a recusa que não confirma a existência de um projeto fora do escopo autorizado.
+
+**Toda mensagem oferece uma saída.** Em cinco dos oito casos a saída inclui o canal de texto, o que operacionaliza no nível da interface o plano de resposta ao risco R03 registrado em 2.6.3: tratar a voz como incremento, com retorno sempre possível ao texto.
+
+**Falha de transcrição não é erro de requisição.** A indisponibilidade do serviço de fala, o tempo esgotado e o áudio sem fala reconhecível não aparecem nesta tabela: eles ocorrem depois da aceitação e se manifestam como o estado `falhou` descrito em 5.7.3.4, com resposta `200`. Um erro de requisição informa que o pedido não pôde ser atendido; um estado informa o desfecho de um pedido que foi atendido.
 
 ## 5.8 Diagrama de Classes da Solução — Sprint 2
 
@@ -4885,6 +5116,10 @@ Neste desenho, o botão não serve para resolver a pendência diretamente. Ele f
 
 O protótipo A foi executado como um mockup interativo que simula o fluxo conversacional proativo do agente Prata dentro do Microsoft Teams. A figura a seguir apresenta o storyboard completo do fluxo, composto por cinco frames que representam a jornada desde a notificação inicial até o ponto de ruptura.
 
+[Acessar o vídeo desenvolvido para o Protótipo A](https://drive.google.com/file/d/1i8gJux-svrldd1OrkpJKvStBlHGnVkWR/view?usp=sharing)
+
+Gerado com apoio de inteligência artificial, o protótipo tem caráter exploratório: busca evidenciar a necessidade da solução e permitir uma avaliação preliminar de sua usabilidade e do fluxo de interação.
+
 <div align="center">
 
 ![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](../documentos/imagens/storyboard-fluxo-prata.png)
@@ -4969,6 +5204,8 @@ O vídeo e a imagem conceitual utilizados nesta exploração foram gerados com a
 
 **Cena 4 · Atualização e confirmação** - Fernanda solicita: "Não precisa. Resolva agora: registre que estamos aguardando aprovação do cliente". O agente interpreta a solicitação, relaciona-a ao contexto da pendência e responde: "Entendi. Marco Entrega da Fase 2, projeto Linha 6, motivo aguardando aprovação do cliente. Confirma o registro?". A cena termina antes da efetivação da mudança, evidenciando que uma atualização não deve ser registrada sem confirmação explícita.
 
+**Cena 5 · Ruptura** - Após o registro da atualização, Fernanda é chamada para uma reunião em outra sala e deixa o crachá sobre a mesa, ainda vestido pelo desligamento do turno anterior. Minutos depois, uma nova pendência é identificada pela plataforma e o sinal luminoso é acionado normalmente. Como o crachá permanece imóvel sobre a mesa, o alerta segue piscando sem que Fernanda esteja por perto para reconhecê-lo. Carlos, sentado próximo, percebe a luz acesa e pergunta diretamente: "Isso é seu, Fernanda? Tá alertando alguma coisa?" - mas Fernanda não está na sala para responder. O grupo não havia definido se o sistema deveria detectar a ausência do usuário e suspender o sinal, ou se o alerta deveria simplesmente continuar até alguém tocá-lo. Diante da pergunta de Carlos, o "roteirista" precisou improvisar uma resposta na hora, admitindo que esse comportamento não fora desenhado - expondo uma lacuna real sobre o vínculo entre o dispositivo e a presença física do responsável, algo que nenhum RF atual cobre.
+
 #### 7.5.2.1 Protocolo de interação com o crachá
 
 O roteiro utiliza o toque como mecanismo de reconhecimento do alerta e de consentimento para iniciar a conversa. O crachá não mantém o microfone continuamente ativo: a captura ocorre apenas durante os momentos em que o agente aguarda uma resposta da usuária. Cada fala é encerrada por uma pausa breve, simulando a detecção do fim do enunciado; em seguida, o dispositivo interrompe a captura e processa a resposta.
@@ -4986,6 +5223,8 @@ O roteiro utiliza o toque como mecanismo de reconhecimento do alerta e de consen
 Os sinais visuais além da luz vermelha, o intervalo utilizado para reconhecer o fim da fala e o comportamento técnico do segundo toque são convenções de encenação do protótipo. Esses elementos deverão ser validados antes de qualquer implementação, pois a gravação demonstra o fluxo de interação e não um dispositivo eletrônico funcional.
 
 ### 7.5.3 Espaço de testagem
+
+Os protótipos físicos foram apresentados a colegas de outras turmas do Inteli, que atuaram como testers externos em um teste inicial. A atividade teve como objetivo observar a compreensão dos protótipos e verificar sua usabilidade preliminar, sem pretensão de representar uma validação formal ou estatisticamente significativa.
 
 | Protótipo | Situação testada | O que aconteceu | Onde falhou/precisou de improviso |
 |---|---|---|---|
@@ -5037,6 +5276,12 @@ Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o
 
 As imagens a seguir compõem o registro visual completo do Protótipo A. Todas as telas foram criadas como mockups de alta fidelidade simulando a interface do agente Prata dentro do Microsoft Teams.
 
+O registro fotográfico abaixo foi realizado durante o teste inicial com testers externos. Trata-se de uma fotografia bruta do protótipo em uso, sem geração ou edição por inteligência artificial.
+
+![Registro fotográfico bruto do Protótipo A em uso durante o teste inicial de usabilidade com colegas do Inteli.](../documentos/imagens/prototipoa.jpeg)
+
+*Figura - Protótipo A apresentado a testers externos durante o teste inicial de usabilidade.*
+
 | Arquivo | Descrição |
 |---|---|
 | `storyboard-fluxo-prata.png` | Storyboard completo do fluxo de chat do Prata AI Agent, com os cinco frames da jornada conversacional |
@@ -5051,6 +5296,12 @@ As imagens a seguir compõem o registro visual completo do Protótipo A. Todas a
 ### 7.8.2 Registro visual — Protótipo B
 
 O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecimento por toque, a interação por voz e a solicitação de confirmação antes do registro de uma atualização. A imagem conceitual a seguir foi utilizada como referência para definir os personagens, o contexto de escritório e os elementos visuais do crachá apresentados no vídeo.
+
+Além do registro audiovisual, a fotografia a seguir documenta o protótipo físico do crachá durante sua apresentação. A imagem é um registro bruto, produzido sem uso de inteligência artificial para sua geração ou edição, e foi feita durante o teste inicial com testers externos.
+
+![Registro fotográfico bruto do Protótipo B, representado pelo crachá físico, durante o teste inicial de usabilidade com colegas do Inteli.](../documentos/imagens/prototipob.jpeg)
+
+*Figura - Protótipo B físico apresentado a testers externos durante o teste inicial de usabilidade.*
 
 <div align="center">
 
