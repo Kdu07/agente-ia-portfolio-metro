@@ -4177,12 +4177,12 @@ A organização da seção acompanha a ordem em que as decisões se condicionam:
 | 5.7.1 | Topologia do canal de voz: por qual caminho o áudio trafega e por quê |
 | 5.7.2 | Seleção dos serviços de conversão entre fala e texto |
 | 5.7.3 | API de recebimento de áudios do usuário |
-| 5.7.4 | API de conversão de fala em texto — **pendente de redação** |
+| 5.7.4 | API de conversão de fala em texto |
 | 5.7.5 | API de conversão de texto em fala — **pendente de redação** |
-| 5.7.6 | Catálogo de erros, limites operacionais e registro — **pendente de redação** |
+| 5.7.6 | Corpus de áudio de referência e procedimento de verificação — **pendente de redação** |
 | 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções — **pendente de redação** |
 
-> **Pendência de seção.** As subseções 5.7.4 a 5.7.7 estão previstas nesta organização e são referenciadas ao longo de 5.7.1 e 5.7.2 — o corpus de áudio de referência que sustenta os indicadores de 3.1.5.2 (5.7.6) —, mas ainda não foram redigidas. Enquanto isso não ocorrer, as metas de WER, de acurácia de termos de domínio e de degradação ponta a ponta permanecem declaradas sem procedimento de verificação escrito.
+> **Pendência de seção.** As subseções 5.7.5 a 5.7.7 estão previstas nesta organização e são referenciadas ao longo de 5.7.1, 5.7.2 e 5.7.4 — em especial o corpus de áudio de referência que sustenta os indicadores de 3.1.5.2 (5.7.6) —, mas ainda não foram redigidas. Enquanto isso não ocorrer, as metas de WER, de acurácia de termos de domínio e de degradação ponta a ponta permanecem declaradas sem procedimento de verificação escrito.
 
 ### 5.7.1 Topologia do canal de voz
 
@@ -4600,6 +4600,124 @@ Duas propriedades atravessam a tabela.
 **Toda mensagem oferece uma saída.** Em cinco dos oito casos a saída inclui o canal de texto, o que operacionaliza no nível da interface o plano de resposta ao risco R03 registrado em 2.6.3: tratar a voz como incremento, com retorno sempre possível ao texto.
 
 **Falha de transcrição não é erro de requisição.** A indisponibilidade do serviço de fala, o tempo esgotado e o áudio sem fala reconhecível não aparecem nesta tabela: eles ocorrem depois da aceitação e se manifestam como o estado `falhou` descrito em 5.7.3.4, com resposta `200`. Um erro de requisição informa que o pedido não pôde ser atendido; um estado informa o desfecho de um pedido que foi atendido.
+
+### 5.7.4 API de conversão de fala em texto
+
+Esta subseção especifica como o áudio recebido pelo trajeto de ingestão é convertido em texto e como o modo de transmissão contínua obtém a credencial que o autoriza. É onde o serviço selecionado em 5.7.2.5 deixa de ser escolha de fornecedor e passa a ser chamada concreta.
+
+O que já está decidido não é revisitado. Formatos aceitos, limites de tamanho e duração e o catálogo de erros dirigidos ao usuário pertencem a 5.7.3.6 e 5.7.3.8; a política de retenção pertence a 5.7.1.5. O que falta é a **interface** do serviço que o servidor efetivamente chama — e essa escolha não é detalhe de implementação, porque as interfaces disponíveis diferem justamente naquilo que este documento já declarou inegociável.
+
+#### 5.7.4.1 Critérios de escolha da interface
+
+O serviço adotado expõe mais de uma interface de reconhecimento, e elas não são intercambiáveis. Nenhum dos critérios abaixo é novo: cada um deriva de decisão já tomada.
+
+| Critério | Origem |
+|---|---|
+| **C1** — admite lista de frases | É a única mitigação técnica do R03 (5.7.2.1) e a condição de existência do indicador de acurácia de termos de domínio (3.1.5.2) |
+| **C2** — aceita os formatos de 5.7.3.6 sem conversão | Aquela subseção decidiu que nenhuma transcodificação ocorre, nem no cliente nem no servidor |
+| **C3** — não exige infraestrutura adicional | A topologia de 5.7.1.4 delimitou os componentes do canal; acrescentar armazenamento ou dependência de sistema amplia o perímetro a homologar |
+| **C4** — compatível com a retenção de 5.7.1.5 | O áudio é descartado após a transcrição; uma interface que exija persisti-lo contraria a política |
+
+C1 é eliminatório por construção. Sem ele, a seleção registrada em 5.7.2.5 perde seu fundamento principal: o serviço foi escolhido porque admitia vocabulário customizado, e uma interface que não o admite anula essa razão sem anular o custo da escolha.
+
+#### 5.7.4.2 Interfaces avaliadas
+
+| Interface | C1 — lista de frases | C2 — formatos | C3 — infraestrutura | C4 — retenção |
+|---|---|---|---|---|
+| REST de áudio curto | **Não admite** | Apenas WAV/PCM e OGG/Opus, 16 kHz mono | Nenhuma | Compatível |
+| Transcrição em lote | Admite | Amplos | **Armazenamento acessível por URL** | **Exige áudio em repouso** |
+| Transcrição rápida | Admite | WAV, WebM, OGG/Opus, MP3, FLAC, AAC, entre outros | Nenhuma | Compatível |
+| SDK com reconhecimento contínuo | Admite | WAV nativo; **comprimidos exigem GStreamer** | **GStreamer no contêiner** | Compatível |
+
+**O REST de áudio curto é eliminado duas vezes.** A documentação do fornecedor declara que fala customizada e transcrição em lote não estão disponíveis por essa via, o que reprova C1 sozinho. Somam-se a isso os formatos: aceita apenas WAV/PCM e OGG/Opus a 16 kHz mono, o que exclui o WebM produzido pelo Chrome e pelo Edge e o MP4 produzido pelo Safari — dois dos quatro formatos de 5.7.3.6 — e obrigaria exatamente a conversão que aquela subseção recusou. O teto de sessenta segundos por requisição, contra os cinco minutos admitidos em 5.7.3.6, é a terceira reprovação.
+
+**A transcrição em lote é eliminada pela infraestrutura.** Opera sobre arquivos acessíveis por URL, o que exige depositar o áudio em armazenamento antes de transcrever. O custo é duplo: um recurso a mais fora do perímetro descrito em 5.7.1.4, e áudio em repouso, contrariando a política de 5.7.1.5, que o descarta assim que a transcrição termina.
+
+**O SDK com reconhecimento contínuo é o caso mais sutil, e merece atenção porque é a interface que a equipe já usou** — foi por ela que se conduziu a verificação registrada na seção 8 do glossário de domínio. Ele admite a lista de frases e satisfaz C1 sem ressalva. Reprova em C2 e C3 ao mesmo tempo, e pela mesma razão: em Linux, o SDK delega a decodificação de formatos comprimidos ao GStreamer, biblioteca que não é distribuída junto e precisa ser instalada no contêiner. Disso decorrem duas consequências. A primeira é uma dependência de sistema nova, com licenciamento e ciclo de atualização próprios. A segunda é menos visível e mais relevante: **o GStreamer descomprime o áudio para PCM antes de enviá-lo**. A conversão que 5.7.3.6 recusou não desaparece — ela se move para dentro do contêiner e deixa de aparecer na especificação. Uma conversão que a documentação não menciona continua sendo uma conversão, e passa a ser uma que ninguém revisa.
+
+#### 5.7.4.3 Decisão
+
+**O trajeto de ingestão usa a transcrição rápida**: uma chamada síncrona sobre HTTPS, com o áudio no corpo `multipart/form-data`.
+
+Três razões a sustentam. A primeira é C1: admite a lista de frases, e com ela o glossário de domínio permanece executável, que é o que mantém de pé a mitigação do R03. A segunda é C2 em sentido literal: aceita, sobre a própria conexão, os quatro formatos que os navegadores produzem, de modo que o servidor encaminha os bytes recebidos sem tocá-los. A terceira é C3: a chamada é HTTPS comum, feita com o mesmo cliente `httpx` que o middleware já usa para falar com o Direct Line — nenhuma dependência nova, nativa ou de sistema.
+
+Cabe registrar que a interface é síncrona enquanto o contrato de 5.7.3.1 é assíncrono, e que não há contradição nisso. O que é assíncrono é o contrato **com o cliente**: a submissão devolve `202` e a consulta devolve `200`. A chamada ao serviço ocorre na tarefa de segundo plano que preenche o intervalo entre as duas, e uma interface síncrona é precisamente o que torna essa tarefa simples — ela começa, espera e termina, sem precisar sondar o estado de um recurso externo.
+
+#### 5.7.4.4 A chamada ao serviço
+
+```http
+POST https://{recurso}.cognitiveservices.azure.com/speechtotext/transcriptions:transcribe?api-version=2025-10-15
+Ocp-Apim-Subscription-Key: {chave}
+Content-Type: multipart/form-data
+```
+
+O corpo tem duas partes. A parte `audio` carrega os bytes tal como recebidos em `POST /voz/audios`, sem conversão. A parte `definition` carrega a configuração do reconhecimento:
+
+```json
+{
+  "locales": ["pt-BR"],
+  "phraseList": {
+    "phrases": ["PRJ", "NOR", "PRJ-2024-018", "subportfólio", "ART", "…"]
+  }
+}
+```
+
+A chave do recurso permanece no servidor, lida da configuração e nunca transmitida ao navegador — a credencial do cliente é outra, tratada em 5.7.4.6.
+
+O idioma é declarado, e não detectado. Vem do campo `idioma` da submissão, definido em 5.7.3.3, ou da configuração do serviço quando ausente. Declará-lo reduz latência e melhora acurácia, e a detecção automática não tem função num canal cujo domínio é monolíngue por definição: pagar tempo de inferência para descobrir que a pessoa falou português é desperdício previsível.
+
+#### 5.7.4.5 Injeção do glossário de domínio
+
+O campo `phraseList` é onde o glossário deixa de ser documento e passa a ser mecanismo. As frases enviadas são as consolidadas em `documentos/glossario-dominio.md` — 101 das 500 que o serviço admite, conforme o orçamento registrado na seção 6.1 daquele documento.
+
+A lista é enviada **a cada requisição**, e não configurada uma vez. O mecanismo é de tempo de execução, aplicado sobre o modelo base, sem etapa de treinamento e sem endpoint dedicado. Disso decorre uma consequência operacional favorável: alterar o glossário não exige publicar modelo nem reiniciar serviço, e a versão vigente no repositório é a que vale na requisição seguinte.
+
+Decorre também uma advertência que a especificação não pode omitir. A verificação registrada na seção 8 do glossário estabeleceu que o mecanismo **corrige erros de segmentação e não corrige erros de substituição**. O texto entregue ao pipeline pode conter, portanto, termos do domínio trocados por palavras comuns — *arte* onde se disse `ART`, *Vila permanente* onde se disse `via permanente` — e nenhuma configuração desta API elimina essa classe de erro. Ela pertence à etapa de extração de entidades, que precisa reconciliar a cadeia transcrita com o glossário. O ponto está desenvolvido na seção 8.5 daquele documento e é retomado em 5.7.7.
+
+Uma ressalva de escopo sobre a própria verificação. Ela foi conduzida através do SDK, e não da interface aqui adotada. As duas expõem o mesmo mecanismo, e a documentação do fornecedor o descreve nos mesmos termos, mas **transferir o resultado de uma para a outra é suposição razoável, não observação**. A confirmação sobre a interface efetivamente adotada cabe ao corpus de 5.7.6.
+
+#### 5.7.4.6 Modo de transmissão contínua e emissão da credencial
+
+O modo de transmissão contínua, mantido em 5.7.1.3 como atalho do chat web, não passa pelo servidor: o navegador conversa diretamente com o serviço de fala. Isso exige credencial, e a credencial não pode ser a chave do recurso.
+
+`GET /voz/token` devolve:
+
+| Campo | Conteúdo |
+|---|---|
+| `token` | Credencial de curta duração emitida pelo serviço. Nunca a chave do recurso |
+| `regiao` | Região do recurso, necessária ao SDK do navegador para compor o endpoint |
+| `expira_em_segundos` | Validade da credencial, 600 segundos no padrão do serviço |
+| `idioma` | Código BCP 47 do reconhecimento, `pt-BR` |
+
+**Por que token e não chave.** Um token vazado expira sozinho em dez minutos. Uma chave vazada exige rotação no tenant do parceiro e derruba a integração inteira até que a nova seja distribuída — o custo de um incidente é desproporcional ao de emitir credenciais.
+
+**Por que exige sessão.** Um endpoint aberto seria proxy gratuito para um serviço tarifado por hora de áudio. Não exige, porém, permissão especial: falar é uma forma de escrever, e quem pode usar o chat pode ditar. A regra segue o modelo de 5.2.
+
+**Renovação antecipada.** O cliente renova antes de expirar, e não ao receber erro. Uma renovação reativa interromperia a fala do usuário no meio, que é o único momento em que a interrupção é percebida.
+
+Resta a lista de frases do lado do cliente. O navegador também precisa dela, e o token não a transporta. Como o glossário é versionado no repositório e não constitui informação sigilosa — a seção 3 daquele documento exclui deliberadamente o que é classificado —, ele acompanha o pacote do frontend, carregado como recurso estático. A consequência precisa ficar registrada: **uma alteração no glossário vale imediatamente no trajeto de ingestão e só vale no modo de transmissão contínua após nova publicação do frontend.** Os dois trajetos podem, portanto, operar sob versões diferentes do mesmo glossário, o que afeta a regra da seção 7.3 daquele documento — toda medição registra contra qual versão foi feita, e aqui há duas. A conciliação cabe a 5.7.6.
+
+O navegador não enfrenta o problema de formato descrito em 5.7.4.2: o SDK de JavaScript captura diretamente do microfone em PCM e não passa por codec comprimido.
+
+#### 5.7.4.7 Falhas do serviço de fala
+
+O catálogo de 5.7.3.8 cobre as falhas atribuíveis à requisição do usuário. As falhas do serviço externo são de outra natureza — a pessoa não fez nada errado — e completam aquele catálogo:
+
+| Situação no serviço | Código interno | HTTP | Mensagem à pessoa |
+|---|---|:-:|---|
+| `401` ou `403` — chave inválida, expirada ou recurso desabilitado | `SERVICO_FALA_INDISPONIVEL` | 503 | O serviço de voz está indisponível agora. Digite sua solicitação que eu respondo do mesmo jeito. |
+| `429` — franquia mensal esgotada ou requisição simultânea | `COTA_EXCEDIDA` | 429 | Definida em 5.7.3.8 |
+| `5xx` ou tempo de resposta esgotado | `SERVICO_FALA_INDISPONIVEL` | 503 | Idem à primeira linha |
+
+Duas propriedades atravessam a tabela. A primeira é que nenhuma mensagem revela detalhe do serviço externo, do recurso ou da chave: uma mensagem que distinguisse "chave inválida" de "recurso desabilitado" informaria a quem estivesse sondando o sistema, sem ajudar quem apenas quis falar.
+
+A segunda é que toda mensagem oferece o canal de texto. Isso não é cortesia de redação: é o plano de resposta ao R03 registrado em 5.7.2.8, que define o retorno ao canal de texto como resposta à indisponibilidade — e não o recurso a um serviço de fala alternativo fora do perímetro.
+
+O `429` reaproveita o código já existente porque, do ponto de vista da pessoa, esgotar a franquia mensal e disputar a única requisição simultânea admitida pelo nível gratuito produzem a mesma experiência e a mesma ação recomendada. A distinção interessa ao registro de auditoria, não ao usuário, e o campo `detalhe` a preserva.
+
+#### 5.7.4.8 O que esta subseção deixa por verificar
+
+Três afirmações desta subseção são hipóteses fundamentadas, e não observações, e ficam registradas como tais: que a lista de frases opera na interface de transcrição rápida com o mesmo efeito observado no SDK; que os quatro formatos de 5.7.3.6 são aceitos por ela sem conversão, incluído o MP4 do Safari; e que a latência da chamada síncrona cabe no intervalo que a interface de submissão consegue exibir como progresso. As três se resolvem por medição sobre o corpus de referência de 5.7.6, e nenhuma delas se resolve por leitura de documentação.
 
 ## 5.8 Diagrama de Classes da Solução — Sprint 2
 
