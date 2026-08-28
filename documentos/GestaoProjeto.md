@@ -116,7 +116,7 @@
     - [3.3.1 Planejamento da Sprint 2](#331-planejamento-da-sprint-2)
     - [3.3.2 Alinhamento aos critérios do Escritório de Projetos](#332-alinhamento-aos-critérios-do-escritório-de-projetos)
     - [3.3.3 Matriz de papéis e responsabilidades da Sprint 2](#333-matriz-de-papéis-e-responsabilidades-da-sprint-2)
-    - [3.3.4 Acompanhamento parcial e análise da Sprint 2](#334-acompanhamento-parcial-e-análise-da-sprint-2)
+    - [3.3.4 Fechamento e análise da Sprint 2](#334-fechamento-e-análise-da-sprint-2)
   - [3.4 Sprint 3](#34-sprint-3)
   - [3.5 Sprint 4](#35-sprint-4)
   - [3.6 Sprint 5](#36-sprint-5)
@@ -291,7 +291,9 @@ Ao final de cada sprint, a equipe deve:
 - consolidar o `Projeto.md` e os documentos de gestão;
 - verificar a coerência entre NEG, REQ e PROJ;
 - conferir o atendimento ao DoD das issues;
+- conferir que nenhuma issue do ciclo foi fechada sem responsável atribuído;
 - verificar merge requests pendentes;
+- extrair as métricas do ciclo declarando corte, fonte, commit-base e regra de atribuição, conforme a nota metodológica da seção [3.3.4](#334-fechamento-e-análise-da-sprint-2);
 - registrar a retrospectiva;
 - identificar e documentar pendências;
 - planejar e criar as issues da sprint seguinte, incluindo estimativas, labels, milestone e dependências;
@@ -333,7 +335,7 @@ O quadro evolutivo será consolidado progressivamente para evidenciar temas reco
 | Sprint | Pontos fortes | Pontos de atenção | Ações para o ciclo seguinte |
 |---|---|---|---|
 | Sprint 1 | Entrega integral do escopo no fechamento; rastreabilidade por issues, commits e MRs; equilíbrio global entre criação e revisão de MRs | Distribuição desigual entre frentes; revisões concentradas; atualizações mantidas até a noite de encerramento | Definir corte único das métricas; distribuir revisões desde o início; acompanhar carga e dependências nas dailies |
-| Sprint 2 | Entrega integral dos artefatos previstos mesmo com redefinição de escopo; granularidade do planejamento em tasks pequenas e verificáveis; comunicação consistente nas dailies | Desorganização na primeira semana por mudança de escopo; acúmulo de itens em fila de revisão; desequilíbrio de carga e de contribuição registrada; ausência de Tech Lead designado | Nomear revisor na abertura do MR e verificar a fila na daily; redistribuição obrigatória acima de 2:1; designar Tech Lead; issue de propagação a cada mudança de escopo; padronizar identidade Git |
+| Sprint 2 | Conclusão integral da milestone (81/81 issues) mesmo com redefinição de escopo; granularidade do planejamento em tasks pequenas e verificáveis; participação dos seis integrantes no fluxo de integração; identidades de autoria reconciliadas pelo `.mailmap`; comunicação consistente nas dailies | Desorganização na primeira semana por mudança de escopo; fechamento concentrado no encerramento (51% nos dois últimos dias); 24,7% do escopo fechado sem responsável atribuído; desequilíbrio de carga (2,83:1 em issues e 2,92:1 em horas) e integração concentrada; ausência de Tech Lead designado | Nomear revisor na abertura do MR e medir o SLA; redistribuição obrigatória acima de 2:1; designar Tech Lead; issue de propagação a cada mudança de escopo; responsável obrigatório antes de `Doing`; checkpoint de repriorização no penúltimo dia útil |
 
 ### 3.2 Sprint 1
 
@@ -522,6 +524,8 @@ O planejamento operacional da Sprint 2 está registrado no [Kanban do GitLab](ht
 | `SIZE_G` | 2 | de 60 a 120 minutos |
 | **Total** | **27** | — |
 
+> **Nota de reconciliação.** Este é o plano **de abertura** do ciclo, mantido como registro do que foi previsto. Ele não descreve o escopo executado: a redefinição de arquitetura da primeira semana substituiu integralmente esse conjunto por um planejamento mais granular, e a milestone `Sprint 02` fechou com **81 issues**, das quais nenhuma pertence à faixa `#71`–`#97`. A diferença entre o previsto e o realizado é analisada na seção [3.3.4](#334-fechamento-e-análise-da-sprint-2), e a exigência de registrar a propagação de cada mudança de escopo passou a ser a ação `AM09`.
+
 A prioridade foi definida pela redução de incerteza e pelo efeito de desbloqueio. Primeiro são executadas as atividades que fundamentam decisões posteriores; em seguida, são produzidos os artefatos técnicos e visuais; por fim, são consolidados governança e planejamento do próximo ciclo. As duas tasks `SIZE_G`, relacionadas à proposta de UX e ao deploy, devem receber acompanhamento mais frequente nas dailies por concentrarem maior abrangência e incerteza.
 
 O sequenciamento principal é:
@@ -546,7 +550,7 @@ A distribuição inicial divide as 27 tasks em seis blocos, com quatro ou cinco 
 
 | Critério | Evidência no projeto |
 |---|---|
-| Análise crítica da Sprint 2 | Seção 3.3.4, com indicadores, pontos fortes, pontos de atenção, efetividade das ações anteriores e ações verificáveis para a Sprint 3 |
+| Análise crítica da Sprint 2 | Seção [3.3.4](#334-fechamento-e-análise-da-sprint-2), com os indicadores de fechamento, pontos fortes, pontos de atenção, efetividade das ações anteriores e ações verificáveis para a Sprint 3 |
 | Revisão e acompanhamento dos riscos | Seção 4, com a matriz de risco completa, histórico por sprint, itens materializados, efetividade das respostas, matriz probabilidade × impacto e análise dos três itens mais críticos |
 | Papéis e responsabilidades | Seção 3.3.3, com todos os integrantes, frentes, entregas e rotação evidenciada em relação à Sprint 1 |
 | Contrato, SLA e rituais | Seções 2.1 a 2.4 e registro da revisão na seção 2.9.1, incluindo segurança psicológica, comunicação, dailies, conflitos e revisão em até 24 horas úteis |
@@ -570,7 +574,7 @@ A matriz da Sprint 2 registra o papel principal assumido por cada integrante, a 
 | **Alexsander Barbosa** | Responsável por pilha tecnológica e dados | TEC — Tecnologias e modelagem de dados | Definição e atualização da pilha de tecnologias, análise de confiabilidade e escalabilidade, modelagem conceitual, modelagem lógica e modelagem física dos dados |
 | **Celso Rocha** | Responsável pelo pré-processamento textual e pelo catálogo de intenções | TEC — Pipeline de PLN; DOC — Consistência documental | Definição do catálogo de intenções do agente, implementação do pipeline de pré-processamento textual, implementação da vetorização com TF-IDF, identificação de pontos desatualizados e atualização da documentação |
 
-O papel de **Tech Lead não foi atribuído na Sprint 2**. As decisões técnicas foram tomadas de forma distribuída entre os responsáveis por cada frente e validadas coletivamente nas dailies. O registro é mantido de forma explícita porque a ausência do papel tem efeito sobre a análise da sprint: parte do retrabalho descrito na seção [3.3.4](#334-acompanhamento-parcial-e-análise-da-sprint-2) decorreu da falta de uma instância única de arbitragem técnica durante a redefinição da arquitetura.
+O papel de **Tech Lead não foi atribuído na Sprint 2**. As decisões técnicas foram tomadas de forma distribuída entre os responsáveis por cada frente e validadas coletivamente nas dailies. O registro é mantido de forma explícita porque a ausência do papel tem efeito sobre a análise da sprint: parte do retrabalho descrito na seção [3.3.4](#334-fechamento-e-análise-da-sprint-2) decorreu da falta de uma instância única de arbitragem técnica durante a redefinição da arquitetura.
 
 ##### Evidência da rotação de papéis
 
@@ -587,75 +591,155 @@ A rotação é obrigatória e deve ser verificável entre sprints. A tabela abai
 
 Todos os seis integrantes exerceram na Sprint 2 responsabilidades distintas das da Sprint 1, e nenhuma frente permaneceu com a mesma pessoa nos dois ciclos. A rotação também produziu o efeito pretendido de desenvolvimento multidisciplinar: integrantes que atuaram apenas em artefatos de negócio e documentação na Sprint 1 assumiram tarefas de implementação, modelagem de dados e integração técnica na Sprint 2.
 
-#### 3.3.4 Acompanhamento parcial e análise da Sprint 2
+#### 3.3.4 Fechamento e análise da Sprint 2
 
-> **Nota metodológica.** A Sprint 2 **ainda não foi encerrada** na data desta redação. Os dados a seguir correspondem a um recorte parcial do período de **17/08/2026 a 26/08/2026**, extraído do GitLab em **26/08/2026**. A conversão de esforço adotada foi `SIZE_PP` = 0,25 h, `SIZE_P` = 0,5 h, `SIZE_M` = 1 h e `SIZE_G` = 2 h; issues sem *size* não somam horas. Os números consolidados de fechamento, a verificação do SLA e a reconciliação entre totais gerais e individuais serão registrados na conclusão da sprint, conforme a ação `AM01`. A análise qualitativa desta seção já reflete a percepção da equipe e não depende do fechamento.
+> **Nota metodológica.** Os dados desta seção correspondem ao **fechamento da Sprint 2**, cobrindo o período de **17/08/2026 a 28/08/2026**, e substituem o recorte parcial de 26/08 usado na redação anterior. São duas fontes, declaradas em separado porque medem coisas diferentes:
+>
+> 1. **Export de *work items* do GitLab de 28/08/2026**, restrito às milestones `Sprint 01` e `Sprint 02`. Dele vêm issues, responsáveis, *sizes* e datas de fechamento. A conversão de esforço é a mesma dos ciclos anteriores — `SIZE_PP` = 0,25 h, `SIZE_P` = 0,5 h, `SIZE_M` = 1 h e `SIZE_G` = 2 h —, e issues sem *size* não somam horas.
+> 2. **Histórico da branch `develop`**, até o commit `74c48d0`, de **28/08/2026, 19:08 UTC**. Dele vêm commits, merges e merge requests integrados. A autoria é reconciliada pelo arquivo `.mailmap` do repositório, conforme a ação `AM10`.
+>
+> **Limites declarados.** A contagem de MRs *criados* e *revisados* pela interface do GitLab não foi reextraída no corte de fechamento; em seu lugar é usado o número de merge requests **efetivamente integrados na `develop`**, verificável no próprio repositório. O tempo até a primeira revisão permanece **sem instrumentação**: o SLA de 24 horas úteis da seção [2.4](#24-sla-de-entregas) não pôde ser verificado neste ciclo e segue como pendência da ação `AM06`.
 
-##### Situação do board no corte
+##### Situação do board no fechamento
 
 | Situação | Issues | Observação |
 |---|---:|---|
-| Concluídas | 39 | Escopo já entregue e integrado |
-| `Waiting Review` e `Review` | 11 | Aguardando revisão ou em revisão |
-| `Doing` | 3 | Em execução |
-| `Backlog` | 32 | Backlog candidato levantado para a Sprint 3 |
-| **Total na milestone `Sprint 02`** | **85** | — |
+| Concluídas | 81 | Todo o escopo remanescente na milestone foi fechado |
+| `Waiting Review` e `Review` | 0 | Fila zerada; ver a ressalva no perfil de fechamento |
+| `Doing` | 0 | — |
+| `Backlog` | 0 | O backlog candidato da Sprint 3 deixou de compor a milestone do ciclo, conforme `AM11` |
+| **Total na milestone `Sprint 02`** | **81** | **100% de conclusão** |
 
-As 32 issues em `Backlog` correspondem ao levantamento do backlog candidato da Sprint 3 e não representam escopo pendente da Sprint 2. A concentração de 11 itens em revisão no corte é, por outro lado, um indicador relevante e aparece entre os pontos de atenção.
+A milestone tinha **85 issues** no corte de 26/08 e fechou com **81**. A diferença resulta de seis itens que saíram da milestone e dois que entraram. A saída não está justificada em card: a correspondência abaixo foi levantada na revisão de fechamento, verificando o conteúdo efetivamente entregue nos documentos — exatamente o tipo de rastro que a ação `AM09` passa a exigir.
 
-##### Indicadores parciais por integrante
+| Issue que deixou a milestone | Destino do conteúdo |
+|---|---|
+| `#147` [TEC-19] Modelagem lógica e física dos dados | Substituída pelas issues `#175` e `#176`, ambas concluídas |
+| `#150` [TEC-22] Guia reprodutível de deploy com capturas de tela | Não realizada. Acompanha a redefinição da `#149`, que passou de "Deploy do algoritmo de NLP em nuvem comercial" para "Documentar futuro deploy", com o *size* reduzido de `G` para `M` |
+| `#154` [TEC-26] Revisão de coerência com a especificação técnica da Sprint 1 | Coberta pelas issues `#179` e `#180`, de identificação e atualização dos pontos desatualizados da documentação |
+| `#156` [TEC-28] Consolidação da seção de Estratégia Técnica no `Projeto.md` | Conteúdo entregue na seção 5 do [Projeto.md](Projeto.md), sem issue própria |
+| `#158` [GP-02] Definição das ações de melhoria verificáveis para a Sprint 3 | Conteúdo entregue nesta seção, na tabela `AM06` a `AM13`, sob a issue `#157` |
+| `#161` [GP-05] Inclusão dos novos riscos e oportunidades surgidos na Sprint 2 | Conteúdo entregue na seção [4.2](#42-matriz-de-risco-consolidada--revisão-da-sprint-2), com os itens `R11` a `R17` e `O04` |
 
-| Integrante | Commits autorais | Integrados na `develop` | Merges na `develop` | Issues fechadas / atribuídas | Horas fechadas / atribuídas | MRs criados | MRs revisados |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Mirela Bianchi | 19 | 19 | 5 | 5/11 | 7,5 / 15,0 h | 5 | 5 |
-| Mariana Reis | 15 | 13 | 4 | 4/9 | 6,0 / 11,0 h | 5 | 4 |
-| Carlos Eduardo Serrano | 6 | 3 | 3 | 2/15 | 1,5 / 13,5 h | 3 | 3 |
-| Alexsander Barbosa | 4 | 4 | 0 | 4/6 | 3,0 / 5,0 h | 2 | 0 |
-| Celso Rocha | 3 | 3 | 3 | 3/5 | 4,0 / 7,0 h | 2 | 3 |
-| Eduardo Casarini | 0 | 0 | 0 | 1/5 | 1,0 / 9,0 h | 0 | 0 |
-| **Total** | **47** | **42** | **15** | **19/51** | **23,0 / 60,5 h** | **17** | **15** |
+As duas entradas foram a `#190`, que duplica a preparação da Sprint Review já registrada na `#109`, e a `#271`, de harmonização dos artefatos UML com a arquitetura consolidada — esta última criada durante o próprio ciclo, como consequência da redefinição de escopo.
 
-Os números são evidências de rastreabilidade e não medem isoladamente qualidade ou esforço. Autoria de commit, integração na `develop`, entrega por merge request e execução do merge são métricas distintas e permanecem separadas. Ainda assim, o recorte parcial mostra uma amplitude de contribuição registrada mais larga do que a observada na Sprint 1, o que sustenta o ponto de atenção levantado pela equipe.
+##### Composição do escopo entregue
+
+| *Size* | Issues | Horas convertidas |
+|---|---:|---:|
+| `SIZE_P` | 15 | 7,5 h |
+| `SIZE_M` | 47 | 47,0 h |
+| `SIZE_G` | 18 | 36,0 h |
+| Sem *size* | 1 | — |
+| **Total** | **81** | **90,5 h** |
+
+| Tipo predominante | Issues |
+|---|---:|
+| Documentação (`DOCUMENTATION`, `DOCS`) | 41 |
+| Design (`DESIGN`) | 17 |
+| Desenvolvimento (`CODE`, `BACKEND`, `DEVOPS`) | 12 |
+| Requisitos (`REQUIREMENTS`) | 6 |
+| Reuniões (`MEET`) | 3 |
+| Pesquisa e testes (`RESEARCH`, `TEST`) | 2 |
+
+A predominância de itens documentais é coerente com os três artefatos da sprint, mas convém registrar que ela também reflete a decisão de especificar antes de implementar: o canal de voz, o deploy e a modelagem de dados foram entregues como contrato, esquema e esqueleto de código — o endpoint de token do Speech, por exemplo, está declarado em `app/api/routes/voz.py` e ainda levanta `NotImplementedError` —, e não como funcionalidade em execução. A consequência para a Sprint 3 é que boa parte do que consta como concluído aqui volta como implementação, e isso precisa estar refletido na capacidade planejada do próximo ciclo.
+
+##### Indicadores consolidados no fechamento
+
+| Métrica | Resultado |
+|---|---:|
+| Issues concluídas na milestone `Sprint 02` | 81/81 |
+| Taxa de conclusão | **100%** |
+| Horas convertidas (total) | 90,5 h |
+| Horas convertidas com responsável atribuído | 73,5 h |
+| Issues fechadas sem responsável | 20 (24,7%) |
+| Commits na `develop` no período | 129 |
+| Commits autorais (sem merges) | 91 |
+| Merge requests integrados na `develop` | 35 |
+| Itens em fila de revisão no fechamento | 0 |
+
+##### Distribuição por integrante
+
+| Integrante | Issues fechadas | Horas convertidas | Commits autorais | MRs produzidos | Merges executados |
+|---|---:|---:|---:|---:|---:|
+| Carlos Eduardo Serrano | 17 | 19,0 h | 12 | 6 | 12 |
+| Eduardo Casarini | 13 | 16,5 h | 19 | 7 | 3 |
+| Mirela Bianchi | 9 | 13,5 h | 28 | 8 | 6 |
+| Mariana Reis | 8 | 10,0 h | 20 | 7 | 7 |
+| Alexsander Barbosa | 8 | 6,5 h | 6 | 4 | 1 |
+| Celso Rocha | 6 | 8,0 h | 6 | 3 | 6 |
+| *Sem responsável atribuído* | 20 | 17,0 h | — | — | — |
+| **Total** | **81** | **90,5 h** | **91** | **35** | **35** |
+
+As colunas medem coisas distintas e não devem ser somadas entre si. *Commits autorais* é a produção registrada na `develop`; *MRs produzidos* atribui cada merge request ao autor predominante da branch de origem; *merges executados* indica quem concluiu a integração, isto é, quem aprovou e mesclou o trabalho. Três merges de sincronização da `develop` para branches de trabalho foram excluídos da contagem de MRs, por não representarem entrega.
+
+O fechamento confirma o desequilíbrio levantado no recorte parcial, ainda que em grau menor. Entre os integrantes com responsabilidade atribuída, a razão entre a maior e a menor carga foi de **2,83:1** em issues e de **2,92:1** em horas, ambas acima do limite de 2:1 fixado em `AM03`. Em commits autorais a razão foi de **4,67:1**. Houve, porém, melhora verificável em relação ao corte de 26/08: naquele momento dois integrantes não registravam nenhum commit nem nenhuma revisão, e no fechamento **todos os seis registram commits, MRs produzidos e merges executados**. A integração permanece concentrada — um integrante executou 12 dos 35 merges, ou 34% —, o que mantém o ponto de atenção sobre revisão.
+
+##### Perfil de fechamento
+
+| Data | Issues fechadas | Das quais, sem responsável | Acumulado |
+|---|---:|---:|---:|
+| 17 a 20/08 | 5 | 0 | 5 |
+| 24/08 | 3 | 2 | 8 |
+| 25/08 | 7 | 0 | 15 |
+| 26/08 | 25 | 18 | 40 |
+| 27/08 | 9 | 0 | 49 |
+| 28/08 | 32 | 0 | 81 |
+
+O perfil mostra dois movimentos que a taxa de 100% esconde. O primeiro é a **concentração no encerramento**: 41 issues, ou 51% do escopo, foram fechadas nos dois últimos dias, sendo 32 no último. O segundo é a **regularização em bloco de 26/08**: 18 issues sem responsável foram fechadas em um intervalo de três minutos, entre 20h15 e 20h18 UTC. São issues de trabalho coletivo ou administrativo — cerimônias da sprint, sessões de teste dos protótipos, planejamento da Sprint 3, revisão do contrato de convivência e atualização do GitFlow —, cujo conteúdo foi de fato entregue e permanece verificável nos documentos. O que não ocorreu foi o uso dessas issues como instrumento de acompanhamento durante o ciclo: elas foram acertadas no fim, e não movidas conforme o trabalho avançava.
+
+É por isso que a fila de revisão zerada no fechamento não deve ser lida como resolução do acúmulo apontado em 26/08. A fila foi absorvida pelo fechamento concentrado, e não por um fluxo contínuo de revisão ao longo da sprint.
+
+##### Reconciliação com a Sprint 1
+
+O mesmo export registra **51 issues fechadas** na milestone `Sprint 01`, contra as **48** consolidadas na seção [3.2.3](#323-indicadores-quantitativos). A divergência se explica pelo corte: doze issues da Sprint 1 foram fechadas depois das 13h de 14/08, horário da extração usada naquela seção, e uma delas — a `#37`, da própria retrospectiva — só foi fechada em 17/08, já dentro da Sprint 2. Os números da seção 3.2.3 são preservados como registro do que foi observado naquele corte. Para comparação entre ciclos vale a régua declarada nesta seção, e é essa a razão de a ação `AM01` fixar corte, fonte e regra de atribuição antes da extração.
 
 ##### Pontos fortes
 
 | Ponto forte | Evidência observada | Impacto no processo |
 |---|---|---|
-| Entrega integral dos artefatos previstos | Todas as frentes planejadas — design compreensivo, estratégia técnica e gestão evolutiva — produziram entregas registradas no repositório e no board | Manteve o compromisso de escopo mesmo com a redefinição ocorrida no início do ciclo |
-| Granularidade do planejamento | Os artefatos foram decompostos em tarefas pequenas e verificáveis, com *size*, DoR e DoD por card | Tornou o progresso visível entre as dailies e permitiu redistribuir trabalho sem renegociar o artefato inteiro |
-| Comunicação da equipe, especialmente nas dailies | Uso consistente do ritual diário para alinhamento, levantamento de impedimentos e organização das tarefas do dia | Reduziu o tempo entre o surgimento de um bloqueio e sua discussão pelo grupo |
+| Conclusão integral do escopo da milestone | 81 de 81 issues fechadas, com as três frentes planejadas — design compreensivo, estratégia técnica e gestão evolutiva — entregues e registradas | Manteve o compromisso de escopo mesmo após a redefinição de arquitetura ocorrida na primeira semana |
+| Granularidade do planejamento | Escopo decomposto em 81 issues com *size*, DoR e DoD por card, sendo 62 de tamanho `P` ou `M` | Tornou o progresso visível entre as dailies e permitiu redistribuir trabalho sem renegociar o artefato inteiro |
+| Participação de todos os integrantes no fluxo de integração | No fechamento, os seis registram commits autorais, MRs produzidos e merges executados, contra dois integrantes sem registro algum no corte parcial | Reduz a dependência de poucos revisores e distribui o conhecimento sobre o que entra na `develop` |
+| Reconciliação das identidades de autoria | O `.mailmap` normalizou quatro variações de identidade e nenhum commit do período ficou atribuído à conta técnica `Administrator` | Tornou a atribuição individual das métricas confiável já neste fechamento, antecipando a ação `AM10` |
+| Comunicação da equipe nas dailies | Uso consistente do ritual diário para alinhamento, levantamento de impedimentos e organização das tarefas do dia | Reduziu o tempo entre o surgimento de um bloqueio e sua discussão pelo grupo |
 
 ##### Pontos de atenção
 
 | Ponto de atenção | Evidência observada | Consequência para o processo |
 |---|---|---|
 | Desorganização na primeira semana | Mudança significativa de escopo no início do ciclo, com retrabalho para reorganizar o `Projeto.md` e bloqueio das tarefas de desenvolvimento enquanto a nova arquitetura era definida | Consumiu capacidade em reorganização e adiou o início efetivo das tarefas técnicas dependentes |
-| Acúmulo de tarefas em revisão | 11 issues em `Waiting Review` e `Review` no corte de 26/08 | Cria fila de espera, concentra o fechamento no fim do ciclo e reduz o efeito da revisão como mecanismo de qualidade |
-| Desequilíbrio de trabalho e de contribuição registrada | No recorte parcial, o volume de commits integrados varia de 19 a 0 entre integrantes, e a razão entre a maior e a menor carga de issues atribuídas supera o limite de 2:1 definido em `AM03` | Indica concentração de execução e risco de dependência de poucas pessoas nas entregas críticas |
+| Fechamento concentrado no encerramento | 41 issues (51%) fechadas nos dois últimos dias, sendo 32 no dia 28/08 | O board não representou o estado real da execução durante o ciclo, e a revisão perdeu função de controle de qualidade ao se acumular no fim |
+| Escopo fechado sem responsável | 20 issues (24,7%) e 17,0 h fechadas sem responsável atribuído, 18 delas em um intervalo de três minutos em 26/08 | Impede a atribuição individual exigida por `AM01` e `AM07` e retira do board a capacidade de sinalizar sobrecarga durante a sprint |
+| Desequilíbrio de carga e de contribuição registrada | Razão de 2,83:1 em issues e de 2,92:1 em horas entre a maior e a menor carga atribuída, acima do limite de 2:1 de `AM03`; 4,67:1 em commits autorais | Indica concentração de execução e risco de dependência de poucas pessoas nas entregas críticas |
+| Concentração da integração | Um integrante executou 12 dos 35 merges do ciclo, ou 34% | Reproduz, no fluxo de integração, o padrão de revisões concentradas já observado na Sprint 1 |
 | Ausência de Tech Lead designado | O papel não foi atribuído na Sprint 2 | Deixou a arbitragem técnica difusa justamente no ciclo em que a arquitetura foi redefinida |
 
 Os pontos de atenção são características do processo e não avaliação individual. Volume, complexidade, dependências, papel exercido e natureza do artefato precisam ser lidos em conjunto: frentes com forte componente de especificação e pesquisa produzem menos commits do que frentes de implementação, sem que isso signifique menor contribuição.
 
 ##### Efetividade das ações da Sprint 1
 
-| ID | Ação definida para a Sprint 2 | Situação no corte parcial | Avaliação |
+| ID | Ação definida para a Sprint 2 | Situação no fechamento | Avaliação |
 |---|---|---|---|
-| AM01 | Definir data, horário, branch-base e regra de atribuição antes da extração | O relatório parcial já explicita período, data de extração e regra de conversão de *size*; o corte definitivo do fechamento ainda será definido | **Em execução** |
-| AM02 | Distribuir revisões de MRs e acompanhar o SLA de 24 horas úteis | O SLA será verificado no fechamento; o acúmulo de 11 itens em revisão indica pressão sobre o prazo, e dois integrantes não registram revisões no recorte | **Em execução, com evidência desfavorável** |
-| AM03 | Revisar carga, complexidade e dependências nas dailies | O acompanhamento ocorreu, mas o critério objetivo de 2:1 não foi atingido no recorte parcial | **Ineficaz** |
-| AM04 | Realizar checkpoints de DoD, pendências e itens em revisão | Os checkpoints foram realizados durante o ciclo | **Efetiva** |
-| AM05 | Interpretar volume junto a horas, *size*, artefato e papel | Aplicado nesta seção; a consolidação final acompanha o fechamento | **Em execução** |
+| AM01 | Definir data, horário, branch-base e regra de atribuição antes da extração | Este relatório declara período, corte, fontes, commit-base e regra de conversão, e explica a divergência com o corte da Sprint 1 | **Efetiva, com ressalva** — a reconciliação entre totais gerais e individuais permanece incompleta enquanto 24,7% das issues fecharem sem responsável |
+| AM02 | Distribuir revisões de MRs e acompanhar o SLA de 24 horas úteis | Todos os seis integrantes executaram merges, contra dois sem registro no corte parcial, mas a integração seguiu concentrada em 34% num único integrante e o SLA não pôde ser medido | **Parcialmente efetiva** |
+| AM03 | Revisar carga, complexidade e dependências nas dailies | O acompanhamento ocorreu e a amplitude diminuiu em relação ao corte parcial, mas o critério objetivo de 2:1 não foi atingido em nenhuma das medidas | **Ineficaz** |
+| AM04 | Realizar checkpoints de DoD, pendências e itens em revisão | Os checkpoints foram realizados, porém não evitaram o fechamento de 51% do escopo nos dois últimos dias nem a regularização em bloco de 26/08 | **Parcialmente efetiva** |
+| AM05 | Interpretar volume junto a horas, *size*, artefato e papel | Aplicado nesta seção, com as métricas apresentadas por natureza distinta e acompanhadas de leitura qualitativa | **Efetiva** |
+| AM10 | Padronizar a identidade Git e manter o `.mailmap` | Antecipada para a Sprint 2: quatro variações reconciliadas e nenhum commit atribuído à conta `Administrator` no período | **Efetiva** |
 
 ##### Ações de melhoria para a Sprint 3
 
 | ID | Problema endereçado | Ação de melhoria | Responsável | Prazo | Critério de sucesso (verificável) |
 |---|---|---|---|---|---|
-| AM06 | Acúmulo de itens em revisão | Nomear revisor no momento da abertura do MR e verificar a fila de `Waiting Review` em toda daily, conforme a seção [2.2.2](#222-dailies) | Scrum Master da Sprint 3 | Diária, ao longo da Sprint 3 | Nenhum MR permanece mais de 24 horas úteis sem revisor nomeado; máximo de 5 itens em `Waiting Review` ao final de qualquer dia |
+| AM06 | Acúmulo de itens em revisão e SLA não medido | Nomear revisor no momento da abertura do MR, verificar a fila de `Waiting Review` em toda daily e registrar no card a data de abertura e a de primeira revisão, conforme a seção [2.2.2](#222-dailies) | Scrum Master da Sprint 3 | Diária, ao longo da Sprint 3 | Nenhum MR permanece mais de 24 horas úteis sem revisor nomeado; máximo de 5 itens em `Waiting Review` ao final de qualquer dia; SLA verificável no relatório de fechamento |
 | AM07 | Desequilíbrio de carga e de contribuição | Aplicar a verificação de carga da daily com redistribuição obrigatória quando a razão exceder 2:1, registrando no card a justificativa quando a diferença for mantida | Scrum Master da Sprint 3 | Diária, ao longo da Sprint 3 | Razão máxima de 2:1 nas horas atribuídas no fechamento, ou justificativa registrada em card para cada exceção |
 | AM08 | Ausência de arbitragem técnica na redefinição da arquitetura | Designar Tech Lead da sprint na abertura do ciclo, com responsabilidade explícita por decisões técnicas e por validar mudanças de arquitetura antes de sua propagação nos artefatos | Equipe | Primeiro dia da Sprint 3 | Papel registrado na matriz de papéis da Sprint 3 e decisões técnicas relevantes registradas em issue ou no `Projeto.md` |
-| AM09 | Retrabalho documental após mudança de escopo | Ao alterar escopo ou arquitetura, abrir issue específica de propagação identificando todos os artefatos afetados antes de iniciar a atualização | Tech Lead da Sprint 3 | A cada mudança de escopo | Toda mudança de arquitetura possui issue de propagação com a lista de artefatos e seu status de atualização |
+| AM09 | Retrabalho documental após mudança de escopo e issues que deixam a milestone sem justificativa | Ao alterar escopo ou arquitetura, abrir issue específica de propagação identificando todos os artefatos afetados; toda issue removida da milestone registra em comentário o destino do seu conteúdo | Tech Lead da Sprint 3 | A cada mudança de escopo | Toda mudança de arquitetura possui issue de propagação com a lista de artefatos e seu status; nenhuma issue sai da milestone sem destino registrado |
 | AM10 | Atribuição individual das métricas comprometida | Padronizar a identidade Git de cada integrante e manter o arquivo `.mailmap` do repositório, conforme a seção 3.1 do `GestaoConfiguracao.md` | Responsável pela gestão de configuração | Início da Sprint 3 | Relatório de contribuições sem identidades duplicadas e sem commits atribuídos a `Administrator` |
 | AM11 | Escopo pendente sem visibilidade | Manter na milestone da sprint apenas o escopo do ciclo corrente, movendo o backlog candidato para a milestone seguinte assim que for detalhado | Scrum Master da Sprint 3 | Ao longo da Sprint 3 | Milestone da sprint contém apenas issues do ciclo; nenhuma issue em `Backlog` na milestone corrente no fechamento |
+| AM12 | Escopo fechado sem responsável | Exigir responsável atribuído antes de a issue entrar em `Doing`, inclusive nas issues de trabalho coletivo, nas quais o responsável responde pela condução e não pela execução isolada | Scrum Master da Sprint 3 | Ao longo da Sprint 3 | Nenhuma issue fechada sem responsável no relatório de fechamento da Sprint 3 |
+| AM13 | Fechamento concentrado no encerramento | Estabelecer checkpoint no penúltimo dia útil da sprint, com revisão card a card das issues ainda abertas e repriorização explícita do que não couber no ciclo | Scrum Master da Sprint 3 | Penúltimo dia útil da Sprint 3 | No máximo 25% das issues do ciclo fechadas no último dia; itens não concluídos repriorizados em card antes do encerramento |
 
 ### 3.4 Sprint 3
 
@@ -731,7 +815,7 @@ A matriz abaixo mantém o histórico de avaliação desde a identificação inic
 | R01 | Dados (parceiro) | Ameaça | Dados sintéticos pouco representativos do portfólio real → métricas do pipeline de PLN enganosas e baixa aderência no uso real | 4·4 | 16 | 5·4 | **20** | 🔴 Crítica | Resp. dados | Em Monitoramento |
 | R02 | Fornecedor / Tecnologia | Ameaça | Restrições do ecossistema Microsoft e ausência de acesso ao ambiente do parceiro (licenças, Direct Line, conectores e permissões) → o executor das ações sobre o portfólio fica indisponível e RF04 a RF08 não podem ser demonstrados | 3·4 | 12 | 5·4 | **20** | 🔴 Crítica | Resp. integração Microsoft | **Materializado** |
 | R03 | Técnico (voz) | Ameaça | Reconhecimento de fala com baixa acurácia para o jargão do Metrô → intenções mal classificadas no canal de áudio | 3·3 | 9 | 3·3 | **9** | 🟡 Moderada | Resp. PLN | Em Monitoramento |
-| R04 | Técnico (arquitetura) | Ameaça | Classificador de intenções não atinge acurácia aceitável → perda de confiança na demonstração e invalidação da métrica exigida | 2·4 | 8 | 2·4 | **8** | 🟡 Moderada | Resp. PLN | Em Monitoramento |
+| R04 | Técnico (arquitetura) | Ameaça | Classificador de intenções não atinge acurácia aceitável → perda de confiança na demonstração e invalidação da métrica exigida | 2·4 | 8 | 1·4 | **4** | 🟢 Baixa | Resp. PLN | **Mitigado** |
 | R05 | Cronograma | Ameaça | Janela curta somada à curva de aprendizado em PLN → atraso em marcos de sprint e MVP incompleto | 3·3 | 9 | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
 | R06 | Stakeholders | Ameaça | Baixa disponibilidade do PMO/TI do Metrô para validações e insumos → decisões travadas, esperas e retrabalho | 2·4 | 8 | 4·4 | **16** | 🟠 Alta | Product Owner | Em Monitoramento |
 | R07 | Equipe | Ameaça | Desnivelamento técnico e sobrecarga desigual entre integrantes → gargalos em componentes críticos do pipeline | 3·3 | 9 | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
@@ -744,12 +828,13 @@ A matriz abaixo mantém o histórico de avaliação desde a identificação inic
 | **R14** | **Desempenho / Voz** | **Ameaça** | **Latência acumulada no Direct Line e serviços de IA na interação por voz → Degradação da experiência do usuário no mobile/voz** | — | — | **3·3** | **9** | 🟡 Moderada | Resp. PLN | **Em Monitoramento** |
 | **R15** | **Arquitetura / Integração** | **Ameaça** | **Substituição da plataforma de portfólio corporativo (SharePoint → Dynamics/Outro) durante a sustentação → Quebra de conectores e ações pré-configuradas** | — | — | **2·4** | **8** | 🟡 Moderada | Resp. integração Microsoft | **Aberto** |
 | **R16** | **Escalabilidade / Banco** | **Ameaça** | **Crescimento acelerado da tabela `interacao` com prompts em claro e execuções de rotinas → Degradação nas agregações do dashboard de intenções** | — | — | **3·3** | **9** | 🟡 Moderada | Resp. infraestrutura | **Em Monitoramento** |
+| **R17** | **Custo / Voz** | **Ameaça** | **Consumo do canal de voz excede o nível gratuito F0 do Azure Speech (5 h de reconhecimento e 500 mil caracteres de síntese por mês) → interrupção da transcrição durante demonstração ou campanha de medição** | — | — | **2·2** | **4** | 🟢 Baixa | Resp. infraestrutura | **Aberto** |
 | O01 | Stakeholders / Negócio | Oportunidade | MVP com valor demonstrado → internalização e evolução da solução pelo parceiro | 3·4 | 12 | 3·4 | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
 | O02 | Técnica / Reuso | Oportunidade | Reuso dos artefatos do Módulo 8/2025 → decisões de engenharia aceleradas e maior maturidade da solução | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Resp. PLN | Em Monitoramento |
 | O03 | Equipe / Capacitação | Oportunidade | Domínio de tecnologias de alta demanda → equipe mais qualificada e portfólio fortalecido | 4·2 | 8 | 5·2 | **10** | 🟠 Alta | Scrum Master | Em Monitoramento |
 | O04 | Técnica / Arquitetura | Oportunidade | Desacoplamento forçado pela indisponibilidade do ambiente do parceiro → MVP demonstrável de forma autônoma, pela interface web própria, e handover documentado independente do ecossistema corporativo | — | — | 4·3 | **12** | 🟠 Alta | Resp. integração Microsoft | Em Monitoramento |
 
-**Itens novos nesta sprint:** `R11` e `O04`, ambos decorrentes da indisponibilidade de acesso ao ambiente do parceiro; `R12` e `R13`, decorrentes da revisão de escopo que reposicionou o middleware como produto e removeu o mascaramento de PII; e `R14`, `R15` e `R16`, decorrentes da análise técnica de confiabilidade e escalabilidade (TEC-17).
+**Itens novos nesta sprint:** `R11` e `O04`, ambos decorrentes da indisponibilidade de acesso ao ambiente do parceiro; `R12` e `R13`, decorrentes da revisão de escopo que reposicionou o middleware como produto e removeu o mascaramento de PII; `R14`, `R15` e `R16`, decorrentes da análise técnica de confiabilidade e escalabilidade (TEC-17); e `R17`, decorrente da seleção do serviço de fala e do enquadramento de custo registrado em 5.7.2.7 do `Projeto.md`.
 
 A descrição de `R02` foi reescrita nesta sprint sem alteração de pontuação. O texto anterior falava em "orquestração inviabilizada ou tardia", formulação que pressupunha o Copilot Studio como camada de orquestração consumindo a API da equipe. Com a inversão registrada em [Arquitetura.md](Arquitetura.md), o Copilot passou a ser o **executor** das ações sobre o portfólio, e sua ausência deixa de adiar uma integração para remover requisitos inteiros da demonstração — o que também explica por que a contingência descrita em 4.4 precisou ser reformulada.
 
@@ -762,10 +847,10 @@ O histórico registra, por item, a evolução desde a identificação inicial, d
 | R01 | Sev. 16 — Em Monitoramento. Maior exposição do projeto; restrição de dados reais limitava a validação | Sev. 20 — Em Monitoramento | A mitigação prevista dependia de validar amostras com especialistas do Metrô. Com o acesso ao ambiente e às pessoas do parceiro indisponível (R02 materializado), a validação não pôde ocorrer e a probabilidade sobe de 4 para 5. O item passa à faixa crítica |
 | R02 | Sev. 12 — Aberto. Sem evidência suficiente sobre licenças, conectores e permissões | Sev. 20 — **Materializado** | O acesso ao ambiente do parceiro não se concretizou no ciclo. A probabilidade passa a 5 por ocorrência confirmada e a contingência prevista foi acionada |
 | R03 | Sev. 9 — Aberto | Sev. 9 — Em Monitoramento | Mitigação iniciada: seleção dos serviços de fala, glossário de domínio e corpus de áudio de referência entraram em execução. Sem evidência para alterar as notas |
-| R04 | Sev. 8 — Aberto | Sev. 8 — Em Monitoramento | Base sintética e treinamento do classificador em andamento; ainda não há resultado de acurácia que permita reavaliar |
+| R04 | Sev. 8 — Aberto | Sev. 4 — **Mitigado** | O classificador foi treinado e medido, e a bancada da F21 encerra a incerteza: acurácia de 0,856 e macro-F1 de 0,851 sobre 431 casos que não participaram do ajuste, contra metas de 0,85 e 0,80 (5.4.11 do `Projeto.md`). A probabilidade cai de 2 para 1, e o impacto permanece 4 porque a métrica segue sendo entregável central. **Ressalva:** a medição é feita sobre corpus sintético, cuja aderência ao real é justamente o R01 — o R04 deixa de ser a ameaça de "o modelo não funciona" e passa a depender inteiramente do R01, "o modelo funciona sobre a base errada" |
 | R05 | Sev. 9 — Em Monitoramento. Não se materializou na Sprint 1 | Sev. 12 — Em Monitoramento | O retrabalho da primeira semana e o bloqueio das tarefas de desenvolvimento consumiram capacidade do ciclo, elevando a probabilidade de 3 para 4 |
 | R06 | Sev. 8 — Em Monitoramento. Informações pendentes de validação | Sev. 16 — Em Monitoramento | As premissas em aberto permanecem paradas, sem retorno do parceiro. A probabilidade sobe de 2 para 4. O item é candidato à classificação como materializado no fechamento da sprint |
-| R07 | Sev. 9 — Aberto | Sev. 12 — Em Monitoramento | O desequilíbrio de carga e de contribuição foi confirmado por evidência no recorte parcial, elevando a probabilidade de 3 para 4 |
+| R07 | Sev. 9 — Aberto | Sev. 12 — Em Monitoramento | O desequilíbrio de carga e de contribuição foi confirmado no fechamento: razão de 2,83:1 em issues e de 2,92:1 em horas atribuídas, além de 24,7% do escopo fechado sem responsável, o que impede medir a carga real de parte do ciclo. A probabilidade sobe de 3 para 4 |
 | R08 | Sev. 9 — Aberto | Sev. 15 — **Materializado** | A mudança significativa de escopo na primeira semana produziu exatamente o efeito previsto: retrabalho documental e bloqueio de tarefas dependentes |
 | R09 | Sev. 10 — Aberto, com prevenção ativa | Sev. 10 — Em Monitoramento | Nenhum incidente registrado. A regra de uso exclusivo de dados sintéticos permanece em vigor e a ausência de acesso a dados reais reduz a exposição prática, sem alterar as notas |
 | R10 | Sev. 4 — Aberto | Sev. 9 — Em Monitoramento | O provisionamento em conta pessoal transfere o consumo para uma pessoa física, elevando probabilidade e impacto. Item passa a ser acompanhado junto a R11 |
@@ -775,6 +860,7 @@ O histórico registra, por item, a evolução desde a identificação inicial, d
 | **R14** | — | **Sev. 9 — Em Monitoramento** | **Item novo (TEC-17). Latência no canal de voz decorrente dos múltiplos saltos e processamento de PLN/Direct Line. Probabilidade 3 e Impacto 3.** |
 | **R15** | — | **Sev. 8 — Aberto** | **Item novo (TEC-17). Possibilidade de substituição futura da plataforma de portfólio do Metrô (Dynamics/Outro). Probabilidade 2 e Impacto 4.** |
 | **R16** | — | **Sev. 9 — Em Monitoramento** | **Item novo (TEC-17). Crescimento volumétrico da tabela `interacao` com prompts em claro afetando consultas do dashboard. Probabilidade 3 e Impacto 3.** |
+| **R17** | — | **Sev. 4 — Aberto** | **Item novo.** Decorre da decisão de 5.7.2.5 de adotar o Azure Speech no nível gratuito F0. A probabilidade é 2 porque a estimativa de consumo do MVP — 40 min de reconhecimento e 80 mil caracteres por mês — cabe com folga de sete vezes na franquia; o que a consome de forma imprevisível é a campanha de medição do corpus de 5.7.6, com 120 gravações. O impacto é 2 porque o plano de resposta ao R03 já prevê o retorno ao canal de texto, e nenhum requisito além do RF02 depende da voz |
 | O01 | Sev. 12 — Aberto | Sev. 12 — Em Monitoramento | Estratégia de aproveitamento em execução por meio dos artefatos de implantação; sem evidência para reavaliar |
 | O02 | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | O reuso permanece relevante e continua exigindo revisão no contexto atual |
 | O03 | Sev. 8 — Aberto | Sev. 10 — Em Monitoramento | A rotação de papéis da Sprint 2 colocou todos os integrantes em frentes técnicas distintas das anteriores, elevando a probabilidade de captura de 4 para 5 |
@@ -794,7 +880,7 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 |---|---|---|---|
 | Uso exclusivo de dados sintéticos ou anonimizados | Nenhum incidente registrado; base de prompts sintéticos em construção | Efetiva | Revisão dos datasets e serviços externos utilizados na Sprint 3 |
 | Prova mínima de integração com o ecossistema Microsoft | Não pôde ser executada por indisponibilidade de acesso | **Ineficaz por impedimento externo** | Substituída pela estratégia de desacoplamento (O04) |
-| Acompanhamento do cronograma | Escopo entregue, porém com retrabalho e bloqueio na primeira semana | Em execução | Monitorar tasks `SIZE_G` e dependências da Sprint 3 |
+| Acompanhamento do cronograma | Escopo entregue integralmente (81/81 issues), porém com retrabalho e bloqueio na primeira semana e 51% do fechamento concentrado nos dois últimos dias | Em execução | Monitorar tasks `SIZE_G` e dependências da Sprint 3; aplicar o checkpoint de repriorização da ação `AM13` |
 | Validação com o parceiro | Premissas permanecem paradas, sem retorno | Em execução | Consolidar a lista priorizada de dúvidas e registrar as premissas assumidas |
 | Rodízio entre trilhas e documentação contínua | Rotação de papéis executada e evidenciada na seção 3.3.3 | Efetiva | Manter a rotação na matriz de papéis da Sprint 3 |
 | Verificação antecipada de integração e deploy | Ambiente de nuvem provisionado, ainda que por credencial pessoal | Em execução | Guia reproduzível de deploy e retomada das credenciais institucionais |
@@ -819,6 +905,7 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | **R14** | Adoção de transcrição streaming no client via token efêmero; inferência local sub-100ms do classificador de intenções; medição constante da latência P95 em `interacao.latencia_ms`. | Otimizar chamadas ao Direct Line, reduzir o tamanho de contexto enviado e prover feedback sonoro imediato na interface. |
 | **R15** | Manter isolamento estrito da comunicação em `copilot/client.py`; versionar contrato intenção-ação em `copilot/topicos.md`; garantir que o orquestrador do middleware opere desacoplado do executor. | Reimplementar apenas o cliente `copilot/client.py` para a nova API REST/Dataverse do novo ERP/Dynamics, preservando intacto todo o pipeline de PLN, guardas e interface. |
 | **R16** | Criação de índices parciais e compostos no PostgreSQL; consultas agregadas somente-leitura em `analytics/`; implementação da rotina periódica de expurgo no agendador conforme RNF07. | Implementação de views materializadas com atualização assíncrona para o dashboard de telemetria. |
+| **R17** | Configurar alerta de orçamento antes do limite, conforme 6.5.5 do `Projeto.md`; concentrar a campanha de medição do corpus em uma janela única, em vez de diluí-la ao longo do mês; manter a síntese de voz (F80) fora do MVP, que é o lado da franquia com maior consumo por uso. | Suspender o canal de voz até a virada do ciclo de cobrança e sustentar a demonstração pelo canal de texto, registrando a limitação; ou migrar para o nível S0, cujo custo por hora de áudio está dimensionado em 5.7.2.7. |
 
 ### 4.6 Estratégia de aproveitamento — oportunidades
 
@@ -836,10 +923,12 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | **5** | | O03 | R08, R11 | R01, R02 | |
 | **4** | | | R05, R07, R12, O02, O04 | R06 | |
 | **3** | | | R03, R10, **R14**, **R16** | R13, O01 | |
-| **2** | | | | R04, **R15** | R09 |
-| **1** | | | | | |
+| **2** | | **R17** | | **R15** | R09 |
+| **1** | | | | R04 | |
 
-A distribuição deslocou-se para cima em relação à Sprint 1: dois itens entraram na faixa crítica (R01 e R02) e nenhum item permanece na faixa baixa. O movimento é consistente com o ciclo, no qual a exposição a fatores externos — acesso ao ambiente do parceiro e disponibilidade de interlocutores — se confirmou. A figura da matriz produzida no artefato de entendimento de negócio permanece como registro da avaliação inicial:
+A distribuição deslocou-se para cima em relação à Sprint 1: dois itens entraram na faixa crítica (R01 e R02). O movimento é consistente com o ciclo, no qual a exposição a fatores externos — acesso ao ambiente do parceiro e disponibilidade de interlocutores — se confirmou.
+
+O único movimento em sentido contrário é o **R04**, que desce de (P2, I4) para (P1, I4) e volta à faixa baixa, por ser o único risco do ciclo cuja incerteza foi encerrada por medição e não por espera. Vale notar o que isso revela sobre a estrutura da matriz: os riscos que a equipe controla caem quando ela trabalha; os que dependem do parceiro sobem quando ela espera. A figura da matriz produzida no artefato de entendimento de negócio permanece como registro da avaliação inicial:
 
 <img src="imagens/matriz-risco.png" alt="Matriz de probabilidade × impacto da Sprint 1" width="45%">
 
@@ -863,35 +952,41 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 
 | ID | Ação | Responsável | Indicador de sucesso | Status |
 |---|---|---|---|---|
-| AM01 | Definir data, horário, branch-base e regra de atribuição antes da extração das métricas | Scrum Master | Relatório reproduzível e totais reconciliados | **Em execução** — metodologia explicitada no relatório parcial; corte definitivo pendente do fechamento |
-| AM02 | Distribuir revisões de MRs ao longo da sprint e acompanhar o SLA de 24 horas úteis | Equipe | Todo MR com reviewer e impedimentos de SLA registrados | **Em execução, com evidência desfavorável** — 11 itens em revisão no corte e dois integrantes sem revisões registradas |
-| AM03 | Revisar carga, complexidade e dependências nas dailies | Scrum Master e Tech Lead | Diferença máxima de 2:1 na carga | **Ineficaz** — o acompanhamento ocorreu, mas o critério não foi atingido |
-| AM04 | Realizar checkpoints de DoD, pendências e itens em revisão | Equipe | Nenhuma issue sem atualização nos checkpoints | **Efetiva** — checkpoints realizados durante o ciclo |
-| AM05 | Interpretar volume junto a horas, *size*, artefato e papel | Scrum Master | Retrospectiva com análise quantitativa e qualitativa | **Em execução** — aplicado na seção 3.3.4; consolidação no fechamento |
+| AM01 | Definir data, horário, branch-base e regra de atribuição antes da extração das métricas | Scrum Master | Relatório reproduzível e totais reconciliados | **Efetiva, com ressalva** — corte, fontes e commit-base declarados no fechamento; a reconciliação individual segue incompleta por causa das issues sem responsável |
+| AM02 | Distribuir revisões de MRs ao longo da sprint e acompanhar o SLA de 24 horas úteis | Equipe | Todo MR com reviewer e impedimentos de SLA registrados | **Parcialmente efetiva** — os seis integrantes executaram merges, mas 34% da integração ficou com um único integrante e o SLA não foi medido |
+| AM03 | Revisar carga, complexidade e dependências nas dailies | Scrum Master e Tech Lead | Diferença máxima de 2:1 na carga | **Ineficaz** — amplitude reduzida em relação ao corte parcial, mas 2,83:1 em issues e 2,92:1 em horas no fechamento |
+| AM04 | Realizar checkpoints de DoD, pendências e itens em revisão | Equipe | Nenhuma issue sem atualização nos checkpoints | **Parcialmente efetiva** — checkpoints realizados, porém 51% do escopo foi fechado nos dois últimos dias |
+| AM05 | Interpretar volume junto a horas, *size*, artefato e papel | Scrum Master | Retrospectiva com análise quantitativa e qualitativa | **Efetiva** — aplicado na seção [3.3.4](#334-fechamento-e-análise-da-sprint-2), com as métricas separadas por natureza |
 
 **Ações da Sprint 2 para a Sprint 3**
 
 | ID | Ação | Responsável | Indicador de sucesso | Status |
 |---|---|---|---|---|
-| AM06 | Nomear revisor na abertura do MR e verificar a fila de revisão em toda daily | Scrum Master da Sprint 3 | Nenhum MR sem revisor por mais de 24 h úteis; máximo de 5 itens em `Waiting Review` ao fim do dia | Planejada |
+| AM06 | Nomear revisor na abertura do MR, verificar a fila em toda daily e registrar as datas de abertura e de primeira revisão | Scrum Master da Sprint 3 | Nenhum MR sem revisor por mais de 24 h úteis; máximo de 5 itens em `Waiting Review` ao fim do dia; SLA verificável no fechamento | Planejada |
 | AM07 | Redistribuição obrigatória quando a razão de carga exceder 2:1 | Scrum Master da Sprint 3 | Razão máxima de 2:1 nas horas atribuídas, ou justificativa registrada em card | Planejada |
 | AM08 | Designar Tech Lead na abertura do ciclo | Equipe | Papel registrado na matriz de papéis da Sprint 3 | Planejada |
-| AM09 | Abrir issue de propagação a cada mudança de escopo ou arquitetura | Tech Lead da Sprint 3 | Toda mudança com issue listando artefatos afetados e status | Planejada |
-| AM10 | Padronizar identidade Git e manter o `.mailmap` | Responsável pela gestão de configuração | Relatório sem identidades duplicadas nem commits de `Administrator` | Planejada |
-| AM11 | Manter na milestone apenas o escopo do ciclo corrente | Scrum Master da Sprint 3 | Nenhuma issue em `Backlog` na milestone corrente no fechamento | Planejada |
+| AM09 | Abrir issue de propagação a cada mudança de escopo ou arquitetura e registrar o destino de toda issue removida da milestone | Tech Lead da Sprint 3 | Toda mudança com issue listando artefatos afetados e status; nenhuma issue sai da milestone sem destino registrado | Planejada |
+| AM10 | Padronizar identidade Git e manter o `.mailmap` | Responsável pela gestão de configuração | Relatório sem identidades duplicadas nem commits de `Administrator` | **Efetiva** — antecipada para a Sprint 2: quatro variações reconciliadas e nenhum commit de `Administrator` no período |
+| AM11 | Manter na milestone apenas o escopo do ciclo corrente | Scrum Master da Sprint 3 | Nenhuma issue em `Backlog` na milestone corrente no fechamento | **Em execução** — a milestone `Sprint 02` fechou sem itens em `Backlog` |
+| AM12 | Exigir responsável atribuído antes de a issue entrar em `Doing`, inclusive nas de trabalho coletivo | Scrum Master da Sprint 3 | Nenhuma issue fechada sem responsável no relatório de fechamento | Planejada |
+| AM13 | Checkpoint de repriorização no penúltimo dia útil da sprint | Scrum Master da Sprint 3 | No máximo 25% das issues do ciclo fechadas no último dia | Planejada |
 
 ### 5.2 Indicadores de processo
 
-| Indicador | Sprint 1 (fechamento) | Sprint 2 (parcial, 26/08) | Uso no acompanhamento |
+| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Uso no acompanhamento |
 |---|---:|---:|---|
-| Issues concluídas | 48/48 — 100% | 39 concluídas; 14 em execução ou revisão | Verificar previsibilidade do planejamento e concentração de fechamento |
-| Horas entregues | 55 h | 23,0 h de 60,5 h atribuídas | Comparar carga planejada e concluída sem tratar duração como medida de qualidade |
-| Commits integrados à `develop` | 65 | 42 | Evidenciar integração e rastreabilidade; analisar junto à granularidade das tarefas |
-| MRs criados e revisados | 33 / 33 | 17 / 15 | Acompanhar equilíbrio entre produção e revisão |
-| Itens em fila de revisão | não medido | 11 | Novo indicador; detectar acúmulo antes do fechamento (`AM06`) |
-| SLA de primeira revisão | até 24 h úteis | a verificar no fechamento | Identificar espera e bloqueios no fluxo de integração |
-| Distribuição de carga | razão de 2:1 nas issues | razão superior a 2:1 | Apoiar redistribuição durante as dailies (`AM07`) |
-| Atualização do Kanban | início e fim de cada dia | mantida | Verificar se o board representa o estado real da execução |
+| Issues concluídas | 48/48 — 100% | 81/81 — 100% | Verificar previsibilidade do planejamento e concentração de fechamento |
+| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | Comparar carga planejada e concluída sem tratar duração como medida de qualidade |
+| Commits na `develop` | 65 | 129, sendo 91 autorais | Evidenciar integração e rastreabilidade; analisar junto à granularidade das tarefas |
+| Merge requests | 33 criados / 33 revisados | 35 integrados na `develop` | Acompanhar equilíbrio entre produção e integração |
+| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | Detectar acúmulo antes do fechamento (`AM06`) |
+| SLA de primeira revisão | até 24 h úteis | não instrumentado | Identificar espera e bloqueios no fluxo de integração |
+| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues e 2,92:1 em horas | Apoiar redistribuição durante as dailies (`AM07`) |
+| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | Novo indicador; medir a confiabilidade da atribuição individual (`AM12`) |
+| Concentração do fechamento | não medido | 51% nos dois últimos dias | Novo indicador; verificar se o fluxo é contínuo ou concentrado no encerramento (`AM13`) |
+| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | Verificar se o board representa o estado real da execução |
+
+As duas colunas não são diretamente comparáveis em valor absoluto: a Sprint 1 teve 27 issues a menos e usou contagem de horas declarada pela equipe, enquanto a Sprint 2 usa a conversão por *size* descrita na seção [3.3.4](#334-fechamento-e-análise-da-sprint-2). O que se compara entre ciclos são as razões e os padrões, não os totais.
 
 Os dados são extraídos com data, horário, branch-base e regra de atribuição registrados. A análise não converte contagens em ranking individual: qualidade, complexidade, dependências, papel exercido e revisão cruzada permanecem parte da interpretação. A partir da Sprint 3, a confiabilidade da atribuição individual depende da padronização de identidade Git definida na ação `AM10`.
 

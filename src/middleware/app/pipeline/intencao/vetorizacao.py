@@ -1,11 +1,13 @@
 """Vetorização do texto pré-processado — Bag of Words e TF-IDF.
 
 Ponte entre o texto que sai de `preprocessamento.py` e um modelo
-supervisionado clássico. Não decide o classificador de produção — essa
-escolha ainda depende de embeddings (Arquitetura.md, seção 7; ver também o
-stub em `classificador.py`). Este módulo sustenta a linha de base clássica
-que a feature F22 do Projeto.md já previa comparar lado a lado com um
-modelo de linguagem, para justificar a escolha final.
+supervisionado clássico. Este módulo é a **linha de base** da comparação da
+F22, não o classificador de produção: a escolha final recaiu sobre o
+ensemble de TF-IDF com embeddings montado em `modelo.py`, e os números que
+a sustentam estão em 5.4.11 do Projeto.md.
+
+O tokenizador daqui continua em uso na produção — `modelo.py` o reaproveita
+no ramo de palavra do vetorizador TF-IDF.
 
 Entrada esperada: `texto_classificador` de `TextoPreprocessado` — o texto
 com entidades mascaradas (`⟨PROJETO⟩`, `⟨DATA⟩`), não o texto cru. Vetorizar
@@ -113,10 +115,11 @@ def comparar_configuracoes(
 ) -> tuple[ResultadoComparacao, ...]:
     """Ajusta TF-IDF para cada configuração e resume o vocabulário resultante.
 
-    Sustenta a escolha registrada em Projeto.md (seção 5.1.5); não decide
-    sozinha, porque o corpus do MVP tem ~70 enunciados para 27 classes —
+    Sustenta a escolha registrada em Projeto.md (seção 5.1.6); não decide
+    sozinha, porque o CSV do catálogo tem ~70 enunciados para 28 classes —
     pequeno demais para uma métrica de classificação ser conclusiva por si
-    só. O que se compara aqui é o efeito de cada parâmetro sobre o
+    só. A comparação conclusiva, sobre o corpus completo, está em 5.4.11.
+    O que se compara aqui é o efeito de cada parâmetro sobre o
     vocabulário: quanto ele cresce com bigramas, quanto encolhe com
     `min_df`.
     """

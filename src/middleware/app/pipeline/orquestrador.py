@@ -164,7 +164,7 @@ class Orquestrador:
         # acionar o Copilot.
         #
         # O limiar calibrado do artefato tem precedência sobre o do
-        # catálogo: aquele veio da validação cruzada da bancada (F1.21),
+        # catálogo: aquele veio da validação cruzada da bancada (F21),
         # este é o valor provisório que 5.3.7 registrou até a bancada
         # existir. Quando o modelo é treinado sem calibração, o valor do
         # catálogo volta a valer, e o comportamento é o de antes.

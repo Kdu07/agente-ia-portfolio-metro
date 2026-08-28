@@ -154,7 +154,7 @@ git pull --ff-only origin develop
 git switch -c docs/gestao-projeto
 ```
 
-Para funcionalidades, correções, releases e hotfixes, deve-se utilizar o prefixo e a branch de origem indicados na tabela da seção 2.1.
+Para funcionalidades, correções, releases e hotfixes, deve-se utilizar o prefixo e a branch de origem indicados na tabela da seção 2.2.
 
 #### Convenções de nomenclatura
 

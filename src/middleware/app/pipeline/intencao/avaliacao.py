@@ -1,4 +1,4 @@
-"""Bancada de avaliação do classificador de intenção — feature F1.21.
+"""Bancada de avaliação do classificador de intenção — feature F21.
 
 Produz a evidência exigida pelo RNF03 e pelo objetivo O5: acurácia, F1
 por intenção, matriz de confusão e curva de rejeição, sobre uma divisão
