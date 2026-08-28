@@ -270,7 +270,7 @@ Três limitações precisam estar registradas, porque a ausência delas produzir
 
 **A lista não aceita padrões.** O ponto está desenvolvido em 5.2 e é repetido aqui porque é a limitação com maior consequência prática: nenhum conjunto aberto de identificadores pode ser coberto por este mecanismo.
 
-**O suporte do mecanismo ao português brasileiro não está declarado na documentação consultada.** A documentação do fornecedor descreve o recurso e seu teto sem enumerar os idiomas em que ele opera. Não há motivo para supor que `pt-BR` esteja fora — o serviço o suporta plenamente para reconhecimento —, mas **supor não é verificar**. A confirmação depende de teste empírico sobre o recurso provisionado, e está registrada como pendência em 7.4. Enquanto não for feita, todo o efeito atribuído a este glossário permanece uma hipótese de projeto, ainda que bem fundamentada.
+**A lista corrige erros de segmentação, e não de substituição.** A documentação do fornecedor descreve o recurso e seu teto sem enumerar os idiomas em que ele opera, o que deixou em aberto, até a verificação registrada na seção 8, se o mecanismo sequer operava em português brasileiro. Opera. A limitação que restou, porém, é mais específica e mais consequente do que a dúvida original: quando o reconhecimento produz os fonemas corretos e erra apenas onde traçar a fronteira de palavra, a lista corrige; quando ele escolhe outra palavra que não a dita, a lista não corrige. A evidência está em 8.4 e o efeito sobre o alcance deste glossário, em 8.5.
 
 ## 7. Manutenção e rastreabilidade
 
@@ -311,8 +311,84 @@ Pela mesma razão, **o glossário não deve ser alterado entre a gravação do c
 |---|---|---|
 | Expansão da sigla `GPM` | Confirmar o nome por extenso com o parceiro; o Anexo 1 usa a sigla sem defini-la | Nada; o verbete opera sem a expansão |
 | Denominações oficiais dos subportfólios | Submeter à validação do parceiro, por constarem de anexo classificado como Corporativo | Cobertura do glossário para consultas agregadas |
-| Suporte da lista de frases a `pt-BR` | Verificação empírica sobre o recurso provisionado | Toda a eficácia atribuída ao glossário |
+| Tratamento do ruído ambiente e da fala de terceiros | Especificar qualidade mínima do áudio e comportamento diante de fala não pertencente ao usuário | Confiabilidade da transcrição fora de ambiente controlado |
+| Ordem de pronúncia dos códigos de projeto | Observar como o usuário efetivamente enuncia um código, no corpus de 5.7.6 e junto ao parceiro | Validade da estratégia de 5.2 |
+| Magnitude do efeito da lista de frases | Medição sobre o corpus de áudio de 5.7.6, com amostra suficiente | Estimativa do indicador de 3.1.5.2 |
 | Substituição da subseção 5.6 | Disponibilidade de dados reais do parceiro | Uso do glossário fora do ambiente de teste |
 | Geração dinâmica dos códigos de projeto | Decisão sobre acoplar a emissão do token a consulta de dados | Escala do glossário para a base real |
 
-As três primeiras pendências são de verificação e não impedem a versão atual de cumprir sua função. A terceira, porém, é qualitativamente diferente das demais e merece o registro explícito: enquanto ela estiver aberta, este documento descreve um mecanismo cuja aplicabilidade ao idioma do projeto é presumida a partir da documentação do fornecedor, e não observada. É a primeira coisa a testar assim que o recurso da tarefa de provisionamento estiver disponível.
+A pendência sobre o suporte da lista de frases ao português brasileiro, registrada na versão anterior desta tabela, **está encerrada** pela verificação da seção 8. Em seu lugar entram três pendências mais precisas, que só puderam ser formuladas depois de haver observação.
+
+Duas delas — a ordem de pronúncia dos códigos e a magnitude do efeito — condicionam afirmações que este documento já faz. A primeira sustenta a estratégia de 5.2; a segunda, a expectativa de que o mecanismo baste como mitigação do R03. Nenhuma das duas se resolve por leitura de documentação: ambas exigem observar fala real, o que é a função do corpus da subseção 5.7.6.
+
+## 8. Verificação empírica do mecanismo
+
+A seção 6.3 registrou que o suporte da lista de frases ao português brasileiro não está declarado na documentação do fornecedor, e que enquanto essa lacuna persistisse todo o efeito atribuído a este glossário seria hipótese. Esta seção registra a verificação que fecha aquela pendência e delimita, com honestidade, o que ela estabelece e o que não estabelece.
+
+### 8.1 Procedimento
+
+Foram construídos cinco enunciados, cada um exercitando um caso de criticidade alta declarado nas subseções da seção 5: os códigos de projeto e normativo de 5.2, a proximidade entre `marco` e *março* e o monossílabo `Sé` de 5.3 e 5.4, o prefixo átono de `subportfólio` de 5.3, o termo composto `via permanente` de 5.5 e a sigla `ART` de 5.1, homófona de palavra comum. Os enunciados não são amostra aleatória do domínio: são os casos que este documento afirma serem difíceis, escolhidos justamente para que a verificação pudesse contrariá-lo.
+
+Cada enunciado foi gravado uma vez, por um único falante, em WAV de 16 kHz, 16 bits e canal único. Cada arquivo foi então transcrito **duas vezes, com a mesma configuração de serviço, região e idioma, diferindo apenas pela presença da lista de frases**. Como o áudio é bit a bit idêntico nas duas passagens, qualquer divergência entre as transcrições é atribuível ao mecanismo, e não à variação da fala — é essa a propriedade que torna o procedimento um teste, e não uma demonstração.
+
+A comparação por termo aplicou as regras já fixadas neste documento: para códigos, a normalização de caixa, hífens, barras e espaços declarada em 5.2; para termos de texto, comparação de palavra inteira com **acentos preservados**, porque distinguir `marco` de *março* é precisamente o que se pretendia medir e uma normalização que dobrasse acentos aprovaria o erro.
+
+Cabe registrar que o instrumento de medição precisou ele próprio ser corrigido durante a execução, e que os dois defeitos encontrados são instrutivos. O primeiro comparava códigos por subcadeia após remover os caracteres não alfanuméricos, de modo que a palavra *arte* satisfazia a busca pela sigla `ART` — o comparador reproduzia exatamente o erro que o documento existe para detectar, e classificava como acerto a falha que pretendia medir. O segundo usava reconhecimento de disparo único, que encerra no primeiro silêncio e descartava o restante do enunciado quando o falante pausava no meio da frase. Nenhum dos dois se manifestava como erro visível: ambos produziam números plausíveis. A lição, que vale para os indicadores de 3.1.5.2 em geral, é que um instrumento de medição também precisa ser verificado antes de se acreditar no que ele informa.
+
+O script de verificação e a evidência bruta não são versionados. O script é ferramenta descartável, e a evidência é reproduzível a partir do procedimento aqui descrito.
+
+### 8.2 O que ficou estabelecido
+
+**A lista de frases opera em português brasileiro.** A evidência é direta e não depende de contagem: sobre o mesmo arquivo de áudio, a transcrição sem a lista produziu `sub portfólio`, em duas palavras, e a transcrição com a lista produziu `subportfólio`, na forma canônica registrada em 5.3. O resultado se reproduziu em duas execuções independentes. Efeito acessório na mesma direção: termos que o modelo base já reconhecia passaram a ser grafados na forma exata da lista, com a caixa alta dos verbetes.
+
+Com isso, a terceira limitação registrada em 6.3 deixa de ser uma incógnita e passa a ser uma limitação de grau, não de existência: o mecanismo funciona no idioma do projeto, e a questão pertinente passa a ser **quanto** ele corrige, tratada na subseção seguinte.
+
+### 8.3 Limitações da verificação
+
+Três limitações delimitam o alcance do que foi verificado.
+
+A primeira é o **tamanho da amostra**. Cada termo foi observado em uma única gravação, de um único falante, com fraseado controlado. Isso é suficiente para estabelecer que o efeito existe — um caso basta para refutar a hipótese de que o mecanismo não opera no idioma — e é insuficiente para estimar sua magnitude. Nenhuma taxa de acerto derivada deste procedimento deve ser lida como estimativa da acurácia esperada em operação; a estimativa é o que o corpus de áudio da subseção 5.7.6 existe para produzir.
+
+A segunda é o **ruído ambiente**. Uma das gravações captou fala de terceiro no ambiente, que o serviço transcreveu como conteúdo do enunciado, acrescentando à transcrição frases que o usuário não disse. A observação extrapola o escopo deste glossário e revela uma lacuna na especificação do canal: nem a topologia de 5.7.1 nem os formatos e limites de 5.7.3 tratam de ruído ambiente, de fala de terceiros ou de qualidade mínima do áudio submetido. O ponto está registrado aqui por ter sido observado aqui, e pertence àquelas seções.
+
+A terceira é uma **hipótese não verificada que este documento assume sem declarar**. A estratégia de 5.2 pressupõe que o usuário pronuncia os códigos na ordem escrita, soletrando o prefixo — *pê-érre-jota dois mil e vinte e quatro zero dezoito*. Se o uso corrente na companhia for outro, como *projeto dezoito de dois mil e vinte e quatro*, nenhuma lista de frases resolve, porque o problema deixa de ser reconhecimento e passa a ser interpretação: o serviço transcreve o que foi dito, na ordem em que foi dito, e não reordena. Como a verificação foi conduzida sob a pronúncia que o documento assume, ela não testou a suposição — apenas a tornou visível. Responder a isso exige observar como as pessoas do Metrô efetivamente falam, o que cabe ao corpus da subseção 5.7.6 e à validação com o parceiro.
+
+### 8.4 Resultados
+
+A tabela registra as nove observações. As transcrições são literais; a coluna de efeito classifica o que a presença da lista alterou.
+
+| Termo | Sem lista | Com lista | Efeito da lista |
+|---|---|---|---|
+| `PRJ-2024-018` | `prj? 2024 zero 18` | `PRJ 2024 zero 18` | Grafia canônica |
+| `NOR-00-223` | `ANOR 00223` | `a NOR 00223` | **Corrigido** |
+| `marco` | `Marco` | `Marco` | Falha prevista não ocorreu |
+| `Requalificação da Sé` | `da se` | `da se` | Nenhum |
+| `subportfólio` | `sub portfólio` | `subportfólio` | **Corrigido** |
+| `Via Permanente` | `Vila permanente` | `Vila permanente` | Nenhum |
+| `Via Permanente Trecho Norte` | `trefunorte` | `trefro norte` | Alterou sem corrigir |
+| `ART` | `arte` | `arte` | Nenhum |
+| `Monotrilho Ouro` | `monotrilho ouro` | `Monotrilho Ouro` | Grafia canônica |
+
+Dos nove termos, três foram transcritos corretamente sem a lista e cinco com ela. A leitura útil, porém, não está no placar, e sim no que distingue os dois termos corrigidos dos três que não foram.
+
+**O que organiza os resultados é o tipo de erro que o reconhecimento cometeu**, e não a frequência do termo nem sua criticidade. Os erros observados se separam em duas classes.
+
+Na primeira, o reconhecimento produziu os fonemas corretos e errou apenas **onde traçar a fronteira de palavra**: `sub portfólio` em duas palavras onde havia uma, e `ANOR` numa palavra onde havia a preposição seguida da sigla. São erros de **segmentação**. A lista corrigiu os dois.
+
+Na segunda, o reconhecimento **escolheu outra palavra** que não a dita: *arte* por `ART`, *Vila* por `Via`, *se* por `Sé`. São erros de **substituição**. A lista não corrigiu nenhum dos três — no caso de `Via Permanente Trecho Norte` chegou a alterar a saída, de `trefunorte` para `trefro norte`, sem se aproximar da forma correta.
+
+A explicação é compatível com o que 6.3 já afirmava sobre o mecanismo. A lista eleva a probabilidade a priori de uma sequência. Quando a evidência acústica já sustenta os fonemas e o que está em disputa é apenas sua decomposição em palavras, um acréscimo pequeno de probabilidade decide a questão. Quando a evidência acústica aponta para outra palavra, o mesmo acréscimo precisa superar a verossimilhança acústica, e em geral não supera.
+
+Duas ressalvas. A primeira é o tamanho da amostra, já registrado em 8.3: são duas observações de segmentação e três de substituição, o que torna o padrão uma **hipótese consistente com todos os cinco enunciados**, e não uma lei estabelecida. A confirmação cabe ao corpus da subseção 5.7.6. A segunda é que a falha prevista para `marco` não ocorreu: o modelo base o transcreveu corretamente sem auxílio, o que sugere que sua classificação em criticidade alta na seção 5.3 pode estar superestimada, ao menos sob contexto sintático forte.
+
+### 8.5 Consequências para este documento
+
+A distinção entre segmentação e substituição, se confirmada, tem três efeitos sobre o que este glossário afirma.
+
+O primeiro recai sobre a **escala de criticidade da seção 4**, que hoje mede apenas a consequência do erro. A verificação mostra que essa escala é insuficiente sozinha, porque não informa se o mecanismo alcança o erro em questão. `ART`, `Sé` e `via permanente` são criticidade alta e, pelos dados desta verificação, **não são tratados pela injeção no reconhecimento**. Continuam sendo verbetes legítimos — o erro é real e consequente —, mas a mitigação declarada para eles não é a lista de frases.
+
+O segundo recai sobre a **relação entre 2.1 e 2.3**. A subseção 2.3 registra a normalização de entidades como "uso subsidiário" do glossário. A evidência não sustenta essa hierarquia: se a transcrição vai produzir `Vila permanente` de qualquer modo, o que salva a consulta é a camada de extração reconhecer que aquela cadeia deve ser reconciliada com `via permanente` — ou seja, o glossário operando como dicionário de normalização **a jusante**, e não como lista de injeção a montante. Os dois usos não são principal e acessório: são **complementares e cobrem classes de erro distintas**. A injeção cobre segmentação; a normalização precisa cobrir substituição. Esta versão registra a observação; a reescrita de 2.1 e 2.3 sob esse enquadramento fica para revisão posterior, por alterar uma tese do documento e não apenas sua redação.
+
+O terceiro recai sobre a **avaliação do modelo customizado em 6.2**, hoje tratada como decisão de volume — o que fazer quando o glossário ultrapassar quinhentas entradas. A verificação acrescenta um segundo motivo, independente do volume: se os erros de substituição forem frequentes no uso real, o teto de entradas deixa de ser o critério relevante, porque acrescentar verbetes a uma lista que não trata essa classe de erro não melhora o resultado. O critério passaria a ser a distribuição das classes de erro no corpus, e não o tamanho do glossário.
+
+Nenhum desses três efeitos invalida o que está escrito. Os dois primeiros ajustam o alcance atribuído ao mecanismo; o terceiro acrescenta um critério que faltava. E vale registrar o que a verificação **confirmou**: das seis falhas que este documento previu, cinco ocorreram exatamente como descritas. O diagnóstico do glossário sobre o que quebra no reconhecimento resistiu ao teste. O que o teste corrigiu foi a expectativa sobre o remédio.
