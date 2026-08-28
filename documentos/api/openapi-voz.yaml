@@ -1,0 +1,361 @@
+openapi: 3.0.3
+
+info:
+  title: API do Canal de Voz — Agente de Portfólio do Metrô de São Paulo
+  description: |
+    Contrato do canal de voz do agente de IA para a gestão do portfólio de
+    projetos. Transcreve os enunciados enviados pelo usuário e devolve o texto,
+    que é submetido ao endpoint de conversação como qualquer outra mensagem.
+
+    A especificação normativa deste contrato é a seção 5.7.3 do `Projeto.md`.
+    Este arquivo é a sua expressão legível por máquina, e não uma fonte
+    independente: divergências entre os dois devem ser resolvidas em favor
+    daquela seção.
+
+    Dois trajetos coexistem, conforme a topologia adotada em 5.7.1.3. A ingestão
+    (`POST /voz/audios` seguido de `GET /voz/audios/{id_audio}/transcricao`) é o
+    contrato canônico. A emissão de token (`GET /voz/token`) credencia o modo de
+    transmissão contínua usado pela interface web.
+  version: 1.0.0
+  contact:
+    name: Grupo ES07-G02 — Inteli
+  license:
+    name: Uso acadêmico restrito ao Módulo 07
+
+servers:
+  - url: https://{host}/api
+    description: A aplicação declara os caminhos sob /voz; o prefixo /api é acrescentado pelo proxy reverso descrito em 5.2.3.1
+    variables:
+      host:
+        default: localhost:5173
+
+tags:
+  - name: voz
+    description: Ingestão de áudio e credenciais do canal de voz
+
+security:
+  - sessaoCookie: []
+
+paths:
+
+  /voz/audios:
+    post:
+      tags: [voz]
+      operationId: submeterAudio
+      summary: Submeter um áudio para transcrição
+      description: |
+        Recebe o áudio capturado, valida formato, tamanho e duração e aceita a
+        submissão para transcrição. A validação precede o acionamento do serviço
+        de fala: um arquivo inválido é recusado sem consumir a franquia.
+
+        A resposta 202 afirma que o áudio foi aceito, não que a transcrição
+        existe. O resultado é obtido em `GET /voz/audios/{id_audio}/transcricao`.
+      parameters:
+        - $ref: '#/components/parameters/ChaveIdempotencia'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubmissaoAudio'
+            encoding:
+              audio:
+                contentType: audio/webm, audio/ogg, audio/mp4, audio/wav
+      responses:
+        '202':
+          description: Áudio aceito e enfileirado para transcrição
+          headers:
+            Location:
+              description: Caminho da consulta do resultado
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudioAceito'
+              example:
+                id_audio: a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19
+                estado: recebido
+                duracao_segundos: 11.4
+                consultar_em: /voz/audios/a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19/transcricao
+                expira_em: '2026-08-27T18:42:10Z'
+        '400':
+          description: Áudio ausente, ilegível ou com duração acima do limite
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+              examples:
+                audioAusente:
+                  value:
+                    codigo: AUDIO_AUSENTE
+                    mensagem: Não recebi nenhum áudio. Tente gravar de novo.
+                audioMuitoLongo:
+                  value:
+                    codigo: AUDIO_MUITO_LONGO
+                    mensagem: O áudio tem mais de 5 minutos. Grave um trecho mais curto ou digite a solicitação.
+                    detalhe: { duracao_segundos: 412.7, limite_segundos: 300 }
+                audioIlegivel:
+                  value:
+                    codigo: AUDIO_ILEGIVEL
+                    mensagem: Não consegui abrir esse áudio. Tente gravar de novo.
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '413':
+          description: Arquivo acima do limite de tamanho
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+              example:
+                codigo: AUDIO_MUITO_GRANDE
+                mensagem: O arquivo é grande demais.
+                detalhe: { bytes: 41943040, limite_bytes: 26214400 }
+        '415':
+          description: Tipo de conteúdo fora dos formatos aceitos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+              example:
+                codigo: AUDIO_FORMATO_NAO_SUPORTADO
+                mensagem: Não consigo ler esse formato de áudio.
+        '429':
+          $ref: '#/components/responses/CotaExcedida'
+
+  /voz/audios/{id_audio}/transcricao:
+    get:
+      tags: [voz]
+      operationId: consultarTranscricao
+      summary: Consultar o resultado da transcrição
+      description: |
+        Devolve o estado da submissão. Os quatro estados possíveis respondem 200:
+        a consulta foi atendida, e o estado informa o desfecho. Um desfecho
+        negativo (`falhou`) não é erro de requisição.
+
+        Um identificador inexistente, expirado ou pertencente a outro usuário
+        produz 404, e nunca 403: distinguir os dois permitiria confirmar, por
+        tentativa, a existência de uma submissão alheia.
+      parameters:
+        - name: id_audio
+          in: path
+          required: true
+          description: Identificador devolvido na submissão
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Estado da submissão
+          headers:
+            Retry-After:
+              description: Segundos sugeridos até a próxima consulta. Presente apenas nos estados não terminais
+              schema: { type: integer }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoTranscricao'
+              examples:
+                emAndamento:
+                  summary: Transcrição em curso
+                  value:
+                    id_audio: a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19
+                    estado: transcrevendo
+                concluida:
+                  summary: Texto disponível
+                  value:
+                    id_audio: a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19
+                    estado: concluida
+                    texto: Qual o avanço do projeto da Linha 15 Prata?
+                    idioma: pt-BR
+                    confianca: 0.94
+                    duracao_segundos: 11.4
+                    latencia_ms: 1830
+                falhou:
+                  summary: Transcrição não pôde ser produzida
+                  value:
+                    id_audio: a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19
+                    estado: falhou
+                    mensagem: Não consegui entender o áudio. Tente de novo ou digite a solicitação.
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '404':
+          description: Submissão inexistente, expirada ou de outro usuário
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+              example:
+                codigo: AUDIO_NAO_ENCONTRADO
+                mensagem: Esse áudio não está mais disponível.
+
+  /voz/token:
+    get:
+      tags: [voz]
+      operationId: emitirTokenVoz
+      summary: Obter credencial temporária do modo de transmissão contínua
+      description: |
+        Devolve um token de curta duração para que o navegador estabeleça conexão
+        direta com o serviço de fala. A chave do recurso permanece no servidor: um
+        token vazado expira sozinho, uma chave vazada exigiria rotação no tenant
+        do parceiro.
+
+        Exige sessão válida. Um endpoint aberto seria um proxy gratuito para um
+        serviço tarifado por hora de áudio.
+      responses:
+        '200':
+          description: Credencial temporária emitida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenVoz'
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.<omitido>
+                regiao: brazilsouth
+                expira_em_segundos: 600
+                idioma: pt-BR
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '429':
+          $ref: '#/components/responses/CotaExcedida'
+
+components:
+
+  securitySchemes:
+    sessaoCookie:
+      type: apiKey
+      in: cookie
+      name: sessao
+      description: Cookie httpOnly com SameSite=Strict emitido pela autenticação corporativa
+
+  parameters:
+    ChaveIdempotencia:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Identificador da submissão gerado pelo cliente. Uma chave já vista dentro
+        do prazo de retenção devolve o id_audio original, sem nova transcrição.
+        Existe porque o reenvio automático em rede instável, comum em dispositivo
+        móvel, consumiria a franquia duas vezes e produziria duas interações
+        registradas para uma única fala.
+      schema: { type: string, format: uuid }
+
+  schemas:
+
+    SubmissaoAudio:
+      type: object
+      required: [audio]
+      properties:
+        audio:
+          type: string
+          format: binary
+          description: Áudio capturado. Formatos e limites conforme 5.7.3.6
+        idioma:
+          type: string
+          default: pt-BR
+          description: Código BCP 47. Ausente, assume a configuração do serviço
+        conversa_id:
+          type: string
+          format: uuid
+          description: Vincula a transcrição a uma conversa existente
+
+    AudioAceito:
+      type: object
+      required: [id_audio, estado, consultar_em, expira_em]
+      properties:
+        id_audio: { type: string, format: uuid }
+        estado:
+          type: string
+          enum: [recebido]
+          description: Sempre `recebido` nesta resposta
+        duracao_segundos:
+          type: number
+          format: float
+          description: Duração apurada na validação, para que o cliente estime a espera
+        consultar_em: { type: string }
+        expira_em:
+          type: string
+          format: date-time
+          description: Momento a partir do qual o resultado deixa de estar disponível
+
+    EstadoTranscricao:
+      type: object
+      required: [id_audio, estado]
+      properties:
+        id_audio: { type: string, format: uuid }
+        estado:
+          type: string
+          enum: [recebido, transcrevendo, concluida, falhou]
+        texto:
+          type: string
+          description: Presente apenas em `concluida`. Já com pontuação e capitalização
+        idioma: { type: string }
+        confianca:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: |
+            Confiança devolvida pelo serviço de fala. Não se confunde com a
+            confiança da classificação de intenção, apurada adiante no pipeline
+        duracao_segundos: { type: number, format: float }
+        latencia_ms:
+          type: integer
+          description: Tempo entre a aceitação e a conclusão. Alimenta o indicador de latência de 3.1.5.2
+        mensagem:
+          type: string
+          description: Presente apenas em `falhou`. Orientação destinada à pessoa
+
+    TokenVoz:
+      type: object
+      required: [token, regiao, expira_em_segundos, idioma]
+      properties:
+        token:
+          type: string
+          description: Credencial de curta duração. Nunca a chave do recurso
+        regiao: { type: string, example: brazilsouth }
+        expira_em_segundos: { type: integer, example: 600 }
+        idioma: { type: string, example: pt-BR }
+
+    Erro:
+      type: object
+      required: [codigo, mensagem]
+      properties:
+        codigo:
+          type: string
+          description: Código interno estável, destinado ao cliente e aos registros
+          enum:
+            - NAO_AUTENTICADO
+            - AUDIO_AUSENTE
+            - AUDIO_FORMATO_NAO_SUPORTADO
+            - AUDIO_MUITO_GRANDE
+            - AUDIO_MUITO_LONGO
+            - AUDIO_ILEGIVEL
+            - AUDIO_NAO_ENCONTRADO
+            - COTA_EXCEDIDA
+        mensagem:
+          type: string
+          description: |
+            Texto destinado à pessoa. Não revela fornecedor, franquia, região nem
+            funcionamento interno, conforme a orientação sem exposição exigida
+            pelo RF03
+        detalhe:
+          type: object
+          additionalProperties: true
+          description: Dados de apoio ao diagnóstico, quando aplicável
+
+  responses:
+
+    NaoAutenticado:
+      description: Sessão ausente, expirada ou inválida
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+          example:
+            codigo: NAO_AUTENTICADO
+            mensagem: Sua sessão expirou. Entre novamente para continuar.
+
+    CotaExcedida:
+      description: |
+        Franquia mensal esgotada ou submissão simultânea. O nível gratuito admite
+        uma requisição de reconhecimento por vez, conforme 5.7.3.6
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+          example:
+            codigo: COTA_EXCEDIDA
+            mensagem: O serviço de voz está ocupado. Tente em instantes ou digite a solicitação.

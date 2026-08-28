@@ -1,0 +1,29 @@
+﻿categoria,intencao,dev,treino,total
+Alerta,consultar_pendencias,10,44,54
+Classe negativa,fora_de_escopo,18,71,89
+Classe negativa,tentativa_injecao,6,24,30
+Consulta,comparar_projetos,12,46,58
+Consulta,consultar_aderencia_normativa,12,48,60
+Consulta,consultar_avanco,12,48,60
+Consulta,consultar_conceito_gestao,15,57,72
+Consulta,consultar_cronograma,15,60,75
+Consulta,consultar_documento_projeto,15,54,69
+Consulta,consultar_faturas_vencidas,12,41,53
+Consulta,consultar_indicadores_portfolio,15,55,70
+Consulta,consultar_marcos,15,57,72
+Consulta,consultar_problemas,12,46,58
+Consulta,consultar_riscos,12,48,60
+Consulta,consultar_status_projeto,15,65,80
+Consulta,gerar_previa_diretoria,15,43,58
+Consulta,gerar_relatorio_encerramento,12,48,60
+Consulta,gerar_relatorio_status,12,48,60
+Transação,atualizar_avanco,12,48,60
+Transação,atualizar_cronograma,15,59,74
+Transação,atualizar_mapa_beneficios,12,48,60
+Transação,atualizar_termo_abertura,12,48,60
+Transação,criar_projeto,16,60,76
+Transação,encerrar_projeto,14,57,71
+Transação,registrar_entrega_marco,12,48,60
+Transação,registrar_mudanca,12,48,60
+Transação,registrar_problema,12,48,60
+Transação,registrar_risco,12,48,60

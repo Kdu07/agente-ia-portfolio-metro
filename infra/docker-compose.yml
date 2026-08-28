@@ -1,0 +1,68 @@
+# Ambiente de desenvolvimento local: interface, API, agendador e banco.
+# Uso: docker compose -f infra/docker-compose.yml up --build
+#
+# Quatro serviços. O `worker` é separado da `middleware` de propósito:
+# mantém a API sem estado e evita que duas réplicas disparem a mesma
+# rotina duas vezes.
+services:
+  # Estáticos do React + proxy /api -> middleware. Como navegador e API
+  # ficam na mesma origem, o cookie de sessão viaja sem CORS e sem
+  # exceção de SameSite.
+  web:
+    build: ../src/web
+    ports:
+      - "5173:80"
+    depends_on:
+      - middleware
+
+  middleware:
+    build: ../src/middleware
+    env_file:
+      - ../src/middleware/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    # Aplica as migrações antes de subir a API: um esquema desatualizado
+    # falharia na primeira consulta, e não na subida, onde é visível.
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    # Sem `ports`: quem expõe a API ao navegador é o nginx do serviço web.
+    # Publicar a porta aqui abriria um caminho que ignora o proxy.
+    expose:
+      - "8000"
+
+  worker:
+    build: ../src/middleware
+    env_file:
+      - ../src/middleware/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      middleware:
+        condition: service_started
+    # Mesma imagem da API, entrypoint diferente. Não expõe porta: o
+    # agendador não atende HTTP.
+    command: ["python", "-m", "app.worker"]
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: middleware
+      POSTGRES_PASSWORD: middleware
+      POSTGRES_DB: middleware
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    # O healthcheck evita a corrida clássica: `depends_on` sozinho espera
+    # o contêiner subir, não o PostgreSQL aceitar conexões. Sem ele, o
+    # `alembic upgrade` do middleware falha em máquinas mais lentas.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U middleware -d middleware"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  dbdata:

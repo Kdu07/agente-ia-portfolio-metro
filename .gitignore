@@ -1,0 +1,23 @@
+# Segredos e configuração local
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+dist/
+*.tsbuildinfo
+*.local
+.eslintcache
+
+# Docker
+dbdata/
+
+# Claude
+.claude
