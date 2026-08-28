@@ -4179,10 +4179,10 @@ A organização da seção acompanha a ordem em que as decisões se condicionam:
 | 5.7.3 | API de recebimento de áudios do usuário |
 | 5.7.4 | API de conversão de fala em texto |
 | 5.7.5 | API de conversão de texto em fala |
-| 5.7.6 | Corpus de áudio de referência e procedimento de verificação — **pendente de redação** |
+| 5.7.6 | Corpus de áudio de referência e procedimento de verificação |
 | 5.7.7 | Rastreabilidade, pendências e impactos sobre outras seções — **pendente de redação** |
 
-> **Pendência de seção.** As subseções 5.7.6 e 5.7.7 estão previstas nesta organização e são referenciadas ao longo de 5.7.1, 5.7.2, 5.7.4 e 5.7.5 — em especial o corpus de áudio de referência que sustenta os indicadores de 3.1.5.2 (5.7.6) —, mas ainda não foram redigidas. Enquanto isso não ocorrer, as metas de WER, de acurácia de termos de domínio e de degradação ponta a ponta permanecem declaradas sem procedimento de verificação escrito.
+> **Pendência de seção.** A subseção 5.7.7 está prevista nesta organização e ainda não foi redigida. Enquanto isso não ocorrer, permanecem sem consolidação a rastreabilidade da seção 5.7 para os requisitos e demais vistas, as pendências que ela acumula e os impactos que impõe a outras seções deste documento.
 
 ### 5.7.1 Topologia do canal de voz
 
@@ -4824,6 +4824,122 @@ Terceiro, o acionamento na interface e a chamada ao serviço pelo SDK do navegad
 Quarto, a medição do indicador de 3.1.5.2 pelo procedimento de 5.7.5.5, sobre o corpus de 5.7.6.
 
 O primeiro passo é o único que pode ser feito e verificado **antes** de haver interface, e é também o que carrega o risco real da funcionalidade. Se a implementação vier a ser priorizada com prazo curto, é por ele que se começa.
+
+### 5.7.6 Corpus de áudio de referência e procedimento de verificação
+
+Cinco afirmações deste documento dependem desta subseção. As metas de *Word Error Rate*, de acurácia de termos de domínio e de degradação ponta a ponta, declaradas em 3.1.5.2 e mantidas em 5.7.2.8, só são verificáveis sobre um conjunto de áudio cuja transcrição correta seja conhecida de antemão. A política de retenção de 5.7.1.5 abre exceção justamente para esse conjunto. E as ressalvas registradas em 5.7.4.8 e 5.7.5.5 endereçam a ele sua confirmação.
+
+Esta subseção define o que é esse conjunto, como ele é construído, quanta evidência ele produz e em que ordem as medições precisam ocorrer para que seus resultados sejam interpretáveis.
+
+#### 5.7.6.1 O que o corpus é, e o que ele não é
+
+O corpus é um conjunto de gravações acompanhadas de suas transcrições de referência, construído pela equipe para medir o canal de voz.
+
+Ele **não é uma amostra da população de usuários do parceiro**. Os locutores são membros da equipe, os enunciados são redigidos antes de serem falados e o ambiente de gravação é escolhido. Isso é adequado ao propósito — instrumento de medição precisa ser controlado — e delimita o que se pode concluir: o corpus mede **a solução**, e não prediz a experiência do usuário final. Uma acurácia de noventa por cento medida sobre ele significa que o sistema acerta noventa por cento das ocorrências *daqueles* termos, ditos *daquele* modo, por *aqueles* locutores. Toda extrapolação além disso precisa ser declarada como tal.
+
+A distinção não é formalidade. A subseção 8.3 do glossário de domínio registrou o mesmo cuidado ao delimitar uma verificação de cinco enunciados, e o motivo para repeti-lo aqui é que um corpus maior produz números mais precisos sem produzir números mais gerais — a precisão cresce com o tamanho da amostra, a generalidade não.
+
+#### 5.7.6.2 Composição
+
+O corpus é derivado **do glossário de domínio**, e não do catálogo de intenções. A escolha decorre do que se pretende medir: o indicador crítico de 3.1.5.2 conta ocorrências de termos do domínio, de modo que a unidade de amostragem é o termo, não a intenção.
+
+A cobertura segue a criticidade registrada na seção 5 do glossário:
+
+| Criticidade | Verbetes | Ocorrências por verbete | Ocorrências no corpus |
+|---|:-:|:-:|:-:|
+| Alta | 38 | 3 | 114 |
+| Média | 13, amostrados | 2 | 26 |
+| Baixa | — | — | — |
+| **Total** | | | **140** |
+
+Os verbetes de criticidade baixa ficam fora por definição: seu erro não altera intenção nem entidade, e medi-los consumiria gravação para produzir um número sem consequência. Os de criticidade média entram por amostragem, priorizando os que têm origem em documento do parceiro sobre os que só existem no corpus de treino — o mesmo critério de desempate da política de seleção de 6.2 daquele documento.
+
+As 140 ocorrências distribuem-se em aproximadamente **60 enunciados**, redigidos a partir dos exemplos do catálogo de intenções de 5.4.4 para que sejam solicitações plausíveis, e não listas de palavras lidas em sequência. Um termo pronunciado dentro de uma frase real recebe o contexto acústico e sintático que o reconhecimento efetivamente encontrará; lido isoladamente, ele mede outra coisa.
+
+#### 5.7.6.3 Tamanho da amostra
+
+O indicador de acurácia de termos de domínio é uma proporção, e a precisão com que uma proporção é estimada depende do número de observações. Para uma acurácia próxima da meta de noventa por cento, o intervalo de confiança de noventa e cinco por cento tem a seguinte semiamplitude:
+
+| Ocorrências | Semiamplitude do intervalo |
+|:-:|:-:|
+| 35 | ± 10 pontos percentuais |
+| 71 | ± 7 pontos percentuais |
+| **139** | **± 5 pontos percentuais** |
+| 385 | ± 3 pontos percentuais |
+
+As 140 ocorrências da subseção anterior não são número redondo por acaso: são o ponto em que a estimativa passa a distinguir uma acurácia de noventa por cento de uma de oitenta, que é a distinção da qual depende aceitar ou recusar a meta. Abaixo disso, um resultado de oitenta e sete por cento seria compatível com a meta e com sua violação ao mesmo tempo, e a medição não decidiria nada. Acima disso, o ganho de precisão é real mas caro: passar de cinco para três pontos percentuais quase triplica o esforço de gravação.
+
+Cabe a advertência que acompanha toda escolha de tamanho amostral: **isto é precisão, não correção**. Um corpus enviesado medido com cento e quarenta ocorrências produz um número errado com intervalo estreito. A defesa contra o viés está na composição de 5.7.6.2 e na declaração de escopo de 5.7.6.1, não no tamanho.
+
+O *Word Error Rate* não é uma proporção simples — seu denominador são palavras da referência e seu numerador conta inserções, remoções e substituições — e portanto não segue essa tabela. Os sessenta enunciados produzem algo entre setecentas e novecentas palavras de referência, volume suficiente para uma estimativa estável de WER, que é grandeza menos sensível ao tamanho da amostra do que a acurácia de um subconjunto restrito de termos.
+
+#### 5.7.6.4 Locutores e condições
+
+A verificação registrada no glossário teve um locutor e um ambiente. O corpus amplia os dois eixos, com o cuidado de não prometer mais do que a ampliação entrega.
+
+| Bloco | Enunciados | Locutores | Condição | O que produz |
+|---|:-:|:-:|---|---|
+| Núcleo | 60 | 1 | Ambiente silencioso | As 140 ocorrências e o intervalo de ± 5 pontos percentuais |
+| Extensão de locutor | 20 | 2 adicionais | Ambiente silencioso | Variação entre locutores |
+| Extensão de ruído | 20 | 1 | Com ruído ambiente controlado | Efeito do ruído sobre o reconhecimento |
+
+São 120 gravações no total, distribuíveis entre os membros da equipe em sessões curtas.
+
+Três locutores **não** constituem amostra da população falante do parceiro, e a extensão de locutor não estima acurácia populacional. O que ela responde é mais modesto e ainda assim útil: se os três divergirem muito entre si, o número do núcleo é frágil e depende de quem falou; se convergirem, ele é ao menos estável dentro da equipe. É diagnóstico de robustez, não de generalidade.
+
+A extensão de ruído endereça a lacuna observada em 8.3 do glossário, quando uma gravação captou fala de terceiro e o serviço a transcreveu como conteúdo do enunciado. Ela mede o que o ruído custa, e é o insumo para que 5.7.1 e 5.7.3 decidam o que fazer a respeito — decisão que não pertence a esta subseção.
+
+O protocolo de gravação tem uma regra que parece trivial e não é: **fala em ritmo natural, sem articulação reforçada**. Articular com capricho eleva artificialmente a acurácia medida e produz um número que a operação real não reproduz. O corpus existe para prever o comportamento do sistema diante de fala comum; gravá-lo com fala cuidadosa mede outro sistema.
+
+#### 5.7.6.5 A transcrição de referência
+
+A transcrição de referência é **redigida antes da gravação**, e não obtida a partir dela. O enunciado é escrito, o locutor o lê, e o texto escrito é a referência contra a qual a transcrição produzida pelo serviço é comparada.
+
+A ordem elimina a fonte de erro mais comum em corpora de fala, que é a transcrição manual do áudio: nela, quem transcreve já sabe o que deveria ter sido dito e tende a registrar isso em vez do que foi dito. Aqui a referência não é uma interpretação do áudio — é o texto que o originou.
+
+A contrapartida é que o corpus mede **fala lida**, não fala espontânea. Um conjunto de fala espontânea exigiria transcrição humana com dupla checagem, esforço desproporcional ao escopo do módulo. A limitação fica registrada, e o efeito esperado é conhecido: fala lida tende a ser mais bem reconhecida que fala espontânea, de modo que os números do corpus são **otimistas** em relação ao uso real. É a direção segura do viés, mas ainda assim um viés.
+
+Cada registro do corpus guarda, além do texto, a **forma como cada código foi pronunciado** — soletrada ou por extenso. A razão está na subseção seguinte.
+
+#### 5.7.6.6 Ordem das medições
+
+A ordem importa mais que os procedimentos individuais, porque é ela que torna os resultados atribuíveis. Quatro medições, nesta sequência:
+
+**Primeira — reconhecimento sem lista de frases.** Estabelece a linha de base: quanto o modelo base acerta sozinho, em WER e em acurácia de termos.
+
+**Segunda — reconhecimento com a lista de frases.** A diferença em relação à primeira é a **magnitude do efeito do glossário**, e encerra a pendência registrada em 7.4 daquele documento. É também a medição que confirma, ou não, a hipótese de 8.4 sobre segmentação e substituição: basta classificar cada erro observado em uma das duas categorias e verificar se a lista corrige apenas a primeira.
+
+**Terceira — degradação ponta a ponta.** Submete-se ao classificador de intenção o texto de referência e, separadamente, a transcrição produzida. A diferença entre as duas acurácias de classificação é a degradação que o canal de voz introduz sobre o canal de texto, terceiro indicador de 3.1.5.2.
+
+**Quarta — inteligibilidade da síntese.** Executa-se o percurso de ida e volta descrito em 5.7.5.5. Como a taxa de erro do reconhecimento sobre estes mesmos termos já é conhecida das duas primeiras medições, o excedente observado é atribuível à síntese. Sem a ordem, o percurso de ida e volta mede dois serviços e não distingue qual falhou.
+
+A pendência sobre a **ordem de pronúncia dos códigos** recebe tratamento parcial e é importante dizer em que sentido. O corpus contém ambas as formas — soletrada e por extenso — e mede o custo de cada uma, o que responde "quanto se perde se o usuário disser de um jeito ou de outro". Ele **não responde qual das duas as pessoas do Metrô efetivamente usam**, porque seus enunciados foram redigidos pela equipe. Essa metade da pergunta é observação de campo junto ao parceiro, e permanece aberta.
+
+#### 5.7.6.7 O que fica registrado a cada medição
+
+Uma medição sem procedência não é comparável com a seguinte. Cada campanha registra:
+
+| Campo | Razão |
+|---|---|
+| Commit do glossário de domínio | Ele define o denominador do indicador; a exigência é da seção 7.3 daquele documento |
+| Versão do glossário em cada trajeto | 5.7.4.6 mostrou que ingestão e transmissão contínua podem operar sob versões diferentes. Numa campanha de medição as duas precisam coincidir, e o registro é o que permite verificar isso |
+| Interface de reconhecimento utilizada | 5.7.4.5 registrou que a verificação anterior usou o SDK e não a transcrição rápida. O campo torna a diferença visível em vez de implícita |
+| Voz configurada na síntese | Altera duração e prosódia, e portanto o resultado do percurso de ida e volta (5.7.5.2) |
+| Locutor e condição de gravação | Distinguem núcleo de extensões |
+
+#### 5.7.6.8 Retenção e confidencialidade
+
+O corpus é a exceção declarada em 5.7.1.5 à política de descarte imediato do áudio: ele é retido porque medições precisam ser reproduzíveis, e uma medição sobre áudio descartado não pode ser refeita nem contestada.
+
+A exceção é segura por três razões, e convém enunciá-las. Os enunciados são sintéticos, redigidos pela equipe a partir do catálogo de intenções e dos nomes de projeto do ambiente de teste registrados na seção 5.6 do glossário — **nenhum dado real de projeto do parceiro integra o corpus**. Os locutores são membros da equipe, que gravam sabendo a finalidade. E nenhum áudio produzido por usuário do parceiro é incorporado, em nenhuma circunstância: a exceção de retenção vale para o conjunto de avaliação, e não para o trajeto de ingestão.
+
+Fica registrado que a voz gravada é dado pessoal dos próprios membros da equipe, e que o corpus acompanha o repositório do projeto, sujeito às mesmas restrições de acesso.
+
+#### 5.7.6.9 O que o corpus encerra, e o que permanece aberto
+
+**Encerra:** a magnitude do efeito da lista de frases; a confirmação ou refutação da hipótese de segmentação e substituição; a estimativa dos três indicadores de 3.1.5.2 com precisão declarada; a separação entre erro de síntese e erro de reconhecimento no percurso de ida e volta; e o custo do ruído ambiente.
+
+**Permanece aberto:** qual forma de pronúncia de código as pessoas do parceiro efetivamente usam, que depende de observação de campo; e a aceitação dos formatos comprimidos pela interface de transcrição rápida, registrada em 5.7.4.8 — porque o corpus é mantido em `audio/wav` mono a 16 kHz, conforme 5.7.3.6, e **um conjunto todo em WAV não testa o que acontece com WebM ou MP4**. Essa verificação é uma submissão de cada formato pela interface de ingestão, feita uma vez, e não depende do corpus.
 
 ## 5.8 Diagrama de Classes da Solução — Sprint 2
 
