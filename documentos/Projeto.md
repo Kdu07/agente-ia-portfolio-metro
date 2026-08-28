@@ -2469,111 +2469,100 @@ ou compartilhadas, deixando explícitos os limites de responsabilidade da equipe
 
 ```mermaid
 flowchart TB
-  ATOR([Usuário<br/>Diretoria / Líder / Membro])
+  ATOR([Usuário Autenticado<br/>Diretoria / Líder / Membro])
 
-  subgraph WEBAPP["src/web — React + TypeScript + Vite"]
+  subgraph CLIENT["Navegador / Cliente"]
     direction TB
-    P_CHAT["Página: Chat<br/><i>conversa + microfone</i>"]
-    P_HIST["Página: Histórico<br/><i>lista e retomada de conversas</i>"]
-    P_INT["Página: Intenções<br/><i>dashboard — requer VER_INTENCOES</i>"]
-    P_ROT["Página: Rotinas<br/><i>agenda e execuções — requer GERIR_ROTINAS</i>"]
+    SPA["src/web (React 18 + Vite + Tailwind)<br/><i>Chat · Histórico · Intenções · Rotinas</i>"]
   end
 
-  NGX["Nginx<br/><i>estáticos + proxy /api</i>"]
-
-  subgraph MIDDLEWARE["src/middleware — FastAPI (docker: api)"]
+  subgraph DOCKER["Ambiente Local / Docker Compose"]
     direction TB
-    C_API["api/<br/><i>rotas HTTP, deps.py resolve<br/>sessão/perfil/permissões</i>"]
-    C_AUTH["auth/<br/><i>OAuth Entra ID, sessão<br/>cookie httpOnly</i>"]
-    C_ORQ["pipeline/orquestrador.py<br/><i>encadeia as etapas,<br/>ordem fixa</i>"]
-    C_GINJ["pipeline/guardas/injecao/<br/><i>regras + classificador</i>"]
-    C_GABU["pipeline/guardas/abuso/<br/><i>categorias + política de uso</i>"]
-    C_GSAI["pipeline/guardas/saida.py<br/><i>injeção indireta</i>"]
-    C_INT["pipeline/intencao/<br/><i>catálogo + classificador</i>"]
-    C_ANL["analytics/<br/><i>agregações SQL,<br/>somente leitura</i>"]
-    C_VOZ["voz/<br/><i>token efêmero</i>"]
-    C_COP["copilot/client.py<br/><i>único ponto que fala<br/>com o Copilot</i>"]
-    C_PER["persistence/<br/><i>modelos e repositórios</i>"]
+    NGX["web (Nginx)<br/><i>Proxy reverso /api + estáticos</i>"]
+    
+    subgraph MID["middleware (FastAPI - Python 3.12)"]
+      direction TB
+      API["api/ · deps.py<br/><i>Controle de Sessão & RBAC</i>"]
+      AUTH["auth/ (OAuth PKCE · Cookies httpOnly)"]
+      ORQ["pipeline/orquestrador.py<br/><i>Invariante de Ordem Fixa</i>"]
+      GINJ["pipeline/guardas/injecao/"]
+      GABU["pipeline/guardas/abuso/"]
+      INT["pipeline/intencao/ (Ensemble + Calibração)"]
+      COP["copilot/client.py (Direct Line)"]
+      GSAI["pipeline/guardas/saida.py"]
+      ANL["analytics/ (Consultas SQL Read-only)"]
+      VOZ_BE["voz/ (Emissão de Token Efêmero)"]
+      PER["persistence/ (SQLAlchemy 2 Async)"]
+    end
+
+    subgraph WRK["worker (APScheduler 3)"]
+      direction TB
+      AGD["rotinas/agendador.py<br/><i>Fuso America/Sao_Paulo</i>"]
+      EXE["rotinas/execucao.py<br/><i>Reuso do Orquestrador (canal=rotina)</i>"]
+    end
+
+    DB[("db (PostgreSQL 16)<br/><i>Interações, Conversas, Rotinas, Jobstore</i>")]
   end
 
-  subgraph WORKER["docker: worker — APScheduler"]
+  subgraph TENANT_PARCEIRO["Tenant Microsoft do Parceiro (Homologado)"]
     direction TB
-    C_AGD["rotinas/agendador.py<br/><i>jobstore no banco</i>"]
-    C_EXE["rotinas/execucao.py<br/><i>executa PELO orquestrador,<br/>canal=rotina</i>"]
-    C_VAL["rotinas/validacao.py<br/><i>valida prompt no cadastro</i>"]
+    ENTRA["Microsoft Entra ID<br/><i>Identidade e Claims de Grupo</i>"]
+    CS["Copilot Studio (Direct Line API)<br/><i>Executor Corporativo</i>"]
+    M365["SharePoint Online · Power BI · Power Automate<br/><i>Fontes do Portfólio (Menor Privilégio)</i>"]
   end
 
-  DB[("docker: db<br/>PostgreSQL 16")]
-
-  subgraph TENANT["Tenant Microsoft do parceiro"]
+  subgraph TENANT_EQUIPE["Tenant da Equipe (Perímetro Declarado RNF01 / R12)"]
     direction TB
-    ENTRA["Entra ID<br/><i>Authorization Code + PKCE</i>"]
-    CS["Copilot Studio<br/><i>Direct Line</i>"]
-    CN["SharePoint · Power BI ·<br/>Power Automate<br/><i>conectores, menor privilégio</i>"]
+    SAFE["Azure AI Content Safety<br/><i>Prompt Shields + Categorias de Abuso</i>"]
+    SPEECH["Azure Speech Services<br/><i>Transcrição em Tempo Real (STT)</i>"]
   end
 
-  subgraph TEQUIPE["Tenant da equipe — fora do perímetro homologado (R12)"]
-    direction TB
-    SAFE["Azure AI Content Safety<br/><i>Prompt Shields</i>"]
-    SPEECH["Azure Speech<br/><i>transcrição em tempo real</i>"]
-  end
+  %% Conexões Cliente / Proxy
+  ATOR --> SPA
+  SPA -->|"Requisições HTTP /api"| NGX
+  NGX --> API
+  SPA -.->|"Streaming de Áudio"| SPEECH
+  API --> VOZ_BE
+  VOZ_BE -.->|"Gera Token Efêmero"| SPEECH
 
-  %% Frontend
-  ATOR --> P_CHAT & P_HIST & P_INT & P_ROT
-  P_CHAT & P_HIST & P_INT & P_ROT --> NGX
-  NGX -->|"/api"| C_API
+  %% Fluxo Backend / Pipeline
+  API --> AUTH
+  AUTH <-->|"OAuth 2.0 PKCE"| ENTRA
+  API --> ORQ
 
-  %% Autenticação
-  C_API --> C_AUTH
-  C_AUTH -->|"Authorization Code + PKCE"| ENTRA
-  ENTRA -.->|"claims de grupo"| C_AUTH
+  ORQ --> GINJ
+  GINJ --> SAFE
+  ORQ --> GABU
+  GABU --> SAFE
+  ORQ --> INT
+  ORQ --> COP
+  COP <-->|"Direct Line"| CS
+  CS <--> M365
+  ORQ --> GSAI
+  GSAI --> SAFE
+  ORQ --> PER
+  PER --> DB
 
-  %% Pipeline principal (trajeto da mensagem)
-  C_API -->|"1. sessão/perfil/permissões"| C_ORQ
-  C_ORQ -->|"2. guarda de injeção"| C_GINJ
-  C_GINJ -->|"classificador"| SAFE
-  C_ORQ -->|"3. guarda de abuso"| C_GABU
-  C_GABU -->|"categorias de conteúdo"| SAFE
-  C_ORQ -->|"4. classificação de intenção"| C_INT
-  C_ORQ -->|"5. execução (prompt rotulado)"| C_COP
-  C_COP -->|"Direct Line"| CS
-  CS --> CN
-  C_ORQ -->|"6. guarda de saída"| C_GSAI
-  C_GSAI -->|"avalia resposta"| SAFE
-  C_ORQ -->|"7. registro"| C_PER
-  C_PER --> DB
-
-  %% Voz
-  P_CHAT -.->|"áudio"| SPEECH
-  C_VOZ -.->|"emite token efêmero"| SPEECH
-  C_API --> C_VOZ
-
-  %% Rotinas
-  P_ROT -->|"cadastra rotina"| C_API
-  C_API --> C_VAL
-  C_VAL -->|"valida via pipeline"| C_ORQ
-  C_VAL --> DB
-  C_AGD --> DB
-  C_AGD -->|"na data programada"| C_EXE
-  C_EXE -->|"mesmo orquestrador,<br/>canal=rotina"| C_ORQ
-
-  %% Analytics
-  P_INT -->|"solicita recortes"| C_API
-  C_API --> C_ANL
-  C_ANL --> DB
-  C_ANL -->|"volume, desfechos,<br/>bloqueios, confiança"| C_API
-  C_API --> P_INT
+  %% Rotinas e Analytics
+  API --> ANL
+  ANL --> DB
+  AGD <--> DB
+  AGD --> EXE
+  EXE --> ORQ
 
   classDef web fill:#e8f0fe,stroke:#3a5a8f,stroke-width:1px;
   classDef mid fill:#eef3fb,stroke:#3a5a8f,stroke-width:1px;
   classDef wrk fill:#eaf7ec,stroke:#2f7a3d,stroke-width:1px;
   classDef db fill:#fdf3e3,stroke:#b5822a,stroke-width:1px;
-  classDef ext fill:#f4e3f4,stroke:#8f3a8f,stroke-width:1px;
-  class P_CHAT,P_HIST,P_INT,P_ROT,NGX web;
-  class C_API,C_AUTH,C_ORQ,C_GINJ,C_GABU,C_GSAI,C_INT,C_ANL,C_VOZ,C_COP,C_PER mid;
-  class C_AGD,C_EXE,C_VAL wrk;
+  classDef extParceiro fill:#f4e3f4,stroke:#8f3a8f,stroke-width:1px;
+  classDef extEquipe fill:#ffebee,stroke:#c62828,stroke-width:1px;
+
+  class SPA,NGX web;
+  class API,AUTH,ORQ,GINJ,GABU,INT,COP,GSAI,ANL,VOZ_BE,PER mid;
+  class AGD,EXE wrk;
   class DB db;
-  class ENTRA,SAFE,SPEECH,CS,CN ext;
+  class ENTRA,CS,M365 extParceiro;
+  class SAFE,SPEECH extEquipe;
 ```
 
 *Figura X — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
@@ -3126,37 +3115,32 @@ Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriorme
 sequenceDiagram
   autonumber
   actor U as Usuário
-  participant WEB as Frontend (Chat)
-  participant API as api/ (FastAPI)
-  participant ORQ as Orquestrador
-  participant GINJ as Guarda de Injeção
-  participant SAFE as Azure AI Content Safety
-  participant PER as persistence/
+  participant WEB as Frontend (React/Vite)
+  participant API as api/ (FastAPI deps.py)
+  participant ORQ as pipeline/orquestrador.py
+  participant GINJ as guardas/injecao/
+  participant SAFE as Azure AI Content Safety (Prompt Shields)
+  participant PER as persistence/ (PostgreSQL)
 
-  U->>WEB: Envia mensagem
-  WEB->>API: POST /api/chat
-  API->>API: deps.py resolve sessão, perfil e permissões
-  API->>ORQ: processar(mensagem, usuário, canal=chat)
+  U->>WEB: Envia prompt com tentativa de injeção
+  WEB->>API: POST /api/chat (cookie httpOnly)
+  API->>API: Valida sessão, perfil e permissões
+  API->>ORQ: processar(prompt, usuario, canal=CHAT)
   activate ORQ
-  ORQ->>GINJ: 2. Guarda de injeção
+  ORQ->>GINJ: 1. Guarda de Injeção
   activate GINJ
-  GINJ->>GINJ: Regras determinísticas (versionadas no repo)
-  GINJ->>SAFE: Classificador por modelo (Prompt Shields)
-  SAFE-->>GINJ: Score de injeção
+  GINJ->>GINJ: Avalia regras determinísticas locais (Regex)
+  GINJ->>SAFE: Avalia via Prompt Shields API
+  SAFE-->>GINJ: Score de risco adversarial detectado
+  GINJ-->>ORQ: Desfecho = BLOQUEADA_INJECAO
+  deactivate GINJ
 
-  alt injeção detectada
-    GINJ-->>ORQ: Desfecho = BLOQUEADA_INJECAO
-    deactivate GINJ
-    ORQ->>PER: Registra interação (desfecho=BLOQUEADA_INJECAO)
-    PER-->>ORQ: Confirmado
-    ORQ-->>API: Recusa seca, sem revelar o motivo
-    API-->>WEB: Resposta de bloqueio
-    WEB-->>U: Exibe recusa padrão
-  else input aprovado
-    GINJ-->>ORQ: Desfecho = null (segue pipeline)
-    Note over ORQ: Segue para guarda de abuso (Cenário 2)
-  end
+  ORQ->>PER: Persiste Interação (desfecho=BLOQUEADA_INJECAO, prompt em claro)
+  PER-->>ORQ: OK
+  ORQ-->>API: Recusa seca (sem detalhes do bloqueio)
   deactivate ORQ
+  API-->>WEB: 200 OK com mensagem padronizada de bloqueio
+  WEB-->>U: Exibe recusa sem expor regras internas
 ```
 
 #### 5.3.8.2 Cenário 2 - Fluxo completo de sucesso (chat)
@@ -3165,52 +3149,49 @@ sequenceDiagram
 sequenceDiagram
   autonumber
   actor U as Usuário
-  participant WEB as Frontend (Chat)
+  participant WEB as Frontend (React/Vite)
   participant API as api/ (FastAPI)
-  participant ORQ as Orquestrador
-  participant GINJ as Guarda de Injeção
-  participant GABU as Guarda de Abuso
-  participant INT as Classificador de Intenção
+  participant ORQ as pipeline/orquestrador.py
+  participant GINJ as guardas/injecao/
+  participant GABU as guardas/abuso/
+  participant INT as pipeline/intencao/
   participant COP as copilot/client.py
   participant CS as Copilot Studio (Direct Line)
-  participant GSAI as Guarda de Saída
-  participant PER as persistence/
+  participant GSAI as guardas/saida.py
+  participant PER as persistence/ (PostgreSQL)
 
-  U->>WEB: Envia mensagem
+  U->>WEB: Digita solicitação legítima do portfólio
   WEB->>API: POST /api/chat
-  API->>ORQ: 1. sessão/perfil/permissões resolvidos
+  API->>ORQ: 1. Inicia pipeline com perfil resolvido
   activate ORQ
 
-  ORQ->>GINJ: 2. Guarda de injeção
+  ORQ->>GINJ: 2. Guarda de Injeção (Regras + Content Safety)
   GINJ-->>ORQ: Aprovado
 
-  ORQ->>GABU: 3. Guarda de abuso
-  GABU->>GABU: Categorias de conteúdo + política de uso corporativo
+  ORQ->>GABU: 3. Guarda de Abuso (Categorias de Conteúdo)
   GABU-->>ORQ: Aprovado
 
-  ORQ->>INT: 4. Classificação de intenção
-  INT->>INT: Compara contra catálogo, aplica limiar por intenção
-  INT-->>ORQ: Intenção + confiança
+  ORQ->>INT: 4. Classificador de Intenção (Ensemble + Limiar calibrado)
+  INT-->>ORQ: Intenção identificada + Score de Confiança
 
-  ORQ->>COP: 5. Execução — prompt como dado rotulado + intenção em metadados
+  ORQ->>COP: 5. Execução (Prompt rotulado como dado + Intenção em metadados)
   activate COP
-  COP->>CS: Direct Line — envia prompt validado
-  CS->>CS: Executa tópico/ação correspondente
-  CS-->>COP: Resposta gerada
-  COP-->>ORQ: Resposta do Copilot
+  COP->>CS: Direct Line API (Aciona tópico correspondente)
+  CS->>CS: Consulta conectores M365 (SharePoint / Power BI)
+  CS-->>COP: Retorna texto da resposta estruturada
+  COP-->>ORQ: Resposta bruta do executor
   deactivate COP
 
-  ORQ->>GSAI: 6. Guarda de saída
-  GSAI->>GSAI: Avalia resposta antes da entrega
+  ORQ->>GSAI: 6. Guarda de Saída (Inspeção contra injeção indireta)
   GSAI-->>ORQ: Aprovada
 
-  ORQ->>PER: 7. Registra interação completa (desfecho=SUCESSO)
-  PER-->>ORQ: Confirmado
+  ORQ->>PER: 7. Grava registro integral imutável (desfecho=SUCESSO, latência)
+  PER-->>ORQ: Registro confirmado
 
-  ORQ-->>API: Resposta final
+  ORQ-->>API: Resposta sanitizada final
   deactivate ORQ
-  API-->>WEB: Resposta
-  WEB-->>U: Exibe resposta
+  API-->>WEB: Payload JSON
+  WEB-->>U: Renderiza resposta contextualizada e fontes
 ```
 
 #### 5.3.8.3 Cenário 3 - Mensagem bloqueada pela guarda de abuso
@@ -3260,43 +3241,42 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   autonumber
-  actor ATK as Atacante
-  participant SP as SharePoint
-  actor U as Usuário legítimo
-  participant WEB as Frontend (Chat)
+  actor ATK as Atacante Indireto
+  participant SP as SharePoint (Biblioteca)
+  actor U as Usuário Legítimo
   participant API as api/ (FastAPI)
-  participant ORQ as Orquestrador
+  participant ORQ as pipeline/orquestrador.py
   participant COP as copilot/client.py
   participant CS as Copilot Studio
-  participant GSAI as Guarda de Saída
-  participant PER as persistence/
+  participant GSAI as guardas/saida.py
+  participant SAFE as Azure AI Content Safety
+  participant PER as persistence/ (PostgreSQL)
 
-  ATK->>SP: Deposita documento com<br/>instrução maliciosa embutida
-  Note over ATK,SP: Ataque não passa pelo campo de texto —<br/>a entrada do usuário é inocente
-
-  U->>WEB: Faz pergunta legítima sobre o portfólio
-  WEB->>API: POST /api/chat
-  API->>ORQ: 1–4. sessão, guardas de entrada e<br/>classificação (todas aprovadas)
+  ATK->>SP: Deposita documento de projeto com prompt embutido oculto
+  U->>API: Pergunta legítima: "Resuma os riscos do projeto XPTO"
+  API->>ORQ: Entrada legítima passa pelas guardas 1 a 4
   activate ORQ
-  ORQ->>COP: 5. Execução — prompt rotulado
-  COP->>CS: Direct Line
-  CS->>SP: Recupera documento para compor resposta
-  SP-->>CS: Conteúdo do documento (com instrução embutida)
-  CS-->>COP: Resposta contaminada pela instrução do documento
-  COP-->>ORQ: Resposta do Copilot
+  ORQ->>COP: 5. Envia prompt rotulado ao Copilot
+  activate COP
+  COP->>CS: Direct Line API
+  CS->>SP: Recupera trechos do documento contaminado
+  SP-->>CS: Conteúdo do arquivo com payload embutido
+  CS-->>COP: Resposta gerada incorporando instrução hostil
+  COP-->>ORQ: Resposta com potencial injeção indireta
+  deactivate COP
 
-  ORQ->>GSAI: 6. Guarda de saída
+  ORQ->>GSAI: 6. Guarda de Saída
   activate GSAI
-  GSAI->>GSAI: Avalia a resposta antes da entrega
+  GSAI->>SAFE: Avalia saída com Content Safety (Prompt Shields)
+  SAFE-->>GSAI: Alerta de injeção indireta detectada
   GSAI-->>ORQ: Desfecho = BLOQUEADA_SAIDA
   deactivate GSAI
 
-  ORQ->>PER: 7. Registra interação (desfecho=BLOQUEADA_SAIDA)
-  PER-->>ORQ: Confirmado
-  ORQ-->>API: Recusa seca, sem repetir a instrução recebida
+  ORQ->>PER: 7. Grava auditoria nominal (desfecho=BLOQUEADA_SAIDA)
+  PER-->>ORQ: OK
+  ORQ-->>API: Mensagem segura de indisponibilidade do conteúdo
   deactivate ORQ
-  API-->>WEB: Resposta de bloqueio
-  WEB-->>U: Exibe recusa padrão
+  API-->>U: Exibe recusa padrão sem executar comando injetado
 ```
 
 #### 5.3.8.5 Cenário 5 - Disparo de rotina agendada
@@ -3304,56 +3284,36 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   autonumber
-  actor U as Usuário (dono, GERIR_ROTINAS)
-  participant WEB as Frontend (Rotinas)
+  actor U as Líder de Projeto (GERIR_ROTINAS)
   participant API as api/ (FastAPI)
   participant VAL as rotinas/validacao.py
-  participant ORQV as Orquestrador (validação)
-  participant AGD as rotinas/agendador.py<br/>(APScheduler)
-  participant DB as PostgreSQL
-  participant EXE as rotinas/execucao.py
-  participant ORQE as Orquestrador (execução)
+  participant AGD as rotinas/agendador.py (APScheduler)
+  participant DB as PostgreSQL 16
+  participant WRK as worker (rotinas/execucao.py)
+  participant ORQ as pipeline/orquestrador.py
   participant COP as copilot/client.py
-  actor DIR as Diretoria
 
-  U->>WEB: Cadastra rotina (prompt, cron, timezone)
-  WEB->>API: POST /api/rotinas
-  API->>VAL: Valida prompt no cadastro
-  VAL->>ORQV: Passa pelas guardas e classificador
-  alt não resolve em intenção do catálogo
-    ORQV-->>VAL: Recusa
-    VAL-->>API: Cadastro recusado, com explicação
-    API-->>WEB: Erro de validação
-    WEB-->>U: Exibe motivo da recusa
-  else resolve em intenção válida
-    ORQV-->>VAL: Aprovado
-    VAL->>DB: Persiste Rotina (ativa, intencao_prevista)
-    VAL-->>API: Confirmado
-    API-->>WEB: Rotina criada
-    WEB-->>U: Exibe confirmação
-  end
+  U->>API: POST /api/rotinas (prompt, cron, timezone="America/Sao_Paulo")
+  API->>VAL: Valida prompt no cadastro via classificador
+  VAL->>DB: Salva Rotina ativa + Jobstore APScheduler
+  DB-->>API: Rotina cadastrada com sucesso
 
-  Note over AGD,DB: Fuso da rotina (ex.: America/Sao_Paulo),<br/>coalesce + misfire_grace_time evitam disparo em rajada
+  Note over AGD,DB: Worker dispara no contêiner independente no horário programado
 
-  AGD->>DB: Job persistido dispara no horário agendado
-  AGD->>EXE: Aciona execução (canal=rotina)
-  activate EXE
-  EXE->>ORQE: Reentra pelo MESMO orquestrador<br/>(permissões do dono resolvidas na execução)
-  activate ORQE
-  ORQE->>ORQE: Repassa por todas as guardas<br/>(catálogo e permissões reavaliados)
-  ORQE->>COP: 5. Execução no Copilot Studio
-  COP-->>ORQE: Resposta (relatório)
-  ORQE->>DB: Registra Interacao (canal=rotina)
-  ORQE->>DB: Registra ExecucaoRotina (status, interacao_id)
-  deactivate ORQE
-  EXE-->>AGD: Execução concluída
-  deactivate EXE
-
-  WEB->>API: Consulta histórico de execuções
-  API->>DB: SELECT execuções da rotina
-  DB-->>API: Lista de execuções
-  API-->>WEB: Exibe status na aba de resultados
-  WEB-->>DIR: Diretoria acessa relatório no app<br/>(sem depender de e-mail/Teams)
+  AGD->>WRK: Disparo de evento agendado
+  activate WRK
+  WRK->>DB: Obtém Rotina e resolve permissões atuais do dono
+  WRK->>ORQ: processar(prompt, dono, canal=ROTINA)
+  activate ORQ
+  ORQ->>ORQ: Executa pipeline completo (Guardas 1 a 4)
+  ORQ->>COP: Executa no Copilot Studio via Direct Line
+  COP-->>ORQ: Devolve relatório/resposta
+  ORQ->>ORQ: Avalia guarda de saída
+  ORQ->>DB: Grava Interacao (canal=ROTINA)
+  ORQ->>DB: Grava ExecucaoRotina (status=SUCESSO, interacao_id)
+  deactivate ORQ
+  WRK-->>AGD: Job concluído com sucesso
+  deactivate WRK
 ```
 
 #### 5.3.8.6 Convenções adotadas
@@ -4580,17 +4540,9 @@ O modelo mantém o catálogo de intenções como referência para a classificaç
 
 ```mermaid
 classDiagram
-    class Usuario {
-        +UUID id
-        +String nome
-        +String email
-        +String entraObjectId
-        +Perfil perfil
-        +List~Permissao~ permissoes
-        +DateTime criadoEm
-        +possuiPermissao(permissao) Boolean
-    }
+    direction TB
 
+    %% Enums do Domínio e Banco de Dados
     class Perfil {
         <<enumeration>>
         DIRETORIA
@@ -4604,38 +4556,18 @@ classDiagram
         GERIR_ROTINAS
     }
 
-    class Conversa {
-        +UUID id
-        +UUID usuarioId
-        +String titulo
-        +String conversaExternaId
-        +DateTime arquivadaEm
-        +DateTime criadaEm
-        +gerarTitulo(primeiroTurno) String
-    }
-
-    class Interacao {
-        +UUID id
-        +UUID conversaId
-        +UUID usuarioId
-        +String prompt
-        +String resposta
-        +UUID intencaoId
-        +Float confianca
-        +Desfecho desfecho
-        +Perfil perfil
-        +Canal canal
-        +UUID rotinaId
-        +Integer latenciaMs
-        +DateTime criadaEm
-        +persistir() Void
-    }
-
     class Canal {
         <<enumeration>>
         CHAT
         VOZ
         ROTINA
+    }
+
+    class StatusExecucao {
+        <<enumeration>>
+        EM_EXECUCAO
+        SUCESSO
+        FALHA
     }
 
     class Desfecho {
@@ -4649,121 +4581,117 @@ classDiagram
         BLOQUEADA_SAIDA
     }
 
+    %% Modelos de Persistência (SQLAlchemy 2 / PostgreSQL)
+    class Usuario {
+        +UUID id
+        +String entra_object_id
+        +String email
+        +String nome
+        +Perfil perfil
+        +DateTime criado_em
+        +DateTime visto_em
+    }
+
+    class Conversa {
+        +UUID id
+        +UUID usuario_id
+        +String titulo
+        +String conversa_externa_id
+        +DateTime arquivada_em
+        +DateTime criada_em
+    }
+
+    class Interacao {
+        +UUID id
+        +UUID conversa_id
+        +UUID usuario_id
+        +String prompt
+        +String resposta
+        +UUID intencao_id
+        +Decimal confianca
+        +Desfecho desfecho
+        +Perfil perfil
+        +Canal canal
+        +UUID rotina_id
+        +Integer latencia_ms
+        +DateTime criada_em
+    }
+
     class IntencaoCatalogo {
         +UUID id
         +String codigo
         +String nome
         +String descricao
-        +Float limiarConfianca
-        +Boolean ehForaDeEscopo
-        +DateTime versaoAtualizadaEm
-    }
-
-    class GuardaInjecao {
-        +avaliarRegrasDeterministicas(texto) Boolean
-        +avaliarClassificador(texto) Float
-        +decidir(texto) Desfecho
-    }
-
-    class GuardaAbuso {
-        +avaliarCategoriasConteudo(texto) Boolean
-        +avaliarPoliticaUsoCorporativo(usuario, texto) Boolean
-        +decidir(usuario, texto) Desfecho
-    }
-
-    class GuardaSaida {
-        +avaliarRespostaCopilot(resposta) Boolean
-        +decidir(resposta) Desfecho
-    }
-
-    class ClassificadorIntencao {
-        +classificar(texto) IntencaoCatalogo
-        +calcularConfianca(texto, intencao) Float
-    }
-
-    class Orquestrador {
-        +processar(mensagem, usuario, canal) Interacao
-        -resolverSessao(usuario) Void
-        -executarGuardaInjecao(texto) Desfecho
-        -executarGuardaAbuso(usuario, texto) Desfecho
-        -executarClassificacao(texto) IntencaoCatalogo
-        -executarNoCopilot(promptValidado, intencao) String
-        -executarGuardaSaida(resposta) Desfecho
-        -registrarInteracao(dados) Interacao
-    }
-
-    class ClienteCopilotStudio {
-        +String directLineToken
-        +enviarPromptRotulado(prompt, intencaoMetadados) String
+        +Decimal limiar_confianca
+        +Boolean eh_fora_de_escopo
+        +DateTime versao_atualizada_em
     }
 
     class Rotina {
         +UUID id
+        +UUID dono_id
         +String nome
         +String prompt
-        +String agendaCron
+        +String agenda_cron
         +String timezone
-        +UUID donoId
-        +UUID intencaoPrevista
+        +UUID intencao_prevista
         +Boolean ativa
-        +DateTime criadaEm
-        +validarNoCadastro() Boolean
+        +DateTime criada_em
     }
 
     class ExecucaoRotina {
         +UUID id
-        +UUID rotinaId
-        +DateTime iniciadaEm
-        +DateTime concluidaEm
+        +UUID rotina_id
+        +DateTime iniciada_em
+        +DateTime concluida_em
         +StatusExecucao status
-        +UUID interacaoId
+        +UUID interacao_id
         +String erro
     }
 
-    class StatusExecucao {
-        <<enumeration>>
-        SUCESSO
-        FALHA
-        EM_EXECUCAO
+    %% Serviços do Core / Pipeline FastAPI
+    class OrquestradorPipeline {
+        +processar(mensagem: str, usuario: Usuario, canal: Canal, conversa_id: UUID) ResultadoPipeline
     }
 
-    class RecorteAnalitico {
-        +UUID id
-        +String tipo
-        +DateTime periodoInicio
-        +DateTime periodoFim
-        +Map dados
-        +gerarVolumePorIntencao() Map
-        +gerarDistribuicaoDesfechos() Map
-        +gerarSerieBloqueiosPorGuarda() Map
-        +gerarAgrupamentoForaDeEscopo() Map
-        +gerarConfiancaMediaPorIntencao() Map
+    class GuardaInjecao {
+        +avaliar(texto: str) Tuple~bool, str~
     }
 
-    Usuario "1" --> "1" Perfil : possui
-    Usuario "1" --> "*" Permissao : possui
-    Usuario "1" --> "*" Conversa : inicia
-    Conversa "1" --> "*" Interacao : contém
-    Usuario "1" --> "*" Interacao : gera
-    Interacao "1" --> "1" Canal : ocorre via
-    Interacao "1" --> "1" Desfecho : resulta em
-    Interacao "*" --> "0..1" IntencaoCatalogo : classificada como
+    class GuardaAbuso {
+        +avaliar(texto: str) Tuple~bool, str~
+    }
 
-    Orquestrador "1" --> "1" GuardaInjecao : aciona
-    Orquestrador "1" --> "1" GuardaAbuso : aciona
-    Orquestrador "1" --> "1" GuardaSaida : aciona
-    Orquestrador "1" --> "1" ClassificadorIntencao : aciona
-    Orquestrador "1" --> "1" ClienteCopilotStudio : aciona
-    Orquestrador "1" --> "*" Interacao : produz
-    ClassificadorIntencao "*" --> "*" IntencaoCatalogo : consulta
+    class GuardaSaida {
+        +avaliar(resposta: str) Tuple~bool, str~
+    }
 
-    Usuario "1" --> "*" Rotina : possui (dono)
-    Rotina "1" --> "*" ExecucaoRotina : gera
-    ExecucaoRotina "1" --> "1" StatusExecucao : possui
-    ExecucaoRotina "1" --> "0..1" Interacao : associada a
-    Rotina "1" --> "0..1" IntencaoCatalogo : prevê
+    class ClassificadorIntencao {
+        +classificar(texto: str) Tuple~IntencaoCatalogo, float~
+    }
 
-    RecorteAnalitico "*" --> "*" Interacao : agrega
+    class CopilotClient {
+        +executar_acao(prompt: str, intencao: str, conversa_externa_id: str) str
+    }
+
+    %% Relacionamentos de Dados
+    Usuario "1" --> "0..*" Conversa : mantém
+    Usuario "1" --> "0..*" Interacao : autor
+    Usuario "1" --> "0..*" Permissao : possui
+    Conversa "1" --> "1..*" Interacao : agrupa
+    IntencaoCatalogo "0..1" <-- "0..*" Interacao : resolvida_como
+    Usuario "1" --> "0..*" Rotina : dono
+    Rotina "1" --> "0..*" ExecucaoRotina : gera
+    Interacao "0..1" <-- "0..1" ExecucaoRotina : origina
+    Rotina "0..1" <-- "0..*" Interacao : disparada_por
+
+    %% Dependências de Serviços do Pipeline
+    OrquestradorPipeline ..> GuardaInjecao : 1. valida injeção
+    OrquestradorPipeline ..> GuardaAbuso : 2. valida abuso
+    OrquestradorPipeline ..> ClassificadorIntencao : 3. classifica
+    OrquestradorPipeline ..> CopilotClient : 4. executa via Direct Line
+    OrquestradorPipeline ..> GuardaSaida : 5. valida saída
+    OrquestradorPipeline ..> Interacao : 6. persiste auditoria
 ```
 
 *Figura X — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
