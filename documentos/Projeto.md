@@ -2368,6 +2368,74 @@ classificação supervisionada ser decisiva. A palavra final sobre BoW/TF-IDF
 como linha de base — e sobre como ela se compara ao classificador de
 produção — depende da bancada de avaliação (RNF03, seção 5.4.8).
 
+### 5.1.7 Análise de Confiabilidade e Escalabilidade da Pilha Escolhida
+
+Esta seção formaliza a análise técnica não funcional da arquitetura implementada (FastAPI, React+Vite, PostgreSQL 16, APScheduler, Azure AI Content Safety, Azure Speech e Copilot Studio via Direct Line), considerando os requisitos levantados (RNF01 a RNF07), o volume de usuários e dados do PMO do Metrô, tempos de resposta no canal de voz e estratégias de evolução/desacoplamento.
+
+#### 5.1.7.1 Análise de Confiabilidade (Reliability)
+
+A confiabilidade da solução é sustentada por **defesa em profundidade**, **isolamento de processos** e **auditoria universal imutável**:
+
+1. **Invariante de Ordem e Pipeline Determinado:**
+   - O orquestrador (`pipeline/orquestrador.py`) executa o fluxo estrito: `Sessão/Identidade → Guarda de Injeção → Guarda de Abuso → Classificação de Intenção → Execução (Copilot) → Guarda de Saída → Registro`.
+   - Nenhuma etapa é ignorada ou reordenada, garantindo que mesmo entradas hostis ou respostas indiretamente contaminadas por documentos do SharePoint sejam interceptadas antes do usuário final (RNF06 e RF09).
+2. **Auditoria Universal e Rastreabilidade Completa (RNF02, RNF07):**
+   - Toda solicitação processada grava **exatamente uma linha** na tabela `interacao` no PostgreSQL, inclusive nos casos de bloqueio (`BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA`, `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR`).
+   - Garante rastreabilidade integral de autoria, canal, momento, confiança e latência sem perda de trilha de auditoria.
+3. **Resiliência do Agendador de Rotinas (RF11, RNF04):**
+   - O `worker` (APScheduler) opera com *jobstore* relacional diretamente no PostgreSQL.
+   - Configurações explícitas de `coalesce=True` e `misfire_grace_time` evitam disparos em rajada ou execuções duplicadas após indisponibilidade temporária do contêiner.
+   - Toda rotina reexecuta sob as permissões e contexto do dono **no instante do disparo**, prevenindo escalonamento indevido de privilégios.
+
+#### 5.1.7.2 Análise de Escalabilidade e Pontos de Gargalo
+
+A avaliação da capacidade de crescimento da solução considerou quatro dimensões críticas:
+
+| Dimensão de Carga | Cenário Operacional / Volume | Ponto de Gargalo Potencial | Estratégia de Mitigação Implementada / Arquitetada |
+|---|---|---|---|
+| **Volume de Usuários do PMO** | Diretoria, ~30 Líderes de Projeto e Membros de Equipe (concorrência baixa a média, picos em fechamento mensal). | Bloqueio de I/O em requisições concorrentes ou retenção de estado em memória. | **Backend *Stateless*:** FastAPI assíncrono com `asyncpg` + SQLAlchemy 2 Async; pool de conexões otimizado; sessões seguras em cookies `httpOnly` delegando estado ao cookie. O contêiner de API pode escalar horizontalmente sem impacto no agendador. |
+| **Crescimento da Base de Documentos** | Dezenas de projetos, TAP, cronogramas, matrizes de risco e relatórios acumulados no SharePoint. | *Injeção indireta* vinda de documentos recuperados e degradação de busca semântica no Copilot. | **Guarda de Saída (`saida.py`):** Inspeção da resposta do executor via Content Safety. Índices de metadados no SharePoint mantidos com menor privilégio por pasta/projeto. |
+| **Crescimento da Tabela de Interações** | Acúmulo contínuo de logs de chat, voz e rotinas analíticas (milhares de registros/mês). | Degradação de desempenho no dashboard de intenções (`/api/analytics`). | **Indexação Otimizada:** Índices compostos `(criada_em DESC)`, `(intencao_id, criada_em)`, `(desfecho, criada_em)` e índice parcial condicional sobre `desfecho = 'RECUSADA_FORA_ESCOPO'`. Expulgo automatizado pós-prazo de retenção via rotina do APScheduler (RNF07). |
+| **Interação por Voz (Tempo de Resposta)** | Usuários em mobilidade ou campo ditando consultas ao agente. | Latência perceptível acumulada (áudio → STT → pipeline → Copilot → UI). | **Topologia Híbrida e Streaming:** Transcrição parcial em tempo real no frontend via Azure Speech SDK usando tokens efêmeros emitidos pelo backend; classificação em ensemble leve (TF-IDF + embeddings) com inferência sub-100ms. |
+
+#### 5.1.7.3 Tempo de Resposta no Canal de Voz e Orçamento de Latência
+
+Para manter a experiência fluida no canal multimodal (RF02), a arquitetura segue o seguinte orçamento de tempo de resposta esperado (P95):
+
+```mermaid
+flowchart LR
+    A["Fala do Usuário"] -->|Streaming 0ms perceptível| B["Azure Speech (STT)"]
+    B -->|~200-400ms| C["FastAPI / Guardas"]
+    C -->|~150-300ms Content Safety + Ensemble| D["Copilot Studio (Direct Line)"]
+    D -->|~800-1500ms Busca/Ação| E["Guarda de Saída + DB"]
+    E -->|~100-200ms| F["Resposta na UI"]
+```
+
+- **Latência Total Estimada (P95):** ~1.25s a 2.40s.
+- **Otimização de Voz:** A transcrição parcial durante a fala reduz a latência percebida para quase zero no envio; o processamento do middleware opera em paralelo com a persistência assíncrona.
+
+#### 5.1.7.4 Estratégia de Desacoplamento e Evolução da Plataforma de Portfólio
+
+Conforme premissa do **TAPI**, a plataforma de gestão do Metrô pode evoluir ou ser substituída (ex.: migração do SharePoint para *Dynamics 365 Project Operations* ou ferramenta interna):
+
+```mermaid
+flowchart TB
+    UI["Frontend Web (React)"] --> BFF["FastAPI (Middleware + Guardas + Intenções)"]
+    BFF --> ORQ["pipeline/orquestrador.py"]
+    
+    subgraph ISOLAMENTO["Camada de Desacoplamento"]
+        ORQ --> CLIENT["copilot/client.py (Cliente Direct Line)"]
+    end
+    
+    CLIENT -.->|Hoje: Conectores M365| P1["Copilot Studio + SharePoint / Power BI"]
+    CLIENT -.->|Evolução: API Rest / Dataverse| P2["Dynamics 365 Project Operations / Novo ERP"]
+```
+
+1. **Ponto Único de Acoplamento:** O módulo `copilot/client.py` é o **único** ponto do middleware que conhece a API Direct Line e o Copilot Studio. 
+2. **Preservação dos Ativos de PLN e Segurança:** Se a plataforma de portfólio mudar:
+   - Todo o frontend, guardas de injeção/abuso, banco de dados, motor de agendamento de rotinas e o classificador de intenções permanecem **100% inalterados**.
+   - Apenas o cliente executor (`client.py`) e a tabela de mapeamento de contratos (`copilot/topicos.md`) são reescritos para dialogar com a nova API do ERP/Dynamics.
+
 ## 5.2 Diagrama de Componentes da UML
 
 Um Diagrama de Componentes UML é uma representação visual que descreve a organização dos principais módulos de um sistema de software, suas responsabilidades e as interfaces por meio das quais se comunicam. Esse tipo de diagrama permite visualizar, de forma modular, como cada parte do sistema interage com as demais, garantindo organização, coesão e clareza arquitetural, e servindo como referência para o desenvolvimento, integração e implantação da solução.
@@ -2383,6 +2451,7 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
   <br>
   <sub>Figura X — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
 </div>
+
 
 ---
 
