@@ -2,7 +2,7 @@
 
 Backend FastAPI que orquestra o pipeline de segurança e a classificação de
 intenção antes de acionar o Copilot Studio. A ordem das etapas está descrita em
-[Arquitetura.md](../../documentos/Arquitetura.md) e é fixa.
+[Arquitetura.md](../../docs/Arquitetura.md) e é fixa.
 
 ## Ambiente
 
@@ -60,7 +60,7 @@ para `dados/classificador.joblib`.
 | `python -m app.pipeline.intencao.avaliacao --f22` | Comparação entre estratégias (F22) — treina todas as configurações do zero |
 
 O relatório da bancada é a evidência do RNF03; os números correntes e sua leitura
-estão na seção 5.4.11 de [Projeto.md](../../documentos/Projeto.md).
+estão na seção 5.4.11 de [Projeto.md](../../docs/Projeto.md).
 
 ## Testes
 

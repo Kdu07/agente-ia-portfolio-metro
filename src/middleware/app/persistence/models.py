@@ -2,7 +2,7 @@
 
 Uma linha de `Interacao` é gravada em TODOS os desfechos, inclusive nos
 bloqueios: as tentativas de ataque são o insumo do recorte de segurança
-do dashboard (seção 5 de documentos/Arquitetura.md). A mesma tabela
+do dashboard (seção 5 de docs/Arquitetura.md). A mesma tabela
 serve ao histórico de conversas do usuário e à análise de intenções — a
 diferença está em quem pode consultá-la (`Permissao.VER_INTENCOES`).
 

@@ -4,7 +4,7 @@ Separado de `api/` porque é lógica de identidade, não de transporte:
 `api/routes/` conecta HTTP ao resto e `api/deps.py` apenas consome o que
 este pacote resolve.
 
-Decisão central (seção 7 de documentos/Arquitetura.md): o **FastAPI é o
+Decisão central (seção 7 de docs/Arquitetura.md): o **FastAPI é o
 BFF**. O fluxo Authorization Code + PKCE contra o Entra ID acontece aqui,
 no servidor, e a sessão vive num cookie httpOnly. O React nunca vê um
 access_token.

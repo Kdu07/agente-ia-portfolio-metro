@@ -7,7 +7,7 @@ ser refletida aqui, na mesma mudança.
 
 O catálogo tem 26 intenções mais as classes negativas `fora_de_escopo` e
 `tentativa_injecao` (28 classes, conforme a seção 5.4.8 de
-[Projeto.md](../documentos/Projeto.md)). Todas as 28 passaram a ter exemplos no
+[Projeto.md](../docs/Projeto.md)). Todas as 28 passaram a ter exemplos no
 corpus de treino, mas as intenções marcadas como _documentado, não treinado_ e
 _pendente de validação_ seguem fora do escopo de execução do MVP e, portanto, não
 precisam de tópico configurado nesta etapa.

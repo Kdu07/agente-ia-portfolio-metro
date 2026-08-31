@@ -6,7 +6,7 @@ conhecer FastAPI, e a inversão evitaria um ciclo de importação entre
 api/ e pipeline/.
 
 Perfil e permissão são dimensões INDEPENDENTES (seção 6 de
-documentos/Arquitetura.md):
+docs/Arquitetura.md):
 
 - o **perfil** governa o escopo de dados e a profundidade da resposta;
 - a **permissão** governa o acesso ao dashboard de intenções e à gestão

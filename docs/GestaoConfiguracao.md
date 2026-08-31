@@ -316,7 +316,7 @@ git switch -c docs/gestao-projeto
 
 3. Commitar as alterações:
 ```bash
-git add documentos/GestaoProjeto.md
+git add docs/GestaoProjeto.md
 git commit -m "docs: adiciona políticas de dailies e GitLab (#166)"
 ```
 
@@ -352,7 +352,7 @@ git switch -c docs/gestao-configuracao
 
 3. Commitar as alterações:
 ```bash
-git add documentos/GestaoConfiguracao.md
+git add docs/GestaoConfiguracao.md
 git commit -m "docs: atualiza fluxo gitflow e políticas de branches (#166)"
 ```
 

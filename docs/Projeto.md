@@ -1824,7 +1824,7 @@ A distinção é a decisão estruturante desta seção. Um modelo que tentasse e
 
 O modelo conceitual define as entidades do middleware, seus papéis e as associações que garantem a rastreabilidade das solicitações e das rotinas.
 
-![Modelagem conceitual do domínio do middleware](/documentos/imagens/Modelagem%20Conceitual.png)
+![Modelagem conceitual do domínio do middleware](/docs/imagens/Modelagem%20Conceitual.png)
 *Figura 17 — Modelagem Conceitual.*
 
 ### 4.2.1 Entidades do domínio
@@ -1847,7 +1847,7 @@ O modelo conceitual define as entidades do middleware, seus papéis e as associa
 
 O modelo lógico traduz o domínio em estrutura relacional, com chaves, tipos, restrições de integridade e a validação da normalização.
 
-![Modelagem lógica do middleware](/documentos/imagens/Modelagem%20Lógica.png)
+![Modelagem lógica do middleware](/docs/imagens/Modelagem%20Lógica.png)
 *Figura 18 — Modelagem Lógica.*
 
 **Decisão sobre identificadores.** As chaves primárias são inteiros sequenciais (`serial`). A escolha privilegia a simplicidade de leitura e depuração durante a construção do MVP: um identificador legível aparece em log, em consulta manual e em mensagem de erro sem exigir cópia integral de um UUID. A contrapartida é conhecida e está registrada em 4.4.2.
@@ -1912,7 +1912,7 @@ A rotina guarda o prompt e o dono, que é o mínimo para que ela exista e execut
 
 O modelo físico implementa o esquema para **PostgreSQL 16**, com as restrições de integridade e os índices que sustentam o histórico e as agregações do painel.
 
-![Modelagem física do middleware](/documentos/imagens/Modelagem%20Física.png)
+![Modelagem física do middleware](/docs/imagens/Modelagem%20Física.png)
 *Figura 19 — Modelagem Física.*
 
 ### 4.4.1 Script DDL
@@ -2122,7 +2122,7 @@ exclusivo de um enunciado — recebem o peso mais alto (0,50). É esse
 contraste que se espera que ajude o classificador a discriminar intenção.
 
 **Comparação de configurações.** Rodada sobre o corpus completo de
-[testes-catalogo-intencoes.csv](testes-catalogo-intencoes.csv) (67
+[testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv) (67
 enunciados, 28 classes — 26 intenções mais as duas classes negativas), via
 `comparar_configuracoes`:
 
@@ -2566,7 +2566,7 @@ A revisão do diagrama de componentes (5.2) harmonizou as três vistas da arquit
 
 **Numeração.** As mensagens são numeradas automaticamente em cada diagrama. As referências no texto — "passo 7", por exemplo — correspondem a essa numeração e são reiniciadas a cada cenário.
 
-**Formato.** Cada diagrama é apresentado como imagem exportada em `documentos/imagens/`, com o código-fonte em Mermaid disponível logo abaixo, em bloco recolhível, para permitir edição e versionamento sem dependência de ferramenta gráfica externa.
+**Formato.** Cada diagrama é apresentado como imagem exportada em `docs/imagens/`, com o código-fonte em Mermaid disponível logo abaixo, em bloco recolhível, para permitir edição e versionamento sem dependência de ferramenta gráfica externa.
 
 **Escopo dos cenários.** Foram modelados quatro cenários, escolhidos para cobrir os três tipos de fluxo previstos na Figura 01 do TAPI — consulta, transação e alerta — e a totalidade das *User Stories* classificadas como MVP:
 
@@ -3461,7 +3461,7 @@ python -m app.pipeline.intencao.avaliacao          # metas, recortes, confusões
 python -m app.pipeline.intencao.avaliacao --f22    # comparação entre as sete configurações
 ```
 
-**O conjunto de teste tem 431 casos e nenhum deles participou do ajuste.** Ele reúne duas origens que a bancada mantém separadas de propósito: os 364 enunciados da partição `dev` do corpus sintético, que o treino nunca viu, e os 67 enunciados-semente de [testes-catalogo-intencoes.csv](testes-catalogo-intencoes.csv), derivados do apêndice do TAPI e da seção 5.4.4 — isto é, de outra fonte que não o gerador de templates. Fundir os dois num único número esconderia justamente a diferença que interessa medir: acertar o corpus sintético é acertar o próprio gerador; acertar o CSV do catálogo é generalizar.
+**O conjunto de teste tem 431 casos e nenhum deles participou do ajuste.** Ele reúne duas origens que a bancada mantém separadas de propósito: os 364 enunciados da partição `dev` do corpus sintético, que o treino nunca viu, e os 67 enunciados-semente de [testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv), derivados do apêndice do TAPI e da seção 5.4.4 — isto é, de outra fonte que não o gerador de templates. Fundir os dois num único número esconderia justamente a diferença que interessa medir: acertar o corpus sintético é acertar o próprio gerador; acertar o CSV do catálogo é generalizar.
 
 A semente de aleatoriedade é fixa (`SEMENTE = 42`) em todo ponto que sorteia, de modo que dois treinos sobre o mesmo corpus produzam os mesmos limiares. Sem isso a bancada não seria reproduzível, e sem reprodutibilidade ela não seria evidência.
 
@@ -4637,7 +4637,7 @@ O idioma é declarado, e não detectado. Vem do campo `idioma` da submissão, de
 
 #### 5.7.4.5 Injeção do glossário de domínio
 
-O campo `phraseList` é onde o glossário deixa de ser documento e passa a ser mecanismo. As frases enviadas são as consolidadas em `documentos/glossario-dominio.md` — 101 das 500 que o serviço admite, conforme o orçamento registrado na seção 6.1 daquele documento.
+O campo `phraseList` é onde o glossário deixa de ser documento e passa a ser mecanismo. As frases enviadas são as consolidadas em `docs/glossario-dominio.md` — 101 das 500 que o serviço admite, conforme o orçamento registrado na seção 6.1 daquele documento.
 
 A lista é enviada **a cada requisição**, e não configurada uma vez. O mecanismo é de tempo de execução, aplicado sobre o modelo base, sem etapa de treinamento e sem endpoint dedicado. Disso decorre uma consequência operacional favorável: alterar o glossário não exige publicar modelo nem reiniciar serviço, e a versão vigente no repositório é a que vale na requisição seguinte.
 
@@ -4951,7 +4951,7 @@ Cabe ser explícito quanto ao alcance disso, para não registrar como solução 
 
 A subseção 5.7.5.1 decidiu que a síntese ocorre no navegador e a marcação do texto ocorre no servidor, e deixou registrado que o transporte da marcação seria conciliado aqui.
 
-A forma natural é um campo opcional na própria resposta de conversação: a mesma resposta, com um campo a mais, ausente quando a síntese não é solicitada. Esta subseção **não fixa esse campo**, e a razão é de governança do documento, não de indecisão técnica. O contrato de `POST /api/chat` aparece nos cenários vigentes de 5.3.8 e na especificação de interface do diretório `documentos/api/`; acrescentar-lhe um campo de dentro da seção 5.7 colocaria o mesmo contrato sob duas autoridades, e a divergência entre elas apareceria na primeira alteração feita em apenas uma.
+A forma natural é um campo opcional na própria resposta de conversação: a mesma resposta, com um campo a mais, ausente quando a síntese não é solicitada. Esta subseção **não fixa esse campo**, e a razão é de governança do documento, não de indecisão técnica. O contrato de `POST /api/chat` aparece nos cenários vigentes de 5.3.8 e na especificação de interface do diretório `docs/api/`; acrescentar-lhe um campo de dentro da seção 5.7 colocaria o mesmo contrato sob duas autoridades, e a divergência entre elas apareceria na primeira alteração feita em apenas uma.
 
 O que esta subseção fixa é a **condição que a forma escolhida precisa satisfazer**, e ela pode ser enunciada sem decidir a forma: o texto marcado viaja junto da resposta que ele marca, na mesma requisição, e não por uma segunda chamada. Uma segunda chamada permitiria que o cliente exibisse um texto e falasse outro, quando uma das duas falhasse — e duplicaria os pontos de falha de uma funcionalidade classificada como "Ir Além".
 
@@ -4967,9 +4967,9 @@ Como F80 tem prioridade 2 e a subseção 5.7.5 especifica sem implementar, esta 
 | 5.5.5 — ficha INT-12 | Registrar os dois trajetos e a emissão do token efêmero pelo backend | **Resolvido** |
 | 5.8 — diagrama de classes | Que os dois trajetos produzam um único registro de interação, com o canal marcado como voz | **Sem impacto**: as classes `Interacao` e `Canal` já comportam a decisão de 5.7.1.3 sem alteração |
 | 5.4 e componente C3 — extração de entidades | Absorver o erro de substituição residual, conforme 5.7.7.2 | **Conciliação registrada**, a executar pela seção que governa o pipeline |
-| 5.3.8 e `documentos/api/` — contrato de conversação | Comportar o transporte da marcação de síntese, conforme 5.7.7.3 | **Conciliação registrada**, condicionada à priorização de F80 |
+| 5.3.8 e `docs/api/` — contrato de conversação | Comportar o transporte da marcação de síntese, conforme 5.7.7.3 | **Conciliação registrada**, condicionada à priorização de F80 |
 | 6.5.5 — orçamento e alertas | Configurar alerta antes do limite do nível gratuito F0 | **Requerido**, decorrente de 5.7.2.7 |
-| `documentos/glossario-dominio.md` | A decisão de 5.7.4.6 põe o glossário em operação simultânea sob duas versões possíveis, uma no servidor e outra no pacote publicado do frontend | **Afeta a regra da seção 7.3 daquele documento**, que exige registrar a versão contra a qual cada medição foi feita |
+| `docs/glossario-dominio.md` | A decisão de 5.7.4.6 põe o glossário em operação simultânea sob duas versões possíveis, uma no servidor e outra no pacote publicado do frontend | **Afeta a regra da seção 7.3 daquele documento**, que exige registrar a versão contra a qual cada medição foi feita |
 
 Duas dessas linhas merecem palavra explícita.
 
@@ -5538,7 +5538,7 @@ Gerado com apoio de inteligência artificial, o protótipo tem caráter explorat
 
 <div align="center">
 
-![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](../documentos/imagens/storyboard-fluxo-prata.png)
+![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](imagens/storyboard-fluxo-prata.png)
 
 *Figura 30 — Storyboard do fluxo de chat do Prata AI Agent.*
 
@@ -5550,7 +5550,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 <div align="center">
 
-![Tela 1 — Notificação proativa do agente Prata sobre atraso no marco "Entrega da Fase 2" do Projeto X, com opções para "Ver detalhes" ou "Ignorar".](../documentos/imagens/tela-1-notificacao.png)
+![Tela 1 — Notificação proativa do agente Prata sobre atraso no marco "Entrega da Fase 2" do Projeto X, com opções para "Ver detalhes" ou "Ignorar".](imagens/tela-1-notificacao.png)
 
 *Figura 31 — Tela de notificação proativa do agente Prata.*
 
@@ -5560,7 +5560,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 <div align="center">
 
-![Tela 2 — Mensagem inicial do agente informando que o marco "Entrega da Fase 2" está atrasado, oferecendo botões "Contar o motivo" e "Ver histórico".](../documentos/imagens/tela-2-mensagem-inicial.png)
+![Tela 2 — Mensagem inicial do agente informando que o marco "Entrega da Fase 2" está atrasado, oferecendo botões "Contar o motivo" e "Ver histórico".](imagens/tela-2-mensagem-inicial.png)
 
 *Figura 32 — Mensagem inicial do agente sobre o atraso.*
 
@@ -5570,7 +5570,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 <div align="center">
 
-![Tela 3 - Resposta da usuária informando o motivo do atraso e confirmação do agente perguntando se deve registrar e notificar o responsável.](../documentos/imagens/tela-3-resposta-usuaria.png)
+![Tela 3 - Resposta da usuária informando o motivo do atraso e confirmação do agente perguntando se deve registrar e notificar o responsável.](imagens/tela-3-resposta-usuaria.png)
 
 *Figura 33 — Resposta da usuária e confirmação do agente.*
 
@@ -5580,7 +5580,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 <div align="center">
 
-![Tela 4 - Cartão adaptável de confirmação mostrando a pendência atualizada com marco, motivo registrado e notificação enviada ao Roberto.](../documentos/imagens/tela-4-cartao-confirmacao.png)
+![Tela 4 - Cartão adaptável de confirmação mostrando a pendência atualizada com marco, motivo registrado e notificação enviada ao Roberto.](imagens/tela-4-cartao-confirmacao.png)
 
 *Figura 34 — Cartão adaptável de confirmação da pendência atualizada.*
 
@@ -5590,7 +5590,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 <div align="center">
 
-![Tela 5 — Ponto de ruptura: a usuária tenta mudar de assunto perguntando sobre o Projeto Y enquanto a conversa sobre o Projeto X ainda está ativa.](../documentos/imagens/tela-5-ponto-ruptura.png)
+![Tela 5 — Ponto de ruptura: a usuária tenta mudar de assunto perguntando sobre o Projeto Y enquanto a conversa sobre o Projeto X ainda está ativa.](imagens/tela-5-ponto-ruptura.png)
 
 *Figura 35 — Ponto de ruptura: mudança de assunto durante a conversa.*
 
@@ -5600,7 +5600,7 @@ A tela a seguir ilustra como essa lacuna se manifestaria em uma interface real: 
 
 <div align="center">
 
-![Tela 5b — Tela de fluxo não mapeado com anotação de UX indicando lacuna no comportamento do agente para mudanças de assunto fora do escopo planejado.](../documentos/imagens/tela-5b-fluxo-nao-mapeado.png)
+![Tela 5b — Tela de fluxo não mapeado com anotação de UX indicando lacuna no comportamento do agente para mudanças de assunto fora do escopo planejado.](imagens/tela-5b-fluxo-nao-mapeado.png)
 
 *Figura 36 — Tela de fluxo não mapeado identificada durante a execução do protótipo.*
 
@@ -5694,7 +5694,7 @@ As imagens a seguir compõem o registro visual completo do Protótipo A. Todas a
 
 O registro fotográfico abaixo foi realizado durante o teste inicial com testers externos. Trata-se de uma fotografia bruta do protótipo em uso, sem geração ou edição por inteligência artificial.
 
-![Registro fotográfico bruto do Protótipo A em uso durante o teste inicial de usabilidade com colegas do Inteli.](../documentos/imagens/prototipoa.jpeg)
+![Registro fotográfico bruto do Protótipo A em uso durante o teste inicial de usabilidade com colegas do Inteli.](imagens/prototipoa.jpeg)
 
 *Figura 37 — Protótipo A apresentado a testers externos durante o teste inicial de usabilidade.*
 
@@ -5714,13 +5714,13 @@ O registro audiovisual do Protótipo B demonstra o alerta luminoso, o reconhecim
 
 Além do registro audiovisual, a fotografia a seguir documenta o protótipo físico do crachá durante sua apresentação. A imagem é um registro bruto, produzido sem uso de inteligência artificial para sua geração ou edição, e foi feita durante o teste inicial com testers externos.
 
-![Registro fotográfico bruto do Protótipo B, representado pelo crachá físico, durante o teste inicial de usabilidade com colegas do Inteli.](../documentos/imagens/prototipob.jpeg)
+![Registro fotográfico bruto do Protótipo B, representado pelo crachá físico, durante o teste inicial de usabilidade com colegas do Inteli.](imagens/prototipob.jpeg)
 
 *Figura 38 — Protótipo B físico apresentado a testers externos durante o teste inicial de usabilidade.*
 
 <div align="center">
 
-![Representação conceitual dos personagens e do crachá inteligente utilizados na simulação do Protótipo B.](../documentos/imagens/personagens-video.png)
+![Representação conceitual dos personagens e do crachá inteligente utilizados na simulação do Protótipo B.](imagens/personagens-video.png)
 
 *Figura 39 — Representação conceitual gerada por IA utilizada como referência visual para o vídeo do Protótipo B. A imagem não representa um dispositivo funcional.*
 
