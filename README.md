@@ -1,37 +1,37 @@
 <p align="center">
-  <img src="documentos/imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
+  <img src="docs/imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
 </p>
 
 <table align="center" width="100%" style="table-layout: fixed;">
   <tr>
     <td align="center">
       <a href="https://www.linkedin.com/in/alexsander-dsbarbosa/">
-        <img src="documentos/imagens/alexsander.png" width="90" alt="Alexsander B.">
+        <img src="docs/imagens/alexsander.png" width="90" alt="Alexsander B.">
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/CaduQuaglia">
-        <img src="documentos/imagens/cadu.png" width="90" alt="Carlos Eduardo">
+        <img src="docs/imagens/cadu.png" width="90" alt="Carlos Eduardo">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/celsojwnior/">
-        <img src="documentos/imagens/celso.png" width="90" alt="Celso Rocha">
+        <img src="docs/imagens/celso.png" width="90" alt="Celso Rocha">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/eduardo-casarini/">
-        <img src="documentos/imagens/edu.png" width="90" alt="Eduardo C.">
+        <img src="docs/imagens/edu.png" width="90" alt="Eduardo C.">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/marianalacerdareis/">
-        <img src="documentos/imagens/mariana.png" width="90" alt="Mariana Reis">
+        <img src="docs/imagens/mariana.png" width="90" alt="Mariana Reis">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/mirela-bianchi-608601254/">
-        <img src="documentos/imagens/mirela.png" width="90" alt="Mirela Bianchi">
+        <img src="docs/imagens/mirela.png" width="90" alt="Mirela Bianchi">
       </a>
     </td>
   </tr>
@@ -40,44 +40,44 @@
 <br>
 
 <p align="center">
-  <img src="documentos/imagens/professores.png" alt="Professores">
+  <img src="docs/imagens/professores.png" alt="Professores">
 </p>
 
 <table align="center" width="100%" style="table-layout: fixed;">
   <tr>
     <td align="center">
       <a href="https://www.linkedin.com/in/vanunes/">
-        <img src="documentos/imagens/vanessa.png" width="100" alt="Vanessa Nunes">
+        <img src="docs/imagens/vanessa.png" width="100" alt="Vanessa Nunes">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/reginaldo-arakaki-9574222b/">
-        <img src="documentos/imagens/reginaldo.png" width="100" alt="Reginaldo A.">
+        <img src="docs/imagens/reginaldo.png" width="100" alt="Reginaldo A.">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/bryan-kano/">
-        <img src="documentos/imagens/bryan.png" width="100" alt="Bryan Kano">
+        <img src="docs/imagens/bryan.png" width="100" alt="Bryan Kano">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/fernando-pizzo-208b526a/">
-        <img src="documentos/imagens/pizzo.png" width="100" alt="Fernando Pizzo">
+        <img src="docs/imagens/pizzo.png" width="100" alt="Fernando Pizzo">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/lisane-valdo/">
-        <img src="documentos/imagens/lisane.png" width="100" alt="Lisane Valdo">
+        <img src="docs/imagens/lisane.png" width="100" alt="Lisane Valdo">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/bruno-grandchamp-rodilha/">
-        <img src="documentos/imagens/bruno.png" width="100" alt="Bruno Rodilha">
+        <img src="docs/imagens/bruno.png" width="100" alt="Bruno Rodilha">
       </a>
     </td>
     <td align="center">
       <a href="https://www.linkedin.com/in/filipe-gon%C3%A7alves-08a55015b/">
-        <img src="documentos/imagens/filipe.png" width="100" alt="Filipe Gonçalves">
+        <img src="docs/imagens/filipe.png" width="100" alt="Filipe Gonçalves">
       </a>
     </td>
   </tr>
@@ -86,7 +86,7 @@
 <br>
 
 <p align="center">
-  <img src="documentos/imagens/bottom.png" alt="Elemento visual de encerramento do cabeçalho">
+  <img src="docs/imagens/bottom.png" alt="Elemento visual de encerramento do cabeçalho">
 </p>
 
 # Agente de IA para Gestão do Portfólio de Projetos do Metrô
@@ -116,7 +116,7 @@ Conforme os requisitos levantados, o projeto prevê:
 
 O desenvolvimento considera a integração com o ecossistema Microsoft já utilizado pelo Metrô, incluindo SharePoint, Power BI, Power Automate e Copilot Studio. A forma e os limites dessas integrações respeitam as definições de segurança, governança e escopo do projeto.
 
-A arquitetura da solução, as tecnologias adotadas e as decisões que as sustentam estão descritas em [Arquitetura da solução](documentos/Arquitetura.md).
+A arquitetura da solução, as tecnologias adotadas e as decisões que as sustentam estão descritas em [Arquitetura da solução](docs/Arquitetura.md).
 
 ## Estrutura de pastas
 
@@ -127,7 +127,7 @@ g02/
 │   └── web/             # Frontend: chat, histórico, intenções e rotinas
 ├── copilot/             # Configuração versionada do Copilot Studio
 ├── infra/               # Ambiente de desenvolvimento local
-├── documentos/          # Documentação do projeto e imagens de apoio
+├── docs/                # Documentação do projeto e imagens de apoio
 └── README.md
 ```
 
@@ -173,21 +173,21 @@ npm run test    # suíte de testes
 | Interface — Histórico e Intenções | Em construção |
 | Autenticação, persistência, guardas, análise de intenções e voz | Em construção |
 
-O planejamento das frentes pendentes está em [Arquitetura da solução](documentos/Arquitetura.md).
+O planejamento das frentes pendentes está em [Arquitetura da solução](docs/Arquitetura.md).
 
 ## 📝 Documentação
 
-- [Documentação geral do projeto](documentos/Projeto.md): entendimento do negócio, visão do produto, personas, jornadas, fluxos, riscos e requisitos do projeto, além do catálogo de intenções, das integrações Microsoft e do canal de voz.
-- [Arquitetura da solução](documentos/Arquitetura.md): visão da arquitetura, barreiras de segurança, tecnologias, estrutura detalhada de pastas e modelo de dados.
+- [Documentação geral do projeto](docs/Projeto.md): entendimento do negócio, visão do produto, personas, jornadas, fluxos, riscos e requisitos do projeto, além do catálogo de intenções, das integrações Microsoft e do canal de voz.
+- [Arquitetura da solução](docs/Arquitetura.md): visão da arquitetura, barreiras de segurança, tecnologias, estrutura detalhada de pastas e modelo de dados.
 - [Middleware — guia de execução](src/middleware/README.md): preparação do ambiente, treino e avaliação do classificador, testes e execução da API.
-- [Gestão do projeto](documentos/GestaoProjeto.md): organização da equipe, rituais, SLA, avaliação e retrospectiva de cada sprint, gestão de riscos e indicadores de processo.
-- [Gestão de configuração](documentos/GestaoConfiguracao.md): política de branches, commits, merge requests, arquivos sensíveis, rollback e variáveis de ambiente.
+- [Gestão do projeto](docs/GestaoProjeto.md): organização da equipe, rituais, SLA, avaliação e retrospectiva de cada sprint, gestão de riscos e indicadores de processo.
+- [Gestão de configuração](docs/GestaoConfiguracao.md): política de branches, commits, merge requests, arquivos sensíveis, rollback e variáveis de ambiente.
 
-Três arquivos de `documentos/` ainda são templates não preenchidos, mantidos no repositório para uso nas próximas sprints: `Index.md`, `GuiaPadroesDesenvolvimento.md` e `Manual-instalacao.md`. Até que sejam escritos, a instalação está descrita em [Como executar](#como-executar) e no [guia do middleware](src/middleware/README.md).
+Três arquivos de `docs/` ainda são templates não preenchidos, mantidos no repositório para uso nas próximas sprints: `Index.md`, `GuiaPadroesDesenvolvimento.md` e `Manual-instalacao.md`. Até que sejam escritos, a instalação está descrita em [Como executar](#como-executar) e no [guia do middleware](src/middleware/README.md).
 
 ## 🚀 Versionamento
 
-O projeto segue [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-BR/), no formato `MAJOR.MINOR.PATCH`, conforme detalhado na [Gestão de configuração](documentos/GestaoConfiguracao.md#2-política-de-branches):
+O projeto segue [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-BR/), no formato `MAJOR.MINOR.PATCH`, conforme detalhado na [Gestão de configuração](docs/GestaoConfiguracao.md#2-política-de-branches):
 
 - **MAJOR**: entrega consolidada ao final de cada sprint, mesclada de `release/<versão>` para `main` e marcada com uma tag anotada (ex.: `v1.0.0`).
 - **MINOR**: incremento de escopo relevante integrado a uma versão já entregue.
@@ -201,7 +201,7 @@ O projeto segue [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-B
 | `v4.0.0` | Sprint 4 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 4. |
 | `v5.0.0` | Sprint 5 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 5. |
 
-O histórico detalhado de cada entrega — incluindo métricas, retrospectivas e planejamento da sprint seguinte — é registrado em [Gestão do projeto](documentos/GestaoProjeto.md#3-avaliação-das-sprints).
+O histórico detalhado de cada entrega — incluindo métricas, retrospectivas e planejamento da sprint seguinte — é registrado em [Gestão do projeto](docs/GestaoProjeto.md#3-avaliação-das-sprints).
 
 ## 📋 Licença
 

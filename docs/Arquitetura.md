@@ -351,7 +351,7 @@ g02/
 ├── infra/
 │   └── docker-compose.yml            # web + middleware + worker + db
 │
-└── documentos/                       # Documentação do projeto (este arquivo incluído)
+└── docs/                             # Documentação do projeto (este arquivo incluído)
 ```
 
 `src/middleware/` mantém o nome: ele continua literalmente mediando entre a
@@ -529,7 +529,7 @@ da adaptação: ganha as etapas de abuso e de saída, e perde a de mascaramento.
 O **catálogo de intenções** está completo, com 26 intenções mais as classes
 negativas `fora_de_escopo` e `tentativa_injecao`, derivado da seção 5.4.4 de
 [Projeto.md](Projeto.md) e de
-[testes-catalogo-intencoes.csv](testes-catalogo-intencoes.csv).
+[testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv).
 
 O **classificador de intenção está implementado, treinado e medido**. A bancada
 de avaliação (F21) roda com `python -m app.pipeline.intencao.avaliacao` sobre

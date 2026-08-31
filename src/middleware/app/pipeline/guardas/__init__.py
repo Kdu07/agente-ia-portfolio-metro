@@ -14,7 +14,7 @@ Três módulos, dois problemas distintos e um vetor que só aparece na volta:
 
 Manter os três separados não é organização: é o que permite políticas,
 textos de recusa e tratamentos de incidente diferentes para problemas
-que só se parecem de longe. Ver seção 2 de documentos/Arquitetura.md.
+que só se parecem de longe. Ver seção 2 de docs/Arquitetura.md.
 
 Nenhuma das três é suficiente sozinha, e a ordem entre injeção e abuso
 importa: injeção primeiro, porque é o ataque mais grave e o mais barato
