@@ -21,3 +21,5 @@ dbdata/
 
 # Claude
 .claude
+
+claude-gitlab/
