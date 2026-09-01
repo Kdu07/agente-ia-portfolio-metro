@@ -3572,6 +3572,26 @@ O joelho da curva está entre 0,2 e 0,4: nessa faixa cada ponto de cobertura sac
 
 Sete configurações, treinadas do zero sobre o mesmo conjunto e avaliadas sobre o mesmo teste. Cada uma varia um eixo por vez, para que a diferença medida seja atribuível.
 
+Antes dos resultados, o quadro a seguir compara as três famílias candidatas
+pelos critérios que condicionam a escolha neste projeto: capacidade de capturar
+formulações literais e paráfrases, robustez ao ruído esperado da transcrição,
+custo de execução, explicabilidade e compatibilidade com a restrição de dados
+sensíveis. A comparação separa a adequação técnica da medição empírica:
+uma abordagem pode ser operacionalmente simples e, ainda assim, não atingir a
+meta de qualidade.
+
+| Família candidata | Características | Vantagens | Limitações | Compatibilidade com dados sensíveis |
+|---|---|---|---|---|
+| **TF-IDF de palavras e caracteres + classificador linear** | Representa o texto pela importância de termos, n-gramas de palavras e sequências de caracteres; a inferência e o treino ocorrem no middleware | Baixo custo computacional; execução rápida; vocabulário e pesos inspecionáveis; n-gramas de caracteres absorvem parte dos erros de digitação e transcrição | Depende de sobreposição lexical; generaliza pior para paráfrases; isoladamente fica abaixo do RNF03 | **Compatível por arquitetura:** o texto não precisa sair do ambiente da aplicação. O vocabulário e o artefato treinado podem revelar termos do corpus e devem receber o mesmo controle de acesso e retenção aplicado aos dados de treino |
+| **Embeddings `multilingual-e5-large` + regressão logística** | Converte cada enunciado em um vetor semântico por um modelo multilíngue congelado e treina somente a camada classificadora | Reconhece paráfrases e proximidade de significado; melhor desempenho isolado entre as famílias avaliadas; não exige ajuste fino do encoder sobre o corpus pequeno | Aproximadamente 2 GB de pesos; maior consumo de memória e latência; menor explicabilidade; ainda fica ligeiramente abaixo da meta de acurácia | **Compatível com condição:** depois de baixados e armazenados no ambiente, os pesos permitem inferência local, sem envio dos enunciados a uma API externa. O download inicial pelo Hugging Face exige controle de origem, versão fixada e cache homologado, mas não transmite o corpus ao provedor |
+| **Ensemble TF-IDF + embeddings E5** | Combina por média ponderada as probabilidades das duas representações; peso de 0,6 para embeddings, escolhido por validação cruzada | Reúne robustez lexical e semântica; compensa erros diferentes dos dois ramos; única família que atinge simultaneamente as metas de acurácia e macro-F1 | Herda o custo de memória e latência dos embeddings; possui mais componentes para versionar, testar e monitorar | **Compatível com as mesmas condições dos dois ramos:** processamento integral no middleware, artefatos protegidos e nenhuma chamada externa durante a inferência. No MVP, a validação continua restrita a dados sintéticos ou anonimizados; uso com dados reais depende de ambiente homologado pelo Metrô |
+
+Nenhuma das três famílias, por si só, garante confidencialidade. A
+compatibilidade indicada no quadro decorre da forma de implantação: inferência
+local, restrição de acesso ao corpus e aos artefatos, cifra em repouso e ausência
+de registro indevido de enunciados. Esses controles pertencem à arquitetura da
+aplicação e ao RNF01, e não ao algoritmo de classificação isolado.
+
 | Configuração | Representação | Estimador | Acurácia | Macro-F1 |
 |---|---|---|:-:|:-:|
 | **`ensemble-tfidf-e5-large`** | TF-IDF + embeddings | Logística | **0,856** | **0,851** |
