@@ -1,0 +1,99 @@
+# Agendamento server-side da transição Doing → Waiting Review.
+#
+# Vive numa branch órfã dedicada (ex.: `ci/agenda`) para não interferir com a
+# pipeline real do projeto. Disparado por:
+#
+#   glab ci run -b ci/agenda --variables AGENDA_KEY:M3,ISSUE:412
+#
+# Buckets: PP1..PP5 (13-17min), P1..P5 (26-34min), M1..M5 (51-69min),
+# G1..G5 (102-138min) e TESTE (1min, só para validar o setup).
+#
+# Pré-requisito: um Project Access Token com escopo `api` e papel Reporter ou
+# superior, salvo como variável mascarada `AGENDA_TOKEN` em
+# Settings → CI/CD → Variables. O CI_JOB_TOKEN NÃO consegue alterar issues.
+
+stages:
+  - agenda
+
+mover-para-review:
+  stage: agenda
+  image: alpine:3
+  interruptible: false          # não pode ser cancelado por pipelines novas
+  variables:
+    GIT_STRATEGY: none          # não precisa clonar o repo
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - |
+      test -n "$ISSUE" || { echo "variável ISSUE não definida"; exit 1; }
+      curl --fail --silent --show-error --request PUT \
+        --header "PRIVATE-TOKEN: $AGENDA_TOKEN" \
+        --data-urlencode "add_labels=Waiting Review" \
+        --data-urlencode "remove_labels=Doing" \
+        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues/$ISSUE" > /dev/null
+      echo "issue #$ISSUE movida para 'Waiting Review'"
+  rules:
+    - if: '$AGENDA_KEY == "TESTE"'
+      when: delayed
+      start_in: 1 minute
+    - if: '$AGENDA_KEY == "PP1"'
+      when: delayed
+      start_in: 13 minutes
+    - if: '$AGENDA_KEY == "PP2"'
+      when: delayed
+      start_in: 14 minutes
+    - if: '$AGENDA_KEY == "PP3"'
+      when: delayed
+      start_in: 15 minutes
+    - if: '$AGENDA_KEY == "PP4"'
+      when: delayed
+      start_in: 16 minutes
+    - if: '$AGENDA_KEY == "PP5"'
+      when: delayed
+      start_in: 17 minutes
+    - if: '$AGENDA_KEY == "P1"'
+      when: delayed
+      start_in: 26 minutes
+    - if: '$AGENDA_KEY == "P2"'
+      when: delayed
+      start_in: 28 minutes
+    - if: '$AGENDA_KEY == "P3"'
+      when: delayed
+      start_in: 30 minutes
+    - if: '$AGENDA_KEY == "P4"'
+      when: delayed
+      start_in: 32 minutes
+    - if: '$AGENDA_KEY == "P5"'
+      when: delayed
+      start_in: 34 minutes
+    - if: '$AGENDA_KEY == "M1"'
+      when: delayed
+      start_in: 51 minutes
+    - if: '$AGENDA_KEY == "M2"'
+      when: delayed
+      start_in: 56 minutes
+    - if: '$AGENDA_KEY == "M3"'
+      when: delayed
+      start_in: 60 minutes
+    - if: '$AGENDA_KEY == "M4"'
+      when: delayed
+      start_in: 64 minutes
+    - if: '$AGENDA_KEY == "M5"'
+      when: delayed
+      start_in: 69 minutes
+    - if: '$AGENDA_KEY == "G1"'
+      when: delayed
+      start_in: 102 minutes
+    - if: '$AGENDA_KEY == "G2"'
+      when: delayed
+      start_in: 111 minutes
+    - if: '$AGENDA_KEY == "G3"'
+      when: delayed
+      start_in: 120 minutes
+    - if: '$AGENDA_KEY == "G4"'
+      when: delayed
+      start_in: 129 minutes
+    - if: '$AGENDA_KEY == "G5"'
+      when: delayed
+      start_in: 138 minutes
+    - when: never
