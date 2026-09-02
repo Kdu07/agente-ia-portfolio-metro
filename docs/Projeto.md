@@ -6209,7 +6209,316 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 
 ## 10.3 Testes de Usabilidade
 
-[Preencher]
+### 10.3.1 Objetivo
+
+Os testes de usabilidade têm como objetivo avaliar se usuários externos à turma conseguem utilizar o agente de projetos de forma clara, eficiente e autônoma, especialmente nos fluxos de consulta de informações, identificação de pendências, atualização de dados e interação em linguagem natural.
+
+A avaliação considera a experiência de uso da interface conversacional e dos elementos apresentados pelo agente, verificando se o usuário consegue compreender o que o sistema está informando, formular solicitações sem conhecer a estrutura técnica da solução, interpretar as respostas e identificar corretamente quando uma ação necessita de confirmação.
+
+Os testes também buscam identificar pontos de confusão, dificuldades de navegação, necessidade de ajuda, ambiguidades nas mensagens e rupturas no fluxo conversacional. Como métrica quantitativa principal, será utilizado o System Usability Scale (SUS), aplicado após a execução das tarefas.
+
+Os testes foram derivados principalmente dos requisitos RF01 a RF06 e das User Stories US01 a US06, que correspondem ao recorte MVP da solução. Também será observada a adequação das respostas ao perfil e às permissões do usuário, relacionada ao RNF05.
+
+### 10.3.2 Participantes
+
+Serão utilizados no mínimo cinco participantes externos à turma, buscando diversidade principalmente quanto à familiaridade com tecnologia e à experiência prévia com ferramentas de gestão de projetos. Os participantes não serão funcionários do Metrô e nem precisarão possuir conhecimento prévio sobre a arquitetura do sistema. Durante o teste, serão apresentados a eles cenários fictícios relacionados ao acompanhamento de projetos, permitindo avaliar a usabilidade sem depender de conhecimento específico do projeto.
+
+A diversidade de familiaridade tecnológica é importante porque o produto tem como premissa permitir interação em linguagem natural sem exigir conhecimento da estrutura técnica dos sistemas. Os participantes deverão ser identificados apenas por códigos (P1, P2, etc.) no registro dos resultados, evitando a exposição desnecessária de dados pessoais.
+
+### 10.3.3 Ambiente e preparação
+
+Os testes serão realizados utilizando a versão disponível do protótipo da interface conversacional do agente.
+
+Antes de cada sessão:
+1. O participante será informado de que o objetivo é avaliar o sistema, e não seu desempenho individual.
+2. Será explicado que ele deve realizar as tarefas da maneira mais natural possível.
+3. Não será fornecida previamente a formulação exata das perguntas que deverá fazer.
+4. O avaliador poderá observar e registrar dificuldades, erros, dúvidas e necessidade de intervenção.
+5. O avaliador não deverá corrigir imediatamente o participante, permitindo identificar se a própria interface fornece orientação suficiente.
+6. Ao final das tarefas, será aplicado o questionário SUS.
+
+Quando (e caso) uma funcionalidade específica não estiver disponível na versão utilizada no teste, ela deverá ser marcada como não executada, sem que o comportamento seja considerado como resultado positivo ou negativo de usabilidade.
+
+### 10.3.4 Roteiro de execução
+
+Cada participante deverá executar as tarefas abaixo. A ordem deverá ser mantida para permitir comparação entre participantes.
+
+#### Cenário 1 — Iniciar uma consulta em linguagem natural
+
+**Objetivo:** verificar se o usuário entende como iniciar uma interação e se consegue formular uma consulta sem conhecer comandos específicos.
+
+**Situação apresentada ao participante:** Você precisa descobrir como está o Projeto X. Utilize o agente para obter essa informação.
+
+**Tarefa:** O participante deverá iniciar uma conversa e perguntar, utilizando suas próprias palavras, pelo status do Projeto X.
+
+Observar:
+
+- Se o participante identifica rapidamente o campo de mensagem.
+- Se entende que pode escrever a pergunta em linguagem natural.
+- Se sabe como enviar a mensagem.
+- Se precisa de ajuda para formular a solicitação.
+- Se compreende a resposta apresentada.
+- Se identifica quais informações correspondem ao status do projeto.
+
+Requisitos relacionados: RF02, RF03, RF04; US02, US04.
+
+#### Cenário 2 — Consultar informações do projeto e interpretar a resposta
+
+**Objetivo:** avaliar a facilidade para localizar e compreender informações de acompanhamento do projeto.
+
+**Situação apresentada ao participante:** Você é responsável pelo acompanhamento de um projeto e precisa verificar informações sobre seu andamento e seus principais pontos de atenção.
+
+**Tarefa:** Solicitar informações sobre o status, cronograma ou riscos do Projeto X.
+
+O participante poderá formular a pergunta livremente, por exemplo:
+
+"Como está o Projeto X?"
+
+Observar:
+
+- Se a pergunta é formulada sem necessidade de instrução.
+- Se o participante entende o conteúdo retornado.
+- Se consegue identificar informações relevantes.
+- Se percebe a diferença entre informações resumidas e detalhadas.
+- Se consegue identificar a origem da informação quando uma referência é apresentada.
+- Se a quantidade de informação é adequada ao contexto.
+
+Requisitos relacionados: RF01, RF04; US01, US04; RNF05.
+
+#### Cenário 3 — Responder a uma pendência apresentada proativamente
+
+**Objetivo:** verificar se o usuário compreende uma notificação proativa e sabe como prosseguir.
+
+**Situação apresentada ao participante:** O sistema identificou que uma entrega importante do projeto está atrasada e enviou uma notificação. Você precisa entender o problema e decidir o que fazer.
+
+**Tarefa:** Ao receber a notificação de atraso, o participante deverá analisar as opções disponíveis e prosseguir pelo caminho que considerar adequado.
+
+A interface apresenta uma notificação indicando que o marco "Entrega da Fase 2" está atrasado e oferece as opções "Ver detalhes" e "Ignorar".
+
+Observar:
+
+- Se o participante percebe que a notificação exige atenção.
+- Se compreende qual marco está atrasado.
+- Se entende o significado do atraso apresentado.
+- Se identifica corretamente as opções disponíveis.
+- Se sabe quando utilizar "Ver detalhes" ou "Ignorar".
+- Se percebe que a ação é originada pelo próprio agente, e não por uma mensagem comum.
+- Se a informação apresentada é suficiente para decidir o próximo passo.
+
+Requisitos relacionados: RF06; US06.
+
+#### Cenário 4 — Informar o motivo de uma pendência
+
+**Objetivo:** avaliar a capacidade do usuário de fornecer informações ao agente a partir de uma pendência identificada.
+
+**Situação apresentada ao participante:** O agente informou que uma entrega está atrasada e pediu que você explique o motivo.
+
+**Tarefa:** Responder ao agente informando que a equipe está aguardando a aprovação do cliente.
+
+O sistema deverá apresentar uma pergunta semelhante a:
+
+"Entendi. Quer que eu registre esse motivo como justificativa do atraso e avise o Roberto?"
+
+Observar:
+
+- Se o participante entende que o agente está solicitando uma informação.
+- Se consegue responder naturalmente.
+- Se entende que a resposta poderá gerar uma alteração.
+- Se percebe que o sistema está solicitando confirmação antes de realizar a ação.
+- Se entende claramente o que será registrado.
+- Se compreende quem será notificado.
+
+Requisitos relacionados: RF05, RF06; US05, US06.
+
+#### Cenário 5 — Confirmar uma atualização
+
+**Objetivo:** avaliar a compreensão do mecanismo de confirmação antes de uma alteração.
+
+**Situação apresentada ao participante:** Você informou o motivo do atraso e agora precisa decidir se deseja realmente registrar essa informação no projeto.
+
+**Tarefa:** Analisar a mensagem de confirmação e escolher entre:
+
+"Sim, registrar" e
+"Não, só anotar pra mim"
+
+Observar:
+
+- Se o participante entende a diferença entre as duas opções.
+- Se consegue prever o efeito de cada escolha.
+- Se percebe que "Sim, registrar" representa uma alteração efetiva.
+- Se entende que o sistema registrará o motivo e poderá avisar outro usuário.
+- Se a confirmação é considerada suficiente antes da alteração.
+
+Após a confirmação, deverá ser observado se o cartão "Pendência Atualizada" comunica adequadamente o resultado da operação, incluindo o marco, o motivo registrado e a notificação realizada.
+
+Requisitos relacionados: RF05, RF06; US05, US06; RNF05.
+
+#### Cenário 6 — Realizar uma solicitação fora do fluxo atualmente mapeado
+
+**Objetivo:** identificar se o sistema consegue orientar o usuário quando a interação não corresponde a um fluxo suportado pela interface.
+
+**Situação apresentada ao participante:** Depois de atualizar a pendência, você quer saber como está outro projeto. Faça uma nova pergunta ao agente.
+
+**Tarefa:** Solicitar informações sobre o Projeto Y, utilizando linguagem natural.
+
+Observar:
+
+- Se o participante entende como continuar a conversa.
+- Se identifica corretamente o campo de entrada.
+- Se compreende o retorno apresentado pelo sistema.
+- Caso seja apresentada a tela "Fluxo não mapeado", verificar se o usuário entende que houve uma interrupção.
+- Verificar se o botão "Reiniciar fluxo" é compreendido como alternativa para continuar.
+- Verificar se o usuário sabe como recuperar-se da interrupção sem ajuda externa.
+- Registrar se a mensagem de erro é suficiente para explicar o problema.
+
+Este cenário é particularmente importante porque o protótipo apresenta atualmente um ponto de ruptura no qual o sistema informa "Fluxo não mapeado". O teste deverá verificar se essa situação gera perda de contexto, confusão ou abandono da tarefa.
+
+Requisitos relacionados: RF03, RF04; US03, US04.
+
+### 10.3.5 Cenários positivos e negativos
+
+Além dos cenários principais, os testes deverão contemplar comportamentos positivos e negativos.
+
+
+| Tipo | Situação | Resultado esperado |
+|---|---|---|
+| Positivo | Usuário pergunta pelo status de um projeto autorizado | Sistema apresenta resposta compreensível e contextualizada |
+| Positivo | Usuário fornece o motivo de uma pendência | Sistema interpreta a informação e solicita confirmação quando necessário |
+| Positivo | Usuário confirma uma atualização | Sistema apresenta claramente o resultado da alteração |
+| Positivo | Usuário recebe alerta de pendência | Usuário compreende o problema e identifica o próximo passo |
+| Positivo | Usuário formula pergunta com linguagem natural | Sistema permite a interação sem exigir comandos predefinidos |
+| Negativo | Usuário solicita algo fora do fluxo suportado | Sistema orienta o usuário de forma compreensível |
+| Negativo | Usuário encontra um fluxo não mapeado | Sistema oferece recuperação clara, evitando que o usuário fique sem saber como continuar |
+| Negativo | Usuário recebe uma confirmação ambígua | O teste deverá registrar se ele não consegue prever o efeito da ação |
+| Negativo | Usuário tenta consultar informação fora de seu contexto de acesso | Sistema não deve expor informação não autorizada e deve comunicar a restrição adequadamente |
+
+### 10.3.6 Pontos de observação durante o teste
+
+O avaliador deverá registrar, para cada participante:
+
+- tempo aproximado para concluir cada tarefa;
+- quantidade de erros ou tentativas;
+- quantidade de vezes que o participante solicitou ajuda;
+- pontos em que o participante demonstrou dúvida;
+- elementos da interface que foram ignorados ou não compreendidos;
+- mensagens que foram interpretadas incorretamente;
+- dificuldade para formular perguntas;
+- dificuldade para interpretar respostas;
+- dificuldade para compreender notificações;
+- dificuldade para diferenciar consulta de alteração;
+- compreensão das confirmações;
+- capacidade de recuperar-se de um fluxo interrompido;
+- percepção sobre clareza e confiança na resposta.
+
+A intervenção do avaliador deverá ser registrada sempre que ocorrer, permitindo diferenciar uma tarefa concluída autonomamente de uma tarefa concluída com assistência.
+
+### 10.3.7 Métricas
+
+Serão utilizadas métricas de desempenho da tarefa e de percepção subjetiva.
+
+#### Taxa de conclusão
+
+Será calculada pela proporção de participantes que conseguem concluir a tarefa sem intervenção do avaliador:
+
+Taxa de conclusão = tarefa concluídas sem ajuda / total de tarefas executas * 100
+
+#### Taxa de sucesso por tarefa
+
+Para cada cenário será registrada a quantidade de participantes que concluíram corretamente a atividade.
+
+| Tarefa | Participantes | Sucessos | Taxa de sucesso |
+|---|---:|---:|---:|
+| T1 — Consulta inicial | 5 | — | — |
+| T2 — Consulta e interpretação | 5 | — | — |
+| T3 — Notificação de pendência | 5 | — | — |
+| T4 — Informar motivo | 5 | — | — |
+| T5 — Confirmar atualização | 5 | — | — |
+| T6 — Fluxo não mapeado | 5 | — | — |
+
+Os campos deverão ser preenchidos após a execução dos testes, não sendo considerados resultados previstos.
+
+### 10.3.8 Questionário SUS
+
+Após concluir os cenários, cada participante responderá individualmente às dez afirmações do **System Usability Scale (SUS)**, utilizando uma escala de 1 a 5:
+
+**1 — Discordo totalmente**  
+**2 — Discordo**  
+**3 — Neutro**  
+**4 — Concordo**  
+**5 — Concordo totalmente**
+
+#### Modelo a ser utilizado
+
+![Modelo SUS Parte 1](./imagens/sus1.png)
+
+![Modelo SUS Parte 2](./imagens/sus2.png)
+
+### 10.3.9 Cálculo do SUS
+
+Para calcular a pontuação:
+
+- Para as questões **ímpares (1, 3, 5, 7 e 9)**, subtrair 1 da resposta.
+- Para as questões **pares (2, 4, 6, 8 e 10)**, calcular `5 - resposta`.
+- Somar os dez valores obtidos.
+- Multiplicar o resultado por **2,5**.
+
+O resultado final varia de **0 a 100 pontos**.
+
+A pontuação individual e a média dos participantes deverão ser registradas ao final dos testes:
+
+| Participante | SUS |
+|---|---:|
+| P1 | — |
+| P2 | — |
+| P3 | — |
+| P4 | — |
+| P5 | — |
+| **Média** | **—** |
+
+A pontuação SUS média será utilizada como indicador consolidado da percepção de usabilidade, enquanto as observações das tarefas serão utilizadas para identificar problemas específicos da interface e dos fluxos conversacionais.
+
+### 10.3.10 Critérios de análise
+
+Os resultados serão analisados considerando conjuntamente:
+
+1. **Conclusão das tarefas:** se o usuário consegue realizar a atividade proposta.
+2. **Autonomia:** se consegue realizar a atividade sem intervenção do avaliador.
+3. **Compreensão:** se entende as mensagens, respostas, notificações e confirmações.
+4. **Eficiência:** quantidade de tentativas, erros e tempo necessário para concluir cada tarefa.
+5. **Recuperação de erros:** capacidade de continuar utilizando o sistema após uma interação não suportada.
+6. **Adequação ao perfil:** se o nível de detalhamento e as ações apresentadas são compatíveis com o perfil simulado.
+7. **Satisfação:** percepção geral obtida por meio do SUS.
+
+Como referência de aceitação relacionada ao RNF05, a avaliação deverá verificar se as respostas apresentadas são adequadas ao perfil e às permissões do usuário. O requisito estabelece como meta **mínimo de 90% de adequação**, além de **zero exposição de conteúdo não autorizado** nos casos avaliados.
+
+Os problemas identificados deverão ser classificados por impacto:
+
+| Severidade | Critério |
+|---|---|
+| Crítica | Impede a conclusão da tarefa ou pode levar o usuário a executar uma ação inadequada |
+| Alta | Dificulta significativamente a conclusão da tarefa ou causa perda de contexto |
+| Média | Gera dúvida ou retrabalho, mas permite concluir a tarefa |
+| Baixa | Problema de clareza ou conveniência sem impacto significativo na conclusão |
+
+### 10.3.11 Registro dos resultados
+
+Após a execução dos testes, será consolidada uma tabela por participante e por tarefa:
+
+| Participante | T1 | T2 | T3 | T4 | T5 | T6 | Ajuda solicitada | SUS |
+|---|---|---|---|---|---|---|---:|---:|
+| P1 | — | — | — | — | — | — | — | — |
+| P2 | — | — | — | — | — | — | — | — |
+| P3 | — | — | — | — | — | — | — | — |
+| P4 | — | — | — | — | — | — | — | — |
+| P5 | — | — | — | — | — | — | — | — |
+
+Os resultados qualitativos deverão ser consolidados posteriormente em uma lista de problemas encontrados, contendo:
+
+| ID | Problema observado | Tarefa | Severidade | Frequência | Evidência | Ação proposta |
+|---|---|---|---|---:|---|---|
+| UX01 | — | — | — | — | — | — |
+| UX02 | — | — | — | — | — | — |
+| UX03 | — | — | — | — | — | — |
 
 ## 10.4 Testes de APIs Externas
 
