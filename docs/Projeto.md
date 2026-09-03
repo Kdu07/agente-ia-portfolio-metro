@@ -6573,7 +6573,57 @@ Isso importa por uma razão prática. Um cenário negativo inventado verifica o 
 
 ## 10.2 Testes de RNFs
 
-[Preencher]
+Os requisitos não funcionais já chegam a esta seção especificados. Cada um dos sete tem, em 3.3.1, uma descrição mensurável, uma fórmula, uma meta e uma referência normativa. Isso delimita o que a seção faz: ela descreve **como medir**, e não redefine o que medir. Onde a meta é hipótese da equipe, e 3.3.1 diz quais são, o teste é escrito para produzir o número que permitirá recalibrá-la, e não para confirmá-la.
+
+O RNF03 é caso à parte e precisa ser lido como tal. Ele não é plano: já foi medido. A bancada de 5.4.11 é a evidência, com procedimento reproduzível, conjunto de teste declarado e semente fixa. O que a subseção correspondente faz é documentar o procedimento executado e apontar para aquela seção, em vez de repetir números que já estão registrados lá.
+
+A fronteira declarada em 10.1 vale aqui sem alteração. Estes testes observam o middleware, com os serviços externos dublados sempre que a medição do tempo de terceiro contaminaria a medição do tempo próprio. A conversa real com Entra ID, Copilot Studio, Content Safety e Speech é objeto de 10.4 e 10.5.
+
+### 10.2.1 Ancoragem do requisito de desempenho
+
+Este é o ponto mais delicado da seção e ele precisa ser tratado de frente, porque a solução adotada é uma decisão da equipe e não uma leitura da especificação.
+
+**A especificação atual não possui requisito não funcional de desempenho.** RNF01 a RNF07 cobrem confidencialidade por perímetro declarado, rastreabilidade das alterações, precisão na classificação, disponibilidade, adequação da resposta ao perfil, eficácia das barreiras e retenção do registro. Latência e vazão não estão entre eles. Não se trata de um requisito mal redigido: ele não existe.
+
+O artefato de testes sistêmicos, porém, exige teste de desempenho, e os parâmetros existem — em dois lugares que **divergem entre si**. A seção 5.1.7.3 estabelece um orçamento de latência por salto para o canal de voz, com transcrição em transmissão contínua, de 200 a 400 ms até as guardas, de 150 a 300 ms para Content Safety e classificação, de 800 a 1500 ms para a execução no Copilot Studio e de 100 a 200 ms para a guarda de saída e a persistência, totalizando um P95 estimado entre aproximadamente 1,25 s e 2,40 s. A seção 9.1.8, por sua vez, fixa como métrica técnica de qualidade uma latência p50 do chat abaixo de 3 s e p95 abaixo de 8 s. Os dois números não podem ser lidos como a mesma coisa: 8 s é mais de três vezes o teto do orçamento arquitetural.
+
+**A reconciliação adotada é a seguinte.** O orçamento de 5.1.7.3 é o **alvo arquitetural**, válido com todos os saltos operando em condição nominal — rede estável, serviços externos respondendo dentro do esperado e sem concorrência relevante. Os limites de 9.1.8 são o **limite operacional de aceitação**, com margem deliberada para degradação de rede, variação de serviço de terceiro e carga concorrente. Os testes reportam contra os dois, e a distinção entre eles governa a leitura do resultado: ultrapassar o orçamento de 5.1.7.3 é sinal de investigação e aponta qual salto saiu do previsto; ultrapassar o limite de 9.1.8 é **falha declarada**. Um resultado de 3,5 s ponta a ponta reprova contra o alvo arquitetural e passa no critério de aceitação, e essa é exatamente a informação que a equipe precisa ter — o sistema está mais lento do que foi desenhado e ainda dentro do que foi acordado.
+
+Fica registrada a recomendação de que a próxima revisão dos requisitos **formalize um RNF de desempenho**, com fórmula e meta, absorvendo essa reconciliação em vez de deixá-la distribuída entre uma análise de arquitetura e uma lista de métricas de processo. Esta seção não altera 3.3, e não deve: criar requisito é decisão de quem mantém a especificação, e o lugar de propô-la é este parágrafo, não aquela seção. Enquanto isso não acontece, os testes de desempenho usam o prefixo `TNF-DES`, cuja irregularidade em relação a `TNF-RNFxx` é o registro visível da lacuna, conforme já explicado em 10.1.1.
+
+### 10.2.2 Testes de desempenho
+
+Os cenários abaixo cobrem quatro perguntas distintas, e a distinção importa porque cada uma exige um instrumento diferente: quanto tempo o sistema leva sem ninguém competindo por ele, quanto desse tempo pertence a cada salto, o que acontece quando várias pessoas usam ao mesmo tempo, e o que acontece quando algo de fora atrasa ou não responde. Nenhum cenário mede o tempo do Copilot Studio, e isso é deliberado: medir o tempo de um serviço de terceiro não mede o desempenho do middleware, e o resultado variaria com a carga do fornecedor em vez de com o código da equipe.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-DES-01` | Positivo | Baseline de usuário único | Ambiente em repouso, sem concorrência.<br>Sequência de solicitações de chat com o executor dublado em latência fixa | São reportados p50, p95 e p99 ponta a ponta, com o tempo de cada salto discriminado; o resultado é confrontado com o orçamento de 5.1.7.3 e com os limites de 9.1.8 | 5.1.7.3, 9.1.8 | Onda 1 |
+| `TNF-DES-02` | Positivo | Micro-latência das guardas e do classificador | Guardas e classificador exercitados isoladamente, fora do ciclo de requisição | É reportada a latência de cada guarda e do classificador separadamente, permitindo atribuir a latência total aos saltos previstos em 5.1.7.3 | 9.1.2.2, 5.1.7.3 | Onda 2 |
+| `TNF-DES-03` | Positivo | Carga nominal concorrente | Dez usuários simultâneos, com rampa declarada de subida e patamar sustentado.<br>Executor dublado com latência sintética | A latência p95 permanece dentro do limite de 9.1.8 e o desvio em relação ao baseline de `TNF-DES-01` é reportado | 9.1.8, 5.1.7.2 | Onda 3 |
+| `TNF-DES-04` | Positivo | Pico | Três vezes a carga nominal, com a mesma rampa | É identificado o ponto de saturação e caracterizada a forma da degradação, distinguindo perda gradual de tempo de resposta de recusa abrupta de requisições | 5.1.7.2 | Onda 3 |
+| `TNF-DES-05` | Positivo | Disparo concorrente de rotinas | Várias rotinas com o mesmo horário de vencimento no *worker*, competindo com tráfego de chat em curso | O tráfego de chat mantém a latência dentro do limite de 9.1.8 durante o disparo, e nenhuma execução de rotina é perdida ou duplicada | RF11, 5.1.4, 5.1.7.1 | Onda 5 |
+| `TNF-DES-06` | Negativo | Tempo esgotado no executor | Executor dublado configurado para não responder dentro do orçamento | A requisição é encerrada com o desfecho de falha do executor previsto em UC02, sem travar a conexão do usuário, e a linha de registro do RF10 é gravada mesmo assim | UC02 (exceção 5a), RF10 | Onda 1 |
+| `TNF-DES-07` | Negativo | Degradação além do limite de aceitação | Resultados de `TNF-DES-03` e `TNF-DES-04` | O conjunto é reprovado quando a latência p95 ultrapassa 8 s, independentemente de o p50 permanecer dentro do limite | 9.1.8 | Onda 3, aplicado sobre `TNF-DES-03` e `TNF-DES-04` |
+
+Três escolhas nesta tabela precisam de justificativa explícita.
+
+**O número de usuários simultâneos é hipótese.** A seção 5.1.7.2 estima o porte do PMO Corporativo em uma diretoria, cerca de trinta líderes de projeto e os membros de equipe, com concorrência classificada como baixa a média e picos no fechamento mensal. Dez usuários simultâneos representam aproximadamente um terço dessa população ativa no mesmo instante, o que é deliberadamente alto para uma ferramenta usada em rajadas curtas ao longo do dia; o pico de trinta corresponde à população estimada inteira consultando o agente ao mesmo tempo, que é o teto teórico e não uma expectativa. Os dois números **não foram fornecidos pelo parceiro** e precisam ser validados com ele, do mesmo modo que 2.4 declara as próprias personas como hipóteses a refinar quando o documento de perfis for disponibilizado. Até lá, eles servem para produzir uma medição comparável entre sprints, e não para atestar capacidade.
+
+**`TNF-DES-05` é o único cenário que testa uma promessa da arquitetura.** A seção 5.1.4 afirma que separar o `worker` do `middleware` em contêineres distintos mantém a API sem estado e permite escalar horizontalmente sem duplicar rotinas agendadas, e 5.1.7.1 acrescenta que `coalesce` e `misfire_grace_time` evitam disparos em rajada. Nenhum outro cenário exercita isso. Várias rotinas vencendo no mesmo instante enquanto o chat está sob uso é a única situação em que a separação entre os dois processos ou funciona, ou aparece como latência no chat de quem não tem nada a ver com as rotinas.
+
+**A guarda que não responde não é cenário de desempenho.** A indisponibilidade do serviço de avaliação de conteúdo já é verificada como comportamento funcional em `TF-RF09-06`, com a regra de UC10 de que a falha de uma barreira não pode resultar em passagem livre. Repeti-la aqui mediria a mesma coisa com instrumento pior. O que `TNF-DES-06` acrescenta é diferente: o executor que **demora** em vez de falhar, situação em que o sistema precisa decidir por conta própria quando desistir.
+
+**Execução.** Os cenários de carga rodam com **Locust**, no arquivo planejado `src/middleware/tests/desempenho/locustfile.py`. A escolha é justificada por três razões concretas: Locust é Python, roda no mesmo repositório e na mesma linguagem do middleware, e permite reutilizar as *fixtures* de sessão e de dados já construídas para os testes funcionais. As alternativas usuais introduziriam custo sem ganho — k6 exigiria runtime JavaScript e JMeter, ambiente Java, ambos apenas para gerar carga contra uma API HTTP que qualquer um dos três alcança igualmente. A micro-latência de `TNF-DES-02` roda com **`pytest-benchmark`** em `src/middleware/tests/desempenho/test_micro_latencia.py`, que mede função isolada com repetição e descarte de aquecimento, coisa que um cronômetro em torno de uma requisição não faz. Ambas as ferramentas são adições declaradas em 10.1.1 e ausentes da matriz de 5.1.5, a tratar em *issue* própria.
+
+O Copilot Studio é **dublado com latência sintética controlada** em todos os cenários. A razão é a que abre esta subseção, e tem consequência prática: com o dublê fixado, por exemplo, em 1000 ms, qualquer variação medida acima disso pertence ao middleware, e a medição vira um número atribuível a código que a equipe controla. Medir o serviço real produziria um número que muda sozinho entre duas execuções e que nenhuma alteração no repositório melhoraria.
+
+A instrumentação separa o tempo de cada salto — sessão e permissões, guardas de entrada, classificação, chamada ao executor, guarda de saída e persistência —, e é isso que permite a leitura contra 5.1.7.3. Um total ponta a ponta, sozinho, diz que o sistema está lento e não diz onde, o que transforma o orçamento por salto de 5.1.7.3 em texto decorativo. O relatório de cada execução registra os dois confrontos, o alvo arquitetural e o limite de aceitação, e a data e a composição do ambiente, sem os quais duas medições não são comparáveis.
+
+```powershell
+cd src\middleware
+python -m pytest tests/desempenho/test_micro_latencia.py --benchmark-only
+python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
+```
 
 ## 10.3 Testes de Usabilidade
 
