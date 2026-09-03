@@ -6317,6 +6317,80 @@ cd src\middleware
 python -m pytest tests/funcionais/test_rf03_intencoes.py -q
 ```
 
+### 10.1.3 Consulta e gestão do portfólio — RF04 a RF06
+
+Os três requisitos desta subseção são o que o usuário efetivamente pede ao agente: consultar o que existe, alterar o que mudou e ser avisado do que falta. Eles compartilham uma característica que muda a forma de testá-los. A execução sobre o portfólio acontece no Copilot Studio e nos conectores do parceiro, e não no middleware, de modo que o que se verifica aqui é o que a aplicação exige antes de acionar o executor, o que ela faz com a resposta recebida e o que ela recusa a fazer. Os três cenários dinâmicos correspondentes — DS02 em 5.3.3, DS03 em 5.3.4 e DS04 em 5.3.5 — trazem os fluxos alternativos que viraram os casos negativos.
+
+#### 10.1.3.1 RF04 — Consulta e análise de informações dos projetos
+
+Este conjunto verifica que uma consulta autorizada devolve o dado com a procedência da informação, e que uma consulta que não pode ser atendida o diz sem preencher a lacuna por conta própria. Os casos derivam dos três critérios de aceitação de US04, do fluxo alternativo de UC04 e do cenário DS02, cuja pós-condição de recusa exige que nem a existência do projeto seja revelada. A referência da informação utilizada não é um detalhe de apresentação: é a exigência do objetivo O3, que pede que 100% das respostas factuais possam ser relacionadas às informações da base, e por isso ela é asserção de caso positivo e não observação de prosa.
+
+A decisão difícil deste requisito aparece na comparação entre dois casos negativos. Um projeto que não existe e um projeto que existe mas está fora do escopo do solicitante precisam produzir respostas **indistinguíveis entre si**. Se a resposta de projeto inexistente for diferente da resposta de projeto não autorizado, a diferença entre as duas informa ao solicitante que o segundo existe, e a recusa que 5.3.3 constrói com cuidado é desfeita pelo contraste. O par `TF-RF04-03` e `TF-RF04-04` existe para verificar isso, e a asserção é sobre a igualdade das duas respostas.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF04-01` | Positivo | Consulta às dimensões previstas no requisito | Sessão válida, com projeto dentro do escopo autorizado.<br>Um enunciado por dimensão: avanço, cronograma, status, marcos, riscos, problemas e aderência a normativos | Cada consulta devolve o dado correspondente e a referência da informação utilizada, no formato de origem previsto em 5.3.3 | US04, UC04, 5.4.4.1, O3 | Onda 3 |
+| `TF-RF04-02` | Positivo | A referência acompanha o conteúdo | Consulta autorizada cuja resposta é composta a partir de listas e de trecho de documento | A referência vem junto da resposta produzida, e não anexada ao final pela camada de apresentação, conforme a decisão de modelagem de 5.3.3 | US04, 5.3.3, O3 | Onda 3 |
+| `TF-RF04-03` | Negativo | Projeto inexistente | Enunciado sobre um projeto que não existe na base | Resposta que informa não haver projeto correspondente, sem produzir dado algum sobre ele | US04, UC04 | Onda 3 |
+| `TF-RF04-04` | Negativo | Projeto fora da permissão do solicitante | Enunciado sobre projeto existente, submetido por perfil sem acesso a ele | Recusa **idêntica** à de `TF-RF04-03`; nenhuma consulta às fontes é disparada antes da verificação de autorização, e a tentativa é registrada | US04, UC04 (3a), 5.3.3 | Onda 3 |
+| `TF-RF04-05` | Negativo | Informação ausente na base | Projeto autorizado cuja informação solicitada não está preenchida | O agente declara a ausência da informação; a resposta não estima, não infere e não substitui o dado ausente por conhecimento geral | US04, 5.3.3 | Onda 3 |
+
+`TF-RF04-05` é o caso que separa uma resposta útil de uma resposta inventada, e é o mais fácil de passar por engano. Um agente que responde "o avanço é de aproximadamente 60%" quando o campo está vazio parece mais prestativo do que um que responde "esse dado não está preenchido no projeto", e é exatamente o comportamento que o objetivo O3 proíbe. A asserção, por isso, é dupla: a resposta precisa conter a declaração de ausência e não pode conter valor numérico ou afirmação factual sobre o campo consultado.
+
+A intenção `consultar_faturas_vencidas` **não** integra este conjunto. Ela consta do catálogo por rastreabilidade com o TAPI, mas está classificada como pendente de validação com o parceiro em 5.4.7 e, enquanto isso, fora do conjunto de treino do MVP. Testá-la aqui cobraria do sistema um comportamento que a especificação ainda não decidiu. A exclusão é retomada na subseção de abrangência dos cenários funcionais.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf04_consulta.py`. O Copilot Studio é dublado e devolve respostas fixas construídas para cada caso, incluindo a resposta com referência de origem e a resposta de campo vazio — o dublê é indispensável enquanto o provisionamento do risco R02 de 9.1.6 não ocorre, e continua útil depois, porque um dublê determinístico permite asserções que um executor real não permitiria repetir. A comparação de `TF-RF04-03` com `TF-RF04-04` é feita sobre o corpo devolvido pelas duas execuções, que precisam ser iguais.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf04_consulta.py -q
+```
+
+#### 10.1.3.2 RF05 — Apoio à criação e atualização de projetos
+
+Este conjunto verifica que nenhuma alteração de dado acontece sem que o usuário a tenha visto e confirmado. Os casos derivam dos três critérios de aceitação de US05, dos desvios de UC05 e do cenário DS03, que modela a transação passo a passo: verificação de permissão de escrita, complemento dos parâmetros ausentes, leitura do valor vigente, prévia contrapondo o valor atual ao proposto, confirmação explícita, gravação e registro. Cada um desses passos é ponto de falha, e o conjunto exercita os que produzem desfecho observável na fronteira do middleware.
+
+A decisão difícil deste requisito é a distinção entre permissão de leitura e permissão de escrita. Um usuário pode estar autorizado a consultar um projeto sem estar autorizado a alterá-lo, e 5.3.4 registra que a verificação de escrita precede a leitura do valor vigente. A consequência para o teste é precisa: em `TF-RF05-03` a asserção não é apenas que a gravação não ocorreu, e sim que **nenhuma leitura do valor atual chegou a acontecer**. Verificar só o resultado final deixaria passar uma implementação que consulta o dado, monta a prévia e recusa no último passo.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF05-01` | Positivo | Atualização com confirmação prévia | Perfil com permissão de escrita sobre o projeto.<br>Enunciado que classifica em intenção de transação, com os parâmetros completos | A prévia é apresentada contrapondo o valor vigente ao proposto, e a gravação só é disparada após a confirmação explícita | US05, UC05, 5.3.4 | Onda 3 |
+| `TF-RF05-02` | Negativo | Usuário nega a confirmação | Transação proposta, com a prévia já apresentada, e resposta negativa do usuário | Nada é efetivado, o valor anterior é preservado e a desistência fica registrada, permitindo distinguir depois uma transação abandonada de uma que nunca foi proposta | US05, UC05 (3a), 5.3.4 | Onda 3 |
+| `TF-RF05-03` | Negativo | Perfil sem permissão de escrita | Perfil autorizado a ler o projeto e não autorizado a alterá-lo.<br>Enunciado de transação sobre esse projeto | A operação é recusada e registrada, e **nenhuma leitura do valor atual é executada** antes da recusa | US05, 5.3.4, 5.4.6 | Onda 3 |
+| `TF-RF05-04` | Positivo | A alteração efetivada carrega origem, autoria e momento | Transação confirmada e efetivada no dublê do executor | O registro da alteração contém os três elementos, e o momento gravado é o da efetivação, não o da proposta | US05, UC05, RNF02 | Onda 3 |
+| `TF-RF05-05` | Negativo | Falha na gravação | Transação confirmada, com o dublê do executor devolvendo falha na gravação | O usuário é informado de que nada foi alterado, o valor anterior é preservado e não resta estado parcial nem registro de alteração efetivada | UC05 (exceção 5a), 5.3.4 | Onda 3 |
+| `TF-RF05-06` | Negativo | Parâmetro obrigatório ausente | Enunciado de transação sem um dos parâmetros exigidos pela intenção | O agente pergunta apenas o que falta, sem reiniciar o diálogo, e não propõe a alteração enquanto a intenção estiver incompleta | UC05 (2a), 5.3.4, 5.4.6 | Onda 3 |
+
+`TF-RF05-04` verifica a **existência** dos três elementos de rastreabilidade em uma alteração efetivada. A cobertura de 100% sobre o conjunto de alterações, que é a métrica do RNF02, é medida em 10.2: aqui basta que o mecanismo exista, lá se verifica que ele não falha em nenhum caso. A separação é deliberada, porque um mecanismo que funciona no caminho feliz e falha na alteração originada por rotina agendada passaria neste conjunto e reprovaria no do RNF02, que é onde essa asserção pertence.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf05_transacoes.py`, contra o PostgreSQL 16 do contêiner de teste. O Copilot Studio é dublado e devolve, conforme o caso, gravação bem-sucedida ou falha de gravação, o que permite exercitar `TF-RF05-05` sem depender de provocar erro em serviço real. A asserção de `TF-RF05-03` é feita sobre as chamadas registradas no dublê: o caso reprova se qualquer leitura do projeto tiver sido emitida antes da recusa.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf05_transacoes.py -q
+```
+
+#### 10.1.3.3 RF06 — Identificação, alertas e apoio proativo a pendências
+
+Este conjunto verifica a única capacidade do agente que não começa com uma pergunta do usuário. Os casos derivam dos quatro critérios de aceitação de US06, do fluxo de UC08 e do cenário DS04, que é descrito em 5.3.5 como o único diagrama sem solicitação do usuário e cujo ator aparece como destinatário, e não como originador da interação. É essa inversão que o conjunto precisa verificar, e ela concentra o critério de aceitação mais exigente de US06: o sistema inicia o contato com o responsável **sem depender de o usuário acessá-lo**. Um agente que apenas responde "há três pendências no seu projeto" quando perguntado atende ao RF04, e não ao RF06.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF06-01` | Positivo | A varredura identifica pendência e alerta o responsável | Base com projeto contendo dado ausente ou desatualizado, com responsável identificado.<br>Disparo da varredura | É produzido um alerta dirigido ao responsável pela informação, descrevendo a pendência identificada | US06, UC08, 5.3.5 | Onda 5 |
+| `TF-RF06-02` | Positivo | O contato parte do sistema | Nenhuma mensagem do usuário; apenas o disparo agendado da varredura | O alerta é produzido e entregue sem que exista solicitação correspondente do usuário, e o registro da interação identifica a origem como disparo do sistema | US06, 5.3.5, 5.2.3.2 | Onda 5 |
+| `TF-RF06-03` | Negativo | Projeto completo não gera alerta falso | Base com projeto cujos dados estão completos e atualizados dentro dos prazos | A varredura conclui sem produzir alerta para esse projeto | US06, 5.3.5 | Onda 5 |
+| `TF-RF06-04` | Negativo | O alerta não alcança quem não é responsável | Pendência identificada em projeto com responsável definido, e um segundo usuário sem responsabilidade sobre a informação | O alerta é entregue apenas ao responsável; o segundo usuário não recebe notificação nem consegue ler o alerta alheio | US06, RF01, 5.3.5 | Onda 5 |
+| `TF-RF06-05` | Positivo | A resposta ao alerta volta ao fluxo transacional | Alerta entregue, com o usuário respondendo que deseja corrigir a informação | A correção segue o fluxo de RF05, com prévia e confirmação explícita; não existe caminho abreviado que grave a partir da resposta ao alerta | US06, 5.3.5, 5.3.4 | Onda 5 |
+
+`TF-RF06-05` merece destaque porque é a garantia mais fácil de perder na implementação. O alerta convida à correção, mas não a autoriza, e 5.3.5 registra isso ao determinar que a resposta ao alerta retorne ao fluxo transacional de DS03. Um atalho que gravasse direto a partir da resposta seria mais fluido para o usuário e removeria a confirmação exigida pelo RF05 e o registro exigido pelo RNF02 — exatamente as duas garantias que o contato ter partido do sistema não deveria enfraquecer.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf06_pendencias.py`, contra o PostgreSQL 16 do contêiner de teste, cujo conteúdo é preparado por *fixture* com os projetos completos e incompletos de cada caso. A varredura é acionada diretamente pelo teste, sem esperar o horário programado: o que se verifica aqui é a regra de pendência e o destinatário do alerta, enquanto o comportamento do agendador no tempo é objeto dos casos do RF11. O canal de entrega é dublado, e a asserção de `TF-RF06-04` é feita sobre os destinatários que o dublê recebeu.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf06_pendencias.py -q
+```
+
 ## 10.2 Testes de RNFs
 
 [Preencher]
