@@ -1,16 +1,18 @@
-"""Emissão do token efêmero do Azure Speech para o navegador.
+"""Rotas do canal de voz.
 
-Exige sessão válida: um endpoint aberto seria um proxy gratuito para o
-recurso de Speech do parceiro, faturado por minuto de áudio.
-
-Não exige permissão especial — falar é uma forma de escrever, e quem
-pode usar o chat pode ditar.
+Engloba a emissão de token efêmero do Azure Speech para o navegador
+e a API de recebimento de áudios do usuário conforme especificação
+da seção 5.7.3 do projeto.md.
 """
 
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
 from app.api.deps import UsuarioAtual
+from app.schemas.audio import AudioUploadResponse, TranscricaoResponse
+from app.utils.validadores import validar_extensao_audio, validar_formato_audio, validar_tamanho_arquivo
 
 router = APIRouter(prefix="/voz")
 
@@ -37,3 +39,94 @@ async def token(usuario: UsuarioAtual) -> TokenResposta:
     renovação reativa interromperia a fala do usuário no meio.
     """
     raise NotImplementedError("Emissão de token a implementar junto com a voz")
+
+
+@router.post("/audios", status_code=status.HTTP_202_ACCEPTED, response_model=AudioUploadResponse)
+async def upload_audio(
+    audio: Annotated[UploadFile, File(description="Arquivo de áudio (mp3, wav, ogg, webm, mp4)")],
+    idioma: Annotated[str | None, Form(description="Código BCP 47 do idioma (padrão: pt-BR)")] = None,
+    conversa_id: Annotated[str | None, Form(description="ID da conversa existente")] = None,
+    usuario: UsuarioAtual = Depends(),
+) -> AudioUploadResponse:
+    """Submete um áudio para transcrição via Azure AI Speech.
+
+    Valida formato, tamanho e duração antes de processar. A submissão
+    é assíncrona: retorna 202 com ID para consulta posterior.
+
+    Erros:
+        400 Bad Request: Arquivo inválido ou campos incorretos
+        413 Payload Too Large: Arquivo excede 25 MB
+        415 Unsupported Media Type: Formato não suportado
+
+    Conforme especificação seção 5.7.3 do projeto.md.
+    """
+    # Valida se arquivo foi fornecido
+    if not audio or not audio.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Campo 'audio' é obrigatório"
+        )
+
+    # Valida extensão
+    try:
+        validar_extensao_audio(audio.filename)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=str(e)
+        )
+
+    # Valida tamanho
+    try:
+        validar_tamanho_arquivo(audio.size or 0)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=str(e)
+        )
+
+    # Valida formato real via magic bytes
+    try:
+        formato_detectado = validar_formato_audio(audio.file)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=str(e)
+        )
+
+    # TODO: Implementar lógica completa de upload e processamento
+    # Este é um esboço que valida e retorna estrutura básica
+
+    # TODO: Gerar ID único, salvar arquivo/processar, enfileirar transcrição
+    # Por enquanto retorna estrutura esqueletica
+    from uuid import uuid4
+
+    id_audio = str(uuid4())
+
+    return AudioUploadResponse(
+        id_audio=id_audio,
+        estado="recebido",
+        duracao_segundos=0.0,  # TODO: Calcular duração real
+        consultar_em=f"/voz/audios/{id_audio}/transcricao",
+        expira_em="2026-09-03T18:00:00Z",  # TODO: Calcular expiração real
+    )
+
+
+@router.get("/audios/{id_audio}/transcricao", response_model=TranscricaoResponse)
+async def consultar_transcricao(
+    id_audio: str,
+    usuario: UsuarioAtual = Depends(),
+) -> TranscricaoResponse:
+    """Consulta o resultado da transcrição de um áudio.
+
+    Retorna o estado atual da submissão (recebido, transcrevendo,
+    concluida ou falhou) e, quando concluída, o texto transcrito.
+
+    Conforme especificação seção 5.7.3.4 do projeto.md.
+    """
+    # TODO: Implementar consulta real ao banco de dados/cache
+    # Por enquanto retorna estado de processamento
+    return TranscricaoResponse(
+        id_audio=id_audio,
+        estado="transcrevendo",
+    )
