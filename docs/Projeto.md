@@ -6771,6 +6771,48 @@ cd src\middleware
 python -m pytest tests/rnf -q
 ```
 
+### 10.2.4 Abrangência dos cenários de RNF
+
+A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não funcionais e 7 de desempenho, que não pertencem a requisito nenhum. A tabela abaixo liga cada conjunto ao instrumento que o mede, e o instrumento é a informação que mais importa aqui — em 10.1 os casos compartilhavam o mesmo arranjo de execução, enquanto nesta seção cada requisito exige um instrumento próprio, e é a disponibilidade desse instrumento que determina o que pode ser medido hoje.
+
+| Conjunto | Subseção | Positivos | Negativos | Instrumento | Situação do instrumento |
+|---|---|:-:|:-:|---|---|
+| RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
+| RNF02 | 10.2.3.2 | 1 | 3 | Consulta agregada sobre as alterações efetivadas no PostgreSQL de teste | Disponível |
+| RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
+| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética periódica no *worker*, sobre janela declarada | A construir |
+| RNF05 | 10.2.3.5 | 2 | 2 | Conjunto de enunciados por perfil, com avaliação humana da adequação e verificação automatizada da exposição | A construir |
+| RNF06 | 10.2.3.6 | 3 | 3 | Conjunto adversarial em cinco vetores mais contraparte legítima, contra o Content Safety real | **Não existe** — a construção é pré-condição |
+| RNF07 | 10.2.3.7 | 2 | 2 | Inspeção do estado da base e execução dirigida do expurgo | A construir |
+| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência, com o executor dublado em latência sintética | A construir |
+| **Total** | — | **21** | **16** | — | — |
+
+A linha de desempenho é a única sem requisito de origem, e o identificador `TNF-DES` registra isso em vez de escondê-lo. A ancoragem está em 10.2.1: os parâmetros vêm do orçamento arquitetural de 5.1.7.3 e do limite operacional de 9.1.8, que divergem entre si, e a reconciliação adotada reporta contra os dois e declara falha apenas no segundo. Enquanto um RNF de desempenho não for formalizado, essa linha permanece sustentada por uma decisão desta seção, e não pela especificação de requisitos.
+
+**Por que estes cenários e não outros.** Os casos medem exatamente as fórmulas de 3.3.1, e nenhum deles redefine meta. Essa contenção é deliberada e vale a pena explicitar, porque a tentação contrária é grande: ao escrever o procedimento de medição, quem o escreve enxerga as dificuldades da meta e é tentado a ajustá-la para algo que o instrumento alcance. Fazer isso transformaria o planejamento de testes em revisão de requisitos disfarçada, e a revisão de requisitos tem lugar próprio.
+
+Quando a meta é hipótese da equipe — e 3.3.1 diz quais são: os 99% do RNF04, os limiares de 90% e 5% do RNF06 e o prazo de retenção do RNF07 — o teste é escrito para **produzir o número que permitirá recalibrá-la**, e não para confirmá-la. A diferença aparece no desenho. Um teste escrito para confirmar uma meta reporta aprovado ou reprovado; um teste escrito para recalibrar reporta a distribuição, o resultado por barreira, por vetor e por perfil, e a janela em que foi obtido. É por isso que o RNF06 exige reporte por vetor além de por barreira, que o RNF04 exige a janela e a contagem de amostras inconclusivas junto do percentual, e que o RNF03 mantém os dois recortes de origem separados no relatório. Nos três casos, o número agregado seria suficiente para dizer se passou, e insuficiente para dizer o que fazer a seguir.
+
+**Requisito verificável por execução e requisito verificável por inspeção.** RNF02 a RNF06 verificam-se executando alguma coisa e observando o que acontece. RNF01 e RNF07 pertencem ao segundo grupo: o primeiro confronta a configuração com a tabela do perímetro, o segundo confronta o estado da base com a política de retenção e cifra. Isso não os torna menos testáveis, e a própria 3.3.1 já determina, para o RNF01, verificação por inspeção a cada entrega em vez de amostragem de operações.
+
+Torna-os, porém, mais fáceis de degradar sem que ninguém perceba, e por duas razões. A primeira é que uma inspeção que apenas confirma o esperado passa igualmente quando está correta e quando está quebrada. A segunda é que inspeção não deixa rastro de esforço: um teste de execução que deixou de exercitar o sistema costuma ficar visivelmente trivial, enquanto uma inspeção vazia continua parecendo uma inspeção. As duas condições que este planejamento impõe respondem a isso — a inspeção precisa ter **resultado binário**, e precisa ter um **cenário negativo que a exercite**. `TNF-RNF01-02`, que introduz deliberadamente um serviço não declarado, e `TNF-RNF07-04`, que verifica que o expurgo não alcança o que ainda está no prazo, são esses cenários. Sem eles, os dois requisitos teriam procedimento e não teriam teste.
+
+**O que fica fora.** Cinco exclusões, cada uma com registro anterior neste documento.
+
+A **disponibilidade real** do agente não é medida. O RNF04 produz um indicativo sobre uma janela declarada, e 3.3.1 já reconhece que o percentual não foi pactuado com o parceiro. Disponibilidade se apura em operação continuada, que o MVP acadêmico não tem, e apresentar o resultado da sonda como certificação seria dar a uma hipótese a aparência de um resultado.
+
+A **medição do canal de voz** não acontece nesta seção. Os indicadores de 3.1.5.2 — WER, acurácia de termos de domínio, degradação ponta a ponta e inteligibilidade da síntese — dependem do corpus de áudio de 5.7.6, que ainda não foi gravado. O que existe hoje é a aproximação textual do RNF03, o recorte de texto ruidoso, que estabelece a ordem de grandeza da robustez do classificador e não substitui a medição sobre áudio real.
+
+A **exposição do risco R12** não é eliminada por nenhum teste. Content Safety e Speech operam no tenant da equipe, e não no do parceiro, de modo que texto de prompt e áudio atravessam por desenho um ambiente que o Metrô não homologou, conforme 3.3.1.1 declara. A contenção durante o MVP é o uso exclusivo de dado sintético, que `TNF-RNF01-04` verifica, e a migração dos dois serviços para o tenant homologado é **pré-condição para qualquer uso com dado real** — não recomendação, e não algo que a aprovação dos testes desta seção autorize a dispensar.
+
+A **ausência de um RNF de desempenho** permanece. Os sete casos `TNF-DES` medem contra parâmetros que existem fora de 3.3.1, pela reconciliação de 10.2.1, e a recomendação de formalizar o requisito na próxima revisão fica registrada lá e repetida aqui, porque é o tipo de pendência que some quando fica em um único lugar.
+
+**Locust e `pytest-benchmark` estão fora da matriz de 5.1.5.** Os dois foram introduzidos por esta seção, declarados como adição em 10.1.1, e a inclusão na pilha oficial deve ser tratada em *issue* própria por quem mantém aquela seção.
+
+**O que a seção 10.2 estabelece, e sob que condição.** A seção estabelece quatro coisas. Como cada um dos sete requisitos não funcionais é medido, com instrumento nomeado e cenário negativo que exercite a medição. Que o RNF03 já foi medido e atende à meta, com a evidência reproduzível de 5.4.11. Onde os testes de desempenho se ancoram na ausência de requisito que os sustente, e qual dos dois conjuntos de parâmetros decide aprovação. E a especificação do conjunto adversarial do RNF06, com composição, tamanho mínimo e a justificativa de ambos.
+
+Estabelece essas quatro coisas sob uma condição que prefere declarar a omitir: **de todos os números desta seção, apenas os do RNF03 existem hoje.** Os demais são procedimentos escritos para instrumentos que ainda serão construídos, e três das metas contra as quais eles reportarão são hipóteses da própria equipe, que os primeiros resultados deverão recalibrar. A seção não afirma que o sistema atende aos requisitos não funcionais; afirma como se saberá, e admite que, para seis dos sete, ainda não se sabe.
+
 ## 10.3 Testes de Usabilidade
 
 ### 10.3.1 Objetivo
