@@ -5,11 +5,16 @@ código: tudo vem do ambiente. O arquivo .env.example na raiz do
 middleware documenta as variáveis esperadas.
 """
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Variáveis de ambiente do middleware."""
+
+    # --- Diretório base -------------------------------------------------
+    base_dir: Path = Path(__file__).parent.parent.parent
 
     # --- Copilot Studio (canal Direct Line) ----------------------------
     directline_endpoint: str = "https://directline.botframework.com"
