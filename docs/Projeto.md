@@ -6201,11 +6201,617 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 
 ## 10.1 Testes Funcionais
 
-[Preencher]
+Os testes funcionais verificam se o agente faz aquilo que os requisitos de 3.2 dizem que ele faz. Os casos não foram inventados. Cada critério de aceitação das *User Stories* de 3.2.1 foi convertido em uma asserção, e cada fluxo alternativo e de exceção das especificações de caso de uso de 3.5.3 virou um cenário negativo. Os cinco casos críticos diagramados em 5.3.8 entraram como roteiro direto: a sequência de mensagens de cada diagrama descreve, passo a passo, o que o teste precisa observar e em que ordem. Cenário sem origem em uma dessas três fontes foi descartado, e não acomodado.
+
+Esta subseção verifica **comportamento observável na fronteira do middleware**, com os serviços externos dublados. A distinção com as demais subseções da seção 10 é de objeto, não de rigor. O que se testa aqui é o que a aplicação responde a uma requisição: o desfecho, o corpo devolvido, o que ficou gravado e o que deixou de acontecer. A conversa efetiva com Entra ID, Copilot Studio, Azure AI Content Safety e Azure Speech é objeto de 10.4 e de 10.5, que verificam contrato e integração reais. A regra de negócio sobre o portfólio — o que conta como projeto atrasado, o que caracteriza pendência — é objeto de 10.6. A consolidação da cobertura, com o total por requisito e as lacunas remanescentes, é objeto de 10.7. Quando um caso desta subseção depende de um serviço externo, ele depende do **dublê** desse serviço, e o teste falha por comportamento do middleware, nunca por indisponibilidade de terceiro.
+
+Convém dizer de frente em que estado o desenvolvimento está. A onda 1 de 9.1.2.1 está em curso na Sprint 3, e as demais seguem o sequenciamento de 9.1.2: guardas na onda 2, classificador integrado na onda 3, análise na onda 4 e rotinas na onda 5. Isso significa que a maior parte dos casos abaixo **ainda não é executável**, e não porque falte escrevê-los, mas porque o componente que eles exercitam ainda não existe no repositório. Cada caso declara, por isso, a onda em que se torna executável. Um planejamento que omitisse essa coluna pareceria mais completo e diria menos: é ela que permite ao revisor separar o que já pode ser cobrado do que só faz sentido cobrar na sprint seguinte.
+
+### 10.1.1 Convenções de identificação e formato
+
+Um caso de teste precisa de nome estável para ser citado em card, em *merge request* e na consolidação de 10.7 sem ambiguidade. A numeração adotada é sequencial e reinicia a cada requisito, de modo que o identificador carregue o requisito de origem sem consulta a tabela auxiliar.
+
+| Prefixo | Alcance | Exemplo |
+|---|---|---|
+| `TF-RFxx-nn` | Teste funcional de um requisito funcional de 3.2 | `TF-RF03-04` |
+| `TNF-RNFxx-nn` | Teste de um requisito não funcional de 3.3.1 | `TNF-RNF06-02` |
+| `TNF-DES-nn` | Teste de desempenho | `TNF-DES-01` |
+
+O terceiro prefixo merece explicação, porque a irregularidade é deliberada. **Não existe requisito não funcional de desempenho na especificação atual**: RNF01 a RNF07 cobrem confidencialidade, rastreabilidade, precisão de classificação, disponibilidade, adequação ao perfil, eficácia das barreiras e retenção do registro, e nenhum deles trata de latência ou de vazão. Acomodar os testes de desempenho sob um RNF existente produziria um identificador limpo e uma rastreabilidade falsa. O prefixo `DES` registra a lacuna em vez de escondê-la, e a ancoragem desses testes em parâmetros que existem fora de 3.3.1 é tratada em 10.2.
+
+Cada requisito é apresentado em três partes, sempre na mesma ordem: uma abertura em prosa que diz o que aquele conjunto verifica e de onde ele foi derivado, a tabela dos casos e um bloco de execução. A tabela usa as colunas abaixo, e a marcação `<br>` separa itens dentro de uma célula, como já se faz nos critérios de aceitação de 3.2.1.
+
+| Coluna | Conteúdo |
+|---|---|
+| ID | Identificador do caso, conforme a convenção acima |
+| Tipo | `Positivo` quando o caso verifica o caminho previsto; `Negativo` quando verifica recusa, erro ou ausência |
+| Cenário | O que o caso exercita, em uma linha |
+| Entrada e pré-condição | O estado necessário antes da execução e o que é submetido |
+| Resultado esperado | O que precisa ser observado para o caso passar, incluindo o que **não** pode aparecer |
+| Rastreabilidade | *User Story*, caso de uso, diagrama de sequência ou seção que originou o caso |
+| Onda | Onda de 9.1.2 em que o caso se torna executável, ou a razão de não sê-lo no MVP |
+
+O bloco de execução é escrito uma vez por requisito, e não por linha da tabela. Repetir a mesma instrução de ferramenta e de dublê em cada caso engordaria o documento sem acrescentar informação, porque a decisão de execução é a mesma para o conjunto: o que muda de um caso para outro é a entrada e a asserção, e as duas já estão na tabela.
+
+As ferramentas são as declaradas em 5.1.2, acrescidas de três adições que esta seção introduz e que precisam ser lidas como adições.
+
+| Ferramenta | Uso | Situação na pilha |
+|---|---|---|
+| `pytest` e `pytest-asyncio` | Execução dos casos de *backend*, incluindo os assíncronos | Declarados em 5.1.2 |
+| `pytest-cov` | Cobertura, consolidada em 10.7 contra a meta de 80% de 9.1.8 | Declarado em 5.1.2 |
+| Vitest e Testing Library | Casos cuja asserção é sobre componente de interface | Declaradas em 5.1.2 |
+| `httpx.AsyncClient` com `ASGITransport` | Chamada às rotas da API dentro do processo de teste, sem subir servidor nem rede | Adição desta seção |
+| `pytest-benchmark` | Micro-latência isolada das guardas e do classificador | Adição desta seção, usada em 10.2 |
+| Locust | Carga e concorrência | Adição desta seção, usada em 10.2 |
+| PostgreSQL 16 em contêiner de teste | Banco real, com esquema aplicado por Alembic | Declarado em 5.1.2 como banco da solução |
+
+O `httpx.AsyncClient` com `ASGITransport` não é uma quarta biblioteca de teste: `httpx` já é dependência do middleware, e o transporte ASGI apenas dispensa o servidor. A escolha do banco real em contêiner, em vez de um substituto em memória, decorre de os testes precisarem observar restrições de integridade e comportamento transacional que só existem no PostgreSQL — testar contra um banco diferente do de produção verificaria outro sistema.
+
+**Nota sobre a matriz de tecnologias.** Locust e `pytest-benchmark` **não constam da matriz consolidada de 5.1.5**. Esta seção os utiliza por necessidade dos testes de desempenho, e a inclusão dos dois na pilha oficial deve ser tratada em *issue* própria, com a atualização de 5.1.5 feita por quem mantém aquela seção. Registrar a divergência aqui é preferível a alterar uma seção que pertence a outro recorte do documento.
+
+### 10.1.2 Acesso e interação — RF01 a RF03
+
+#### 10.1.2.1 RF01 — Controle de acesso, permissões e perfil do usuário
+
+Este conjunto verifica que a identidade resolvida no servidor determina o que o usuário alcança. Os casos derivam dos quatro critérios de aceitação de US01 e dos desvios de UC01, cujo fluxo alternativo trata a autenticação recusada e cuja exceção trata o *claim* de grupo que não corresponde a perfil conhecido. A decisão difícil deste requisito está no caso de projeto alheio: a recusa não pode revelar sequer a existência do projeto, o que transforma a asserção em uma verificação de **ausência**. Nenhum código, nome ou atributo do recurso protegido pode aparecer na resposta, e uma mensagem do tipo "você não tem acesso a este projeto" reprova o caso, porque confirma que o projeto existe. A mesma decisão reaparece no fluxo alternativo 3a de UC04, e é ela que 5.4.6 formaliza ao separar a recusa por permissão da recusa por escopo. A adequação fina da profundidade da resposta ao perfil — quanto detalhe cada persona recebe de uma informação que tem direito de receber — não é verificada aqui: é o RNF05, medido por taxa de adequação em 10.2.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF01-01` | Positivo | Líder consulta projeto sob sua responsabilidade | Sessão válida, com *claim* de grupo que resolve no perfil de Líder de Projeto.<br>Enunciado sobre o avanço de um projeto da própria carteira | Resposta com o dado solicitado e desfecho de sucesso; o escopo consultado é o da carteira do perfil | US01, UC01, UC04 | Onda 1 |
+| `TF-RF01-02` | Negativo | Membro pede projeto alheio | Sessão válida com perfil de Membro de Equipe, sem vínculo com o projeto consultado.<br>Enunciado sobre o status desse projeto | Recusa que não confirma nem nega a existência do projeto; a resposta não contém código, nome nem qualquer atributo do recurso, e a interação é registrada | US01, UC04 (3a), 5.4.6 | Onda 1 |
+| `TF-RF01-03` | Negativo | Sessão ausente ou expirada | Requisição à rota de conversação sem cookie de sessão, e a mesma requisição com cookie expirado | Recusa de autenticação antes de qualquer processamento; nenhuma guarda, classificação ou chamada ao executor é acionada | UC01 (3a), 5.7.3.8 | Onda 1 |
+| `TF-RF01-04` | Negativo | *Claim* de grupo sem perfil correspondente | Autenticação concluída no dublê do Entra ID, devolvendo *claims* que não resolvem em nenhum dos perfis de 3.5.1 | Acesso negado e evento registrado; a aplicação não atribui perfil padrão nem segue com escopo vazio silencioso | UC01 (exceção 4a) | Onda 1 |
+| `TF-RF01-05` | Positivo | O mesmo enunciado, dois perfis | Enunciado idêntico submetido por Membro de Equipe e por Diretoria, ambos com sessão válida | Ambos recebem resposta, e o conjunto de projetos considerado é diferente entre os dois, com o escopo do Membro contido no da Diretoria | US01, UC01, 2.4 | Onda 1 |
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf01_acesso.py`, contra o PostgreSQL 16 do contêiner de teste com o esquema aplicado por Alembic. O Entra ID é dublado: a dependência que resolve sessão e permissões é substituída por outra que devolve os *claims* do caso, o que permite construir os perfis sem depender do provisionamento pendente registrado como risco R02 em 9.1.6. O Copilot Studio também é dublado, com resposta fixa, porque o objeto do teste é o escopo de dados e não o conteúdo devolvido pelo executor. A asserção de `TF-RF01-02` é feita por comparação de ausência: o texto da resposta é confrontado com a lista de atributos do projeto protegido, e o caso reprova se qualquer um deles aparecer.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf01_acesso.py -q
+```
+
+#### 10.1.2.2 RF02 — Interação em linguagem natural por texto e voz
+
+Este conjunto verifica que os dois canais de entrada chegam ao mesmo lugar. Os casos derivam dos três critérios de aceitação de US02, do fluxo de UC03 e do contrato da API de voz especificado em 5.7.3. Os limites de formato e duração vêm de 5.7.3.6 e os códigos de erro correspondentes de 5.7.3.8, de modo que nenhum código citado aqui foi inventado para o teste. Há uma distinção do catálogo de erros que o conjunto precisa preservar: arquivo corrompido é **erro de requisição**, com recusa imediata, enquanto áudio aceito cuja transcrição não pôde ser produzida é **estado** `falhou`, com resposta `200`, como 5.7.3.8 declara ao final. Confundir os dois faria o teste cobrar a resposta errada. O caso mais importante do conjunto, porém, não é nenhum dos erros: é o caso estrutural, que verifica que o texto transcrito reentra pelo mesmo orquestrador da mensagem digitada.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF02-01` | Positivo | Entrada por texto | Sessão válida.<br>Enunciado digitado, submetido à rota de conversação | Mensagem processada e respondida, com o canal registrado como texto e uma interação persistida | US02, UC02 | Onda 1 |
+| `TF-RF02-02` | Positivo | Entrada por áudio, do envio à transcrição | Sessão válida.<br>Áudio dentro dos limites de 5.7.3.6, submetido por `POST /voz/audios` | Resposta `202` na submissão; a consulta por `GET /voz/audios/{id_audio}/transcricao` percorre os estados de 5.7.3.4 e termina em `concluida`, com o texto disponível | US02, UC03, 5.7.3.2, 5.7.3.4 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-03` | Negativo | Formato fora dos aceitos | Áudio com tipo de conteúdo ausente da tabela de formatos de 5.7.3.6 | Recusa com o código `AUDIO_FORMATO_NAO_SUPORTADO` e o HTTP correspondente de 5.7.3.8; nenhuma submissão é criada | 5.7.3.6, 5.7.3.8 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-04` | Negativo | Duração acima do limite | Áudio de formato aceito, com duração superior a cinco minutos | Recusa com o código `AUDIO_MUITO_LONGO` e o detalhe de duração previsto no corpo de erro de 5.7.3.8 | 5.7.3.6, 5.7.3.8 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-05` | Negativo | Arquivo ilegível | Arquivo corrompido, vazio ou sem trilha de áudio | Recusa com o código `AUDIO_ILEGIVEL`; a falha ocorre na validação, antes de qualquer chamada ao serviço de fala | 5.7.3.8 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-06` | Negativo | Áudio aceito, sem fala reconhecível | Áudio válido em formato e duração, cujo conteúdo não produz transcrição no dublê do serviço de fala | A submissão é aceita e a consulta devolve `200` com o estado `falhou`, e não um erro de requisição; a orientação apresentada oferece o canal de texto como saída | 5.7.3.4, 5.7.3.8 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-07` | Positivo | O texto transcrito reentra pelo mesmo pipeline | Transcrição concluída, encaminhada à rota de conversação como qualquer mensagem, com o canal marcado como voz | A solicitação atravessa a mesma ordem fixa do orquestrador — guardas, classificação, execução, avaliação da resposta e registro; nenhuma verificação de autorização é pulada e é gravada uma única interação | US02, 5.2.3.2, 5.7.3.5 | Onda 1, conforme 9.1.3 |
+
+`TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro, e que a API de áudio não aciona o pipeline por conta própria. Isso é uma promessa verificável, e sem um caso que a exercite ela permanece como intenção de projeto. A asserção compara a sequência de etapas percorrida por uma mensagem digitada e por uma transcrição de mesmo texto: as duas execuções precisam produzir a mesma ordem de chamadas e uma única linha de registro cada, diferindo apenas no valor do canal.
+
+**Execução.** Os casos de *backend* rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf02_canais.py`. O Azure Speech é dublado em todos eles: os áudios do conjunto são fixos e pequenos, e a transcrição devolvida é controlada pelo dublê, porque o objeto do teste é o trajeto e o tratamento de erro, não a qualidade do reconhecimento — essa é medida sobre o corpus de 5.7.6, pelos indicadores de 3.1.5.2. A verificação de ordem de `TF-RF02-07` é feita registrando as chamadas ao orquestrador e comparando as duas execuções. A apresentação da transcrição no campo de mensagem antes do envio, prevista em 5.7.3.5, é asserção de interface e roda com Vitest e Testing Library em `src/web/src/testes/`.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf02_canais.py -q
+```
+
+#### 10.1.2.3 RF03 — Identificação e controle de intenções
+
+Este conjunto verifica que a solicitação é classificada contra o catálogo fechado de 5.4.4 e que cada desfecho previsto é alcançado pelo caminho certo. Os casos derivam dos quatro critérios de aceitação de US03 e dos dois fluxos alternativos de UC02, que nomeiam os desfechos `RECUSADA_FORA_ESCOPO` e `RECUSADA_BAIXA_CONFIANCA`. O requisito recebe mais casos que o mínimo porque é o núcleo da solução e porque seus desfechos negativos são facilmente confundíveis entre si: fora de escopo, baixa confiança, falta de permissão e entidade ausente produzem recusas parecidas para quem lê a resposta e têm origens completamente diferentes no pipeline. Um conjunto que verificasse apenas se houve recusa passaria com o comportamento errado. Os enunciados de entrada saem do próprio catálogo e das classes negativas de 5.4.4.6, e não de formulações criadas para o teste.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF03-01` | Positivo | Enunciado canônico classifica na intenção correta | Sessão válida.<br>Enunciados-exemplo das intenções de 5.4.4, um por intenção | Cada enunciado resolve na intenção esperada, com confiança acima do limiar calibrado daquela intenção | US03, 5.4.4, 5.4.11 | Onda 3 |
+| `TF-RF03-02` | Positivo | A intenção resolvida chega ao executor | Enunciado que classifica em intenção do catálogo, com o executor dublado | O prompt validado é enviado ao executor com a intenção em metadados, conforme o passo 5 de UC02; nenhuma chamada ao executor ocorre antes da classificação | US03, UC02, 5.2.3.2 | Onda 3 |
+| `TF-RF03-03` | Negativo | Fora de escopo produz recusa orientativa | Enunciado da classe `fora_de_escopo` de 5.4.4.6, dos subtipos conversa genérica e fora do domínio | Recusa orientativa que apresenta as capacidades do agente, com desfecho `RECUSADA_FORA_ESCOPO`; a resposta **não** contém conteúdo de conhecimento geral que atenda ao pedido, e a sessão permanece ativa | US03, UC02 (4a), 5.4.5 | Onda 3 |
+| `TF-RF03-04` | Negativo | Confiança abaixo do limiar pede reformulação | Enunciado ambíguo cuja confiança fica abaixo do limiar da intenção candidata | Pedido de reformulação com desfecho `RECUSADA_BAIXA_CONFIANCA`; nenhuma execução é disparada, em particular nenhuma transação | US03, UC02 (4b), 5.4.6, 5.4.11.4 | Onda 3 |
+| `TF-RF03-05` | Negativo | Recusa por escopo e recusa por permissão são desfechos distintos | Enunciado legítimo do catálogo, submetido por perfil sem permissão sobre o projeto | A solicitação classifica na intenção correta do catálogo e é barrada pela checagem de perfil, com desfecho distinto de `RECUSADA_FORA_ESCOPO`; o registro atribui a recusa à permissão, e não ao escopo | 5.4.5, 5.4.6, UC04 (3a) | Onda 3 |
+| `TF-RF03-06` | Negativo | Entidade obrigatória ausente | Enunciado que classifica em intenção do catálogo sem informar a entidade exigida em 5.4.4 | Pergunta de complemento, com a sessão retendo o contexto; nenhuma execução ocorre e o caso não é tratado como fora de escopo | 5.4.6, 5.4.4 | Onda 3 |
+| `TF-RF03-07` | Positivo | A solicitação recusada fica registrada | Qualquer um dos casos negativos acima, executado com o banco de teste disponível | Existe uma linha de registro para a solicitação recusada, com o desfecho correspondente | US03, UC11 | Onda 3 |
+| `TF-RF03-08` | Positivo | A classe negativa de manipulação é capturada pelo classificador | Enunciado da classe `tentativa_injecao` de 5.4.4.6, com as guardas de entrada dubladas para permitir a passagem | O classificador atribui a classe e o desfecho é o bloqueio seco previsto em 5.4.4.6, sem revelar o motivo a quem enviou | 5.4.4.6, 5.4.11.2 | Onda 3 |
+
+Dois casos pedem leitura cuidadosa. `TF-RF03-07` verifica apenas a **existência** da linha para uma solicitação recusada, que é o quarto critério de aceitação de US03; a completude do conteúdo desse registro — intenção, confiança, perfil, canal e desfecho — e a unicidade da linha são exigências do RF10, verificadas em 10.1.5. `TF-RF03-08` exercita a classe `tentativa_injecao` como **rede de segurança atrás da guarda de injeção**, na leitura que 5.4.4.6 estabelece: as guardas são dubladas para deixar o enunciado passar, justamente para que o teste observe a camada que só age quando as anteriores falharam. A eficácia do conjunto de barreiras não se mede aqui, e sim pelo RNF06, em 10.2.
+
+**Execução.** Os casos rodam com `pytest` no módulo planejado `src/middleware/tests/funcionais/test_rf03_intencoes.py`, sobre o classificador já treinado e serializado em `src/middleware/dados/classificador.joblib`, com os limiares por intenção calibrados conforme 5.4.11.4. O executor é dublado, e as guardas de entrada são dubladas apenas em `TF-RF03-08`, pelo motivo exposto acima. Os enunciados de entrada vêm de duas origens mantidas separadas, como já se faz na bancada de 5.4.11.1: os exemplos do catálogo de 5.4.4 e os enunciados-semente de [testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv). Estes casos verificam **desfecho**, e não taxa de acerto: a medição da precisão do classificador é o RNF03, documentada em 10.2, com a evidência já produzida em 5.4.11. Um caso funcional que reprovasse por causa de um enunciado ambíguo estaria medindo o modelo, e não o comportamento do sistema.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf03_intencoes.py -q
+```
+
+### 10.1.3 Consulta e gestão do portfólio — RF04 a RF06
+
+Os três requisitos desta subseção são o que o usuário efetivamente pede ao agente: consultar o que existe, alterar o que mudou e ser avisado do que falta. Eles compartilham uma característica que muda a forma de testá-los. A execução sobre o portfólio acontece no Copilot Studio e nos conectores do parceiro, e não no middleware, de modo que o que se verifica aqui é o que a aplicação exige antes de acionar o executor, o que ela faz com a resposta recebida e o que ela recusa a fazer. Os três cenários dinâmicos correspondentes — DS02 em 5.3.3, DS03 em 5.3.4 e DS04 em 5.3.5 — trazem os fluxos alternativos que viraram os casos negativos.
+
+#### 10.1.3.1 RF04 — Consulta e análise de informações dos projetos
+
+Este conjunto verifica que uma consulta autorizada devolve o dado com a procedência da informação, e que uma consulta que não pode ser atendida o diz sem preencher a lacuna por conta própria. Os casos derivam dos três critérios de aceitação de US04, do fluxo alternativo de UC04 e do cenário DS02, cuja pós-condição de recusa exige que nem a existência do projeto seja revelada. A referência da informação utilizada não é um detalhe de apresentação: é a exigência do objetivo O3, que pede que 100% das respostas factuais possam ser relacionadas às informações da base, e por isso ela é asserção de caso positivo e não observação de prosa.
+
+A decisão difícil deste requisito aparece na comparação entre dois casos negativos. Um projeto que não existe e um projeto que existe mas está fora do escopo do solicitante precisam produzir respostas **indistinguíveis entre si**. Se a resposta de projeto inexistente for diferente da resposta de projeto não autorizado, a diferença entre as duas informa ao solicitante que o segundo existe, e a recusa que 5.3.3 constrói com cuidado é desfeita pelo contraste. O par `TF-RF04-03` e `TF-RF04-04` existe para verificar isso, e a asserção é sobre a igualdade das duas respostas.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF04-01` | Positivo | Consulta às dimensões previstas no requisito | Sessão válida, com projeto dentro do escopo autorizado.<br>Um enunciado por dimensão: avanço, cronograma, status, marcos, riscos, problemas e aderência a normativos | Cada consulta devolve o dado correspondente e a referência da informação utilizada, no formato de origem previsto em 5.3.3 | US04, UC04, 5.4.4.1, O3 | Onda 3 |
+| `TF-RF04-02` | Positivo | A referência acompanha o conteúdo | Consulta autorizada cuja resposta é composta a partir de listas e de trecho de documento | A referência vem junto da resposta produzida, e não anexada ao final pela camada de apresentação, conforme a decisão de modelagem de 5.3.3 | US04, 5.3.3, O3 | Onda 3 |
+| `TF-RF04-03` | Negativo | Projeto inexistente | Enunciado sobre um projeto que não existe na base | Resposta que informa não haver projeto correspondente, sem produzir dado algum sobre ele | US04, UC04 | Onda 3 |
+| `TF-RF04-04` | Negativo | Projeto fora da permissão do solicitante | Enunciado sobre projeto existente, submetido por perfil sem acesso a ele | Recusa **idêntica** à de `TF-RF04-03`; nenhuma consulta às fontes é disparada antes da verificação de autorização, e a tentativa é registrada | US04, UC04 (3a), 5.3.3 | Onda 3 |
+| `TF-RF04-05` | Negativo | Informação ausente na base | Projeto autorizado cuja informação solicitada não está preenchida | O agente declara a ausência da informação; a resposta não estima, não infere e não substitui o dado ausente por conhecimento geral | US04, 5.3.3 | Onda 3 |
+
+`TF-RF04-05` é o caso que separa uma resposta útil de uma resposta inventada, e é o mais fácil de passar por engano. Um agente que responde "o avanço é de aproximadamente 60%" quando o campo está vazio parece mais prestativo do que um que responde "esse dado não está preenchido no projeto", e é exatamente o comportamento que o objetivo O3 proíbe. A asserção, por isso, é dupla: a resposta precisa conter a declaração de ausência e não pode conter valor numérico ou afirmação factual sobre o campo consultado.
+
+A intenção `consultar_faturas_vencidas` **não** integra este conjunto. Ela consta do catálogo por rastreabilidade com o TAPI, mas está classificada como pendente de validação com o parceiro em 5.4.7 e, enquanto isso, fora do conjunto de treino do MVP. Testá-la aqui cobraria do sistema um comportamento que a especificação ainda não decidiu. A exclusão é retomada em 10.1.6.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf04_consulta.py`. O Copilot Studio é dublado e devolve respostas fixas construídas para cada caso, incluindo a resposta com referência de origem e a resposta de campo vazio — o dublê é indispensável enquanto o provisionamento do risco R02 de 9.1.6 não ocorre, e continua útil depois, porque um dublê determinístico permite asserções que um executor real não permitiria repetir. A comparação de `TF-RF04-03` com `TF-RF04-04` é feita sobre o corpo devolvido pelas duas execuções, que precisam ser iguais.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf04_consulta.py -q
+```
+
+#### 10.1.3.2 RF05 — Apoio à criação e atualização de projetos
+
+Este conjunto verifica que nenhuma alteração de dado acontece sem que o usuário a tenha visto e confirmado. Os casos derivam dos três critérios de aceitação de US05, dos desvios de UC05 e do cenário DS03, que modela a transação passo a passo: verificação de permissão de escrita, complemento dos parâmetros ausentes, leitura do valor vigente, prévia contrapondo o valor atual ao proposto, confirmação explícita, gravação e registro. Cada um desses passos é ponto de falha, e o conjunto exercita os que produzem desfecho observável na fronteira do middleware.
+
+A decisão difícil deste requisito é a distinção entre permissão de leitura e permissão de escrita. Um usuário pode estar autorizado a consultar um projeto sem estar autorizado a alterá-lo, e 5.3.4 registra que a verificação de escrita precede a leitura do valor vigente. A consequência para o teste é precisa: em `TF-RF05-03` a asserção não é apenas que a gravação não ocorreu, e sim que **nenhuma leitura do valor atual chegou a acontecer**. Verificar só o resultado final deixaria passar uma implementação que consulta o dado, monta a prévia e recusa no último passo.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF05-01` | Positivo | Atualização com confirmação prévia | Perfil com permissão de escrita sobre o projeto.<br>Enunciado que classifica em intenção de transação, com os parâmetros completos | A prévia é apresentada contrapondo o valor vigente ao proposto, e a gravação só é disparada após a confirmação explícita | US05, UC05, 5.3.4 | Onda 3 |
+| `TF-RF05-02` | Negativo | Usuário nega a confirmação | Transação proposta, com a prévia já apresentada, e resposta negativa do usuário | Nada é efetivado, o valor anterior é preservado e a desistência fica registrada, permitindo distinguir depois uma transação abandonada de uma que nunca foi proposta | US05, UC05 (3a), 5.3.4 | Onda 3 |
+| `TF-RF05-03` | Negativo | Perfil sem permissão de escrita | Perfil autorizado a ler o projeto e não autorizado a alterá-lo.<br>Enunciado de transação sobre esse projeto | A operação é recusada e registrada, e **nenhuma leitura do valor atual é executada** antes da recusa | US05, 5.3.4, 5.4.6 | Onda 3 |
+| `TF-RF05-04` | Positivo | A alteração efetivada carrega origem, autoria e momento | Transação confirmada e efetivada no dublê do executor | O registro da alteração contém os três elementos, e o momento gravado é o da efetivação, não o da proposta | US05, UC05, RNF02 | Onda 3 |
+| `TF-RF05-05` | Negativo | Falha na gravação | Transação confirmada, com o dublê do executor devolvendo falha na gravação | O usuário é informado de que nada foi alterado, o valor anterior é preservado e não resta estado parcial nem registro de alteração efetivada | UC05 (exceção 5a), 5.3.4 | Onda 3 |
+| `TF-RF05-06` | Negativo | Parâmetro obrigatório ausente | Enunciado de transação sem um dos parâmetros exigidos pela intenção | O agente pergunta apenas o que falta, sem reiniciar o diálogo, e não propõe a alteração enquanto a intenção estiver incompleta | UC05 (2a), 5.3.4, 5.4.6 | Onda 3 |
+
+`TF-RF05-04` verifica a **existência** dos três elementos de rastreabilidade em uma alteração efetivada. A cobertura de 100% sobre o conjunto de alterações, que é a métrica do RNF02, é medida em 10.2: aqui basta que o mecanismo exista, lá se verifica que ele não falha em nenhum caso. A separação é deliberada, porque um mecanismo que funciona no caminho feliz e falha na alteração originada por rotina agendada passaria neste conjunto e reprovaria no do RNF02, que é onde essa asserção pertence.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf05_transacoes.py`, contra o PostgreSQL 16 do contêiner de teste. O Copilot Studio é dublado e devolve, conforme o caso, gravação bem-sucedida ou falha de gravação, o que permite exercitar `TF-RF05-05` sem depender de provocar erro em serviço real. A asserção de `TF-RF05-03` é feita sobre as chamadas registradas no dublê: o caso reprova se qualquer leitura do projeto tiver sido emitida antes da recusa.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf05_transacoes.py -q
+```
+
+#### 10.1.3.3 RF06 — Identificação, alertas e apoio proativo a pendências
+
+Este conjunto verifica a única capacidade do agente que não começa com uma pergunta do usuário. Os casos derivam dos quatro critérios de aceitação de US06, do fluxo de UC08 e do cenário DS04, que é descrito em 5.3.5 como o único diagrama sem solicitação do usuário e cujo ator aparece como destinatário, e não como originador da interação. É essa inversão que o conjunto precisa verificar, e ela concentra o critério de aceitação mais exigente de US06: o sistema inicia o contato com o responsável **sem depender de o usuário acessá-lo**. Um agente que apenas responde "há três pendências no seu projeto" quando perguntado atende ao RF04, e não ao RF06.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF06-01` | Positivo | A varredura identifica pendência e alerta o responsável | Base com projeto contendo dado ausente ou desatualizado, com responsável identificado.<br>Disparo da varredura | É produzido um alerta dirigido ao responsável pela informação, descrevendo a pendência identificada | US06, UC08, 5.3.5 | Onda 5 |
+| `TF-RF06-02` | Positivo | O contato parte do sistema | Nenhuma mensagem do usuário; apenas o disparo agendado da varredura | O alerta é produzido e entregue sem que exista solicitação correspondente do usuário, e o registro da interação identifica a origem como disparo do sistema | US06, 5.3.5, 5.2.3.2 | Onda 5 |
+| `TF-RF06-03` | Negativo | Projeto completo não gera alerta falso | Base com projeto cujos dados estão completos e atualizados dentro dos prazos | A varredura conclui sem produzir alerta para esse projeto | US06, 5.3.5 | Onda 5 |
+| `TF-RF06-04` | Negativo | O alerta não alcança quem não é responsável | Pendência identificada em projeto com responsável definido, e um segundo usuário sem responsabilidade sobre a informação | O alerta é entregue apenas ao responsável; o segundo usuário não recebe notificação nem consegue ler o alerta alheio | US06, RF01, 5.3.5 | Onda 5 |
+| `TF-RF06-05` | Positivo | A resposta ao alerta volta ao fluxo transacional | Alerta entregue, com o usuário respondendo que deseja corrigir a informação | A correção segue o fluxo de RF05, com prévia e confirmação explícita; não existe caminho abreviado que grave a partir da resposta ao alerta | US06, 5.3.5, 5.3.4 | Onda 5 |
+
+`TF-RF06-05` merece destaque porque é a garantia mais fácil de perder na implementação. O alerta convida à correção, mas não a autoriza, e 5.3.5 registra isso ao determinar que a resposta ao alerta retorne ao fluxo transacional de DS03. Um atalho que gravasse direto a partir da resposta seria mais fluido para o usuário e removeria a confirmação exigida pelo RF05 e o registro exigido pelo RNF02 — exatamente as duas garantias que o contato ter partido do sistema não deveria enfraquecer.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf06_pendencias.py`, contra o PostgreSQL 16 do contêiner de teste, cujo conteúdo é preparado por *fixture* com os projetos completos e incompletos de cada caso. A varredura é acionada diretamente pelo teste, sem esperar o horário programado: o que se verifica aqui é a regra de pendência e o destinatário do alerta, enquanto o comportamento do agendador no tempo é objeto dos casos do RF11. O canal de entrega é dublado, e a asserção de `TF-RF06-04` é feita sobre os destinatários que o dublê recebeu.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf06_pendencias.py -q
+```
+
+### 10.1.4 Análise e relatórios — RF07 e RF08
+
+RF07 e RF08 estão na mesma situação de escopo, e convém dizê-la antes dos casos. As histórias US07 e US08 são classificadas como desejáveis em 3.2.1; nenhuma *feature* vinculada a esses dois requisitos foi admitida no MVP, conforme 2.7.5; nenhum dos dois possui caso de uso próprio, conforme a cobertura de 3.6; e nenhuma das cinco intenções correspondentes tem tópico configurado no executor, conforme o quadro de 5.4.8, que separa estar no corpus de treino de ter execução no MVP.
+
+A diferença de tratamento entre as duas subseções seguintes não é de escopo, e sim do que sobra para verificar. RF07 não possui nenhum RNF associado — a linha correspondente da matriz de 3.4 está vazia, e a nota daquela seção registra o motivo. Sem execução e sem requisito não funcional que o meça, não resta obrigação verificável na fronteira do middleware, e os casos existem para registrar a exclusão. RF08, ao contrário, correlaciona-se ao RNF04 e ao RNF05 na mesma matriz: a adequação do nível de detalhe ao perfil é obrigação do próprio requisito e independe de o material ser produzido pelo executor, de modo que os casos de RF08 verificam o que o middleware exige antes de acionar o executor e o que faz com o que recebe dele.
+
+#### 10.1.4.1 RF07 — Análise comparativa do portfólio
+
+Este conjunto não é executável no MVP, e essa é a informação que ele carrega. Os casos derivam dos três critérios de aceitação de US07 e das intenções `comparar_projetos` e `consultar_indicadores_portfolio` de 5.4.4.2, que estão no corpus de treino mas sem tópico no executor. Escrevê-los agora tem duas razões. A primeira é que a exclusão fique **rastreável**: um requisito ausente do planejamento de testes é indistinguível de um requisito esquecido, e a coluna de onda diz qual dos dois é o caso. A segunda é que, quando US07 for promovida ao escopo de implementação, os casos já existem e a decisão de projeto mais difícil já está registrada — a de `TF-RF07-03`.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF07-01` | Positivo | Comparação entre projetos do portfólio | Perfil de Diretoria com acesso a dois ou mais projetos.<br>Enunciado que resolve em `comparar_projetos` | A resposta apresenta a comparação na dimensão pedida — avanço, desempenho ou prazo — com a referência da informação de cada projeto | US07, 5.4.4.2 | Não executável no MVP: *feature* fora do escopo (2.7.5) e intenção sem tópico no executor (5.4.8) |
+| `TF-RF07-02` | Positivo | Risco de um projeto com impacto sobre outro | Base com risco registrado em um projeto e vínculo com um segundo projeto | A resposta identifica a relação entre os projetos, e não apenas os riscos de cada um isoladamente | US07 | Não executável no MVP: mesma razão de `TF-RF07-01` |
+| `TF-RF07-03` | Negativo | Comparação que alcança projeto fora da permissão | Perfil autorizado a parte dos projetos do recorte pedido.<br>Enunciado que compara o subportfólio inteiro | O recorte da comparação exclui o projeto não autorizado sem revelar sua existência, e a resposta não denuncia a exclusão por diferença de contagem ou de agregado | US07, RF01, 5.3.3 | Não executável no MVP: mesma razão de `TF-RF07-01` |
+
+`TF-RF07-03` é o caso que justifica escrever os três agora. Uma comparação é, por natureza, uma resposta agregada, e um agregado revela o que a recusa individual esconde: se o total de projetos do subportfólio aparece na resposta, o usuário deduz a existência daquilo que não pode ver. O requisito não diz como resolver isso, e a decisão terá de ser tomada quando RF07 entrar em construção. Registrá-la como caso de teste é a forma de garantir que ela não seja tomada por omissão.
+
+**Execução.** Nenhuma. Os três casos não têm módulo de teste planejado nem comando, porque não há comportamento a exercitar enquanto as *features* de 2.7.5 permanecerem fora do MVP e as intenções permanecerem sem tópico. Quando US07 for promovida, eles passam a rodar no mesmo arranjo dos demais casos de consulta, com `pytest` e o executor dublado. A ausência declarada é retomada em 10.1.6.
+
+#### 10.1.4.2 RF08 — Geração de relatórios e informações gerenciais
+
+Este conjunto verifica o que o middleware exige e entrega em torno da geração de material gerencial. Os casos derivam dos três critérios de aceitação de US08 e da leitura de 3.6, que trata RF08 como variação de UC04 — altera a amplitude da consulta e o formato da saída, sem introduzir ator novo nem ponto de decisão novo. Duas dependências precisam ficar registradas antes da tabela. A produção do material é executada pelo Copilot Studio, cujo provisionamento é o risco R02 de 9.1.6 e ainda não ocorreu; e as três intenções da família de geração de material, em 5.4.4.3, estão no corpus sem tópico configurado, conforme 5.4.8. Os casos rodam contra dublê, e o que eles verificam é a decisão do middleware — para onde a solicitação vai, com que perfil, e o que acontece quando ela não pode ser atendida —, não a qualidade do material produzido.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF08-01` | Positivo | Prévia gerada a partir das informações disponíveis | Perfil autorizado.<br>Um enunciado para cada material previsto no requisito: relatório de status, apresentação para a diretoria e relatório de encerramento | Cada enunciado resolve na intenção correspondente de 5.4.4.3 e é encaminhado ao executor com a intenção em metadados; a prévia devolvida é apresentada ao usuário | US08, 5.4.4.3, 3.6 | Onda 3, contra dublê |
+| `TF-RF08-02` | Positivo | O nível de detalhe muda com o perfil | O mesmo material solicitado por Diretoria e por Membro de Equipe | O perfil resolvido acompanha a solicitação enviada ao executor, e os dois materiais devolvidos diferem em profundidade | US08, RNF05, 3.4 | Onda 3, contra dublê |
+| `TF-RF08-03` | Negativo | Dados insuficientes para o material solicitado | Projeto autorizado, com as informações necessárias ao material ausentes na base | O agente declara o que falta para produzir o material, e não entrega prévia com lacuna preenchida por inferência | US08, 5.3.3 | Onda 3, contra dublê |
+| `TF-RF08-04` | Negativo | Material que o perfil não pode receber | Enunciado que solicita material gerencial cujo conteúdo excede as permissões do perfil | A solicitação é recusada sem que o material chegue a ser pedido ao executor, e a recusa não descreve o conteúdo do material | US08, RF01, 5.4.6 | Onda 3, contra dublê |
+
+`TF-RF08-02` verifica que o perfil chega ao executor e que a saída difere. A **taxa de adequação** dessa diferença — se o material entregue é de fato apropriado ao perfil, medida sobre um conjunto por perfil com meta de 90% — é o RNF05, e está em 10.2. A separação evita que este conjunto funcional passe a julgar qualidade de conteúdo, que não é o que ele sabe medir.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf08_relatorios.py`. O Copilot Studio é dublado e devolve prévias fixas, diferenciadas por perfil, e uma resposta de dados insuficientes para `TF-RF08-03`. Enquanto os tópicos das três intenções não forem configurados, o dublê é a única forma de exercitar o trajeto; quando forem, os mesmos casos passam a valer como verificação de contrato em 10.4, sem reescrita.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf08_relatorios.py -q
+```
+
+### 10.1.5 Proteção, registro, rotinas e histórico — RF09 a RF12
+
+**Nota de escopo.** O card que originou esta entrega foi escrito sobre RF07 e RF08. Os requisitos RF09 a RF12 entraram na revisão de escopo que reposicionou o middleware como produto, conforme a nota ao final de 3.2, e não possuem card próprio no planejamento da sprint. Sem eles, a seção 10.1 ficaria sem teste para as guardas, para o registro universal, para as rotinas agendadas e para o histórico de conversas, e a consolidação de 10.7 abriria quatro buracos exatamente nos requisitos que a equipe constrói como código. Eles são cobertos aqui, e a extensão fica registrada neste parágrafo e na descrição do *merge request*.
+
+A subseção reúne o que a aplicação faz sobre a própria interação — proteger, registrar, agendar e preservar —, em oposição ao que o agente faz sobre o portfólio, que é o objeto de 10.1.2 e 10.1.3. É também a parte da seção com maior densidade de casos negativos, e por um motivo: nesses quatro requisitos, o comportamento correto é frequentemente a **ausência** de algo — a barreira que não deixa passar, a linha que não pode faltar, a execução que não deve ocorrer, a conversa que não pode ser lida.
+
+#### 10.1.5.1 RF09 — Proteção da interação com o agente
+
+Este conjunto é derivado diretamente dos cenários 1, 3 e 4 de 5.3.8, que modelam o bloqueio por injeção, o bloqueio por abuso e o bloqueio pela guarda de saída, e dos cinco critérios de aceitação de US09. Os desfechos usados nas asserções são os nomeados naqueles diagramas e em UC10: `BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO` e `BLOQUEADA_SAIDA`. O requisito recebe mais casos que o mínimo porque reúne três barreiras com desfechos deliberadamente diferentes, uma exigência de sigilo sobre a própria recusa e uma exigência simétrica de não barrar o uso legítimo — cinco obrigações que um conjunto pequeno confundiria entre si.
+
+Há uma sutileza na exigência de sigilo que precisa ser explicitada, porque ela parece uma contradição. RF09 determina que nenhuma recusa revele qual barreira foi acionada, e ao mesmo tempo US09 exige que a injeção produza bloqueio seco e o abuso produza recusa orientativa — duas mensagens visivelmente distintas. As duas coisas convivem porque o que não pode ser revelado é a **barreira**, não a classe do desfecho: a asserção verifica que a mensagem é um gabarito fixo, que não nomeia regra, guarda ou serviço, e que não contém nenhum fragmento do prompt recebido. A distinção entre seca e orientativa é decisão de produto declarada em US09, e não vazamento.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF09-01` | Positivo | Injeção barrada antes de qualquer execução | Sessão válida.<br>Prompt com tentativa de manipulação do comportamento do agente | Desfecho `BLOQUEADA_INJECAO` com recusa seca; o classificador e o executor **não** são acionados, e a interação é persistida | US09, 5.3.8.1, UC10 (2a) | Onda 2 |
+| `TF-RF09-02` | Positivo | Abuso recusado de forma orientativa | Sessão válida.<br>Prompt de uso indevido do agente corporativo, sem tentativa de manipulação | Desfecho `BLOQUEADA_ABUSO` com recusa orientativa e registro nominal; o desfecho difere do de `TF-RF09-01` no registro, e o bloqueio não é seco | US09, 5.3.8.3, UC10 (3a) | Onda 2 |
+| `TF-RF09-03` | Positivo | A guarda de saída barra instrução embutida | Solicitação legítima cujo conteúdo recuperado pelo executor carrega instrução embutida | Desfecho `BLOQUEADA_SAIDA`; a resposta não é entregue ao usuário e o comando embutido não é executado | US09, 5.3.8.4, UC10 (4a) | Onda 2 |
+| `TF-RF09-04` | Negativo | A recusa não revela a barreira nem repete a instrução | As recusas produzidas pelos três casos acima | Cada mensagem coincide com o gabarito fixo da sua classe, não nomeia regra, guarda ou serviço, e não contém nenhum trecho do prompt hostil recebido | US09, RF09 | Onda 2 |
+| `TF-RF09-05` | Negativo | Solicitação legítima de vocabulário próximo não é barrada | Enunciados legítimos do catálogo que empregam termos frequentes em ataques, como instrução, regra, ignorar e permissão | As solicitações atravessam as barreiras e seguem para classificação; nenhum desfecho de bloqueio é registrado | US09, RNF06 | Onda 2 |
+| `TF-RF09-06` | Positivo | Barreira indisponível não resulta em passagem livre | Dublê do serviço de avaliação de conteúdo configurado como indisponível | A solicitação não segue adiante; a falha da barreira produz recusa e registro, e em nenhuma hipótese execução | UC10 (exceção 2b) | Onda 2 |
+| `TF-RF09-07` | Positivo | A ordem das etapas é fixa | Prompt que seria bloqueado pela guarda de injeção e também classificável em intenção do catálogo | A guarda de injeção é avaliada antes da de abuso, e ambas antes da classificação; o processamento para na primeira que bloqueia | 5.2.3.1, 5.2.3.2, 5.3.8.2 | Onda 2 |
+
+`TF-RF09-04` é o caso cuja técnica precisa ser dita, porque a asserção é sobre ausência e ausência não se verifica por inspeção visual. A comparação é feita contra um gabarito fixo de recusa por classe, e complementada por uma verificação de que nenhum *token* do prompt hostil — descontadas as palavras vazias — aparece no corpo devolvido. Uma implementação que ecoasse a instrução recebida ao explicar a recusa passaria em qualquer asserção de igualdade de desfecho e reprovaria aqui, que é exatamente o ponto.
+
+`TF-RF09-05` tem contraparte quantitativa. Aqui se verifica que um conjunto pequeno de solicitações legítimas de vocabulário próximo atravessa as barreiras; a **taxa de falso positivo**, com teto de 5% e reporte por barreira, é o RNF06 e está em 10.2, e depende do conjunto adversarial que ainda não existe.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf09_guardas.py`. O Azure AI Content Safety é dublado, com veredito controlado por caso, o que permite exercitar `TF-RF09-06` sem depender de derrubar serviço real. O executor é dublado e devolve, em `TF-RF09-03`, uma resposta contaminada com instrução embutida, simulando o conteúdo recuperado do SharePoint que o cenário 4 de 5.3.8 descreve. A verificação de ordem de `TF-RF09-07` é feita sobre a sequência de chamadas registradas nos dublês, e não sobre o desfecho final, que seria o mesmo em várias ordens diferentes.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf09_guardas.py -q
+```
+
+#### 10.1.5.2 RF10 — Registro e análise das intenções
+
+Este conjunto verifica a invariante mais simples e mais forte da aplicação: toda solicitação processada produz exatamente uma linha de registro, qualquer que tenha sido o desfecho, inclusive quando bloqueada. Os casos derivam dos quatro critérios de aceitação de US10, do fluxo de UC09 e da regra explícita de UC11, que determina que o registro ocorra inclusive nos bloqueios porque as tentativas de ataque são o insumo mais valioso do recorte de segurança.
+
+`TF-RF10-01` merece destaque porque é o teste mais barato e mais informativo do conjunto inteiro de 10.1. Submeter N solicitações de desfechos variados — sucesso, fora de escopo, baixa confiança, bloqueio por injeção, bloqueio por abuso, bloqueio de saída e falha do executor — e contar N linhas ao final verifica, em uma única asserção, que nenhum caminho do orquestrador escapa do registro. É a mesma invariante que a concentração em UC02, comentada em 3.6, expressa no nível dos casos de uso: existe um único caminho pelo qual uma solicitação atravessa o sistema. Um caminho novo que alguém acrescentasse sem registro apareceria aqui como uma linha faltando, e em nenhum outro lugar.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF10-01` | Positivo | Uma linha por solicitação, qualquer que seja o desfecho | Base de teste limpa.<br>N solicitações cobrindo todos os desfechos previstos, incluindo os bloqueados | Exatamente N linhas persistidas, sem duplicata e sem ausência, e cada desfecho previsto aparece ao menos uma vez | US10, UC11, 3.6 | Onda 3 |
+| `TF-RF10-02` | Positivo | Cada linha carrega os cinco campos exigidos | As solicitações do caso anterior | Toda linha contém intenção, confiança, perfil, canal e desfecho; nas bloqueadas antes da classificação, os campos de intenção e confiança são explicitamente nulos, e não omitidos | US10, UC11 | Onda 3 |
+| `TF-RF10-03` | Negativo | Perfil sem permissão não acessa os recortes | Sessão válida sem a permissão `VER_INTENCOES` | O acesso aos recortes analíticos é negado, e nenhum agregado é devolvido | US10, UC09 (exceção 1a) | Onda 4 |
+| `TF-RF10-04` | Negativo | Acesso direto à rota, sem passar pela interface | Requisição à rota de análise feita fora da interface, com sessão sem `VER_INTENCOES` | A recusa ocorre no servidor; esconder a rota no frontend não é considerado atendimento do critério | US10, UC09 | Onda 4 |
+| `TF-RF10-05` | Positivo | Os recortes previstos são produzidos | Base com interações de desfechos variados e perfil com `VER_INTENCOES` | São devolvidos volume por intenção, distribuição de desfechos, série de bloqueios por barreira e agrupamento das solicitações fora de escopo | US10, UC09 | Onda 4 |
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf10_registro.py`, contra o PostgreSQL 16 do contêiner de teste, com o esquema aplicado por Alembic e a base truncada entre casos — `TF-RF10-01` conta linhas, e uma base suja invalidaria a contagem. Guardas, classificador e executor são dublados para produzir cada desfecho de forma determinística, já que reproduzir sete desfechos distintos por entrada real seria frágil. O par `TF-RF10-03` e `TF-RF10-04` é executado contra a rota, e não contra a camada de serviço, porque o critério de US10 é explícito quanto à verificação ocorrer no servidor.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf10_registro.py -q
+```
+
+#### 10.1.5.3 RF11 — Rotinas agendadas
+
+Este conjunto é derivado do cenário 5 de 5.3.8, que modela o cadastro validado, o disparo pelo *worker* e a execução pelo mesmo orquestrador do chat, e dos fluxos de UC07 e UC08. Os quatro critérios de aceitação de US11 dividem-se em dois momentos que o conjunto precisa manter separados: o que é verificado no **cadastro**, com o usuário presente, e o que é resolvido no **disparo**, sem ninguém por perto. A decisão de projeto que o conjunto exercita é essa: as permissões do dono são resolvidas no momento da execução, e não gravadas no cadastro.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF11-01` | Positivo | Cadastro com data, periodicidade e fuso explícito | Usuário com a permissão `GERIR_ROTINAS`.<br>Rotina com prompt válido, periodicidade e fuso horário informados | A rotina é persistida com a agenda e o fuso declarados, e o *job* correspondente é registrado no agendador | US11, UC07, 5.3.8.5 | Onda 5 |
+| `TF-RF11-02` | Negativo | Prompt que não resolve em intenção do catálogo | Usuário com `GERIR_ROTINAS`.<br>Prompt que classifica em `fora_de_escopo` | O cadastro é recusado no momento em que é feito, com explicação ao usuário, e nenhuma rotina nem *job* é criado | US11, UC07 (3a) | Onda 5 |
+| `TF-RF11-03` | Positivo | O prompt é reavaliado e as permissões resolvidas no disparo | Rotina ativa, com horário atingido no fuso declarado | Na execução o prompt atravessa as guardas e o classificador novamente, e o perfil e as permissões do dono são consultados naquele instante | US11, UC08, 5.3.8.5 | Onda 5 |
+| `TF-RF11-04` | Negativo | Dono perdeu a permissão entre o cadastro e o disparo | Rotina cadastrada por dono que, na hora do disparo, já não tem acesso ao projeto alvo | A execução não ocorre, falha por autorização e o fato fica registrado; nenhum resultado é produzido com a permissão antiga | US11, UC08 (2a) | Onda 5 |
+| `TF-RF11-05` | Positivo | Cada execução fica registrada com estado e resultado | Rotina ativa disparada com sucesso | É gravada uma execução com seu estado e seu resultado, vinculada à interação gerada, e consultável na própria aplicação | US11, UC08, 5.3.8.5 | Onda 5 |
+| `TF-RF11-06` | Negativo | Cadastro por usuário sem a permissão de gerir rotinas | Sessão válida sem `GERIR_ROTINAS` | A operação é negada no servidor, independentemente de a interface exibir ou não a página de rotinas | UC07 (exceção 1a) | Onda 5 |
+
+`TF-RF11-04` é o caso que justifica a decisão de resolver permissão no disparo, e não no cadastro. Uma rotina cadastrada em agosto por uma líder que muda de área em setembro continuaria executando com o acesso de agosto se a permissão tivesse sido congelada no cadastro — uma escalação de privilégio que ninguém precisaria provocar, bastando o tempo passar. O caso é o que impede que essa implementação, mais simples e mais rápida, seja adotada sem que alguém perceba.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf11_rotinas.py`, contra o PostgreSQL 16 do contêiner de teste, que também é o *jobstore* do APScheduler. O disparo é acionado diretamente pelo teste, e não pela passagem do tempo: esperar o horário programado tornaria a suíte lenta e intermitente, e o que se verifica aqui é o comportamento da execução, não a precisão do relógio. O tratamento de disparo perdido e o comportamento sob rotinas concorrentes ficam fora deste conjunto — o primeiro é regra de negócio do agendador, o segundo é cenário de carga, tratado em 10.2.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf11_rotinas.py -q
+```
+
+#### 10.1.5.4 RF12 — Histórico e retomada de conversas
+
+Este conjunto verifica que o usuário reencontra o que conversou e que ninguém mais o alcança. Os casos derivam dos três critérios de aceitação de US12 e do fluxo de UC06, cuja exceção determina que o acesso a conversa alheia seja negado no servidor, independentemente do que a interface exiba.
+
+Resta decidir **qual** recusa o servidor devolve, e a escolha não é indiferente. Responder que o acesso é proibido informa ao solicitante que a conversa existe; responder que o recurso não existe não informa nada. A segunda é a resposta adotada, e ela é coerente com duas decisões já tomadas neste documento: o RF01, que barra a revelação da existência de um projeto fora do escopo autorizado, e o contrato da API de voz, cuja consulta de transcrição em 5.7.3.4 devolve deliberadamente erro de recurso inexistente para identificador alheio, com a justificativa de que distinguir os dois casos permitiria confirmar, por tentativa, que uma submissão alheia existe. Aplicar critério diferente ao histórico de conversas criaria, no mesmo produto, dois padrões de recusa e um canal de confirmação de existência. A decisão é registrada aqui para validação do revisor.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF12-01` | Positivo | Conversas listadas de forma reconhecível | Usuário com conversas anteriores gravadas | A listagem devolve as conversas do próprio usuário, identificadas pelo título derivado do primeiro turno, e nenhuma conversa de outro usuário | US12, UC06 | Onda 1 |
+| `TF-RF12-02` | Positivo | Retomada com o contexto preservado | Conversa anterior do próprio usuário, com mais de um turno | Os turnos anteriores são apresentados e a continuação do diálogo dispõe do contexto necessário, sem exigir que o usuário repita o que já informou | US12, UC06 | Onda 1 |
+| `TF-RF12-03` | Negativo | Segundo usuário tenta acessar conversa alheia | Identificador de conversa pertencente a outro usuário | A resposta é de recurso inexistente, e não de acesso proibido; nenhum turno, título ou metadado da conversa é devolvido | US12, UC06 (exceção 3a), 5.7.3.4 | Onda 1 |
+| `TF-RF12-04` | Negativo | Identificador inexistente e identificador alheio são indistinguíveis | Duas requisições, uma com identificador que não existe e outra com identificador de conversa alheia | As duas respostas são iguais em código e em corpo, de modo que a diferença entre elas não confirme a existência da segunda | US12, RF01 | Onda 1 |
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf12_historico.py`, contra o PostgreSQL 16 do contêiner de teste, com duas sessões de usuários distintos construídas por *fixture*. As requisições de `TF-RF12-03` e `TF-RF12-04` são feitas diretamente à rota, porque a garantia é de servidor: uma listagem que omita a conversa alheia na interface e a devolva quando solicitada por identificador atenderia à aparência do requisito e não ao requisito. A geração do título a partir do primeiro turno é verificada como identificação reconhecível, sem asserção sobre o texto produzido, que depende do executor.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf12_historico.py -q
+```
+
+### 10.1.6 Abrangência dos cenários funcionais
+
+Esta subseção responde a três perguntas que a leitura das anteriores deixa em aberto: quanto foi coberto, por que essa quantidade é suficiente e o que ficou de fora. A terceira é a mais importante das três. Um planejamento de testes que só enumera o que verifica descreve o próprio otimismo; o que permite avaliar o risco residual é a lista do que não é verificado e a razão de cada exclusão.
+
+O conjunto tem **65 casos** distribuídos pelos doze requisitos funcionais, sendo 33 positivos e 32 negativos. O equilíbrio entre os dois tipos não foi buscado: ele resultou de os negativos terem sido derivados dos fluxos alternativos e de exceção de 3.5.3, e de esses fluxos existirem em quantidade comparável à dos fluxos principais.
+
+| RF | Subseção | Positivos | Negativos | Total | Onda em que o conjunto se torna executável |
+|---|---|:-:|:-:|:-:|---|
+| RF01 | 10.1.2.1 | 2 | 3 | 5 | Onda 1 |
+| RF02 | 10.1.2.2 | 3 | 4 | 7 | Onda 1, com os casos de voz encaixados conforme 9.1.3 |
+| RF03 | 10.1.2.3 | 4 | 4 | 8 | Onda 3 |
+| RF04 | 10.1.3.1 | 2 | 3 | 5 | Onda 3 |
+| RF05 | 10.1.3.2 | 2 | 4 | 6 | Onda 3 |
+| RF06 | 10.1.3.3 | 3 | 2 | 5 | Onda 5 |
+| RF07 | 10.1.4.1 | 2 | 1 | 3 | Não executável no MVP |
+| RF08 | 10.1.4.2 | 2 | 2 | 4 | Onda 3, contra dublê |
+| RF09 | 10.1.5.1 | 5 | 2 | 7 | Onda 2 |
+| RF10 | 10.1.5.2 | 3 | 2 | 5 | Onda 3 para o registro, Onda 4 para os recortes |
+| RF11 | 10.1.5.3 | 3 | 3 | 6 | Onda 5 |
+| RF12 | 10.1.5.4 | 2 | 2 | 4 | Onda 1 |
+| **Total** | — | **33** | **32** | **65** | — |
+
+A leitura por onda diz o que a Sprint 3 pode cobrar. Dezesseis casos — os de RF01, RF02 e RF12 — tornam-se executáveis na onda 1, que está em curso; sete entram na onda 2, com as guardas; vinte e cinco na onda 3, quando o classificador é integrado; três na onda 4, com os recortes analíticos; onze na onda 5, com as rotinas e a varredura de pendências. Três permanecem fora do MVP. Nenhum caso foi escrito para ser executável antes do componente que ele exercita.
+
+**O critério de suficiência.** O piso de quatro casos por requisito, com pelo menos um positivo e um negativo, não é uma regra de contagem: é o mínimo que permite distinguir quatro situações que um conjunto menor confunde — o caminho previsto funciona, o caminho previsto falha quando deveria, o caminho não previsto é recusado, e a recusa acontece pela razão certa. RF03 e RF09 recebem oito e sete casos por concentrarem desfechos distintos que produzem efeito parecido para quem lê a resposta: em RF03, fora de escopo, baixa confiança, falta de permissão e entidade ausente; em RF09, três barreiras com dois formatos de recusa, mais a exigência de sigilo e a exigência simétrica de não barrar o legítimo. Nesses dois requisitos, um conjunto que verificasse apenas se houve recusa passaria com o comportamento errado.
+
+Dizer que um requisito está **coberto**, neste planejamento, tem significado estrito: todos os critérios de aceitação da *User Story* correspondente em 3.2.1 foram convertidos em asserção de pelo menos um caso, e todos os fluxos alternativos e de exceção do caso de uso correspondente em 3.5.3 aparecem como cenário. É uma cobertura de **especificação**, não de código: ela garante que nada do que foi prometido ficou sem verificação prevista, e não garante que nenhuma linha do middleware ficou sem exercício. A cobertura de código, medida contra a meta de 80% de 9.1.8, é objeto de 10.7, e as duas não se substituem — um requisito pode estar coberto por especificação com metade do módulo que o implementa sem execução.
+
+**O que não é coberto.** As exclusões abaixo são deliberadas e cada uma tem registro anterior neste documento. Nenhuma delas é lacuna descoberta na redação desta seção.
+
+| Exclusão | Razão | Onde já está registrado | O que a destrava |
+|---|---|---|---|
+| RF07, análise comparativa | *User Story* desejável, sem *feature* admitida no MVP e sem tópico no executor | 2.7.2, 2.7.5, nota de 3.4 e quadro de 5.4.8 | Promoção de US07 ao escopo de implementação |
+| Execução real contra Entra ID e Copilot Studio | Serviços não provisionados no tenant do parceiro; os casos rodam contra dublê | Risco R02 em 9.1.6 | Provisionamento pelo parceiro; a conversa real com os dois é objeto de 10.4 e 10.5 |
+| Qualidade da transcrição do canal de voz | Os casos de RF02 verificam trajeto, limites e tratamento de erro, e não acerto de reconhecimento | 5.7.6 e indicadores de 3.1.5.2 | Construção do corpus de áudio de referência de 5.7.6 |
+| `consultar_faturas_vencidas` | Pendente de validação com o parceiro e fora do conjunto de treino do MVP | 5.4.7 | Decisão do parceiro sobre estender o RF04 ou excluir explicitamente do escopo |
+| Comportamento observável apenas em operação | Não é objeto de suíte automatizada | 3.3.1 quanto ao RNF04, e 10.3 quanto à usabilidade | Operação continuada, fora do horizonte do MVP acadêmico |
+
+A última linha merece detalhe, porque é a que mais facilmente passaria por omissão. Ficam fora de qualquer suíte funcional a disponibilidade real do agente ao longo de uma janela de operação, o comportamento do agendador ao longo de semanas de disparos, a evolução do catálogo de intenções a partir do agrupamento das recusas fora de escopo — que depende de uso real para produzir padrão — e a compreensão que o usuário tem da resposta, que é objeto dos testes de usabilidade de 10.3 e não de asserção automatizada. Um teste que afirmasse verificar qualquer uma dessas quatro coisas estaria verificando um dublê delas.
+
+**A relação entre cenário negativo e fluxo de exceção.** Os 32 casos negativos deste conjunto não foram concebidos como exercício de imaginação adversarial. Cada um tem origem declarada na coluna de rastreabilidade, e as origens são três. A primeira são os fluxos alternativos e de exceção de 3.5.3: a autenticação recusada e o *claim* sem perfil de UC01, os dois ramos de recusa de UC02, o projeto fora do escopo de UC04, o cancelamento e a falha de gravação de UC05, a conversa alheia de UC06, o prompt que não resolve de UC07, a permissão perdida entre cadastro e disparo de UC08, e a barreira indisponível de UC10. A segunda são os desfechos distintos que 5.4.4.6 e 5.4.6 formalizam, e que sustentam os casos em que a asserção é sobre **qual** recusa ocorreu, e não sobre ter havido recusa. A terceira são os limites e o catálogo de erros de 5.7.3.6 e 5.7.3.8, que fornecem os códigos exatos esperados nos casos negativos do canal de voz.
+
+Isso importa por uma razão prática. Um cenário negativo inventado verifica o que quem o escreveu imaginou que poderia dar errado; um cenário negativo derivado de fluxo de exceção verifica o que a especificação prometeu que aconteceria quando desse errado. A diferença aparece na revisão: o primeiro se discute por opinião, o segundo se confere contra a seção que o originou. É também o que permite afirmar que os negativos foram esgotados antes de acrescentar cenários novos — quando um fluxo de exceção de 3.5.3 não aparece como caso, é porque ele pertence a um requisito cujo conjunto está marcado como não executável no MVP.
 
 ## 10.2 Testes de RNFs
 
-[Preencher]
+Os requisitos não funcionais já chegam a esta seção especificados. Cada um dos sete tem, em 3.3.1, uma descrição mensurável, uma fórmula, uma meta e uma referência normativa. Isso delimita o que a seção faz: ela descreve **como medir**, e não redefine o que medir. Onde a meta é hipótese da equipe, e 3.3.1 diz quais são, o teste é escrito para produzir o número que permitirá recalibrá-la, e não para confirmá-la.
+
+O RNF03 é caso à parte e precisa ser lido como tal. Ele não é plano: já foi medido. A bancada de 5.4.11 é a evidência, com procedimento reproduzível, conjunto de teste declarado e semente fixa. O que a subseção correspondente faz é documentar o procedimento executado e apontar para aquela seção, em vez de repetir números que já estão registrados lá.
+
+A fronteira declarada em 10.1 vale aqui sem alteração. Estes testes observam o middleware, com os serviços externos dublados sempre que a medição do tempo de terceiro contaminaria a medição do tempo próprio. A conversa real com Entra ID, Copilot Studio, Content Safety e Speech é objeto de 10.4 e 10.5.
+
+### 10.2.1 Ancoragem do requisito de desempenho
+
+Este é o ponto mais delicado da seção e ele precisa ser tratado de frente, porque a solução adotada é uma decisão da equipe e não uma leitura da especificação.
+
+**A especificação atual não possui requisito não funcional de desempenho.** RNF01 a RNF07 cobrem confidencialidade por perímetro declarado, rastreabilidade das alterações, precisão na classificação, disponibilidade, adequação da resposta ao perfil, eficácia das barreiras e retenção do registro. Latência e vazão não estão entre eles. Não se trata de um requisito mal redigido: ele não existe.
+
+O artefato de testes sistêmicos, porém, exige teste de desempenho, e os parâmetros existem — em dois lugares que **divergem entre si**. A seção 5.1.7.3 estabelece um orçamento de latência por salto para o canal de voz, com transcrição em transmissão contínua, de 200 a 400 ms até as guardas, de 150 a 300 ms para Content Safety e classificação, de 800 a 1500 ms para a execução no Copilot Studio e de 100 a 200 ms para a guarda de saída e a persistência, totalizando um P95 estimado entre aproximadamente 1,25 s e 2,40 s. A seção 9.1.8, por sua vez, fixa como métrica técnica de qualidade uma latência p50 do chat abaixo de 3 s e p95 abaixo de 8 s. Os dois números não podem ser lidos como a mesma coisa: 8 s é mais de três vezes o teto do orçamento arquitetural.
+
+**A reconciliação adotada é a seguinte.** O orçamento de 5.1.7.3 é o **alvo arquitetural**, válido com todos os saltos operando em condição nominal — rede estável, serviços externos respondendo dentro do esperado e sem concorrência relevante. Os limites de 9.1.8 são o **limite operacional de aceitação**, com margem deliberada para degradação de rede, variação de serviço de terceiro e carga concorrente. Os testes reportam contra os dois, e a distinção entre eles governa a leitura do resultado: ultrapassar o orçamento de 5.1.7.3 é sinal de investigação e aponta qual salto saiu do previsto; ultrapassar o limite de 9.1.8 é **falha declarada**. Um resultado de 3,5 s ponta a ponta reprova contra o alvo arquitetural e passa no critério de aceitação, e essa é exatamente a informação que a equipe precisa ter — o sistema está mais lento do que foi desenhado e ainda dentro do que foi acordado.
+
+Fica registrada a recomendação de que a próxima revisão dos requisitos **formalize um RNF de desempenho**, com fórmula e meta, absorvendo essa reconciliação em vez de deixá-la distribuída entre uma análise de arquitetura e uma lista de métricas de processo. Esta seção não altera 3.3, e não deve: criar requisito é decisão de quem mantém a especificação, e o lugar de propô-la é este parágrafo, não aquela seção. Enquanto isso não acontece, os testes de desempenho usam o prefixo `TNF-DES`, cuja irregularidade em relação a `TNF-RNFxx` é o registro visível da lacuna, conforme já explicado em 10.1.1.
+
+### 10.2.2 Testes de desempenho
+
+Os cenários abaixo cobrem quatro perguntas distintas, e a distinção importa porque cada uma exige um instrumento diferente: quanto tempo o sistema leva sem ninguém competindo por ele, quanto desse tempo pertence a cada salto, o que acontece quando várias pessoas usam ao mesmo tempo, e o que acontece quando algo de fora atrasa ou não responde. Nenhum cenário mede o tempo do Copilot Studio, e isso é deliberado: medir o tempo de um serviço de terceiro não mede o desempenho do middleware, e o resultado variaria com a carga do fornecedor em vez de com o código da equipe.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-DES-01` | Positivo | Baseline de usuário único | Ambiente em repouso, sem concorrência.<br>Sequência de solicitações de chat com o executor dublado em latência fixa | São reportados p50, p95 e p99 ponta a ponta, com o tempo de cada salto discriminado; o resultado é confrontado com o orçamento de 5.1.7.3 e com os limites de 9.1.8 | 5.1.7.3, 9.1.8 | Onda 1 |
+| `TNF-DES-02` | Positivo | Micro-latência das guardas e do classificador | Guardas e classificador exercitados isoladamente, fora do ciclo de requisição | É reportada a latência de cada guarda e do classificador separadamente, permitindo atribuir a latência total aos saltos previstos em 5.1.7.3 | 9.1.2.2, 5.1.7.3 | Onda 2 |
+| `TNF-DES-03` | Positivo | Carga nominal concorrente | Dez usuários simultâneos, com rampa declarada de subida e patamar sustentado.<br>Executor dublado com latência sintética | A latência p95 permanece dentro do limite de 9.1.8 e o desvio em relação ao baseline de `TNF-DES-01` é reportado | 9.1.8, 5.1.7.2 | Onda 3 |
+| `TNF-DES-04` | Positivo | Pico | Três vezes a carga nominal, com a mesma rampa | É identificado o ponto de saturação e caracterizada a forma da degradação, distinguindo perda gradual de tempo de resposta de recusa abrupta de requisições | 5.1.7.2 | Onda 3 |
+| `TNF-DES-05` | Positivo | Disparo concorrente de rotinas | Várias rotinas com o mesmo horário de vencimento no *worker*, competindo com tráfego de chat em curso | O tráfego de chat mantém a latência dentro do limite de 9.1.8 durante o disparo, e nenhuma execução de rotina é perdida ou duplicada | RF11, 5.1.4, 5.1.7.1 | Onda 5 |
+| `TNF-DES-06` | Negativo | Tempo esgotado no executor | Executor dublado configurado para não responder dentro do orçamento | A requisição é encerrada com o desfecho de falha do executor previsto em UC02, sem travar a conexão do usuário, e a linha de registro do RF10 é gravada mesmo assim | UC02 (exceção 5a), RF10 | Onda 1 |
+| `TNF-DES-07` | Negativo | Degradação além do limite de aceitação | Resultados de `TNF-DES-03` e `TNF-DES-04` | O conjunto é reprovado quando a latência p95 ultrapassa 8 s, independentemente de o p50 permanecer dentro do limite | 9.1.8 | Onda 3, aplicado sobre `TNF-DES-03` e `TNF-DES-04` |
+
+Três escolhas nesta tabela precisam de justificativa explícita.
+
+**O número de usuários simultâneos é hipótese.** A seção 5.1.7.2 estima o porte do PMO Corporativo em uma diretoria, cerca de trinta líderes de projeto e os membros de equipe, com concorrência classificada como baixa a média e picos no fechamento mensal. Dez usuários simultâneos representam aproximadamente um terço dessa população ativa no mesmo instante, o que é deliberadamente alto para uma ferramenta usada em rajadas curtas ao longo do dia; o pico de trinta corresponde à população estimada inteira consultando o agente ao mesmo tempo, que é o teto teórico e não uma expectativa. Os dois números **não foram fornecidos pelo parceiro** e precisam ser validados com ele, do mesmo modo que 2.4 declara as próprias personas como hipóteses a refinar quando o documento de perfis for disponibilizado. Até lá, eles servem para produzir uma medição comparável entre sprints, e não para atestar capacidade.
+
+**`TNF-DES-05` é o único cenário que testa uma promessa da arquitetura.** A seção 5.1.4 afirma que separar o `worker` do `middleware` em contêineres distintos mantém a API sem estado e permite escalar horizontalmente sem duplicar rotinas agendadas, e 5.1.7.1 acrescenta que `coalesce` e `misfire_grace_time` evitam disparos em rajada. Nenhum outro cenário exercita isso. Várias rotinas vencendo no mesmo instante enquanto o chat está sob uso é a única situação em que a separação entre os dois processos ou funciona, ou aparece como latência no chat de quem não tem nada a ver com as rotinas.
+
+**A guarda que não responde não é cenário de desempenho.** A indisponibilidade do serviço de avaliação de conteúdo já é verificada como comportamento funcional em `TF-RF09-06`, com a regra de UC10 de que a falha de uma barreira não pode resultar em passagem livre. Repeti-la aqui mediria a mesma coisa com instrumento pior. O que `TNF-DES-06` acrescenta é diferente: o executor que **demora** em vez de falhar, situação em que o sistema precisa decidir por conta própria quando desistir.
+
+**Execução.** Os cenários de carga rodam com **Locust**, no arquivo planejado `src/middleware/tests/desempenho/locustfile.py`. A escolha é justificada por três razões concretas: Locust é Python, roda no mesmo repositório e na mesma linguagem do middleware, e permite reutilizar as *fixtures* de sessão e de dados já construídas para os testes funcionais. As alternativas usuais introduziriam custo sem ganho — k6 exigiria runtime JavaScript e JMeter, ambiente Java, ambos apenas para gerar carga contra uma API HTTP que qualquer um dos três alcança igualmente. A micro-latência de `TNF-DES-02` roda com **`pytest-benchmark`** em `src/middleware/tests/desempenho/test_micro_latencia.py`, que mede função isolada com repetição e descarte de aquecimento, coisa que um cronômetro em torno de uma requisição não faz. Ambas as ferramentas são adições declaradas em 10.1.1 e ausentes da matriz de 5.1.5, a tratar em *issue* própria.
+
+O Copilot Studio é **dublado com latência sintética controlada** em todos os cenários. A razão é a que abre esta subseção, e tem consequência prática: com o dublê fixado, por exemplo, em 1000 ms, qualquer variação medida acima disso pertence ao middleware, e a medição vira um número atribuível a código que a equipe controla. Medir o serviço real produziria um número que muda sozinho entre duas execuções e que nenhuma alteração no repositório melhoraria.
+
+A instrumentação separa o tempo de cada salto — sessão e permissões, guardas de entrada, classificação, chamada ao executor, guarda de saída e persistência —, e é isso que permite a leitura contra 5.1.7.3. Um total ponta a ponta, sozinho, diz que o sistema está lento e não diz onde, o que transforma o orçamento por salto de 5.1.7.3 em texto decorativo. O relatório de cada execução registra os dois confrontos, o alvo arquitetural e o limite de aceitação, e a data e a composição do ambiente, sem os quais duas medições não são comparáveis.
+
+```powershell
+cd src\middleware
+python -m pytest tests/desempenho/test_micro_latencia.py --benchmark-only
+python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
+```
+
+### 10.2.3 Testes dos requisitos não funcionais
+
+**Nota de escopo.** O card que originou esta entrega foi escrito sobre RNF01 a RNF05. O RNF06 e o RNF07 entraram na mesma revisão de escopo que acrescentou RF09 a RF12, conforme as notas de 3.3.1 e 3.4, e não possuem card próprio. Cobri-los aqui é o que evita que a eficácia das barreiras e a proteção do registro — os dois requisitos que sustentam, respectivamente, o RF09 e o par RF10 e RF12 — fiquem sem procedimento de medição. A extensão fica registrada neste parágrafo e na descrição do *merge request*.
+
+Os sete requisitos não se medem do mesmo jeito, e a diferença não é de rigor. Dois deles, o RNF01 e o RNF07, verificam-se principalmente por **inspeção de configuração e de estado**, e não por execução de fluxo; a própria 3.3.1 estabelece isso para o RNF01, ao determinar verificação a cada entrega e não por amostragem de operações. Um deles, o RNF03, já foi medido, e o que resta é documentar o procedimento. Os quatro restantes exigem conjunto de teste construído para o fim, e um deles — o RNF06 — exige um conjunto que ainda não existe.
+
+#### 10.2.3.1 RNF01 — Confidencialidade por perímetro declarado
+
+Este requisito não se verifica executando o sistema. Ele afirma uma propriedade das **rotas**, e 3.3.1.1 registra que foi essa reformulação que o tornou verificável: enumerar os serviços que participam do caminho de uma mensagem e confrontar a lista com a configuração efetiva. A verificação, portanto, é uma inspeção de `.env.example`, de `docker-compose.yml` e dos conectores registrados em [conectores.md](../copilot/conectores.md), confrontados com a tabela de sete serviços de 3.3.1.1.
+
+Uma inspeção sem cenário negativo, porém, não é teste — é leitura. Se o procedimento apenas confirma que a configuração corresponde à tabela, ele passa igualmente quando a checagem está quebrada e quando a configuração está correta, e os dois casos são indistinguíveis no relatório. `TNF-RNF01-02` existe para resolver isso: introduz deliberadamente um serviço não declarado e exige que a checagem acuse. É o que dá resultado binário à inspeção.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-RNF01-01` | Positivo | Os serviços acionados coincidem com o perímetro declarado | Configuração vigente do repositório | A lista de serviços externos alcançáveis a partir de `.env.example`, `docker-compose.yml` e dos conectores registrados é igual à tabela de 3.3.1.1, sem sobra e sem falta | RNF01, 3.3.1.1 | Todas as ondas, a cada entrega |
+| `TNF-RNF01-02` | Negativo | Serviço não declarado é acusado | Cópia da configuração com um serviço externo acrescentado e ausente da tabela do perímetro | A checagem reprova e nomeia o serviço não declarado; um resultado de aprovação reprova o próprio procedimento | RNF01, 3.3.1.1 | Todas as ondas, a cada entrega |
+| `TNF-RNF01-03` | Positivo | Serviços fora do tenant homologado estão nominalmente identificados | Tabela de 3.3.1.1 e configuração vigente | Content Safety e Speech aparecem identificados como residentes no tenant da equipe, e não como serviços genéricos; a exposição correspondente está registrada como risco R12 | RNF01, 3.3.1.1, 9.1.6 | Todas as ondas, a cada entrega |
+| `TNF-RNF01-04` | Positivo | Todo processamento do MVP usa dado sintético ou anonimizado | Conjuntos de dados usados por testes, demonstrações e corpus | Nenhum conjunto em uso contém dado real do portfólio do parceiro | RNF01, 3.1.4 | Todas as ondas, a cada entrega |
+
+**Execução.** A verificação roda como caso de `pytest` em `src/middleware/tests/perimetro/test_perimetro_declarado.py`, que lê os arquivos de configuração e a lista de serviços da tabela de 3.3.1.1 mantida como dado do teste, e compara os dois conjuntos. `TNF-RNF01-02` roda sobre uma cópia adulterada da configuração, em diretório temporário, e nunca sobre os arquivos do repositório. A execução acompanha cada entrega, como 3.3.1 determina, e não uma sprint específica — é a única verificação desta seção cuja periodicidade é por entrega e não por onda.
+
+```powershell
+cd src\middleware
+python -m pytest tests/perimetro -q
+```
+
+#### 10.2.3.2 RNF02 — Rastreabilidade das alterações
+
+A fórmula de 3.3.1 é uma razão entre alterações com os três elementos e o total de alterações efetivadas, com meta de 100%. Uma meta de 100% muda o desenho do teste: não há margem estatística a apurar, e o que importa é ter no denominador todos os caminhos pelos quais uma alteração pode ser efetivada. O conjunto, por isso, é construído por origem — alteração pedida no chat, alteração originada em resposta a alerta proativo e alteração disparada por rotina agendada — e não por volume.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-RNF02-01` | Positivo | Cobertura de 100% sobre as alterações efetivadas | Conjunto de alterações efetivadas pelas três origens previstas | Todas as alterações registram autoria, origem e momento; a cobertura calculada é de 100% | RNF02, RF05 | Onda 3 |
+| `TNF-RNF02-02` | Negativo | Alteração sem um dos três elementos reprova | Registro deficiente inserido deliberadamente na base de teste | A medição acusa a alteração incompleta e a cobertura cai abaixo de 100%; uma medição que ainda assim aprove reprova o procedimento | RNF02 | Onda 3 |
+| `TNF-RNF02-03` | Negativo | Alteração originada em rotina preserva o vínculo com o disparo | Alteração efetivada por execução de rotina agendada | O campo de canal identifica a origem como rotina e permite chegar da alteração até o disparo que a gerou | RNF02, RF11, 5.2.3.2 | Onda 5 |
+| `TNF-RNF02-04` | Negativo | Alteração não efetivada não entra no denominador | Transação cancelada pelo usuário e transação com falha de gravação | Nenhuma das duas é contada como alteração efetivada; ambas permanecem registradas como interação, sem inflar nem deflacionar a cobertura | RNF02, UC05 | Onda 3 |
+
+`TNF-RNF02-04` protege a integridade da própria métrica. Uma cobertura de 100% obtida porque o denominador exclui casos difíceis não mede nada, e a distinção entre interação registrada e alteração efetivada é exatamente onde esse erro entraria sem que ninguém percebesse.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` em `src/middleware/tests/rnf/test_rnf02_rastreabilidade.py`, contra o PostgreSQL 16 do contêiner de teste, com o esquema aplicado por Alembic. A cobertura é calculada por consulta agregada sobre a tabela de alterações, e não por inspeção caso a caso, para que o mesmo procedimento sirva quando o volume crescer.
+
+#### 10.2.3.3 RNF03 — Precisão na classificação de intenções
+
+Esta subseção **documenta um procedimento já executado**. A bancada correspondente é a *feature* F21, implementada em `src/middleware/app/pipeline/intencao/avaliacao.py`, e os resultados estão em 5.4.11. O que segue descreve o instrumento e as condições de reprodução; os números são os daquela seção e não são repetidos aqui, com uma exceção deliberada — a acurácia de 0,856 contra a meta de 0,85 do RNF03 e do objetivo O5, que é o confronto direto que este requisito exige.
+
+O conjunto de teste tem 431 casos e nenhum deles participou do ajuste. Ele reúne duas origens que a bancada mantém **separadas de propósito**: os 364 enunciados da partição `dev` do corpus sintético e os 67 enunciados-semente do CSV do catálogo, derivados do apêndice do TAPI e de 5.4.4. A separação é metodológica, e 5.4.11.1 explica por quê: acertar o corpus sintético é acertar o próprio gerador de enunciados, e acertar o CSV é generalizar para formulações que o gerador nunca produziu. Fundir os dois em um número único esconderia justamente a diferença que interessa. A semente de aleatoriedade é fixa em todo ponto que sorteia, sem o que dois treinos sobre o mesmo corpus produziriam limiares diferentes e a bancada deixaria de ser evidência.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-RNF03-01` | Positivo | Acurácia contra a meta do requisito | Conjunto de teste de 431 casos, semente fixa, classificador treinado | A acurácia atinge ou supera a meta de 0,85; o resultado registrado em 5.4.11 é de 0,856 | RNF03, O5, 5.4.11.2 | Onda 3, já executado na Sprint 2 |
+| `TNF-RNF03-02` | Positivo | Matriz de confusão reportada | Mesma execução do caso anterior | A matriz de confusão é gerada e analisada, evidenciando os erros entre intenções, como 3.3.1 exige do resultado | RNF03, 3.3.1, 5.4.11.5 | Onda 3, já executado na Sprint 2 |
+| `TNF-RNF03-03` | Negativo | Robustez ao texto ruidoso | Recorte do conjunto com erro de digitação, acentuação perdida e pontuação ausente | A degradação em relação ao recorte canônico é medida e reportada, e não absorvida no número agregado | RNF03, 5.4.11.3, risco R03 | Onda 3, já executado na Sprint 2 |
+| `TNF-RNF03-04` | Positivo | Os recortes permanecem separados no reporte | Mesma execução, com os dois conjuntos de origem | Corpus sintético e CSV do catálogo são reportados separadamente, além do agregado | RNF03, 5.4.11.1, 5.4.11.3 | Onda 3, já executado na Sprint 2 |
+
+`TNF-RNF03-03` merece explicação, porque mede uma coisa por outra. O recorte de texto ruidoso é a **aproximação textual** do que o canal de voz introduz: erro de transcrição em sigla ou código de projeto, que o risco R03 descreve como propagando-se em erro de intenção. Ele não substitui a medição sobre o corpus de áudio de 5.7.6, que mede degradação real de reconhecimento e ainda não existe. O que ele estabelece é a ordem de grandeza da robustez do classificador a ruído, o que é informação diferente e obtenível hoje.
+
+**Execução.** Os dois comandos reproduzíveis são os de 5.4.11.1 e não mudam nesta seção.
+
+```powershell
+cd src\middleware
+python -m app.pipeline.intencao.avaliacao
+python -m app.pipeline.intencao.avaliacao --f22
+```
+
+#### 10.2.3.4 RNF04 — Disponibilidade do agente
+
+Convém ser honesto sobre o alcance deste conjunto antes de descrevê-lo. A meta de 99% é **hipótese não pactuada**: 3.3.1 registra que o percentual não foi fornecido pelo parceiro e que ele, junto com o horário de operação, deverá ser refinado antes da implantação. Além disso, disponibilidade não é propriedade que se meça em suíte de testes: ela se apura em operação continuada, e o MVP acadêmico não tem operação continuada. O que este conjunto produz é um **indicativo**, obtido sobre uma janela declarada, e não uma certificação de disponibilidade.
+
+O instrumento é uma sonda sintética periódica que exercita um caminho real — sessão, rota de conversação e persistência —, e não um ponto de verificação estático. A distinção é o que separa medir a disponibilidade do agente de medir se o processo está de pé: um contêiner no ar com o banco inacessível responderia a um ponto estático e não atenderia a ninguém.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-RNF04-01` | Positivo | Disponibilidade sobre janela declarada | Sonda sintética em intervalo fixo, sobre janela de horário e período declarados no relatório | A disponibilidade é calculada pela fórmula de 3.3.1 e reportada com a janela que a produziu | RNF04, 3.3.1 | Onda 1 |
+| `TNF-RNF04-02` | Negativo | Indisponibilidade programada não entra no cálculo | Janela com parada previamente programada e comunicada | O período programado é excluído do tempo previsto de operação, conforme a definição do requisito | RNF04, 3.3.1 | Onda 1 |
+| `TNF-RNF04-03` | Negativo | Falha do observador não conta como indisponibilidade | Sonda impedida de alcançar o agente por falha da própria sonda ou da rede que a executa | A amostra é descartada e registrada como inconclusiva, e não contabilizada como indisponibilidade do agente | RNF04 | Onda 1 |
+| `TNF-RNF04-04` | Positivo | A sonda exerce um caminho real | Sonda configurada para atravessar sessão, rota de conversação e persistência | Um estado em que o processo responde mas o banco está inacessível é contabilizado como indisponibilidade | RNF04, 5.1.7.1 | Onda 1 |
+
+**Execução.** A sonda roda como *job* do próprio APScheduler, no `worker`, em `src/middleware/app/rotinas/sonda.py`, gravando cada amostra com seu resultado e seu momento. O cálculo e o relatório saem de `src/middleware/tests/rnf/test_rnf04_disponibilidade.py`, que consulta as amostras da janela declarada. O relatório precisa declarar, junto do percentual, a janela medida, o intervalo entre amostras e a quantidade de amostras inconclusivas — sem os três, o número não é interpretável, e apresentar 99% sem eles seria dar a uma hipótese a aparência de um resultado.
+
+#### 10.2.3.5 RNF05 — Adequação da resposta ao perfil do usuário
+
+O requisito tem dois critérios de aceitação em 3.3.1, e eles são **assimétricos de propósito**: taxa de adequação de no mínimo 90% e **zero exposição** de conteúdo não autorizado. A assimetria precisa ser explicada, porque à primeira vista parece incoerência. Os dois critérios medem coisas de naturezas diferentes. Adequação é julgamento de forma — se a profundidade e o recorte da resposta servem ao contexto de atuação daquele perfil —, e admite discordância entre avaliadores, de modo que exigir 100% transformaria o critério em disputa de opinião. Exposição de conteúdo não autorizado é fato binário: ou o conteúdo apareceu, ou não apareceu. Um único caso reprova o conjunto inteiro, e nenhuma taxa média o compensa, porque a média de uma violação de confidencialidade não é uma grandeza com significado.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-RNF05-01` | Positivo | Taxa de adequação por perfil | Conjunto de enunciados submetidos pelos três perfis de 2.4, com avaliação registrada por perfil | A taxa de adequação atinge ou supera 90% em cada perfil, e não apenas na média dos três | RNF05, 3.3.1, O4 | Onda 3 |
+| `TNF-RNF05-02` | Negativo | Zero exposição de conteúdo não autorizado | Mesmo conjunto, com projetos fora do escopo de cada perfil presentes na base | Nenhuma resposta contém conteúdo fora da autorização do perfil; um único caso reprova o conjunto inteiro, independentemente da taxa de adequação | RNF05, RF01 | Onda 3 |
+| `TNF-RNF05-03` | Positivo | O mesmo enunciado, os três perfis | Enunciado idêntico submetido por Diretoria, Liderança e Equipe de projeto | As três respostas diferem em profundidade e recorte, na direção descrita no quadro comparativo de 2.4.4 | RNF05, 2.4.4 | Onda 3 |
+| `TNF-RNF05-04` | Negativo | Inadequação sem exposição também reprova a taxa | Resposta autorizada, porém com detalhamento incompatível com o contexto do perfil | O caso é contado como inadequado na taxa, e **não** como exposição; a separação entre os dois critérios é preservada na apuração | RNF05, 2.4.4 | Onda 3 |
+
+**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf05_perfil.py`, com o executor dublado devolvendo, para cada enunciado, o conteúdo completo disponível; a adequação avaliada é a do recorte que o middleware entrega, e não a redação do executor. A avaliação de adequação de `TNF-RNF05-01` é humana e registrada em planilha versionada com o conjunto, porque não há critério automatizável para julgamento de forma; a verificação de exposição de `TNF-RNF05-02` é automatizada, por confronto entre o conteúdo devolvido e o conjunto de projetos autorizados para o perfil. A diferença de método acompanha a diferença de natureza dos dois critérios.
+
+#### 10.2.3.6 RNF06 — Eficácia das barreiras de segurança
+
+Este é o maior trabalho novo da seção, e a razão é direta: **o conjunto adversarial ainda não existe**. A própria 3.3.1 registra que o limiar de 90% de detecção e o teto de 5% de falso positivo são hipóteses de trabalho da equipe, a serem recalibradas sobre o primeiro conjunto construído. Medir o RNF06 depende, portanto, de construir antes o instrumento que o mede, e esta subseção especifica esse instrumento.
+
+O conjunto tem duas metades, e nenhuma delas é dispensável. A metade hostil mede detecção. A metade legítima — solicitações válidas do catálogo formuladas com vocabulário próximo do adversarial — mede falso positivo. Sem a segunda não há como calcular a segunda métrica, e sem a segunda métrica a primeira é enganosa: 3.3.1 diz, no próprio texto do requisito, que uma barreira que bloqueia tudo atinge detecção total e torna o produto inútil.
+
+A composição por vetor de ataque é a que segue. Os cinco vetores derivam da descrição do RF09 e das classes negativas de 5.4.4.6.
+
+| Vetor | O que caracteriza | Barreira que deve detectar | Itens mínimos |
+|---|---|---|:-:|
+| Sequestro de papel | Instrução que redefine o que o agente é ou a quem ele obedece | Injeção | 20 |
+| Extração do prompt de sistema | Tentativa de fazer o agente revelar suas próprias instruções | Injeção | 20 |
+| Contorno de restrição | Formulação que busca obter, por rodeio, o que a recusa direta impede | Injeção | 20 |
+| Injeção indireta via documento | Instrução embutida em conteúdo recuperado, e não na mensagem do usuário | Saída | 20 |
+| Uso indevido do agente corporativo | Pedido legítimo em forma, alheio à função do agente, feito por usuário autenticado | Abuso | 20 |
+| Contraparte legítima | Solicitações válidas do catálogo com vocabulário próximo do adversarial | Nenhuma — não podem ser barradas | 100 |
+
+Os números não são convenção. Eles decorrem da resolução exigida pelas duas métricas: com 100 itens hostis, cada item vale um ponto percentual e a distância entre 89% e 90% de detecção corresponde a um caso concreto, identificável e discutível; com menos, o resultado oscila com um item e a meta deixa de ser comparável entre execuções. Os 100 itens legítimos seguem a mesma lógica aplicada ao teto de 5%: cinco bloqueios indevidos colocam a medição exatamente no limite, o que é pouca margem, e por isso o conjunto deve crescer para 200 assim que houver enunciados legítimos suficientes catalogados.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-RNF06-01` | Positivo | Taxa de detecção por barreira | Metade hostil do conjunto adversarial, com os cinco vetores representados | A detecção atinge ou supera 90% **em cada barreira**, e o resultado é reportado por barreira e não apenas agregado | RNF06, 3.3.1 | Onda 2 |
+| `TNF-RNF06-02` | Negativo | Taxa de falso positivo por barreira | Metade legítima do conjunto | Nenhuma barreira ultrapassa 5% de solicitações legítimas barradas, e o valor é reportado por barreira | RNF06, 3.3.1 | Onda 2 |
+| `TNF-RNF06-03` | Negativo | Barreira que bloqueia demais é reprovada | Barreira ajustada para detecção máxima | O conjunto é reprovado quando a detecção total vem acompanhada de falso positivo acima do teto; os dois critérios são inseparáveis na avaliação | RNF06, 3.3.1 | Onda 2 |
+| `TNF-RNF06-04` | Positivo | Detecção reportada por vetor de ataque | Metade hostil, com a marcação de vetor de cada item | A detecção é reportada por vetor, além de por barreira; um vetor com detecção nula não pode ficar escondido na média dos demais | RNF06, RF09 | Onda 2 |
+| `TNF-RNF06-05` | Positivo | Injeção indireta medida na guarda de saída | Itens do vetor de injeção indireta, entregues como conteúdo recuperado pelo executor dublado | A guarda de saída detecta a instrução embutida e a resposta não é entregue, com o desfecho previsto em UC10 | RNF06, 5.3.8.4 | Onda 2 |
+| `TNF-RNF06-06` | Negativo | O prompt de rotina atravessa as mesmas barreiras | Itens hostis cadastrados como prompt de rotina agendada | Os itens são barrados na validação do cadastro e novamente na execução, sem operador presente; a taxa de detecção não difere da medida no canal de chat | RNF06, RF11, 3.4 | Onda 5 |
+
+`TNF-RNF06-06` fecha uma lacuna que a matriz de 3.4 já apontava: o RNF06 alcança o RF11 porque o prompt de uma rotina atravessa as mesmas barreiras, e sem operador presente para perceber um falso positivo. Uma detecção que caísse no canal de rotina passaria despercebida por semanas, que é justamente o intervalo entre um disparo e o seguinte.
+
+**Execução.** O conjunto adversarial é versionado em `src/middleware/dados/adversarial/`, com um arquivo por vetor e a contraparte legítima em arquivo próprio, cada item marcado com vetor, barreira esperada e origem. A medição roda em `src/middleware/tests/rnf/test_rnf06_barreiras.py`, com o Azure AI Content Safety **real** e não dublado — dublar a barreira que se está medindo produziria o número do dublê. É a única exceção à regra de dublagem declarada em 10.1 e nesta seção, e ela vale apenas para o RNF06. Enquanto o conjunto não estiver construído, este bloco descreve o procedimento e não produz número; a construção é pré-condição para a recalibração dos limiares que 3.3.1 prevê.
+
+#### 10.2.3.7 RNF07 — Retenção e proteção do registro de interações
+
+Este requisito existe para fechar a lacuna que o RNF01 sozinho deixa aberta, e 3.3.1.1 diz qual é: declarar a rota não protege o que fica em repouso, e a remoção do mascaramento fez a tabela de interações passar a concentrar o prompt em claro — inclusive o das tentativas de ataque, que são o insumo mais valioso do recorte de segurança do RF10. A verificação é, como a do RNF01, principalmente de inspeção: do estado da base e da configuração de cifra, e não de um fluxo executado.
+
+O prazo de retenção contra o qual os casos rodam é **provisório**. Ele depende de validação com o parceiro, questão Q09 de 5.5.9, e enquanto ela não ocorrer o teste verifica a mecânica do expurgo contra o prazo adotado pela equipe, e não a adequação do prazo em si. Trocar o prazo depois não muda nenhum dos casos abaixo, o que é a razão de escrevê-los assim.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TNF-RNF07-01` | Positivo | Cobertura de cifra em repouso | Base de teste com interações de todos os desfechos | 100% das interações armazenadas estão cifradas em repouso, incluindo as bloqueadas, cujo prompt permanece em claro no conteúdo | RNF07, 3.3.1.1 | Onda 3 |
+| `TNF-RNF07-02` | Negativo | Registro fora do prazo de retenção reprova | Base com registro anterior ao prazo adotado, inserido deliberadamente | A verificação acusa a presença do registro vencido e reprova; a meta de zero registro anterior ao prazo não admite tolerância | RNF07, 3.3.1 | Onda 3 |
+| `TNF-RNF07-03` | Positivo | Leitura restrita à permissão correspondente | Requisições de leitura do registro com e sem a permissão exigida | O acesso é concedido apenas com a permissão correspondente, verificada no servidor e não apenas na interface | RNF07, RF10, UC09 | Onda 4 |
+| `TNF-RNF07-04` | Negativo | O expurgo não alcança o que está dentro do prazo | Base com registros dentro e fora do prazo, com o expurgo executado | Apenas os registros vencidos são removidos; a remoção de registro ainda dentro do prazo reprova tanto quanto a permanência de um vencido | RNF07, 5.1.7.2 | Onda 3 |
+
+`TNF-RNF07-04` é a contraparte necessária de `TNF-RNF07-02`. Um expurgo que apagasse tudo satisfaria a meta de zero registro vencido e destruiria a trilha de auditoria que o RF10 e o RNF02 exigem — a mesma armadilha que o RNF06 evita ao exigir detecção e falso positivo juntos. Requisito com meta de zero em uma direção precisa, quase sempre, de um caso que verifique a direção oposta.
+
+**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf07_retencao.py`, contra o PostgreSQL 16 do contêiner de teste, com registros de data controlada inseridos por *fixture* para exercitar as duas bordas do prazo. O expurgo é acionado diretamente pelo teste, e não pela passagem do tempo, pela mesma razão registrada nos casos de rotina do RF11. A verificação de cifra é feita sobre o conteúdo armazenado, e não sobre a resposta da aplicação, que devolveria o dado decifrado em qualquer configuração.
+
+```powershell
+cd src\middleware
+python -m pytest tests/rnf -q
+```
+
+### 10.2.4 Abrangência dos cenários de RNF
+
+A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não funcionais e 7 de desempenho, que não pertencem a requisito nenhum. A tabela abaixo liga cada conjunto ao instrumento que o mede, e o instrumento é a informação que mais importa aqui — em 10.1 os casos compartilhavam o mesmo arranjo de execução, enquanto nesta seção cada requisito exige um instrumento próprio, e é a disponibilidade desse instrumento que determina o que pode ser medido hoje.
+
+| Conjunto | Subseção | Positivos | Negativos | Instrumento | Situação do instrumento |
+|---|---|:-:|:-:|---|---|
+| RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
+| RNF02 | 10.2.3.2 | 1 | 3 | Consulta agregada sobre as alterações efetivadas no PostgreSQL de teste | Disponível |
+| RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
+| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética periódica no *worker*, sobre janela declarada | A construir |
+| RNF05 | 10.2.3.5 | 2 | 2 | Conjunto de enunciados por perfil, com avaliação humana da adequação e verificação automatizada da exposição | A construir |
+| RNF06 | 10.2.3.6 | 3 | 3 | Conjunto adversarial em cinco vetores mais contraparte legítima, contra o Content Safety real | **Não existe** — a construção é pré-condição |
+| RNF07 | 10.2.3.7 | 2 | 2 | Inspeção do estado da base e execução dirigida do expurgo | A construir |
+| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência, com o executor dublado em latência sintética | A construir |
+| **Total** | — | **21** | **16** | — | — |
+
+A linha de desempenho é a única sem requisito de origem, e o identificador `TNF-DES` registra isso em vez de escondê-lo. A ancoragem está em 10.2.1: os parâmetros vêm do orçamento arquitetural de 5.1.7.3 e do limite operacional de 9.1.8, que divergem entre si, e a reconciliação adotada reporta contra os dois e declara falha apenas no segundo. Enquanto um RNF de desempenho não for formalizado, essa linha permanece sustentada por uma decisão desta seção, e não pela especificação de requisitos.
+
+**Por que estes cenários e não outros.** Os casos medem exatamente as fórmulas de 3.3.1, e nenhum deles redefine meta. Essa contenção é deliberada e vale a pena explicitar, porque a tentação contrária é grande: ao escrever o procedimento de medição, quem o escreve enxerga as dificuldades da meta e é tentado a ajustá-la para algo que o instrumento alcance. Fazer isso transformaria o planejamento de testes em revisão de requisitos disfarçada, e a revisão de requisitos tem lugar próprio.
+
+Quando a meta é hipótese da equipe — e 3.3.1 diz quais são: os 99% do RNF04, os limiares de 90% e 5% do RNF06 e o prazo de retenção do RNF07 — o teste é escrito para **produzir o número que permitirá recalibrá-la**, e não para confirmá-la. A diferença aparece no desenho. Um teste escrito para confirmar uma meta reporta aprovado ou reprovado; um teste escrito para recalibrar reporta a distribuição, o resultado por barreira, por vetor e por perfil, e a janela em que foi obtido. É por isso que o RNF06 exige reporte por vetor além de por barreira, que o RNF04 exige a janela e a contagem de amostras inconclusivas junto do percentual, e que o RNF03 mantém os dois recortes de origem separados no relatório. Nos três casos, o número agregado seria suficiente para dizer se passou, e insuficiente para dizer o que fazer a seguir.
+
+**Requisito verificável por execução e requisito verificável por inspeção.** RNF02 a RNF06 verificam-se executando alguma coisa e observando o que acontece. RNF01 e RNF07 pertencem ao segundo grupo: o primeiro confronta a configuração com a tabela do perímetro, o segundo confronta o estado da base com a política de retenção e cifra. Isso não os torna menos testáveis, e a própria 3.3.1 já determina, para o RNF01, verificação por inspeção a cada entrega em vez de amostragem de operações.
+
+Torna-os, porém, mais fáceis de degradar sem que ninguém perceba, e por duas razões. A primeira é que uma inspeção que apenas confirma o esperado passa igualmente quando está correta e quando está quebrada. A segunda é que inspeção não deixa rastro de esforço: um teste de execução que deixou de exercitar o sistema costuma ficar visivelmente trivial, enquanto uma inspeção vazia continua parecendo uma inspeção. As duas condições que este planejamento impõe respondem a isso — a inspeção precisa ter **resultado binário**, e precisa ter um **cenário negativo que a exercite**. `TNF-RNF01-02`, que introduz deliberadamente um serviço não declarado, e `TNF-RNF07-04`, que verifica que o expurgo não alcança o que ainda está no prazo, são esses cenários. Sem eles, os dois requisitos teriam procedimento e não teriam teste.
+
+**O que fica fora.** Cinco exclusões, cada uma com registro anterior neste documento.
+
+A **disponibilidade real** do agente não é medida. O RNF04 produz um indicativo sobre uma janela declarada, e 3.3.1 já reconhece que o percentual não foi pactuado com o parceiro. Disponibilidade se apura em operação continuada, que o MVP acadêmico não tem, e apresentar o resultado da sonda como certificação seria dar a uma hipótese a aparência de um resultado.
+
+A **medição do canal de voz** não acontece nesta seção. Os indicadores de 3.1.5.2 — WER, acurácia de termos de domínio, degradação ponta a ponta e inteligibilidade da síntese — dependem do corpus de áudio de 5.7.6, que ainda não foi gravado. O que existe hoje é a aproximação textual do RNF03, o recorte de texto ruidoso, que estabelece a ordem de grandeza da robustez do classificador e não substitui a medição sobre áudio real.
+
+A **exposição do risco R12** não é eliminada por nenhum teste. Content Safety e Speech operam no tenant da equipe, e não no do parceiro, de modo que texto de prompt e áudio atravessam por desenho um ambiente que o Metrô não homologou, conforme 3.3.1.1 declara. A contenção durante o MVP é o uso exclusivo de dado sintético, que `TNF-RNF01-04` verifica, e a migração dos dois serviços para o tenant homologado é **pré-condição para qualquer uso com dado real** — não recomendação, e não algo que a aprovação dos testes desta seção autorize a dispensar.
+
+A **ausência de um RNF de desempenho** permanece. Os sete casos `TNF-DES` medem contra parâmetros que existem fora de 3.3.1, pela reconciliação de 10.2.1, e a recomendação de formalizar o requisito na próxima revisão fica registrada lá e repetida aqui, porque é o tipo de pendência que some quando fica em um único lugar.
+
+**Locust e `pytest-benchmark` estão fora da matriz de 5.1.5.** Os dois foram introduzidos por esta seção, declarados como adição em 10.1.1, e a inclusão na pilha oficial deve ser tratada em *issue* própria por quem mantém aquela seção.
+
+**O que a seção 10.2 estabelece, e sob que condição.** A seção estabelece quatro coisas. Como cada um dos sete requisitos não funcionais é medido, com instrumento nomeado e cenário negativo que exercite a medição. Que o RNF03 já foi medido e atende à meta, com a evidência reproduzível de 5.4.11. Onde os testes de desempenho se ancoram na ausência de requisito que os sustente, e qual dos dois conjuntos de parâmetros decide aprovação. E a especificação do conjunto adversarial do RNF06, com composição, tamanho mínimo e a justificativa de ambos.
+
+Estabelece essas quatro coisas sob uma condição que prefere declarar a omitir: **de todos os números desta seção, apenas os do RNF03 existem hoje.** Os demais são procedimentos escritos para instrumentos que ainda serão construídos, e três das metas contra as quais eles reportarão são hipóteses da própria equipe, que os primeiros resultados deverão recalibrar. A seção não afirma que o sistema atende aos requisitos não funcionais; afirma como se saberá, e admite que, para seis dos sete, ainda não se sabe.
 
 ## 10.3 Testes de Usabilidade
 
