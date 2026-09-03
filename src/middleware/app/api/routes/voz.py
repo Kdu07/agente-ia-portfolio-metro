@@ -81,3 +81,23 @@ async def upload_audio(
         consultar_em=f"/voz/audios/{id_audio}/transcricao",
         expira_em="2026-09-03T18:00:00Z",  # TODO: Calcular expiração real
     )
+
+
+@router.get("/audios/{id_audio}/transcricao", response_model=TranscricaoResponse)
+async def consultar_transcricao(
+    id_audio: str,
+    usuario: UsuarioAtual = Depends(),
+) -> TranscricaoResponse:
+    """Consulta o resultado da transcrição de um áudio.
+
+    Retorna o estado atual da submissão (recebido, transcrevendo,
+    concluida ou falhou) e, quando concluída, o texto transcrito.
+
+    Conforme especificação seção 5.7.3.4 do projeto.md.
+    """
+    # TODO: Implementar consulta real ao banco de dados/cache
+    # Por enquanto retorna estado de processamento
+    return TranscricaoResponse(
+        id_audio=id_audio,
+        estado="transcrevendo",
+    )
