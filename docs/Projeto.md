@@ -6308,7 +6308,7 @@ Este conjunto verifica que a solicitação é classificada contra o catálogo fe
 | `TF-RF03-07` | Positivo | A solicitação recusada fica registrada | Qualquer um dos casos negativos acima, executado com o banco de teste disponível | Existe uma linha de registro para a solicitação recusada, com o desfecho correspondente | US03, UC11 | Onda 3 |
 | `TF-RF03-08` | Positivo | A classe negativa de manipulação é capturada pelo classificador | Enunciado da classe `tentativa_injecao` de 5.4.4.6, com as guardas de entrada dubladas para permitir a passagem | O classificador atribui a classe e o desfecho é o bloqueio seco previsto em 5.4.4.6, sem revelar o motivo a quem enviou | 5.4.4.6, 5.4.11.2 | Onda 3 |
 
-Dois casos pedem leitura cuidadosa. `TF-RF03-07` verifica apenas a **existência** da linha para uma solicitação recusada, que é o quarto critério de aceitação de US03; a completude do conteúdo desse registro — intenção, confiança, perfil, canal e desfecho — e a unicidade da linha são exigências do RF10. `TF-RF03-08` exercita a classe `tentativa_injecao` como **rede de segurança atrás da guarda de injeção**, na leitura que 5.4.4.6 estabelece: as guardas são dubladas para deixar o enunciado passar, justamente para que o teste observe a camada que só age quando as anteriores falharam. A eficácia do conjunto de barreiras não se mede aqui, e sim pelo RNF06, em 10.2.
+Dois casos pedem leitura cuidadosa. `TF-RF03-07` verifica apenas a **existência** da linha para uma solicitação recusada, que é o quarto critério de aceitação de US03; a completude do conteúdo desse registro — intenção, confiança, perfil, canal e desfecho — e a unicidade da linha são exigências do RF10, verificadas em 10.1.5. `TF-RF03-08` exercita a classe `tentativa_injecao` como **rede de segurança atrás da guarda de injeção**, na leitura que 5.4.4.6 estabelece: as guardas são dubladas para deixar o enunciado passar, justamente para que o teste observe a camada que só age quando as anteriores falharam. A eficácia do conjunto de barreiras não se mede aqui, e sim pelo RNF06, em 10.2.
 
 **Execução.** Os casos rodam com `pytest` no módulo planejado `src/middleware/tests/funcionais/test_rf03_intencoes.py`, sobre o classificador já treinado e serializado em `src/middleware/dados/classificador.joblib`, com os limiares por intenção calibrados conforme 5.4.11.4. O executor é dublado, e as guardas de entrada são dubladas apenas em `TF-RF03-08`, pelo motivo exposto acima. Os enunciados de entrada vêm de duas origens mantidas separadas, como já se faz na bancada de 5.4.11.1: os exemplos do catálogo de 5.4.4 e os enunciados-semente de [testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv). Estes casos verificam **desfecho**, e não taxa de acerto: a medição da precisão do classificador é o RNF03, documentada em 10.2, com a evidência já produzida em 5.4.11. Um caso funcional que reprovasse por causa de um enunciado ambíguo estaria medindo o modelo, e não o comportamento do sistema.
 
@@ -6337,7 +6337,7 @@ A decisão difícil deste requisito aparece na comparação entre dois casos neg
 
 `TF-RF04-05` é o caso que separa uma resposta útil de uma resposta inventada, e é o mais fácil de passar por engano. Um agente que responde "o avanço é de aproximadamente 60%" quando o campo está vazio parece mais prestativo do que um que responde "esse dado não está preenchido no projeto", e é exatamente o comportamento que o objetivo O3 proíbe. A asserção, por isso, é dupla: a resposta precisa conter a declaração de ausência e não pode conter valor numérico ou afirmação factual sobre o campo consultado.
 
-A intenção `consultar_faturas_vencidas` **não** integra este conjunto. Ela consta do catálogo por rastreabilidade com o TAPI, mas está classificada como pendente de validação com o parceiro em 5.4.7 e, enquanto isso, fora do conjunto de treino do MVP. Testá-la aqui cobraria do sistema um comportamento que a especificação ainda não decidiu. A exclusão é retomada na subseção de abrangência dos cenários funcionais.
+A intenção `consultar_faturas_vencidas` **não** integra este conjunto. Ela consta do catálogo por rastreabilidade com o TAPI, mas está classificada como pendente de validação com o parceiro em 5.4.7 e, enquanto isso, fora do conjunto de treino do MVP. Testá-la aqui cobraria do sistema um comportamento que a especificação ainda não decidiu. A exclusão é retomada em 10.1.6.
 
 **Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf04_consulta.py`. O Copilot Studio é dublado e devolve respostas fixas construídas para cada caso, incluindo a resposta com referência de origem e a resposta de campo vazio — o dublê é indispensável enquanto o provisionamento do risco R02 de 9.1.6 não ocorre, e continua útil depois, porque um dublê determinístico permite asserções que um executor real não permitiria repetir. A comparação de `TF-RF04-03` com `TF-RF04-04` é feita sobre o corpo devolvido pelas duas execuções, que precisam ser iguais.
 
@@ -6409,7 +6409,7 @@ Este conjunto não é executável no MVP, e essa é a informação que ele carre
 
 `TF-RF07-03` é o caso que justifica escrever os três agora. Uma comparação é, por natureza, uma resposta agregada, e um agregado revela o que a recusa individual esconde: se o total de projetos do subportfólio aparece na resposta, o usuário deduz a existência daquilo que não pode ver. O requisito não diz como resolver isso, e a decisão terá de ser tomada quando RF07 entrar em construção. Registrá-la como caso de teste é a forma de garantir que ela não seja tomada por omissão.
 
-**Execução.** Nenhuma. Os três casos não têm módulo de teste planejado nem comando, porque não há comportamento a exercitar enquanto as *features* de 2.7.5 permanecerem fora do MVP e as intenções permanecerem sem tópico. Quando US07 for promovida, eles passam a rodar no mesmo arranjo dos demais casos de consulta, com `pytest` e o executor dublado. A ausência declarada é retomada na subseção de abrangência dos cenários funcionais.
+**Execução.** Nenhuma. Os três casos não têm módulo de teste planejado nem comando, porque não há comportamento a exercitar enquanto as *features* de 2.7.5 permanecerem fora do MVP e as intenções permanecerem sem tópico. Quando US07 for promovida, eles passam a rodar no mesmo arranjo dos demais casos de consulta, com `pytest` e o executor dublado. A ausência declarada é retomada em 10.1.6.
 
 #### 10.1.4.2 RF08 — Geração de relatórios e informações gerenciais
 
@@ -6526,6 +6526,50 @@ Resta decidir **qual** recusa o servidor devolve, e a escolha não é indiferent
 cd src\middleware
 python -m pytest tests/funcionais/test_rf12_historico.py -q
 ```
+
+### 10.1.6 Abrangência dos cenários funcionais
+
+Esta subseção responde a três perguntas que a leitura das anteriores deixa em aberto: quanto foi coberto, por que essa quantidade é suficiente e o que ficou de fora. A terceira é a mais importante das três. Um planejamento de testes que só enumera o que verifica descreve o próprio otimismo; o que permite avaliar o risco residual é a lista do que não é verificado e a razão de cada exclusão.
+
+O conjunto tem **65 casos** distribuídos pelos doze requisitos funcionais, sendo 33 positivos e 32 negativos. O equilíbrio entre os dois tipos não foi buscado: ele resultou de os negativos terem sido derivados dos fluxos alternativos e de exceção de 3.5.3, e de esses fluxos existirem em quantidade comparável à dos fluxos principais.
+
+| RF | Subseção | Positivos | Negativos | Total | Onda em que o conjunto se torna executável |
+|---|---|:-:|:-:|:-:|---|
+| RF01 | 10.1.2.1 | 2 | 3 | 5 | Onda 1 |
+| RF02 | 10.1.2.2 | 3 | 4 | 7 | Onda 1, com os casos de voz encaixados conforme 9.1.3 |
+| RF03 | 10.1.2.3 | 4 | 4 | 8 | Onda 3 |
+| RF04 | 10.1.3.1 | 2 | 3 | 5 | Onda 3 |
+| RF05 | 10.1.3.2 | 2 | 4 | 6 | Onda 3 |
+| RF06 | 10.1.3.3 | 3 | 2 | 5 | Onda 5 |
+| RF07 | 10.1.4.1 | 2 | 1 | 3 | Não executável no MVP |
+| RF08 | 10.1.4.2 | 2 | 2 | 4 | Onda 3, contra dublê |
+| RF09 | 10.1.5.1 | 5 | 2 | 7 | Onda 2 |
+| RF10 | 10.1.5.2 | 3 | 2 | 5 | Onda 3 para o registro, Onda 4 para os recortes |
+| RF11 | 10.1.5.3 | 3 | 3 | 6 | Onda 5 |
+| RF12 | 10.1.5.4 | 2 | 2 | 4 | Onda 1 |
+| **Total** | — | **33** | **32** | **65** | — |
+
+A leitura por onda diz o que a Sprint 3 pode cobrar. Dezesseis casos — os de RF01, RF02 e RF12 — tornam-se executáveis na onda 1, que está em curso; sete entram na onda 2, com as guardas; vinte e cinco na onda 3, quando o classificador é integrado; três na onda 4, com os recortes analíticos; onze na onda 5, com as rotinas e a varredura de pendências. Três permanecem fora do MVP. Nenhum caso foi escrito para ser executável antes do componente que ele exercita.
+
+**O critério de suficiência.** O piso de quatro casos por requisito, com pelo menos um positivo e um negativo, não é uma regra de contagem: é o mínimo que permite distinguir quatro situações que um conjunto menor confunde — o caminho previsto funciona, o caminho previsto falha quando deveria, o caminho não previsto é recusado, e a recusa acontece pela razão certa. RF03 e RF09 recebem oito e sete casos por concentrarem desfechos distintos que produzem efeito parecido para quem lê a resposta: em RF03, fora de escopo, baixa confiança, falta de permissão e entidade ausente; em RF09, três barreiras com dois formatos de recusa, mais a exigência de sigilo e a exigência simétrica de não barrar o legítimo. Nesses dois requisitos, um conjunto que verificasse apenas se houve recusa passaria com o comportamento errado.
+
+Dizer que um requisito está **coberto**, neste planejamento, tem significado estrito: todos os critérios de aceitação da *User Story* correspondente em 3.2.1 foram convertidos em asserção de pelo menos um caso, e todos os fluxos alternativos e de exceção do caso de uso correspondente em 3.5.3 aparecem como cenário. É uma cobertura de **especificação**, não de código: ela garante que nada do que foi prometido ficou sem verificação prevista, e não garante que nenhuma linha do middleware ficou sem exercício. A cobertura de código, medida contra a meta de 80% de 9.1.8, é objeto de 10.7, e as duas não se substituem — um requisito pode estar coberto por especificação com metade do módulo que o implementa sem execução.
+
+**O que não é coberto.** As exclusões abaixo são deliberadas e cada uma tem registro anterior neste documento. Nenhuma delas é lacuna descoberta na redação desta seção.
+
+| Exclusão | Razão | Onde já está registrado | O que a destrava |
+|---|---|---|---|
+| RF07, análise comparativa | *User Story* desejável, sem *feature* admitida no MVP e sem tópico no executor | 2.7.2, 2.7.5, nota de 3.4 e quadro de 5.4.8 | Promoção de US07 ao escopo de implementação |
+| Execução real contra Entra ID e Copilot Studio | Serviços não provisionados no tenant do parceiro; os casos rodam contra dublê | Risco R02 em 9.1.6 | Provisionamento pelo parceiro; a conversa real com os dois é objeto de 10.4 e 10.5 |
+| Qualidade da transcrição do canal de voz | Os casos de RF02 verificam trajeto, limites e tratamento de erro, e não acerto de reconhecimento | 5.7.6 e indicadores de 3.1.5.2 | Construção do corpus de áudio de referência de 5.7.6 |
+| `consultar_faturas_vencidas` | Pendente de validação com o parceiro e fora do conjunto de treino do MVP | 5.4.7 | Decisão do parceiro sobre estender o RF04 ou excluir explicitamente do escopo |
+| Comportamento observável apenas em operação | Não é objeto de suíte automatizada | 3.3.1 quanto ao RNF04, e 10.3 quanto à usabilidade | Operação continuada, fora do horizonte do MVP acadêmico |
+
+A última linha merece detalhe, porque é a que mais facilmente passaria por omissão. Ficam fora de qualquer suíte funcional a disponibilidade real do agente ao longo de uma janela de operação, o comportamento do agendador ao longo de semanas de disparos, a evolução do catálogo de intenções a partir do agrupamento das recusas fora de escopo — que depende de uso real para produzir padrão — e a compreensão que o usuário tem da resposta, que é objeto dos testes de usabilidade de 10.3 e não de asserção automatizada. Um teste que afirmasse verificar qualquer uma dessas quatro coisas estaria verificando um dublê delas.
+
+**A relação entre cenário negativo e fluxo de exceção.** Os 32 casos negativos deste conjunto não foram concebidos como exercício de imaginação adversarial. Cada um tem origem declarada na coluna de rastreabilidade, e as origens são três. A primeira são os fluxos alternativos e de exceção de 3.5.3: a autenticação recusada e o *claim* sem perfil de UC01, os dois ramos de recusa de UC02, o projeto fora do escopo de UC04, o cancelamento e a falha de gravação de UC05, a conversa alheia de UC06, o prompt que não resolve de UC07, a permissão perdida entre cadastro e disparo de UC08, e a barreira indisponível de UC10. A segunda são os desfechos distintos que 5.4.4.6 e 5.4.6 formalizam, e que sustentam os casos em que a asserção é sobre **qual** recusa ocorreu, e não sobre ter havido recusa. A terceira são os limites e o catálogo de erros de 5.7.3.6 e 5.7.3.8, que fornecem os códigos exatos esperados nos casos negativos do canal de voz.
+
+Isso importa por uma razão prática. Um cenário negativo inventado verifica o que quem o escreveu imaginou que poderia dar errado; um cenário negativo derivado de fluxo de exceção verifica o que a especificação prometeu que aconteceria quando desse errado. A diferença aparece na revisão: o primeiro se discute por opinião, o segundo se confere contra a seção que o originou. É também o que permite afirmar que os negativos foram esgotados antes de acrescentar cenários novos — quando um fluxo de exceção de 3.5.3 não aparece como caso, é porque ele pertence a um requisito cujo conjunto está marcado como não executável no MVP.
 
 ## 10.2 Testes de RNFs
 
