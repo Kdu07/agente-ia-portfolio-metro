@@ -37,6 +37,9 @@ dependencies = [
     "scikit-learn>=1.4",
     "sentence-transformers>=3.0",
     "joblib>=1.4",
+    # Reconhecimento de fala no backend. A integração isolada aceita WAV;
+    # formatos comprimidos entram na etapa de processamento de áudio.
+    "azure-cognitiveservices-speech>=1.51,<2",
 ]
 
 [project.optional-dependencies]

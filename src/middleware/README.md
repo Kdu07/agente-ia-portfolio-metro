@@ -81,3 +81,26 @@ uvicorn app.main:app --reload
 
 Requer `.env` — parta de [.env.example](.env.example). O PostgreSQL e demais
 serviços sobem por [infra/docker-compose.yml](../../infra/docker-compose.yml).
+
+## Validação isolada do Speech-to-Text
+
+O backend usa o SDK Python oficial do Azure AI Speech. Preencha no `.env`:
+
+```dotenv
+SPEECH_KEY=<chave do recurso, não versionar>
+SPEECH_REGION=brazilsouth
+SPEECH_IDIOMA=pt-BR
+```
+
+Com o ambiente virtual ativo, valide a configuração usando um WAV curto, com
+uma única fala e dados sintéticos:
+
+```powershell
+python -m app.voz.speech caminho\para\fala.wav
+```
+
+O comando imprime somente o texto reconhecido. O teste isolado aceita WAV
+porque esse é o formato suportado diretamente pelo `AudioConfig(filename=...)`;
+a normalização de MP3, OGG, WebM e MP4 e a integração com o upload pertencem
+à etapa posterior de processamento. Nunca use um áudio com informação real
+do Metrô enquanto o recurso não estiver no ambiente homologado.
