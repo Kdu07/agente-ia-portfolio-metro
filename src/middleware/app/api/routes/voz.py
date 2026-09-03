@@ -7,7 +7,7 @@ da seção 5.7.3 do projeto.md.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
 from app.api.deps import UsuarioAtual
@@ -53,20 +53,49 @@ async def upload_audio(
     Valida formato, tamanho e duração antes de processar. A submissão
     é assíncrona: retorna 202 com ID para consulta posterior.
 
+    Erros:
+        400 Bad Request: Arquivo inválido ou campos incorretos
+        413 Payload Too Large: Arquivo excede 25 MB
+        415 Unsupported Media Type: Formato não suportado
+
     Conforme especificação seção 5.7.3 do projeto.md.
     """
-    # TODO: Implementar lógica completa de upload e processamento
-    # Este é um esboço que valida e retorna estrutura básica
+    # Valida se arquivo foi fornecido
+    if not audio or not audio.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Campo 'audio' é obrigatório"
+        )
 
     # Valida extensão
-    if audio.filename:
+    try:
         validar_extensao_audio(audio.filename)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=str(e)
+        )
 
     # Valida tamanho
-    validar_tamanho_arquivo(audio.size or 0)
+    try:
+        validar_tamanho_arquivo(audio.size or 0)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=str(e)
+        )
 
     # Valida formato real via magic bytes
-    formato_detectado = validar_formato_audio(audio.file)
+    try:
+        formato_detectado = validar_formato_audio(audio.file)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=str(e)
+        )
+
+    # TODO: Implementar lógica completa de upload e processamento
+    # Este é um esboço que valida e retorna estrutura básica
 
     # TODO: Gerar ID único, salvar arquivo/processar, enfileirar transcrição
     # Por enquanto retorna estrutura esqueletica
