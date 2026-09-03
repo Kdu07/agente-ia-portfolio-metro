@@ -12,9 +12,13 @@ from pydantic import BaseModel
 
 from app.api.deps import UsuarioAtual
 from app.schemas.audio import AudioUploadResponse, TranscricaoResponse
+from app.servicos.audio_service import AudioService
 from app.utils.validadores import validar_extensao_audio, validar_formato_audio, validar_tamanho_arquivo
 
 router = APIRouter(prefix="/voz")
+
+# Instância do serviço de áudio
+audio_service = AudioService()
 
 
 class TokenResposta(BaseModel):
@@ -69,7 +73,7 @@ async def upload_audio(
 
     # Valida extensão
     try:
-        validar_extensao_audio(audio.filename)
+        extensao = validar_extensao_audio(audio.filename)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -94,21 +98,31 @@ async def upload_audio(
             detail=str(e)
         )
 
-    # TODO: Implementar lógica completa de upload e processamento
-    # Este é um esboço que valida e retorna estrutura básica
+    # Gera ID único e salva arquivo usando o serviço
+    id_audio = audio_service.gerar_id_audio()
 
-    # TODO: Gerar ID único, salvar arquivo/processar, enfileirar transcrição
-    # Por enquanto retorna estrutura esqueletica
-    from uuid import uuid4
+    try:
+        caminho_arquivo = audio_service.salvar_arquivo(
+            audio.file,
+            id_audio,
+            formato_detectado
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Falha ao processar arquivo: {e}"
+        )
 
-    id_audio = str(uuid4())
+    # Calcula expiração
+    duracao_segundos = 0.0  # TODO: Calcular duração real do áudio
+    expiracao = audio_service.calcular_expiracao(duracao_segundos)
 
     return AudioUploadResponse(
         id_audio=id_audio,
         estado="recebido",
-        duracao_segundos=0.0,  # TODO: Calcular duração real
+        duracao_segundos=duracao_segundos,
         consultar_em=f"/voz/audios/{id_audio}/transcricao",
-        expira_em="2026-09-03T18:00:00Z",  # TODO: Calcular expiração real
+        expira_em=expiracao.isoformat() + "Z",
     )
 
 
