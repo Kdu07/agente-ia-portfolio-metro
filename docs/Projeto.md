@@ -6201,7 +6201,121 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 
 ## 10.1 Testes Funcionais
 
-[Preencher]
+Os testes funcionais verificam se o agente faz aquilo que os requisitos de 3.2 dizem que ele faz. Os casos não foram inventados. Cada critério de aceitação das *User Stories* de 3.2.1 foi convertido em uma asserção, e cada fluxo alternativo e de exceção das especificações de caso de uso de 3.5.3 virou um cenário negativo. Os cinco casos críticos diagramados em 5.3.8 entraram como roteiro direto: a sequência de mensagens de cada diagrama descreve, passo a passo, o que o teste precisa observar e em que ordem. Cenário sem origem em uma dessas três fontes foi descartado, e não acomodado.
+
+Esta subseção verifica **comportamento observável na fronteira do middleware**, com os serviços externos dublados. A distinção com as demais subseções da seção 10 é de objeto, não de rigor. O que se testa aqui é o que a aplicação responde a uma requisição: o desfecho, o corpo devolvido, o que ficou gravado e o que deixou de acontecer. A conversa efetiva com Entra ID, Copilot Studio, Azure AI Content Safety e Azure Speech é objeto de 10.4 e de 10.5, que verificam contrato e integração reais. A regra de negócio sobre o portfólio — o que conta como projeto atrasado, o que caracteriza pendência — é objeto de 10.6. A consolidação da cobertura, com o total por requisito e as lacunas remanescentes, é objeto de 10.7. Quando um caso desta subseção depende de um serviço externo, ele depende do **dublê** desse serviço, e o teste falha por comportamento do middleware, nunca por indisponibilidade de terceiro.
+
+Convém dizer de frente em que estado o desenvolvimento está. A onda 1 de 9.1.2.1 está em curso na Sprint 3, e as demais seguem o sequenciamento de 9.1.2: guardas na onda 2, classificador integrado na onda 3, análise na onda 4 e rotinas na onda 5. Isso significa que a maior parte dos casos abaixo **ainda não é executável**, e não porque falte escrevê-los, mas porque o componente que eles exercitam ainda não existe no repositório. Cada caso declara, por isso, a onda em que se torna executável. Um planejamento que omitisse essa coluna pareceria mais completo e diria menos: é ela que permite ao revisor separar o que já pode ser cobrado do que só faz sentido cobrar na sprint seguinte.
+
+### 10.1.1 Convenções de identificação e formato
+
+Um caso de teste precisa de nome estável para ser citado em card, em *merge request* e na consolidação de 10.7 sem ambiguidade. A numeração adotada é sequencial e reinicia a cada requisito, de modo que o identificador carregue o requisito de origem sem consulta a tabela auxiliar.
+
+| Prefixo | Alcance | Exemplo |
+|---|---|---|
+| `TF-RFxx-nn` | Teste funcional de um requisito funcional de 3.2 | `TF-RF03-04` |
+| `TNF-RNFxx-nn` | Teste de um requisito não funcional de 3.3.1 | `TNF-RNF06-02` |
+| `TNF-DES-nn` | Teste de desempenho | `TNF-DES-01` |
+
+O terceiro prefixo merece explicação, porque a irregularidade é deliberada. **Não existe requisito não funcional de desempenho na especificação atual**: RNF01 a RNF07 cobrem confidencialidade, rastreabilidade, precisão de classificação, disponibilidade, adequação ao perfil, eficácia das barreiras e retenção do registro, e nenhum deles trata de latência ou de vazão. Acomodar os testes de desempenho sob um RNF existente produziria um identificador limpo e uma rastreabilidade falsa. O prefixo `DES` registra a lacuna em vez de escondê-la, e a ancoragem desses testes em parâmetros que existem fora de 3.3.1 é tratada em 10.2.
+
+Cada requisito é apresentado em três partes, sempre na mesma ordem: uma abertura em prosa que diz o que aquele conjunto verifica e de onde ele foi derivado, a tabela dos casos e um bloco de execução. A tabela usa as colunas abaixo, e a marcação `<br>` separa itens dentro de uma célula, como já se faz nos critérios de aceitação de 3.2.1.
+
+| Coluna | Conteúdo |
+|---|---|
+| ID | Identificador do caso, conforme a convenção acima |
+| Tipo | `Positivo` quando o caso verifica o caminho previsto; `Negativo` quando verifica recusa, erro ou ausência |
+| Cenário | O que o caso exercita, em uma linha |
+| Entrada e pré-condição | O estado necessário antes da execução e o que é submetido |
+| Resultado esperado | O que precisa ser observado para o caso passar, incluindo o que **não** pode aparecer |
+| Rastreabilidade | *User Story*, caso de uso, diagrama de sequência ou seção que originou o caso |
+| Onda | Onda de 9.1.2 em que o caso se torna executável, ou a razão de não sê-lo no MVP |
+
+O bloco de execução é escrito uma vez por requisito, e não por linha da tabela. Repetir a mesma instrução de ferramenta e de dublê em cada caso engordaria o documento sem acrescentar informação, porque a decisão de execução é a mesma para o conjunto: o que muda de um caso para outro é a entrada e a asserção, e as duas já estão na tabela.
+
+As ferramentas são as declaradas em 5.1.2, acrescidas de três adições que esta seção introduz e que precisam ser lidas como adições.
+
+| Ferramenta | Uso | Situação na pilha |
+|---|---|---|
+| `pytest` e `pytest-asyncio` | Execução dos casos de *backend*, incluindo os assíncronos | Declarados em 5.1.2 |
+| `pytest-cov` | Cobertura, consolidada em 10.7 contra a meta de 80% de 9.1.8 | Declarado em 5.1.2 |
+| Vitest e Testing Library | Casos cuja asserção é sobre componente de interface | Declaradas em 5.1.2 |
+| `httpx.AsyncClient` com `ASGITransport` | Chamada às rotas da API dentro do processo de teste, sem subir servidor nem rede | Adição desta seção |
+| `pytest-benchmark` | Micro-latência isolada das guardas e do classificador | Adição desta seção, usada em 10.2 |
+| Locust | Carga e concorrência | Adição desta seção, usada em 10.2 |
+| PostgreSQL 16 em contêiner de teste | Banco real, com esquema aplicado por Alembic | Declarado em 5.1.2 como banco da solução |
+
+O `httpx.AsyncClient` com `ASGITransport` não é uma quarta biblioteca de teste: `httpx` já é dependência do middleware, e o transporte ASGI apenas dispensa o servidor. A escolha do banco real em contêiner, em vez de um substituto em memória, decorre de os testes precisarem observar restrições de integridade e comportamento transacional que só existem no PostgreSQL — testar contra um banco diferente do de produção verificaria outro sistema.
+
+**Nota sobre a matriz de tecnologias.** Locust e `pytest-benchmark` **não constam da matriz consolidada de 5.1.5**. Esta seção os utiliza por necessidade dos testes de desempenho, e a inclusão dos dois na pilha oficial deve ser tratada em *issue* própria, com a atualização de 5.1.5 feita por quem mantém aquela seção. Registrar a divergência aqui é preferível a alterar uma seção que pertence a outro recorte do documento.
+
+### 10.1.2 Acesso e interação — RF01 a RF03
+
+#### 10.1.2.1 RF01 — Controle de acesso, permissões e perfil do usuário
+
+Este conjunto verifica que a identidade resolvida no servidor determina o que o usuário alcança. Os casos derivam dos quatro critérios de aceitação de US01 e dos desvios de UC01, cujo fluxo alternativo trata a autenticação recusada e cuja exceção trata o *claim* de grupo que não corresponde a perfil conhecido. A decisão difícil deste requisito está no caso de projeto alheio: a recusa não pode revelar sequer a existência do projeto, o que transforma a asserção em uma verificação de **ausência**. Nenhum código, nome ou atributo do recurso protegido pode aparecer na resposta, e uma mensagem do tipo "você não tem acesso a este projeto" reprova o caso, porque confirma que o projeto existe. A mesma decisão reaparece no fluxo alternativo 3a de UC04, e é ela que 5.4.6 formaliza ao separar a recusa por permissão da recusa por escopo. A adequação fina da profundidade da resposta ao perfil — quanto detalhe cada persona recebe de uma informação que tem direito de receber — não é verificada aqui: é o RNF05, medido por taxa de adequação em 10.2.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF01-01` | Positivo | Líder consulta projeto sob sua responsabilidade | Sessão válida, com *claim* de grupo que resolve no perfil de Líder de Projeto.<br>Enunciado sobre o avanço de um projeto da própria carteira | Resposta com o dado solicitado e desfecho de sucesso; o escopo consultado é o da carteira do perfil | US01, UC01, UC04 | Onda 1 |
+| `TF-RF01-02` | Negativo | Membro pede projeto alheio | Sessão válida com perfil de Membro de Equipe, sem vínculo com o projeto consultado.<br>Enunciado sobre o status desse projeto | Recusa que não confirma nem nega a existência do projeto; a resposta não contém código, nome nem qualquer atributo do recurso, e a interação é registrada | US01, UC04 (3a), 5.4.6 | Onda 1 |
+| `TF-RF01-03` | Negativo | Sessão ausente ou expirada | Requisição à rota de conversação sem cookie de sessão, e a mesma requisição com cookie expirado | Recusa de autenticação antes de qualquer processamento; nenhuma guarda, classificação ou chamada ao executor é acionada | UC01 (3a), 5.7.3.8 | Onda 1 |
+| `TF-RF01-04` | Negativo | *Claim* de grupo sem perfil correspondente | Autenticação concluída no dublê do Entra ID, devolvendo *claims* que não resolvem em nenhum dos perfis de 3.5.1 | Acesso negado e evento registrado; a aplicação não atribui perfil padrão nem segue com escopo vazio silencioso | UC01 (exceção 4a) | Onda 1 |
+| `TF-RF01-05` | Positivo | O mesmo enunciado, dois perfis | Enunciado idêntico submetido por Membro de Equipe e por Diretoria, ambos com sessão válida | Ambos recebem resposta, e o conjunto de projetos considerado é diferente entre os dois, com o escopo do Membro contido no da Diretoria | US01, UC01, 2.4 | Onda 1 |
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf01_acesso.py`, contra o PostgreSQL 16 do contêiner de teste com o esquema aplicado por Alembic. O Entra ID é dublado: a dependência que resolve sessão e permissões é substituída por outra que devolve os *claims* do caso, o que permite construir os perfis sem depender do provisionamento pendente registrado como risco R02 em 9.1.6. O Copilot Studio também é dublado, com resposta fixa, porque o objeto do teste é o escopo de dados e não o conteúdo devolvido pelo executor. A asserção de `TF-RF01-02` é feita por comparação de ausência: o texto da resposta é confrontado com a lista de atributos do projeto protegido, e o caso reprova se qualquer um deles aparecer.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf01_acesso.py -q
+```
+
+#### 10.1.2.2 RF02 — Interação em linguagem natural por texto e voz
+
+Este conjunto verifica que os dois canais de entrada chegam ao mesmo lugar. Os casos derivam dos três critérios de aceitação de US02, do fluxo de UC03 e do contrato da API de voz especificado em 5.7.3. Os limites de formato e duração vêm de 5.7.3.6 e os códigos de erro correspondentes de 5.7.3.8, de modo que nenhum código citado aqui foi inventado para o teste. Há uma distinção do catálogo de erros que o conjunto precisa preservar: arquivo corrompido é **erro de requisição**, com recusa imediata, enquanto áudio aceito cuja transcrição não pôde ser produzida é **estado** `falhou`, com resposta `200`, como 5.7.3.8 declara ao final. Confundir os dois faria o teste cobrar a resposta errada. O caso mais importante do conjunto, porém, não é nenhum dos erros: é o caso estrutural, que verifica que o texto transcrito reentra pelo mesmo orquestrador da mensagem digitada.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF02-01` | Positivo | Entrada por texto | Sessão válida.<br>Enunciado digitado, submetido à rota de conversação | Mensagem processada e respondida, com o canal registrado como texto e uma interação persistida | US02, UC02 | Onda 1 |
+| `TF-RF02-02` | Positivo | Entrada por áudio, do envio à transcrição | Sessão válida.<br>Áudio dentro dos limites de 5.7.3.6, submetido por `POST /voz/audios` | Resposta `202` na submissão; a consulta por `GET /voz/audios/{id_audio}/transcricao` percorre os estados de 5.7.3.4 e termina em `concluida`, com o texto disponível | US02, UC03, 5.7.3.2, 5.7.3.4 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-03` | Negativo | Formato fora dos aceitos | Áudio com tipo de conteúdo ausente da tabela de formatos de 5.7.3.6 | Recusa com o código `AUDIO_FORMATO_NAO_SUPORTADO` e o HTTP correspondente de 5.7.3.8; nenhuma submissão é criada | 5.7.3.6, 5.7.3.8 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-04` | Negativo | Duração acima do limite | Áudio de formato aceito, com duração superior a cinco minutos | Recusa com o código `AUDIO_MUITO_LONGO` e o detalhe de duração previsto no corpo de erro de 5.7.3.8 | 5.7.3.6, 5.7.3.8 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-05` | Negativo | Arquivo ilegível | Arquivo corrompido, vazio ou sem trilha de áudio | Recusa com o código `AUDIO_ILEGIVEL`; a falha ocorre na validação, antes de qualquer chamada ao serviço de fala | 5.7.3.8 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-06` | Negativo | Áudio aceito, sem fala reconhecível | Áudio válido em formato e duração, cujo conteúdo não produz transcrição no dublê do serviço de fala | A submissão é aceita e a consulta devolve `200` com o estado `falhou`, e não um erro de requisição; a orientação apresentada oferece o canal de texto como saída | 5.7.3.4, 5.7.3.8 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-07` | Positivo | O texto transcrito reentra pelo mesmo pipeline | Transcrição concluída, encaminhada à rota de conversação como qualquer mensagem, com o canal marcado como voz | A solicitação atravessa a mesma ordem fixa do orquestrador — guardas, classificação, execução, avaliação da resposta e registro; nenhuma verificação de autorização é pulada e é gravada uma única interação | US02, 5.2.3.2, 5.7.3.5 | Onda 1, conforme 9.1.3 |
+
+`TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro, e que a API de áudio não aciona o pipeline por conta própria. Isso é uma promessa verificável, e sem um caso que a exercite ela permanece como intenção de projeto. A asserção compara a sequência de etapas percorrida por uma mensagem digitada e por uma transcrição de mesmo texto: as duas execuções precisam produzir a mesma ordem de chamadas e uma única linha de registro cada, diferindo apenas no valor do canal.
+
+**Execução.** Os casos de *backend* rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf02_canais.py`. O Azure Speech é dublado em todos eles: os áudios do conjunto são fixos e pequenos, e a transcrição devolvida é controlada pelo dublê, porque o objeto do teste é o trajeto e o tratamento de erro, não a qualidade do reconhecimento — essa é medida sobre o corpus de 5.7.6, pelos indicadores de 3.1.5.2. A verificação de ordem de `TF-RF02-07` é feita registrando as chamadas ao orquestrador e comparando as duas execuções. A apresentação da transcrição no campo de mensagem antes do envio, prevista em 5.7.3.5, é asserção de interface e roda com Vitest e Testing Library em `src/web/src/testes/`.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf02_canais.py -q
+```
+
+#### 10.1.2.3 RF03 — Identificação e controle de intenções
+
+Este conjunto verifica que a solicitação é classificada contra o catálogo fechado de 5.4.4 e que cada desfecho previsto é alcançado pelo caminho certo. Os casos derivam dos quatro critérios de aceitação de US03 e dos dois fluxos alternativos de UC02, que nomeiam os desfechos `RECUSADA_FORA_ESCOPO` e `RECUSADA_BAIXA_CONFIANCA`. O requisito recebe mais casos que o mínimo porque é o núcleo da solução e porque seus desfechos negativos são facilmente confundíveis entre si: fora de escopo, baixa confiança, falta de permissão e entidade ausente produzem recusas parecidas para quem lê a resposta e têm origens completamente diferentes no pipeline. Um conjunto que verificasse apenas se houve recusa passaria com o comportamento errado. Os enunciados de entrada saem do próprio catálogo e das classes negativas de 5.4.4.6, e não de formulações criadas para o teste.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF03-01` | Positivo | Enunciado canônico classifica na intenção correta | Sessão válida.<br>Enunciados-exemplo das intenções de 5.4.4, um por intenção | Cada enunciado resolve na intenção esperada, com confiança acima do limiar calibrado daquela intenção | US03, 5.4.4, 5.4.11 | Onda 3 |
+| `TF-RF03-02` | Positivo | A intenção resolvida chega ao executor | Enunciado que classifica em intenção do catálogo, com o executor dublado | O prompt validado é enviado ao executor com a intenção em metadados, conforme o passo 5 de UC02; nenhuma chamada ao executor ocorre antes da classificação | US03, UC02, 5.2.3.2 | Onda 3 |
+| `TF-RF03-03` | Negativo | Fora de escopo produz recusa orientativa | Enunciado da classe `fora_de_escopo` de 5.4.4.6, dos subtipos conversa genérica e fora do domínio | Recusa orientativa que apresenta as capacidades do agente, com desfecho `RECUSADA_FORA_ESCOPO`; a resposta **não** contém conteúdo de conhecimento geral que atenda ao pedido, e a sessão permanece ativa | US03, UC02 (4a), 5.4.5 | Onda 3 |
+| `TF-RF03-04` | Negativo | Confiança abaixo do limiar pede reformulação | Enunciado ambíguo cuja confiança fica abaixo do limiar da intenção candidata | Pedido de reformulação com desfecho `RECUSADA_BAIXA_CONFIANCA`; nenhuma execução é disparada, em particular nenhuma transação | US03, UC02 (4b), 5.4.6, 5.4.11.4 | Onda 3 |
+| `TF-RF03-05` | Negativo | Recusa por escopo e recusa por permissão são desfechos distintos | Enunciado legítimo do catálogo, submetido por perfil sem permissão sobre o projeto | A solicitação classifica na intenção correta do catálogo e é barrada pela checagem de perfil, com desfecho distinto de `RECUSADA_FORA_ESCOPO`; o registro atribui a recusa à permissão, e não ao escopo | 5.4.5, 5.4.6, UC04 (3a) | Onda 3 |
+| `TF-RF03-06` | Negativo | Entidade obrigatória ausente | Enunciado que classifica em intenção do catálogo sem informar a entidade exigida em 5.4.4 | Pergunta de complemento, com a sessão retendo o contexto; nenhuma execução ocorre e o caso não é tratado como fora de escopo | 5.4.6, 5.4.4 | Onda 3 |
+| `TF-RF03-07` | Positivo | A solicitação recusada fica registrada | Qualquer um dos casos negativos acima, executado com o banco de teste disponível | Existe uma linha de registro para a solicitação recusada, com o desfecho correspondente | US03, UC11 | Onda 3 |
+| `TF-RF03-08` | Positivo | A classe negativa de manipulação é capturada pelo classificador | Enunciado da classe `tentativa_injecao` de 5.4.4.6, com as guardas de entrada dubladas para permitir a passagem | O classificador atribui a classe e o desfecho é o bloqueio seco previsto em 5.4.4.6, sem revelar o motivo a quem enviou | 5.4.4.6, 5.4.11.2 | Onda 3 |
+
+Dois casos pedem leitura cuidadosa. `TF-RF03-07` verifica apenas a **existência** da linha para uma solicitação recusada, que é o quarto critério de aceitação de US03; a completude do conteúdo desse registro — intenção, confiança, perfil, canal e desfecho — e a unicidade da linha são exigências do RF10. `TF-RF03-08` exercita a classe `tentativa_injecao` como **rede de segurança atrás da guarda de injeção**, na leitura que 5.4.4.6 estabelece: as guardas são dubladas para deixar o enunciado passar, justamente para que o teste observe a camada que só age quando as anteriores falharam. A eficácia do conjunto de barreiras não se mede aqui, e sim pelo RNF06, em 10.2.
+
+**Execução.** Os casos rodam com `pytest` no módulo planejado `src/middleware/tests/funcionais/test_rf03_intencoes.py`, sobre o classificador já treinado e serializado em `src/middleware/dados/classificador.joblib`, com os limiares por intenção calibrados conforme 5.4.11.4. O executor é dublado, e as guardas de entrada são dubladas apenas em `TF-RF03-08`, pelo motivo exposto acima. Os enunciados de entrada vêm de duas origens mantidas separadas, como já se faz na bancada de 5.4.11.1: os exemplos do catálogo de 5.4.4 e os enunciados-semente de [testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv). Estes casos verificam **desfecho**, e não taxa de acerto: a medição da precisão do classificador é o RNF03, documentada em 10.2, com a evidência já produzida em 5.4.11. Um caso funcional que reprovasse por causa de um enunciado ambíguo estaria medindo o modelo, e não o comportamento do sistema.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf03_intencoes.py -q
+```
 
 ## 10.2 Testes de RNFs
 
