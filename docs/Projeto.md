@@ -6526,7 +6526,782 @@ Os resultados qualitativos deverão ser consolidados posteriormente em uma lista
 
 ## 10.5 Testes de Integração
 
-[Preencher]
+Esta seção planeja os testes de integração da solução: o que se verifica em
+cada costura entre componentes, com quais ferramentas, sob quais critérios de
+aceitação e em que ordem.
+
+A arquitetura que ela testa está descrita em [Arquitetura.md](Arquitetura.md); a
+estratégia de qualidade em que ela se encaixa, na seção 9.1.4 deste documento.
+Esta seção é a expressão executável daquela estratégia para o nível de
+integração.
+
+> **Sobre o termo VHS.** Ao longo desta seção, *fita* e *VHS* designam o padrão
+> de **gravação e reprodução** (*record/replay*) de tráfego HTTP: a resposta real
+> do serviço externo é gravada uma vez em arquivo e reproduzida em toda execução
+> seguinte. A implementação adotada no ecossistema Python é o **VCR.py**,
+> dirigido pelo plugin `pytest-recording` — é o VCR.py que grava e toca as fitas
+> deste plano. O vocabulário de fita é mantido porque descreve bem o ciclo:
+> grava-se uma vez, toca-se sempre, e revalida-se por decisão explícita.
+
+### 10.5.1 Objetivo e escopo
+
+#### 10.5.1.1 O que este plano cobre
+
+Um teste de integração, aqui, verifica **a costura entre dois ou mais
+componentes**: o contrato que atravessa a fronteira, a ordem em que os módulos
+se acionam e o comportamento quando o outro lado falha. Ele parte de um ponto de
+entrada real da aplicação — uma requisição HTTP, um disparo do agendador, uma
+ação na interface — e não de uma função isolada.
+
+Três famílias, com pesos diferentes:
+
+| Família | O que integra | Volume previsto |
+|---|---|---|
+| **Interna** | Módulos do middleware entre si e a interface com a API | ~60% dos casos |
+| **Externa** | Middleware com Entra ID, Content Safety, Direct Line, Azure Speech e PostgreSQL | ~30% dos casos |
+| **Contrato** | Implementação com as especificações versionadas (OpenAPI, `topicos.md`) | ~10% dos casos |
+
+A suíte atual tem um único arquivo de integração,
+[test_fluxo_chat.py](../src/middleware/tests/integration/test_fluxo_chat.py), com
+onze casos que cobrem a costura HTTP → `deps` → orquestrador com todos os
+serviços dublados. Ele é o ponto de partida: este plano o preserva, reorganiza e
+estende.
+
+#### 10.5.1.2 O que fica fora
+
+- **Testes unitários** — os sete arquivos em
+  [tests/unit/](../src/middleware/tests/unit/) e os componentes React em
+  [paginas.test.tsx](../src/web/src/testes/paginas.test.tsx). Continuam existindo
+  e não são substituídos por integração.
+- **Bancada de avaliação do classificador (F21/F22)** — `python -m
+  app.pipeline.intencao.avaliacao` mede acurácia e macro-F1 sobre 431 casos de
+  teste. É medição de modelo, não de integração; o que a integração verifica é
+  que o veredito do classificador **chega ao orquestrador e vira desfecho**.
+- **Testes de usabilidade, acessibilidade e carga** — seções 9.1.4 e 10.3 deste
+  documento.
+- **Verificação de perímetro (RNF01)** — feita por inspeção de configuração, não
+  por teste automatizado (seção 3.3.1.1 deste documento).
+
+#### 10.5.1.3 Princípios invariantes
+
+Quatro regras que nenhum caso de teste pode violar:
+
+1. **Nenhum teste da suíte alcança um serviço Microsoft real.** O bloqueio é
+   técnico, não disciplinar: `pytest --block-network` faz qualquer tentativa de
+   rede não coberta por fita falhar o teste. A única exceção é a sessão
+   deliberada de gravação.
+2. **Nenhuma fita contém segredo.** A sanitização é configurada uma vez no
+   `conftest.py` e verificada por *hook* antes do commit (seção 10.5.4.3).
+3. **Nenhum dado real do Metrô entra em fixture ou fita.** Os dados são
+   sintéticos, conforme a condição declarada em `Arquitetura.md` §11 enquanto
+   Content Safety e Speech operarem no tenant da equipe (risco R12).
+4. **A ordem das etapas do pipeline é testável e testada.** A invariante de
+   segurança descrita em `Arquitetura.md` §3 — injeção → abuso → intenção →
+   Copilot → saída → registro — tem caso de teste próprio (IT-API-08).
+
+### 10.5.2 Mapa das integrações
+
+#### 10.5.2.1 Componentes internos
+
+```mermaid
+flowchart TB
+    subgraph FRONT["src/web"]
+        PG["páginas e hooks"] --> SV["servicos/api.ts"]
+    end
+
+    subgraph BACK["src/middleware"]
+        RT["api/routes/*"] --> DP["api/deps.py"]
+        DP --> SE["auth/sessao.py + permissoes.py"]
+        DP --> OR["pipeline/orquestrador.py"]
+        OR --> GI["guardas/injecao"]
+        OR --> GA["guardas/abuso"]
+        OR --> GS["guardas/saida.py"]
+        OR --> CL["intencao/classificador.py"]
+        OR --> CP["copilot/client.py"]
+        OR --> RP["persistence/repository.py"]
+        EX["rotinas/execucao.py"] --> OR
+        AG["rotinas/agendador.py"] --> EX
+        WK["worker.py"] --> AG
+        AN["analytics/consultas.py"] --> RP
+    end
+
+    SV -->|"HTTP /api"| RT
+    RP --> DB[("PostgreSQL")]
+    AG -->|"jobstore"| DB
+```
+
+As costuras internas que este plano verifica, e o que cada uma pode quebrar sem
+que nenhum teste unitário perceba:
+
+| # | Costura | Contrato | O que quebra silenciosamente |
+|---|---|---|---|
+| I1 | `servicos/api.ts` → rotas | JSON + cookie `sessao`, `credentials: "include"` | Um campo renomeado no Pydantic que o TypeScript ainda declara |
+| I2 | rotas → `deps.py` | `UsuarioAtual`, `exige_permissao` | Uma rota nova sem a dependência de permissão |
+| I3 | `deps.py` → `sessao` + `permissoes` | `UsuarioAutenticado` imutável | Cookie expirado tratado como ausente com resposta diferente |
+| I4 | rotas → `Orquestrador` | `ChatRequest` → `ChatResponse` | Bloqueio devolvido como 500 em vez de 200 |
+| I5 | orquestrador → guardas | `ResultadoInjection`, `ResultadoAbuso`, `ResultadoSaida` | Uma guarda que falha aberta quando deveria falhar fechada |
+| I6 | orquestrador → classificador | `ResultadoIntencao` + `limiar_de` | Limiar do artefato ignorado, caindo sempre no do catálogo |
+| I7 | orquestrador → `CopilotClient` | `RespostaCopilot` + `conversa_externa_id` | Vínculo Direct Line não gravado no primeiro turno |
+| I8 | orquestrador → repositórios | `Interacao` gravada em **todo** desfecho | Um caminho de saída que escapa do registro (RNF02) |
+| I9 | `rotinas/execucao` → orquestrador | `canal=ROTINA`, `rotina_id` | Uma seta direta de `rotinas/` para `copilot/`, contornando as guardas |
+| I10 | `agendador` → jobstore | APScheduler sobre PostgreSQL | Disparo duplicado, perdido ou em fuso errado |
+| I11 | `analytics/consultas` → banco | Agregações por `Janela` | Recorte de segurança somando desfechos que deveriam ficar separados |
+
+A costura I9 merece destaque: ela é uma **invariante de arquitetura**, não um
+comportamento. O teste correspondente (IT-ROT-01) verifica que a execução de uma
+rotina passa pelas mesmas guardas de uma mensagem digitada — se alguém
+introduzir um atalho, o teste cai.
+
+#### 10.5.2.2 Dependências externas
+
+| Serviço | Módulo que o isola | Protocolo | Situação (Arquitetura §12.2) |
+|---|---|---|---|
+| Microsoft Entra ID | `auth/entra.py` | OIDC/OAuth2 sobre HTTPS (MSAL) | **Pendente** — tenant do parceiro |
+| Copilot Studio | `copilot/client.py` | Direct Line 3.0 (REST + WebSocket opcional) | **Pendente** — tenant do parceiro |
+| Azure AI Content Safety | `guardas/injecao`, `guardas/abuso`, `guardas/saida` | REST sobre HTTPS | Em operação — tenant da equipe |
+| Azure Speech | `voz/speech.py` (token) e SDK no navegador | REST para o token, WebSocket para o áudio | Em operação — tenant da equipe |
+| PostgreSQL 16 | `persistence/` | Wire protocol via asyncpg | Local, no Compose |
+
+Os dois primeiros ainda não podem ser gravados de verdade — o que exige a
+manobra das fitas provisórias, e não a suspensão dos testes.
+
+#### 10.5.2.3 Matriz de integração e técnica
+
+| Integração | Técnica | Ferramenta | Rede? |
+|---|---|---|---|
+| Interface ↔ API | Dublê de rede no cliente | MSW | Não |
+| HTTP ↔ pipeline | Aplicação real em processo | `httpx.ASGITransport` + `TestClient` | Não |
+| Pipeline ↔ PostgreSQL | **Serviço real, efêmero** | Testcontainers + Alembic | Local |
+| Pipeline ↔ Entra ID | **Fita VHS** | `pytest-recording` + VCR.py | Não |
+| Pipeline ↔ Content Safety | **Fita VHS** | `pytest-recording` + VCR.py | Não |
+| Pipeline ↔ Direct Line | **Fita VHS** | `pytest-recording` + VCR.py | Não |
+| Backend ↔ Azure Speech (token) | **Fita VHS** | `pytest-recording` + VCR.py | Não |
+| Navegador ↔ Azure Speech (áudio) | Dublê do SDK | Injeção de *recognizer* falso | Não |
+| Falhas de rede e latência | Dublê programático | `respx` | Não |
+| Agendador ↔ jobstore | Serviço real + relógio controlado | Testcontainers + `time-machine` | Local |
+| Implementação ↔ OpenAPI | Fuzz de contrato | Schemathesis | Local |
+| Pilha completa | Smoke sobre o Compose | Docker Compose + `httpx` | Local |
+
+A regra que organiza a matriz: **serviço nosso, roda de verdade; serviço de
+terceiro, toca-se a fita.** O PostgreSQL sobe em contêiner porque um dublê de
+banco esconde exatamente os erros que se quer pegar — migração ausente,
+constraint violada, transação não commitada. Já o Content Safety não sobe: sua
+resposta é gravada.
+
+### 10.5.3 Ferramentas
+
+#### 10.5.3.1 Backend
+
+| Ferramenta | Versão mínima | Papel | Já no projeto? |
+|---|---|---|---|
+| `pytest` | 8.0 | Executor da suíte | Sim |
+| `pytest-asyncio` | 0.23 | Testes `async` (`asyncio_mode = "auto"`) | Sim |
+| `pytest-recording` | 0.13 | **Marcador `@pytest.mark.vcr`, `--record-mode`, `--block-network`** | **A adicionar** |
+| `vcrpy` | 6.0 | **Motor de gravação e reprodução das fitas (VHS)** | **A adicionar** |
+| `respx` | 0.21 | Dublê de `httpx` para o que não se grava: timeout, 5xx, conexão recusada | **A adicionar** |
+| `testcontainers[postgres]` | 4.0 | PostgreSQL 16 efêmero por sessão de teste | **A adicionar** |
+| `pytest-cov` | 5.0 | Cobertura, meta de 80% em código crítico | **A adicionar** |
+| `time-machine` | 2.14 | Relógio controlado para agenda, fuso e expiração de sessão | **A adicionar** |
+| `schemathesis` | 3.25 | Contrato: gera casos a partir do OpenAPI e confronta a implementação | **A adicionar** |
+| `alembic` | 1.13 | Aplica as migrações no banco de teste | Sim (runtime) |
+| `ruff` | 0.5 | Lint, inclusive dos testes | Sim |
+
+`vcrpy` suporta `httpx`, síncrono e assíncrono — que é o cliente HTTP declarado
+em [pyproject.toml](../src/middleware/pyproject.toml) e o previsto nos `TODO` de
+`copilot/client.py`, `voz/speech.py` e das guardas. É essa coincidência que torna
+o VHS aplicável a **todas** as integrações externas do middleware com uma única
+configuração.
+
+`respx` não substitui a fita: ele cobre o que a fita não consegue gravar, porque
+não existe resposta a gravar. Um timeout do Direct Line, um 429 do Content
+Safety, um 503 do Entra ID — cenários que precisam ser testados justamente
+porque decidem entre falhar aberto e falhar fechado.
+
+#### 10.5.3.2 Frontend
+
+| Ferramenta | Versão mínima | Papel | Já no projeto? |
+|---|---|---|---|
+| `vitest` | 2.0 | Executor | Sim |
+| `@testing-library/react` | 16.0 | Renderização e interação | Sim |
+| `@testing-library/user-event` | 14.5 | Interação fiel ao navegador (foco, teclado) | **A adicionar** |
+| `msw` | 2.3 | **Dublê de `/api` no nível de rede**, sem tocar em `servicos/api.ts` | **A adicionar** |
+| `@vitest/coverage-v8` | 2.0 | Cobertura do frontend | **A adicionar** |
+
+MSW intercepta o `fetch` no nível de rede, e não por *mock* de módulo. A
+diferença importa: um `vi.mock("@/servicos/api")` deixaria de exercitar
+justamente o que se quer testar — o `credentials: "include"`, o tratamento de
+401 com redirecionamento e a leitura do `detail` no corpo de erro, todos em
+[api.ts](../src/web/src/servicos/api.ts).
+
+#### 10.5.3.3 Infraestrutura e CI
+
+| Ferramenta | Papel |
+|---|---|
+| Docker + Docker Compose | Sobe `web`, `middleware`, `worker` e `db` para o smoke de pilha completa ([infra/docker-compose.yml](../infra/docker-compose.yml)) |
+| GitLab CI | Executa a suíte em cada merge request, conforme §9.1.5 |
+| `detect-secrets` ou `gitleaks` | *Hook* de pré-commit que barra fita com segredo (seção 10.5.4.3) |
+
+#### 10.5.3.4 Instalação
+
+Backend — as dependências de teste vão para o grupo `dev` já existente em
+[pyproject.toml](../src/middleware/pyproject.toml):
+
+```toml
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    # Integração
+    "pytest-recording>=0.13",   # VHS: grava e toca as fitas
+    "vcrpy>=6.0",
+    "respx>=0.21",              # falhas que não se gravam
+    "testcontainers[postgres]>=4.0",
+    "pytest-cov>=5.0",
+    "time-machine>=2.14",
+    "schemathesis>=3.25",
+]
+```
+
+```powershell
+cd src\middleware
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+```
+
+Frontend:
+
+```powershell
+cd src\web
+npm install -D msw@^2.3 @testing-library/user-event@^14.5 @vitest/coverage-v8@^2.0
+npx msw init public/ --save
+```
+
+### 10.5.4 Gravação e reprodução com VHS
+
+#### 10.5.4.1 Por que fita, e não dublê escrito à mão
+
+O dublê escrito à mão mente. Ele devolve o que o autor **imagina** que a API
+responde, e passa a divergir do serviço real no dia em que a Microsoft acrescenta
+um campo, muda um código de erro ou renomeia uma categoria de severidade. A
+suíte continua verde e a aplicação quebra em produção.
+
+A fita não mente na origem: é a resposta real, capturada uma vez, com todos os
+cabeçalhos, o corpo integral e o código de status que o serviço devolveu.
+
+O custo assumido é que a fita **envelhece** — tratado na seção 10.5.4.4.
+
+#### 10.5.4.2 Onde as fitas ficam
+
+```text
+src/middleware/tests/integration/
+├── conftest.py
+├── fitas/                              # as fitas VHS, versionadas
+│   ├── entra/
+│   │   ├── troca_codigo_sucesso.yaml
+│   │   ├── troca_codigo_expirado.yaml
+│   │   └── openid_configuration.yaml
+│   ├── content_safety/
+│   │   ├── prompt_shield_ataque_direto.yaml
+│   │   ├── prompt_shield_limpo.yaml
+│   │   ├── categorias_odio_severidade_4.yaml
+│   │   └── categorias_limpo.yaml
+│   ├── directline/
+│   │   ├── iniciar_conversa.yaml
+│   │   ├── postar_activity_resposta_simples.yaml
+│   │   └── postar_activity_com_anexo.yaml
+│   └── speech/
+│       └── issue_token.yaml
+```
+
+Uma fita por **cenário**, não por teste: `prompt_shield_ataque_direto.yaml` é
+usada por todos os casos que precisam de um veredito positivo do Prompt Shields.
+Fitas nomeadas pelo cenário sobrevivem à renomeação de testes e deixam claro o
+que falta gravar.
+
+Convenção de nome: `<operacao>_<cenario>.yaml`, em minúsculas, sem acento,
+palavras separadas por `_` — alinhada à nomenclatura de branches de
+[GestaoConfiguracao.md](GestaoConfiguracao.md) §2.3.
+
+#### 10.5.4.3 Sanitização obrigatória
+
+O que **nunca** pode chegar a uma fita versionada:
+
+| Origem | Item | Onde aparece |
+|---|---|---|
+| Entra ID | `client_secret`, `code`, `code_verifier` | Corpo do POST `/oauth2/v2.0/token` |
+| Entra ID | `access_token`, `id_token`, `refresh_token` | Corpo da resposta |
+| Entra ID | `oid`, `upn`, `email` de pessoa real | *Claims* do token decodificado |
+| Direct Line | `Authorization: Bearer <secret>` | Cabeçalho de toda requisição |
+| Direct Line | `token`, `streamUrl`, `conversationId` | Resposta de `POST /conversations` |
+| Content Safety | `Ocp-Apim-Subscription-Key` | Cabeçalho |
+| Azure Speech | Corpo da resposta de `issueToken` (o token inteiro) | Resposta |
+| Middleware | `Set-Cookie: sessao=...` | Resposta de `/auth/callback` |
+
+O `conftest.py` cobre todos por configuração. A verificação independente é um
+*hook* de pré-commit, porque configuração pode ser contornada por engano:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        # As fitas são o ponto de maior risco do repositório: contêm
+        # tráfego real de serviços autenticados.
+        files: ^src/middleware/tests/integration/fitas/
+```
+
+**Regra de revisão.** Toda merge request que adicione ou altere uma fita tem, no
+*checklist* de [GestaoConfiguracao.md](GestaoConfiguracao.md) §4.1, um item
+próprio: *"li o `git diff` da fita linha a linha"*. Fita é código, e código que
+ninguém leu não entra.
+
+#### 10.5.4.4 Revalidação
+
+Uma fita gravada em setembro descreve o serviço de setembro. A revalidação é o
+que impede que a suíte fique verde sobre um contrato que já mudou.
+
+| Gatilho | Ação |
+|---|---|
+| Fechamento de sprint | `--record-mode=all` no grupo `externo`; o diff das fitas entra na retrospectiva |
+| Antes de uma `release/` | Idem, obrigatório; nenhuma release sai com fita de mais de uma sprint |
+| Aviso de mudança do fornecedor | Regravação imediata do grupo afetado |
+| Falha em produção não reproduzida pela suíte | Regravação do grupo suspeito antes de qualquer correção |
+
+**O diff da fita é o alerta.** Quando `--record-mode=all` produz alteração, ela é
+lida como notícia sobre o fornecedor: um campo novo no payload do Content
+Safety, uma categoria renomeada, um código de erro diferente. Essa leitura vale
+mais que o próprio teste passar — é o único mecanismo do projeto que enxerga
+mudança silenciosa em API de terceiro.
+
+#### 10.5.4.5 Onde a fita não serve
+
+| Situação | Por quê | O que se faz |
+|---|---|---|
+| Áudio para o Azure Speech | WebSocket bidirecional; o VCR.py intercepta HTTP | *Recognizer* dublado no hook `useMicrofone`; teste manual com áudio real, registrado como evidência de sprint |
+| SSE do `/chat` (previsto em `useConversa.ts`) | Resposta longa, incremental | `httpx` com `stream=True` contra a aplicação ASGI, sem serviço externo no meio |
+| Timeout do Direct Line | Não há resposta a gravar | `respx` com `httpx.TimeoutException` |
+| 429 / 503 do Content Safety | Reproduzir ao vivo exigiria estourar cota de propósito | `respx` com o status desejado |
+| Expiração de token | Depende do relógio, não do payload | `time-machine` avançando o tempo |
+| Concorrência (dois disparos simultâneos) | Fita é sequencial | Teste com banco real e `asyncio.gather` |
+
+Isso divide o trabalho com clareza: **VHS responde "o que o serviço devolve";
+`respx` e `time-machine` respondem "o que fazemos quando ele não devolve"**. A
+segunda pergunta é a que decide se a guarda de injeção falha fechada e a de abuso
+falha aberta — as duas decisões de segurança mais delicadas do middleware.
+
+### 10.5.5 Casos de teste
+
+Os casos abaixo estão organizados por costura. A coluna *Onda* indica quando o
+caso passa a ser exigível, conforme a ordem de construção de `Arquitetura.md`
+§12.1 — casos sem onda são exigíveis desde já.
+
+#### 10.5.5.1 IT-API — costura HTTP, dependências e orquestrador
+
+Aplicação real em processo, todos os serviços externos dublados. Onze destes já
+existem em [test_fluxo_chat.py](../src/middleware/tests/integration/test_fluxo_chat.py)
+e são marcados como tal.
+
+| ID | Verifica | Critério de aceitação | Onda |
+|---|---|---|---|
+| IT-API-01 | Mensagem legítima atravessa o pipeline | 200, `desfecho=encaminhada`, `bloqueada=false`, `intencao_id` preenchido, uma interação gravada ✅ *existe* | — |
+| IT-API-02 | Segundo turno reaproveita a conversa | Mesmo `conversa_id`, uma única `Conversa`, `conversa_externa_id` gravado no primeiro turno ✅ *existe* | — |
+| IT-API-03 | Bloqueio por regra de injeção não vira erro HTTP | 200, `bloqueada=true`, Copilot não acionado, prompt gravado ✅ *existe* | — |
+| IT-API-04 | Abuso recebe recusa orientativa | `desfecho=bloqueada_abuso`, texto menciona o escopo do agente ✅ *existe* | — |
+| IT-API-05 | Resposta envenenada é retida | `desfecho=bloqueada_saida`, Copilot acionado, conteúdo não entregue ✅ *existe* | — |
+| IT-API-06 | Rotas restritas barram sem permissão | 403 em `/intencoes/*` e `/rotinas` ✅ *existe* | — |
+| IT-API-07 | Permissão concedida ultrapassa a barreira | `/intencoes/volume` deixa de responder 403 ✅ *existe* | — |
+| IT-API-08 | **Ordem das etapas é respeitada** | Com todas as guardas positivas, o desfecho é `bloqueada_injecao_regra` — a primeira da ordem; classificador e Copilot não são chamados | — |
+| IT-API-09 | **Todo desfecho grava exatamente uma interação** | Parametrizado nos 8 valores de `Desfecho`: uma linha por chamada, com prompt em claro (RNF02) | — |
+| IT-API-10 | Baixa confiança pede reformulação sem acionar o Copilot | `desfecho=recusada_baixa_confianca`, `copilot.recebidas == []` | — |
+| IT-API-11 | Limiar calibrado tem precedência sobre o do catálogo | Com `limiar_de` devolvendo valor acima da confiança, recusa; devolvendo `None`, cai no catálogo | — |
+| IT-API-12 | `tentativa_injecao` vira bloqueio, não recusa | `desfecho=bloqueada_injecao_modelo` e alerta em log | — |
+| IT-API-13 | Falha do executor vira resposta amigável | Exceção do `CopilotClient` → `desfecho=falha_executor`, 200, sem *traceback* no log | — |
+| IT-API-14 | `conversa_id` de outro usuário gera conversa nova | Id alheio não dá acesso; resposta traz `conversa_id` diferente do enviado | — |
+| IT-API-15 | Falha ao gravar a interação propaga | Repositório levantando exceção → 500; **não** se responde sem registrar | — |
+| IT-API-16 | Sessão ausente, adulterada e expirada dão o mesmo 401 | Três entradas, uma resposta indistinguível (sem oráculo) | 1 |
+| IT-API-17 | Payload inválido é recusado pelo Pydantic | Mensagem vazia e acima de 4000 caracteres → 422 | — |
+| IT-API-18 | `canal=rotina` não pode vir do cliente | POST com `canal: "rotina"` não produz interação marcada como rotina sem `rotina_id` | 5 |
+
+#### 10.5.5.2 IT-DB — persistência contra PostgreSQL real
+
+Testcontainers sobe `postgres:16-alpine`, Alembic aplica as migrações, os
+repositórios rodam de verdade. É o único grupo que exige Docker.
+
+| ID | Verifica | Critério de aceitação | Onda |
+|---|---|---|---|
+| IT-DB-01 | Migrações aplicam do zero | `alembic upgrade head` em banco vazio, sem erro; `downgrade base` reverte | 1 |
+| IT-DB-02 | Interação persiste e relê idêntica | Todos os campos de `Interacao`, incluindo `Enum` de `Canal` e `Desfecho` | 1 |
+| IT-DB-03 | `ConversaRepository.obter` filtra por dono | Conversa de `u1` não é devolvida para `u2` | 1 |
+| IT-DB-04 | `listar_por_conversa` filtra por dono | Idem, no nível das interações | 1 |
+| IT-DB-05 | Arquivar não apaga interações | Após `arquivar`, a conversa some da lista e as interações permanecem consultáveis | 1 |
+| IT-DB-06 | `vincular_externa` é idempotente | Chamada duas vezes com o mesmo id não duplica nem falha | 1 |
+| IT-DB-07 | Pipeline completo grava de verdade | `/chat` com repositórios reais: a linha existe no PostgreSQL ao final | 1 |
+| IT-DB-08 | Agregações do dashboard batem com os dados | Massa sintética conhecida → `volume`, `desfechos` e `latencia` com valores previstos | 4 |
+| IT-DB-09 | Séries de segurança não se somam | Injeção, abuso e saída em séries separadas, conforme `routes/intencoes.py` | 4 |
+| IT-DB-10 | Intenções com contagem zero aparecem | Classe do catálogo sem tráfego é devolvida com zero, não omitida | 4 |
+| IT-DB-11 | Transação não commitada não deixa resíduo | Erro no meio da gravação → nenhuma linha parcial | 1 |
+| IT-DB-12 | Jobstore do APScheduler coexiste no mesmo banco | Tabelas do scheduler criadas sem colidir com as do Alembic | 5 |
+
+#### 10.5.5.3 IT-AUTH — Microsoft Entra ID
+
+Fitas em `fitas/entra/`. Provisórias até o provisionamento do tenant.
+
+| ID | Verifica | Técnica | Critério de aceitação | Onda |
+|---|---|---|---|---|
+| IT-AUTH-01 | `/auth/login` monta a URL de autorização | Fita (`openid_configuration`) | Redirect 302 com `code_challenge`, `state` e `redirect_uri` corretos | 1 |
+| IT-AUTH-02 | `/auth/callback` troca o código e abre sessão | Fita | 302 para a raiz + `Set-Cookie` com `HttpOnly`, `Secure`, `SameSite=Strict`, `Max-Age` | 1 |
+| IT-AUTH-03 | **`state` divergente é recusado** | Fita | 400 e **nenhuma** sessão criada | 1 |
+| IT-AUTH-04 | Código expirado não vira sessão parcial | Fita (`troca_codigo_expirado`) | Exceção tratada, 400, nada gravado | 1 |
+| IT-AUTH-05 | Token com assinatura inválida é rejeitado | Fita adulterada de propósito | Exceção; nenhuma identidade devolvida | 1 |
+| IT-AUTH-06 | Grupos viram perfil e permissões | Fita + `settings.entra_grupo_*` | `IdentidadeEntra` → `UsuarioAutenticado` com perfil e permissões esperados | 1 |
+| IT-AUTH-07 | Usuário sem grupo mapeado cai no perfil padrão | Fita | `PERFIL_PADRAO` (`MEMBRO_EQUIPE`), nenhuma permissão | 1 |
+| IT-AUTH-08 | Perfil mais amplo vence em caso de múltiplos grupos | Fita | Diretoria prevalece sobre membro de equipe | 1 |
+| IT-AUTH-09 | **Nenhum token chega ao navegador** | Inspeção da resposta | Corpo e cookies não contêm `access_token` nem `id_token` | 1 |
+| IT-AUTH-10 | Logout invalida no servidor | Banco real | Cookie copiado antes do logout deixa de valer | 1 |
+| IT-AUTH-11 | Sessão expira no prazo configurado | `time-machine` | Após `session_max_age_seconds`, 401 | 1 |
+| IT-AUTH-12 | Entra ID indisponível não abre sessão | `respx` 503 | Erro tratado, nenhuma sessão, mensagem sem detalhe do provedor | 1 |
+
+#### 10.5.5.4 IT-SAFE — Azure AI Content Safety
+
+Fitas em `fitas/content_safety/`, graváveis desde já (o recurso opera no tenant
+da equipe). É o grupo onde o VHS mais rende: cada categoria e cada nível de
+severidade vira uma fita reutilizável.
+
+| ID | Verifica | Técnica | Critério de aceitação | Onda |
+|---|---|---|---|---|
+| IT-SAFE-01 | Prompt Shields detecta ataque direto | Fita | `suspeita=True`; `/chat` responde `bloqueada_injecao_modelo` | 2 |
+| IT-SAFE-02 | Texto limpo passa | Fita | `suspeita=False`, pipeline segue para a classificação | 2 |
+| IT-SAFE-03 | **Guarda de injeção falha FECHADA** | `respx` 503 | `suspeita=True`, `motivo="servico_indisponivel"`, Copilot não acionado | 2 |
+| IT-SAFE-04 | Timeout também falha fechado | `respx` timeout | Idem IT-SAFE-03 | 2 |
+| IT-SAFE-05 | Categoria de abuso bloqueia acima do limiar | Fita (severidade 4) | `abusiva=True`, `categoria="Hate"` | 2 |
+| IT-SAFE-06 | Severidade abaixo do limiar não bloqueia | Fita (severidade 1) | `abusiva=False` com `content_safety_limiar_severidade=2` | 2 |
+| IT-SAFE-07 | **Guarda de abuso falha ABERTA** | `respx` 503 | `abusiva=False`, desfecho degradado registrado, mensagem segue | 2 |
+| IT-SAFE-08 | Políticas corporativas somam à moderação | Fita limpa + `politicas.avaliar` positiva | `abusiva=True` com `violacoes` preenchidas e `categoria=None` | 2 |
+| IT-SAFE-09 | Guarda de saída detecta injeção indireta | Fita (modo `documents`) | `suspeita=True` → `bloqueada_saida` | 2 |
+| IT-SAFE-10 | **Guarda de saída falha FECHADA** | `respx` 503 | Resposta retida, não entregue | 2 |
+| IT-SAFE-11 | 429 é tratado como indisponibilidade, não como veredito | `respx` 429 | Mesmo comportamento de 503 em cada guarda | 2 |
+| IT-SAFE-12 | Nenhuma chave viaja no corpo | Inspeção da fita gravada | `Ocp-Apim-Subscription-Key` aparece como `DUBLE` | 2 |
+| IT-SAFE-13 | Mensagem barrada por regra não chega ao serviço | Fita ausente + `--block-network` | Nenhuma requisição sai: a regra determinística vem antes (economia e segurança) | 2 |
+
+O par IT-SAFE-03 / IT-SAFE-07 é o mais importante do grupo: são as duas decisões
+opostas de disponibilidade documentadas em
+[injecao/classificador.py](../src/middleware/app/pipeline/guardas/injecao/classificador.py)
+e [abuso/classificador.py](../src/middleware/app/pipeline/guardas/abuso/classificador.py).
+Trocá-las por engano transformaria uma queda do Content Safety em janela de
+ataque, ou em indisponibilidade total do agente.
+
+#### 10.5.5.5 IT-COP — Copilot Studio via Direct Line
+
+Fitas em `fitas/directline/`. Provisórias até o provisionamento.
+
+| ID | Verifica | Técnica | Critério de aceitação | Onda |
+|---|---|---|---|---|
+| IT-COP-01 | Início de conversa devolve `conversationId` | Fita | `RespostaCopilot.conversa_externa_id` preenchido | 1 |
+| IT-COP-02 | Activity é postada e a resposta lida | Fita | Texto do bot chega íntegro ao `ChatResponse` | 1 |
+| IT-COP-03 | **Entrada vai como dado rotulado** | Inspeção da requisição gravada | `intencao_id` e `exige_confirmacao` em `channelData`/`value`, **nunca** concatenados ao texto | 1 |
+| IT-COP-04 | Turno seguinte reusa a conversa externa | Fita | Nenhum `POST /conversations` no segundo turno | 1 |
+| IT-COP-05 | Anexo estruturado chega em `dados` | Fita (resposta com card) | `RespostaCopilot.dados` populado, texto preservado | 1 |
+| IT-COP-06 | Timeout respeita `copilot_timeout_seconds` | `respx` | Exceção em ≤ o configurado → `falha_executor` | 1 |
+| IT-COP-07 | 401 do Direct Line não vaza segredo | `respx` 401 | Log sem `directline_secret`; resposta genérica ao usuário | 1 |
+| IT-COP-08 | Resposta vazia do bot é tratada | Fita | Não quebra a guarda de saída nem o registro | 1 |
+| IT-COP-09 | Intenção sem tópico configurado | Fita de erro | Desfecho `falha_executor`, com correlação por `interacao_id` | 1 |
+| IT-COP-10 | `conversationId` nunca aparece na API pública | Inspeção do `ChatResponse` | Apenas o `conversa_id` do middleware | 1 |
+
+#### 10.5.5.6 IT-VOZ — Azure Speech
+
+| ID | Verifica | Técnica | Critério de aceitação | Onda |
+|---|---|---|---|---|
+| IT-VOZ-01 | `/voz/token` emite credencial curta | Fita (`issue_token`) | 200 com `token`, `regiao=brazilsouth`, `expira_em_segundos=600`, `idioma=pt-BR` | Livre |
+| IT-VOZ-02 | **`/voz/token` exige sessão** | Sem cookie | 401; o endpoint não é proxy gratuito | Livre |
+| IT-VOZ-03 | Chave do recurso nunca sai | Inspeção da resposta | Corpo contém token efêmero, jamais `speech_key` | Livre |
+| IT-VOZ-04 | Speech indisponível não derruba o chat | `respx` 503 | `/voz/token` falha isoladamente; `/chat` por texto segue | Livre |
+| IT-VOZ-05 | Cota excedida devolve 429 | `respx` 429 | Conforme `openapi-voz.yaml` | Livre |
+| IT-VOZ-06 | Transcrição entra pelo `/chat` como texto | Aplicação real | `canal=voz` registrado; mesmas guardas aplicadas | Livre |
+| IT-VOZ-07 | Hook renova o token antes de expirar | Vitest + relógio falso | Renovação proativa, não reativa a erro | Livre |
+| IT-VOZ-08 | `Idempotency-Key` não duplica submissão | Aplicação real | Mesma chave → mesmo `id_audio`, sem nova transcrição | Livre |
+
+#### 10.5.5.7 IT-ROT — rotinas, agendador e worker
+
+| ID | Verifica | Técnica | Critério de aceitação | Onda |
+|---|---|---|---|---|
+| IT-ROT-01 | **Rotina passa pelas mesmas guardas** | Banco real + fitas | Disparo com prompt malicioso → `bloqueada_*`, Copilot não acionado, `canal=rotina` | 5 |
+| IT-ROT-02 | **`rotinas/` não importa `copilot/`** | Análise estática (`ast`) | Nenhum import direto; a seta é sempre via orquestrador | 5 |
+| IT-ROT-03 | Cron dispara no fuso da rotina | `time-machine` + banco | `0 8 5 * *` em `America/Sao_Paulo` dispara às 8h locais, não em UTC | 5 |
+| IT-ROT-04 | `coalesce` colapsa disparos acumulados | Relógio + jobstore | Worker fora por 3 ciclos → **um** disparo ao voltar | 5 |
+| IT-ROT-05 | `misfire_grace_time` descarta o atrasado demais | Relógio | Além de 3600 s, o disparo é pulado | 5 |
+| IT-ROT-06 | `max_instances=1` evita concorrência | `asyncio.gather` | Segunda execução descartada enquanto a primeira roda | 5 |
+| IT-ROT-07 | Identidade é reconstruída no disparo | Fita do Entra | Permissão revogada ontem vale hoje: execução bloqueada | 5 |
+| IT-ROT-08 | Dono desativado encerra e desativa a rotina | Fita do Entra (usuário inexistente) | `StatusExecucao.FALHA` e `ativa=False` | 5 |
+| IT-ROT-09 | Validação barra prompt fora do catálogo no cadastro | Aplicação real | 422 com explicação; nenhuma rotina criada | 5 |
+| IT-ROT-10 | Edição revalida o prompt | Aplicação real | Trocar prompt válido por inválido é recusado | 5 |
+| IT-ROT-11 | Cron inválido é recusado no cadastro | Aplicação real | 422; a rotina não nasce silenciosamente morta | 5 |
+| IT-ROT-12 | Fuso inexistente é recusado | Aplicação real | `zoneinfo` valida `America/Sao_Paulo` vs. erro de digitação | 5 |
+| IT-ROT-13 | Remover desagenda o job | Jobstore real | Nenhum job órfão após `DELETE /rotinas/{id}` | 5 |
+| IT-ROT-14 | **Disparo sob demanda exige ser dono** | Aplicação real | Rotina alheia → 404/403, sem executar sob a identidade do outro | 5 |
+| IT-ROT-15 | Execução liga-se à interação | Banco real | `ExecucaoRotina.interacao_id` aponta para o registro gravado | 5 |
+| IT-ROT-16 | `carregar_agenda` reconcilia na subida | Jobstore real | Rotina desativada com worker fora não dispara ao voltar | 5 |
+| IT-ROT-17 | Desfecho bloqueado não é erro de sistema | Banco real | `StatusExecucao.BLOQUEADA`, visível na aba de resultados | 5 |
+
+#### 10.5.5.8 IT-WEB — interface contra o middleware
+
+Vitest + Testing Library + MSW. Os *handlers* respondem exatamente o que o
+OpenAPI do FastAPI declara (ver IT-CTR-03).
+
+| ID | Verifica | Critério de aceitação | Onda |
+|---|---|---|---|
+| IT-WEB-01 | Envio de mensagem exibe a resposta | POST `/api/chat` interceptado; bolha do agente renderizada | 1 |
+| IT-WEB-02 | **`credentials: "include"` em toda chamada** | MSW inspeciona a requisição; ausência falha o teste | 1 |
+| IT-WEB-03 | **Nenhum `Authorization: Bearer` sai do navegador** | Varredura dos *handlers*: cabeçalho nunca presente | 1 |
+| IT-WEB-04 | 401 redireciona ao login | `window.location.href` vai para `/api/auth/login` | 1 |
+| IT-WEB-05 | Erro 500 exibe mensagem, não tela branca | `ErroApi` capturado e renderizado | 1 |
+| IT-WEB-06 | `conversa_id` devolvido é adotado | Servidor devolve id diferente → próximo POST usa o novo | 1 |
+| IT-WEB-07 | Resposta bloqueada aparece como orientação | `bloqueada=true` renderiza aviso, não erro | 2 |
+| IT-WEB-08 | Menus restritos seguem `/auth/eu` | Sem `ver_intencoes`, a aba não aparece — e a rota ainda dá 403 no backend (IT-API-06) | 4 |
+| IT-WEB-09 | Dashboard renderiza a partir dos endpoints | Recharts recebe as séries de `/intencoes/*` | 4 |
+| IT-WEB-10 | Rotinas: criar, listar, excluir | Fluxo completo contra o MSW, com confirmação de exclusão | 5 |
+| IT-WEB-11 | Estado de carregamento e de erro | TanStack Query exibe *loading* e *retry* | 4 |
+| IT-WEB-12 | Microfone com SDK dublado | `useMicrofone` produz parcial e final; token pedido a `/api/voz/token` | Livre |
+
+#### 10.5.5.9 IT-CTR — contratos
+
+| ID | Verifica | Ferramenta | Critério de aceitação | Onda |
+|---|---|---|---|---|
+| IT-CTR-01 | Implementação obedece ao próprio OpenAPI | Schemathesis sobre `/openapi.json` | Nenhuma resposta fora do schema; nenhum 500 inesperado | 1 |
+| IT-CTR-02 | **Canal de voz obedece ao contrato versionado** | Schemathesis sobre [openapi-voz.yaml](api/openapi-voz.yaml) | Divergência falha o teste. *Hoje a implementação declara apenas `/voz/token`; `POST /voz/audios` e `GET /voz/audios/{id}/transcricao` estão especificados e ausentes — este caso torna a lacuna visível em vez de tácita* | Livre |
+| IT-CTR-03 | Handlers do MSW derivam do OpenAPI | Script `npm run gerar:fixtures` | Fixture regenerada não produz diff; se produzir, o contrato mudou e o frontend precisa acompanhar | 1 |
+| IT-CTR-04 | Catálogo de intenções e `topicos.md` concordam | Teste sobre `catalogo.py` + parse do Markdown | Toda intenção treinada no MVP tem linha em [topicos.md](../copilot/topicos.md), e vice-versa | 3 |
+| IT-CTR-05 | Toda fita provisória declara origem e issue | Varredura de `fitas/**.yaml` | Cabeçalho presente; nenhuma fita provisória anônima | — |
+| IT-CTR-06 | Tipos do frontend acompanham os schemas | `tsc` sobre tipos gerados do OpenAPI | `src/tipos/index.ts` sem divergência de campo ou nulidade | 1 |
+
+#### 10.5.5.10 IT-E2E — pilha completa no Compose
+
+Um punhado de casos, deliberadamente. Este grupo é lento e frágil por natureza;
+serve para provar que a **montagem** funciona, não para cobrir regras de negócio.
+
+| ID | Verifica | Critério de aceitação | Onda |
+|---|---|---|---|
+| IT-E2E-01 | `docker compose up` sobe os quatro serviços | `web`, `middleware`, `worker`, `db` saudáveis | 1 |
+| IT-E2E-02 | Migrações rodam antes da API | `alembic upgrade head` concluído; `/health` responde `{"status":"ok"}` | 1 |
+| IT-E2E-03 | Proxy do Nginx encaminha `/api` | `GET http://localhost:5173/api/health` responde pelo middleware | 1 |
+| IT-E2E-04 | Middleware não é acessível fora do proxy | Porta 8000 não publicada no host | 1 |
+| IT-E2E-05 | Worker sobe sem expor HTTP | Processo vivo, nenhuma porta atendendo | 5 |
+| IT-E2E-06 | Cookie de sessão sobrevive ao proxy | Mesma origem, `SameSite=Strict` mantido | 1 |
+
+### 10.5.6 Ambiente e dados de teste
+
+#### 10.5.6.1 Três modos de execução
+
+| Modo | Comando | Precisa de Docker? | Precisa de rede? | Tempo alvo |
+|---|---|---|---|---|
+| **Rápido** (padrão do dia a dia) | `python -m pytest -m "not banco and not lento"` | Não | Não | < 30 s |
+| **Completo** (pré-commit e CI) | `python -m pytest --block-network` | Sim | Não | < 4 min |
+| **Gravação** (deliberado) | `VHS_GRAVANDO=1 python -m pytest -m externo --record-mode=all` | Não | **Sim** | — |
+
+O modo rápido existe para que a suíte seja rodada de fato. Uma suíte de quatro
+minutos roda antes do commit; uma de quatro minutos rodada a cada `Ctrl+S` deixa
+de ser rodada.
+
+#### 10.5.6.2 Variáveis de ambiente
+
+Os testes **não** leem o `.env` de desenvolvimento. A fixture `ambiente_de_teste`
+injeta credenciais falsas, e `src/middleware/tests/.env.teste` documenta o
+conjunto mínimo:
+
+```ini
+# Valores propositalmente inválidos: qualquer chamada real falharia,
+# o que é o comportamento desejado fora da sessão de gravação.
+DIRECTLINE_SECRET=chave-de-teste
+CONTENT_SAFETY_ENDPOINT=https://exemplo-teste.cognitiveservices.azure.com
+CONTENT_SAFETY_KEY=chave-de-teste
+CONTENT_SAFETY_LIMIAR_SEVERIDADE=2
+ENTRA_TENANT_ID=00000000-0000-0000-0000-000000000000
+ENTRA_CLIENT_ID=00000000-0000-0000-0000-000000000001
+ENTRA_CLIENT_SECRET=chave-de-teste
+ENTRA_GRUPO_DIRETORIA=grupo-diretoria-teste
+ENTRA_GRUPO_LIDER_PROJETO=grupo-lider-teste
+ENTRA_GRUPO_MEMBRO_EQUIPE=grupo-membro-teste
+ENTRA_GRUPO_VER_INTENCOES=grupo-intencoes-teste
+ENTRA_GRUPO_GERIR_ROTINAS=grupo-rotinas-teste
+SESSION_SECRET=segredo-de-teste-nao-usar-em-producao
+SESSION_COOKIE_SECURE=false
+SPEECH_KEY=chave-de-teste
+SPEECH_REGION=brazilsouth
+# DATABASE_URL é definida em tempo de execução pelo Testcontainers.
+```
+
+O `.env.gravacao`, com as credenciais reais de desenvolvimento, **não é
+versionado** — entra no `.gitignore` junto com `.env`, conforme
+[GestaoConfiguracao.md](GestaoConfiguracao.md) §6.
+
+#### 10.5.6.3 Dados
+
+Três fontes, nenhuma delas com dado real do Metrô:
+
+| Fonte | Uso |
+|---|---|
+| [testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv) | Enunciados por intenção, já versionados, para os casos que exercitam a classificação |
+| Fábricas em `tests/integration/fabricas.py` | `Interacao`, `Conversa`, `Rotina` sintéticas, com projetos fictícios (`123XXX`, como no teste atual) |
+| Corpus adversarial em `tests/integration/dados/ataques.yaml` | Tentativas de injeção e de abuso, alimentando os casos parametrizados de IT-SAFE |
+
+O corpus adversarial é ativo de segurança e cresce a cada incidente encontrado:
+todo bloqueio real observado no dashboard que não estivesse coberto vira uma
+linha nova.
+
+### 10.5.7 Organização e execução
+
+#### 10.5.7.1 Estrutura de diretórios
+
+```text
+src/middleware/tests/
+├── unit/                              # existente, inalterado
+├── integration/
+│   ├── conftest.py                    # VHS, fixtures de app e de banco
+│   ├── fabricas.py                    # dados sintéticos
+│   ├── dados/
+│   │   └── ataques.yaml
+│   ├── fitas/                         # fitas VHS (seção 10.5.4.2)
+│   ├── internos/
+│   │   ├── test_fluxo_chat.py         # existente, ampliado — IT-API
+│   │   ├── test_persistencia.py       # IT-DB
+│   │   ├── test_analytics.py          # IT-DB-08..10
+│   │   └── test_rotinas.py            # IT-ROT
+│   ├── externos/
+│   │   ├── test_entra.py              # IT-AUTH
+│   │   ├── test_content_safety.py     # IT-SAFE
+│   │   ├── test_directline.py         # IT-COP
+│   │   └── test_speech.py             # IT-VOZ
+│   └── contratos/
+│       ├── test_openapi.py            # IT-CTR-01, 02
+│       ├── test_catalogo_topicos.py   # IT-CTR-04
+│       └── test_fitas.py              # IT-CTR-05
+
+src/web/src/testes/
+├── setup.ts                           # existente + servidor MSW
+├── mocks/
+│   ├── servidor.ts
+│   ├── handlers.ts                    # derivados do OpenAPI
+│   └── fixtures/                      # geradas por `npm run gerar:fixtures`
+├── paginas.test.tsx                   # existente
+└── integracao/
+    ├── chat.test.tsx                  # IT-WEB-01..07
+    ├── permissoes.test.tsx            # IT-WEB-08
+    ├── rotinas.test.tsx               # IT-WEB-10
+    └── voz.test.tsx                   # IT-WEB-12
+```
+
+#### 10.5.7.2 Comandos
+
+```powershell
+cd src\middleware
+
+python -m pytest -m "not banco and not lento"      # ciclo curto
+python -m pytest -m integracao --block-network     # tudo, sem rede
+python -m pytest -m externo                        # só as fitas
+python -m pytest -m banco                          # só o que precisa de Docker
+python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=80
+python -m ruff check app tests
+```
+
+```powershell
+cd src\web
+
+npm run test                    # vitest run
+npm run test -- --coverage
+npm run gerar:fixtures          # regenera handlers do MSW a partir do openapi.json
+```
+
+### 10.5.8 Integração contínua
+
+O pipeline roda em cada merge request, conforme §9.1.5. Três
+estágios, do mais barato para o mais caro:
+
+```yaml
+# .gitlab-ci.yml (esboço)
+stages: [lint, teste, integracao]
+
+lint:
+  stage: lint
+  image: python:3.12-slim
+  script:
+    - pip install -e "src/middleware[dev]"
+    - ruff check src/middleware/app src/middleware/tests
+
+teste-unitario:
+  stage: teste
+  image: python:3.12-slim
+  script:
+    - pip install -e "src/middleware[dev]"
+    # --block-network é o cinto de segurança: nenhuma chamada real
+    # escapa da fita, nem por engano de configuração.
+    - pytest src/middleware/tests/unit --block-network
+
+teste-frontend:
+  stage: teste
+  image: node:18-alpine
+  script:
+    - cd src/web && npm ci && npm run test -- --coverage
+
+teste-integracao:
+  stage: integracao
+  image: python:3.12-slim
+  services:
+    - name: postgres:16-alpine
+      alias: db
+  variables:
+    POSTGRES_USER: middleware
+    POSTGRES_PASSWORD: middleware
+    POSTGRES_DB: middleware
+    DATABASE_URL: "postgresql+asyncpg://middleware:middleware@db:5432/middleware"
+  script:
+    - pip install -e "src/middleware[dev]"
+    - alembic -c src/middleware/alembic.ini upgrade head
+    - pytest src/middleware/tests/integration --block-network
+        --cov=app --cov-report=term-missing --cov-fail-under=80
+```
+
+No CI o PostgreSQL vem do serviço do GitLab, não do Testcontainers — o
+*runner* já provê o contêiner e o Docker-in-Docker seria custo desnecessário.
+As fixtures de banco leem `DATABASE_URL` quando definida e sobem o Testcontainers
+apenas quando não estiver, o que faz o mesmo teste rodar nos dois ambientes sem
+alteração.
+
+O grupo `externo` roda com as fitas versionadas: **o CI não tem credencial de
+nenhum tenant**, e essa é uma propriedade a preservar.
+
+### 10.5.9 Rastreabilidade com os requisitos
+
+| Requisito | O que exige | Casos que o cobrem |
+|---|---|---|
+| RF01–RF03 (interação em linguagem natural) | Mensagem entra, resposta volta | IT-API-01, IT-COP-02, IT-WEB-01 |
+| RF04–RF08 (ações executadas pelo Copilot) | Prompt validado chega ao executor com a intenção resolvida | IT-COP-03, IT-COP-05, IT-CTR-04 |
+| RF09–RF12 (guardas, registro, análise, rotinas) | As quatro responsabilidades do middleware | IT-SAFE-*, IT-API-09, IT-DB-08, IT-ROT-* |
+| RNF01 (perímetro) | Serviços e tenants declarados | Fora de escopo automatizado — inspeção de configuração (§10.5.1.2) |
+| RNF02 (rastreabilidade) | Toda interação registrada, inclusive bloqueios | **IT-API-09**, IT-API-15, IT-DB-02, IT-ROT-15 |
+| RNF03 (acurácia do classificador) | ≥ 0,85 | Bancada F21 (fora deste plano); integração cobre o **uso** do veredito: IT-API-10, IT-API-11 |
+| RNF06 (controle de acesso por perfil e permissão) | Barreira no servidor, não na interface | IT-API-06, IT-API-07, IT-AUTH-06..08, IT-WEB-08 |
+| RNF07 (retenção e proteção do prompt) | Prompt em claro, com acesso restrito | IT-API-09, IT-DB-03, IT-DB-04 |
+| Risco R02 (indisponibilidade do tenant) | Progresso sem os recursos | Fitas provisórias, IT-CTR-05 |
+| Risco R12 (perímetro de dois tenants) | Nenhum dado real fora do homologado | §10.5.1.3, princípio 3; §10.5.6.3 |
+
+### 10.5.10 Cronograma por onda
+
+| Onda | Grupos exigíveis ao fim | Marco de teste |
+|---|---|---|
+| **1. Fundação** | IT-API (completo), IT-DB-01..07, IT-AUTH, IT-COP, IT-WEB-01..06, IT-CTR-01/03/06, IT-E2E | Login real, `/chat` gravando no PostgreSQL, fitas de Entra e Direct Line **reais** |
+| **2. Guardas** | IT-SAFE (completo), IT-API-08/12, IT-WEB-07 | Fail-closed e fail-open verificados; corpus adversarial em uso |
+| **3. Intenções** | IT-CTR-04, IT-API-10/11 | Catálogo e `topicos.md` sob teste de concordância |
+| **4. Análise** | IT-DB-08..10, IT-WEB-08/09/11 | Agregações do dashboard conferidas contra massa conhecida |
+| **5. Rotinas** | IT-ROT (completo), IT-DB-12, IT-WEB-10, IT-E2E-05 | Invariante I9 protegida por teste; agenda com fuso e *misfire* verificados |
+| **Voz** (livre) | IT-VOZ, IT-WEB-12, IT-CTR-02 | Token efêmero sob fita; lacuna de `/voz/audios` explicitada |
+
+**O que se faz agora**, antes de qualquer onda: instalar as ferramentas
+(§10.5.3.4), escrever o `conftest.py`, reorganizar o arquivo de integração
+existente em `internos/`, gravar as fitas de Content Safety — que já é possível
+— e criar as fitas provisórias de Entra ID e Direct Line com suas issues de
+substituição.
 
 ## 10.6 Testes de Regras de Negócio
 
@@ -6554,10 +7329,18 @@ Os resultados qualitativos deverão ser consolidados posteriormente em uma lista
 - JURAFSKY, D.; MARTIN, J. H. *Speech and Language Processing*. 3. ed. (rascunho). Cap. 4 (avaliação de classificadores: precisão, recall e F1) e Cap. 16 (reconhecimento automático de fala e *Word Error Rate*). Disponível em: https://web.stanford.edu/~jurafsky/slp3/
 - MICROSOFT. *Azure AI Content Safety — detecção de ataques por prompt (Prompt Shields)*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/content-safety/concepts/jailbreak-detection
 - MICROSOFT. *Azure AI Speech — documentação do serviço de fala*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/speech-service/
+- MICROSOFT. *Azure AI Speech — obter token de autorização*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/speech-service/rest-speech-to-text-short. Acesso em: 2 set. 2026.
 - MICROSOFT. *Conectar o agente do Copilot Studio a um aplicativo próprio (canal Direct Line)*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/publication-connect-bot-to-custom-application
 - MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/
 - MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
+- MICROSOFT. *Direct Line API 3.0 — enviar atividade ao bot*. Disponível em: https://learn.microsoft.com/pt-br/azure/bot-service/rest-api/bot-framework-rest-direct-line-3-0-send-activity. Acesso em: 2 set. 2026.
 - MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
 - MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
+- MICROSOFT. *Microsoft identity platform — fluxo de código de autorização com PKCE*. Disponível em: https://learn.microsoft.com/pt-br/entra/identity-platform/v2-oauth2-auth-code-flow. Acesso em: 2 set. 2026.
 - MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
+- MOCK SERVICE WORKER. *Documentação do MSW*. Disponível em: https://mswjs.io/docs/. Acesso em: 2 set. 2026.
+- PYTEST-RECORDING. *Plugin de gravação e reprodução para pytest*. Disponível em: https://github.com/kiwicom/pytest-recording. Acesso em: 2 set. 2026.
+- SCHEMATHESIS. *Property-based testing para APIs descritas em OpenAPI*. Disponível em: https://schemathesis.readthedocs.io/. Acesso em: 2 set. 2026.
 - SCIKIT-LEARN. *Metrics and scoring: quantifying the quality of predictions*. Disponível em: https://scikit-learn.org/stable/modules/model_evaluation.html
+- TESTCONTAINERS. *Testcontainers para Python*. Disponível em: https://testcontainers-python.readthedocs.io/. Acesso em: 2 set. 2026.
+- VCR.PY. *Gravação e reprodução de interações HTTP em fitas*. Disponível em: https://vcrpy.readthedocs.io/. Acesso em: 2 set. 2026.
