@@ -6391,6 +6391,142 @@ cd src\middleware
 python -m pytest tests/funcionais/test_rf06_pendencias.py -q
 ```
 
+### 10.1.4 Análise e relatórios — RF07 e RF08
+
+RF07 e RF08 estão na mesma situação de escopo, e convém dizê-la antes dos casos. As histórias US07 e US08 são classificadas como desejáveis em 3.2.1; nenhuma *feature* vinculada a esses dois requisitos foi admitida no MVP, conforme 2.7.5; nenhum dos dois possui caso de uso próprio, conforme a cobertura de 3.6; e nenhuma das cinco intenções correspondentes tem tópico configurado no executor, conforme o quadro de 5.4.8, que separa estar no corpus de treino de ter execução no MVP.
+
+A diferença de tratamento entre as duas subseções seguintes não é de escopo, e sim do que sobra para verificar. RF07 não possui nenhum RNF associado — a linha correspondente da matriz de 3.4 está vazia, e a nota daquela seção registra o motivo. Sem execução e sem requisito não funcional que o meça, não resta obrigação verificável na fronteira do middleware, e os casos existem para registrar a exclusão. RF08, ao contrário, correlaciona-se ao RNF04 e ao RNF05 na mesma matriz: a adequação do nível de detalhe ao perfil é obrigação do próprio requisito e independe de o material ser produzido pelo executor, de modo que os casos de RF08 verificam o que o middleware exige antes de acionar o executor e o que faz com o que recebe dele.
+
+#### 10.1.4.1 RF07 — Análise comparativa do portfólio
+
+Este conjunto não é executável no MVP, e essa é a informação que ele carrega. Os casos derivam dos três critérios de aceitação de US07 e das intenções `comparar_projetos` e `consultar_indicadores_portfolio` de 5.4.4.2, que estão no corpus de treino mas sem tópico no executor. Escrevê-los agora tem duas razões. A primeira é que a exclusão fique **rastreável**: um requisito ausente do planejamento de testes é indistinguível de um requisito esquecido, e a coluna de onda diz qual dos dois é o caso. A segunda é que, quando US07 for promovida ao escopo de implementação, os casos já existem e a decisão de projeto mais difícil já está registrada — a de `TF-RF07-03`.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF07-01` | Positivo | Comparação entre projetos do portfólio | Perfil de Diretoria com acesso a dois ou mais projetos.<br>Enunciado que resolve em `comparar_projetos` | A resposta apresenta a comparação na dimensão pedida — avanço, desempenho ou prazo — com a referência da informação de cada projeto | US07, 5.4.4.2 | Não executável no MVP: *feature* fora do escopo (2.7.5) e intenção sem tópico no executor (5.4.8) |
+| `TF-RF07-02` | Positivo | Risco de um projeto com impacto sobre outro | Base com risco registrado em um projeto e vínculo com um segundo projeto | A resposta identifica a relação entre os projetos, e não apenas os riscos de cada um isoladamente | US07 | Não executável no MVP: mesma razão de `TF-RF07-01` |
+| `TF-RF07-03` | Negativo | Comparação que alcança projeto fora da permissão | Perfil autorizado a parte dos projetos do recorte pedido.<br>Enunciado que compara o subportfólio inteiro | O recorte da comparação exclui o projeto não autorizado sem revelar sua existência, e a resposta não denuncia a exclusão por diferença de contagem ou de agregado | US07, RF01, 5.3.3 | Não executável no MVP: mesma razão de `TF-RF07-01` |
+
+`TF-RF07-03` é o caso que justifica escrever os três agora. Uma comparação é, por natureza, uma resposta agregada, e um agregado revela o que a recusa individual esconde: se o total de projetos do subportfólio aparece na resposta, o usuário deduz a existência daquilo que não pode ver. O requisito não diz como resolver isso, e a decisão terá de ser tomada quando RF07 entrar em construção. Registrá-la como caso de teste é a forma de garantir que ela não seja tomada por omissão.
+
+**Execução.** Nenhuma. Os três casos não têm módulo de teste planejado nem comando, porque não há comportamento a exercitar enquanto as *features* de 2.7.5 permanecerem fora do MVP e as intenções permanecerem sem tópico. Quando US07 for promovida, eles passam a rodar no mesmo arranjo dos demais casos de consulta, com `pytest` e o executor dublado. A ausência declarada é retomada na subseção de abrangência dos cenários funcionais.
+
+#### 10.1.4.2 RF08 — Geração de relatórios e informações gerenciais
+
+Este conjunto verifica o que o middleware exige e entrega em torno da geração de material gerencial. Os casos derivam dos três critérios de aceitação de US08 e da leitura de 3.6, que trata RF08 como variação de UC04 — altera a amplitude da consulta e o formato da saída, sem introduzir ator novo nem ponto de decisão novo. Duas dependências precisam ficar registradas antes da tabela. A produção do material é executada pelo Copilot Studio, cujo provisionamento é o risco R02 de 9.1.6 e ainda não ocorreu; e as três intenções da família de geração de material, em 5.4.4.3, estão no corpus sem tópico configurado, conforme 5.4.8. Os casos rodam contra dublê, e o que eles verificam é a decisão do middleware — para onde a solicitação vai, com que perfil, e o que acontece quando ela não pode ser atendida —, não a qualidade do material produzido.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF08-01` | Positivo | Prévia gerada a partir das informações disponíveis | Perfil autorizado.<br>Um enunciado para cada material previsto no requisito: relatório de status, apresentação para a diretoria e relatório de encerramento | Cada enunciado resolve na intenção correspondente de 5.4.4.3 e é encaminhado ao executor com a intenção em metadados; a prévia devolvida é apresentada ao usuário | US08, 5.4.4.3, 3.6 | Onda 3, contra dublê |
+| `TF-RF08-02` | Positivo | O nível de detalhe muda com o perfil | O mesmo material solicitado por Diretoria e por Membro de Equipe | O perfil resolvido acompanha a solicitação enviada ao executor, e os dois materiais devolvidos diferem em profundidade | US08, RNF05, 3.4 | Onda 3, contra dublê |
+| `TF-RF08-03` | Negativo | Dados insuficientes para o material solicitado | Projeto autorizado, com as informações necessárias ao material ausentes na base | O agente declara o que falta para produzir o material, e não entrega prévia com lacuna preenchida por inferência | US08, 5.3.3 | Onda 3, contra dublê |
+| `TF-RF08-04` | Negativo | Material que o perfil não pode receber | Enunciado que solicita material gerencial cujo conteúdo excede as permissões do perfil | A solicitação é recusada sem que o material chegue a ser pedido ao executor, e a recusa não descreve o conteúdo do material | US08, RF01, 5.4.6 | Onda 3, contra dublê |
+
+`TF-RF08-02` verifica que o perfil chega ao executor e que a saída difere. A **taxa de adequação** dessa diferença — se o material entregue é de fato apropriado ao perfil, medida sobre um conjunto por perfil com meta de 90% — é o RNF05, e está em 10.2. A separação evita que este conjunto funcional passe a julgar qualidade de conteúdo, que não é o que ele sabe medir.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf08_relatorios.py`. O Copilot Studio é dublado e devolve prévias fixas, diferenciadas por perfil, e uma resposta de dados insuficientes para `TF-RF08-03`. Enquanto os tópicos das três intenções não forem configurados, o dublê é a única forma de exercitar o trajeto; quando forem, os mesmos casos passam a valer como verificação de contrato em 10.4, sem reescrita.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf08_relatorios.py -q
+```
+
+### 10.1.5 Proteção, registro, rotinas e histórico — RF09 a RF12
+
+**Nota de escopo.** O card que originou esta entrega foi escrito sobre RF07 e RF08. Os requisitos RF09 a RF12 entraram na revisão de escopo que reposicionou o middleware como produto, conforme a nota ao final de 3.2, e não possuem card próprio no planejamento da sprint. Sem eles, a seção 10.1 ficaria sem teste para as guardas, para o registro universal, para as rotinas agendadas e para o histórico de conversas, e a consolidação de 10.7 abriria quatro buracos exatamente nos requisitos que a equipe constrói como código. Eles são cobertos aqui, e a extensão fica registrada neste parágrafo e na descrição do *merge request*.
+
+A subseção reúne o que a aplicação faz sobre a própria interação — proteger, registrar, agendar e preservar —, em oposição ao que o agente faz sobre o portfólio, que é o objeto de 10.1.2 e 10.1.3. É também a parte da seção com maior densidade de casos negativos, e por um motivo: nesses quatro requisitos, o comportamento correto é frequentemente a **ausência** de algo — a barreira que não deixa passar, a linha que não pode faltar, a execução que não deve ocorrer, a conversa que não pode ser lida.
+
+#### 10.1.5.1 RF09 — Proteção da interação com o agente
+
+Este conjunto é derivado diretamente dos cenários 1, 3 e 4 de 5.3.8, que modelam o bloqueio por injeção, o bloqueio por abuso e o bloqueio pela guarda de saída, e dos cinco critérios de aceitação de US09. Os desfechos usados nas asserções são os nomeados naqueles diagramas e em UC10: `BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO` e `BLOQUEADA_SAIDA`. O requisito recebe mais casos que o mínimo porque reúne três barreiras com desfechos deliberadamente diferentes, uma exigência de sigilo sobre a própria recusa e uma exigência simétrica de não barrar o uso legítimo — cinco obrigações que um conjunto pequeno confundiria entre si.
+
+Há uma sutileza na exigência de sigilo que precisa ser explicitada, porque ela parece uma contradição. RF09 determina que nenhuma recusa revele qual barreira foi acionada, e ao mesmo tempo US09 exige que a injeção produza bloqueio seco e o abuso produza recusa orientativa — duas mensagens visivelmente distintas. As duas coisas convivem porque o que não pode ser revelado é a **barreira**, não a classe do desfecho: a asserção verifica que a mensagem é um gabarito fixo, que não nomeia regra, guarda ou serviço, e que não contém nenhum fragmento do prompt recebido. A distinção entre seca e orientativa é decisão de produto declarada em US09, e não vazamento.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF09-01` | Positivo | Injeção barrada antes de qualquer execução | Sessão válida.<br>Prompt com tentativa de manipulação do comportamento do agente | Desfecho `BLOQUEADA_INJECAO` com recusa seca; o classificador e o executor **não** são acionados, e a interação é persistida | US09, 5.3.8.1, UC10 (2a) | Onda 2 |
+| `TF-RF09-02` | Positivo | Abuso recusado de forma orientativa | Sessão válida.<br>Prompt de uso indevido do agente corporativo, sem tentativa de manipulação | Desfecho `BLOQUEADA_ABUSO` com recusa orientativa e registro nominal; o desfecho difere do de `TF-RF09-01` no registro, e o bloqueio não é seco | US09, 5.3.8.3, UC10 (3a) | Onda 2 |
+| `TF-RF09-03` | Positivo | A guarda de saída barra instrução embutida | Solicitação legítima cujo conteúdo recuperado pelo executor carrega instrução embutida | Desfecho `BLOQUEADA_SAIDA`; a resposta não é entregue ao usuário e o comando embutido não é executado | US09, 5.3.8.4, UC10 (4a) | Onda 2 |
+| `TF-RF09-04` | Negativo | A recusa não revela a barreira nem repete a instrução | As recusas produzidas pelos três casos acima | Cada mensagem coincide com o gabarito fixo da sua classe, não nomeia regra, guarda ou serviço, e não contém nenhum trecho do prompt hostil recebido | US09, RF09 | Onda 2 |
+| `TF-RF09-05` | Negativo | Solicitação legítima de vocabulário próximo não é barrada | Enunciados legítimos do catálogo que empregam termos frequentes em ataques, como instrução, regra, ignorar e permissão | As solicitações atravessam as barreiras e seguem para classificação; nenhum desfecho de bloqueio é registrado | US09, RNF06 | Onda 2 |
+| `TF-RF09-06` | Positivo | Barreira indisponível não resulta em passagem livre | Dublê do serviço de avaliação de conteúdo configurado como indisponível | A solicitação não segue adiante; a falha da barreira produz recusa e registro, e em nenhuma hipótese execução | UC10 (exceção 2b) | Onda 2 |
+| `TF-RF09-07` | Positivo | A ordem das etapas é fixa | Prompt que seria bloqueado pela guarda de injeção e também classificável em intenção do catálogo | A guarda de injeção é avaliada antes da de abuso, e ambas antes da classificação; o processamento para na primeira que bloqueia | 5.2.3.1, 5.2.3.2, 5.3.8.2 | Onda 2 |
+
+`TF-RF09-04` é o caso cuja técnica precisa ser dita, porque a asserção é sobre ausência e ausência não se verifica por inspeção visual. A comparação é feita contra um gabarito fixo de recusa por classe, e complementada por uma verificação de que nenhum *token* do prompt hostil — descontadas as palavras vazias — aparece no corpo devolvido. Uma implementação que ecoasse a instrução recebida ao explicar a recusa passaria em qualquer asserção de igualdade de desfecho e reprovaria aqui, que é exatamente o ponto.
+
+`TF-RF09-05` tem contraparte quantitativa. Aqui se verifica que um conjunto pequeno de solicitações legítimas de vocabulário próximo atravessa as barreiras; a **taxa de falso positivo**, com teto de 5% e reporte por barreira, é o RNF06 e está em 10.2, e depende do conjunto adversarial que ainda não existe.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf09_guardas.py`. O Azure AI Content Safety é dublado, com veredito controlado por caso, o que permite exercitar `TF-RF09-06` sem depender de derrubar serviço real. O executor é dublado e devolve, em `TF-RF09-03`, uma resposta contaminada com instrução embutida, simulando o conteúdo recuperado do SharePoint que o cenário 4 de 5.3.8 descreve. A verificação de ordem de `TF-RF09-07` é feita sobre a sequência de chamadas registradas nos dublês, e não sobre o desfecho final, que seria o mesmo em várias ordens diferentes.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf09_guardas.py -q
+```
+
+#### 10.1.5.2 RF10 — Registro e análise das intenções
+
+Este conjunto verifica a invariante mais simples e mais forte da aplicação: toda solicitação processada produz exatamente uma linha de registro, qualquer que tenha sido o desfecho, inclusive quando bloqueada. Os casos derivam dos quatro critérios de aceitação de US10, do fluxo de UC09 e da regra explícita de UC11, que determina que o registro ocorra inclusive nos bloqueios porque as tentativas de ataque são o insumo mais valioso do recorte de segurança.
+
+`TF-RF10-01` merece destaque porque é o teste mais barato e mais informativo do conjunto inteiro de 10.1. Submeter N solicitações de desfechos variados — sucesso, fora de escopo, baixa confiança, bloqueio por injeção, bloqueio por abuso, bloqueio de saída e falha do executor — e contar N linhas ao final verifica, em uma única asserção, que nenhum caminho do orquestrador escapa do registro. É a mesma invariante que a concentração em UC02, comentada em 3.6, expressa no nível dos casos de uso: existe um único caminho pelo qual uma solicitação atravessa o sistema. Um caminho novo que alguém acrescentasse sem registro apareceria aqui como uma linha faltando, e em nenhum outro lugar.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF10-01` | Positivo | Uma linha por solicitação, qualquer que seja o desfecho | Base de teste limpa.<br>N solicitações cobrindo todos os desfechos previstos, incluindo os bloqueados | Exatamente N linhas persistidas, sem duplicata e sem ausência, e cada desfecho previsto aparece ao menos uma vez | US10, UC11, 3.6 | Onda 3 |
+| `TF-RF10-02` | Positivo | Cada linha carrega os cinco campos exigidos | As solicitações do caso anterior | Toda linha contém intenção, confiança, perfil, canal e desfecho; nas bloqueadas antes da classificação, os campos de intenção e confiança são explicitamente nulos, e não omitidos | US10, UC11 | Onda 3 |
+| `TF-RF10-03` | Negativo | Perfil sem permissão não acessa os recortes | Sessão válida sem a permissão `VER_INTENCOES` | O acesso aos recortes analíticos é negado, e nenhum agregado é devolvido | US10, UC09 (exceção 1a) | Onda 4 |
+| `TF-RF10-04` | Negativo | Acesso direto à rota, sem passar pela interface | Requisição à rota de análise feita fora da interface, com sessão sem `VER_INTENCOES` | A recusa ocorre no servidor; esconder a rota no frontend não é considerado atendimento do critério | US10, UC09 | Onda 4 |
+| `TF-RF10-05` | Positivo | Os recortes previstos são produzidos | Base com interações de desfechos variados e perfil com `VER_INTENCOES` | São devolvidos volume por intenção, distribuição de desfechos, série de bloqueios por barreira e agrupamento das solicitações fora de escopo | US10, UC09 | Onda 4 |
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf10_registro.py`, contra o PostgreSQL 16 do contêiner de teste, com o esquema aplicado por Alembic e a base truncada entre casos — `TF-RF10-01` conta linhas, e uma base suja invalidaria a contagem. Guardas, classificador e executor são dublados para produzir cada desfecho de forma determinística, já que reproduzir sete desfechos distintos por entrada real seria frágil. O par `TF-RF10-03` e `TF-RF10-04` é executado contra a rota, e não contra a camada de serviço, porque o critério de US10 é explícito quanto à verificação ocorrer no servidor.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf10_registro.py -q
+```
+
+#### 10.1.5.3 RF11 — Rotinas agendadas
+
+Este conjunto é derivado do cenário 5 de 5.3.8, que modela o cadastro validado, o disparo pelo *worker* e a execução pelo mesmo orquestrador do chat, e dos fluxos de UC07 e UC08. Os quatro critérios de aceitação de US11 dividem-se em dois momentos que o conjunto precisa manter separados: o que é verificado no **cadastro**, com o usuário presente, e o que é resolvido no **disparo**, sem ninguém por perto. A decisão de projeto que o conjunto exercita é essa: as permissões do dono são resolvidas no momento da execução, e não gravadas no cadastro.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF11-01` | Positivo | Cadastro com data, periodicidade e fuso explícito | Usuário com a permissão `GERIR_ROTINAS`.<br>Rotina com prompt válido, periodicidade e fuso horário informados | A rotina é persistida com a agenda e o fuso declarados, e o *job* correspondente é registrado no agendador | US11, UC07, 5.3.8.5 | Onda 5 |
+| `TF-RF11-02` | Negativo | Prompt que não resolve em intenção do catálogo | Usuário com `GERIR_ROTINAS`.<br>Prompt que classifica em `fora_de_escopo` | O cadastro é recusado no momento em que é feito, com explicação ao usuário, e nenhuma rotina nem *job* é criado | US11, UC07 (3a) | Onda 5 |
+| `TF-RF11-03` | Positivo | O prompt é reavaliado e as permissões resolvidas no disparo | Rotina ativa, com horário atingido no fuso declarado | Na execução o prompt atravessa as guardas e o classificador novamente, e o perfil e as permissões do dono são consultados naquele instante | US11, UC08, 5.3.8.5 | Onda 5 |
+| `TF-RF11-04` | Negativo | Dono perdeu a permissão entre o cadastro e o disparo | Rotina cadastrada por dono que, na hora do disparo, já não tem acesso ao projeto alvo | A execução não ocorre, falha por autorização e o fato fica registrado; nenhum resultado é produzido com a permissão antiga | US11, UC08 (2a) | Onda 5 |
+| `TF-RF11-05` | Positivo | Cada execução fica registrada com estado e resultado | Rotina ativa disparada com sucesso | É gravada uma execução com seu estado e seu resultado, vinculada à interação gerada, e consultável na própria aplicação | US11, UC08, 5.3.8.5 | Onda 5 |
+| `TF-RF11-06` | Negativo | Cadastro por usuário sem a permissão de gerir rotinas | Sessão válida sem `GERIR_ROTINAS` | A operação é negada no servidor, independentemente de a interface exibir ou não a página de rotinas | UC07 (exceção 1a) | Onda 5 |
+
+`TF-RF11-04` é o caso que justifica a decisão de resolver permissão no disparo, e não no cadastro. Uma rotina cadastrada em agosto por uma líder que muda de área em setembro continuaria executando com o acesso de agosto se a permissão tivesse sido congelada no cadastro — uma escalação de privilégio que ninguém precisaria provocar, bastando o tempo passar. O caso é o que impede que essa implementação, mais simples e mais rápida, seja adotada sem que alguém perceba.
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf11_rotinas.py`, contra o PostgreSQL 16 do contêiner de teste, que também é o *jobstore* do APScheduler. O disparo é acionado diretamente pelo teste, e não pela passagem do tempo: esperar o horário programado tornaria a suíte lenta e intermitente, e o que se verifica aqui é o comportamento da execução, não a precisão do relógio. O tratamento de disparo perdido e o comportamento sob rotinas concorrentes ficam fora deste conjunto — o primeiro é regra de negócio do agendador, o segundo é cenário de carga, tratado em 10.2.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf11_rotinas.py -q
+```
+
+#### 10.1.5.4 RF12 — Histórico e retomada de conversas
+
+Este conjunto verifica que o usuário reencontra o que conversou e que ninguém mais o alcança. Os casos derivam dos três critérios de aceitação de US12 e do fluxo de UC06, cuja exceção determina que o acesso a conversa alheia seja negado no servidor, independentemente do que a interface exiba.
+
+Resta decidir **qual** recusa o servidor devolve, e a escolha não é indiferente. Responder que o acesso é proibido informa ao solicitante que a conversa existe; responder que o recurso não existe não informa nada. A segunda é a resposta adotada, e ela é coerente com duas decisões já tomadas neste documento: o RF01, que barra a revelação da existência de um projeto fora do escopo autorizado, e o contrato da API de voz, cuja consulta de transcrição em 5.7.3.4 devolve deliberadamente erro de recurso inexistente para identificador alheio, com a justificativa de que distinguir os dois casos permitiria confirmar, por tentativa, que uma submissão alheia existe. Aplicar critério diferente ao histórico de conversas criaria, no mesmo produto, dois padrões de recusa e um canal de confirmação de existência. A decisão é registrada aqui para validação do revisor.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
+|---|---|---|---|---|---|---|
+| `TF-RF12-01` | Positivo | Conversas listadas de forma reconhecível | Usuário com conversas anteriores gravadas | A listagem devolve as conversas do próprio usuário, identificadas pelo título derivado do primeiro turno, e nenhuma conversa de outro usuário | US12, UC06 | Onda 1 |
+| `TF-RF12-02` | Positivo | Retomada com o contexto preservado | Conversa anterior do próprio usuário, com mais de um turno | Os turnos anteriores são apresentados e a continuação do diálogo dispõe do contexto necessário, sem exigir que o usuário repita o que já informou | US12, UC06 | Onda 1 |
+| `TF-RF12-03` | Negativo | Segundo usuário tenta acessar conversa alheia | Identificador de conversa pertencente a outro usuário | A resposta é de recurso inexistente, e não de acesso proibido; nenhum turno, título ou metadado da conversa é devolvido | US12, UC06 (exceção 3a), 5.7.3.4 | Onda 1 |
+| `TF-RF12-04` | Negativo | Identificador inexistente e identificador alheio são indistinguíveis | Duas requisições, uma com identificador que não existe e outra com identificador de conversa alheia | As duas respostas são iguais em código e em corpo, de modo que a diferença entre elas não confirme a existência da segunda | US12, RF01 | Onda 1 |
+
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf12_historico.py`, contra o PostgreSQL 16 do contêiner de teste, com duas sessões de usuários distintos construídas por *fixture*. As requisições de `TF-RF12-03` e `TF-RF12-04` são feitas diretamente à rota, porque a garantia é de servidor: uma listagem que omita a conversa alheia na interface e a devolva quando solicitada por identificador atenderia à aparência do requisito e não ao requisito. A geração do título a partir do primeiro turno é verificada como identificação reconhecível, sem asserção sobre o texto produzido, que depende do executor.
+
+```powershell
+cd src\middleware
+python -m pytest tests/funcionais/test_rf12_historico.py -q
+```
+
 ## 10.2 Testes de RNFs
 
 [Preencher]
