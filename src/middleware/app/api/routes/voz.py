@@ -12,9 +12,13 @@ from pydantic import BaseModel
 
 from app.api.deps import UsuarioAtual
 from app.schemas.audio import AudioUploadResponse, TranscricaoResponse
+from app.servicos.audio_service import AudioService
 from app.utils.validadores import validar_extensao_audio, validar_formato_audio, validar_tamanho_arquivo
 
 router = APIRouter(prefix="/voz")
+
+# Instância do serviço de áudio
+audio_service = AudioService()
 
 
 class TokenResposta(BaseModel):
@@ -41,7 +45,42 @@ async def token(usuario: UsuarioAtual) -> TokenResposta:
     raise NotImplementedError("Emissão de token a implementar junto com a voz")
 
 
-@router.post("/audios", status_code=status.HTTP_202_ACCEPTED, response_model=AudioUploadResponse)
+@router.post(
+    "/audios",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=AudioUploadResponse,
+    summary="Submeter áudio para transcrição",
+    description=(
+        "Recebe um arquivo de áudio para transcrição via Azure AI Speech. "
+        "Valida formato, tamanho e duração antes de processar. A submissão "
+        "é assíncrona: retorna 202 com ID para consulta posterior do resultado."
+    ),
+    responses={
+        status.HTTP_202_ACCEPTED: {
+            "description": "Áudio aceito e enfileirado para transcrição",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+                        "estado": "recebido",
+                        "duracao_segundos": 11.4,
+                        "consultar_em": "/voz/audios/a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19/transcricao",
+                        "expira_em": "2026-09-03T18:42:10Z",
+                    }
+                }
+            },
+        },
+        status.HTTP_400_BAD_REQUEST: {
+            "description": "Campo 'audio' não fornecido ou inválido",
+        },
+        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {
+            "description": "Arquivo excede 25 MB",
+        },
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
+            "description": "Formato de arquivo não suportado (aceitos: mp3, wav, ogg, webm, mp4)",
+        },
+    },
+)
 async def upload_audio(
     audio: Annotated[UploadFile, File(description="Arquivo de áudio (mp3, wav, ogg, webm, mp4)")],
     idioma: Annotated[str | None, Form(description="Código BCP 47 do idioma (padrão: pt-BR)")] = None,
@@ -59,6 +98,14 @@ async def upload_audio(
         415 Unsupported Media Type: Formato não suportado
 
     Conforme especificação seção 5.7.3 do projeto.md.
+
+    **Exemplo de requisição cURL:**
+    ```bash
+    curl -X POST "http://localhost:8000/voz/audios" \\
+      -H "Cookie: sessao=<cookie>" \\
+      -F "audio=@enunciado.webm" \\
+      -F "idioma=pt-BR"
+    ```
     """
     # Valida se arquivo foi fornecido
     if not audio or not audio.filename:
@@ -69,7 +116,7 @@ async def upload_audio(
 
     # Valida extensão
     try:
-        validar_extensao_audio(audio.filename)
+        extensao = validar_extensao_audio(audio.filename)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -94,25 +141,86 @@ async def upload_audio(
             detail=str(e)
         )
 
-    # TODO: Implementar lógica completa de upload e processamento
-    # Este é um esboço que valida e retorna estrutura básica
+    # Gera ID único e salva arquivo usando o serviço
+    id_audio = audio_service.gerar_id_audio()
 
-    # TODO: Gerar ID único, salvar arquivo/processar, enfileirar transcrição
-    # Por enquanto retorna estrutura esqueletica
-    from uuid import uuid4
+    try:
+        caminho_arquivo = audio_service.salvar_arquivo(
+            audio.file,
+            id_audio,
+            formato_detectado
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Falha ao processar arquivo: {e}"
+        )
 
-    id_audio = str(uuid4())
+    # Calcula expiração
+    duracao_segundos = 0.0  # TODO: Calcular duração real do áudio
+    expiracao = audio_service.calcular_expiracao(duracao_segundos)
 
     return AudioUploadResponse(
         id_audio=id_audio,
         estado="recebido",
-        duracao_segundos=0.0,  # TODO: Calcular duração real
+        duracao_segundos=duracao_segundos,
         consultar_em=f"/voz/audios/{id_audio}/transcricao",
-        expira_em="2026-09-03T18:00:00Z",  # TODO: Calcular expiração real
+        expira_em=expiracao.isoformat() + "Z",
     )
 
 
-@router.get("/audios/{id_audio}/transcricao", response_model=TranscricaoResponse)
+@router.get(
+    "/audios/{id_audio}/transcricao",
+    response_model=TranscricaoResponse,
+    summary="Consultar resultado da transcrição",
+    description=(
+        "Consulta o estado atual da transcrição de um áudio submetido. "
+        "Retorna o estado (recebido, transcrevendo, concluida ou falhou) "
+        "e, quando concluída, o texto transcrito com metadados."
+    ),
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Estado da transcrição consultado com sucesso",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "em_processamento": {
+                            "summary": "Ainda transcrevendo",
+                            "value": {
+                                "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+                                "estado": "transcrevendo",
+                            },
+                        },
+                        "concluida": {
+                            "summary": "Transcrição concluída",
+                            "value": {
+                                "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+                                "estado": "concluida",
+                                "texto": "Qual o avanço do projeto da Linha 15 Prata?",
+                                "idioma": "pt-BR",
+                                "confianca": 0.94,
+                                "duracao_segundos": 11.4,
+                                "latencia_ms": 1830,
+                            },
+                        },
+                        "falhou": {
+                            "summary": "Transcrição falhou",
+                            "value": {
+                                "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+                                "estado": "falhou",
+                                "mensagem_erro": "Áudio muito ruidoso, não foi possível transcrever",
+                                "duracao_segundos": 11.4,
+                            },
+                        },
+                    }
+                }
+            },
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "description": "ID de áudio não encontrado ou expirado",
+        },
+    },
+)
 async def consultar_transcricao(
     id_audio: str,
     usuario: UsuarioAtual = Depends(),
@@ -123,6 +231,12 @@ async def consultar_transcricao(
     concluida ou falhou) e, quando concluída, o texto transcrito.
 
     Conforme especificação seção 5.7.3.4 do projeto.md.
+
+    **Exemplo de requisição cURL:**
+    ```bash
+    curl -X GET "http://localhost:8000/voz/audios/{id_audio}/transcricao" \\
+      -H "Cookie: sessao=<cookie>"
+    ```
     """
     # TODO: Implementar consulta real ao banco de dados/cache
     # Por enquanto retorna estado de processamento
