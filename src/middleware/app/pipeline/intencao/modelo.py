@@ -113,7 +113,13 @@ class EmbeddingsSentenca(BaseEstimator, TransformerMixin):
         self.nome_modelo = nome_modelo
         self.prefixo = prefixo
 
-    def _obter_encoder(self):
+    def obter_encoder(self):
+        """Devolve o encoder do modelo, carregando-o na primeira chamada.
+
+        Público porque `rag/embeddings.py` o reusa (decisão D5 do plano
+        do executor próprio): são ~2 GB de pesos, e um processo que
+        classifica intenção e responde por RAG deve carregá-los uma vez.
+        """
         if self.nome_modelo not in EmbeddingsSentenca._encoders:
             # Import adiado: carregar torch custa segundos, e quem só usa
             # a família tfidf não deve pagar por isso.
@@ -135,7 +141,7 @@ class EmbeddingsSentenca(BaseEstimator, TransformerMixin):
             # dict.fromkeys preserva a ordem e remove repetição: dentro de
             # uma dobra o mesmo texto pode aparecer mais de uma vez.
             unicos = list(dict.fromkeys(faltantes))
-            vetores = self._obter_encoder().encode(
+            vetores = self.obter_encoder().encode(
                 [self.prefixo + t for t in unicos],
                 batch_size=32,
                 show_progress_bar=False,
