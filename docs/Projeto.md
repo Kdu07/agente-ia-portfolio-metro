@@ -3622,6 +3622,49 @@ Três ressalvas delimitam o alcance dos números acima, e nenhuma delas é forma
 
 **A degradação por voz é aproximada, não medida.** O recorte de texto ruidoso usa erro de digitação e acentuação perdida como análogo do erro de transcrição. A degradação ponta a ponta real do canal de voz é o terceiro indicador de 3.1.5.2 e depende do corpus de áudio de 5.7.6, ainda a gravar. Os 3,8 pontos de 5.4.11.3 são um piso plausível, não o valor esperado.
 
+#### 5.4.11.9 Decisão adotada para o classificador de intenções
+
+**Decisão.** Adota-se como configuração de produção o ensemble
+`ensemble-tfidf-e5-large`, composto por um ramo TF-IDF com n-gramas de
+palavras e caracteres e um ramo de embeddings
+`intfloat/multilingual-e5-large`. Cada ramo utiliza regressão logística, e
+suas probabilidades são combinadas com pesos de 0,4 para TF-IDF e 0,6 para
+embeddings. O texto passa antes pelo mesmo pré-processamento e mascaramento de
+entidades em ambos os ramos, evitando divergência entre treino e inferência.
+
+**Justificativa.** A escolha resulta da bancada comparativa de 5.4.11.7, e não
+de preferência por uma biblioteca. O ensemble foi a única família que atingiu
+simultaneamente a meta de acurácia do RNF03 e a meta de macro-F1, com 0,856 e
+0,851, respectivamente. O ganho decorre da complementaridade das
+representações: o TF-IDF preserva sinais literais e tolera parte do ruído por
+meio dos n-gramas de caracteres, enquanto o E5 reconhece paráfrases e
+proximidade semântica. A regressão logística fornece `predict_proba`, necessário
+para aplicar os limiares de aceitação calibrados por intenção.
+
+**Vantagens assumidas.** A configuração combina robustez lexical e semântica,
+permite inferência integral no middleware e conserva o ramo TF-IDF como uma
+referência inspecionável para diagnóstico. O encoder E5 permanece congelado;
+somente os classificadores lineares são treinados, reduzindo o risco de ajustar
+um modelo de linguagem de grande porte ao corpus sintético e pequeno do MVP.
+
+**Limitações aceitas.** A decisão incorpora aproximadamente 2 GB de pesos,
+maior uso de memória e latência superior às alternativas exclusivamente
+clássicas. Também aumenta o número de artefatos que precisam ter versão e
+procedência controladas. Esses custos foram aceitos porque a linha de base
+TF-IDF ficou abaixo das metas, mas devem ser medidos novamente no ambiente de
+implantação. A acurácia observada não elimina o risco de generalização: o
+corpus continua predominantemente sintético, e a degradação causada por
+Speech-to-Text ainda depende de avaliação com áudios reais de referência.
+
+**Condições de revisão.** A decisão deve ser reavaliada se a validação com
+especialistas do Metrô ou com o corpus de voz fizer a acurácia cair abaixo de
+0,85; se a latência ou o consumo de memória inviabilizarem o ambiente de
+implantação; se o catálogo sofrer alteração material; ou se as exigências de
+homologação impedirem manter os pesos do E5 no perímetro aprovado. Até que um
+desses gatilhos ocorra, esta é a configuração normativa do classificador de
+intenções e corresponde à constante `PRODUCAO` de
+`app/pipeline/intencao/modelo.py`.
+
 
 ## 5.5 Integrações com o Ecossistema Microsoft
 
