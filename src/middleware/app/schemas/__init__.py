@@ -1,19 +1,9 @@
-"""Contratos de entrada e saída da API (modelos Pydantic)."""
+"""Contratos de entrada e saída da API (modelos Pydantic).
 
-from app.schemas.audio import AudioUploadResponse, TranscricaoResponse
-from app.schemas.chat import ChatRequest, ChatResponse
-from app.schemas.conversa import ConversaResponse
-from app.schemas.intencao import IntencaoResponse
-from app.schemas.rotina import RotinaResponse
-from app.schemas.usuario import UsuarioResponse
-
-__all__ = [
-    "AudioUploadResponse",
-    "TranscricaoResponse",
-    "ChatRequest",
-    "ChatResponse",
-    "ConversaResponse",
-    "IntencaoResponse",
-    "RotinaResponse",
-    "UsuarioResponse",
-]
+Sem reexportação: cada módulo é importado pelo caminho completo, como
+nos demais pacotes de `app/`. A lista que existia aqui apontava para
+nomes que os módulos já não têm (`ConversaResponse`, `RotinaResponse`,
+`UsuarioResponse`), e um `__init__` que reexporta é justamente o lugar
+onde essa defasagem passa despercebida até quebrar a importação de
+qualquer submódulo — inclusive a de quem só queria `usuario.Perfil`.
+"""

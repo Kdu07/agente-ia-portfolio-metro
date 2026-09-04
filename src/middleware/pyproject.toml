@@ -40,6 +40,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Banco vetorial do executor próprio. Extra, e não dependência base,
+# porque o caminho oficial (executor=copilot) não indexa nada e não deve
+# arrastar o SDK do provedor. O adaptador de reserva não aparece aqui: o
+# pgvector é uma extensão do servidor, e rag/vetorial/pgvector.py fala
+# apenas SQL pelo SQLAlchemy que já está na base.
+rag = [
+    "pinecone>=5.0",
+]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
