@@ -7,7 +7,7 @@ como cada um é usado:
   templates, 1.779 enunciados sobre 28 classes, já dividido em `treino` e
   `dev`. Cobre variação de caixa, acentuação, pontuação e erro de
   digitação, esta última exigida pelo risco R03 (transcrição de voz).
-- **`documentos/testes-catalogo-intencoes.csv`** — os enunciados-semente
+- **`dados/testes-catalogo-intencoes.csv`** — os enunciados-semente
   derivados do apêndice do TAPI e da seção 5.4.4 do Projeto.md. São 67, e
   vieram de outra fonte que não o gerador de templates.
 
@@ -37,10 +37,9 @@ from enum import Enum
 from pathlib import Path
 
 _MIDDLEWARE = Path(__file__).resolve().parents[3]
-_RAIZ = Path(__file__).resolve().parents[5]
 
 CAMINHO_CORPUS = _MIDDLEWARE / "dados" / "treino-intencoes.csv"
-CAMINHO_CATALOGO = _RAIZ / "documentos" / "testes-catalogo-intencoes.csv"
+CAMINHO_CATALOGO = _MIDDLEWARE / "dados" / "testes-catalogo-intencoes.csv"
 
 
 class Origem(Enum):

@@ -396,12 +396,12 @@ A matriz foi construída em alto nível por artefato e entregável, conforme ori
 
 | Documento | Seção | Responsável principal |
 |---|---|---|
-| `documentos/GestaoProjeto.md` | Matriz de papéis e responsabilidades | Mariana Reis |
-| `documentos/GestaoProjeto.md` | Contrato de convivência, SLA e rituais | Celso Rocha |
-| `documentos/GestaoProjeto.md` | Análise da Sprint 1 | Mariana Reis |
-| `documentos/GestaoProjeto.md` | Planejamento da Sprint 2 | Mariana Reis |
-| `documentos/GestaoConfiguracao.md` | GitFlow e política de branches | Celso Rocha |
-| `documentos/GestaoConfiguracao.md` | Padrão de commits | Celso Rocha |
+| `docs/GestaoProjeto.md` | Matriz de papéis e responsabilidades | Mariana Reis |
+| `docs/GestaoProjeto.md` | Contrato de convivência, SLA e rituais | Celso Rocha |
+| `docs/GestaoProjeto.md` | Análise da Sprint 1 | Mariana Reis |
+| `docs/GestaoProjeto.md` | Planejamento da Sprint 2 | Mariana Reis |
+| `docs/GestaoConfiguracao.md` | GitFlow e política de branches | Celso Rocha |
+| `docs/GestaoConfiguracao.md` | Padrão de commits | Celso Rocha |
 | Apresentação da Sprint 1 | Slides | Mirela Bianchi |
 | `README.md` | Visão geral do projeto | Mariana Reis |
 

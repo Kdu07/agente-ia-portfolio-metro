@@ -6,8 +6,8 @@ de treino do classificador e como chave de roteamento para o Copilot Studio.
 O mapeamento intenção -> tópico/ação é mantido em copilot/topicos.md e deve
 ser atualizado junto com este catálogo.
 
-Conteúdo derivado da seção 5.4.4 de documentos/Projeto.md e dos enunciados
-de documentos/testes-catalogo-intencoes.csv — 26 intenções mais as duas
+Conteúdo derivado da seção 5.4.4 de docs/Projeto.md e dos enunciados
+de src/middleware/dados/testes-catalogo-intencoes.csv — 26 intenções mais as duas
 classes negativas `fora_de_escopo` e `tentativa_injecao`, totalizando 28
 classes. Ao revisar o catálogo, atualizar os três artefatos na mesma
 mudança.

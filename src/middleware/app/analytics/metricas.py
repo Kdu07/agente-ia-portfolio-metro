@@ -5,7 +5,7 @@ Separado das consultas porque são responsabilidades distintas:
 sabe o que o dashboard mostra e não escreve SQL. Trocar a origem dos
 dados (vista materializada, cache) não deveria tocar aqui.
 
-Os oito recortes abaixo são os da seção 5 de documentos/Arquitetura.md, e
+Os oito recortes abaixo são os da seção 5 de docs/Arquitetura.md, e
 cada um existe porque habilita uma decisão — não porque o dado estava
 disponível.
 """

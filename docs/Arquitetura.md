@@ -351,7 +351,7 @@ g02/
 ├── infra/
 │   └── docker-compose.yml            # web + middleware + worker + db
 │
-└── documentos/                       # Documentação do projeto (este arquivo incluído)
+└── docs/                             # Documentação do projeto (este arquivo incluído)
 ```
 
 `src/middleware/` mantém o nome: ele continua literalmente mediando entre a
@@ -529,7 +529,7 @@ da adaptação: ganha as etapas de abuso e de saída, e perde a de mascaramento.
 O **catálogo de intenções** está completo, com 26 intenções mais as classes
 negativas `fora_de_escopo` e `tentativa_injecao`, derivado da seção 5.4.4 de
 [Projeto.md](Projeto.md) e de
-[testes-catalogo-intencoes.csv](testes-catalogo-intencoes.csv).
+[testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv).
 
 O **classificador de intenção está implementado, treinado e medido**. A bancada
 de avaliação (F21) roda com `python -m app.pipeline.intencao.avaliacao` sobre
@@ -589,3 +589,119 @@ homologado por desenho. Ficam isolados atrás de `pipeline/guardas/` e `voz/`,
 de modo que reprovisioná-los no tenant do parceiro seja mudança de configuração
 e não de código — pré-condição para qualquer uso com dado real. O perímetro
 completo está em 3.3.1.1 de [Projeto.md](Projeto.md).
+
+## 13. Caminho alternativo: executor próprio
+
+Duas das quatro dependências externas da seção 12.2 — o registro de aplicação no
+Entra ID e o Copilot Studio com Direct Line — estão pendentes no tenant do
+parceiro e são pré-requisito da onda 1, da qual todas as outras dependem. Como a
+data de entrega é fixa e o provisionamento não é controlado pela equipe, existe
+um **segundo executor**, construído sobre serviços que a equipe provisiona
+sozinha.
+
+Ele não substitui esta arquitetura. Os dois executores coexistem atrás da mesma
+porta e são selecionados por configuração. O plano de construção, com as
+decisões e suas alternativas descartadas, está em
+[plano-executor-proprio.md](plano-executor-proprio.md).
+
+### 13.1 A porta e os dois adaptadores
+
+O executor deixa de ser um tipo concreto e passa a ser uma interface. A troca é
+barata porque a estrutura já a previa: `copilot/client.py` sempre foi o único
+módulo que conhece o Copilot, e o acoplamento real são três pontos — a fábrica
+em `api/deps.py`, o parâmetro do construtor do orquestrador e a única chamada no
+passo 5 do trajeto descrito em 1.1.
+
+```mermaid
+flowchart LR
+    ORQ["pipeline/orquestrador.py"] --> P{"executor/base.py<br/>porta Executor"}
+
+    P -->|"EXECUTOR=copilot"| A["copilot/client.py"]
+    A --> CS["Copilot Studio<br/>(tenant do parceiro)"]
+    CS --> CN["SharePoint · Power BI<br/>Power Automate"]
+
+    P -->|"EXECUTOR=proprio"| B["rag/executor.py"]
+    B -->|"documental"| RAG["recuperacao.py + geracao.py"]
+    B -->|"estruturado"| PF["portfolio/"]
+    RAG --> PIN[("Pinecone")]
+    RAG --> GEM["Gemini"]
+    RAG --> DRV["Google Drive<br/>(ingestão pelo worker)"]
+    PF --> DB[("PostgreSQL")]
+```
+
+O que **não** muda: a ordem invariante do pipeline, as duas guardas de entrada,
+a guarda de saída, o catálogo de intenções e seus limiares calibrados, o
+registro da interação, o dashboard, as rotinas, o modelo de dados e a interface.
+O executor é o passo 5 de sete, e trocá-lo não autoriza mexer nos outros seis.
+
+Duas mudanças de contrato acompanham a porta. O identificador de sessão externa
+passa a ser opcional, porque o executor próprio não tem sessão do outro lado — o
+estado do diálogo multiturno é lido da tabela `Interacao`, que já grava todos os
+turnos. E a resposta ganha um campo de **fontes**: citação verificável do trecho
+usado, que o Copilot como caixa-preta não devolvia.
+
+Sob este caminho, a linha "Entra ID — registro de aplicação" da tabela de 12.2
+deixa de estar pendente: a aplicação é registrada no tenant onde a equipe já
+opera Content Safety e Speech, e `auth/` continua idêntico — mudam apenas os
+identificadores de grupo no `.env`, que `config.py` já trata como configuração
+justamente para este caso.
+
+### 13.2 O que muda nas barreiras
+
+A seção 2.1 justifica a guarda de saída pelo ataque que chega dentro de um
+documento. Com o repositório documental sob controle da equipe, esse vetor deixa
+de ser argumento e passa a ser **encenável**: um documento sintético com
+instrução embutida, depositado na pasta de teste, recuperado e barrado antes da
+entrega. É o teste adversarial da onda 2, com evidência.
+
+Aparece também um vetor que o caminho oficial não tem — o **envenenamento do
+índice** — e, pela mesma razão, a possibilidade de uma barreira que o caminho
+oficial não pode ter. No oficial quem indexa é o Copilot, e não há onde
+inspecionar; aqui a ingestão passa o texto extraído pelas regras de injeção e
+pelo Content Safety **antes** de o trecho existir no índice. Rejeição é sempre
+registrada, e a triagem não substitui a guarda de saída: são barreiras em
+profundidade, uma vendo o documento e a outra vendo a resposta.
+
+A terceira mudança é de controle de acesso. Os metadados de projeto e perfil vão
+no índice, e o filtro de permissão é aplicado **na busca**, não depois de
+recuperar. Filtrar depois é falha de segurança e não ineficiência: os trechos
+recuperados já conteriam o que o usuário não pode ver, e `api/deps.py` não
+enxerga o interior do executor. Vale aqui a mesma regra da seção 6 — quem barra
+é o servidor, e agora também o índice.
+
+Por fim, a decisão 4 da seção 10 ganha um segundo alcance: os trechos
+recuperados entram no prompt do modelo delimitados e rotulados como conteúdo não
+confiável, jamais concatenados às instruções. A diferença é que no caminho
+oficial o rótulo viajava em metadados de uma *activity* do Direct Line, e aqui a
+fronteira é montada por código próprio — ganha-se controle e ganha-se a
+obrigação de testá-la.
+
+### 13.3 Tecnologias do caminho alternativo
+
+| Camada | Escolha | Por quê |
+|---|---|---|
+| Repositório documental | Google Drive, pasta controlada por conta de serviço | Provisionamento imediato pela equipe; a ingestão é um job no `worker` que já existe, sem serviço novo no compose |
+| Embeddings | `intfloat/multilingual-e5-large`, local | Já carregado pelo ramo de embeddings do classificador, com os prefixos de assimetria da família e5 já tratados. Custo zero e, sobretudo, o corpus não sai da máquina para ser indexado |
+| Banco vetorial | Pinecone, atrás de uma porta `RepositorioVetorial` | O adaptador pgvector sobre o PostgreSQL existente fica como reserva: esgotar a camada gratuita ou desistir de enviar vetores para fora vira mudança de `.env`, não refatoração |
+| Geração | Gemini | Provisionamento imediato e camada gratuita suficiente para dado sintético. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação |
+| Base estruturada | PostgreSQL, *schema* `portfolio`, por migração Alembic | Dá destino às 10 intenções de transação e às agregações que caberiam ao Power BI, sem banco novo |
+
+### 13.4 Perímetro e limites
+
+O caminho acrescenta dois destinos de dado ao perímetro declarado em 3.3.1.1 de
+[Projeto.md](Projeto.md): a pergunta e os trechos recuperados vão ao provedor de
+geração; vetores e metadados de identificação vão ao provedor do índice. Duas
+mitigações são de desenho e não de discurso — os embeddings são calculados
+localmente, e o **texto dos trechos não é gravado no metadado do índice**, que
+guarda apenas vetor, identificador e os campos usados no filtro, com o texto
+vivendo no PostgreSQL. Vetor não é texto, mas também não é anonimização: a
+condição declarada continua sendo dado exclusivamente sintético, como já vale
+para Content Safety e Speech. Ambas as exposições entram na matriz de risco, nos
+dois lugares onde ela vive.
+
+O que este caminho **não** resolve, e por isso não encerra nada: não valida a
+integração Direct Line, que segue com `NotImplementedError`; não exercita a
+governança de conectores de [conectores.md](../copilot/conectores.md), que só
+existe do lado do parceiro; não mede desempenho sobre uma biblioteca
+corporativa real; e não dispensa o reprovisionamento no tenant do parceiro para
+qualquer uso com dado que não seja sintético.

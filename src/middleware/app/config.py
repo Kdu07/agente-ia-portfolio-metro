@@ -5,11 +5,16 @@ código: tudo vem do ambiente. O arquivo .env.example na raiz do
 middleware documenta as variáveis esperadas.
 """
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Variáveis de ambiente do middleware."""
+
+    # --- Diretório base -------------------------------------------------
+    base_dir: Path = Path(__file__).parent.parent.parent
 
     # --- Copilot Studio (canal Direct Line) ----------------------------
     directline_endpoint: str = "https://directline.botframework.com"
@@ -57,6 +62,25 @@ class Settings(BaseSettings):
     # escala do serviço é 0-6; 2 é o padrão conservador e deve ser
     # calibrado na bancada da onda 2.
     content_safety_limiar_severidade: int = 2
+
+    # --- Banco vetorial (executor próprio) ------------------------------
+    # Caminho alternativo, seção 3.7 de docs/plano-executor-proprio.md. O
+    # backend fica atrás da porta `rag/vetorial/base.py`: `pinecone` é o
+    # padrão e `pgvector`, sobre o PostgreSQL que já existe, é a reserva
+    # para quando a camada gratuita esgotar, a latência inviabilizar a
+    # demonstração ou a decisão for não enviar vetores para fora.
+    vetorial_backend: str = "pinecone"
+    pinecone_api_key: str = ""
+    pinecone_index: str = ""
+    # Isola ambientes dentro do mesmo índice. A pasta adversarial da
+    # bancada nunca deve compartilhar namespace com a demonstração.
+    pinecone_namespace: str = "portfolio"
+
+    # NOTA: dimensão do vetor (1024) e teto de tokens do e5 (512) NÃO
+    # ficam aqui. São propriedades do modelo escolhido, não configuração
+    # de ambiente: mudá-las sem trocar o modelo produz um índice quebrado,
+    # e trocar o modelo obriga a reindexar o corpus inteiro. Vivem como
+    # constantes em rag/vetorial/base.py e rag/embeddings.py.
 
     # --- Voz (Azure Speech) ---------------------------------------------
     speech_key: str = ""

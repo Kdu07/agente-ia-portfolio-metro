@@ -1,7 +1,7 @@
 """Entrypoint do agendador de rotinas.
 
 Processo separado da API, com o mesmo código. Duas razões (seção 8.4 de
-documentos/Arquitetura.md):
+docs/Arquitetura.md):
 
 1. mantém a API sem estado, livre para reiniciar e escalar;
 2. evita disparo duplicado — com o agendador embutido, duas réplicas da
