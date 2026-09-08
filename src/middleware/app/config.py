@@ -84,8 +84,11 @@ class Settings(BaseSettings):
 
     # --- Voz (Azure Speech) ---------------------------------------------
     speech_key: str = ""
+    speech_endpoint: str = ""
     speech_region: str = "brazilsouth"
     speech_idioma: str = "pt-BR"
+    speech_api_version: str = "2025-10-15"
+    speech_timeout_seconds: float = 30.0
 
     # NOTA: o limiar de confiança da classificação de intenção NÃO fica
     # aqui. Ele é definido por intenção em pipeline/intencao/catalogo.py,

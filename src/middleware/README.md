@@ -104,3 +104,20 @@ porque esse é o formato suportado diretamente pelo `AudioConfig(filename=...)`;
 a normalização de MP3, OGG, WebM e MP4 e a integração com o upload pertencem
 à etapa posterior de processamento. Nunca use um áudio com informação real
 do Metrô enquanto o recurso não estiver no ambiente homologado.
+
+## Conversão de áudio enviado
+
+Arquivos já validados pela API de upload são transcritos pela API REST Fast
+Transcription. Além da chave, configure o endpoint exibido no recurso Azure:
+
+```dotenv
+SPEECH_ENDPOINT=https://<regiao>.api.cognitive.microsoft.com
+SPEECH_API_VERSION=2025-10-15
+SPEECH_TIMEOUT_SECONDS=30
+```
+
+`app.voz.transcricao.transcrever_arquivo` aceita AAC, FLAC, M4A, MP3, MP4,
+OGG, WAV e WebM e devolve texto, idioma, confiança média, duração e latência.
+Ela também aceita uma lista opcional de termos do domínio para melhorar o
+reconhecimento. A integração desse resultado ao endpoint de upload e ao
+pipeline de NLP é feita na task de integração seguinte.
