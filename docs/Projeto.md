@@ -7171,7 +7171,32 @@ Os resultados qualitativos deverão ser consolidados posteriormente em uma lista
 
 ## 10.4 Testes de APIs Externas
 
-[Preencher]
+As APIs externas consumidas pela solução — Microsoft Entra ID, Azure AI Content
+Safety, Copilot Studio via Direct Line e Azure Speech — são testadas junto aos
+demais testes de integração, porque são a mesma costura: o middleware falando
+HTTP com serviço de terceiro, sob as mesmas ferramentas e o mesmo mecanismo de
+gravação e reprodução.
+
+Especificar esses casos duas vezes criaria duas versões que divergiriam na
+primeira mudança. Esta seção, portanto, aponta para onde cada parte está:
+
+| O que se procura | Onde está |
+|---|---|
+| Mapa das dependências externas e matriz de integração | 10.5.2.2 e 10.5.2.3 |
+| Ferramentas e instalação | 10.5.3.1 e 10.5.3.4 |
+| Gravação e reprodução das respostas reais (VHS) | 10.5.4 |
+| **IT-AUTH** — Microsoft Entra ID | 10.5.5.3 |
+| **IT-SAFE** — Azure AI Content Safety | 10.5.5.4 |
+| **IT-COP** — Copilot Studio via Direct Line | 10.5.5.5 |
+| **IT-VOZ** — Azure Speech | 10.5.5.6 |
+| O que a fita não cobre: timeout, 429/503, expiração de token | 10.5.4.5 |
+| Como executar e validar | 10.5.7.2 |
+
+O ponto de maior consequência para estas APIs está em 10.5.4: nenhum teste
+alcança serviço Microsoft na execução ordinária da suíte. A resposta real é
+gravada uma vez, sanitizada e versionada como fita, e é a fita que responde nas
+execuções seguintes — o que mantém a suíte offline, reproduzível e fora da cota
+dos serviços.
 
 ## 10.5 Testes de Integração
 
@@ -7341,19 +7366,24 @@ resposta é gravada.
 
 #### 10.5.3.1 Backend
 
-| Ferramenta | Versão mínima | Papel | Já no projeto? |
+A coluna **Estado** distingue o que já está instalado e exercitado no
+repositório do que segue previsto. Ela é mantida ao dia deliberadamente: uma
+tabela de ferramentas que não diz o que existe descreve a suíte que se gostaria
+de ter, e não a que se pode rodar hoje.
+
+| Ferramenta | Versão mínima | Papel | Estado |
 |---|---|---|---|
-| `pytest` | 8.0 | Executor da suíte | Sim |
-| `pytest-asyncio` | 0.23 | Testes `async` (`asyncio_mode = "auto"`) | Sim |
-| `pytest-recording` | 0.13 | **Marcador `@pytest.mark.vcr`, `--record-mode`, `--block-network`** | **A adicionar** |
-| `vcrpy` | 6.0 | **Motor de gravação e reprodução das fitas (VHS)** | **A adicionar** |
-| `respx` | 0.21 | Dublê de `httpx` para o que não se grava: timeout, 5xx, conexão recusada | **A adicionar** |
-| `testcontainers[postgres]` | 4.0 | PostgreSQL 16 efêmero por sessão de teste | **A adicionar** |
-| `pytest-cov` | 5.0 | Cobertura, meta de 80% em código crítico | **A adicionar** |
-| `time-machine` | 2.14 | Relógio controlado para agenda, fuso e expiração de sessão | **A adicionar** |
-| `schemathesis` | 3.25 | Contrato: gera casos a partir do OpenAPI e confronta a implementação | **A adicionar** |
-| `alembic` | 1.13 | Aplica as migrações no banco de teste | Sim (runtime) |
-| `ruff` | 0.5 | Lint, inclusive dos testes | Sim |
+| `pytest` | 8.0 | Executor da suíte | **Em uso** |
+| `pytest-asyncio` | 0.23 | Testes `async` (`asyncio_mode = "auto"`) | **Em uso** |
+| `pytest-recording` | 0.13 | **Marcador `@pytest.mark.vcr`, `--record-mode`, `--block-network`** | **Em uso** |
+| `vcrpy` | 6.0 | **Motor de gravação e reprodução das fitas (VHS)** | **Em uso** |
+| `ruff` | 0.5 | Lint, inclusive dos testes | **Em uso** |
+| `alembic` | 1.13 | Aplica as migrações no banco de teste | Em uso (runtime) |
+| `respx` | 0.21 | Dublê de `httpx` para o que não se grava: timeout, 5xx, conexão recusada | Previsto — onda 2 |
+| `testcontainers[postgres]` | 4.0 | PostgreSQL 16 efêmero por sessão de teste | Previsto — grupo IT-DB |
+| `pytest-cov` | 5.0 | Cobertura, meta de 80% em código crítico | Previsto — junto da CI |
+| `time-machine` | 2.14 | Relógio controlado para agenda, fuso e expiração de sessão | Previsto — onda 5 |
+| `schemathesis` | 3.25 | Contrato: gera casos a partir do OpenAPI e confronta a implementação | Previsto — grupo IT-CTR |
 
 `vcrpy` suporta `httpx`, síncrono e assíncrono — que é o cliente HTTP declarado
 em [pyproject.toml](../src/middleware/pyproject.toml) e o previsto nos `TODO` de
@@ -7384,16 +7414,21 @@ justamente o que se quer testar — o `credentials: "include"`, o tratamento de
 
 #### 10.5.3.3 Infraestrutura e CI
 
-| Ferramenta | Papel |
-|---|---|
-| Docker + Docker Compose | Sobe `web`, `middleware`, `worker` e `db` para o smoke de pilha completa ([infra/docker-compose.yml](../infra/docker-compose.yml)) |
-| GitLab CI | Executa a suíte em cada merge request, conforme §9.1.5 |
-| `detect-secrets` ou `gitleaks` | *Hook* de pré-commit que barra fita com segredo (seção 10.5.4.3) |
+| Ferramenta | Papel | Estado |
+|---|---|---|
+| Docker + Docker Compose | Sobe `web`, `middleware`, `worker` e `db` para o smoke de pilha completa ([infra/docker-compose.yml](../infra/docker-compose.yml)) | Compose escrito; smoke IT-E2E previsto |
+| GitLab CI | Executa a suíte em cada merge request, conforme §9.1.5 | Previsto — não há `.gitlab-ci.yml` no repositório |
+| `detect-secrets` ou `gitleaks` | *Hook* de pré-commit que barra fita com segredo (seção 10.5.4.3) | Previsto |
+
+Enquanto a CI não existe, a barreira contra segredo em fita é a soma da
+sanitização automática de 10.5.4.3, do caso que a verifica sobre o texto bruto
+do arquivo e da leitura do diff na revisão. É menos do que se quer, e a
+diferença está declarada aqui em vez de suposta.
 
 #### 10.5.3.4 Instalação
 
-Backend — as dependências de teste vão para o grupo `dev` já existente em
-[pyproject.toml](../src/middleware/pyproject.toml):
+Backend — as dependências de teste vivem no grupo `dev` de
+[pyproject.toml](../src/middleware/pyproject.toml), que **hoje** está assim:
 
 ```toml
 [project.optional-dependencies]
@@ -7401,21 +7436,49 @@ dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "ruff>=0.5",
-    # Integração
-    "pytest-recording>=0.13",   # VHS: grava e toca as fitas
+    # VHS (10.5.4): grava uma vez a resposta real do serviço externo e a
+    # reproduz nas execuções seguintes. vcrpy é o motor; pytest-recording
+    # traz o marcador @pytest.mark.vcr, --record-mode e --block-network.
+    "pytest-recording>=0.13",
     "vcrpy>=6.0",
-    "respx>=0.21",              # falhas que não se gravam
-    "testcontainers[postgres]>=4.0",
-    "pytest-cov>=5.0",
-    "time-machine>=2.14",
-    "schemathesis>=3.25",
 ]
 ```
 
+O mesmo arquivo registra os marcadores usados pelos modos de execução de
+10.5.6.1:
+
+```toml
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "integracao: costura entre componentes, e não função isolada",
+    "externo: exercita integração externa sob fita VHS",
+]
+```
+
+Instalação, a partir de uma cópia limpa do repositório:
+
 ```powershell
 cd src\middleware
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
+```
+
+As demais ferramentas da tabela de 10.5.3.1 entram com os grupos de teste que
+as exigem, para que ninguém instale hoje o que não é exercitado por nenhum
+caso — dependência sem teste que a use é peso morto que ainda assim precisa ser
+atualizado:
+
+```toml
+# A acrescentar ao grupo `dev` quando o grupo de casos correspondente for
+# implementado (10.5.10 dá as ondas).
+"respx>=0.21",                    # IT-SAFE, IT-COP: falhas que não se gravam
+"testcontainers[postgres]>=4.0",  # IT-DB
+"pytest-cov>=5.0",                # meta de cobertura, junto da CI
+"time-machine>=2.14",             # IT-ROT, expiração de sessão
+"schemathesis>=3.25",             # IT-CTR
 ```
 
 Frontend:
@@ -7442,10 +7505,18 @@ O custo assumido é que a fita **envelhece** — tratado na seção 10.5.4.4.
 
 #### 10.5.4.2 Onde as fitas ficam
 
+Uma pasta por serviço, sob `tests/integration/fitas/`. O marcador `‹hoje›`
+distingue o que está versionado do que será gravado quando o grupo de casos
+correspondente for implementado:
+
 ```text
 src/middleware/tests/integration/
-├── conftest.py
-├── fitas/                              # as fitas VHS, versionadas
+├── vhs.py                              # ‹hoje› o mecanismo: sanitização e configuração
+├── conftest.py                         # ‹hoje› a fiação do VHS no pytest
+├── fitas/
+│   ├── README.md                       # ‹hoje› como gravar, regravar e revisar
+│   ├── vhs/
+│   │   └── cache_resposta_repetida.yaml   # ‹hoje› fita do autoteste do módulo
 │   ├── entra/
 │   │   ├── troca_codigo_sucesso.yaml
 │   │   ├── troca_codigo_expirado.yaml
@@ -7463,10 +7534,19 @@ src/middleware/tests/integration/
 │       └── issue_token.yaml
 ```
 
+A única fita versionada até aqui é a do **autoteste do próprio módulo**: as
+integrações de Entra ID, Direct Line, Content Safety e Speech ainda são `TODO`
+no código (ondas 1 e 2 de [Arquitetura.md](Arquitetura.md) §12.1), e fita se
+grava contra cliente que existe. O que já está provado é o mecanismo — ver
+10.5.4.6.
+
 Uma fita por **cenário**, não por teste: `prompt_shield_ataque_direto.yaml` é
 usada por todos os casos que precisam de um veredito positivo do Prompt Shields.
 Fitas nomeadas pelo cenário sobrevivem à renomeação de testes e deixam claro o
-que falta gravar.
+que falta gravar. O compartilhamento não exige mecanismo próprio: o
+`pytest-recording` aceita o marcador `@pytest.mark.default_cassette`, e vários
+testes apontam para o mesmo arquivo. Sem o marcador, a fita recebe o nome do
+teste.
 
 Convenção de nome: `<operacao>_<cenario>.yaml`, em minúsculas, sem acento,
 palavras separadas por `_` — alinhada à nomenclatura de branches de
@@ -7487,8 +7567,31 @@ O que **nunca** pode chegar a uma fita versionada:
 | Azure Speech | Corpo da resposta de `issueToken` (o token inteiro) | Resposta |
 | Middleware | `Set-Cookie: sessao=...` | Resposta de `/auth/callback` |
 
-O `conftest.py` cobre todos por configuração. A verificação independente é um
-*hook* de pré-commit, porque configuração pode ser contornada por engano:
+Todos são cobertos por configuração, em
+[vhs.py](../src/middleware/tests/integration/vhs.py) — e não no `conftest.py`,
+que é só a fiação do mecanismo no pytest. A separação é deliberada: a
+sanitização é a parte de segurança do módulo, e módulo importável é módulo que
+se pode chamar diretamente de um teste. Configuração que ninguém exercita é
+configuração que se **acredita** estar funcionando.
+
+O que a sanitização alcança, por caminho de vazamento:
+
+| Caminho | Como é tratado |
+|---|---|
+| Cabeçalho de requisição e de resposta | `filter_headers` do VCR.py mais um hook que preserva o formato (o VCR.py guarda cabeçalho ora como string, ora como lista) |
+| Corpo `form-urlencoded` | `filter_post_data_parameters` — é o formato do POST de token do Entra ID |
+| Corpo JSON, de requisição e de resposta | Hook próprio: o filtro nativo só entende `form-urlencoded`, e a maior parte do tráfego destes serviços é JSON |
+| Parâmetro de query | `filter_query_parameters` |
+| `conversationId` embutido na URL do Direct Line | Substituição por expressão regular, com o **mesmo** valor usado na resposta — assim a URL da reprodução casa com a gravada |
+
+Tudo o que é redigido vira a marca literal `REDIGIDO-PELO-VHS`, e não string
+vazia: um segredo redigido para vazio não se distinguiria de um campo que o
+serviço não devolveu, e a marca se acha com um `grep`, tanto por quem revisa
+quanto pelo caso que a verifica (10.5.4.6).
+
+A verificação independente prevista é um *hook* de pré-commit, porque
+configuração pode ser contornada por engano — ainda não instalado, conforme a
+tabela de 10.5.3.3:
 
 ```yaml
 # .pre-commit-config.yaml
@@ -7540,6 +7643,96 @@ Isso divide o trabalho com clareza: **VHS responde "o que o serviço devolve";
 `respx` e `time-machine` respondem "o que fazemos quando ele não devolve"**. A
 segunda pergunta é a que decide se a guarda de injeção falha fechada e a de abuso
 falha aberta — as duas decisões de segurança mais delicadas do middleware.
+
+#### 10.5.4.6 O módulo, como está implementado
+
+O mecanismo descrito nas subseções anteriores está implementado e coberto por
+testes próprios. São dois arquivos:
+
+| Arquivo | Papel |
+|---|---|
+| [vhs.py](../src/middleware/tests/integration/vhs.py) | A sanitização (10.5.4.3), a configuração única do VCR.py e o registro de procedência de fita provisória |
+| [conftest.py](../src/middleware/tests/integration/conftest.py) | Sobrescreve `vcr_config` e `vcr_cassette_dir`, impondo essa configuração a todo teste marcado com `@pytest.mark.vcr` |
+
+Quatro decisões da configuração merecem registro, porque não são padrão do
+VCR.py e cada uma responde a um requisito desta seção:
+
+| Ajuste | Por quê |
+|---|---|
+| `allow_playback_repeats=True` | É o que dá **comportamento de cache**: uma única interação gravada atende quantas requisições idênticas o teste fizer, em vez de exigir uma cópia da resposta por chamada |
+| `match_on` sem o corpo — método, esquema, host, porta, caminho e query | O corpo vai redigido, e duas chamadas que só diferem no segredo redigido são a mesma interação |
+| `decode_compressed_response=True` | Fita é código; corpo gravado em gzip não se lê no `git diff`, e o que não se lê não se revisa (10.5.4.3) |
+| `record_mode` vindo da variável `VHS_GRAVANDO` | Fora da sessão deliberada de gravação o modo é `none`: toca a fita e **falha** se faltar interação, de modo que nenhuma requisição escape por engano de configuração |
+
+O grupo de casos que exercita o próprio mecanismo está em
+[externos/test_vhs.py](../src/middleware/tests/integration/externos/test_vhs.py).
+Ele não toca em serviço Microsoft — os clientes ainda não existem — e sim num
+servidor HTTP local que **conta** quantas requisições de fato chegaram nele:
+
+| Verifica | Como |
+|---|---|
+| A fita evita a ida repetida ao serviço | Grava uma vez, toca três; o contador do servidor não se move durante a reprodução, e `play_count` chega a 3 sobre uma única interação gravada. É o cenário demonstrado que a task de implementação exigia |
+| A fita versionada serve sem rede alguma | Roda sob `--block-network`: se o VHS não estivesse tocando, o teste falharia em vez de passar em silêncio |
+| Nenhum segredo sobreviveu à gravação | Três segredos plantados de propósito — um em cabeçalho de requisição, um em corpo de resposta, um em `Set-Cookie` — procurados no **texto bruto** do YAML, como um revisor leria o diff |
+| Os hooks cobrem cabeçalho, corpo e URL | Chamada direta às funções de sanitização, inclusive verificando que campo comum **não** é redigido |
+| Corpo não-JSON passa intacto | Áudio e multipart não podem ser corrompidos pelo hook de JSON |
+| Fora da sessão deliberada, o modo é `none` | Chamada direta a `modo_de_gravacao()` com e sem a variável |
+| Fita provisória declara origem e issue | É o caso IT-CTR-05 (10.5.5.9), aplicado à única fita existente |
+
+Esse último ponto vale explicação. Enquanto o tenant do parceiro não estiver
+disponível (risco R02), o projeto conviverá com **fitas provisórias**: gravadas
+contra dublê em vez do serviço real. Fita gravada do serviço real se identifica
+sozinha pela URL; fita provisória, não — e sem procedência ela vira um dublê
+anônimo que ninguém sabe quando substituir, exatamente o que 10.5.4.1 rejeita.
+Por isso toda fita provisória carrega no topo:
+
+```yaml
+# origem: servidor local do proprio teste do modulo de VHS
+# issue: #255
+# Fita provisoria: substituir por gravacao contra o servico real
+# quando a integracao correspondente existir.
+```
+
+O cabeçalho é reposto por `vhs.registrar_cabecalho_de_fita` ao fim de cada
+gravação, porque o VCR.py reescreve o arquivo inteiro e apagaria um cabeçalho
+posto à mão.
+
+#### 10.5.4.7 Gravar e revalidar, passo a passo
+
+A gravação é sempre **deliberada**: exige a variável de ambiente, credenciais
+reais e rede liberada. Nenhuma dessas três condições ocorre por acidente.
+
+```powershell
+cd src\middleware
+.\.venv\Scripts\Activate.ps1
+
+$env:VHS_GRAVANDO = "1"                        # troca o modo para `all`
+python -m pytest -m externo --record-mode=all  # grava contra o serviço real
+Remove-Item Env:\VHS_GRAVANDO                  # volta ao modo `none`
+```
+
+Depois de gravar, antes de commitar: ler o diff da fita linha a linha e
+confirmar que a marca `REDIGIDO-PELO-VHS` aparece onde deveria.
+
+```powershell
+python -m pytest tests/integration/externos     # a fita nova passa a valer
+Select-String -Path tests\integration\fitas\**\*.yaml -Pattern "REDIGIDO-PELO-VHS"
+```
+
+Três armadilhas conhecidas, todas encontradas na implementação e registradas
+aqui para não serem redescobertas:
+
+| Armadilha | Efeito | O que fazer |
+|---|---|---|
+| `--record-mode=all` **acrescenta** à fita existente | A fita acumula interações duplicadas e deixa de representar o cenário que diz representar | Apagar o arquivo antes de regravar |
+| `--block-network` no Windows derruba todo teste `async` | O laço de eventos do asyncio abre um socket local para o próprio *self-pipe*, e o bloqueador o lê como acesso à rede | Localmente, `--block-network --allowed-hosts=127.0.0.1`. Na CI, que é Linux, `--block-network` sozinho basta |
+| Gravar e bloquear a rede são modos opostos | O bloqueador reescreve a pilha de sockets do processo e derruba a conexão no meio da resposta | O caso que grava se pula sozinho quando detecta `--block-network` |
+
+Os gatilhos de **quando** regravar estão em 10.5.4.4; o passo a passo acima é o
+**como**. A instrução operacional de bolso, para quem está com o repositório
+aberto, fica em
+[tests/integration/fitas/README.md](../src/middleware/tests/integration/fitas/README.md) —
+esta seção é a fonte, e aquele README a repete em forma curta.
 
 ### 10.5.5 Casos de teste
 
@@ -7753,11 +7946,21 @@ O modo rápido existe para que a suíte seja rodada de fato. Uma suíte de quatr
 minutos roda antes do commit; uma de quatro minutos rodada a cada `Ctrl+S` deixa
 de ser rodada.
 
+Dos quatro marcadores usados acima, `integracao` e `externo` estão registrados
+em `[tool.pytest.ini_options]` (10.5.3.4). Os marcadores `banco` e `lento`
+chegam com o grupo IT-DB, junto do Testcontainers: enquanto nenhum caso os
+carrega, o modo Rápido seleciona a suíte inteira, e é por isso que ele ainda
+cabe nos 30 segundos. No Windows, o modo Completo pede
+`--block-network --allowed-hosts=127.0.0.1` — a razão está em 10.5.4.7.
+
 #### 10.5.6.2 Variáveis de ambiente
 
-Os testes **não** leem o `.env` de desenvolvimento. A fixture `ambiente_de_teste`
-injeta credenciais falsas, e `src/middleware/tests/.env.teste` documenta o
-conjunto mínimo:
+Os testes **não** leem o `.env` de desenvolvimento.
+[tests/.env.teste](../src/middleware/tests/.env.teste) documenta o conjunto
+mínimo, com valores propositalmente inválidos; a fixture `ambiente_de_teste`,
+que os injeta no ambiente do processo, chega junto do primeiro cliente externo
+implementado — hoje nenhum caso lê configuração de serviço, porque nenhum
+cliente externo existe para lê-la.
 
 ```ini
 # Valores propositalmente inválidos: qualquer chamada real falharia,
@@ -7789,11 +7992,11 @@ versionado** — entra no `.gitignore` junto com `.env`, conforme
 
 Três fontes, nenhuma delas com dado real do Metrô:
 
-| Fonte | Uso |
-|---|---|
-| [testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv) | Enunciados por intenção, já versionados, para os casos que exercitam a classificação |
-| Fábricas em `tests/integration/fabricas.py` | `Interacao`, `Conversa`, `Rotina` sintéticas, com projetos fictícios (`123XXX`, como no teste atual) |
-| Corpus adversarial em `tests/integration/dados/ataques.yaml` | Tentativas de injeção e de abuso, alimentando os casos parametrizados de IT-SAFE |
+| Fonte | Uso | Estado |
+|---|---|---|
+| [testes-catalogo-intencoes.csv](../src/middleware/dados/testes-catalogo-intencoes.csv) | Enunciados por intenção, para os casos que exercitam a classificação | Versionado |
+| Fábricas em `tests/integration/fabricas.py` | `Interacao`, `Conversa`, `Rotina` sintéticas, com projetos fictícios (`123XXX`, como no teste atual) | Previsto — com o grupo IT-DB |
+| Corpus adversarial em `tests/integration/dados/ataques.yaml` | Tentativas de injeção e de abuso, alimentando os casos parametrizados de IT-SAFE | Previsto — com o grupo IT-SAFE |
 
 O corpus adversarial é ativo de segurança e cresce a cada incidente encontrado:
 todo bloqueio real observado no dashboard que não estivesse coberto vira uma
@@ -7803,21 +8006,29 @@ linha nova.
 
 #### 10.5.7.1 Estrutura de diretórios
 
+Como em 10.5.4.2, `‹hoje›` marca o que existe no repositório; o restante é o
+destino desta estrutura, alcançado conforme as ondas de 10.5.10.
+
 ```text
 src/middleware/tests/
-├── unit/                              # existente, inalterado
+├── .env.teste                         # ‹hoje› variáveis mínimas (10.5.6.2)
+├── unit/                              # ‹hoje› existente, inalterado
 ├── integration/
-│   ├── conftest.py                    # VHS, fixtures de app e de banco
+│   ├── vhs.py                         # ‹hoje› mecanismo do VHS (10.5.4.6)
+│   ├── conftest.py                    # ‹hoje› fiação do VHS; fixtures de app e de banco a seguir
+│   ├── test_fluxo_chat.py             # ‹hoje› IT-API — migra para internos/
+│   ├── test_api_audio.py              # ‹hoje› IT-API — migra para internos/
 │   ├── fabricas.py                    # dados sintéticos
 │   ├── dados/
 │   │   └── ataques.yaml
-│   ├── fitas/                         # fitas VHS (seção 10.5.4.2)
+│   ├── fitas/                         # ‹hoje› fitas VHS (seção 10.5.4.2)
 │   ├── internos/
 │   │   ├── test_fluxo_chat.py         # existente, ampliado — IT-API
 │   │   ├── test_persistencia.py       # IT-DB
 │   │   ├── test_analytics.py          # IT-DB-08..10
 │   │   └── test_rotinas.py            # IT-ROT
 │   ├── externos/
+│   │   ├── test_vhs.py                # ‹hoje› o mecanismo de fita, testado
 │   │   ├── test_entra.py              # IT-AUTH
 │   │   ├── test_content_safety.py     # IT-SAFE
 │   │   ├── test_directline.py         # IT-COP
@@ -7843,6 +8054,8 @@ src/web/src/testes/
 
 #### 10.5.7.2 Comandos
 
+Repertório completo, alcançado conforme as ondas de 10.5.10:
+
 ```powershell
 cd src\middleware
 
@@ -7853,6 +8066,35 @@ python -m pytest -m banco                          # só o que precisa de Docker
 python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=80
 python -m ruff check app tests
 ```
+
+**O que roda hoje, e com que resultado.** Os comandos abaixo foram executados
+nesta ordem, no Windows, sobre o ambiente de 10.5.3.4:
+
+```powershell
+cd src\middleware
+.\.venv\Scripts\Activate.ps1
+
+python -m pytest tests/unit                  # 189 passed
+python -m pytest tests/integration/externos  # 7 passed  -- o VHS, com rede liberada
+python -m pytest tests/integration/externos --block-network --allowed-hosts=127.0.0.1
+                                             # 6 passed, 1 skipped
+```
+
+A leitura da terceira linha é a que interessa: sob rede bloqueada, os seis casos
+que dependem da fita **passam sem alcançar socket algum** — é a prova de que a
+reprodução funciona. O caso pulado é o de gravação, que pertence ao modo
+Gravação e se exclui sozinho quando detecta o bloqueio (10.5.4.7).
+
+Duas restrições conhecidas, ambas herdadas e nenhuma delas no VHS:
+
+| Restrição | Efeito | Situação |
+|---|---|---|
+| `settings.BASE_DIR` em `app/servicos/audio_service.py` | `Settings` declara `base_dir`, em minúsculas; a divergência de caixa interrompe a **coleta** de `test_api_audio.py` e `test_fluxo_chat.py`, o que derruba junto qualquer seleção por marcador — inclusive `-m externo` | Por isso os comandos acima selecionam por caminho, e não por marcador. Corrigir é tarefa própria, fora do escopo desta seção |
+| 16 apontamentos do `ruff` em `app/servicos/audio_service.py`, `app/api/routes/voz.py`, `app/utils/validadores.py` e dois testes unitários | `python -m ruff check app tests` termina com erro | Os arquivos do VHS passam limpos: `ruff check tests/integration/vhs.py tests/integration/conftest.py tests/integration/externos/test_vhs.py` → *All checks passed* |
+
+Enquanto a primeira restrição existir, o modo Completo de 10.5.6.1 não é
+executável como escrito. Registrar isso aqui é preferível a publicar um passo a
+passo que falha na primeira tentativa de quem o seguir.
 
 ```powershell
 cd src\web
@@ -7865,7 +8107,12 @@ npm run gerar:fixtures          # regenera handlers do MSW a partir do openapi.j
 ### 10.5.8 Integração contínua
 
 O pipeline roda em cada merge request, conforme §9.1.5. Três
-estágios, do mais barato para o mais caro:
+estágios, do mais barato para o mais caro.
+
+> **Estado.** O `.gitlab-ci.yml` abaixo é esboço: não há pipeline na `develop`
+> nem na `main` até aqui, e a única pipeline do repositório serve à automação do
+> board. Enquanto ela não existir, o que este esboço descreve é executado à mão
+> antes do merge request — os comandos verificados estão em 10.5.7.2.
 
 ```yaml
 # .gitlab-ci.yml (esboço)
