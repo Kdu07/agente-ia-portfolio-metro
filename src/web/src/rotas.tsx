@@ -1,14 +1,19 @@
 /**
  * Rotas do app.
  *
- * Duas telas compõem o escopo inicial do frontend: a página principal do
- * agente e a gestão de rotinas, protegida por permissão.
+ * Seis telas compoem a solucao: entrada (login), a pagina principal do
+ * agente, o historico de conversas, o dashboard de intencoes, a gestao de
+ * rotinas e o destino de rota inexistente.
  *
- * AVISO que precisa sobreviver a qualquer refatoração: `RotaProtegida`
- * é conveniência de navegação, NÃO controle de acesso. Ela evita que o
- * usuário veja um menu que levaria a uma tela vazia de 403. Quem barra
- * de verdade é `exige_permissao` no backend, em cada rota da API —
- * qualquer pessoa consegue digitar /intencoes na barra de endereço ou
+ * A tela de entrada fica FORA do Layout, porque quem ainda nao tem sessao
+ * nao deve ver a navegacao de uma aplicacao a que nao tem acesso. As
+ * demais entram como rotas filhas do Layout, que rende o `Outlet`.
+ *
+ * AVISO que precisa sobreviver a qualquer refatoracao: `RotaProtegida`
+ * e conveniencia de navegacao, NAO controle de acesso. Ela evita que o
+ * usuario veja um menu que levaria a uma tela vazia de 403. Quem barra
+ * de verdade e `exige_permissao` no backend, em cada rota da API --
+ * qualquer pessoa consegue digitar /intencoes na barra de endereco ou
  * chamar a API direto.
  */
 
@@ -17,8 +22,13 @@ import type { ReactNode } from "react";
 
 import { useUsuario } from "@/hooks/useUsuario";
 import type { Permissao } from "@/tipos";
+import { Layout } from "@/componentes/ui/Layout";
 import { Principal } from "@/paginas/Principal";
 import { Rotinas } from "@/paginas/Rotinas";
+import { Historico } from "@/paginas/Historico";
+import { Intencoes } from "@/paginas/Intencoes";
+import { Login } from "@/paginas/Login";
+import { NaoEncontrada } from "@/paginas/NaoEncontrada";
 
 function RotaProtegida({
   permissao,
@@ -30,7 +40,10 @@ function RotaProtegida({
   const { usuario, carregando } = useUsuario();
 
   if (carregando) return null;
-  if (!usuario?.permissoes.includes(permissao)) {
+  // Sem sessao o destino e a entrada, e nao a pagina principal: mandar
+  // para "/" produziria um segundo 401 e um redirecionamento em cadeia.
+  if (!usuario) return <Navigate to="/entrar" replace />;
+  if (!usuario.permissoes.includes(permissao)) {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
@@ -39,17 +52,30 @@ function RotaProtegida({
 export function Rotas() {
   return (
     <Routes>
-      <Route path="/" element={<Principal />} />
-      <Route path="/conversas/:conversaId" element={<Principal />} />
-      <Route
-        path="/rotinas"
-        element={
-          <RotaProtegida permissao="gerir_rotinas">
-            <Rotinas />
-          </RotaProtegida>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/entrar" element={<Login />} />
+
+      <Route element={<Layout />}>
+        <Route path="/" element={<Principal />} />
+        <Route path="/conversas/:conversaId" element={<Principal />} />
+        <Route path="/historico" element={<Historico />} />
+        <Route
+          path="/intencoes"
+          element={
+            <RotaProtegida permissao="ver_intencoes">
+              <Intencoes />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/rotinas"
+          element={
+            <RotaProtegida permissao="gerir_rotinas">
+              <Rotinas />
+            </RotaProtegida>
+          }
+        />
+        <Route path="*" element={<NaoEncontrada />} />
+      </Route>
     </Routes>
   );
 }

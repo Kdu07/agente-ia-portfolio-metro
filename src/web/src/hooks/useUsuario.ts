@@ -2,7 +2,7 @@
  * Identidade da sessao atual.
  *
  * O cookie e httpOnly: o React nao consegue le-lo para descobrir quem
- * esta logado nem quais permissoes tem. Esta e a unica forma de saber —
+ * esta logado nem quais permissoes tem. Esta e a unica forma de saber,
  * perguntando ao servidor via GET /auth/eu.
  */
 
@@ -11,19 +11,22 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/servicos/api";
 import type { Usuario } from "@/tipos";
 
+// Identidade de desenvolvimento. As duas permissoes estao presentes para
+// que as telas protegidas possam ser revisadas localmente enquanto o
+// fluxo do Entra ID nao existe. Isso NAO afrouxa controle de acesso: o
+// backend verifica perfil e permissao por conta propria em cada rota, e
+// esta identidade nunca chega ao artefato de producao.
 const USUARIO_DEMONSTRACAO: Usuario = {
   id: "usuario-demonstracao",
   nome: "Fernanda Silva",
   email: "fernanda@empresa.com.br",
   perfil: "lider_projeto",
-  permissoes: ["gerir_rotinas"],
+  permissoes: ["ver_intencoes", "gerir_rotinas"],
 };
 
 export function useUsuario() {
-  // Enquanto o fluxo do Entra ID nao esta implementado, o servidor de
-  // desenvolvimento precisa permitir a revisao das telas protegidas.
   // `import.meta.env.DEV` e substituido por false no build de producao:
-  // esta identidade nunca e enviada no artefato operacional como sessao.
+  // o ramo de demonstracao e removido do pacote final pelo bundler.
   const modoDemonstracao = import.meta.env.DEV;
   const { data, isLoading } = useQuery({
     queryKey: ["usuario"],
