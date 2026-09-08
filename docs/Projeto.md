@@ -6094,6 +6094,70 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 - Escalação de privilégio em rotinas antigas
 - Disparos duplicados ou perdidos por falha do worker
 
+#### 9.1.2.6 Sistema de troca de mensagens (S5)
+
+O sistema de troca de mensagens será implementado com **RabbitMQ**, usando AMQP 0-9-1. A escolha mantém a operação no mesmo perímetro do `middleware` e do `worker`, oferece confirmação de publicação, reconhecimento explícito pelo consumidor, retentativas e fila de mensagens rejeitadas sem introduzir um segundo banco para coordenar o trabalho. A primeira entrega deve tratar esta seção como contrato de implementação; o broker ainda não faz parte da infraestrutura atual.
+
+**Topologia inicial:**
+
+| Elemento | Nome | Responsabilidade |
+|---|---|---|
+| Exchange | `prata.events` (`topic`, durable) | Receber eventos publicados pelo middleware e pelos webhooks |
+| Fila | `prata.audio.transcription` (durable) | Entregar solicitações de transcrição ao consumidor de áudio |
+| Fila | `prata.routines.execution` (durable) | Entregar disparos de rotinas ao consumidor do worker |
+| Fila | `prata.webhooks.incoming` (durable) | Isolar eventos recebidos de sistemas externos |
+| Exchange | `prata.dead-letter` (`direct`, durable) | Reter mensagens que excederam as tentativas |
+| Fila | `prata.failed` (durable) | Permitir inspeção e reprocessamento controlado de falhas |
+
+As chaves de roteamento iniciais são `audio.transcription.requested`, `routine.execution.requested` e `webhook.received`. As filas de trabalho usam `x-dead-letter-exchange=prata.dead-letter`; a publicação deve usar mensagem persistente e `publisher confirms`. A ordem é garantida apenas dentro da fila e não deve ser usada para coordenar conversas diferentes.
+
+**Contrato da mensagem:**
+
+Todo evento será um JSON UTF-8 com o envelope abaixo. `message_id` é único para a tentativa lógica, `correlation_id` acompanha a solicitação de ponta a ponta e `occurred_at` é UTC no formato ISO 8601.
+
+```json
+{
+  "message_id": "uuid",
+  "event_type": "audio.transcription.requested",
+  "schema_version": 1,
+  "occurred_at": "2026-01-01T12:00:00Z",
+  "correlation_id": "uuid",
+  "producer": "middleware",
+  "payload": {}
+}
+```
+
+O produtor rejeita eventos sem `message_id`, `event_type`, `schema_version`, `correlation_id` ou `payload`. O consumidor registra `message_id` antes de executar um efeito externo e ignora uma mensagem já processada, tornando a entrega **at-least-once** idempotente. Mensagens inválidas ou que excederem três tentativas vão para `prata.failed`; falhas transitórias devem ser reencaminhadas com atraso crescente.
+
+**Produtores e consumidores:**
+
+- O endpoint de áudio publica `audio.transcription.requested` e continua respondendo `202` com o identificador da solicitação.
+- O endpoint de webhook valida autenticação, assinatura, tamanho e `event_type`, registra o evento e publica `webhook.received`; ele não executa a regra de negócio dentro da requisição HTTP.
+- O agendador publica `routine.execution.requested` quando uma rotina vence, preservando dono, conversa, permissões a resolver e `correlation_id`.
+- O `worker` consome as filas de áudio e rotinas com `prefetch` limitado, confirma (`ack`) somente após o processamento e rejeita (`nack`) mensagens para retentativa ou dead letter conforme a classe do erro.
+- O consumidor de webhook encaminha o evento validado ao serviço correspondente; não há chamada direta a serviços externos antes da validação e da deduplicação.
+
+O webhook deve responder rapidamente com `202` após a publicação confirmada. Sem confirmação do RabbitMQ, responde erro transitório e não declara o evento recebido. A assinatura deve ser validada com segredo configurado fora do código e comparação em tempo constante; o corpo bruto usado na assinatura não pode ser reconstruído a partir de um JSON reserializado.
+
+**Configuração e operação:**
+
+As variáveis mínimas são `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_LETTER_EXCHANGE`, `RABBITMQ_PREFETCH_COUNT` e `RABBITMQ_MAX_RETRIES`. Em desenvolvimento, o RabbitMQ será um serviço do `docker-compose`; em produção, as credenciais serão fornecidas pelo ambiente de implantação. Não devem ser gravados payloads sensíveis nos logs. Métricas mínimas: mensagens publicadas, confirmadas, consumidas, rejeitadas, idade da mensagem, tamanho da fila e mensagens em dead letter.
+
+**Casos de uso e testes:**
+
+| Caso | Comportamento verificável |
+|---|---|
+| Publicação confirmada | O produtor serializa o envelope, publica na exchange correta e só retorna sucesso após `publisher confirm`. |
+| Broker indisponível | A API não perde o evento, retorna erro transitório e registra a correlação para nova tentativa. |
+| Consumo com sucesso | O consumidor executa o handler e confirma a mensagem uma única vez. |
+| Falha transitória | A mensagem é rejeitada para retentativa até o limite, sem perder o `message_id`. |
+| Falha permanente ou payload inválido | A mensagem não é processada e vai para `prata.failed`. |
+| Redelivery | A mesma mensagem não produz efeito externo duas vezes. |
+| Webhook válido | A assinatura é validada, o evento é publicado e a resposta é `202`. |
+| Webhook inválido ou duplicado | A assinatura inválida é recusada; o `message_id` duplicado é tratado de forma idempotente. |
+
+Esta entrega documenta o desenho e os critérios de aceite. A implementação posterior deve adicionar o cliente RabbitMQ compartilhado, declarar a topologia na inicialização, integrar o endpoint de webhook e substituir os `NotImplementedError` do `worker` por consumidores testados com um broker efêmero ou dublado.
+
 ### 9.1.3 Integração com Voz
 
 A funcionalidade de voz não depende de nenhuma onda específica e nenhuma onda depende dela. Deve ser encaixada onde houver folga na Sprint 3 ou 4, preferencialmente na Onda 1, já que a transcrição alimenta o mesmo `/chat`.
