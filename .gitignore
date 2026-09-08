@@ -1,5 +1,7 @@
 # Segredos e configuração local
 .env
+# Credenciais reais da sessão de gravação das fitas VHS (Projeto.md 10.5.6.2)
+.env.gravacao
 
 # Python
 __pycache__/

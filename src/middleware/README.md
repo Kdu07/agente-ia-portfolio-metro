@@ -69,6 +69,19 @@ python -m pytest -q          # suíte completa
 python -m ruff check app tests
 ```
 
+Os testes que dependem de API externa rodam sobre **fitas VHS**: a resposta do
+serviço é gravada uma vez e reproduzida depois, o que evita a requisição
+repetida e mantém a suíte offline.
+
+```powershell
+python -m pytest -m externo                  # só o que toca fita
+python -m pytest --block-network             # nenhuma chamada real escapa
+```
+
+O mecanismo está em [tests/integration/vhs.py](tests/integration/vhs.py) e as
+fitas, com as instruções de gravação, em
+[tests/integration/fitas/](tests/integration/fitas/README.md).
+
 A suíte não exige o modelo treinado: os testes que tocam o classificador usam
 dublês, e os que exercitam o pipeline de PLN rodam sobre a família TF-IDF, que
 treina em segundos e não baixa pesos.

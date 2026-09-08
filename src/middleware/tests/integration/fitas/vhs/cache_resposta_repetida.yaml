@@ -1,0 +1,44 @@
+# origem: servidor local do proprio teste do modulo de VHS
+# issue: #255
+# Fita provisoria: substituir por gravacao contra o servico real
+# quando a integracao correspondente existir.
+interactions:
+- request:
+    body: '{"userPrompt": "qual o avanco do projeto 123XXX?", "documents": []}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '64'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:8765
+      ocp-apim-subscription-key:
+      - REDIGIDO-PELO-VHS
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: http://127.0.0.1:8765/contentsafety/text:shieldPrompt
+  response:
+    body:
+      string: '{"attackDetected": false, "token": "REDIGIDO-PELO-VHS"}'
+    headers:
+      content-length:
+      - '55'
+      content-type:
+      - application/json
+      date:
+      - Tue, 08 Sep 2026 20:30:21 GMT
+      server:
+      - BaseHTTP/0.6 Python/3.14.5
+      set-cookie:
+      - REDIGIDO-PELO-VHS
+    status:
+      code: 200
+      message: OK
+version: 1
