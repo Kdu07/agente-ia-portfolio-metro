@@ -17,7 +17,7 @@
  * chamar a API direto.
  */
 
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
 
 import { useUsuario } from "@/hooks/useUsuario";
@@ -49,14 +49,32 @@ function RotaProtegida({
   return <>{children}</>;
 }
 
+/**
+ * A pagina de conversa remonta a cada troca de contexto.
+ *
+ * Sem a `key`, navegar de uma conversa para outra mantem o componente
+ * montado: o React reaproveita a instancia porque a rota e a mesma e so
+ * o parametro mudou. O resultado e a conversa anterior continuar na tela
+ * enquanto a nova carrega por baixo.
+ *
+ * `location.key` muda a cada navegacao, inclusive de "/" para "/", e e
+ * o que faz o botao Nova conversa comecar de fato uma conversa nova em
+ * vez de nao fazer nada quando ja se esta na pagina principal.
+ */
+function Conversa() {
+  const { conversaId } = useParams<{ conversaId: string }>();
+  const localizacao = useLocation();
+  return <Principal key={conversaId ?? localizacao.key} />;
+}
+
 export function Rotas() {
   return (
     <Routes>
       <Route path="/entrar" element={<Login />} />
 
       <Route element={<Layout />}>
-        <Route path="/" element={<Principal />} />
-        <Route path="/conversas/:conversaId" element={<Principal />} />
+        <Route path="/" element={<Conversa />} />
+        <Route path="/conversas/:conversaId" element={<Conversa />} />
         <Route path="/historico" element={<Historico />} />
         <Route
           path="/intencoes"

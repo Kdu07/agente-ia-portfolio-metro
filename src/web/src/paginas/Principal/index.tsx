@@ -6,8 +6,10 @@
  * e essa e a propriedade que permite trocar o duble pelo middleware sem
  * tocar aqui.
  *
- * `:conversaId` na rota retoma uma conversa gravada: os turnos anteriores
- * sao carregados e as mensagens novas entram na sequencia.
+ * Sem `:conversaId` a tela e uma conversa nova, com sugestoes de partida.
+ * Com o parametro, os turnos gravados sao carregados e as mensagens novas
+ * entram na sequencia. A remontagem entre uma conversa e outra e
+ * garantida pela `key` em `rotas.tsx`.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -15,17 +17,18 @@ import { useParams } from "react-router-dom";
 
 import { BolhaMensagem } from "@/componentes/chat/BolhaMensagem";
 import { Composer } from "@/componentes/chat/Composer";
+import { ConversaVazia } from "@/componentes/chat/ConversaVazia";
 import { IndicadorDigitando } from "@/componentes/chat/IndicadorDigitando";
 import { useConversa } from "@/hooks/useConversa";
-
-const SAUDACAO =
-  "Olá! O acompanhamento do Projeto X está ativo. Posso ajudar a consultar status, revisar riscos, acompanhar marcos ou registrar uma pendência.";
 
 export function Principal() {
   const { conversaId } = useParams<{ conversaId: string }>();
   const { linhas, carregando, enviando, erro, enviar, reenviarUltima } = useConversa(conversaId);
 
-  const [notificacao, setNotificacao] = useState(true);
+  // O alerta proativo so faz sentido numa conversa nova: ele fala do
+  // agora, e reaparecer ao abrir uma conversa de tres dias atras daria a
+  // impressao de que o marco acabou de atrasar.
+  const [notificacao, setNotificacao] = useState(!conversaId);
   const [gravando, setGravando] = useState(false);
   const [texto, setTexto] = useState("");
 
@@ -47,7 +50,7 @@ export function Principal() {
     enviar("Por que o marco “Entrega da Fase 2” está atrasado?");
   }
 
-  const conversaVazia = !carregando && linhas.length === 0;
+  const semMensagens = !carregando && linhas.length === 0;
 
   return (
     <div className="page conversation-page">
@@ -67,9 +70,7 @@ export function Principal() {
             <p className="text-sm text-slate-600">Carregando a conversa...</p>
           ) : null}
 
-          {conversaVazia ? (
-            <BolhaMensagem autor="agente" texto={SAUDACAO} horario="" />
-          ) : null}
+          {semMensagens ? <ConversaVazia onEscolher={setTexto} /> : null}
 
           {linhas.map((linha) => (
             <BolhaMensagem
@@ -117,7 +118,7 @@ export function Principal() {
         <Composer
           valor={texto}
           gravando={gravando}
-          contexto="Projeto X - PMO GPT⌄"
+          contexto="Projeto X - PMO GPT"
           onAlterar={setTexto}
           onEnviar={submeter}
           onAlternarVoz={() => setGravando((ativo) => !ativo)}
