@@ -1,15 +1,30 @@
-import { type FormEvent, useState } from "react";
+/**
+ * Pagina principal: a conversa com o agente.
+ *
+ * As mensagens ainda vivem em estado local. O consumo de POST /chat
+ * entra no bloco seguinte, e por isso o formato de `Mensagem` aqui e
+ * proposital: ele antecipa o `Turno` do contrato, com `desfecho`
+ * opcional, para que a troca nao exija reescrever a renderizacao.
+ */
+
+import { useState } from "react";
+
+import { BolhaMensagem } from "@/componentes/chat/BolhaMensagem";
+import { Composer } from "@/componentes/chat/Composer";
+import type { Desfecho } from "@/tipos";
 
 interface Mensagem {
   autor: "agente" | "usuario";
   texto: string;
   horario: string;
+  desfecho?: Desfecho;
 }
 
 const INICIAIS: Mensagem[] = [
   {
     autor: "agente",
-    texto: "Olá! O acompanhamento do Projeto X está ativo. Posso ajudar a consultar status, revisar riscos, acompanhar marcos ou registrar uma pendência.",
+    texto:
+      "Olá! O acompanhamento do Projeto X está ativo. Posso ajudar a consultar status, revisar riscos, acompanhar marcos ou registrar uma pendência.",
     horario: "10:00",
   },
 ];
@@ -20,8 +35,7 @@ export function Principal() {
   const [texto, setTexto] = useState("");
   const [mensagens, setMensagens] = useState<Mensagem[]>(INICIAIS);
 
-  function enviar(evento: FormEvent) {
-    evento.preventDefault();
+  function enviar() {
     const mensagem = texto.trim();
     if (!mensagem) return;
     setMensagens((atuais) => [
@@ -37,7 +51,8 @@ export function Principal() {
       ...atuais,
       {
         autor: "agente",
-        texto: "Notei que o marco “Entrega da Fase 2” está atrasado. Quer me contar o motivo ou prefere ver o histórico primeiro?",
+        texto:
+          "Notei que o marco “Entrega da Fase 2” está atrasado. Quer me contar o motivo ou prefere ver o histórico primeiro?",
         horario: "agora",
       },
     ]);
@@ -58,17 +73,20 @@ export function Principal() {
       <div className="conversation-body">
         <div className="messages" aria-live="polite">
           {mensagens.map((mensagem, indice) => (
-            <div className={`message-row message-row--${mensagem.autor}`} key={`${mensagem.horario}-${indice}`}>
-              {mensagem.autor === "agente" ? <span className="message-avatar brand-mark--letter" aria-label="Prata">P</span> : null}
-              <div>
-                <article className="message-bubble">{mensagem.texto}</article>
-                <time>{mensagem.horario}</time>
-              </div>
-              {mensagem.autor === "usuario" ? <span className="avatar avatar--small">FE</span> : null}
-            </div>
+            <BolhaMensagem
+              key={`${mensagem.horario}-${indice}`}
+              autor={mensagem.autor}
+              texto={mensagem.texto}
+              horario={mensagem.horario}
+              desfecho={mensagem.desfecho}
+              iniciais="FE"
+            />
           ))}
         </div>
 
+        {/* TODO (bloco de alertas): o cartao flutua sobre a conversa e
+            encobre a mensagem a que se refere. Deve empurrar o conteudo
+            ou entrar como primeira mensagem. */}
         {notificacao ? (
           <aside className="notification-card" role="dialog" aria-label="Notificação do assistente">
             <button className="notification-close" onClick={() => setNotificacao(false)} aria-label="Fechar">×</button>
@@ -81,18 +99,14 @@ export function Principal() {
           </aside>
         ) : null}
 
-        <form className="composer" onSubmit={enviar}>
-          <textarea value={texto} onChange={(evento) => setTexto(evento.target.value)} placeholder={gravando ? "Ouvindo... fale agora" : "Digite sua mensagem para a Prata..."} aria-label="Mensagem" rows={1} />
-          <div className="composer-actions">
-            <div className="composer-tools" aria-hidden="true"><span>⌕</span><span>◎</span><span>▣</span><b>Projeto X - PMO GPT⌄</b></div>
-            <div className="composer-submit">
-              <button className={gravando ? "voice-button voice-button--active" : "voice-button"} type="button" aria-label={gravando ? "Parar entrada por voz" : "Iniciar entrada por voz"} aria-pressed={gravando} onClick={() => setGravando((ativo) => !ativo)}>
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" /></svg>
-              </button>
-              <button className="send-button" type="submit" aria-label="Enviar mensagem" disabled={!texto.trim()}>→</button>
-            </div>
-          </div>
-        </form>
+        <Composer
+          valor={texto}
+          gravando={gravando}
+          contexto="Projeto X - PMO GPT⌄"
+          onAlterar={setTexto}
+          onEnviar={enviar}
+          onAlternarVoz={() => setGravando((ativo) => !ativo)}
+        />
         <p className="disclaimer">Prata pode cometer erros. Verifique informações importantes.</p>
       </div>
     </div>
