@@ -5,31 +5,45 @@
  * interface de conversa. Sem isso a pessoa digita, aperta Enter, ganha
  * uma linha em branco e precisa procurar o botao com o mouse.
  *
- * O botao de envio fica desabilitado com o campo vazio: e mais honesto
- * que aceitar o clique e nao fazer nada.
+ * Durante a gravacao o campo exibe a transcricao parcial e fica somente
+ * leitura: editar um texto que o reconhecedor vai sobrescrever no
+ * proximo evento produziria perda silenciosa do que a pessoa digitou.
  */
 
 import { type FormEvent, type KeyboardEvent } from "react";
 
 import { BotaoMicrofone } from "@/componentes/chat/BotaoMicrofone";
+import type { EstadoVoz } from "@/hooks/useMicrofone";
 
 interface Props {
   valor: string;
-  gravando: boolean;
+  estadoVoz: EstadoVoz;
+  parcial: string;
   contexto: string;
   onAlterar: (valor: string) => void;
   onEnviar: () => void;
   onAlternarVoz: () => void;
 }
 
+const ESPERADO: Record<EstadoVoz, string> = {
+  ocioso: "Digite sua mensagem para a Prata...",
+  solicitando: "Preparando o microfone...",
+  gravando: "Ouvindo... fale agora",
+  processando: "Transcrevendo...",
+  erro: "Digite sua mensagem para a Prata...",
+};
+
 export function Composer({
   valor,
-  gravando,
+  estadoVoz,
+  parcial,
   contexto,
   onAlterar,
   onEnviar,
   onAlternarVoz,
 }: Props) {
+  const capturando = estadoVoz === "gravando" || estadoVoz === "processando";
+
   function submeter(evento: FormEvent) {
     evento.preventDefault();
     onEnviar();
@@ -48,12 +62,13 @@ export function Composer({
   return (
     <form className="composer" onSubmit={submeter}>
       <textarea
-        value={valor}
+        value={capturando ? parcial : valor}
         onChange={(evento) => onAlterar(evento.target.value)}
         onKeyDown={aoTeclar}
-        placeholder={gravando ? "Ouvindo... fale agora" : "Digite sua mensagem para a Prata..."}
+        placeholder={ESPERADO[estadoVoz]}
         aria-label="Mensagem"
         aria-describedby="dica-envio"
+        readOnly={capturando}
         rows={1}
       />
       <div className="composer-actions">
@@ -64,8 +79,13 @@ export function Composer({
             de verdade, com nome acessivel. */}
         <p className="composer-context" aria-label="Contexto da conversa">{contexto}</p>
         <div className="composer-submit">
-          <BotaoMicrofone gravando={gravando} onAlternar={onAlternarVoz} />
-          <button className="send-button" type="submit" aria-label="Enviar mensagem" disabled={!valor.trim()}>
+          <BotaoMicrofone estado={estadoVoz} onAlternar={onAlternarVoz} />
+          <button
+            className="send-button"
+            type="submit"
+            aria-label="Enviar mensagem"
+            disabled={!valor.trim() || capturando}
+          >
             →
           </button>
         </div>

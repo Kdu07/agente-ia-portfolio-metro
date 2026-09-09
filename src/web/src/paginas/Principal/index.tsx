@@ -12,7 +12,7 @@
  * garantida pela `key` em `rotas.tsx`.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { BolhaMensagem } from "@/componentes/chat/BolhaMensagem";
@@ -20,6 +20,7 @@ import { Composer } from "@/componentes/chat/Composer";
 import { ConversaVazia } from "@/componentes/chat/ConversaVazia";
 import { IndicadorDigitando } from "@/componentes/chat/IndicadorDigitando";
 import { useConversa } from "@/hooks/useConversa";
+import { useMicrofone } from "@/hooks/useMicrofone";
 
 export function Principal() {
   const { conversaId } = useParams<{ conversaId: string }>();
@@ -29,8 +30,16 @@ export function Principal() {
   // agora, e reaparecer ao abrir uma conversa de tres dias atras daria a
   // impressao de que o marco acabou de atrasar.
   const [notificacao, setNotificacao] = useState(!conversaId);
-  const [gravando, setGravando] = useState(false);
   const [texto, setTexto] = useState("");
+
+  // A transcricao final chega ao campo em vez de ser enviada direto: a
+  // pessoa precisa poder revisar antes, porque reconhecimento de fala
+  // erra nome proprio e numero, que e justamente o que uma solicitacao
+  // sobre projeto costuma conter.
+  const receberTranscricao = useCallback((transcrito: string) => {
+    setTexto((atual) => (atual ? `${atual} ${transcrito}` : transcrito));
+  }, []);
+  const voz = useMicrofone(receberTranscricao);
 
   // A lista de mensagens tem rolagem propria. Sem trazer o fim para a
   // vista a cada mensagem nova, a resposta chega fora do campo visivel e
@@ -103,6 +112,15 @@ export function Principal() {
           </aside>
         ) : null}
 
+        {voz.erro ? (
+          <div
+            role="alert"
+            className="mx-auto mb-2 w-[min(760px,100%)] rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900"
+          >
+            {voz.erro}
+          </div>
+        ) : null}
+
         {erro ? (
           <div
             role="alert"
@@ -117,11 +135,12 @@ export function Principal() {
 
         <Composer
           valor={texto}
-          gravando={gravando}
+          estadoVoz={voz.estado}
+          parcial={voz.parcial}
           contexto="Projeto X - PMO GPT"
           onAlterar={setTexto}
           onEnviar={submeter}
-          onAlternarVoz={() => setGravando((ativo) => !ativo)}
+          onAlternarVoz={voz.alternar}
         />
         <p className="disclaimer">Prata pode cometer erros. Verifique informações importantes.</p>
       </div>

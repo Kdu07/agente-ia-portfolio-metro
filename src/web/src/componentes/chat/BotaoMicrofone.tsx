@@ -7,20 +7,31 @@
  * de tela, onde a mudanca de cor nao existe.
  */
 
+import type { EstadoVoz } from "@/hooks/useMicrofone";
+
 interface Props {
-  gravando: boolean;
+  estado: EstadoVoz;
   onAlternar: () => void;
 }
 
-export function BotaoMicrofone({ gravando, onAlternar }: Props) {
-  // TODO (bloco de voz): consumir useMicrofone, exibir a transcricao
-  // parcial e enviar a final como mensagem com canal="voz".
+const ROTULO: Record<EstadoVoz, string> = {
+  ocioso: "Iniciar entrada por voz",
+  solicitando: "Cancelar entrada por voz",
+  gravando: "Parar entrada por voz",
+  processando: "Processando a transcrição",
+  erro: "Iniciar entrada por voz",
+};
+
+export function BotaoMicrofone({ estado, onAlternar }: Props) {
+  const ativo = estado === "gravando" || estado === "solicitando";
+
   return (
     <button
       type="button"
-      className={gravando ? "voice-button voice-button--active" : "voice-button"}
-      aria-label={gravando ? "Parar entrada por voz" : "Iniciar entrada por voz"}
-      aria-pressed={gravando}
+      className={ativo ? "voice-button voice-button--active" : "voice-button"}
+      aria-label={ROTULO[estado]}
+      aria-pressed={ativo}
+      disabled={estado === "processando"}
       onClick={onAlternar}
     >
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
