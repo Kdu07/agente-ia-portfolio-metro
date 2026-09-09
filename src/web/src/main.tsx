@@ -22,7 +22,11 @@ function montar() {
   createRoot(document.getElementById("raiz")!).render(
     <StrictMode>
       <QueryClientProvider client={cliente}>
-        <BrowserRouter>
+        {/* As duas flags ativam agora o comportamento que sera padrao
+            na versao 7 do React Router. Ativar cedo evita descobrir a
+            diferenca durante a migracao, e silencia o aviso que a
+            biblioteca emite em cada execucao. */}
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Rotas />
         </BrowserRouter>
       </QueryClientProvider>

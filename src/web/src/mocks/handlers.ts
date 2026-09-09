@@ -33,6 +33,21 @@ import {
 const BASE = "/api";
 
 /**
+ * Latencia simulada das respostas.
+ *
+ * A secao 5.1.7.3 do Projeto.md descreve o pedagio de latencia da
+ * arquitetura: a mensagem atravessa duas guardas, o classificador e o
+ * executor antes de voltar. Uma resposta instantanea faria a interface
+ * ser desenhada para uma espera que nao vai existir, e o indicador de
+ * processamento nunca seria exercitado.
+ *
+ * Em teste a latencia e zero: esperar de proposito torna a suite lenta
+ * sem verificar nada a mais.
+ */
+const LATENCIA_CHAT = import.meta.env.MODE === "test" ? 0 : 1400;
+const LATENCIA_CONSULTA = import.meta.env.MODE === "test" ? 0 : 350;
+
+/**
  * Como o duble escolhe o desfecho de uma mensagem.
  *
  * O pipeline real decide por guardas e classificador. Aqui a decisao vem
@@ -104,9 +119,7 @@ export const handlers = [
   // Chat
   http.post(`${BASE}/chat`, async ({ request }) => {
     const pedido = (await request.json()) as ChatRequest;
-    // Latencia proposital: sem ela o estado de "aguardando resposta"
-    // nunca aparece, e um indicador que nunca e visto nao e testado.
-    await delay(700);
+    await delay(LATENCIA_CHAT);
     const { desfecho, resposta } = responderChat(pedido.mensagem ?? "");
     const corpo: ChatResponse = {
       resposta,
@@ -120,11 +133,11 @@ export const handlers = [
 
   // Conversas
   http.get(`${BASE}/conversas`, async () => {
-    await delay(300);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(CONVERSAS);
   }),
   http.get(`${BASE}/conversas/:id`, async ({ params }) => {
-    await delay(300);
+    await delay(LATENCIA_CONSULTA);
     const conversa = detalharConversa(String(params.id));
     if (!conversa) return new HttpResponse(null, { status: 404 });
     return HttpResponse.json(conversa);
@@ -133,12 +146,12 @@ export const handlers = [
 
   // Rotinas
   http.get(`${BASE}/rotinas`, async () => {
-    await delay(300);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(rotinas);
   }),
   http.post(`${BASE}/rotinas/validar`, async ({ request }) => {
     const pedido = (await request.json()) as Partial<Rotina>;
-    await delay(400);
+    await delay(LATENCIA_CONSULTA);
     const valida = (pedido.prompt ?? "").trim().length >= 10;
     return HttpResponse.json({
       valida,
@@ -183,37 +196,37 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
   http.get(`${BASE}/rotinas/:id/execucoes`, async ({ params }) => {
-    await delay(300);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(EXECUCOES[String(params.id)] ?? []);
   }),
 
   // Analise de intencoes
   http.get(`${BASE}/intencoes/volume`, async () => {
-    await delay(400);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(VOLUME_POR_INTENCAO);
   }),
   http.get(`${BASE}/intencoes/desfechos`, async () => {
-    await delay(400);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(DISTRIBUICAO_DESFECHOS);
   }),
   http.get(`${BASE}/intencoes/seguranca/resumo`, async () => {
-    await delay(400);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(RESUMO_SEGURANCA);
   }),
   http.get(`${BASE}/intencoes/seguranca/serie`, async () => {
-    await delay(400);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(SERIE_BLOQUEIOS);
   }),
   http.get(`${BASE}/intencoes/catalogo/resumo`, async () => {
-    await delay(400);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(RESUMO_CATALOGO);
   }),
   http.get(`${BASE}/intencoes/catalogo/fora-de-escopo`, async () => {
-    await delay(400);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(FORA_DE_ESCOPO);
   }),
   http.get(`${BASE}/intencoes/catalogo/baixa-confianca`, async () => {
-    await delay(400);
+    await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(BAIXA_CONFIANCA);
   }),
   // TODO: /intencoes/latencia fica de fora ate o schema de resposta ser
