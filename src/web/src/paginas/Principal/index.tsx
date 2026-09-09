@@ -1,62 +1,53 @@
 /**
  * Pagina principal: a conversa com o agente.
  *
- * As mensagens ainda vivem em estado local. O consumo de POST /chat
- * entra no bloco seguinte, e por isso o formato de `Mensagem` aqui e
- * proposital: ele antecipa o `Turno` do contrato, com `desfecho`
- * opcional, para que a troca nao exija reescrever a renderizacao.
+ * O envio passa pelo contrato de POST /chat. Em desenvolvimento quem
+ * responde e o duble em `mocks/handlers.ts`; a tela nao sabe a diferenca,
+ * e essa e a propriedade que permite trocar o duble pelo middleware sem
+ * tocar aqui.
+ *
+ * `:conversaId` na rota retoma uma conversa gravada: os turnos anteriores
+ * sao carregados e as mensagens novas entram na sequencia.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 
 import { BolhaMensagem } from "@/componentes/chat/BolhaMensagem";
 import { Composer } from "@/componentes/chat/Composer";
-import type { Desfecho } from "@/tipos";
+import { IndicadorDigitando } from "@/componentes/chat/IndicadorDigitando";
+import { useConversa } from "@/hooks/useConversa";
 
-interface Mensagem {
-  autor: "agente" | "usuario";
-  texto: string;
-  horario: string;
-  desfecho?: Desfecho;
-}
-
-const INICIAIS: Mensagem[] = [
-  {
-    autor: "agente",
-    texto:
-      "Olá! O acompanhamento do Projeto X está ativo. Posso ajudar a consultar status, revisar riscos, acompanhar marcos ou registrar uma pendência.",
-    horario: "10:00",
-  },
-];
+const SAUDACAO =
+  "Olá! O acompanhamento do Projeto X está ativo. Posso ajudar a consultar status, revisar riscos, acompanhar marcos ou registrar uma pendência.";
 
 export function Principal() {
+  const { conversaId } = useParams<{ conversaId: string }>();
+  const { linhas, carregando, enviando, erro, enviar, reenviarUltima } = useConversa(conversaId);
+
   const [notificacao, setNotificacao] = useState(true);
   const [gravando, setGravando] = useState(false);
   const [texto, setTexto] = useState("");
-  const [mensagens, setMensagens] = useState<Mensagem[]>(INICIAIS);
 
-  function enviar() {
-    const mensagem = texto.trim();
-    if (!mensagem) return;
-    setMensagens((atuais) => [
-      ...atuais,
-      { autor: "usuario", texto: mensagem, horario: "agora" },
-    ]);
+  // A lista de mensagens tem rolagem propria. Sem trazer o fim para a
+  // vista a cada mensagem nova, a resposta chega fora do campo visivel e
+  // a pessoa precisa rolar para descobrir que ela chegou.
+  const fimDaLista = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fimDaLista.current?.scrollIntoView({ block: "end" });
+  }, [linhas.length, enviando]);
+
+  function submeter() {
+    enviar(texto);
     setTexto("");
   }
 
   function verDetalhes() {
     setNotificacao(false);
-    setMensagens((atuais) => [
-      ...atuais,
-      {
-        autor: "agente",
-        texto:
-          "Notei que o marco “Entrega da Fase 2” está atrasado. Quer me contar o motivo ou prefere ver o histórico primeiro?",
-        horario: "agora",
-      },
-    ]);
+    enviar("Por que o marco “Entrega da Fase 2” está atrasado?");
   }
+
+  const conversaVazia = !carregando && linhas.length === 0;
 
   return (
     <div className="page conversation-page">
@@ -71,17 +62,29 @@ export function Principal() {
       </header>
 
       <div className="conversation-body">
-        <div className="messages" aria-live="polite">
-          {mensagens.map((mensagem, indice) => (
+        <div className="messages" aria-live="polite" aria-busy={enviando}>
+          {carregando ? (
+            <p className="text-sm text-slate-600">Carregando a conversa...</p>
+          ) : null}
+
+          {conversaVazia ? (
+            <BolhaMensagem autor="agente" texto={SAUDACAO} horario="" />
+          ) : null}
+
+          {linhas.map((linha) => (
             <BolhaMensagem
-              key={`${mensagem.horario}-${indice}`}
-              autor={mensagem.autor}
-              texto={mensagem.texto}
-              horario={mensagem.horario}
-              desfecho={mensagem.desfecho}
+              key={linha.id}
+              autor={linha.autor}
+              texto={linha.texto}
+              horario={linha.horario}
+              desfecho={linha.desfecho}
               iniciais="FE"
             />
           ))}
+
+          {enviando ? <IndicadorDigitando /> : null}
+
+          <div ref={fimDaLista} />
         </div>
 
         {/* TODO (bloco de alertas): o cartao flutua sobre a conversa e
@@ -99,12 +102,24 @@ export function Principal() {
           </aside>
         ) : null}
 
+        {erro ? (
+          <div
+            role="alert"
+            className="mx-auto mb-2 flex w-[min(760px,100%)] items-center justify-between gap-4 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3"
+          >
+            <span className="text-sm text-slate-900">{erro}</span>
+            <button type="button" className="outline-button" onClick={reenviarUltima}>
+              Tentar novamente
+            </button>
+          </div>
+        ) : null}
+
         <Composer
           valor={texto}
           gravando={gravando}
           contexto="Projeto X - PMO GPT⌄"
           onAlterar={setTexto}
-          onEnviar={enviar}
+          onEnviar={submeter}
           onAlternarVoz={() => setGravando((ativo) => !ativo)}
         />
         <p className="disclaimer">Prata pode cometer erros. Verifique informações importantes.</p>
