@@ -47,7 +47,7 @@ describe("Página principal", () => {
     expect(resposta).toBeInTheDocument();
 
     // A etiqueta e o texto nao podem nomear a guarda que barrou.
-    expect(screen.getByText("Nao atendida")).toBeInTheDocument();
+    expect(screen.getByText("Não atendida")).toBeInTheDocument();
     expect(screen.queryByText(/inje[cç][aã]o/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/guarda/i)).not.toBeInTheDocument();
   });
