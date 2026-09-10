@@ -6683,7 +6683,145 @@ interface a informação que o pipeline deliberadamente omite.
 
 ## 9.5 Testes Unitários e de Integração
 
-[Preencher]
+Esta seção registra os testes automatizados implementados durante o
+desenvolvimento, com seus casos, entradas, resultados esperados e forma de
+execução. As subseções abaixo cobrem a camada de interface, entregue na Sprint
+3. Os testes do middleware serão acrescentados nesta mesma seção pela pessoa
+responsável por aquela camada.
+
+A distinção entre esta seção e a seção 10 merece registro, porque as duas tratam
+de teste e respondem a perguntas diferentes. A seção 10 é o **planejamento** dos
+testes da solução, derivado dos requisitos e organizado por requisito de origem,
+e sua execução ocorre nas Sprints 4 e 5. Esta seção documenta os testes que
+**já existem no repositório** e que rodam a cada alteração da interface. Um caso
+de 10.1 pode vir a ser implementado como caso desta seção; a recíproca não é
+verdadeira, porque parte do que se verifica aqui é comportamento de componente,
+sem correspondência direta em requisito.
+
+### 9.5.1 Estratégia de teste da interface
+
+Três decisões estruturam a suíte e explicam por que ela verifica o que verifica.
+
+**Os testes usam os mesmos dublês do navegador.** O servidor de dublês montado
+em `testes/setup.ts` recebe os handlers de `mocks/handlers.ts`, sem redefinição.
+Se a suíte tivesse respostas próprias, ela passaria a verificar uma API que só
+existe dentro dela, e um handler quebrado durante o desenvolvimento continuaria
+verde no teste. A consequência prática é que corrigir um dublê corrige o
+desenvolvimento e a suíte na mesma alteração.
+
+**Requisição sem dublê é erro, e não passagem.** No navegador, uma rota sem
+handler segue para a rede, porque ali o comportamento correto é mostrar o erro
+real do backend. No teste a política é `onUnhandledRequest: "error"`: uma
+requisição que ninguém previu indica caminho de código não mapeado, e falhar
+alto é preferível a deixar passar silenciosamente.
+
+**As consultas são por papel acessível, e não por classe ou identificador.**
+Um teste que localiza o campo de mensagem pelo seu papel e pelo seu nome
+acessível falha quando o rótulo desaparece. Um teste que o localiza por classe
+CSS continua verde com a acessibilidade quebrada. A escolha transforma parte dos
+critérios de acessibilidade em verificação automática, em vez de item de
+inspeção manual.
+
+Duas configurações valem apenas no ambiente de teste e estão isoladas em
+`testes/utilitarios.tsx`: a repetição de requisições é desativada, porque
+repetir uma chamada que falhou de propósito faz a suíte esperar sem verificar
+nada, e o cache é descartado entre casos, para que um teste não observe o
+resultado do anterior. A latência simulada dos dublês também é zerada em teste,
+pela mesma razão.
+
+O polyfill de `scrollIntoView` reside em `testes/setup.ts`, e não no componente
+que usa o método. O jsdom não implementa a função porque não possui layout nem
+viewport reais; acrescentar ao código da aplicação uma verificação que existe
+apenas por limitação do ambiente de teste inverteria a relação entre os dois.
+
+### 9.5.2 Identificação dos casos
+
+A convenção de 10.1.1 numera os casos a partir do requisito de origem, no
+formato `TF-RFxx-nn`. Ela não se aplica sem ajuste aos testes desta seção, e a
+razão é a mesma que motivou o prefixo `TNF-DES` naquela seção: parte dos casos
+aqui não deriva de um requisito. Verificar que a tecla Enter envia a mensagem e
+que Shift mais Enter quebra linha é comportamento de componente, e forçá-lo sob
+um requisito produziria identificador limpo e rastreabilidade falsa.
+
+Adota-se, portanto, o prefixo `TU-WEB-nn`, sequencial e contínuo, com a coluna
+de rastreabilidade indicando o requisito de origem quando ele existe e a decisão
+de projeto quando não existe. A coluna "Onda" da convenção de 10.1.1 é omitida
+porque todos os casos desta seção já estão implementados e em execução.
+
+### 9.5.3 Casos implementados
+
+**Apresentação dos desfechos**, em `testes/desfechos.test.ts`.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
+| --- | --- | --- | --- | --- | --- |
+| TU-WEB-01 | Positivo | Cobertura do vocabulário fechado de desfechos | Tabela de aparência dos desfechos | Existe entrada para os oito desfechos declarados em `tipos/index.ts`, sem ausência nem excedente | RF03, RF09 |
+| TU-WEB-02 | Negativo | Rótulo não nomeia a barreira acionada | Desfechos de bloqueio por injeção, por abuso e de saída | Nenhum rótulo contém termo que identifique a barreira; os dois desfechos de injeção compartilham o mesmo rótulo | RF09 |
+| TU-WEB-03 | Positivo | Desfecho atendido não recebe etiqueta | Desfecho `encaminhada` | Rótulo vazio e ausência de filete lateral, para que a conversa normal não seja marcada | RF03 |
+| TU-WEB-04 | Positivo | Todo desfecho não atendido recebe distinção visual | Os sete desfechos restantes | Cada um possui filete lateral e etiqueta, garantindo que a informação não dependa apenas da cor | RF03, WCAG 1.4.1 |
+
+**Navegação entre conversas**, em `testes/navegacao.test.tsx`.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
+| --- | --- | --- | --- | --- | --- |
+| TU-WEB-05 | Positivo | Troca de conversa substitui o conteúdo | Mensagem enviada em uma conversa, seguida de navegação para outra | O conteúdo da conversa anterior deixa a tela e o da nova é apresentado, sem sobreposição | RF12 |
+| TU-WEB-06 | Positivo | Conversa nova apresenta sugestões de partida | Rota da página principal sem identificador de conversa | As quatro sugestões correspondentes a intenções do catálogo são exibidas | RF02, RF03 |
+| TU-WEB-07 | Negativo | Conversa gravada não repete o estado inicial | Rota de conversa com turnos gravados | As sugestões de partida não são exibidas sobre uma conversa que já possui histórico | RF12 |
+| TU-WEB-08 | Negativo | Rota inexistente leva a destino explícito | Endereço não registrado no mapa de rotas | Tela de rota não encontrada, e não tela em branco ou redirecionamento silencioso | Decisão de projeto, seção 9.2.6 |
+
+**Página principal e página de rotinas**, em `testes/paginas.test.tsx`.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
+| --- | --- | --- | --- | --- | --- |
+| TU-WEB-09 | Positivo | Envio de mensagem e recebimento da resposta | Mensagem de consulta ao portfólio | A mensagem do usuário aparece antes da resposta, e a resposta do agente é apresentada em seguida | RF02, RF04 |
+| TU-WEB-10 | Negativo | Recusa fora de escopo não é tratada como erro | Mensagem sobre assunto alheio ao portfólio | O texto orientativo ocupa a bolha como qualquer resposta, com etiqueta de recusa, e nenhuma mensagem de falha do sistema é exibida | RF03 |
+| TU-WEB-11 | Negativo | Tentativa de injeção não revela a barreira | Mensagem contendo instrução de manipulação do agente | Resposta seca, sem explicação do motivo e sem repetição da instrução recebida; a etiqueta não distingue bloqueio por regra de bloqueio por modelo | RF09 |
+| TU-WEB-12 | Positivo | Pedido ambíguo solicita detalhamento | Mensagem curta ou com referência indefinida | Resposta pede a informação faltante em vez de recusar ou de responder por suposição | RF03 |
+| TU-WEB-13 | Positivo | Enter envia e Shift mais Enter quebra linha | Texto digitado no campo de mensagem | Shift mais Enter preserva o texto sem criar bolha; Enter cria a bolha e esvazia o campo | Decisão de projeto, seção 9.2.5 |
+| TU-WEB-14 | Positivo | Entrada por voz sinaliza estado e entrega a transcrição | Acionamento do botão de microfone | O estado ativo é indicado de forma perceptível e o texto transcrito chega ao campo de mensagem | RF02 |
+| TU-WEB-15 | Positivo | Filtragem das rotinas cadastradas | Lista de rotinas do dublê e termo de busca | Apenas as rotinas correspondentes ao termo permanecem visíveis | RF11 |
+| TU-WEB-16 | Positivo | Validação e criação de rotina | Prompt e agenda informados no formulário | A validação é acionada antes da criação e a rotina passa a constar da lista | RF11 |
+| TU-WEB-17 | Negativo | Exclusão exige confirmação | Acionamento da exclusão de uma rotina | A exclusão não ocorre sem confirmação explícita do usuário | RF11 |
+
+### 9.5.4 Execução
+
+Os comandos são executados a partir de `src/web`.
+
+| Comando | Efeito |
+| --- | --- |
+| `npm run test` | Executa a suíte inteira uma vez e retorna código de saída diferente de zero em caso de falha |
+| `npm run test -- --watch` | Reexecuta os casos afetados a cada alteração de arquivo, durante o desenvolvimento |
+| `npm run test -- desfechos` | Executa apenas os arquivos cujo nome contém o termo informado |
+
+A suíte compõe, com a análise estática e a verificação de tipos, o encadeamento
+descrito em 9.2.10. A ordem recomendada antes de abrir uma *merge request* é
+`npm run lint`, `npm run typecheck`, `npm run test` e `npm run build`, porque
+cada etapa é mais rápida que a seguinte e falha mais cedo.
+
+### 9.5.5 Abrangência e limites
+
+Os dezessete casos cobrem os quatro comportamentos que a interface não pode
+errar sem consequência para o usuário ou para a segurança: a apresentação
+correta e não reveladora dos desfechos, a substituição de contexto ao trocar de
+conversa, o envio de mensagem em suas duas formas de acionamento e o ciclo de
+gestão das rotinas.
+
+Três limites devem ser declarados.
+
+O primeiro é que **não há testes de integração nesta entrega**. Todos os casos
+executam contra dublês, e a comunicação real entre interface e middleware
+depende da resolução de sessão no backend, ainda não implementada. Os testes de
+integração são escopo do item 7 do Artefato 7 e estão previstos para a Sprint 5,
+com o planejamento correspondente registrado em 10.5.
+
+O segundo é que **as telas de entrada, histórico e intenções ainda não possuem
+casos próprios**. Elas são exercitadas indiretamente, pela navegação e pelas
+regras de permissão, mas não por asserção específica sobre seu conteúdo. A
+ampliação está registrada em *issue* própria.
+
+O terceiro é que **a cobertura não é medida nesta entrega**. A meta de oitenta
+por cento definida em 9.1.8 é consolidada em 10.7, junto com a cobertura do
+middleware, e a instrumentação correspondente será acrescentada quando as duas
+camadas tiverem suíte executável no mesmo encadeamento de integração contínua.
 
 # 10. Planejamento e Execução de Testes
 
@@ -8417,7 +8555,175 @@ substituição.
 
 ## 11.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento
 
-[Preencher]
+Esta seção descreve como executar o protótipo em máquina local, o que se observa
+ao abrir e como percorrer cada comportamento relevante da solução. As subseções
+abaixo cobrem a interface web, entregue na Sprint 3 e executável de forma
+independente. As instruções de execução do middleware serão acrescentadas nesta
+mesma seção pela pessoa responsável por aquela camada.
+
+A independência é deliberada. A interface conversa com uma camada de dublês
+fiel aos contratos da API, descrita em 9.2.9, o que permite que qualquer pessoa
+da equipe execute, avalie e teste o protótipo sem depender do backend, de banco
+de dados ou de credenciais de nuvem.
+
+### 11.2.1 Pré-requisitos
+
+| Item | Versão | Observação |
+| --- | --- | --- |
+| Node.js | 20 ou superior | Mesma versão utilizada na imagem de contêiner |
+| npm | 10 ou superior | Acompanha a instalação do Node 20 |
+| Navegador | Chromium, Firefox ou Edge atualizados | O registro do *service worker* dos dublês exige navegador com suporte a *Service Workers* |
+
+Não é necessário instalar Python, banco de dados, credenciais do Azure nem
+qualquer serviço adicional para executar a interface.
+
+### 11.2.2 Instalação e execução
+
+A partir da raiz do repositório:
+
+```bash
+cd src/web
+npm install
+npm run dev
+```
+
+O servidor de desenvolvimento sobe em `http://localhost:5173`. A primeira
+execução leva mais tempo, porque instala as dependências e registra o *service
+worker* dos dublês.
+
+O console do navegador registra a ativação da camada de dublês. A ausência
+dessa mensagem indica que o arquivo `public/mockServiceWorker.js` não está
+presente, situação que se resolve executando `npx msw init public` a partir de
+`src/web`.
+
+### 11.2.3 O que se observa ao abrir
+
+A identidade devolvida pelo dublê corresponde a uma líder de projeto com as duas
+permissões da solução, `ver_intencoes` e `gerir_rotinas`. Isso é deliberado:
+permite que as telas protegidas sejam percorridas em avaliação, sem que se
+afrouxe controle de acesso algum, uma vez que a verificação real ocorre no
+backend a cada rota e o arquivo de identidade dublada não entra no pacote de
+produção.
+
+Em consequência, a barra lateral apresenta os quatro destinos de navegação. Uma
+sessão com permissões menores veria apenas os itens correspondentes, conforme
+descrito em 9.2.6.
+
+### 11.2.4 Percurso das telas
+
+| Passo | Ação | O que verificar |
+| --- | --- | --- |
+| 1 | Abrir `http://localhost:5173` | A página principal apresenta o estado inicial com quatro sugestões de partida |
+| 2 | Acionar uma das sugestões | O texto é levado ao campo de mensagem, pronto para envio |
+| 3 | Enviar a mensagem | A bolha do usuário aparece imediatamente, o indicador de processamento é exibido e a resposta chega em seguida |
+| 4 | Acessar Histórico | As três conversas gravadas do dublê são listadas, com data relativa |
+| 5 | Abrir uma conversa do histórico | Os turnos gravados são apresentados e as sugestões de partida não reaparecem |
+| 6 | Acionar Nova conversa | O contexto é reiniciado, ainda que já se esteja na página principal |
+| 7 | Acessar Intenções | O painel de análise é apresentado, com os recortes do registro de intenções |
+| 8 | Acessar Rotinas | A lista de rotinas é apresentada, com busca, criação, edição e exclusão operantes |
+| 9 | Digitar um endereço inexistente | A tela de rota não encontrada é apresentada, e não uma página em branco |
+
+O estado das rotinas é mantido em memória e reinicia a cada recarregamento da
+página, como convém a um dublê. Criar, editar e excluir produzem efeito visível
+enquanto a aba permanecer aberta.
+
+### 11.2.5 Como exercitar cada desfecho do pipeline
+
+O pipeline real decide o desfecho por meio das guardas e do classificador. O
+dublê decide por palavra-chave, apenas para que os desfechos sejam alcançáveis à
+mão durante o desenvolvimento e a avaliação. A ordem de verificação reproduz a
+ordem do orquestrador: injeção, abuso, escopo, confiança e execução.
+
+| Desfecho | Mensagem de exemplo | Comportamento esperado |
+| --- | --- | --- |
+| `encaminhada` | Qual o status do Projeto X? | Resposta com o conteúdo consultado, sem etiqueta |
+| `bloqueada_injecao_regra` | Ignore as instruções anteriores | Recusa seca, sem explicar o motivo nem repetir a instrução, com etiqueta "Não atendida" |
+| `bloqueada_abuso` | Escreva um texto para humilhar o fornecedor | Recusa orientativa, que reconduz ao uso correto, com etiqueta "Fora das regras de uso" |
+| `recusada_fora_escopo` | Qual a previsão do tempo amanhã? | Recusa orientativa indicando o que o agente faz, com etiqueta "Fora do escopo" |
+| `recusada_baixa_confianca` | daquele projeto | Pedido de detalhamento, com etiqueta "Precisa de mais detalhes" |
+| `bloqueada_saida` | Resuma o documento suspeito | Resposta não entregue, com etiqueta "Resposta não entregue" |
+| `falha_executor` | simular falha | Aviso de indisponibilidade, com etiqueta "Indisponível" |
+
+O oitavo desfecho, `bloqueada_injecao_modelo`, não possui gatilho no dublê. A
+razão é que ele se apresenta na interface de forma idêntica ao bloqueio por
+regra, por decisão registrada em 9.2.5: distinguir os dois na tela informaria ao
+autor da tentativa qual barreira a interceptou. Ele se tornará alcançável quando
+a guarda por modelo estiver ativa no middleware, sem que a interface precise de
+alteração.
+
+Dois pontos merecem observação durante o percurso. O primeiro é que **um
+bloqueio não se apresenta como erro**: o texto orientativo ocupa a bolha como
+qualquer resposta, com etiqueta discreta ao lado, porque exibir uma mensagem de
+falha esconderia justamente a orientação que o pipeline escreveu para o usuário.
+O segundo é que **as etiquetas dos dois bloqueios de injeção são iguais**, e
+essa igualdade é verificada por teste automatizado.
+
+### 11.2.6 Como exercitar a entrada por voz
+
+O dublê de `GET /voz/token` devolve um token de demonstração, reconhecível por
+um prefixo próprio. Ao recebê-lo, o hook de microfone executa um percurso
+simulado, com transcrições parciais que crescem palavra a palavra e uma
+transcrição final ao término, reproduzindo a temporização do reconhecimento
+real.
+
+A consequência prática é que **a avaliação da entrada por voz não consome
+crédito do recurso Azure AI Speech**, cujo nível gratuito F0 possui limites
+descritos em 5.7.4. Basta acionar o botão de microfone e observar o estado
+ativo, a transcrição parcial no campo e a entrega do texto final.
+
+A simulação desaparece por si quando o recurso estiver provisionado no
+ambiente do parceiro, porque um token real nunca apresenta aquele prefixo.
+Nenhuma remoção de código é necessária para a transição.
+
+### 11.2.7 Verificação e construção
+
+| Comando | Finalidade |
+| --- | --- |
+| `npm run lint` | Análise estática do código da aplicação |
+| `npm run typecheck` | Verificação de tipos da aplicação e dos arquivos de build |
+| `npm run test` | Execução dos casos documentados em 9.5.3 |
+| `npm run build` | Construção do pacote de produção em `dist/` |
+| `npm run preview` | Serviço local do pacote construído, para conferência do artefato final |
+
+Após `npm run build`, o diretório `dist/` não deve conter o arquivo
+`mockServiceWorker.js`. Sua ausência é a evidência de que a camada de dublês não
+alcança o artefato de produção, conforme descrito em 9.2.9.
+
+### 11.2.8 Execução em contêiner
+
+A interface possui imagem própria, construída em dois estágios. O Node existe
+apenas para construir o pacote; a imagem final contém somente o Nginx e os
+estáticos, sem qualquer ambiente de execução JavaScript. Essa é a razão pela
+qual a solução mantém um único servidor de aplicação, o Python do middleware.
+
+```bash
+cd src/web
+docker build -t agente-portfolio-web .
+docker run --rm -p 8080:80 agente-portfolio-web
+```
+
+A instalação de dependências dentro da imagem usa `npm ci`, e não `npm install`,
+porque é o arquivo de trava que garante a construção com as mesmas versões
+exercitadas localmente. Com `npm install` e sem trava, um intervalo de versão no
+`package.json` faria a imagem receber uma versão que ninguém testou.
+
+O Nginx serve os estáticos e encaminha o prefixo `/api` ao middleware, o que
+preserva a origem única exigida pelo cookie de sessão, conforme 9.2.8.
+
+### 11.2.9 Limitações conhecidas do protótipo
+
+| Limitação | Consequência para quem avalia | Situação |
+| --- | --- | --- |
+| As respostas provêm da camada de dublês | O conteúdo apresentado é massa de teste, e não dado do portfólio | Depende da resolução de sessão no middleware |
+| O estado das rotinas é mantido em memória | Alterações se perdem ao recarregar a página | Comportamento esperado de dublê |
+| A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
+| A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
+| Os gráficos do painel de intenções ainda não estão implementados | O painel apresenta a estrutura, sem as visualizações | Componentes previstos para a onda 4, listados em `src/web/src/componentes/graficos/README.md` |
+
+A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
+elas produz duas leituras erradas em direções opostas: a de que a solução já
+consulta o portfólio real, e a de que a interface não funciona quando o
+avaliador percebe que o dado é fixo.
 
 # Referências
 
