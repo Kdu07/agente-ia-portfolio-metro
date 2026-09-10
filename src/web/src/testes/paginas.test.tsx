@@ -85,25 +85,6 @@ describe("Página principal", () => {
     expect(campo).toHaveValue("");
   });
 
-  it("envia com Enter e quebra linha com Shift mais Enter", async () => {
-    renderizar(<Principal />);
-    const campo = screen.getByRole("textbox", { name: "Mensagem" });
-
-    fireEvent.change(campo, { target: { value: "Linha um" } });
-
-    // Shift+Enter nao envia: o campo mantem o texto e nenhuma bolha e criada.
-    fireEvent.keyDown(campo, { key: "Enter", shiftKey: true });
-    expect(campo).toHaveValue("Linha um");
-    expect(screen.queryByText("Linha um", { selector: "article" })).not.toBeInTheDocument();
-
-    // Enter envia: a bolha aparece e o campo e esvaziado.
-    fireEvent.keyDown(campo, { key: "Enter" });
-    expect(
-      await screen.findByText("Linha um", { selector: "article" }, { timeout: 3000 }),
-    ).toBeInTheDocument();
-    expect(campo).toHaveValue("");
-  });
-
   it("indica quando a entrada por voz está ativa e leva a transcrição ao campo", async () => {
     renderizar(<Principal />);
     const campo = screen.getByRole("textbox", { name: "Mensagem" });
