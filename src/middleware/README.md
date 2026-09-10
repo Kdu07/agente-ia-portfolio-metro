@@ -81,3 +81,43 @@ uvicorn app.main:app --reload
 
 Requer `.env` — parta de [.env.example](.env.example). O PostgreSQL e demais
 serviços sobem por [infra/docker-compose.yml](../../infra/docker-compose.yml).
+
+## Validação isolada do Speech-to-Text
+
+O backend usa o SDK Python oficial do Azure AI Speech. Preencha no `.env`:
+
+```dotenv
+SPEECH_KEY=<chave do recurso, não versionar>
+SPEECH_REGION=brazilsouth
+SPEECH_IDIOMA=pt-BR
+```
+
+Com o ambiente virtual ativo, valide a configuração usando um WAV curto, com
+uma única fala e dados sintéticos:
+
+```powershell
+python -m app.voz.speech caminho\para\fala.wav
+```
+
+O comando imprime somente o texto reconhecido. O teste isolado aceita WAV
+porque esse é o formato suportado diretamente pelo `AudioConfig(filename=...)`;
+a normalização de MP3, OGG, WebM e MP4 e a integração com o upload pertencem
+à etapa posterior de processamento. Nunca use um áudio com informação real
+do Metrô enquanto o recurso não estiver no ambiente homologado.
+
+## Conversão de áudio enviado
+
+Arquivos já validados pela API de upload são transcritos pela API REST Fast
+Transcription. Além da chave, configure o endpoint exibido no recurso Azure:
+
+```dotenv
+SPEECH_ENDPOINT=https://<regiao>.api.cognitive.microsoft.com
+SPEECH_API_VERSION=2025-10-15
+SPEECH_TIMEOUT_SECONDS=30
+```
+
+`app.voz.transcricao.transcrever_arquivo` aceita AAC, FLAC, M4A, MP3, MP4,
+OGG, WAV e WebM e devolve texto, idioma, confiança média, duração e latência.
+Ela também aceita uma lista opcional de termos do domínio para melhorar o
+reconhecimento. A integração desse resultado ao endpoint de upload e ao
+pipeline de NLP é feita na task de integração seguinte.
