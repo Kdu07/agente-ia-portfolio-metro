@@ -6288,7 +6288,390 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 
 ## 9.2 Arquitetura de Codificação e Estrutura de Diretórios
 
-[Preencher]
+Esta seção documenta como o código-fonte da solução está organizado, quais
+convenções governam a escrita e como as partes se comunicam. As subseções 9.2.2
+a 9.2.10 cobrem a camada de interface, entregue na Sprint 3 e correspondente ao
+item 5 do Artefato 7. A organização interna do middleware é descrita nas seções
+5.2 e 5.6, que tratam do diagrama de componentes e da arquitetura em blocos.
+
+### 9.2.1 Organização do código-fonte
+
+O código-fonte reside em `src/`, dividido em duas aplicações independentes que
+se comunicam exclusivamente por HTTP:
+
+| Diretório | Aplicação | Responsabilidade |
+| --- | --- | --- |
+| `src/middleware` | Serviço FastAPI em Python | Sessão, guardas de injeção e abuso, classificação de intenção, execução, canal de voz e registro |
+| `src/web` | Interface React em TypeScript | Interação com o usuário, apresentação dos desfechos, gestão de rotinas e visualização das intenções |
+
+A separação é deliberada e sustenta duas decisões já registradas neste
+documento. A primeira é a adoção do middleware como intermediário obrigatório
+entre usuário e Copilot Studio, descrita na seção 5.6: nenhuma parte da
+interface fala diretamente com o Copilot. A segunda é o padrão BFF, pelo qual o
+FastAPI executa o fluxo de autenticação e devolve a sessão em cookie, de modo
+que o navegador nunca manipula token de acesso.
+
+### 9.2.2 Pilha tecnológica da interface
+
+| Tecnologia | Versão | Papel | Justificativa |
+| --- | --- | --- | --- |
+| React | 18.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
+| TypeScript | 5.5 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
+| Vite | 5.4 | Empacotador e servidor de desenvolvimento | Recarga rápida durante o desenvolvimento e divisão automática de pacote na construção |
+| React Router | 6.26 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
+| TanStack Query | 5.51 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
+| Tailwind CSS | 3.4 | Estilização | Vocabulário visual declarado em configuração única, com breakpoints responsivos prontos |
+| Recharts | 2.12 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
+| Azure Speech SDK | 1.38 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
+| MSW | 2.15 | Dublês de API | Interceptação na camada de rede, o que permite exercitar a interface sem alterar o código de produção |
+| Vitest | 2.0 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
+| Testing Library | 16.0 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
+| ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações |
+
+### 9.2.3 Estrutura de diretórios da interface
+
+```
+src/web/
+├── public/                     Estáticos servidos sem processamento
+│   ├── logo-prata.png
+│   └── mockServiceWorker.js    Worker do MSW, removido do pacote de produção
+├── src/
+│   ├── componentes/
+│   │   ├── chat/               Componentes da tela de conversa
+│   │   ├── graficos/           Visualizações do painel de intenções
+│   │   └── ui/                 Componentes transversais de interface
+│   ├── estilos/
+│   │   └── global.css          Camada de estilo compartilhada
+│   ├── hooks/                  Lógica de estado reutilizável
+│   ├── mocks/
+│   │   ├── dados/              Massa de teste por domínio
+│   │   ├── handlers.ts         Rotas dubladas
+│   │   └── navegador.ts        Inicialização do worker
+│   ├── paginas/                Uma pasta por tela, com index.tsx
+│   ├── servicos/
+│   │   ├── api.ts              Cliente HTTP tipado
+│   │   └── chaves.ts           Chaves de cache do TanStack Query
+│   ├── testes/                 Suítes automatizadas e utilitários de teste
+│   ├── tipos/
+│   │   └── index.ts            Contratos da API espelhando app/schemas
+│   ├── utilitarios/
+│   │   └── formato.ts          Formatação de data e hora
+│   ├── main.tsx                Ponto de entrada
+│   └── rotas.tsx               Mapa de rotas
+├── index.html
+├── package.json
+├── tailwind.config.ts
+├── tsconfig.json               Configuração do código da aplicação
+├── tsconfig.node.json          Configuração dos arquivos de build
+├── vite.config.ts
+├── Dockerfile
+└── nginx.conf
+```
+
+O critério de divisão é a natureza do que o arquivo faz, e não a tela em que
+aparece. Um componente usado por três páginas mora em `componentes/`, não na
+pasta da primeira página que o utilizou. A regra evita a situação em que
+reaproveitar um componente exige importá-lo de dentro de outra tela, o que cria
+dependência entre páginas que deveriam ser independentes.
+
+A existência de dois arquivos de configuração do TypeScript merece registro. O
+`tsconfig.json` cobre `src/` e serve à aplicação; o `tsconfig.node.json` cobre
+`vite.config.ts` e `tailwind.config.ts`, que rodam em Node e não no navegador.
+Sem o segundo, os arquivos de configuração ficavam fora da verificação de tipos
+e um erro real neles só apareceria em tempo de execução do build.
+
+### 9.2.4 Convenções de codificação
+
+**Nomenclatura em português.** Arquivos, funções, variáveis e tipos de domínio
+usam português, acompanhando a linguagem do glossário em
+`documentos/glossario-dominio.md`. Termos consagrados da tecnologia permanecem
+em inglês quando traduzi-los produziria confusão, como `hook`, `build` e
+`token`. O objetivo é que quem lê o código reconheça os mesmos nomes que lê na
+documentação do projeto.
+
+**Alias de importação.** O prefixo `@/` aponta para `src/` e está declarado em
+dois lugares, `tsconfig.json` e `vite.config.ts`. Ambos são necessários e
+precisam concordar: o primeiro serve ao editor e ao verificador de tipos, o
+segundo serve ao empacotador. Declarar apenas no `tsconfig.json` faz a
+verificação de tipos passar e o build falhar ao resolver a importação.
+
+**Tipos espelhando o backend.** Os contratos em `tipos/index.ts` reproduzem à
+mão os schemas de `app/schemas/` do middleware. A geração automática a partir do
+OpenAPI é o passo correto quando o esquema estabilizar, mas hoje acoplaria o
+build da interface a uma API que ainda muda com frequência. A contrapartida é
+uma regra de disciplina: alterar um schema no backend exige alterar o tipo
+correspondente na mesma mudança.
+
+**Classes utilitárias escritas por extenso.** O Tailwind gera a regra de uma
+classe apenas quando a encontra literalmente no código. Construções como
+`text-desfecho-${cor}` compilam sem erro e não pintam nada. Por isso as classes
+de cada desfecho estão escritas inteiras em `componentes/chat/desfechos.ts`.
+
+**Comentários explicam decisão, não mecânica.** Os comentários do código
+registram por que uma escolha foi feita e o que aconteceria sem ela. Descrever o
+que a linha faz é redundante com a própria linha; descrever a razão preserva a
+informação que se perde quando o autor sai do projeto.
+
+### 9.2.5 Componentes da interface
+
+| Componente | Responsabilidade |
+| --- | --- |
+| `ui/Layout.tsx` | Moldura da aplicação: barra lateral, navegação principal e identidade da sessão. Atua como rota-pai e renderiza `Outlet`, o que permite que a tela de entrada exista fora da moldura |
+| `ui/EstadoVazio.tsx` | Estado vazio padrão das telas, com título, descrição e ação opcional |
+| `chat/BolhaMensagem.tsx` | Uma mensagem da conversa, com avatar, horário, filete lateral e etiqueta de desfecho |
+| `chat/Composer.tsx` | Campo de envio, com Enter para enviar e Shift mais Enter para quebrar linha, e exibição da transcrição parcial durante a gravação |
+| `chat/BotaoMicrofone.tsx` | Acionamento da captura de voz, com estado visível e `aria-pressed` |
+| `chat/ConversaVazia.tsx` | Estado inicial de uma conversa nova, com quatro sugestões correspondentes a intenções reais do catálogo |
+| `chat/IndicadorDigitando.tsx` | Sinaliza que o agente compõe a resposta, com `role="status"` e texto equivalente para leitor de tela |
+| `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo e classes visuais |
+
+O arquivo `componentes/graficos/README.md` registra as três regras que valem
+para as visualizações do painel de intenções e a lista de componentes previstos
+para a onda 4: uso obrigatório de contêiner responsivo, séries de bloqueio nunca
+somadas em um total agregado, e exibição de intenções com contagem zero, que
+são achado e não ausência de dado.
+
+**Apresentação dos desfechos.** O backend informa o desfecho, não a cor nem o
+rótulo. A tradução acontece em um único arquivo para que a bolha, o histórico e
+a aba de rotinas usem a mesma linguagem visual para o mesmo evento.
+
+| Desfecho | Rótulo exibido | Cor semântica |
+| --- | --- | --- |
+| `encaminhada` | sem etiqueta | `ok` |
+| `bloqueada_injecao_regra` | Não atendida | `injecao` |
+| `bloqueada_injecao_modelo` | Não atendida | `injecao` |
+| `bloqueada_abuso` | Fora das regras de uso | `abuso` |
+| `recusada_fora_escopo` | Fora do escopo | `recusa` |
+| `recusada_baixa_confianca` | Precisa de mais detalhes | `recusa` |
+| `bloqueada_saida` | Resposta não entregue | `injecao` |
+| `falha_executor` | Indisponível | `falha` |
+
+Dois critérios governam essa tabela. O primeiro é que o rótulo é escrito para o
+usuário e por isso é deliberadamente vago nos bloqueios de segurança: a recusa
+não deve ensinar qual barreira interceptou a mensagem, e isso vale tanto para o
+texto da resposta quanto para a etiqueta ao lado. Os dois desfechos de injeção
+compartilham o rótulo "Não atendida" por essa razão. O segundo critério é o
+1.4.1 da WCAG, segundo o qual a cor nunca é o único portador de significado: o
+rótulo textual carrega a mesma informação e é ele que chega a quem usa leitor de
+tela ou não distingue as cores.
+
+As cores estão definidas em `tailwind.config.ts` e nomeadas pelo significado, e
+não pelo tom, de modo que uma mudança de paleta não exija alteração no código
+que as consome. Todas foram verificadas contra os dois fundos em que aparecem, o
+branco da página e o cinza da bolha do agente, com o mínimo de 4,5:1 exigido
+pelo nível AA da WCAG para texto pequeno.
+
+| Cor | Valor | Contraste sobre página | Contraste sobre bolha |
+| --- | --- | --- | --- |
+| `ok` | `#186B48` | 6,49 | 5,79 |
+| `injecao` | `#B4342A` | 6,06 | 5,41 |
+| `abuso` | `#8A5309` | 6,32 | 5,64 |
+| `recusa` | `#0B5EA8` | 6,60 | 5,89 |
+| `falha` | `#63488B` | 7,42 | 6,62 |
+
+### 9.2.6 Páginas e navegabilidade
+
+| Rota | Página | Proteção | Finalidade |
+| --- | --- | --- | --- |
+| `/entrar` | `Login` | pública | Entrada na aplicação, fora da moldura de navegação |
+| `/` | `Principal` | sessão | Conversa com o agente, iniciando um contexto novo |
+| `/conversas/:conversaId` | `Principal` | sessão | Conversa com o agente, retomando um contexto gravado |
+| `/historico` | `Historico` | sessão | Lista das conversas anteriores |
+| `/intencoes` | `Intencoes` | `ver_intencoes` | Painel de análise das intenções registradas |
+| `/rotinas` | `Rotinas` | `gerir_rotinas` | Cadastro e acompanhamento das rotinas agendadas |
+| qualquer outra | `NaoEncontrada` | sessão | Destino explícito para rota inexistente |
+
+A tela de entrada fica fora do `Layout` porque quem ainda não tem sessão não
+deve ver a navegação de uma aplicação a que não tem acesso. As demais entram
+como rotas filhas.
+
+**Limite da proteção de rota.** O componente `RotaProtegida` e a ocultação de
+itens no menu são conveniências de navegação, e não controle de acesso. Elas
+evitam que o usuário alcance uma tela que retornaria 403. Quem barra de fato é a
+verificação de permissão no backend, aplicada em cada rota da API, porque
+qualquer pessoa consegue digitar o endereço na barra do navegador ou chamar a
+API diretamente. Essa distinção está registrada em comentário no próprio código
+para sobreviver a refatorações futuras.
+
+**Remontagem ao trocar de contexto.** A página de conversa é envolvida por um
+componente que lhe atribui uma `key` derivada do identificador da conversa ou da
+chave de navegação. Sem isso, navegar de uma conversa para outra manteria a
+instância montada, porque a rota é a mesma e apenas o parâmetro muda, e a
+conversa anterior permaneceria na tela enquanto a nova carregasse por baixo. O
+uso da chave de navegação como alternativa é o que faz o botão de nova conversa
+efetivamente iniciar um contexto novo quando o usuário já está na página
+principal. Há teste automatizado cobrindo os dois comportamentos.
+
+### 9.2.7 Gerência de estado
+
+A regra que organiza o estado da interface é a separação entre o que pertence ao
+servidor e o que morre com a tela. Tudo que vem do servidor passa pelo TanStack
+Query; `useState` fica reservado ao que não precisa sobreviver a uma navegação.
+
+| Hook | Responsabilidade |
+| --- | --- |
+| `useUsuario` | Identidade e permissões da sessão atual, obtidas em `GET /auth/eu`. Como o cookie é `httpOnly`, perguntar ao servidor é a única forma de saber quem está autenticado |
+| `useConversa` | Turnos carregados, envio de mensagem, fila otimista e tratamento de erro de uma conversa |
+| `useMicrofone` | Ciclo de vida da captura de voz, incluindo obtenção e renovação do token e liberação do microfone ao desmontar |
+
+O `useConversa` concentra uma conversão que não deveria estar nos componentes.
+Um turno do backend carrega prompt e resposta juntos, porque representa uma
+linha de interação, enquanto a conversa na tela mostra duas bolhas. A tradução
+acontece no hook para que a página não precise conhecer o formato de
+persistência.
+
+A fila otimista existe para o intervalo entre o clique em enviar e a chegada da
+resposta. Sem ela, o texto que a pessoa acabou de escrever desapareceria do
+campo sem aparecer em lugar nenhum até o servidor responder.
+
+As chaves de cache estão centralizadas em `servicos/chaves.ts`. A centralização
+é o que torna a invalidação confiável: com as chaves espalhadas pelos
+componentes, um `["conversas"]` em um arquivo e um `["conversa"]` em outro
+produzem cache que nunca invalida, e o defeito aparece muito depois como "a tela
+não atualiza". A hierarquia das chaves é significativa, porque o TanStack Query
+as trata como prefixo, de modo que invalidar a lista de conversas invalida
+também cada conversa individual.
+
+A política de repetição foi ajustada para uma tentativa, e não as três padrão.
+Um 403 ou 422 não melhora com repetição, e o usuário esperaria três vezes mais
+para ver o mesmo erro.
+
+### 9.2.8 Integração com as APIs do middleware
+
+Toda comunicação passa por um único cliente HTTP tipado em `servicos/api.ts`,
+que concentra três decisões.
+
+**Origem compartilhada.** As chamadas usam o prefixo `/api`, servido pela mesma
+origem da interface. Em produção o Nginx serve os estáticos e faz proxy do
+prefixo para o middleware, conforme `nginx.conf`; em desenvolvimento o servidor
+do Vite cumpre o mesmo papel apontando para `http://localhost:8000`. A paridade
+é necessária, e não conveniência: o cookie de sessão é `SameSite=Strict` e não
+seria enviado em uma configuração de origem cruzada, de modo que a autenticação
+funcionaria apenas dentro do contêiner.
+
+**Envio do cookie de sessão.** Toda requisição usa `credentials: "include"`. A
+sessão vive em cookie `httpOnly`, que o JavaScript não consegue ler nem anexar
+manualmente; sem essa opção o navegador simplesmente não o envia e toda chamada
+retorna 401. Não existe no cliente nenhuma função que leia, guarde ou transmita
+token, e essa ausência é a propriedade que justifica o middleware como BFF. O
+aparecimento de um cabeçalho `Authorization` neste arquivo indicaria que o token
+voltou ao navegador e que a decisão de arquitetura foi desfeita.
+
+**Tratamento uniforme de erro.** Respostas fora da faixa de sucesso viram uma
+exceção tipada que carrega o código e o detalhe enviados pelo servidor, o que
+permite às telas exibirem a mensagem real em vez de um texto genérico. O caso
+401 é tratado uma única vez, no cliente, redirecionando ao fluxo de
+autenticação: distribuir esse tratamento pelas telas faria uma sessão expirada
+aparecer como erro genérico em quatro lugares diferentes. Quando a falha não
+traz detalhe do servidor, a interface apresenta uma orientação de recuperação e
+oferece reenvio da última mensagem, em vez de informar apenas que houve erro.
+
+**Endpoints consumidos.**
+
+| Método e rota | Consumidor | Finalidade |
+| --- | --- | --- |
+| `GET /auth/eu` | `useUsuario` | Identidade e permissões da sessão |
+| `POST /auth/logout` | `Layout` | Encerramento da sessão |
+| `POST /chat` | `useConversa` | Envio de mensagem e recebimento do desfecho |
+| `GET /conversas` | `Historico` | Lista de conversas |
+| `GET /conversas/:id` | `useConversa` | Turnos de uma conversa gravada |
+| `DELETE /conversas/:id` | `Historico` | Exclusão de conversa |
+| `GET /rotinas` | `Rotinas` | Lista de rotinas cadastradas |
+| `POST /rotinas/validar` | `Rotinas` | Validação de agenda antes do cadastro |
+| `POST /rotinas` | `Rotinas` | Criação de rotina |
+| `PUT /rotinas/:id` | `Rotinas` | Alteração de rotina |
+| `DELETE /rotinas/:id` | `Rotinas` | Exclusão de rotina |
+| `GET /rotinas/:id/execucoes` | `Rotinas` | Histórico de execuções |
+| `GET /intencoes/volume` | `Intencoes` | Volume de intenções por janela |
+| `GET /intencoes/desfechos` | `Intencoes` | Distribuição dos desfechos |
+| `GET /intencoes/seguranca/resumo` | `Intencoes` | Indicadores consolidados de bloqueio |
+| `GET /intencoes/seguranca/serie` | `Intencoes` | Série temporal dos bloqueios |
+| `GET /intencoes/catalogo/resumo` | `Intencoes` | Cobertura do catálogo de intenções |
+| `GET /intencoes/catalogo/fora-de-escopo` | `Intencoes` | Enunciados recusados por escopo |
+| `GET /intencoes/catalogo/baixa-confianca` | `Intencoes` | Enunciados de baixa confiança |
+| `GET /voz/token` | `useMicrofone` | Token efêmero de reconhecimento de fala |
+
+**Canal de voz.** A seção 5.7.1.3 define uma topologia híbrida com duas
+trajetórias. A interface web consome a trajetória de transmissão contínua: o
+middleware emite um token de curta duração e o áudio segue do navegador direto
+ao Azure, o que preserva a transcrição parcial em tempo real e mantém a chave do
+recurso fora do navegador. A renovação do token é antecipada, disparada a
+oitenta por cento da validade, porque renovar apenas na expiração interromperia
+a fala no meio da frase. A trajetória de ingestão, com envio do arquivo de áudio
+ao middleware, é o contrato canônico e está implementada no backend; sua adoção
+pela interface está prevista para as ondas seguintes.
+
+A opção pelo SDK do Azure em vez da Web Speech API do navegador, embora esta
+seja gratuita e mais simples, decorre do requisito de confidencialidade: a API
+do navegador envia o áudio a servidores de terceiros fora do tenant do parceiro,
+e o microfone seria o primeiro furo no argumento de confidencialidade da solução.
+O SDK é carregado sob demanda, no primeiro uso do microfone, porque pesa
+centenas de kilobytes e a maior parte das sessões nunca usa voz.
+
+### 9.2.9 Camada de dublês de API
+
+A interface é desenvolvida e testada contra uma camada de dublês construída com
+MSW, que intercepta as requisições na camada de rede do navegador. A escolha da
+ferramenta é relevante: por interceptar a rede, e não substituir o cliente HTTP,
+ela permite que a interface exercite exatamente o mesmo caminho de código que
+usará em produção. Nenhum componente, hook ou serviço contém ramo condicional
+para ambiente de desenvolvimento.
+
+Os dublês reproduzem vinte rotas fiéis ao contrato descrito em
+`documentos/api/openapi-voz.yaml` e nos tipos de `tipos/index.ts`, incluindo os
+oito desfechos possíveis do pipeline com os textos de resposta correspondentes.
+Isso permite verificar, sem backend, que a distinção entre bloqueio seco de
+injeção e recusa orientativa de abuso chega corretamente à tela.
+
+Três propriedades da camada foram estabelecidas deliberadamente:
+
+* Os dublês são inicializados antes da primeira renderização. Montar a aplicação
+  primeiro faria a consulta inicial de identidade sair antes de o worker assumir
+  a rede, receber 401 e redirecionar o usuário ao login;
+* Requisições sem dublê correspondente seguem para a rede em vez de falhar. Uma
+  rota do backend ainda não dublada deve mostrar o erro real, e não um erro da
+  ferramenta de teste;
+* A camada não alcança o artefato de produção. O módulo de inicialização é
+  removido pelo empacotador junto com a verificação de ambiente, e o worker
+  copiado de `public/` é excluído do diretório de construção por um plugin
+  dedicado, para que não fique publicado um arquivo que nada registra e que
+  apenas confundiria quem inspecionasse os estáticos.
+
+**Estado atual da integração.** A interface consome os contratos definidos e
+está pronta para operar contra o middleware. A ligação efetiva depende da
+resolução de sessão no backend, ainda não implementada, da qual todas as rotas
+autenticadas dependem. Enquanto essa peça não existe, os dublês sustentam o
+desenvolvimento e a verificação da interface sem alterar o código que irá a
+produção. A integração completa entre interface e backend, com testes de
+integração e tratamento de falhas de comunicação, é escopo do item 7 do Artefato
+7 e está prevista para a Sprint 5.
+
+### 9.2.10 Verificação automatizada
+
+A interface possui um encadeamento de verificação de quatro etapas, executáveis
+individualmente ou em sequência:
+
+| Comando | Verificação |
+| --- | --- |
+| `npm run lint` | Análise estática, incluindo regras de hooks do React |
+| `npm run typecheck` | Verificação de tipos do código da aplicação e dos arquivos de build |
+| `npm run test` | Execução das suítes automatizadas |
+| `npm run build` | Construção do pacote de produção, precedida da verificação de tipos |
+
+As suítes cobrem dezessete casos distribuídos em três arquivos:
+
+| Arquivo | Casos | Escopo |
+| --- | --- | --- |
+| `testes/desfechos.test.ts` | 4 | Cobertura dos oito desfechos, ausência de etiqueta no desfecho atendido, presença de filete nos demais e verificação de que o rótulo não nomeia a barreira acionada |
+| `testes/navegacao.test.tsx` | 4 | Substituição de conteúdo ao trocar de conversa, sugestões de partida em conversa nova, ausência de repetição de alerta em conversa gravada e destino explícito para rota inexistente |
+| `testes/paginas.test.tsx` | 9 | Envio e recebimento de mensagem, recusa fora de escopo tratada como resposta e não como erro, não revelação da barreira em tentativa de injeção, envio por Enter com quebra de linha por Shift mais Enter, indicação de entrada por voz ativa, e filtragem, criação e exclusão de rotinas |
+
+A escolha de consultar elementos por papel acessível, e não por classe ou
+identificador, faz com que a quebra de um atributo de acessibilidade derrube o
+teste correspondente. O caso que verifica a não revelação da barreira é o
+exemplo mais direto dessa estratégia: ele falha se algum rótulo passar a
+distinguir bloqueio por regra de bloqueio por modelo, o que reintroduziria na
+interface a informação que o pipeline deliberadamente omite.
 
 ## 9.3 Modelo de Recomendação
 
