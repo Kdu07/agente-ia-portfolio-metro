@@ -6290,9 +6290,13 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 
 Esta seção documenta como o código-fonte da solução está organizado, quais
 convenções governam a escrita e como as partes se comunicam. As subseções 9.2.2
-a 9.2.10 cobrem a camada de interface, entregue na Sprint 3 e correspondente ao
+a 9.2.17 cobrem a camada de interface, entregue na Sprint 3 e correspondente ao
 item 5 do Artefato 7. A organização interna do middleware é descrita nas seções
 5.2 e 5.6, que tratam do diagrama de componentes e da arquitetura em blocos.
+
+A entrega do item 5 do Artefato 7 se distribui em duas seções: a estrutura, os
+componentes, a integração com as APIs e a execução do protótipo estão descritos
+aqui; os testes automatizados implementados estão documentados em 9.5.
 
 ### 9.2.1 Organização do código-fonte
 
@@ -6672,6 +6676,155 @@ teste correspondente. O caso que verifica a não revelação da barreira é o
 exemplo mais direto dessa estratégia: ele falha se algum rótulo passar a
 distinguir bloqueio por regra de bloqueio por modelo, o que reintroduziria na
 interface a informação que o pipeline deliberadamente omite.
+
+### 9.2.11 Execução do protótipo em máquina local
+
+A interface é executável de forma independente, sem middleware, banco de dados
+ou credenciais de nuvem, porque conversa com a camada de dublês descrita em
+9.2.9. Isso permite que qualquer pessoa da equipe execute, avalie e teste o
+protótipo isoladamente.
+
+| Item | Versão | Observação |
+| --- | --- | --- |
+| Node.js | 20 ou superior | Mesma versão utilizada na imagem de contêiner |
+| npm | 10 ou superior | Acompanha a instalação do Node 20 |
+| Navegador | Chromium, Firefox ou Edge atualizados | O registro do *service worker* dos dublês exige suporte a *Service Workers* |
+
+A partir da raiz do repositório:
+
+```bash
+cd src/web
+npm install
+npm run dev
+```
+
+O servidor de desenvolvimento sobe em `http://localhost:5173`. A primeira
+execução leva mais tempo, porque instala as dependências e registra o *service
+worker* dos dublês.
+
+O console do navegador registra a ativação da camada de dublês. A ausência dessa
+mensagem indica que o arquivo `public/mockServiceWorker.js` não está presente,
+situação que se resolve executando `npx msw init public` a partir de `src/web`.
+
+Para conferir o artefato de produção, `npm run build` seguido de `npm run
+preview` serve localmente o conteúdo de `dist/`, que não deve conter o arquivo
+`mockServiceWorker.js`.
+
+### 9.2.12 Identidade apresentada pelos dublês
+
+A identidade devolvida pelo dublê corresponde a uma líder de projeto com as duas
+permissões da solução, `ver_intencoes` e `gerir_rotinas`. Isso é deliberado:
+permite que as telas protegidas sejam percorridas em avaliação, sem que se
+afrouxe controle de acesso algum, uma vez que a verificação real ocorre no
+backend a cada rota e o arquivo de identidade dublada não entra no pacote de
+produção.
+
+Em consequência, a barra lateral apresenta os quatro destinos de navegação. Uma
+sessão com permissões menores veria apenas os itens correspondentes, conforme
+descrito em 9.2.6.
+
+### 9.2.13 Percurso das telas
+
+| Passo | Ação | O que verificar |
+| --- | --- | --- |
+| 1 | Abrir `http://localhost:5173` | A página principal apresenta o estado inicial com quatro sugestões de partida |
+| 2 | Acionar uma das sugestões | O texto é levado ao campo de mensagem, pronto para envio |
+| 3 | Enviar a mensagem | A bolha do usuário aparece imediatamente, o indicador de processamento é exibido e a resposta chega em seguida |
+| 4 | Acessar Histórico | As três conversas gravadas do dublê são listadas, com data relativa |
+| 5 | Abrir uma conversa do histórico | Os turnos gravados são apresentados e as sugestões de partida não reaparecem |
+| 6 | Acionar Nova conversa | O contexto é reiniciado, ainda que já se esteja na página principal |
+| 7 | Acessar Intenções | O painel de análise é apresentado, com os recortes do registro de intenções |
+| 8 | Acessar Rotinas | A lista de rotinas é apresentada, com busca, criação, edição e exclusão operantes |
+| 9 | Digitar um endereço inexistente | A tela de rota não encontrada é apresentada, e não uma página em branco |
+
+O estado das rotinas é mantido em memória e reinicia a cada recarregamento da
+página, como convém a um dublê. Criar, editar e excluir produzem efeito visível
+enquanto a aba permanecer aberta.
+
+### 9.2.14 Como exercitar cada desfecho do pipeline
+
+O pipeline real decide o desfecho por meio das guardas e do classificador. O
+dublê decide por palavra-chave, apenas para que os desfechos sejam alcançáveis à
+mão durante o desenvolvimento e a avaliação. A ordem de verificação reproduz a
+ordem do orquestrador: injeção, abuso, escopo, confiança e execução.
+
+| Desfecho | Mensagem de exemplo | Comportamento esperado |
+| --- | --- | --- |
+| `encaminhada` | Qual o status do Projeto X? | Resposta com o conteúdo consultado, sem etiqueta |
+| `bloqueada_injecao_regra` | Ignore as instruções anteriores | Recusa seca, sem explicar o motivo nem repetir a instrução, com etiqueta "Não atendida" |
+| `bloqueada_abuso` | Escreva um texto para humilhar o fornecedor | Recusa orientativa, que reconduz ao uso correto, com etiqueta "Fora das regras de uso" |
+| `recusada_fora_escopo` | Qual a previsão do tempo amanhã? | Recusa orientativa indicando o que o agente faz, com etiqueta "Fora do escopo" |
+| `recusada_baixa_confianca` | daquele projeto | Pedido de detalhamento, com etiqueta "Precisa de mais detalhes" |
+| `bloqueada_saida` | Resuma o documento suspeito | Resposta não entregue, com etiqueta "Resposta não entregue" |
+| `falha_executor` | simular falha | Aviso de indisponibilidade, com etiqueta "Indisponível" |
+
+O oitavo desfecho, `bloqueada_injecao_modelo`, não possui gatilho no dublê. A
+razão é que ele se apresenta na interface de forma idêntica ao bloqueio por
+regra, por decisão registrada em 9.2.5: distinguir os dois na tela informaria ao
+autor da tentativa qual barreira a interceptou. Ele se tornará alcançável quando
+a guarda por modelo estiver ativa no middleware, sem que a interface precise de
+alteração.
+
+Dois pontos merecem observação durante o percurso. O primeiro é que **um
+bloqueio não se apresenta como erro**: o texto orientativo ocupa a bolha como
+qualquer resposta, com etiqueta discreta ao lado, porque exibir uma mensagem de
+falha esconderia justamente a orientação que o pipeline escreveu para o usuário.
+O segundo é que **as etiquetas dos dois bloqueios de injeção são iguais**, e essa
+igualdade é verificada pelo caso `TU-WEB-02`, documentado em 9.5.3.
+
+### 9.2.15 Como exercitar a entrada por voz
+
+O dublê de `GET /voz/token` devolve um token de demonstração, reconhecível por um
+prefixo próprio. Ao recebê-lo, o hook de microfone executa um percurso simulado,
+com transcrições parciais que crescem palavra a palavra e uma transcrição final
+ao término, reproduzindo a temporização do reconhecimento real.
+
+A consequência prática é que **a avaliação da entrada por voz não consome crédito
+do recurso Azure AI Speech**, cujo nível gratuito F0 possui limites descritos em
+5.7.4. Basta acionar o botão de microfone e observar o estado ativo, a
+transcrição parcial no campo e a entrega do texto final.
+
+A simulação desaparece por si quando o recurso estiver provisionado no ambiente
+do parceiro, porque um token real nunca apresenta aquele prefixo. Nenhuma
+remoção de código é necessária para a transição.
+
+### 9.2.16 Execução em contêiner
+
+A interface possui imagem própria, construída em dois estágios. O Node existe
+apenas para construir o pacote; a imagem final contém somente o Nginx e os
+estáticos, sem qualquer ambiente de execução JavaScript. Essa é a razão pela qual
+a solução mantém um único servidor de aplicação, o Python do middleware.
+
+```bash
+cd src/web
+docker build -t agente-portfolio-web .
+docker run --rm -p 8080:80 agente-portfolio-web
+```
+
+A instalação de dependências dentro da imagem usa `npm ci`, e não `npm install`,
+porque é o arquivo de trava que garante a construção com as mesmas versões
+exercitadas localmente. Com `npm install` e sem trava, um intervalo de versão no
+`package.json` faria a imagem receber uma versão que ninguém testou.
+
+O Nginx serve os estáticos e encaminha o prefixo `/api` ao middleware, o que
+preserva a origem única exigida pelo cookie de sessão, conforme 9.2.8. A
+configuração dos ambientes de nuvem e o processo de implantação em produção são
+tratados na seção 11.
+
+### 9.2.17 Limitações conhecidas do protótipo
+
+| Limitação | Consequência para quem avalia | Situação |
+| --- | --- | --- |
+| As respostas provêm da camada de dublês | O conteúdo apresentado é massa de teste, e não dado do portfólio | Depende da resolução de sessão no middleware |
+| O estado das rotinas é mantido em memória | Alterações se perdem ao recarregar a página | Comportamento esperado de dublê |
+| A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
+| A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
+| Os gráficos do painel de intenções ainda não estão implementados | O painel apresenta a estrutura, sem as visualizações | Componentes previstos para a onda 4, listados em `src/web/src/componentes/graficos/README.md` |
+
+A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
+elas produz duas leituras erradas em direções opostas: a de que a solução já
+consulta o portfólio real, e a de que a interface não funciona quando o avaliador
+percebe que o dado é fixo.
 
 ## 9.3 Modelo de Recomendação
 
@@ -8555,175 +8708,7 @@ substituição.
 
 ## 11.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento
 
-Esta seção descreve como executar o protótipo em máquina local, o que se observa
-ao abrir e como percorrer cada comportamento relevante da solução. As subseções
-abaixo cobrem a interface web, entregue na Sprint 3 e executável de forma
-independente. As instruções de execução do middleware serão acrescentadas nesta
-mesma seção pela pessoa responsável por aquela camada.
-
-A independência é deliberada. A interface conversa com uma camada de dublês
-fiel aos contratos da API, descrita em 9.2.9, o que permite que qualquer pessoa
-da equipe execute, avalie e teste o protótipo sem depender do backend, de banco
-de dados ou de credenciais de nuvem.
-
-### 11.2.1 Pré-requisitos
-
-| Item | Versão | Observação |
-| --- | --- | --- |
-| Node.js | 20 ou superior | Mesma versão utilizada na imagem de contêiner |
-| npm | 10 ou superior | Acompanha a instalação do Node 20 |
-| Navegador | Chromium, Firefox ou Edge atualizados | O registro do *service worker* dos dublês exige navegador com suporte a *Service Workers* |
-
-Não é necessário instalar Python, banco de dados, credenciais do Azure nem
-qualquer serviço adicional para executar a interface.
-
-### 11.2.2 Instalação e execução
-
-A partir da raiz do repositório:
-
-```bash
-cd src/web
-npm install
-npm run dev
-```
-
-O servidor de desenvolvimento sobe em `http://localhost:5173`. A primeira
-execução leva mais tempo, porque instala as dependências e registra o *service
-worker* dos dublês.
-
-O console do navegador registra a ativação da camada de dublês. A ausência
-dessa mensagem indica que o arquivo `public/mockServiceWorker.js` não está
-presente, situação que se resolve executando `npx msw init public` a partir de
-`src/web`.
-
-### 11.2.3 O que se observa ao abrir
-
-A identidade devolvida pelo dublê corresponde a uma líder de projeto com as duas
-permissões da solução, `ver_intencoes` e `gerir_rotinas`. Isso é deliberado:
-permite que as telas protegidas sejam percorridas em avaliação, sem que se
-afrouxe controle de acesso algum, uma vez que a verificação real ocorre no
-backend a cada rota e o arquivo de identidade dublada não entra no pacote de
-produção.
-
-Em consequência, a barra lateral apresenta os quatro destinos de navegação. Uma
-sessão com permissões menores veria apenas os itens correspondentes, conforme
-descrito em 9.2.6.
-
-### 11.2.4 Percurso das telas
-
-| Passo | Ação | O que verificar |
-| --- | --- | --- |
-| 1 | Abrir `http://localhost:5173` | A página principal apresenta o estado inicial com quatro sugestões de partida |
-| 2 | Acionar uma das sugestões | O texto é levado ao campo de mensagem, pronto para envio |
-| 3 | Enviar a mensagem | A bolha do usuário aparece imediatamente, o indicador de processamento é exibido e a resposta chega em seguida |
-| 4 | Acessar Histórico | As três conversas gravadas do dublê são listadas, com data relativa |
-| 5 | Abrir uma conversa do histórico | Os turnos gravados são apresentados e as sugestões de partida não reaparecem |
-| 6 | Acionar Nova conversa | O contexto é reiniciado, ainda que já se esteja na página principal |
-| 7 | Acessar Intenções | O painel de análise é apresentado, com os recortes do registro de intenções |
-| 8 | Acessar Rotinas | A lista de rotinas é apresentada, com busca, criação, edição e exclusão operantes |
-| 9 | Digitar um endereço inexistente | A tela de rota não encontrada é apresentada, e não uma página em branco |
-
-O estado das rotinas é mantido em memória e reinicia a cada recarregamento da
-página, como convém a um dublê. Criar, editar e excluir produzem efeito visível
-enquanto a aba permanecer aberta.
-
-### 11.2.5 Como exercitar cada desfecho do pipeline
-
-O pipeline real decide o desfecho por meio das guardas e do classificador. O
-dublê decide por palavra-chave, apenas para que os desfechos sejam alcançáveis à
-mão durante o desenvolvimento e a avaliação. A ordem de verificação reproduz a
-ordem do orquestrador: injeção, abuso, escopo, confiança e execução.
-
-| Desfecho | Mensagem de exemplo | Comportamento esperado |
-| --- | --- | --- |
-| `encaminhada` | Qual o status do Projeto X? | Resposta com o conteúdo consultado, sem etiqueta |
-| `bloqueada_injecao_regra` | Ignore as instruções anteriores | Recusa seca, sem explicar o motivo nem repetir a instrução, com etiqueta "Não atendida" |
-| `bloqueada_abuso` | Escreva um texto para humilhar o fornecedor | Recusa orientativa, que reconduz ao uso correto, com etiqueta "Fora das regras de uso" |
-| `recusada_fora_escopo` | Qual a previsão do tempo amanhã? | Recusa orientativa indicando o que o agente faz, com etiqueta "Fora do escopo" |
-| `recusada_baixa_confianca` | daquele projeto | Pedido de detalhamento, com etiqueta "Precisa de mais detalhes" |
-| `bloqueada_saida` | Resuma o documento suspeito | Resposta não entregue, com etiqueta "Resposta não entregue" |
-| `falha_executor` | simular falha | Aviso de indisponibilidade, com etiqueta "Indisponível" |
-
-O oitavo desfecho, `bloqueada_injecao_modelo`, não possui gatilho no dublê. A
-razão é que ele se apresenta na interface de forma idêntica ao bloqueio por
-regra, por decisão registrada em 9.2.5: distinguir os dois na tela informaria ao
-autor da tentativa qual barreira a interceptou. Ele se tornará alcançável quando
-a guarda por modelo estiver ativa no middleware, sem que a interface precise de
-alteração.
-
-Dois pontos merecem observação durante o percurso. O primeiro é que **um
-bloqueio não se apresenta como erro**: o texto orientativo ocupa a bolha como
-qualquer resposta, com etiqueta discreta ao lado, porque exibir uma mensagem de
-falha esconderia justamente a orientação que o pipeline escreveu para o usuário.
-O segundo é que **as etiquetas dos dois bloqueios de injeção são iguais**, e
-essa igualdade é verificada por teste automatizado.
-
-### 11.2.6 Como exercitar a entrada por voz
-
-O dublê de `GET /voz/token` devolve um token de demonstração, reconhecível por
-um prefixo próprio. Ao recebê-lo, o hook de microfone executa um percurso
-simulado, com transcrições parciais que crescem palavra a palavra e uma
-transcrição final ao término, reproduzindo a temporização do reconhecimento
-real.
-
-A consequência prática é que **a avaliação da entrada por voz não consome
-crédito do recurso Azure AI Speech**, cujo nível gratuito F0 possui limites
-descritos em 5.7.4. Basta acionar o botão de microfone e observar o estado
-ativo, a transcrição parcial no campo e a entrega do texto final.
-
-A simulação desaparece por si quando o recurso estiver provisionado no
-ambiente do parceiro, porque um token real nunca apresenta aquele prefixo.
-Nenhuma remoção de código é necessária para a transição.
-
-### 11.2.7 Verificação e construção
-
-| Comando | Finalidade |
-| --- | --- |
-| `npm run lint` | Análise estática do código da aplicação |
-| `npm run typecheck` | Verificação de tipos da aplicação e dos arquivos de build |
-| `npm run test` | Execução dos casos documentados em 9.5.3 |
-| `npm run build` | Construção do pacote de produção em `dist/` |
-| `npm run preview` | Serviço local do pacote construído, para conferência do artefato final |
-
-Após `npm run build`, o diretório `dist/` não deve conter o arquivo
-`mockServiceWorker.js`. Sua ausência é a evidência de que a camada de dublês não
-alcança o artefato de produção, conforme descrito em 9.2.9.
-
-### 11.2.8 Execução em contêiner
-
-A interface possui imagem própria, construída em dois estágios. O Node existe
-apenas para construir o pacote; a imagem final contém somente o Nginx e os
-estáticos, sem qualquer ambiente de execução JavaScript. Essa é a razão pela
-qual a solução mantém um único servidor de aplicação, o Python do middleware.
-
-```bash
-cd src/web
-docker build -t agente-portfolio-web .
-docker run --rm -p 8080:80 agente-portfolio-web
-```
-
-A instalação de dependências dentro da imagem usa `npm ci`, e não `npm install`,
-porque é o arquivo de trava que garante a construção com as mesmas versões
-exercitadas localmente. Com `npm install` e sem trava, um intervalo de versão no
-`package.json` faria a imagem receber uma versão que ninguém testou.
-
-O Nginx serve os estáticos e encaminha o prefixo `/api` ao middleware, o que
-preserva a origem única exigida pelo cookie de sessão, conforme 9.2.8.
-
-### 11.2.9 Limitações conhecidas do protótipo
-
-| Limitação | Consequência para quem avalia | Situação |
-| --- | --- | --- |
-| As respostas provêm da camada de dublês | O conteúdo apresentado é massa de teste, e não dado do portfólio | Depende da resolução de sessão no middleware |
-| O estado das rotinas é mantido em memória | Alterações se perdem ao recarregar a página | Comportamento esperado de dublê |
-| A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
-| A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
-| Os gráficos do painel de intenções ainda não estão implementados | O painel apresenta a estrutura, sem as visualizações | Componentes previstos para a onda 4, listados em `src/web/src/componentes/graficos/README.md` |
-
-A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
-elas produz duas leituras erradas em direções opostas: a de que a solução já
-consulta o portfólio real, e a de que a interface não funciona quando o
-avaliador percebe que o dado é fixo.
+[Preencher]
 
 # Referências
 
