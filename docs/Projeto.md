@@ -1805,20 +1805,22 @@ Essa posição determina o que o banco de dados guarda, e o que ele **não** gua
 
 A distinção é a decisão estruturante desta seção. Um modelo que tentasse espelhar o portfólio criaria uma segunda fonte de verdade, com todos os problemas de sincronização que a arquitetura evita justamente ao delegar a execução (ver [Arquitetura.md](Arquitetura.md), seção 1).
 
-> **Escopo desta modelagem.** O modelo descrito neste capítulo é o entregue na Sprint 2: três entidades, suficientes para sustentar a identidade do usuário, o registro das solicitações classificadas e o cadastro das rotinas agendadas. A construção da persistência real acontece na Onda 1 da Sprint 3 (9.1.2.1), e o esqueleto de código já existente em `src/middleware/app/persistence/` antecipa desdobramentos que este modelo ainda não representa — separação da conversa em entidade própria, histórico de execuções de rotina e vocabulário fechado de desfechos. Esses desdobramentos são evolução prevista, não divergência: cada um deles nasce de um requisito já registrado (RF11, RF12) e será incorporado ao modelo quando a onda correspondente for construída, por migração versionada.
+> **Escopo desta modelagem.** Este capítulo descreve o esquema **em operação**, criado na Sprint 3 e versionado em `src/middleware/migrations/versions/`. Ele sucede a modelagem de três entidades entregue na Sprint 2, que antecipava por escrito os desdobramentos ainda ausentes — separação da conversa em entidade própria, histórico de execuções de rotina e vocabulário fechado de desfechos. Os três foram construídos, cada um a partir de um requisito já registrado (RF11, RF12), e chegaram por migração versionada. Onde uma decisão da Sprint 2 foi revista, a revisão está registrada com o motivo em 4.4.2, e não substituída em silêncio: um modelo que apaga o próprio histórico impede saber por que ele é como é.
 
 ### 4.1.1 Atores e entidades do negócio
 
-- **Usuário** — colaborador autenticado no Entra ID, caracterizado por um perfil corporativo (`DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`) e pela permissão de visualizar o painel de intenções. Perfil e permissão derivam de *claims* de grupo do Entra ID; o registro local é uma projeção, e não a fonte de verdade.
-- **Intenção** — uma solicitação processada e sua classificação. É a entidade central: existe uma linha para cada mensagem que atravessa o pipeline, com o texto submetido e a intenção que o classificador resolveu.
-- **Rotina** — solicitação em linguagem natural cadastrada para execução automática sob a identidade do seu dono.
+- **Usuário** — colaborador autenticado no Entra ID, caracterizado por um perfil corporativo (`diretoria`, `lider_projeto`, `membro_equipe`). O perfil e as permissões derivam de *claims* de grupo; o registro local é uma projeção para exibição e análise, e não a fonte de verdade da autorização.
+- **Conversa** — uma sessão de diálogo entre o usuário e o agente. Agrupa os turnos em ordem, guarda o título derivado do primeiro turno e o vínculo com a sessão do executor, e pode ser arquivada sem que os turnos sejam apagados.
+- **Interação** — uma mensagem processada e seu desfecho. É a entidade central: existe uma linha para cada mensagem que atravessa o pipeline, inclusive as barradas, com o texto submetido, a resposta entregue, a intenção resolvida, o canal de entrada e quanto tempo o processamento levou.
+- **Rotina** — solicitação em linguagem natural cadastrada para execução automática sob a identidade do seu dono, com expressão de recorrência e fuso horário próprios.
+- **Execução de rotina** — um disparo e seu resultado, com início e fim registrados separadamente, ligado à interação que produziu.
 
 ### 4.1.2 Fluxos principais de dados
 
-1. **Identificação e autorização.** O usuário autentica-se pelo Entra ID. O middleware projeta o identificador federado, o perfil e a permissão de visualização no registro local e resolve o escopo antes de qualquer processamento.
-2. **Ciclo de mensagem e registro.** Toda entrada por chat, voz ou rotina atravessa o orquestrador em ordem fixa e produz **uma** linha de `intencao`, vinculada ao usuário, com o prompt submetido e a classificação resolvida.
-3. **Agendamento.** Rotinas cadastradas são persistidas com o prompt que executam e o usuário sob cuja identidade executam; cada disparo entra pelo mesmo orquestrador e produz seu próprio registro em `intencao`.
-4. **Análise.** As agregações do painel leem a tabela de intenções; nenhuma consulta analítica escreve.
+1. **Identificação e autorização.** O usuário autentica-se pelo Entra ID. O middleware projeta o identificador federado, o nome e o perfil no registro local — por gravação idempotente, a cada requisição — e resolve as permissões a partir dos *claims* antes de qualquer processamento. As permissões não são persistidas: lê-las do banco arriscaria conceder um acesso que o Entra já revogou.
+2. **Ciclo de mensagem e registro.** Toda entrada por chat, voz ou rotina atravessa o orquestrador em ordem fixa e produz **uma** linha de `interacao`, vinculada ao usuário e a uma `conversa`, com o prompt submetido, a resposta entregue, o desfecho e a latência. O registro acontece em todos os desfechos, inclusive nos bloqueios — e o mesmo turno que grava a interação atualiza o momento da conversa, que é o que ordena a lista de histórico.
+3. **Agendamento.** Rotinas cadastradas são persistidas com o prompt, a recorrência, o fuso e o dono sob cuja identidade executam. Cada disparo grava uma linha de `execucao_rotina` **antes** de rodar, entra pelo mesmo orquestrador, produz seu próprio registro em `interacao` e fecha a execução com o resultado. É essa ordem que torna visível um disparo que travou.
+4. **Análise.** As agregações do painel leem a tabela de interações; nenhuma consulta analítica escreve.
 
 ## 4.2 Modelo Conceitual de Dados
 
@@ -1827,21 +1829,28 @@ O modelo conceitual define as entidades do middleware, seus papéis e as associa
 ![Modelagem conceitual do domínio do middleware](/docs/imagens/Modelagem%20Conceitual.png)
 *Figura 17 — Modelagem Conceitual.*
 
+> A imagem é gerada a partir de [`docs/diagramas/modelagem-conceitual.mmd`](diagramas/modelagem-conceitual.mmd). As três modelagens deste capítulo têm fonte versionada em texto; o [README do diretório](diagramas/README.md) traz o comando de regeração. Antes desta revisão as figuras existiam apenas como PNG, e corrigir um relacionamento significava redesenhar o diagrama inteiro.
+
 ### 4.2.1 Entidades do domínio
 
 | Entidade | Papel |
 |---|---|
-| `USUARIO` | Identidade institucional projetada do Entra ID, com perfil e permissão de visualização do painel. |
-| `INTENCAO` | Registro de uma solicitação processada: autor, conversa de origem, prompt submetido, classificação resolvida e momento. |
-| `ROTINA` | Solicitação agendada, com o prompt que executa e o usuário que a criou. |
+| `USUARIO` | Identidade institucional projetada do Entra ID, com nome, perfil observado e momento do último acesso. |
+| `CONVERSA` | Sessão de diálogo: agrupa turnos em ordem, guarda título, vínculo com o executor e arquivamento. |
+| `INTERACAO` | Registro de uma mensagem processada: autor, conversa, canal, prompt, resposta, intenção resolvida, desfecho e latência. |
+| `ROTINA` | Solicitação agendada, com prompt, recorrência, fuso horário e o usuário sob cuja identidade executa. |
+| `EXECUCAO_ROTINA` | Um disparo e seu resultado, ligado à interação que produziu. |
 
 ### 4.2.2 Regras de negócio e cardinalidades
 
-- **`USUARIO` *registra* `INTENCAO` (1:N).** Um usuário registra zero ou mais solicitações; cada solicitação pertence a exatamente um usuário e é acessível apenas a ele, salvo quando o leitor tem a permissão de visualização agregada.
+- **`USUARIO` *mantém* `CONVERSA` (1:N).** Cada conversa pertence a exatamente um usuário e é acessível apenas a ele. A verificação de propriedade acontece na consulta, no servidor: um identificador adivinhado não devolve a conversa de outra pessoa.
+- **`CONVERSA` *agrupa* `INTERACAO` (1:N).** Um turno pertence a uma única conversa. É esse vínculo que permite reconstruir um diálogo em ordem cronológica (RF12). Na modelagem da Sprint 2 a conversa era apenas um identificador solto na tabela de solicitações; promovê-la a entidade foi o que deu lugar ao título, ao arquivamento e à correspondência com a sessão do Direct Line.
+- **`USUARIO` *registra* `INTERACAO` (1:N).** O autor é gravado na própria interação, e não apenas inferido pela conversa. A redundância é deliberada: os recortes do painel agregam por usuário e por perfil sem precisar percorrer as conversas, e o perfil gravado é o **do momento da interação**, que não pode mudar quando o usuário troca de papel.
 - **`USUARIO` *cadastra* `ROTINA` (1:N).** Cada rotina tem um dono exclusivo e executa sob a identidade e as permissões dele, resolvidas no disparo e não no cadastro. Se o dono perder acesso a um projeto, a rotina perde junto no disparo seguinte.
-- **Agrupamento por conversa.** `INTENCAO` guarda o identificador da conversa a que pertence, o que permite reconstruir um diálogo em ordem sem que a conversa seja entidade própria nesta etapa. O custo dessa escolha é que atributos da conversa — título, arquivamento, correspondência com a sessão do Direct Line — não têm onde ser guardados, e é por isso que a separação está prevista para a onda que constrói o histórico (RF12).
-- **Classificação opcional.** `classificacao_intencao` admite nulo, porque nem toda solicitação chega a ser classificada: os bloqueios por injeção e por abuso ocorrem **antes** da classificação, e uma solicitação barrada ali é registrada sem intenção resolvida.
-- **Controle de visualização.** A permissão `pode_ver_intencoes` libera a leitura agregada de todas as solicitações, para o painel; sem ela, o usuário enxerga apenas as próprias. A verificação é feita no servidor, independentemente do que a interface exiba.
+- **`ROTINA` *gera* `EXECUCAO_ROTINA` (1:N).** Cada disparo é uma linha própria. Apagar uma rotina que já disparou é recusado: a operação correta é desativá-la, o que a tira da agenda sem apagar o que ela já fez.
+- **`EXECUCAO_ROTINA` *produz* `INTERACAO` (1:0..1).** A execução aponta para a interação que gerou, e a interação aponta de volta para a rotina de origem. Os dois sentidos existem porque servem a telas diferentes — a aba de resultados navega da execução para a mensagem; o painel filtra as mensagens que nasceram de rotinas. O vínculo é opcional porque a interação ainda não existe quando o disparo começa: a execução é registrada **antes** de o pipeline rodar, para que uma rotina travada apareça em vez de sumir.
+- **Classificação opcional.** `interacao.intencao_id` admite nulo, porque nem toda mensagem chega a ser classificada: os bloqueios por injeção e por abuso ocorrem **antes** da classificação, e uma mensagem barrada ali é registrada sem intenção resolvida. O campo não referencia tabela alguma — o catálogo de intenções é artefato de código, revisado a cada sprint (5.4.9).
+- **Controle de visualização.** A permissão de leitura agregada do painel libera a consulta de todas as interações; sem ela, o usuário enxerga apenas as próprias. A verificação é feita no servidor, independentemente do que a interface exiba, e a permissão vem dos *claims* do Entra a cada requisição — não há coluna de permissão no banco.
 
 ## 4.3 Modelo Lógico de Dados
 
@@ -1850,63 +1859,118 @@ O modelo lógico traduz o domínio em estrutura relacional, com chaves, tipos, r
 ![Modelagem lógica do middleware](/docs/imagens/Modelagem%20Lógica.png)
 *Figura 18 — Modelagem Lógica.*
 
-**Decisão sobre identificadores.** As chaves primárias são inteiros sequenciais (`serial`). A escolha privilegia a simplicidade de leitura e depuração durante a construção do MVP: um identificador legível aparece em log, em consulta manual e em mensagem de erro sem exigir cópia integral de um UUID. A contrapartida é conhecida e está registrada em 4.4.2.
+> Fonte: [`docs/diagramas/modelagem-logica.mmd`](diagramas/modelagem-logica.mmd).
 
-**Decisão sobre vocabulários.** `perfil` e `classificacao_intencao` são colunas de texto com domínio controlado pela aplicação, e não tipos enumerados do banco. É a escolha adequada enquanto o catálogo de intenções ainda evolui a cada sprint (5.4.9): promover o vocabulário a tipo do banco exigiria migração a cada intenção acrescentada, e o catálogo é explicitamente um artefato vivo.
+**Decisão sobre identificadores.** As chaves primárias são UUID armazenados em colunas `text`. A modelagem da Sprint 2 previa inteiros sequenciais (`serial`) pela legibilidade em log e em consulta manual, com a contrapartida registrada: identificador sequencial revela volume de uso e permite enumeração de registros alheios. A troca estava prevista para "a onda que expõe o histórico na interface", e é esta. O tipo é `text`, e não `uuid` nativo, porque o valor circula como cadeia de caracteres em todo o código, nos *schemas* Pydantic e no contrato da API — converter na borda do banco acrescentaria uma tradução sem ganho. A revisão está detalhada em 4.4.2.
+
+**Decisão sobre vocabulários.** `perfil`, `canal`, `desfecho` e `status` são colunas de texto com domínio controlado por restrição `CHECK`, e não tipos enumerados do banco. É a escolha adequada enquanto os vocabulários ainda evoluem a cada sprint (5.4.9): `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria cada valor novo uma migração desconfortável, enquanto um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum. As listas de valores são **geradas a partir dos enums do código**, e não digitadas no DDL — ver 4.4.2. O identificador de intenção é a exceção deliberada: não tem `CHECK` nem chave estrangeira, porque o catálogo é explicitamente um artefato vivo, revisado a cada sprint.
 
 ### 4.3.1 Esquema relacional e dicionário de dados
 
 #### 4.3.1.1 Tabela: `usuario`
 
-Projeção local da identidade federada. Não é a fonte de verdade da autorização: perfil e permissão são resolvidos a cada requisição a partir dos *claims* de grupo do Entra ID, e as colunas abaixo registram o último valor observado, para exibição e para consultas analíticas.
+Projeção local da identidade federada. Não é a fonte de verdade da autorização: perfil e permissões são resolvidos a cada requisição a partir dos *claims* de grupo do Entra ID, e as colunas abaixo registram o último valor observado, para exibição, para as consultas analíticas e para que as demais tabelas tenham a que apontar.
 
 | Coluna | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
-| `id_usuario` | `serial` | `PK` | Identificador interno do usuário. |
-| `entra_id` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Identificador do objeto no Microsoft Entra ID. |
-| `email` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Endereço corporativo. |
-| `perfil` | `VARCHAR(50)` | `NOT NULL` | Último perfil observado nos *claims*: `DIRETORIA`, `LIDER_PROJETO` ou `MEMBRO_EQUIPE`. |
-| `pode_ver_intencoes` | `BOOLEAN` | `NOT NULL`, `DEFAULT FALSE` | Libera a leitura agregada do painel de intenções. |
+| `id` | `text` | `PK` | Identificador do objeto no provedor de identidade (o `oid` do Entra), projetado. |
+| `nome` | `text` | `NOT NULL` | Nome de exibição observado nos *claims*. |
+| `email` | `text` | `UNIQUE`, `NULL` | Endereço corporativo. Nulo porque nem todo provedor o devolve. |
+| `perfil` | `text` | `NOT NULL`, `CHECK` | Último perfil observado: `diretoria`, `lider_projeto` ou `membro_equipe`. |
 | `criado_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Primeiro acesso registrado. |
+| `visto_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Acesso mais recente. Distingue quem existe de quem usa. |
 
-#### 4.3.1.2 Tabela: `intencao`
+**A chave primária é o identificador do provedor, e não uma chave interna.** É o mesmo valor que a identidade autenticada carrega pela requisição inteira; traduzi-lo para uma chave própria custaria uma consulta a cada escrita e guardaria o mesmo dado em duas colunas.
 
-Entidade central. Uma linha é gravada para cada solicitação que atravessa o pipeline, inclusive as barradas — as tentativas de ataque são o dado mais valioso do recorte de segurança do painel.
+**A linha nasce por projeção, não por cadastro.** Enquanto o registro de aplicação no Entra ID seguir pendente, não existe fluxo de login que insira o usuário. A gravação acontece por `INSERT ... ON CONFLICT DO UPDATE` idempotente na resolução da sessão, a cada requisição autenticada — é o que mantém as chaves estrangeiras íntegras sem depender de um provisionamento que não é controlado pela equipe. Quando o *callback* de autenticação existir, o mesmo comando migra para lá.
 
-| Coluna | Tipo | Restrições | Descrição |
-| :--- | :--- | :--- | :--- |
-| `id_intencao` | `serial` | `PK` | Identificador da solicitação registrada. |
-| `id_usuario` | `INTEGER` | `FK (usuario.id_usuario)`, `NOT NULL` | Autor da mensagem. |
-| `id_conversa` | `INTEGER` | `NOT NULL` | Agrupa as solicitações de um mesmo diálogo, em ordem cronológica. |
-| `prompt` | `TEXT` | `NOT NULL` | Texto submetido, como recebido. |
-| `classificacao_intencao` | `VARCHAR(100)` | `NULL` | Código da intenção resolvida, em *snake_case* (ex.: `consultar_cronograma`); nulo quando o bloqueio antecedeu a classificação. |
-| `criado_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Momento do processamento. |
+**A permissão saiu desta tabela.** A modelagem da Sprint 2 tinha `pode_ver_intencoes` como coluna booleana, com o ponto de virada já registrado: uma segunda capacidade administrativa exigiria uma tabela associativa. A gestão de rotinas (RF11) é essa segunda capacidade, e a virada aconteceu antes da coluna existir — as permissões são resolvidas dos *claims* de grupo a cada requisição e não são persistidas. Projetar autorização localmente criaria uma segunda fonte de verdade que poderia divergir do Entra e conceder acesso indevido.
 
-O `id_conversa` parece pequeno e não é: é ele que permite reconstruir um diálogo a partir de linhas independentes e é a única costura entre turnos do mesmo contexto neste modelo. Sem ele, o histórico de conversas exigido pelo RF12 seria uma lista plana de mensagens sem agrupamento.
+#### 4.3.1.2 Tabela: `conversa`
 
-#### 4.3.1.3 Tabela: `rotina`
+Sessão de diálogo, promovida a entidade própria. Na modelagem da Sprint 2 a conversa era apenas uma coluna `id_conversa` na tabela de solicitações, e a limitação estava registrada: título, arquivamento e correspondência com a sessão do Direct Line não tinham onde ser guardados. Esta é a onda que constrói o histórico (RF12), e a separação aconteceu.
 
 | Coluna | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
-| `id_rotina` | `serial` | `PK` | Identificador da rotina. |
-| `id_usuario` | `INTEGER` | `FK (usuario.id_usuario)`, `NOT NULL` | Usuário sob cuja identidade a rotina executa. |
-| `prompt` | `TEXT` | `NOT NULL` | Solicitação que será executada. |
-| `criado_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Cadastro. |
+| `id` | `text` | `PK` | Identificador da conversa, gerado pelo middleware. É o único que aparece no contrato da API. |
+| `usuario_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Dono da conversa. |
+| `conversa_externa_id` | `text` | `NULL` | `conversationId` do Direct Line. Só existe após o primeiro turno efetivamente encaminhado — turnos bloqueados não criam conversa no executor. |
+| `titulo` | `text` | `NULL` | Derivado do primeiro turno. Sem ele, a lista de histórico exibiria uma coluna de identificadores. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Abertura da conversa. |
+| `atualizada_em` | `TIMESTAMPTZ` | `NOT NULL` | Último turno registrado. Ordena a lista de histórico. |
+| `arquivada_em` | `TIMESTAMPTZ` | `NULL` | Preenchido no arquivamento. Nulo significa ativa. |
 
-A rotina guarda o prompt e o dono, que é o mínimo para que ela exista e execute sob a identidade certa. A expressão de recorrência e o fuso horário — indispensáveis para que "todo dia 5 às 8h" signifique 8h em `America/Sao_Paulo`, e não em UTC — são mantidos pelo agendador em seu próprio *jobstore*, e entram no modelo relacional na onda que constrói as rotinas (RF11).
+#### 4.3.1.3 Tabela: `interacao`
+
+Entidade central. Uma linha é gravada para cada mensagem que atravessa o pipeline, inclusive as barradas — as tentativas de ataque são o dado mais valioso do recorte de segurança do painel.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador da interação registrada. |
+| `conversa_id` | `text` | `FK (conversa.id)`, `NOT NULL` | Conversa a que o turno pertence. |
+| `usuario_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Autor da mensagem. |
+| `perfil` | `text` | `NOT NULL`, `CHECK` | Perfil do autor **no momento da interação**. |
+| `canal` | `text` | `NOT NULL`, `CHECK` | Por onde a mensagem entrou: `chat`, `voz` ou `rotina`. |
+| `prompt` | `text` | `NOT NULL` | Texto submetido, como recebido. |
+| `resposta` | `text` | `NOT NULL` | Texto entregue ao usuário — a resposta do executor ou a recusa. |
+| `intencao_id` | `text` | `NULL` | Código da intenção resolvida, em *snake_case*; nulo quando o bloqueio antecedeu a classificação. Sem chave estrangeira: o catálogo é artefato de código. |
+| `confianca_intencao` | `DOUBLE PRECISION` | `NOT NULL` | Confiança do classificador. Alimenta o recorte de baixa confiança. |
+| `desfecho` | `text` | `NOT NULL`, `CHECK` | Como o pipeline decidiu tratar a mensagem — oito valores, ver 4.4.1. |
+| `latencia_ms` | `INTEGER` | `NOT NULL` | Tempo total do pipeline. É o custo do pedágio, medido. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Momento do processamento. |
+| `rotina_id` | `text` | `FK (rotina.id)`, `NULL` | Preenchido quando `canal` é `rotina`. |
+
+**O `perfil` é redundante com `usuario.perfil`, e a redundância é deliberada.** Aqui fica o perfil no momento da interação, que é dado de auditoria e não pode mudar quando o usuário troca de papel; lá fica o último valor observado. As duas colunas respondem a perguntas diferentes, e unificá-las reescreveria o passado a cada promoção.
+
+**O `canal` parece pequeno e não é.** É ele que permite ao painel separar uso digitado de ditado de agendado, e é ele que torna cada disparo de rotina rastreável até a mensagem que gerou. Sem ele, uma execução de rotina fica indistinguível de alguém digitando.
+
+#### 4.3.1.4 Tabela: `rotina`
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador da rotina. |
+| `nome` | `text` | `NOT NULL` | Rótulo exibido na tela de gestão. |
+| `prompt` | `text` | `NOT NULL` | Solicitação que será executada. |
+| `agenda_cron` | `text` | `NOT NULL` | Expressão de recorrência (ex.: `0 8 5 * *`). |
+| `timezone` | `text` | `NOT NULL` | Fuso em que a expressão é interpretada (ex.: `America/Sao_Paulo`). |
+| `dono_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Usuário sob cuja identidade a rotina executa. |
+| `ativa` | `BOOLEAN` | `NOT NULL`, `DEFAULT TRUE` | Desativar tira da agenda sem apagar o histórico. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Cadastro. |
+| `atualizada_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração. |
+| `intencao_prevista` | `text` | `NULL` | Intenção resolvida na validação do cadastro. Permite mostrar ao usuário o que a rotina fará e detectar quando o catálogo mudou sob os pés dela. |
+
+**A recorrência e o fuso passaram a ser colunas.** A modelagem da Sprint 2 os deixava no *jobstore* do agendador, e isso os tornava invisíveis à tela de gestão: mostrar "todo dia 5 às 8h" exigiria consultar a estrutura interna do APScheduler. O `timezone` é campo da rotina, e não constante do sistema, porque "8h" significa 8h no fuso de quem cadastrou — um cron interpretado em UTC dispara na hora errada.
+
+#### 4.3.1.5 Tabela: `execucao_rotina`
+
+Um disparo e seu resultado. Não existia na modelagem da Sprint 2.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador do disparo. |
+| `rotina_id` | `text` | `FK (rotina.id)`, `NOT NULL` | Rotina disparada. |
+| `iniciada_em` | `TIMESTAMPTZ` | `NOT NULL` | Início, gravado **antes** de o pipeline rodar. |
+| `concluida_em` | `TIMESTAMPTZ` | `NULL` | Fim. Nulo enquanto o disparo não termina. |
+| `status` | `text` | `NOT NULL`, `CHECK` | `sucesso`, `bloqueada` (o pipeline barrou o prompt) ou `falha` (erro de execução). |
+| `interacao_id` | `text` | `FK (interacao.id)`, `NULL` | Interação que o disparo produziu. Nula até o fim, porque ela ainda não existe quando ele começa. |
+| `erro` | `text` | `NULL` | Mensagem do erro, quando houver. |
+
+**Início e fim são gravados separadamente, e é isso que torna visível uma rotina travada.** Se a linha só pudesse ser escrita completa, um disparo que nunca termina não apareceria em lugar nenhum — nem para quem a cadastrou, nem para quem opera.
 
 ### 4.3.2 Integridade referencial e restrições
 
-- **Unicidade de identidade.** `usuario.entra_id` e `usuario.email` são únicos, impedindo duplicação do mesmo colaborador.
-- **`intencao` → `usuario` (`ON DELETE RESTRICT`).** O registro de auditoria não pode ser removido por efeito colateral da exclusão de um usuário. Preservar a trilha prevalece sobre a conveniência da limpeza.
-- **`rotina` → `usuario` (`ON DELETE RESTRICT`).** Apagar um usuário apagaria silenciosamente rotinas agendadas cujos disparos já estão registrados na trilha. Desativar é a operação correta.
-- **`intencao.prompt` e `rotina.prompt` são `NOT NULL`.** Uma solicitação sem texto não é registro incompleto, é registro inválido: não há o que auditar nem o que classificar.
+- **Unicidade de identidade.** `usuario.id` é a chave primária e `usuario.email` é único, impedindo duplicação do mesmo colaborador.
+- **Todas as chaves estrangeiras são `ON DELETE RESTRICT` e `ON UPDATE CASCADE`.** São sete: `conversa → usuario`, `interacao → conversa`, `interacao → usuario`, `interacao → rotina`, `rotina → usuario`, `execucao_rotina → rotina` e `execucao_rotina → interacao`. O registro de auditoria não pode ser removido por efeito colateral da exclusão de um usuário ou de uma rotina: preservar a trilha prevalece sobre a conveniência da limpeza.
+- **Apagar uma rotina que já disparou é recusado pela aplicação, com orientação.** A restrição do banco barraria de qualquer forma, mas devolveria uma violação de integridade que o chamador teria de interpretar. A operação correta é desativar (`ativa = FALSE`), que tira a rotina da agenda sem apagar o que ela já fez.
+- **Arquivar não apaga.** `conversa.arquivada_em` marca a conversa como fora da lista, e as interações continuam onde estavam. Excluí-las abriria caminho para alguém limpar a própria trilha depois de um bloqueio.
+- **`interacao.prompt`, `interacao.resposta` e `rotina.prompt` são `NOT NULL`.** Uma solicitação sem texto não é registro incompleto, é registro inválido: não há o que auditar nem o que classificar.
+- **Dois vínculos ligam interação e rotina, e ambos são necessários.** `interacao.rotina_id` responde "de qual rotina esta mensagem nasceu", e sustenta o recorte do painel por canal; `execucao_rotina.interacao_id` responde "que interação este disparo produziu", e sustenta a aba de resultados. São navegações opostas, cada uma em uma tela, e manter só uma custaria uma junção a mais na outra.
 
 ### 4.3.3 Justificativa de normalização (3FN)
 
-1. **Primeira Forma Normal.** Todos os atributos são atômicos. A permissão de visualização, que poderia crescer para um conjunto multivalorado, é representada nesta etapa por um único booleano — decisão registrada em 4.4.2, com o custo que ela implica.
+1. **Primeira Forma Normal.** Todos os atributos são atômicos nas cinco tabelas. As permissões, que seriam o candidato natural a atributo multivalorado, não são persistidas: resolvem-se dos *claims* a cada requisição (4.3.1.1).
 2. **Segunda Forma Normal.** Todas as chaves primárias são simples, e portanto não há dependência parcial em nenhuma tabela.
-3. **Terceira Forma Normal.** Nenhum atributo não-chave depende de outro atributo não-chave. Em `intencao`, `prompt` e `classificacao_intencao` dependem exclusivamente de `id_intencao`; a classificação é resultado do processamento daquela solicitação específica, e não um atributo derivável do usuário ou da conversa.
+3. **Terceira Forma Normal.** Nenhum atributo não-chave depende de outro atributo não-chave. Em `interacao`, `prompt`, `resposta`, `intencao_id`, `desfecho` e `latencia_ms` dependem exclusivamente de `id`: todos são resultado do processamento daquela mensagem específica, e não derivam do usuário nem da conversa. A única redundância do modelo é `interacao.perfil`, e ela é **desnormalização deliberada e documentada** (4.3.1.3): o perfil histórico não é derivável do estado atual do usuário, porque o estado atual muda.
 
 ## 4.4 Modelo Físico de Dados
 
@@ -1915,76 +1979,163 @@ O modelo físico implementa o esquema para **PostgreSQL 16**, com as restriçõe
 ![Modelagem física do middleware](/docs/imagens/Modelagem%20Física.png)
 *Figura 19 — Modelagem Física.*
 
+> Fonte: [`docs/diagramas/modelagem-fisica.mmd`](diagramas/modelagem-fisica.mmd). O diagrama traz os tipos e os índices como estão no banco criado pela migração inicial; o DDL completo está em 4.4.1.
+
 ### 4.4.1 Script DDL
+
+O DDL abaixo foi **extraído do banco em operação** (`pg_dump --schema-only`), e não redigido à parte. A diferença importa: um script escrito à mão diverge do esquema real na primeira migração que ninguém lembra de refletir aqui. A fonte de verdade é a migração Alembic em `src/middleware/migrations/versions/`; esta seção é a leitura dela.
 
 ```sql
 -- TABELA: usuario
 
 CREATE TABLE usuario (
-    id_usuario          serial       PRIMARY KEY,
-    entra_id            VARCHAR(255) NOT NULL,
-    email               VARCHAR(255) NOT NULL,
-    perfil              VARCHAR(50)  NOT NULL,
-    pode_ver_intencoes  BOOLEAN      NOT NULL DEFAULT FALSE,
-    criado_em           TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    CONSTRAINT uk_usuario_entra UNIQUE (entra_id),
-    CONSTRAINT uk_usuario_email UNIQUE (email),
-    -- o perfil é vocabulário fechado, validado aqui enquanto não é tipo do banco
+    id          text        NOT NULL,
+    nome        text        NOT NULL,
+    email       text,
+    perfil      text        NOT NULL,
+    criado_em   timestamptz NOT NULL DEFAULT now(),
+    visto_em    timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT pk_usuario PRIMARY KEY (id),
+    CONSTRAINT uq_usuario_email UNIQUE (email),
+    -- vocabulário fechado, validado aqui enquanto não é tipo do banco.
+    -- A lista é gerada a partir do enum Perfil do código (ver 4.4.2).
     CONSTRAINT ck_usuario_perfil CHECK (
-        perfil IN ('DIRETORIA', 'LIDER_PROJETO', 'MEMBRO_EQUIPE')
+        perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')
     )
 );
 
--- TABELA: intencao
+-- TABELA: conversa
 
-CREATE TABLE intencao (
-    id_intencao             serial       PRIMARY KEY,
-    id_usuario              INTEGER      NOT NULL,
-    id_conversa             INTEGER      NOT NULL,
-    prompt                  TEXT         NOT NULL,
-    classificacao_intencao  VARCHAR(100) NULL,
-    criado_em               TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    CONSTRAINT fk_intencao_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT
+CREATE TABLE conversa (
+    id                   text        NOT NULL,
+    usuario_id           text        NOT NULL,
+    conversa_externa_id  text,
+    titulo               text,
+    criada_em            timestamptz NOT NULL,
+    atualizada_em        timestamptz NOT NULL,
+    arquivada_em         timestamptz,
+    CONSTRAINT pk_conversa PRIMARY KEY (id),
+    CONSTRAINT fk_conversa_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- TABELA: rotina
 
 CREATE TABLE rotina (
-    id_rotina   serial      PRIMARY KEY,
-    id_usuario  INTEGER     NOT NULL,
-    prompt      TEXT        NOT NULL,
-    criado_em   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT fk_rotina_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT
+    id                 text        NOT NULL,
+    nome               text        NOT NULL,
+    prompt             text        NOT NULL,
+    agenda_cron        text        NOT NULL,
+    timezone           text        NOT NULL,
+    dono_id            text        NOT NULL,
+    ativa              boolean     NOT NULL DEFAULT true,
+    criada_em          timestamptz NOT NULL,
+    atualizada_em      timestamptz NOT NULL,
+    intencao_prevista  text,
+    CONSTRAINT pk_rotina PRIMARY KEY (id),
+    CONSTRAINT fk_rotina_dono_id_usuario FOREIGN KEY (dono_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- TABELA: interacao
+
+CREATE TABLE interacao (
+    id                  text             NOT NULL,
+    conversa_id         text             NOT NULL,
+    usuario_id          text             NOT NULL,
+    perfil              text             NOT NULL,
+    canal               text             NOT NULL,
+    prompt              text             NOT NULL,
+    resposta            text             NOT NULL,
+    intencao_id         text,
+    confianca_intencao  double precision NOT NULL,
+    desfecho            text             NOT NULL,
+    latencia_ms         integer          NOT NULL,
+    criada_em           timestamptz      NOT NULL,
+    rotina_id           text,
+    CONSTRAINT pk_interacao PRIMARY KEY (id),
+    CONSTRAINT ck_interacao_perfil CHECK (
+        perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')
+    ),
+    CONSTRAINT ck_interacao_canal CHECK (
+        canal IN ('chat', 'voz', 'rotina')
+    ),
+    -- Os oito desfechos do pipeline. Injeção por regra e por modelo são
+    -- valores distintos porque a origem do bloqueio muda a leitura do
+    -- painel de segurança.
+    CONSTRAINT ck_interacao_desfecho CHECK (
+        desfecho IN ('encaminhada', 'bloqueada_injecao_regra',
+                     'bloqueada_injecao_modelo', 'bloqueada_abuso',
+                     'recusada_fora_escopo', 'recusada_baixa_confianca',
+                     'bloqueada_saida', 'falha_executor')
+    ),
+    CONSTRAINT fk_interacao_conversa_id_conversa FOREIGN KEY (conversa_id)
+        REFERENCES conversa (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_interacao_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_interacao_rotina_id_rotina FOREIGN KEY (rotina_id)
+        REFERENCES rotina (id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- TABELA: execucao_rotina
+
+CREATE TABLE execucao_rotina (
+    id            text        NOT NULL,
+    rotina_id     text        NOT NULL,
+    iniciada_em   timestamptz NOT NULL,
+    concluida_em  timestamptz,
+    status        text        NOT NULL,
+    interacao_id  text,
+    erro          text,
+    CONSTRAINT pk_execucao_rotina PRIMARY KEY (id),
+    CONSTRAINT ck_execucao_rotina_status CHECK (
+        status IN ('sucesso', 'bloqueada', 'falha')
+    ),
+    CONSTRAINT fk_execucao_rotina_rotina_id_rotina FOREIGN KEY (rotina_id)
+        REFERENCES rotina (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_execucao_rotina_interacao_id_interacao FOREIGN KEY (interacao_id)
+        REFERENCES interacao (id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- ÍNDICES
 
 -- Turnos de uma conversa, em ordem (RF12)
-CREATE INDEX idx_intencao_conversa ON intencao (id_conversa, criado_em);
+CREATE INDEX ix_interacao_conversa_criada ON interacao (conversa_id, criada_em);
 
 -- Histórico do usuário e recortes do painel (RF10, RF12)
-CREATE INDEX idx_intencao_usuario ON intencao (id_usuario, criado_em DESC);
-CREATE INDEX idx_intencao_criado_em ON intencao (criado_em DESC);
+CREATE INDEX ix_interacao_usuario_criada ON interacao (usuario_id, criada_em DESC);
+CREATE INDEX ix_interacao_criada_em ON interacao (criada_em DESC);
 
 -- Volume por intenção, base do painel e do backlog de novas intenções (RF10)
-CREATE INDEX idx_intencao_classificacao ON intencao (classificacao_intencao, criado_em);
+CREATE INDEX ix_interacao_intencao_criada ON interacao (intencao_id, criada_em);
 
--- Agrupamento das solicitações não classificadas, que incluem os bloqueios
-CREATE INDEX idx_intencao_sem_classe ON intencao (criado_em DESC)
-    WHERE classificacao_intencao IS NULL;
+-- Distribuição de desfechos e série temporal de bloqueios por guarda
+CREATE INDEX ix_interacao_desfecho_criada ON interacao (desfecho, criada_em);
+
+-- Índice parcial: as mensagens sem intenção resolvida incluem os bloqueios
+-- e alimentam tanto o backlog de novas intenções quanto o painel de segurança
+CREATE INDEX ix_interacao_sem_intencao ON interacao (criada_em DESC)
+    WHERE intencao_id IS NULL;
+
+-- Lista de histórico, ordenada pelo turno mais recente (RF12)
+CREATE INDEX ix_conversa_usuario_atualizada ON conversa (usuario_id, atualizada_em DESC);
 
 -- Rotinas de um dono (RF11)
-CREATE INDEX idx_rotina_usuario ON rotina (id_usuario);
+CREATE INDEX ix_rotina_dono ON rotina (dono_id);
+
+-- Disparos recentes de uma rotina
+CREATE INDEX ix_execucao_rotina_iniciada ON execucao_rotina (rotina_id, iniciada_em DESC);
 ```
 
 ### 4.4.2 Decisões técnicas de implementação
 
 - **`TIMESTAMPTZ` em todas as colunas temporais.** Grava o instante absoluto, independentemente do fuso da sessão. É o que permite ao agendador respeitar `America/Sao_Paulo` sem que os registros fiquem ambíguos no horário de verão, e o que torna comparável o momento de solicitações registradas em máquinas distintas.
-- **Chave sequencial, com a contrapartida declarada.** `serial` é legível e barato, e é a escolha certa para a fase de construção. Ela tem um custo que precisa estar registrado antes de o sistema sair do ambiente de teste: identificadores sequenciais aparecem em URLs e revelam volume de uso, além de permitirem enumeração de registros alheios. A defesa neste modelo é de aplicação — toda leitura verifica a propriedade do registro no servidor —, e a troca por identificador opaco é candidata natural à onda que expõe o histórico na interface.
-- **Permissão como booleano, enquanto for uma.** `pode_ver_intencoes` resolve o caso atual com uma coluna. Se uma segunda capacidade administrativa surgir — a gestão de rotinas é a candidata imediata (RF11) —, a forma correta deixa de ser um segundo booleano e passa a ser uma tabela associativa, porque cada nova capacidade exigiria alterar o esquema. O ponto de virada é conhecido e está registrado aqui para que a decisão seja tomada quando ele chegar, e não descoberta depois.
-- **Índices derivados dos recortes, não do palpite.** Cada índice acima corresponde a uma consulta nomeada em [Arquitetura.md](Arquitetura.md), seção 5. O índice parcial sobre as solicitações sem classificação serve ao agrupamento que alimenta tanto o backlog de novas intenções quanto o recorte de segurança, já que ambos os casos chegam ao banco sem intenção resolvida.
+- **UUID em coluna `text`, revisando a decisão da Sprint 2.** O modelo anterior adotava `serial` pela legibilidade, com o custo declarado: identificador sequencial revela volume de uso e permite enumeração de registros alheios, e a troca por identificador opaco ficava "para a onda que expõe o histórico na interface". Esta é essa onda, e a inversão aconteceu por dois motivos que se somam. O primeiro é o custo já previsto. O segundo é que o orquestrador implementado gera o identificador **antes** de gravar — a interação precisa de um id no início do pipeline, para correlacionar o registro com os alertas de segurança emitidos ao longo dele, e um `serial` só existiria depois do `INSERT`. A defesa de aplicação continua valendo: toda leitura verifica a propriedade do registro no servidor.
+- **`CHECK` gerado, nunca digitado.** As listas de valores de `perfil`, `canal`, `desfecho` e `status` são produzidas a partir dos enums do código na definição do esquema, e não escritas à mão no DDL. A razão é concreta: a versão anterior desta seção trazia `CHECK (perfil IN ('DIRETORIA', ...))` em maiúsculas, enquanto o código grava `'diretoria'` — divergência que passaria despercebida até a primeira gravação real ser recusada em produção. Gerar a lista faz de "acrescentar um desfecho e esquecer o banco" um erro de migração, que aparece antes de chegar ao usuário.
+- **Sem tipo enumerado do banco.** `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria desconfortável cada valor novo; um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum. `interacao.intencao_id` não tem nem `CHECK` nem chave estrangeira, porque o catálogo de intenções é artefato de código revisado a cada sprint (5.4.9) e amarrá-lo ao banco faria de cada revisão uma migração.
+- **Permissões fora do esquema.** A modelagem anterior previa `pode_ver_intencoes` como coluna booleana, registrando o ponto de virada: uma segunda capacidade administrativa exigiria tabela associativa. A gestão de rotinas (RF11) é essa segunda capacidade, e a virada chegou antes de a coluna existir. As permissões passaram a ser resolvidas dos *claims* de grupo a cada requisição, sem persistência — projetá-las localmente criaria uma segunda fonte de verdade capaz de divergir do Entra e conceder acesso que já foi revogado.
+- **Índices derivados dos recortes, não do palpite.** Cada um dos nove índices corresponde a uma consulta nomeada em [Arquitetura.md](Arquitetura.md), seção 5, e a lista está em `src/middleware/migrations/README.md`. O índice parcial sobre as mensagens sem classificação serve ao agrupamento que alimenta tanto o backlog de novas intenções quanto o recorte de segurança, já que ambos os casos chegam ao banco sem intenção resolvida. Não há índice sobre `rotina.ativa`: a consulta que o usaria roda uma vez na subida do worker, sobre dezenas de linhas.
+- **Verificação do esquema por teste, e não por inspeção.** `tests/integration/test_persistencia.py` roda contra o PostgreSQL real e exercita o que só o servidor sabe responder: se cada valor dos enums passa no `CHECK`, se a chave estrangeira recusa apagar um usuário com registro, se o índice parcial existe com a cláusula `WHERE` correta. A suíte pula limpa quando o banco não responde.
 - **Sem vista materializada nesta etapa.** Para o volume esperado de um MVP, a agregação em SQL sobre `intencao` é suficiente. Materializar antes de medir seria otimização especulativa, com custo de atualização e de invalidação.
 - **Cifra em repouso e retenção (RNF07).** Sem a camada de mascaramento removida na revisão de escopo, `intencao.prompt` guarda o texto do usuário em claro, inclusive o das tentativas de ataque. Duas medidas são parte do esquema, e não recomendações: a cifra em repouso é habilitada no nível da instância PostgreSQL, e o expurgo das solicitações além do prazo de retenção é executado como tarefa periódica do próprio agendador. O risco correspondente é o R13, registrado na matriz vigente ([GestaoProjeto.md](GestaoProjeto.md), seção 4).
 - **Migrações versionadas.** O esquema evolui por Alembic. Como o modelo tem desdobramentos previstos para as ondas seguintes — conversa como entidade própria, histórico de execuções de rotina, vocabulário fechado de desfechos —, versionar é o que permite acrescentá-los sem recriar o banco e reverter uma alteração que se mostre errada.
@@ -5078,7 +5229,7 @@ A seção 5.7 optou por dizer isso onde a afirmação é feita, em 5.7.4.8, em 5
 
 O diagrama de classes abaixo apresenta a modelagem técnica atual do middleware responsável por intermediar as solicitações entre os usuários e o Copilot Studio. Diferentemente do modelo conceitual apresentado na seção 3.2.2, elaborado na Sprint 1, esta versão detalha os componentes de processamento, as guardas de segurança, a persistência das interações e a execução de rotinas agendadas previstos para a Sprint 2.
 
-O modelo mantém o catálogo de intenções como referência para a classificação e o roteamento, mas explicita as decisões que acontecem antes e depois da chamada ao Copilot Studio: detecção de injeção, controle de abuso, verificação da saída, registro do desfecho e associação com o perfil do usuário. A representação é conceitual-técnica; os identificadores UUID, os tipos de dados e os nomes das classes servem para orientar a implementação e ainda podem ser refinados durante a evolução da arquitetura.
+O modelo mantém o catálogo de intenções como referência para a classificação e o roteamento, mas explicita as decisões que acontecem antes e depois da chamada ao Copilot Studio: detecção de injeção, controle de abuso, verificação da saída, registro do desfecho e associação com o perfil do usuário. A representação é conceitual-técnica. Os cinco modelos de persistência já correspondem ao esquema construído na Sprint 3 — a modelagem física está no capítulo 4, e o identificador do usuário é o do provedor de identidade, não um UUID interno. `IntencaoCatalogo` é a exceção deliberada: continua sendo artefato de código, e não tabela, porque o catálogo é revisado a cada sprint (5.4.9). As classes de serviço permanecem sujeitas a refinamento conforme as ondas seguintes forem construídas.
 
 ```mermaid
 classDiagram
@@ -5125,10 +5276,9 @@ classDiagram
 
     %% Modelos de Persistência (SQLAlchemy 2 / PostgreSQL)
     class Usuario {
-        +UUID id
-        +String entra_object_id
-        +String email
+        +String id
         +String nome
+        +String email
         +Perfil perfil
         +DateTime criado_em
         +DateTime visto_em
@@ -5136,7 +5286,7 @@ classDiagram
 
     class Conversa {
         +UUID id
-        +UUID usuario_id
+        +String usuario_id
         +String titulo
         +String conversa_externa_id
         +DateTime arquivada_em
@@ -5146,10 +5296,10 @@ classDiagram
     class Interacao {
         +UUID id
         +UUID conversa_id
-        +UUID usuario_id
+        +String usuario_id
         +String prompt
         +String resposta
-        +UUID intencao_id
+        +String intencao_id
         +Decimal confianca
         +Desfecho desfecho
         +Perfil perfil
@@ -5159,24 +5309,25 @@ classDiagram
         +DateTime criada_em
     }
 
+    %% Artefato de CÓDIGO, não tabela: o catálogo vive em
+    %% pipeline/intencao/catalogo.py e é revisado a cada sprint.
+    %% interacao.intencao_id guarda o código, sem chave estrangeira.
     class IntencaoCatalogo {
-        +UUID id
         +String codigo
         +String nome
         +String descricao
         +Decimal limiar_confianca
         +Boolean eh_fora_de_escopo
-        +DateTime versao_atualizada_em
     }
 
     class Rotina {
         +UUID id
-        +UUID dono_id
+        +String dono_id
         +String nome
         +String prompt
         +String agenda_cron
         +String timezone
-        +UUID intencao_prevista
+        +String intencao_prevista
         +Boolean ativa
         +DateTime criada_em
     }

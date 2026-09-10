@@ -41,6 +41,36 @@ class StatusExecucao(Enum):
 
 
 @dataclass
+class Usuario:
+    """Projeção local da identidade federada do Entra ID.
+
+    Não é a fonte de verdade da autorização: perfil e permissões são
+    resolvidos a cada requisição a partir das claims de grupo, e o que
+    fica aqui é o último valor observado — para exibição, para as
+    consultas do dashboard e para que as demais tabelas tenham a quem
+    apontar.
+
+    `id` é o identificador do provedor (o `oid` do Entra), e não uma
+    chave interna. É o mesmo valor que `UsuarioAutenticado.id` carrega
+    pela requisição inteira; traduzi-lo para uma chave própria custaria
+    uma consulta a cada escrita e guardaria o mesmo dado duas vezes.
+
+    `email` é opcional porque `UsuarioAutenticado.email` também é: nem
+    todo provedor devolve o endereço nas claims.
+
+    `visto_em` é reescrito a cada interação registrada. É o que permite
+    distinguir um usuário que existe de um usuário que usa.
+    """
+
+    id: str
+    nome: str
+    perfil: str  # valor de schemas.usuario.Perfil
+    criado_em: datetime
+    visto_em: datetime
+    email: str | None = None
+
+
+@dataclass
 class Conversa:
     """Uma sessão de conversa, na identidade do middleware.
 

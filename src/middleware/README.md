@@ -62,6 +62,33 @@ para `dados/classificador.joblib`.
 O relatório da bancada é a evidência do RNF03; os números correntes e sua leitura
 estão na seção 5.4.11 de [Projeto.md](../../docs/Projeto.md).
 
+## Banco de dados
+
+O esquema é PostgreSQL 16, versionado por Alembic. Cinco tabelas — `usuario`,
+`conversa`, `interacao`, `rotina` e `execucao_rotina` —, descritas em detalhe na
+seção 4.3 de [Projeto.md](../../docs/Projeto.md).
+
+```powershell
+# 1. subir o servidor
+docker compose -f ../../infra/docker-compose.yml up -d db
+
+# 2. criar o esquema (aplica as migrações até a última revisão)
+python -m scripts.criar_banco
+
+# 3. carga de demonstração: usuários, conversas, os oito desfechos e rotinas
+python -m scripts.popular_banco
+```
+
+`criar_banco` é um envelope sobre `alembic upgrade head` que confere a conexão
+antes e relata o que existe depois. Para só inspecionar, sem alterar nada:
+`python -m scripts.criar_banco --conferir`.
+
+`popular_banco` recusa rodar contra qualquer banco que não seja local — a carga
+é sintética e não deve entrar numa trilha de auditoria compartilhada. Rodá-lo
+duas vezes é seguro: ele remove a carga anterior antes de semear.
+
+Para mexer no esquema, ver [migrations/README.md](migrations/README.md).
+
 ## Testes
 
 ```powershell
@@ -72,6 +99,11 @@ python -m ruff check app tests
 A suíte não exige o modelo treinado: os testes que tocam o classificador usam
 dublês, e os que exercitam o pipeline de PLN rodam sobre a família TF-IDF, que
 treina em segundos e não baixa pesos.
+
+Os testes de `tests/integration/test_persistencia.py` rodam contra o PostgreSQL
+de verdade e **pulam limpos** quando ele não responde. Sem banco, a suíte
+continua verde e deixa de verificar as restrições do esquema — para exercitá-las,
+suba o serviço e aplique as migrações antes.
 
 ## Aplicação
 
