@@ -118,9 +118,13 @@
     - [3.3.3 Matriz de papéis e responsabilidades da Sprint 2](#333-matriz-de-papéis-e-responsabilidades-da-sprint-2)
     - [3.3.4 Fechamento e análise da Sprint 2](#334-fechamento-e-análise-da-sprint-2)
   - [3.4 Sprint 3](#34-sprint-3)
-    - [3.4.1 Planejamento e escopo observado](#341-planejamento-e-escopo-observado)
-    - [3.4.2 Alinhamento aos critérios do Escritório de Projetos](#342-alinhamento-aos-critérios-do-escritório-de-projetos)
-    - [3.4.3 Fechamento e análise da Sprint 3](#343-fechamento-e-análise-da-sprint-3)
+    - [3.4.1 Planejamento e matriz de responsabilidades](#341-planejamento-e-matriz-de-responsabilidades)
+      - [Matriz de papéis e responsabilidades da Sprint 3](#matriz-de-papéis-e-responsabilidades-da-sprint-3)
+      - [Rotação de papéis em relação à Sprint 2](#rotação-de-papéis-em-relação-à-sprint-2)
+    - [3.4.2 Retrospectiva da Sprint 3](#342-retrospectiva-da-sprint-3)
+    - [3.4.3 Indicadores quantitativos da Sprint 3](#343-indicadores-quantitativos-da-sprint-3)
+    - [3.4.4 Análise dos pontos identificados na Sprint 3](#344-análise-dos-pontos-identificados-na-sprint-3)
+    - [3.4.5 Melhorias para a Sprint 4](#345-melhorias-para-a-sprint-4)
   - [3.5 Sprint 4](#35-sprint-4)
   - [3.6 Sprint 5](#36-sprint-5)
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
@@ -747,9 +751,9 @@ Os pontos de atenção são características do processo e não avaliação indi
 
 ### 3.4 Sprint 3
 
-#### 3.4.1 Planejamento e escopo observado
+#### 3.4.1 Planejamento e matriz de responsabilidades
 
-O planejamento operacional da Sprint 3 está registrado no [Kanban do GitLab](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/boards), com as tasks estimadas pela métrica t-shirt, priorizadas, sequenciadas e detalhadas com descrição, tipo, DoR e DoD. A estratégia de entrega que orienta o ciclo está em [Projeto.md](Projeto.md) (seção 9.1): **Onda 1 — Fundação** e início da **Onda 2 — Guardas** na Sprint 3, com a voz encaixável onde houver folga (9.1.3) e o sistema de troca de mensagens previsto formalmente para a Sprint 5 (9.1.2.6).
+O planejamento operacional da Sprint 3 está registrado no [Kanban do GitLab](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/boards), com as tasks estimadas pela métrica t-shirt, priorizadas, sequenciadas e detalhadas com descrição, tipo, DoR e DoD. A estratégia de entrega que orienta o ciclo está em [Projeto.md](Projeto.md) (seção 9.1): **Onda 1 — Fundação** e início da **Onda 2 — Guardas** na Sprint 3.
 
 | Frente planejada (9.1) | Escopo de referência | Observação a partir do repositório neste ciclo |
 |---|---|---|
@@ -761,47 +765,129 @@ O planejamento operacional da Sprint 3 está registrado no [Kanban do GitLab](ht
 
 A decisão explícita da equipe foi **adiantar parte do trabalho das sprints seguintes** — em especial a mensageria (S5) e a integração de voz com o pipeline de PLN — para abrir margem de inovação e reduzir risco de integração tardia, mantendo divisões de tarefa claras desde a abertura do ciclo.
 
-#### 3.4.2 Alinhamento aos critérios do Escritório de Projetos
+##### Pontos e responsáveis da Sprint 3
+
+A tabela abaixo organiza os pontos previstos para a Sprint 3 e indica o espaço para registrar a pessoa responsável por cada entrega. A responsabilidade principal não impede colaboração, revisão ou execução conjunta pelos demais integrantes.
+
+| Ponto ou entrega | Sprint | Escopo principal | Responsável |
+|---|:---:|---|---|
+| API para receber áudios (S3) | S3 | Implementar upload de áudio pelo usuário, aceitar os formatos especificados, tratar erros e documentar endpoints, parâmetros, formatos, exemplos de requisições, headers, payloads, códigos de resposta e estrutura das respostas | Mirela Bianchi |
+| Implementação do algoritmo de NLP (S3, iniciar) | S3 | Integrar Speech-to-Text ao algoritmo de NLP, à API de entrada e ao banco de dados; documentar escolha do algoritmo, bibliotecas, frameworks, integração, exemplos de entrada e saída e testes de sucesso e falha | Mariana Reis |
+| Webhooks | S4 | Configurar e implementar dois webhooks, com rotas backend, métodos HTTP, payloads, processamento, armazenamento e resposta adequada ao provedor | Alexsander Barbosa |
+| Sistema de troca de mensagens | S5 | Implementar mensageria assíncrona, com tecnologia escolhida, produtores, consumidores, integração com webhooks, configuração de filas, tópicos ou canais e testes | Mirela Bianchi |
+| Frontend básico | S3 | Criar interface para entrada de texto ou áudio, envio e exibição de resultados, integração com as APIs, validações, feedback ao usuário e documentação de uso e testes | Eduardo Casarini |
+| Desenvolvimento completo do frontend | S5 | Evoluir a interface com framework ou biblioteca escolhida, design responsivo, acessibilidade, testes unitários por componente e automação de testes; documentar fluxos, construção e cobertura |Início na sprint 4|
+| Integração frontend-backend | S5 | Integrar todas as funcionalidades às APIs, com testes de integração e tratamento de erros e falhas de comunicação | Mariana Reis |
+| Implementação e integração com o banco de dados | S4 | Criar e popular o banco, atualizar modelos e estrutura de dados, garantir leitura e escrita seguras, otimizar consultas e documentar tabelas, índices, tipos e scripts | Carlos Eduardo Serrano Quaglia e Celso Rocha |
+| Deploy da solução | S4 | Configurar ambientes de desenvolvimento e produção, implementar e documentar deploy em nuvem, monitoramento, manutenção, scripts de implantação e manual de uso da PoC | Mariana Reis |
+| Testes de funcionalidade | — | Testar os requisitos funcionais em cenários positivos e negativos, explicando o propósito, a execução, os resultados esperados e a abrangência | Celso Rocha |
+| Testes de requisitos não funcionais | — | Testar os RNFs, incluindo obrigatoriamente desempenho, com cenários positivos e negativos, instruções detalhadas, propósito e justificativa de abrangência | Celso Rocha |
+| Testes de integração | — | Validar a comunicação entre componentes internos e serviços externos, incluindo cenários positivos e negativos, tratamento de erros, ferramentas, execução e uso obrigatório do módulo VHS para cache temporário de respostas externas | Carlos Eduardo Serrano Quaglia |
+| Testes de usabilidade | — | Elaborar roteiro com pelo menos cinco usuários externos à turma, perfis diversos, cenários de uso e aplicação do SUS ou outro método aprovado | Alexsander Barbosa |
+| Análise da Sprint 3 | S3 | Registrar pontos fortes e fracos, fatores de impacto, ações objetivas e verificáveis para a Sprint 4, revisão dos riscos, histórico de acompanhamento e alinhamento aos critérios do Escritório de Projetos | Mirela Bianchi |
+| Matriz de papéis e responsabilidades da Sprint 3 | S3 | Registrar integrante, papel principal, artefato ou task, responsabilidades, entregas, rotação de papéis e distribuição equilibrada | Mirela Bianchi |
+| Contrato de convivência, SLA e rituais | S3 | Revisar o contrato vigente e registrar eventuais alterações nas regras de convivência, SLA e rituais | Eduardo Casarini |
+| Planejamento da Sprint 4 no Kanban | S4 | Registrar tasks estimadas por t-shirt sizing, priorização, sequenciamento, descrição, tipo, DoR e DoD | Eduardo Casarini |
+| Gestão do processo de desenvolvimento | S3 | Atualizar políticas de dailies, uso do GitLab, commits e demais processos de trabalho, mantendo coerência com o contrato de convivência | Eduardo Casarini |
+| Gestão de configuração | S3 | Atualizar o GitFlow, branches `main`, `develop`, `feature`, `release` e `hotfix`, procedimentos de criação, merge e exclusão e convenções de nomenclatura | Eduardo Casarini |
+| Criação dos slides da Sprint Review | S3 | Consolidar os resultados, entregas, indicadores, demonstrações e próximos passos da sprint em apresentação | Alexsander Barbosa e Mariana Reis |
+| Apresentação da Sprint Review | S3 | Organizar e realizar a apresentação da sprint, distribuindo a fala e demonstrando os principais resultados da entrega | Alexsander Barbosa |
+
+##### Matriz de papéis e responsabilidades da Sprint 3
+
+| Integrante | Papel principal na Sprint 3 | Artefato ou task sob responsabilidade | Principais responsabilidades e entregas |
+|---|---|---|---|
+| Alexsander Barbosa | Qualidade, usabilidade e apresentação | Testes de usabilidade, webhooks e Sprint Review | Elaborar o roteiro de usabilidade com usuários externos, apoiar a especificação dos webhooks, criar os slides e participar da apresentação da Sprint Review |
+| Carlos Eduardo Serrano Quaglia | Dados, integração e infraestrutura técnica | Testes de integração, VHS, banco de dados e vetorização | Elaborar testes entre componentes e serviços externos, implementar ou documentar o cache VHS, atualizar modelos e estrutura de dados e conduzir a camada de vetorização |
+| Celso Rocha | Qualidade e testes de requisitos | Testes funcionais e testes de requisitos não funcionais | Documentar cenários positivos e negativos dos RFs, testar RNFs e desempenho e registrar a abrangência dos testes |
+| Eduardo Casarini | Frontend e gestão do processo | Frontend básico, GitLab, dailies, commits e GitFlow | Estruturar a interface inicial, registrar navegação e componentes, atualizar políticas de dailies e commits e revisar o fluxo de branches |
+| Mariana Reis | NLP e integração do canal de voz | Escolha do algoritmo, Speech-to-Text, integração com NLP e banco | Comparar e justificar algoritmos, documentar bibliotecas e frameworks, integrar transcrição ao NLP e preparar a persistência dos resultados |
+| Mirela Bianchi | API de áudio, mensageria e gestão dos processos do grupo (Scrum Master) | Upload, validação, processamento de áudio, documentação e contrato de mensagens | Implementar a API de upload, validação de formatos, tratamento de erros, testes e documentação da API e iniciar o contrato da mensageria |
+
+As responsabilidades principais foram distribuídas entre os seis integrantes e organizadas por frentes complementares. A execução permanece colaborativa: cada responsável deve receber revisão de outro integrante e as entregas podem conter commits de mais de uma pessoa. A tabela de indicadores deve ser usada para rastreabilidade, e não como ranking de produtividade.
+
+##### Rotação de papéis em relação à Sprint 2
+
+| Integrante | Papel principal na Sprint 2 | Papel principal na Sprint 3 | Evidência da rotação |
+|---|---|---|---|
+| Alexsander Barbosa | Pilha de tecnologias e modelagem de dados | Qualidade, usabilidade e apresentação | Migrou de decisões técnicas e dados para testes com usuários e comunicação da entrega |
+| Carlos Eduardo Serrano Quaglia | Scrum Master e camada de PLN | Dados, integração e infraestrutura técnica | Migrou da condução do processo e PLN para integração, banco, VHS e vetorização |
+| Celso Rocha | Pré-processamento textual e catálogo de intenções | Qualidade e testes de requisitos | Migrou da implementação de PLN para validação funcional e não funcional |
+| Eduardo Casarini | Canal de voz e contratos de API | Frontend e gestão do processo | Migrou da especificação do canal de voz para interface e políticas de desenvolvimento |
+| Mariana Reis | Projeto visual e implantação em nuvem | NLP e integração do canal de voz | Migrou de design e deploy para classificação, Speech-to-Text e integração do pipeline |
+| Mirela Bianchi | Prototipação exploratória e modelagem UML | API de áudio e mensageria | Migrou de prototipação e modelagem para implementação de serviços e contrato de eventos |
+
+Todos os integrantes assumiram uma frente diferente daquela registrada na Sprint 2. A rotação favorece a formação multidisciplinar, enquanto a divisão por frentes e a revisão cruzada reduzem a centralização de conhecimento.
+
+##### Alinhamento aos critérios do Escritório de Projetos
 
 | Critério | Evidência no projeto |
 |---|---|
-| Análise crítica da Sprint 3 | Seção [3.4.3](#343-fechamento-e-análise-da-sprint-3), com indicadores verificáveis no repositório, pontos fortes, pontos de atenção, leitura dos riscos e ações para a Sprint 4 |
+| Análise crítica da Sprint 3 | Seções [3.4.2](#342-retrospectiva-da-sprint-3) a [3.4.5](#345-melhorias-para-a-sprint-4), com indicadores verificáveis no repositório, pontos fortes, pontos de atenção, leitura dos riscos e ações para a Sprint 4 |
 | Revisão e acompanhamento dos riscos | Seção 4, com matriz consolidada na revisão da Sprint 3, histórico desde a Sprint 1, itens materializados, efetividade das respostas, matriz probabilidade × impacto e análise dos três itens mais críticos |
-| Papéis e responsabilidades | Matrizes das sprints anteriores (3.2.1 e 3.3.3) e divisão observável por frentes nos commits do ciclo (voz, PLN, testes de RF/RNF, mensageria, usabilidade) |
+| Papéis e responsabilidades | Matriz da Sprint 3, rotação explícita em relação à Sprint 2 e divisão observável por frentes no relatório de contribuições (voz, PLN, testes de RF/RNF, mensageria, frontend e usabilidade) |
 | Contrato, SLA e rituais | Seções 2.1 a 2.4 e revisão 2.9.1; a ação `AM14` reforça plano B para ausência e redução de capacity |
 | Planejamento da Sprint 3 | Kanban do GitLab e estratégia 9.1 do `Projeto.md` (ondas, voz e mensageria) |
 | Planejamento da Sprint 4 | Continuação da Onda 2 e Onda 3 (intenções) conforme 9.1.2; backlog operacional no Kanban |
 | Gestão do processo | Seções 2.2 a 2.8 e seção 5, incluindo acompanhamento das ações `AM06` a `AM13` e novas ações `AM14` e `AM15` |
 | Gestão de configuração | `GestaoConfiguracao.md`, com GitFlow, commits e identidade de autoria (`AM10`) |
 
-#### 3.4.3 Fechamento e análise da Sprint 3
+#### 3.4.2 Retrospectiva da Sprint 3
 
-> **Nota metodológica.** Os dados desta seção cobrem o período de **31/08/2026 a 09/09/2026** (corte no commit `c00d712` da `develop`, 09/09/2026). A fonte primária é o **histórico da branch `develop`**, reconciliado pelo `.mailmap`. Contam-se commits autorais (sem merges) e merge requests **efetivamente integrados** na `develop`. As issues citadas são as **referenciadas nas mensagens de commit** do período — **25 identificadores distintos**. O export completo de *work items* da milestone `Sprint 03` no GitLab **não foi reextraído neste corte** (acesso ao board via API/SSO indisponível na máquina de redação); por isso não se afirmam totais de issues fechadas, horas convertidas por *size* nem estado do Kanban. Onde a análise qualitativa depende de observação da equipe (feriado, mal-estar, divisão de escopo), o fato é declarado como tal e cruzado com evidência de repositório quando existir.
+A Sprint 3 teve como foco iniciar a implementação da Onda 1 — Fundação, avançar nas guardas da Onda 2 e 3, e integrar as frentes de voz, PLN, mensageria, testes e usabilidade. A equipe também adiantou parte do trabalho previsto para ciclos seguintes, especialmente o contrato de mensageria e a vetorização, mantendo as tarefas organizadas por frentes e rastreáveis no repositório.
+
+O ciclo foi afetado pela redução de um dia útil devido ao feriado de 07/09 e por relatos de indisposição de integrantes. Esses fatores devem ser considerados no planejamento de capacidade, sem substituir a análise dos artefatos, das issues e das integrações efetivamente entregues.
+
+#### 3.4.3 Indicadores quantitativos da Sprint 3
+
+> **Nota metodológica.** Os dados desta atualização correspondem ao relatório de contribuições com corte em **09/09/2026 às 14:20:53 (UTC-03:00)**, no período de **31/08/2026 a 09/09/2026**. A leitura separa autoria Git, integração na `develop`, commits mantidos somente em branches, commits contidos em MRs, merges, issues e revisões. A autoria e os MRs são evidências de rastreabilidade; não medem isoladamente qualidade ou esforço. Para conversão de esforço, `SIZE_PP` = 0,25 h, `SIZE_P` = 0,5 h, `SIZE_M` = 1 h e `SIZE_G` = 2 h; issues sem *size* não somam horas.
 
 ##### Indicadores verificáveis no repositório
 
 | Métrica | Resultado |
 |---|---:|
-| Commits autorais na `develop` | 37 |
-| Merge requests integrados na `develop` | 16 (`!75` a `!93` no intervalo observado) |
-| Issues distintas referenciadas em commits | 25 |
-| Integrantes com commit autoral no período | 5 de 6 |
+| Commits autorais únicos | 50 |
+| Commits autorais integrados na `develop` | 35 |
+| Commits autorais somente em branches | 15 |
+| Commits autorais contidos em MRs integrados | 7 |
+| Merge requests criados | 20 |
+| Merge requests revisados | 16 |
+| MRs integrados na `develop` | 16 (`!75` a `!93` no intervalo observado) |
+| Merges realizados na `develop` | 15 |
+| Issues criadas | 55 |
+| Issues atribuídas | 55 |
+| Horas atribuídas | 47,50 h |
+| Issues fechadas | 23 |
+| Horas fechadas | 19,50 h |
+| Issues sem *size* | 0 |
 | Dias com commit no período | 31/08, 01–04/09, 08–09/09 |
 | Dias úteis sem commit no recorte | **07/09/2026** (feriado nacional) — nenhum commit com essa data; intervalo sem commits também em 05–06/09 (fim de semana) |
 
-##### Distribuição de commits autorais
+##### Distribuição por integrante
 
-| Integrante | Commits autorais |
-|---|---:|
-| Mirela Bianchi | 13 |
-| Mariana Reis | 12 |
-| Celso Rocha | 7 |
-| Carlos Eduardo Serrano Quaglia | 4 |
-| Alexsander Barbosa | 1 |
-| Eduardo Casarini | 0 |
-| **Total** | **37** |
+| Integrante | Commits autorais únicos | Integrados na `develop` | Somente em branches | Issues atribuídas | Horas atribuídas | Issues fechadas | Horas fechadas | MRs criados | MRs revisados |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Alexsander Barbosa | 1 | 1 | 0 | 4 | 6,00 h | 1 | 1,00 h | 1 | 0 |
+| Carlos Eduardo Serrano Quaglia | 9 | 4 | 5 | 10 | 10,00 h | 4 | 3,50 h | 8 | 1 |
+| Celso Rocha | 7 | 7 | 0 | 8 | 3,75 h | 7 | 1,75 h | 1 | 3 |
+| Eduardo Casarini | 8 | 0 | 8 | 14 | 7,00 h | 0 | 0,00 h | 0 | 0 |
+| Mariana Reis | 12 | 10 | 2 | 8 | 8,50 h | 3 | 3,50 h | 6 | 7 |
+| Mirela Bianchi | 13 | 13 | 0 | 11 | 12,25 h | 8 | 9,75 h | 4 | 5 |
+| **Total** | **50** | **35** | **15** | **55** | **47,50 h** | **23** | **19,50 h** | **20** | **16** |
 
-Entre quem registrou commits, a razão entre o maior e o menor volume autoral foi de **13:1**. Cinco dos seis integrantes aparecem como autores; a ausência de commits de um integrante no período é registrada como fato de rastreabilidade e dialoga com a queda de produtividade por mal-estar relatada na retrospectiva, sem converter volume em ranking individual. Os 16 merges do período foram executados por quatro integrantes (Mariana Reis 6, Mirela Bianchi 6, Celso Rocha 3, Carlos Eduardo Serrano Quaglia 1).
+Os dados mostram que os 50 commits autorais únicos se distribuem entre a `develop` e branches de trabalho. A `develop` recebeu 35 commits autorais, enquanto 15 permaneceram somente em branches no corte; por isso, autoria, integração e entrega por MR devem ser lidas separadamente. A maior concentração autoral foi de **13 commits**, e a menor foi de **1**, entre os integrantes com registro. Os 15 merges foram executados por quatro integrantes: Mariana Reis (6), Mirela Bianchi (6), Celso Rocha (2) e Carlos Eduardo Serrano Quaglia (1).
+
+##### Distribuição do escopo por frente
+
+| Frente | Evidências rastreadas | Resultado no corte |
+|---|---|---|
+| API e pipeline de áudio/voz | Issues `#192`–`#197`, `#203`–`#206`; MRs `!80`, `!82`, `!83`, `!87`, `!89`, `!92` | Upload, validação de formatos, tratamento de erros, transcrição e integração áudio→NLP avançados; testes e documentação incorporados |
+| NLP e vetorização | Issues `#201`, `#202`, `#284`; MR `!85` | Algoritmos comparados, classificador documentado e camada de vetorização integrada |
+| Mensageria | Issue `#198`; MR `!90` | Contrato inicial e desenho de eventos adiantados para a frente S5 |
+| Testes funcionais e RNF | Issues `#246`–`#253`; MR `!84` | RF01–RF12, RNF01–RNF07, desempenho e abrangência documentados |
+| Testes de integração e VHS | Issues `#254`–`#256`; MR `!91` em aberto no corte | Módulo de cache VHS e documentação preparados; integração externa ainda requer validação de fechamento |
+| Frontend e processo | Issues `#211`, `#219`, `#220`, `#233`–`#242`, `#280`–`#282` | Estrutura inicial, navegação, política de processo, acessibilidade e testes planejados em branches |
+| Usabilidade | Issue `#257`; MR `!79` | Roteiro de teste preparado e entregue |
 
 ##### Principais entregas rastreadas por issue
 
@@ -814,6 +900,8 @@ Entre quem registrou commits, a razão entre o maior e o menor volume autoral fo
 | Usabilidade | `#257` | Planejamento de testes de usabilidade |
 | Higiene do repositório | `#275`, `#276` | Nomenclatura `docs/` e `.gitignore` |
 
+#### 3.4.4 Análise dos pontos identificados na Sprint 3
+
 ##### Pontos fortes
 
 | Ponto forte | Evidência observada | Impacto no processo |
@@ -822,15 +910,17 @@ Entre quem registrou commits, a razão entre o maior e o menor volume autoral fo
 | Divisão de tarefas clara desde o início | Frentes distintas e rastreáveis nos commits (voz, testes RF/RNF, PLN, mensageria, usabilidade) com issues associadas | Reduz ambiguidade de escopo individual e facilita paralelismo |
 | Integração contínua entre componentes | 16 MRs integrados; branches de upload, Speech-to-Text, integração áudio–NLP e mensageria mescladas na `develop` | Mantém a `develop` como linha demonstrável ao longo do ciclo, e não só no encerramento |
 | Qualidade embutida em paralelo à implementação | Testes unitários/de integração de áudio (`#197`) e suíte documental de RF/RNF (`#246`–`#252`) no mesmo ciclo da feature | Atende o princípio de qualidade embutida da seção 9.1.1 sem postergar a especificação de aceite |
+| Amplitude de rastreabilidade | 55 issues atribuídas, 50 commits autorais únicos, 20 MRs criados e 16 MRs revisados no relatório parcial | Permite relacionar planejamento, autoria, revisão e estado das entregas por integrante e por frente |
+| Cobertura multidisciplinar | O relatório registra frentes de áudio, NLP, mensageria, testes, frontend, processo e usabilidade | Favorece a rotação de papéis e reduz a dependência de uma única especialidade |
 
 ##### Pontos de atenção
 
 | Ponto de atenção | Evidência observada | Consequência para o processo |
 |---|---|---|
 | Perda de dia útil por feriado | 07/09/2026 sem commits; capacity do ciclo reduzida em um dia de desenvolvimento | Compressão do restante da sprint; reforça a necessidade de incluir feriados no cálculo de capacity (`AM15`) |
-| Queda de produtividade por integrantes resfriados | Relato da retrospectiva, coerente com distribuição desigual de commits (razão 13:1) e com um integrante sem commit autoral no período | Atrasos pontuais e sobrecarga relativa em quem permanece disponível |
-| Fundação da Onda 1 ainda incompleta | `NotImplementedError` remanescentes em persistência, sessões, listagem de conversas e token de voz streaming | O adiantamento de voz/mensageria não substitui os critérios de aceite da Onda 1 (login, `/chat` persistido, interface básica) |
-| Desequilíbrio de contribuição registrada | 13:1 em commits autorais entre extremos com registro; um integrante sem commits no recorte | Mantém pressão sobre `AM07` e sobre o plano B de ausência (`AM14`) |
+| Entregas mantidas em branches | 15 dos 50 commits autorais únicos não estavam integrados na `develop` no corte; o MR `!91` permanecia aberto | Parte do trabalho concluído em branch ainda não compunha a linha demonstrável do produto e exigia fechamento ou replanejamento |
+| Integração externa ainda incompleta | Os testes de integração e o módulo VHS estavam preparados, mas o MR `!91` permanecia aberto no corte | A comunicação com serviços externos e a validação do cache precisam de evidência de execução e fechamento na Sprint 4 |
+| Capacidade planejada sem fechamento homogêneo | 55 issues foram atribuídas, mas apenas 23 estavam fechadas no corte | O acompanhamento deve distinguir trabalho iniciado, entregue em branch e integrado na `develop` |
 
 ##### Riscos do planejamento e acompanhamento no módulo
 
@@ -842,21 +932,21 @@ A leitura abaixo cruza a matriz da seção 4 com o que o ciclo tornou observáve
 | R02 / O04 | Contingência de desacoplamento continua em uso; mensageria e interface própria avançam a autonomia do MVP | R02 permanece materializado; O04 ganha tração com o adiantamento da mensageria |
 | R03 / R14 / R17 | Pipeline de voz implementado e testado; token streaming ainda pendente; consumo F0 sob monitoramento | Mitigações de voz em execução; acurácia no jargão do Metrô ainda não mensurada |
 | R05 | Feriado e mal-estar reduziram capacity; adiantamento de S4/S5 criou colchão | Pressão de cronograma parcialmente absorvida, mas Onda 1 incompleta reacende o risco para a Sprint 4 |
-| R07 / **R18** | Sobrecarga e absences por doença/feriado | R18 materializado neste ciclo; plano B passa a ser ação explícita (`AM14`) |
+| R07 / **R18** | Redução de capacidade por doença/feriado | R18 materializado neste ciclo; plano B passa a ser ação explícita (`AM14`) |
 | R08 | Sem nova ruptura de escopo rastreável nos commits do período | Residual em monitoramento após a materialização da Sprint 2 |
 
-##### Efetividade das ações da Sprint 2 (leitura parcial)
+##### Efetividade das ações da Sprint 2
 
 | ID | Situação observável neste corte | Avaliação |
 |---|---|---|
 | AM06 | 16 MRs integrados por quatro autores; SLA de primeira revisão permanece sem instrumentação no repositório | **Parcialmente verificável** — integração distribuída entre mais de um revisor, mas o SLA ainda não é mensurável |
-| AM07 | Razão 13:1 em commits autorais; um integrante sem commits | **Ineficaz no indicador de volume** — redistribuição não eliminou a amplitude |
+| AM07 | Razão 13:1 em commits autorais entre os integrantes com registro | **Ineficaz no indicador de volume** — a distribuição permaneceu ampla |
 | AM08 | Papel de Tech Lead não documentado nesta seção (board não reextraído) | **Sem evidência no corte** |
 | AM09 | Não há registro, neste arquivo, de issue de propagação por mudança de arquitetura no ciclo | **Sem evidência no corte** |
 | AM10 | Autores do período reconciliados em cinco identidades institucionais; nenhum commit `Administrator` | **Efetiva** |
 | AM11–AM13 | Dependem do estado da milestone no GitLab, não reextraído | **Sem evidência no corte** |
 
-##### Ações de melhoria para a Sprint 4
+#### 3.4.5 Melhorias para a Sprint 4
 
 | ID | Problema endereçado | Ação de melhoria | Responsável | Prazo | Critério de sucesso (verificável) |
 |---|---|---|---|---|---|
@@ -936,7 +1026,7 @@ A matriz abaixo mantém o histórico de avaliação desde a identificação inic
 | R04 | Técnico (arquitetura) | Ameaça | Classificador de intenções não atinge acurácia aceitável → perda de confiança na demonstração e invalidação da métrica exigida | 2·4 | 8 | 1·4 | **4** | 1·4 | **4** | 🟢 Baixa | Resp. PLN | **Mitigado** |
 | R05 | Cronograma | Ameaça | Janela curta somada à curva de aprendizado em PLN → atraso em marcos de sprint e MVP incompleto | 3·3 | 9 | 4·3 | **12** | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
 | R06 | Stakeholders | Ameaça | Baixa disponibilidade do PMO/TI do Metrô para validações e insumos → decisões travadas, esperas e retrabalho | 2·4 | 8 | 4·4 | **16** | 5·4 | **20** | 🔴 Crítica | Product Owner | **Materializado** |
-| R07 | Equipe | Ameaça | Desnivelamento técnico e sobrecarga desigual entre integrantes → gargalos em componentes críticos do pipeline | 3·3 | 9 | 4·3 | **12** | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
+| R07 | Equipe | Ameaça | Desnivelamento técnico e concentração de trabalho entre integrantes → gargalos em componentes críticos do pipeline | 3·3 | 9 | 4·3 | **12** | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
 | R08 | Comunicação | Ameaça | Desalinhamento de expectativas entre equipe, orientadora e parceiro sobre o alcance do MVP → mudanças tardias de escopo e retrabalho | 3·3 | 9 | 5·3 | **15** | 3·3 | **9** | 🟡 Moderada | Product Owner | Em Monitoramento |
 | R09 | Escopo / Compliance | Ameaça | Processamento acidental de dado sensível em serviço não homologado → violação das restrições de confidencialidade | 2·5 | 10 | 2·5 | **10** | 2·5 | **10** | 🟠 Alta | Product Owner | Em Monitoramento |
 | R10 | Custo / Orçamento | Ameaça | Consumo de créditos de nuvem e serviços de IA excede o disponibilizado → interrupção do ambiente e do desenvolvimento | 2·2 | 4 | 3·3 | **9** | 3·3 | **9** | 🟡 Moderada | Product Owner | Em Monitoramento |
@@ -970,7 +1060,7 @@ O histórico registra, por item, a evolução desde a identificação inicial, d
 | R04 | Sev. 8 — Aberto | Sev. 4 — **Mitigado** | Sev. 4 — **Mitigado** | Sem nova bancada que altere as métricas de 5.4.11; status preservado, com a ressalva de dependência do R01 |
 | R05 | Sev. 9 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Feriado e mal-estar reduziram capacity (R18), mas o adiantamento de S4/S5 (O05) evitou nova elevação de notas; Onda 1 ainda incompleta no código |
 | R06 | Sev. 8 — Em Monitoramento | Sev. 16 — Em Monitoramento | Sev. 20 — **Materializado** | Segundo ciclo consecutivo sem retorno do parceiro para premissas em aberto; probabilidade sobe de 4 para 5 |
-| R07 | Sev. 9 — Aberto | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Razão 13:1 em commits autorais e um integrante sem commits no período; desequilíbrio persiste sem mudança de nota |
+| R07 | Sev. 9 — Aberto | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Razão 13:1 em commits autorais entre os integrantes com registro; concentração persiste sem mudança de nota |
 | R08 | Sev. 9 — Aberto | Sev. 15 — **Materializado** | Sev. 9 — Em Monitoramento | Sem nova ruptura de escopo rastreável nos commits do período; probabilidade cai de 5 para 3 e o status deixa Materializado |
 | R09 | Sev. 10 — Aberto | Sev. 10 — Em Monitoramento | Sev. 10 — Em Monitoramento | Nenhum incidente; uso de dados sintéticos mantido |
 | R10 | Sev. 4 — Aberto | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Sem evidência nova de estouro; permanece acoplado a R11 e R17 |
@@ -981,7 +1071,7 @@ O histórico registra, por item, a evolução desde a identificação inicial, d
 | R15 | — | Sev. 8 — Aberto | Sev. 8 — Aberto | Sem evidência de mudança de plataforma no parceiro |
 | R16 | — | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Persistência da Onda 1 ainda incompleta; risco permanece prospectivo |
 | R17 | — | Sev. 4 — Aberto | Sev. 6 — Em Monitoramento | Consumo real de Azure Speech iniciado no ciclo; probabilidade sobe de 2 para 3 |
-| **R18** | — | — | **Sev. 12 — Materializado** | **Item novo.** Feriado de 07/09 sem desenvolvimento e queda de produtividade por integrantes resfriados, sem plano B prévio |
+| **R18** | — | — | **Sev. 12 — Materializado** | **Item novo.** Feriado de 07/09 sem desenvolvimento e redução de capacidade por indisposição, sem plano B prévio |
 | O01 | Sev. 12 — Aberto | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sem evidência para reavaliar |
 | O02 | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Reuso permanece relevante |
 | O03 | Sev. 8 — Aberto | Sev. 10 — Em Monitoramento | Sev. 10 — Em Monitoramento | Frentes técnicas distintas no ciclo (voz, RF/RNF, PLN, mensageria) mantêm a captura |
@@ -996,7 +1086,7 @@ O histórico registra, por item, a evolução desde a identificação inicial, d
 | **R06** — Disponibilidade do parceiro | Premissas e validações seguem sem retorno ao longo de S2 e S3 | Premissas documentadas; decisões reversíveis; redução de dependência externa | **Parcialmente efetiva.** O trabalho técnico avançou, mas R01 permanece sem validação externa e RF04–RF08 seguem não demonstráveis de ponta a ponta no ambiente real | Escalar via orientadora; lista única de dúvidas; registrar premissas assumidas na Sprint 4 |
 | **R08** — Desalinhamento de expectativas | Materializado na Sprint 2 (redefinição de escopo) | Realinhamento e reorganização do `Projeto.md`; `AM09` | **Efetiva residual na Sprint 3.** Não houve nova ruptura rastreável nos commits do período; severidade reduzida para 9 | Manter issue de propagação (`AM09`) se houver mudança de arquitetura |
 | **R11** — Credenciais de nuvem | Infraestrutura ainda vinculada a conta pessoal (sem evidência de credencial institucional no ciclo) | Provisionamento pessoal + documentação reproduzível | **Efetiva quanto à continuidade; exposição residual mantida** | Retomar solicitação institucional; scripts de reprovisionamento |
-| **R18** — Perda de capacity sem plano B | Feriado de 07/09 sem desenvolvimento; integrantes resfriados com queda de produtividade | Redistribuição informal e adiantamento de outras frentes por quem estava disponível | **Parcialmente efetiva.** O ciclo entregou 37 commits e 16 MRs, mas a razão 13:1 e um integrante sem commits mostram cobertura insuficiente | Formalizar plano B (`AM14`) e capacity com feriados (`AM15`) na Sprint 4 |
+| **R18** — Perda de capacity sem plano B | Feriado de 07/09 sem desenvolvimento; redução de capacidade por indisposição | Redistribuição informal e adiantamento de outras frentes | **Parcialmente efetiva.** O ciclo registrou 50 commits autorais, 35 integrados na `develop` e 16 MRs integrados; a concentração entre volumes autorais permanece um ponto de acompanhamento | Formalizar plano B (`AM14`) e capacity com feriados (`AM15`) na Sprint 4 |
 
 As ações de mitigação em curso são classificadas como `Não iniciada`, `Em execução`, `Efetiva`, `Ineficaz` ou `Encerrada`:
 
@@ -1004,7 +1094,7 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 |---|---|---|---|
 | Uso exclusivo de dados sintéticos ou anonimizados | Nenhum incidente registrado; canal de voz operando sobre áudios de teste | Efetiva | Revisar datasets e serviços externos na Sprint 4 |
 | Contingência de desacoplamento (R02 / O04) | Mensageria e voz avançaram na stack própria | Efetiva | Critérios de aceite da Onda 1 + integração do classificador (Onda 3) |
-| Acompanhamento do cronograma | 37 commits / 16 MRs no recorte; Onda 1 ainda com `NotImplementedError`; feriado e mal-estar consumiram capacity | Em execução | `AM15` e `AM16` na Sprint 4 |
+| Acompanhamento do cronograma | 50 commits autorais, 35 integrados na `develop` e 16 MRs integrados; Onda 1 ainda com `NotImplementedError`; feriado e indisposição consumiram capacity | Em execução | `AM15` e `AM16` na Sprint 4 |
 | Validação com o parceiro | Sem retorno rastreável; R06 materializado | **Ineficaz por impedimento externo** | Escala via orientadora; premissas documentadas |
 | Plano B para ausências (R18) | Não havia plano formal; resposta foi redistribuição reativa | **Ineficaz / não iniciada formalmente** | `AM14` na abertura da Sprint 4 |
 | Monitoramento do consumo Speech (R17) | Azure Speech em uso (`#203`–`#206`); token streaming ainda pendente | Em execução | Alerta de orçamento e medição de minutos na Sprint 4 |
@@ -1113,9 +1203,9 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 
 | Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (corte 09/09, `c00d712`) | Uso no acompanhamento |
 |---|---:|---:|---:|---|
-| Issues concluídas | 48/48 — 100% | 81/81 — 100% | não reextraído (board) | Verificar previsibilidade; 25 issues distintas referenciadas em commits do período |
-| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | não reextraído (board) | Comparar carga planejada e concluída |
-| Commits na `develop` | 65 | 129, sendo 91 autorais | 37 autorais + 16 merges | Evidenciar integração e rastreabilidade |
+| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 23 fechadas de 55 atribuídas | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
+| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | 47,50 h atribuídas; 19,50 h fechadas | Comparar carga planejada e concluída |
+| Commits na `develop` | 65 | 129, sendo 91 autorais | 35 autorais integrados; 50 autorais únicos no total | Evidenciar integração e rastreabilidade |
 | Merge requests | 33 criados / 33 revisados | 35 integrados na `develop` | 16 integrados (`!75`–`!93`) | Acompanhar equilíbrio entre produção e integração |
 | Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | não reextraído (board) | Detectar acúmulo (`AM06`) |
 | SLA de primeira revisão | até 24 h úteis | não instrumentado | não instrumentado | Identificar espera no fluxo de integração |
