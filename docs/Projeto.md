@@ -6473,6 +6473,48 @@ pelo nível AA da WCAG para texto pequeno.
 | `recusa` | `#0B5EA8` | 6,60 | 5,89 |
 | `falha` | `#63488B` | 7,42 | 6,62 |
 
+Além das cores dos desfechos, o texto da interface usa uma escala de tokens
+nomeados pelo papel que exercem na hierarquia de leitura, definidos em
+`src/web/src/estilos/global.css`. A adoção dos tokens substituiu seis cinzas
+declarados de forma avulsa ao longo da folha de estilo, o que tornava a
+verificação de contraste inviável na prática: não havia um lugar único a
+auditar.
+
+A verificação foi feita contra todos os fundos claros em que a interface
+efetivamente aplica cada token, e não apenas contra o branco. A distinção não é
+formal: o cinza secundário anterior aprovava sobre a página e reprovava sobre a
+bolha do agente e sobre a etiqueta de status, de modo que uma verificação
+restrita ao branco teria declarado conformidade inexistente.
+
+| Token | Valor | Uso | Pior caso medido | Mínimo exigido |
+| --- | --- | --- | --- | --- |
+| `--texto-forte` | `#172033` | Títulos e corpo do documento | 14,51 | 4,5 |
+| `--texto-padrao` | `#344054` | Texto de interface, rótulos e navegação | 9,33 | 4,5 |
+| `--texto-suave` | `#646d82` | Texto secundário, horários, legendas e metadados | 4,62 | 4,5 |
+| `--indicador-neutro` | `#8691a5` | Ponto de status inativo | 3,18 | 3,0 |
+| `--texto-desabilitado` | `#98a2b3` | Texto de controle desabilitado | 2,30 | isento |
+
+As correções aplicadas foram as seguintes.
+
+| Elemento | Antes | Razão anterior | Depois | Razão |
+| --- | --- | --- | --- | --- |
+| Aviso sob o campo de mensagem | `#a3abba` | 2,31 | `--texto-suave` | 5,18 |
+| Horário das mensagens | `#98a2b3` | 2,58 | `--texto-suave` | 5,18 |
+| Datas do histórico | `#8b95a5` | 2,80 | `--texto-suave` | 4,79 |
+| Rótulos dos campos de rotina | `#8a94a4` | 3,06 | `--texto-suave` | 5,18 |
+| Cabeçalho do histórico | `#7a8493` | 3,50 | `--texto-suave` | 4,79 |
+| Etiqueta de status | `#667085` | 4,44 | `--texto-suave` | 4,62 |
+| Destaque do cartão de notificação | `#e13b3b` | 4,29 | `#df2d2d` | 4,61 |
+| Ponto de status inativo | `#98a2b3` | 2,58 | `--indicador-neutro` | 3,18 |
+
+Duas exceções permanecem, ambas por decisão registrada e não por omissão. A
+primeira é o texto do botão de envio desabilitado, que a WCAG 1.4.3 isenta por
+se tratar de componente inativo: escurecê-lo o faria parecer acionável, o que
+prejudicaria a compreensão em vez de melhorá-la. A segunda são os pontos
+animados do indicador de digitação, que são decorativos, estão marcados com
+`aria-hidden` e têm seu significado carregado pelo texto equivalente lido por
+leitor de tela, conforme descrito em 9.2.5.
+
 ### 9.2.6 Páginas e navegabilidade
 
 | Rota | Página | Proteção | Finalidade |
