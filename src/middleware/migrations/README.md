@@ -37,21 +37,37 @@ O `docker compose` aplica `alembic upgrade head` na subida do serviço
   Converter para `alter_column` na mão quando for o caso.
 - Migração que apaga dado precisa ser mencionada na descrição do MR.
 
-## Índices previstos
+- **Não rodar `alembic init`.** O `alembic.ini` e o `env.py` deste
+  diretório são escritos à mão; o init os sobrescreveria, levando junto o
+  prefixo de data no nome do arquivo, o hook do ruff e o filtro do
+  jobstore.
 
-O dashboard agrega sobre a tabela de interações. Os três índices abaixo
-sustentam os recortes da seção 5 da Arquitetura e devem entrar na
-migração que cria a tabela, não depois:
+## Índices em operação
 
-```sql
-CREATE INDEX ix_interacao_criada_em      ON interacao (criada_em);
-CREATE INDEX ix_interacao_intencao_data  ON interacao (intencao_id, criada_em);
-CREATE INDEX ix_interacao_desfecho_data  ON interacao (desfecho, criada_em);
-```
+O dashboard agrega sobre a tabela de interações. Cada índice abaixo
+corresponde a uma consulta nomeada — nenhum é palpite. Os seis primeiros
+sustentam os recortes da seção 5 da Arquitetura:
 
-## TODO (onda 1)
+| Índice | Consulta |
+|---|---|
+| `ix_interacao_conversa_criada` | turnos de uma conversa, em ordem (RF12) |
+| `ix_interacao_usuario_criada` | histórico do usuário |
+| `ix_interacao_criada_em` | janela do dashboard |
+| `ix_interacao_intencao_criada` | volume por intenção |
+| `ix_interacao_desfecho_criada` | distribuição de desfechos e série de bloqueios |
+| `ix_interacao_sem_intencao` | parcial, `WHERE intencao_id IS NULL`: enunciados fora de escopo e bloqueios |
+| `ix_conversa_usuario_atualizada` | lista de histórico |
+| `ix_rotina_dono` | rotinas de um dono (RF11) |
+| `ix_execucao_rotina_iniciada` | disparos recentes de uma rotina |
 
-Gerar o esqueleto com `alembic init migrations`, ajustar o `env.py` para
-usar `settings.database_url` e o metadata dos modelos, e criar a primeira
-revisão com as tabelas `conversa`, `interacao`, `rotina` e
-`execucao_rotina`. O `versions/` fica vazio até lá.
+**O autogenerate não inventa índice parcial nem `CHECK`.** Os dois estão
+declarados no `tabelas.py` e foram conferidos na revisão da migração
+inicial. Ao acrescentar um, verificar o arquivo gerado antes de aplicar.
+
+## O filtro do jobstore
+
+`env.py` traz um `include_object` que esconde `apscheduler_jobs` do
+autogenerate. Não é detalhe: o jobstore do APScheduler cria a própria
+tabela fora do `metadata`, e o Alembic gera `drop_table` para tudo o que
+encontra no banco e não conhece no código. Sem o filtro, a primeira
+migração criada depois que o worker rodar apagaria a agenda inteira.

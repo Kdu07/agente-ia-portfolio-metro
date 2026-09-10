@@ -18,6 +18,7 @@ from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import sessao as auth_sessao
 from app.copilot.client import CopilotClient
@@ -26,11 +27,14 @@ from app.persistence.repository import (
     ExecucaoRepository,
     InteracaoRepository,
     RotinaRepository,
+    UsuarioRepository,
 )
+from app.persistence.sessao import obter_sessao
 from app.pipeline.orquestrador import Orquestrador
 from app.schemas.usuario import Permissao, UsuarioAutenticado
 
 __all__ = [
+    "SessaoBanco",
     "UsuarioAtual",
     "UsuarioAutenticado",
     "exige_permissao",
@@ -41,16 +45,32 @@ __all__ = [
     "obter_orquestrador",
     "obter_rotinas",
     "obter_usuario_atual",
+    "obter_usuarios",
 ]
+
+SessaoBanco = Annotated[AsyncSession, Depends(obter_sessao)]
 
 
 async def obter_usuario_atual(
+    banco: SessaoBanco,
     sessao: Annotated[str | None, Cookie(alias=auth_sessao.NOME_COOKIE)] = None,
 ) -> UsuarioAutenticado:
     """Resolve a sessão do cookie e devolve o usuário autenticado.
 
     Cookie ausente, adulterado ou expirado resultam no MESMO 401. A
     distinção seria um oráculo útil a quem tenta forjar sessões.
+
+    Projeta a identidade no banco antes de devolvê-la. É aqui, e não no
+    registro da interação, porque é aqui que a identidade está completa:
+    `Interacao` carrega apenas `usuario_id` e `perfil`, sem nome nem
+    e-mail. Enquanto o fluxo de login do Entra não existir, esta é a
+    única passagem por onde todo usuário autenticado passa — e sem a
+    linha em `usuario` as chaves estrangeiras das outras quatro tabelas
+    não teriam a que apontar.
+
+    Uma falha aqui propaga. Se o banco não responde, a requisição não
+    teria como gravar nada mesmo; devolver 200 sugerindo o contrário
+    seria pior.
     """
     if sessao is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sessão ausente")
@@ -59,7 +79,14 @@ async def obter_usuario_atual(
     if resolvida is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sessão inválida")
 
-    return resolvida.usuario
+    usuario = resolvida.usuario
+    await UsuarioRepository(banco).garantir(
+        usuario_id=usuario.id,
+        nome=usuario.nome,
+        perfil=usuario.perfil.value,
+        email=usuario.email,
+    )
+    return usuario
 
 
 UsuarioAtual = Annotated[UsuarioAutenticado, Depends(obter_usuario_atual)]
@@ -92,35 +119,44 @@ def obter_copilot() -> CopilotClient:
     return CopilotClient()
 
 
-def obter_interacoes() -> InteracaoRepository:
+def obter_interacoes(banco: SessaoBanco) -> InteracaoRepository:
     """Repositório do registro de interações."""
-    return InteracaoRepository()
+    return InteracaoRepository(banco)
 
 
-def obter_conversas() -> ConversaRepository:
+def obter_conversas(banco: SessaoBanco) -> ConversaRepository:
     """Repositório de sessões de conversa."""
-    return ConversaRepository()
+    return ConversaRepository(banco)
 
 
-def obter_rotinas() -> RotinaRepository:
+def obter_rotinas(banco: SessaoBanco) -> RotinaRepository:
     """Repositório de rotinas."""
-    return RotinaRepository()
+    return RotinaRepository(banco)
 
 
-def obter_execucoes() -> ExecucaoRepository:
+def obter_execucoes(banco: SessaoBanco) -> ExecucaoRepository:
     """Repositório do histórico de disparos."""
-    return ExecucaoRepository()
+    return ExecucaoRepository(banco)
 
 
-def obter_orquestrador() -> Orquestrador:
+def obter_usuarios(banco: SessaoBanco) -> UsuarioRepository:
+    """Repositório da projeção de identidade."""
+    return UsuarioRepository(banco)
+
+
+def obter_orquestrador(
+    interacoes: Annotated[InteracaoRepository, Depends(obter_interacoes)],
+    conversas: Annotated[ConversaRepository, Depends(obter_conversas)],
+) -> Orquestrador:
     """Monta o orquestrador com seus colaboradores.
 
-    TODO (onda 1): quando os repositórios tiverem implementação com pool
-    de conexões, receber os providers acima via Depends em vez de
-    instanciá-los por requisição.
+    Os repositórios chegam por `Depends` e compartilham a sessão da
+    requisição: a conversa criada no início do turno e a interação
+    gravada no fim são a mesma transação, e um erro entre as duas não
+    deixa conversa órfã.
     """
     return Orquestrador(
         copilot=obter_copilot(),
-        interacoes=obter_interacoes(),
-        conversas=obter_conversas(),
+        interacoes=interacoes,
+        conversas=conversas,
     )

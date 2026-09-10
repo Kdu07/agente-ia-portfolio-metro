@@ -1,0 +1,66 @@
+erDiagram
+    USUARIO ||--o{ CONVERSA : mantem
+    USUARIO ||--o{ INTERACAO : registra
+    USUARIO ||--o{ ROTINA : cadastra
+    CONVERSA ||--o{ INTERACAO : agrupa
+    ROTINA ||--o{ EXECUCAO_ROTINA : gera
+    ROTINA ||--o{ INTERACAO : origina
+    EXECUCAO_ROTINA |o--o| INTERACAO : produz
+
+    USUARIO {
+        texto id PK "identificador do provedor (oid do Entra)"
+        texto nome "obrigatorio"
+        texto email UK "opcional"
+        texto perfil "CHECK: diretoria, lider_projeto, membro_equipe"
+        datahora criado_em "primeiro acesso"
+        datahora visto_em "acesso mais recente"
+    }
+
+    CONVERSA {
+        texto id PK
+        texto usuario_id FK "RESTRICT"
+        texto conversa_externa_id "nulo ate o primeiro turno encaminhado"
+        texto titulo "derivado do primeiro turno"
+        datahora criada_em
+        datahora atualizada_em "ordena a lista de historico"
+        datahora arquivada_em "nulo significa ativa"
+    }
+
+    INTERACAO {
+        texto id PK
+        texto conversa_id FK "RESTRICT"
+        texto usuario_id FK "RESTRICT"
+        texto perfil "CHECK: perfil no momento da interacao"
+        texto canal "CHECK: chat, voz, rotina"
+        texto prompt "obrigatorio"
+        texto resposta "obrigatorio"
+        texto intencao_id "nulo se bloqueada antes de classificar; sem FK"
+        decimal confianca_intencao
+        texto desfecho "CHECK: oito valores"
+        inteiro latencia_ms
+        datahora criada_em
+        texto rotina_id FK "nulo, preenchido quando canal e rotina"
+    }
+
+    ROTINA {
+        texto id PK
+        texto nome
+        texto prompt "obrigatorio"
+        texto agenda_cron "expressao de recorrencia"
+        texto timezone "fuso em que a expressao e interpretada"
+        texto dono_id FK "RESTRICT"
+        booleano ativa "padrao verdadeiro"
+        datahora criada_em
+        datahora atualizada_em
+        texto intencao_prevista "resolvida na validacao do cadastro"
+    }
+
+    EXECUCAO_ROTINA {
+        texto id PK
+        texto rotina_id FK "RESTRICT"
+        datahora iniciada_em "gravado antes do pipeline"
+        datahora concluida_em "nulo enquanto executa"
+        texto status "CHECK: sucesso, bloqueada, falha"
+        texto interacao_id FK "nulo ate o fim do disparo"
+        texto erro "mensagem, quando houver"
+    }
