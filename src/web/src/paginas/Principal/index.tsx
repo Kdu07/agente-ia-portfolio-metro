@@ -1,47 +1,65 @@
-import { type FormEvent, useState } from "react";
+/**
+ * Pagina principal: a conversa com o agente.
+ *
+ * O envio passa pelo contrato de POST /chat. Em desenvolvimento quem
+ * responde e o duble em `mocks/handlers.ts`; a tela nao sabe a diferenca,
+ * e essa e a propriedade que permite trocar o duble pelo middleware sem
+ * tocar aqui.
+ *
+ * Sem `:conversaId` a tela e uma conversa nova, com sugestoes de partida.
+ * Com o parametro, os turnos gravados sao carregados e as mensagens novas
+ * entram na sequencia. A remontagem entre uma conversa e outra e
+ * garantida pela `key` em `rotas.tsx`.
+ */
 
-interface Mensagem {
-  autor: "agente" | "usuario";
-  texto: string;
-  horario: string;
-}
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 
-const INICIAIS: Mensagem[] = [
-  {
-    autor: "agente",
-    texto: "Olá! O acompanhamento do Projeto X está ativo. Posso ajudar a consultar status, revisar riscos, acompanhar marcos ou registrar uma pendência.",
-    horario: "10:00",
-  },
-];
+import { BolhaMensagem } from "@/componentes/chat/BolhaMensagem";
+import { Composer } from "@/componentes/chat/Composer";
+import { ConversaVazia } from "@/componentes/chat/ConversaVazia";
+import { IndicadorDigitando } from "@/componentes/chat/IndicadorDigitando";
+import { useConversa } from "@/hooks/useConversa";
+import { useMicrofone } from "@/hooks/useMicrofone";
 
 export function Principal() {
-  const [notificacao, setNotificacao] = useState(true);
-  const [gravando, setGravando] = useState(false);
-  const [texto, setTexto] = useState("");
-  const [mensagens, setMensagens] = useState<Mensagem[]>(INICIAIS);
+  const { conversaId } = useParams<{ conversaId: string }>();
+  const { linhas, carregando, enviando, erro, enviar, reenviarUltima } = useConversa(conversaId);
 
-  function enviar(evento: FormEvent) {
-    evento.preventDefault();
-    const mensagem = texto.trim();
-    if (!mensagem) return;
-    setMensagens((atuais) => [
-      ...atuais,
-      { autor: "usuario", texto: mensagem, horario: "agora" },
-    ]);
+  // O alerta proativo so faz sentido numa conversa nova: ele fala do
+  // agora, e reaparecer ao abrir uma conversa de tres dias atras daria a
+  // impressao de que o marco acabou de atrasar.
+  const [notificacao, setNotificacao] = useState(!conversaId);
+  const [texto, setTexto] = useState("");
+
+  // A transcricao final chega ao campo em vez de ser enviada direto: a
+  // pessoa precisa poder revisar antes, porque reconhecimento de fala
+  // erra nome proprio e numero, que e justamente o que uma solicitacao
+  // sobre projeto costuma conter.
+  const receberTranscricao = useCallback((transcrito: string) => {
+    setTexto((atual) => (atual ? `${atual} ${transcrito}` : transcrito));
+  }, []);
+  const voz = useMicrofone(receberTranscricao);
+
+  // A lista de mensagens tem rolagem propria. Sem trazer o fim para a
+  // vista a cada mensagem nova, a resposta chega fora do campo visivel e
+  // a pessoa precisa rolar para descobrir que ela chegou.
+  const fimDaLista = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fimDaLista.current?.scrollIntoView({ block: "end" });
+  }, [linhas.length, enviando]);
+
+  function submeter() {
+    enviar(texto);
     setTexto("");
   }
 
   function verDetalhes() {
     setNotificacao(false);
-    setMensagens((atuais) => [
-      ...atuais,
-      {
-        autor: "agente",
-        texto: "Notei que o marco “Entrega da Fase 2” está atrasado. Quer me contar o motivo ou prefere ver o histórico primeiro?",
-        horario: "agora",
-      },
-    ]);
+    enviar("Por que o marco “Entrega da Fase 2” está atrasado?");
   }
+
+  const semMensagens = !carregando && linhas.length === 0;
 
   return (
     <div className="page conversation-page">
@@ -56,19 +74,32 @@ export function Principal() {
       </header>
 
       <div className="conversation-body">
-        <div className="messages" aria-live="polite">
-          {mensagens.map((mensagem, indice) => (
-            <div className={`message-row message-row--${mensagem.autor}`} key={`${mensagem.horario}-${indice}`}>
-              {mensagem.autor === "agente" ? <span className="message-avatar brand-mark--letter" aria-label="Prata">P</span> : null}
-              <div>
-                <article className="message-bubble">{mensagem.texto}</article>
-                <time>{mensagem.horario}</time>
-              </div>
-              {mensagem.autor === "usuario" ? <span className="avatar avatar--small">FE</span> : null}
-            </div>
+        <div className="messages" aria-live="polite" aria-busy={enviando}>
+          {carregando ? (
+            <p className="text-sm text-slate-600">Carregando a conversa...</p>
+          ) : null}
+
+          {semMensagens ? <ConversaVazia onEscolher={setTexto} /> : null}
+
+          {linhas.map((linha) => (
+            <BolhaMensagem
+              key={linha.id}
+              autor={linha.autor}
+              texto={linha.texto}
+              horario={linha.horario}
+              desfecho={linha.desfecho}
+              iniciais="FE"
+            />
           ))}
+
+          {enviando ? <IndicadorDigitando /> : null}
+
+          <div ref={fimDaLista} />
         </div>
 
+        {/* TODO (bloco de alertas): o cartao flutua sobre a conversa e
+            encobre a mensagem a que se refere. Deve empurrar o conteudo
+            ou entrar como primeira mensagem. */}
         {notificacao ? (
           <aside className="notification-card" role="dialog" aria-label="Notificação do assistente">
             <button className="notification-close" onClick={() => setNotificacao(false)} aria-label="Fechar">×</button>
@@ -81,18 +112,36 @@ export function Principal() {
           </aside>
         ) : null}
 
-        <form className="composer" onSubmit={enviar}>
-          <textarea value={texto} onChange={(evento) => setTexto(evento.target.value)} placeholder={gravando ? "Ouvindo... fale agora" : "Digite sua mensagem para a Prata..."} aria-label="Mensagem" rows={1} />
-          <div className="composer-actions">
-            <div className="composer-tools" aria-hidden="true"><span>⌕</span><span>◎</span><span>▣</span><b>Projeto X - PMO GPT⌄</b></div>
-            <div className="composer-submit">
-              <button className={gravando ? "voice-button voice-button--active" : "voice-button"} type="button" aria-label={gravando ? "Parar entrada por voz" : "Iniciar entrada por voz"} aria-pressed={gravando} onClick={() => setGravando((ativo) => !ativo)}>
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" /></svg>
-              </button>
-              <button className="send-button" type="submit" aria-label="Enviar mensagem" disabled={!texto.trim()}>→</button>
-            </div>
+        {voz.erro ? (
+          <div
+            role="alert"
+            className="mx-auto mb-2 w-[min(760px,100%)] rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900"
+          >
+            {voz.erro}
           </div>
-        </form>
+        ) : null}
+
+        {erro ? (
+          <div
+            role="alert"
+            className="mx-auto mb-2 flex w-[min(760px,100%)] items-center justify-between gap-4 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3"
+          >
+            <span className="text-sm text-slate-900">{erro}</span>
+            <button type="button" className="outline-button" onClick={reenviarUltima}>
+              Tentar novamente
+            </button>
+          </div>
+        ) : null}
+
+        <Composer
+          valor={texto}
+          estadoVoz={voz.estado}
+          parcial={voz.parcial}
+          contexto="Projeto X - PMO GPT"
+          onAlterar={setTexto}
+          onEnviar={submeter}
+          onAlternarVoz={voz.alternar}
+        />
         <p className="disclaimer">Prata pode cometer erros. Verifique informações importantes.</p>
       </div>
     </div>

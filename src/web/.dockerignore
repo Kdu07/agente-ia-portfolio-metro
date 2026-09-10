@@ -1,0 +1,8 @@
+# O Dockerfile roda `COPY . .` antes do build. Sem esta lista, a imagem
+# recebe o node_modules da maquina de quem builda — pesado, e com os
+# binarios da plataforma errada quando o build sai de um Windows.
+node_modules
+dist
+.git
+.eslintcache
+*.local
