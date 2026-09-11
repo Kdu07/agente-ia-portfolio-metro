@@ -41,8 +41,8 @@ python -c "import sys; print(sys.executable)"
 
 ## Classificador de intenção
 
-O modelo não é versionado — são ~4 MB de artefato gerado, reproduzível a partir
-do corpus, que está versionado. Depois de clonar o repositório, treine uma vez:
+O artefato `dados/classificador.joblib` e o corpus estão versionados. Para
+regenerar o modelo e calibrar seus limiares a partir do corpus, execute:
 
 ```powershell
 python -m app.pipeline.intencao.treino

@@ -1808,7 +1808,7 @@ Essa posição determina o que o banco de dados guarda, e o que ele **não** gua
 
 A distinção é a decisão estruturante desta seção. Um modelo que tentasse espelhar o portfólio criaria uma segunda fonte de verdade, com todos os problemas de sincronização que a arquitetura evita justamente ao delegar a execução (ver [Arquitetura.md](Arquitetura.md), seção 1).
 
-> **Escopo desta modelagem.** Este capítulo descreve o esquema **em operação**, criado na Sprint 3 e versionado em `src/middleware/migrations/versions/`. Ele sucede a modelagem de três entidades entregue na Sprint 2, que antecipava por escrito os desdobramentos ainda ausentes — separação da conversa em entidade própria, histórico de execuções de rotina e vocabulário fechado de desfechos. Os três foram construídos, cada um a partir de um requisito já registrado (RF11, RF12), e chegaram por migração versionada. Onde uma decisão da Sprint 2 foi revista, a revisão está registrada com o motivo em 4.4.2, e não substituída em silêncio: um modelo que apaga o próprio histórico impede saber por que ele é como é.
+> **Escopo desta modelagem.** Os diagramas e as descrições abaixo representam as cinco tabelas da migração inicial da Sprint 3. O esquema versionado evoluiu para **oito tabelas**: `usuario`, `sessao_usuario`, `conversa`, `interacao`, `rotina`, `execucao_rotina`, `rag.arquivo` e `rag.trecho`. As três adições são implementadas em `app/persistence/tabelas.py` e `app/rag/tabelas.py`, com migrações em `src/middleware/migrations/versions/`: a sessão sustenta o login (RF01), e arquivo/trecho sustentam a recuperação documental e sua proveniência (RF04). As vistas abaixo são um recorte do núcleo inicial, não o inventário completo do esquema; nenhuma tabela ou decisão de modelagem é alterada por esta revisão.
 
 ### 4.1.1 Atores e entidades do negócio
 
@@ -1885,9 +1885,9 @@ Projeção local da identidade federada. Não é a fonte de verdade da autoriza�
 
 **A chave primária é o identificador do provedor, e não uma chave interna.** É o mesmo valor que a identidade autenticada carrega pela requisição inteira; traduzi-lo para uma chave própria custaria uma consulta a cada escrita e guardaria o mesmo dado em duas colunas.
 
-**A linha nasce por projeção, não por cadastro.** Enquanto o registro de aplicação no Entra ID seguir pendente, não existe fluxo de login que insira o usuário. A gravação acontece por `INSERT ... ON CONFLICT DO UPDATE` idempotente na resolução da sessão, a cada requisição autenticada — é o que mantém as chaves estrangeiras íntegras sem depender de um provisionamento que não é controlado pela equipe. Quando o *callback* de autenticação existir, o mesmo comando migra para lá.
+**A linha nasce por projeção, não por cadastro.** O callback de autenticação já está implementado em `app/api/routes/auth.py` e garante o registro do usuário antes de criar a sessão. A autenticação real continua dependendo da configuração do Entra ID; existência do código não comprova homologação no tenant do parceiro.
 
-**A permissão saiu desta tabela.** A modelagem da Sprint 2 tinha `pode_ver_intencoes` como coluna booleana, com o ponto de virada já registrado: uma segunda capacidade administrativa exigiria uma tabela associativa. A gestão de rotinas (RF11) é essa segunda capacidade, e a virada aconteceu antes da coluna existir — as permissões são resolvidas dos *claims* de grupo a cada requisição e não são persistidas. Projetar autorização localmente criaria uma segunda fonte de verdade que poderia divergir do Entra e conceder acesso indevido.
+**As permissões não são colunas de `usuario`.** Elas derivam dos *claims* do Entra no login e são registradas, junto com o perfil, em `sessao_usuario`. As requisições seguintes consultam essa sessão no servidor; não há nova consulta aos grupos do Entra a cada requisição. Uma mudança de grupos no provedor não atualiza automaticamente uma sessão já emitida.
 
 #### 4.3.1.2 Tabela: `conversa`
 
@@ -1971,7 +1971,7 @@ Um disparo e seu resultado. Não existia na modelagem da Sprint 2.
 
 ### 4.3.3 Justificativa de normalização (3FN)
 
-1. **Primeira Forma Normal.** Todos os atributos são atômicos nas cinco tabelas. As permissões, que seriam o candidato natural a atributo multivalorado, não são persistidas: resolvem-se dos *claims* a cada requisição (4.3.1.1).
+1. **Primeira Forma Normal.** Os atributos das cinco tabelas do núcleo inicial são atômicos. A evolução de autenticação armazena as permissões da sessão em `sessao_usuario`; esse registro complementar não está representado nos diagramas da migração inicial (4.1).
 2. **Segunda Forma Normal.** Todas as chaves primárias são simples, e portanto não há dependência parcial em nenhuma tabela.
 3. **Terceira Forma Normal.** Nenhum atributo não-chave depende de outro atributo não-chave. Em `interacao`, `prompt`, `resposta`, `intencao_id`, `desfecho` e `latencia_ms` dependem exclusivamente de `id`: todos são resultado do processamento daquela mensagem específica, e não derivam do usuário nem da conversa. A única redundância do modelo é `interacao.perfil`, e ela é **desnormalização deliberada e documentada** (4.3.1.3): o perfil histórico não é derivável do estado atual do usuário, porque o estado atual muda.
 
@@ -2136,7 +2136,7 @@ CREATE INDEX ix_execucao_rotina_iniciada ON execucao_rotina (rotina_id, iniciada
 - **UUID em coluna `text`, revisando a decisão da Sprint 2.** O modelo anterior adotava `serial` pela legibilidade, com o custo declarado: identificador sequencial revela volume de uso e permite enumeração de registros alheios, e a troca por identificador opaco ficava "para a onda que expõe o histórico na interface". Esta é essa onda, e a inversão aconteceu por dois motivos que se somam. O primeiro é o custo já previsto. O segundo é que o orquestrador implementado gera o identificador **antes** de gravar — a interação precisa de um id no início do pipeline, para correlacionar o registro com os alertas de segurança emitidos ao longo dele, e um `serial` só existiria depois do `INSERT`. A defesa de aplicação continua valendo: toda leitura verifica a propriedade do registro no servidor.
 - **`CHECK` gerado, nunca digitado.** As listas de valores de `perfil`, `canal`, `desfecho` e `status` são produzidas a partir dos enums do código na definição do esquema, e não escritas à mão no DDL. A razão é concreta: a versão anterior desta seção trazia `CHECK (perfil IN ('DIRETORIA', ...))` em maiúsculas, enquanto o código grava `'diretoria'` — divergência que passaria despercebida até a primeira gravação real ser recusada em produção. Gerar a lista faz de "acrescentar um desfecho e esquecer o banco" um erro de migração, que aparece antes de chegar ao usuário.
 - **Sem tipo enumerado do banco.** `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria desconfortável cada valor novo; um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum. `interacao.intencao_id` não tem nem `CHECK` nem chave estrangeira, porque o catálogo de intenções é artefato de código revisado a cada sprint (5.4.9) e amarrá-lo ao banco faria de cada revisão uma migração.
-- **Permissões fora do esquema.** A modelagem anterior previa `pode_ver_intencoes` como coluna booleana, registrando o ponto de virada: uma segunda capacidade administrativa exigiria tabela associativa. A gestão de rotinas (RF11) é essa segunda capacidade, e a virada chegou antes de a coluna existir. As permissões passaram a ser resolvidas dos *claims* de grupo a cada requisição, sem persistência — projetá-las localmente criaria uma segunda fonte de verdade capaz de divergir do Entra e conceder acesso que já foi revogado.
+- **Permissões fora de `usuario`.** A coluna `pode_ver_intencoes` não foi criada. Na implementação atual, perfil e permissões derivados do login são persistidos em `sessao_usuario`, conforme 4.3.1.1; não são recalculados a partir do Entra a cada requisição.
 - **Índices derivados dos recortes, não do palpite.** Cada um dos nove índices corresponde a uma consulta nomeada em [Arquitetura.md](Arquitetura.md), seção 5, e a lista está em `src/middleware/migrations/README.md`. O índice parcial sobre as mensagens sem classificação serve ao agrupamento que alimenta tanto o backlog de novas intenções quanto o recorte de segurança, já que ambos os casos chegam ao banco sem intenção resolvida. Não há índice sobre `rotina.ativa`: a consulta que o usaria roda uma vez na subida do worker, sobre dezenas de linhas.
 - **Verificação do esquema por teste, e não por inspeção.** `tests/integration/test_persistencia.py` roda contra o PostgreSQL real e exercita o que só o servidor sabe responder: se cada valor dos enums passa no `CHECK`, se a chave estrangeira recusa apagar um usuário com registro, se o índice parcial existe com a cláusula `WHERE` correta. A suíte pula limpa quando o banco não responde.
 - **Sem vista materializada nesta etapa.** Para o volume esperado de um MVP, a agregação em SQL sobre `intencao` é suficiente. Materializar antes de medir seria otimização especulativa, com custo de atualização e de invalidação.
@@ -2386,6 +2386,9 @@ flowchart TB
 
 Um Diagrama de Componentes UML é uma representação visual que descreve a organização dos principais módulos de um sistema de software, suas responsabilidades e as interfaces por meio das quais se comunicam. Esse tipo de diagrama permite visualizar, de forma modular, como cada parte do sistema interage com as demais, garantindo organização, coesão e clareza arquitetural, e servindo como referência para o desenvolvimento, integração e implantação da solução.
 
+<details>
+<summary>Histórico da Sprint 1 — não utilizar como arquitetura vigente</summary>
+
 > **Vista da Sprint 1 — mantida como histórico.** As subseções 5.2.1 e 5.2.2 descrevem a arquitetura anterior à revisão de escopo, na qual o Copilot Studio orquestrava o fluxo e **consumia** a API de PLN da equipe pela interface `C0`. A arquitetura vigente inverte essa direção: o middleware é a porta de entrada e **aciona** o Copilot Studio por Direct Line, que atua como executor das ações sobre o portfólio. O contrato atualizado está em **5.2.3** (componentes), **5.3.8** (sequência) e **5.8** (classes). Esta vista é preservada porque registra a decisão de onde se partiu, e não deve ser usada como referência de implementação.
 >
 > Blocos desta vista que **não existem** na arquitetura vigente: `C0` (interface de serviço consumida pelo Copilot), `C5` (busca semântica), `D1` a `D6` (roteador e serviços de negócio, hoje tópicos do Copilot Studio) e `F2` e `F3` (índice vetorial e base de normativos).
@@ -2466,14 +2469,11 @@ C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio —
 
 > Fonte: Material produzido pelos autores (2026).
 
+</details>
+
 ### 5.2.3 Diagrama atual da Sprint 2
 
-Esta subseção registra a versão atual do diagrama de componentes UML, elaborada
-na Sprint 2 a partir da arquitetura implementada no repositório. Ela complementa
-a versão anterior apresentada em 5.2: enquanto aquela descreve a separação
-conceitual entre o pipeline de PLN e os serviços do ecossistema Microsoft, esta
-vista detalha os módulos efetivamente previstos para o middleware, o worker e a
-infraestrutura de execução.
+Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o Copilot é o executor previsto. O diagrama inclui componentes planejados: emissão de token de voz, parte das guardas, cliente Copilot e execução de rotinas ainda possuem etapas não implementadas; não representam funcionalidades integralmente entregues na S3.
 
 O diagrama adota três agrupamentos principais. O `src/web` concentra a
 experiência do usuário; o `src/middleware` recebe as requisições e aplica o
@@ -2672,6 +2672,9 @@ relacionadas de 5.3 e 5.6.
 ## 5.3 Diagramas de Sequência da UML
 
 A seção 3.2.2 — *Modelagem estática — Diagrama de classes* — apresentou a modelagem estática do domínio — quais conceitos existem e como se relacionam. Esta seção apresenta a modelagem dinâmica correspondente: **como esses conceitos são produzidos e consumidos ao longo do tempo**, quais componentes trocam mensagens entre si, em que ordem e sob quais condições.
+
+<details>
+<summary>Histórico da Sprint 1 — não utilizar como arquitetura vigente</summary>
 
 > **Vista da Sprint 1 — mantida como histórico.** Os diagramas `DS01` a `DS04`, das subseções 5.3.2 a 5.3.5, e as convenções de 5.3.1 assumem a topologia anterior: a linha de vida `Copilot Studio` autentica o usuário e chama a `API de PLN`, e o canal de entrada é o Teams. Na arquitetura vigente, a entrada é a interface web própria, a autenticação ocorre no middleware contra o Entra ID, e é o middleware que chama o Copilot. Os cenários atualizados estão em **5.3.8**. Esta vista é preservada por registrar os fluxos de negócio do agente com um nível de detalhe que os cenários críticos não repetem.
 
@@ -3131,11 +3134,13 @@ Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revi
 - **Cobertura da trilha de auditoria.** A modelagem dinâmica evidenciou uma lacuna do mapeamento de integrações: a ficha INT-10 prevê o registro de consultas, intenções classificadas, recusas e alterações efetivadas, mas não de alertas proativos, e a rastreabilidade de 5.5.6 associa o RF06 apenas a INT-03 e INT-07. Por coerência, DS04 não registra o alerta emitido. Recomenda-se ampliar o escopo de INT-10 para cobrir as notificações do RF06, de modo que a atuação proativa também seja auditável.
 - **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
 
+</details>
+
 ### 5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2
 
 Os diagramas desta subseção apresentam a versão atual da modelagem dinâmica do middleware na Sprint 2. Eles detalham cinco casos críticos que atravessam as guardas de segurança, o classificador de intenções, a integração com o Copilot Studio, a persistência das interações e a execução de rotinas agendadas.
 
-Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriormente em 5.3. Os diagramas anteriores permanecem como histórico da modelagem e enfatizam os fluxos de negócio do agente; os cenários atuais partem da implementação do repositório, incluindo a API FastAPI, o cliente do Copilot Studio, o Azure AI Content Safety e as camadas de persistência. O código-fonte Mermaid é mantido neste documento para permitir revisão e evolução do artefato.
+Esta subseção contém as sequências de referência da arquitetura vigente. Os cenários de negócio `DS01` a `DS04` permanecem recolhidos como histórico, sem constituir uma segunda referência de implementação. Os participantes abaixo representam o fluxo previsto: testes com dublês de guardas ou executor não comprovam execução real desses serviços, e a rotina agendada permanece uma evolução prevista. Os diagramas e seus códigos Mermaid são mantidos neste documento.
 
 #### 5.3.8.1 Cenário 1 — Mensagem bloqueada pela guarda de injeção
 
@@ -3160,10 +3165,10 @@ sequenceDiagram
   GINJ->>GINJ: Avalia regras determinísticas locais (Regex)
   GINJ->>SAFE: Avalia via Prompt Shields API
   SAFE-->>GINJ: Score de risco adversarial detectado
-  GINJ-->>ORQ: Desfecho = BLOQUEADA_INJECAO
+  GINJ-->>ORQ: Bloqueio por regra ou modelo
   deactivate GINJ
 
-  ORQ->>PER: Persiste Interação (desfecho=BLOQUEADA_INJECAO, prompt em claro)
+  ORQ->>PER: Persiste Interação (BLOQUEADA_INJECAO_REGRA ou BLOQUEADA_INJECAO_MODELO)
   PER-->>ORQ: OK
   ORQ-->>API: Recusa seca (sem detalhes do bloqueio)
   deactivate ORQ
@@ -3213,7 +3218,7 @@ sequenceDiagram
   ORQ->>GSAI: 6. Guarda de Saída (Inspeção contra injeção indireta)
   GSAI-->>ORQ: Aprovada
 
-  ORQ->>PER: 7. Grava registro integral imutável (desfecho=SUCESSO, latência)
+  ORQ->>PER: 7. Grava registro integral (desfecho=ENCAMINHADA, latência)
   PER-->>ORQ: Registro confirmado
 
   ORQ-->>API: Resposta sanitizada final
@@ -3356,13 +3361,13 @@ O Cenário 2 funciona como fluxo de sucesso de referência para os Cenários 1 e
 
 | Cenário | Requisitos e artefatos relacionados | Evidência no fluxo |
 |---|---|---|
-| 1. Bloqueio por injeção | RF09, RF10, RNF06, INT-11, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO` sem expor o motivo. |
+| 1. Bloqueio por injeção | RF09, RF10, RNF06, INT-11, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO_REGRA` ou `BLOQUEADA_INJECAO_MODELO` sem expor o motivo. |
 | 2. Sucesso no chat | RF01 a RF03, RF10, INT-02, INT-08 e INT-10 | Sessão, permissões, guardas, classificação, execução no Copilot, validação da saída e persistência completa. |
 | 3. Bloqueio por abuso | RF09, RF10, RNF06, INT-11, `GuardaAbuso` | Azure AI Content Safety e política corporativa produzem recusa orientativa e registro nominal. |
 | 4. Injeção indireta | RF09, RNF06, INT-04, `GuardaSaida` | Conteúdo contaminado pelo documento é bloqueado antes de chegar ao usuário e sem repetir a instrução. |
 | 5. Rotina agendada | RF11, RF06, RF10, INT-07, *feature* F101, `Rotina` e `ExecucaoRotina` | Cadastro validado, execução reprocessada pelo mesmo orquestrador, registro do resultado e consulta do histórico. |
 
-Os cenários cobrem os principais desfechos definidos no diagrama de classes da Sprint 2: `BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA` e `SUCESSO`. `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR` permanecem representados no modelo estático e devem ser detalhados em cenários complementares quando seus contratos de implementação forem definidos.
+Os cenários cobrem os principais desfechos definidos no diagrama de classes da Sprint 2: `BLOQUEADA_INJECAO_REGRA`, `BLOQUEADA_INJECAO_MODELO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA` e `ENCAMINHADA`. `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR` permanecem representados no modelo estático e devem ser detalhados em cenários complementares quando seus contratos de implementação forem definidos.
 
 #### 5.3.8.8 Limitações e refinamentos futuros
 
@@ -4107,6 +4112,10 @@ A questão anterior sobre políticas de DLP e conectores personalizados foi ence
 
 ## 5.6 Visão preliminar da arquitetura em blocos conectados
 
+<details>
+<summary>Histórico da Sprint 1 — a vista vigente de componentes está em 5.2.3</summary>
+
+
 ### 5.6.1 Objetivo
 
 > **Vista da Sprint 1 — mantida como histórico.** Esta seção compartilha os identificadores `A1`–`F5` com 5.2.1 e herda a mesma inversão: o percurso descrito em 5.6.5 leva a solicitação do núcleo de PLN ao roteador `D1` e aos serviços de negócio `D2`–`D6`, construídos pela equipe. Na arquitetura vigente esses serviços não existem — consultar, atualizar, alertar, comparar e gerar relatório são executados pelo Copilot Studio, e o middleware entrega guardas, registro, análise e rotinas. A vista em camadas correspondente ao contrato atual é **5.2.3**. Esta seção é preservada pelo valor dos princípios de desenho registrados em 5.6.2, que continuam válidos.
@@ -4352,6 +4361,8 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 | RNF04. Disponibilidade do agente | C0, E1 |
 | RNF05. Adequação da resposta ao perfil | B2, A4 |
 
+</details>
+
 ## 5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto
 
 Esta seção registra a definição técnica do canal de voz da solução, atendendo aos elementos de detalhamento da API de conversão de áudio em texto e de texto em áudio e da API de recebimento dos áudios enviados pelo usuário. O canal de voz materializa o RF02 e a US02, ambos priorizados como MVP, e é a origem do risco R03 registrado na seção 2.6.2.
@@ -4557,6 +4568,10 @@ A decisão introduz e transforma riscos que devem constar do acompanhamento da m
 Quanto às metas registradas ao final da seção 3.1.5, a definição do serviço permite encerrar a ressalva ali declarada. As metas preliminares de WER inferior ou igual a 15%, acurácia de termos de domínio igual ou superior a 90% e degradação ponta a ponta de no máximo 10 pontos percentuais são **mantidas** como hipóteses quantitativas, a serem verificadas sobre o corpus de áudio de referência descrito na subseção 5.7.6. Cabe registrar que a meta de acurácia de termos de domínio só é perseguível porque o serviço escolhido admite vocabulário customizado: sob qualquer das alternativas eliminadas, ela seria inatingível por ausência de mecanismo, e não por insuficiência de qualidade do reconhecimento. Nesse sentido, a seleção do serviço não apenas atende aos indicadores já definidos — ela é a condição de existência de um deles.
 
 ### 5.7.3 API de recebimento de áudios do usuário
+
+> **Estado da implementação na S3.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. Sem autenticação, a resposta é 401; sem o campo obrigatório, o FastAPI retorna 422. As subseções seguintes especificam o contrato-alvo: duração e seu limite, expiração efetiva, idempotência e catálogo padronizado de erros ainda não estão integralmente implementados. A extensão WebM é anunciada, mas falta reconhecê-la no validador de assinatura. A consulta também ainda não verifica a propriedade do áudio pelo usuário — pendência de proteção de acesso antes de uso com dados reais.
+
+> A transcrição REST é executada em segundo plano e mantida em memória no processo. Seu texto precisa ser enviado posteriormente a `/chat` com `canal=voz`; não há encaminhamento automático ao NLP no upload. O microfone da interface usa outro trajeto, dependente de `/voz/token`, ainda não implementado. Esses limites não alteram a decisão tecnológica nem antecipam a integração final da S5.
 
 Esta subseção especifica o contrato da API que recebe os áudios enviados pelo usuário — o trajeto de ingestão adotado em 5.7.1.3 como caminho canônico do canal de voz. É o contrato entre a interface de voz e o pipeline de PLN: o que a interface pode enviar, o que o servidor garante devolver e o que acontece quando algo dá errado.
 
@@ -5310,15 +5325,16 @@ classDiagram
 
     class StatusExecucao {
         <<enumeration>>
-        EM_EXECUCAO
         SUCESSO
+        BLOQUEADA
         FALHA
     }
 
     class Desfecho {
         <<enumeration>>
-        SUCESSO
-        BLOQUEADA_INJECAO
+        ENCAMINHADA
+        BLOQUEADA_INJECAO_REGRA
+        BLOQUEADA_INJECAO_MODELO
         BLOQUEADA_ABUSO
         RECUSADA_FORA_ESCOPO
         RECUSADA_BAIXA_CONFIANCA
@@ -5352,7 +5368,7 @@ classDiagram
         +String prompt
         +String resposta
         +String intencao_id
-        +Decimal confianca
+        +Decimal confianca_intencao
         +Desfecho desfecho
         +Perfil perfil
         +Canal canal
@@ -9166,7 +9182,7 @@ nenhum tenant**, e essa é uma propriedade a preservar.
 | RNF01 (perímetro) | Serviços e tenants declarados | Fora de escopo automatizado — inspeção de configuração (§10.5.1.2) |
 | RNF02 (rastreabilidade) | Toda interação registrada, inclusive bloqueios | **IT-API-09**, IT-API-15, IT-DB-02, IT-ROT-15 |
 | RNF03 (acurácia do classificador) | ≥ 0,85 | Bancada F21 (fora deste plano); integração cobre o **uso** do veredito: IT-API-10, IT-API-11 |
-| RNF06 (controle de acesso por perfil e permissão) | Barreira no servidor, não na interface | IT-API-06, IT-API-07, IT-AUTH-06..08, IT-WEB-08 |
+| RF01 (controle de acesso por perfil e permissão) | Barreira no servidor, não na interface | IT-API-06, IT-API-07, IT-AUTH-06..08, IT-WEB-08 |
 | RNF07 (retenção e proteção do prompt) | Prompt em claro, com acesso restrito | IT-API-09, IT-DB-03, IT-DB-04 |
 | Risco R02 (indisponibilidade do tenant) | Progresso sem os recursos | Fitas provisórias, IT-CTR-05 |
 | Risco R12 (perímetro de dois tenants) | Nenhum dado real fora do homologado | §10.5.1.3, princípio 3; §10.5.6.3 |
@@ -9194,7 +9210,9 @@ substituição.
 
 ## 10.7 Cobertura Consolidada do Artefato de Testes
 
-[Preencher]
+O planejamento funcional cobre RF01–RF12 com **65 casos: 33 positivos e 32 negativos**, discriminados por requisito e onda em 10.1.6; RF07 permanece fora do MVP. Os RNF01–RNF07 são rastreados em 10.2.4, com desempenho nos casos TNF-DES01–07. A matriz 10.5.9 relaciona requisitos e testes de integração, incluindo a estratégia VHS; o roteiro de usabilidade está em 10.3, com pelo menos cinco participantes externos à turma e SUS.
+
+Essa é **cobertura planejada de requisitos**, não percentual de código executado. A meta de 80% de 9.1.8 permanece pendente de medição consolidada. Resultados de carga, validação dos serviços externos e sessões de usabilidade só devem ser registrados após execução; testes com mocks e fitas provisórias não substituem essas evidências.
 
 # 11. Procedimentos de Implantação
 
