@@ -178,6 +178,10 @@ A equipe utiliza o **WhatsApp para comunicações informais**, como avisos rápi
 
 As dailies acontecem **presencialmente, às 14h, em todos os dias nos quais a equipe possui instrução**, com duração máxima de **15 minutos**. Quando a equipe não estiver reunida presencialmente, o acompanhamento poderá ocorrer de forma assíncrona no Slack. Cada integrante apresenta de forma objetiva as atividades concluídas, as próximas atividades e os impedimentos identificados. Quando um integrante não puder participar, sua atualização deve ser enviada pelo canal formal antes do encontro.
 
+**Condução.** A daily é conduzida pelo Scrum Master da sprint, a quem cabe abrir o encontro no horário, manter a ordem de fala, encerrá-lo dentro dos 15 minutos e realizar as três verificações descritas adiante. Quando o Scrum Master não puder conduzir, a condução passa a outro integrante indicado na véspera, de modo que o ritual não dependa da presença de uma única pessoa.
+
+**Roteiro.** Cada integrante responde a três perguntas, nesta ordem: o que concluiu desde a daily anterior, o que pretende concluir até a próxima e o que o impede de avançar. A resposta deve referenciar o card correspondente, e não apenas descrever a atividade, para que o acompanhamento seja verificável no quadro por quem não participou do encontro.
+
 Durante a daily, as tarefas práticas são organizadas para um horizonte máximo de dois a três dias. A distribuição considera as dependências entre as atividades, de modo que a entrega de uma pessoa não bloqueie desnecessariamente o avanço das demais. No fechamento diário, o grupo verifica se as tarefas previstas foram concluídas. Quando uma atividade não é finalizada no mesmo dia, ela continua no dia seguinte, e a equipe avalia se a pessoa responsável necessita de apoio, redistribuição ou esclarecimento para prosseguir.
 
 O Kanban do GitLab apoia esse acompanhamento ao tornar visíveis o estado das tarefas, os responsáveis, as dependências e os impedimentos. Os cards devem refletir a situação discutida nas dailies, permitindo que o grupo acompanhe o progresso entre os encontros e identifique antecipadamente riscos de bloqueio ou atraso.
@@ -189,6 +193,10 @@ O Kanban do GitLab apoia esse acompanhamento ao tornar visíveis o estado das ta
 3. **Fila de revisão.** Verificação das issues em `Waiting Review` e `Review`. Itens que ultrapassem o SLA de 24 horas úteis devem receber um revisor nomeado ainda na daily, priorizando os merge requests que bloqueiam outras entregas.
 
 O resultado dessas três verificações orienta a redistribuição de tarefas do dia e é a base do acompanhamento consolidado na retrospectiva.
+
+**Assuntos que extrapolam a daily.** Discussão técnica, decisão de escopo ou alinhamento que exija mais do que um enunciado não é resolvido no encontro. O assunto é anotado, e a própria daily define quem participa e quando ocorre a conversa à parte. A regra protege os 15 minutos previstos: a daily é um ponto de sincronização, e não o espaço em que o grupo trabalha.
+
+**Registro.** A daily não produz ata. O que precisa sobreviver ao encontro é registrado onde a equipe já consulta: impedimento vira comentário no card, acompanhado da label `BLOCK`; redistribuição vira troca de responsável no quadro; e revisor definido vira atribuição no merge request. Uma daily que não produz nenhum desses registros não deixou rastro verificável, e o acompanhamento do dia seguinte parte da memória de quem esteve presente.
 
 #### 2.2.3 Revisões de merge request
 
@@ -421,7 +429,7 @@ A revisão percorreu o contrato inteiro, e não apenas os pontos que mudaram. As
 
 **Justificativa das alterações**
 
-As alterações desta revisão respondem a situações concretas ocorridas durante a Sprint 3, e não a aprimoramentos genéricos de processo. Uma nasceu de perda efetiva de tempo de trabalho, uma responde a prejuízo de rastreabilidade, duas corrigem divergência entre o que o grupo pratica e o que estava registrado, e a última resolve um caso que a regra anterior não previa.
+As alterações desta revisão respondem a situações concretas ocorridas durante a Sprint 3, e não a aprimoramentos genéricos de processo. Uma nasceu de perda efetiva de tempo de trabalho, uma responde a prejuízo de rastreabilidade, duas corrigem divergência entre o que o grupo pratica e o que estava registrado, uma detalha um ritual cuja regra existia apenas em linhas gerais, e a última resolve um caso que a regra anterior não previa.
 
 **Alterações aprovadas**
 
@@ -433,6 +441,8 @@ As alterações desta revisão respondem a situações concretas ocorridas duran
 
 - **Convenção de merge request.** O título do merge request passa a seguir o mesmo formato da mensagem de commit, e a descrição passa a conter as seções O que foi feito, Por que foi feito, DOR, DOD e Como testar. Até a Sprint 2, o `GestaoConfiguracao.md` previa o formato `TIPO | descrição` e um checklist genérico de conferência, que o grupo deixou de utilizar ao longo da Sprint 3 sem atualizar o documento. As seções de DOR e DOD substituem o checklist porque exigem a evidência de atendimento de cada critério, e não apenas a marcação de uma caixa.
 
+- **Condução e registro da daily.** A daily passa a ter condução nomeada, exercida pelo Scrum Master da sprint, com substituto indicado na véspera quando ele não puder conduzir. Fica estabelecido que assunto cuja discussão exceda o enunciado sai do encontro para conversa à parte, com participantes e horário definidos na própria daily, e que o resultado do encontro é registrado no quadro, e não em ata. A Sprint 3 mostrou que as três verificações criadas na revisão anterior funcionam, mas que dependem de o encontro terminar no tempo previsto e de o que foi decidido ficar onde a equipe consulta.
+
 - **Branch derivada de outra branch.** A regra de que toda branch nasce da `develop` passa a admitir exceção quando o trabalho documenta ou corrige código ainda não integrado. Nesse caso, a branch pode derivar daquela que contém o código, e o merge request deve declarar a branch-base e o motivo. A exceção surgiu na documentação da interface, que descrevia código presente apenas na branch de origem.
 
 **Fechamento de ação da sprint anterior**
@@ -441,7 +451,7 @@ A ação AM13, que previa repriorizar o quadro no penúltimo dia da sprint, depe
 
 **Impacto esperado**
 
-Espera-se redução do tempo perdido com incidentes de ambiente local, que na Sprint 3 consumiram horas de trabalho sem produzir entrega. A abertura de issue para defeito encontrado deve tornar visível no board um tipo de trabalho que antes ficava embutido em outras entregas. A adequação da taxonomia de labels alinha o board aos critérios pelos quais o grupo é avaliado. A convenção unificada de merge request elimina a divergência entre documento e prática e permite ler o título do card, o commit e o merge request como uma sequência única. A exceção da branch-base elimina a escolha entre cumprir a regra e documentar código existente, situação que a regra anterior não previa.
+Espera-se redução do tempo perdido com incidentes de ambiente local, que na Sprint 3 consumiram horas de trabalho sem produzir entrega. A abertura de issue para defeito encontrado deve tornar visível no board um tipo de trabalho que antes ficava embutido em outras entregas. A adequação da taxonomia de labels alinha o board aos critérios pelos quais o grupo é avaliado. A condução nomeada e o registro no quadro devem sustentar as três verificações da daily sem alongar o encontro. A convenção unificada de merge request elimina a divergência entre documento e prática e permite ler o título do card, o commit e o merge request como uma sequência única. A exceção da branch-base elimina a escolha entre cumprir a regra e documentar código existente, situação que a regra anterior não previa.
 
 ## 3. Avaliação das sprints
 
