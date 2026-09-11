@@ -140,6 +140,12 @@ O projeto adota um fluxo baseado em GitFlow, no qual o trabalho é desenvolvido 
 
 Exemplos: `feat/classificacao-intencoes`, `fix/corrige-parser-audio`, `release/v1.0.0`, `hotfix/corrige-consulta-status`, `docs/gestao-projeto`, `design/as-is-bpmn` e `test/classificacao-intencoes`.
 
+O papel de cada branch decorre da sua permanência e do seu destino.
+
+**`main` e `develop` são permanentes.** A `main` guarda apenas versões entregues e recebe merge exclusivamente de `release` e de `hotfix`, de modo que seu histórico corresponde à sequência de entregas do módulo. A `develop` é a linha de integração: todo trabalho converge para ela antes de compor uma entrega, e é dela que nasce qualquer branch de trabalho. Nenhuma das duas aceita commit direto.
+
+**As demais são temporárias e existem enquanto durar o card que as originou.** `feat` e `fix` carregam alteração de comportamento do sistema, a primeira acrescentando e a segunda corrigindo. `docs`, `design` e `test` carregam, respectivamente, documentação, artefatos de modelagem e casos de teste, e não alteram o comportamento da aplicação. `release` estabiliza uma versão candidata e é a única via de promoção para a `main` em condições normais. `hotfix` é a exceção a essa regra, e existe porque uma correção urgente em produção não pode esperar o ciclo de integração; por isso parte da `main` e retorna às duas branches permanentes, para que a correção não desapareça do desenvolvimento.
+
 > **Revisão da Sprint 2.** Os prefixos de funcionalidade e de correção passaram de `feature/` e `bugfix/` para **`feat/` e `fix/`**, alinhando a nomenclatura de branch aos tipos já utilizados nas mensagens de commit do padrão *Conventional Commits* e à prática efetivamente adotada pela equipe no repositório. Branches criadas antes desta revisão permanecem com o nome original em seu histórico; a convenção vale para as branches criadas a partir da Sprint 3.
 
 ### 2.3 Diretrizes de uso das branches
@@ -182,6 +188,7 @@ Exemplos inválidos e o motivo:
 | Nome | Problema |
 |---|---|
 | `feat/organização-pastas` | Contém acento; o nome deve ser escrito sem sinais diacríticos (`feat/organizacao-pastas`) |
+| `docs/gestão-projeto` | Contém acento; o nome correto é `docs/gestao-projeto`. Integrada em 26/08/2026 pelo MR !55, é o caso descrito no Exemplo 3 da seção 2.4.1 |
 | `feature/classificador` | Prefixo descontinuado na revisão da Sprint 2; usar `feat/` |
 | `Feat/Novo-Endpoint` | Uso de letras maiúsculas |
 | `feat/ajustes` | Descrição genérica, que não identifica a entrega |
@@ -227,6 +234,22 @@ git pull --ff-only origin develop
 git switch -c test/nome-do-teste
 git push --set-upstream origin test/nome-do-teste
 ```
+
+#### Atualização de branch de longa duração
+
+Uma branch que permanece aberta por vários dias acumula divergência em relação à `develop`, e o conflito descoberto na abertura do merge request custa mais caro do que o resolvido durante o trabalho. Quando a `develop` avançar de forma relevante, a pessoa responsável deve trazer essa atualização para dentro da sua branch:
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch feat/nome-da-funcionalidade
+git merge develop
+git push origin feat/nome-da-funcionalidade
+```
+
+O merge de integração deve ser feito com a árvore de trabalho limpa, e o resultado precisa ser verificado antes do envio. A branch `feat/classificador` da Sprint 2 recebeu duas atualizações desse tipo, registradas nos commits `72f4aff` e `885efb7`, e o procedimento não estava documentado à época.
+
+Duas restrições valem para esse merge. A primeira é que ele integra a `develop` **para dentro** da branch de trabalho, e nunca o contrário: a direção oposta é o merge request, que passa por revisão. A segunda é que o histórico compartilhado não deve ser reescrito, de modo que `rebase` não é utilizado como procedimento regular em branch já enviada ao remoto.
 
 #### Integração e revisão
 
@@ -299,9 +322,10 @@ git push origin --delete feat/pagina-principal-frontend
 
 Card: #166 - Atualiza políticas de dailies e GitLab
 Branch: `docs/gestao-projeto`
-Merge Request: (a ser criado)
+Merge Request: !58
 Labels: DOCS
-Autor: (nome do integrante)
+Autor: Carlos Eduardo Serrano Quaglia
+Integrado em: 27/08/2026
 Sprint: Sprint 02
 
 Fluxo executado:
@@ -331,14 +355,19 @@ git push --set-upstream origin docs/gestao-projeto
 
 7. Após aprovação e merge, excluir a branch
 
-**Exemplo 3: Atualização de fluxo GitFlow**
+**Exemplo 3: Documentação de gestão e configuração, com desvio de nomenclatura**
 
 Card: #166 - Atualiza fluxo gitflow e políticas de branches
-Branch: `docs/gestao-configuracao`
-Merge Request: (a ser criado)
+Branch: `docs/gestão-projeto`
+Merge Request: !55
 Labels: DOCS
-Autor: (nome do integrante)
+Autora: Mirela Bianchi
+Integrado em: 26/08/2026
 Sprint: Sprint 02
+
+Este exemplo é mantido porque registra um desvio real da convenção, e não um fluxo ideal. A branch foi criada com acento em `gestão`, contrariando a regra de ausência de sinais diacríticos estabelecida na seção 2.3. O merge request foi aberto, revisado e integrado normalmente, porque nenhuma verificação automática barra nome de branch inválido. No dia seguinte, o mesmo card #166 recebeu uma segunda branch, `docs/gestao-projeto`, desta vez com o nome correto, integrada pelo MR !58 e descrita no Exemplo 2.
+
+O episódio produziu duas branches para um único card, com nomes que diferem apenas por um acento, e é a origem de duas decisões registradas nesta revisão: a inclusão de `docs/gestão-projeto` entre os exemplos inválidos da seção 2.3, e a verificação do nome da branch como item explícito da revisão de merge request.
 
 Fluxo executado:
 1. Criar branch a partir de develop:
@@ -536,19 +565,74 @@ Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a ativi
 
 ## 5. Infraestrutura como código
 
-O projeto ainda não definiu artefatos de infraestrutura como código. Caso essa estratégia seja adotada nas próximas sprints, os arquivos, ferramentas, ambientes contemplados e procedimentos de validação deverão ser registrados nesta seção.
+A infraestrutura do projeto passou a ser descrita em arquivos versionados durante a Sprint 3, o que encerra a pendência declarada na Sprint 2.
+
+| Artefato | Caminho | Responsabilidade |
+|---|---|---|
+| Composição de serviços | `infra/docker-compose.yml` | Levantar o ambiente local completo, com banco de dados e aplicações |
+| Imagem do middleware | `src/middleware/Dockerfile` | Empacotar o serviço FastAPI e suas dependências |
+| Imagem da interface | `src/web/Dockerfile` | Construir os estáticos e empacotá-los no Nginx |
+| Configuração do servidor web | `src/web/nginx.conf` | Servir os estáticos e encaminhar o prefixo `/api` ao middleware |
+
+A imagem da interface é construída em dois estágios. O Node existe apenas para produzir o pacote, e a imagem final contém somente o Nginx e os estáticos, sem ambiente de execução JavaScript. Essa escolha é o que permite ao projeto manter um único servidor de aplicação, o Python do middleware.
+
+A instalação de dependências dentro das imagens utiliza os arquivos de trava do repositório, e não resolução livre de versões, para que a imagem construída na nuvem corresponda à exercitada localmente.
+
+A validação desses artefatos consiste em construir as duas imagens e levantar a composição em máquina limpa, confirmando que a aplicação responde sem configuração manual adicional. O processo de implantação nos ambientes de nuvem e os pipelines de integração e entrega contínua são escopo da Sprint 4 e serão registrados nesta seção quando existirem.
 
 ## 6. Gestão de arquivos sensíveis
 
-Dados sensíveis do Metrô não devem ser adicionados ao repositório. O MVP utiliza somente dados sintéticos ou anonimizados, e credenciais, tokens, chaves e segredos devem permanecer fora do controle de versão. Arquivos locais que possam conter essas informações devem ser incluídos no `.gitignore` quando passarem a existir.
+Dados sensíveis do Metrô não devem ser adicionados ao repositório. O MVP utiliza somente dados sintéticos ou anonimizados, e credenciais, tokens, chaves e segredos devem permanecer fora do controle de versão.
+
+Os arquivos que carregam essas informações passaram a existir durante a Sprint 3 e já estão cobertos pelo `.gitignore` da raiz.
+
+| Entrada ignorada | O que protege |
+|---|---|
+| `.env` | Valores reais das variáveis listadas na seção 8, incluindo chaves de serviço e segredo de sessão |
+| `credenciais/` | Chave da conta de serviço utilizada na ingestão de documentos |
+| `dbdata/` | Volume local do banco de dados, que pode conter dados carregados durante o desenvolvimento |
+| `.venv/`, `node_modules/`, `dist/` | Dependências e artefatos de construção, que não pertencem ao controle de versão |
+
+Uma credencial exposta acidentalmente não é resolvida apagando o arquivo em um commit seguinte, porque o valor permanece recuperável no histórico. O procedimento correto é revogar a credencial no serviço de origem, emitir uma nova e registrar o incidente, tratando o valor comprometido como perdido.
 
 ## 7. Política de rollback
 
-O procedimento de rollback será detalhado quando o projeto possuir versões executáveis e processo de implantação definido. Até essa etapa, correções em artefatos versionados devem ocorrer por novos commits ou Merge Requests rastreáveis, sem reescrever o histórico compartilhado.
+O projeto passou a possuir versões executáveis e imagens de contêiner, o que permite estabelecer o procedimento antes previsto como pendente. O princípio permanece o mesmo: o histórico compartilhado não é reescrito, e o retorno a um estado anterior ocorre por avanço, e não por apagamento.
+
+**Reversão de conteúdo já integrado.** Uma alteração indesejada que já esteja na `develop` ou na `main` é desfeita por `git revert` do commit de merge correspondente, submetido por merge request como qualquer outra mudança. O comando registra um commit novo que anula o efeito do anterior, preservando ambos no histórico.
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c fix/reverter-<assunto>
+git revert -m 1 <hash-do-merge>
+git push --set-upstream origin fix/reverter-<assunto>
+```
+
+**Retorno a uma versão entregue.** Como cada promoção para a `main` recebe uma tag, o retorno a uma entrega anterior consiste em reconstruir e reimplantar a imagem daquela tag. A tag é o ponto de referência, e por isso a sua criação faz parte do procedimento de release descrito na seção 2.5.
+
+**Reversão de esquema de banco.** As migrações são versionadas e reversíveis por Alembic, de modo que o retorno de esquema utiliza o comando de downgrade para a revisão anterior. A reversão de esquema deve preceder a reimplantação da aplicação quando a versão anterior não reconhecer o esquema novo.
+
+O gatilho para acionar qualquer um dos três procedimentos e os critérios de decisão associados ao ambiente de produção serão registrados junto ao processo de implantação, na Sprint 4.
 
 ## 8. Registro de variáveis de ambiente
 
-As variáveis de ambiente ainda dependem das decisões técnicas das próximas sprints. Quando forem definidas, deverão ser documentadas apenas pelo nome e pela finalidade, utilizando arquivos de exemplo sem valores sensíveis. Valores reais não devem ser registrados no repositório.
+As variáveis de ambiente foram definidas durante a Sprint 3 e estão declaradas em `src/middleware/.env.example`, versionado sem valores reais. O arquivo `.env`, que carrega os valores, é ignorado pelo controle de versão conforme a seção 6.
+
+Registram-se aqui apenas os nomes e as finalidades. Nenhum valor real deve constar deste documento nem de qualquer arquivo versionado.
+
+| Grupo | Variáveis | Finalidade |
+|---|---|---|
+| Copilot Studio | `DIRECTLINE_ENDPOINT`, `DIRECTLINE_SECRET`, `COPILOT_TIMEOUT_SECONDS` | Endereço, credencial e tempo limite da comunicação com o agente do Copilot Studio |
+| Banco de dados | `DATABASE_URL` | Cadeia de conexão do PostgreSQL |
+| Identidade | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, `ENTRA_REDIRECT_URI` | Parâmetros do fluxo de autenticação corporativa |
+| Perfis e permissões | `ENTRA_GRUPO_DIRETORIA`, `ENTRA_GRUPO_LIDER_PROJETO`, `ENTRA_GRUPO_MEMBRO_EQUIPE`, `ENTRA_GRUPO_VER_INTENCOES`, `ENTRA_GRUPO_GERIR_ROTINAS` | Identificadores dos grupos que determinam perfil e permissões do usuário |
+| Sessão | `SESSION_SECRET`, `SESSION_MAX_AGE_SECONDS`, `SESSION_COOKIE_SECURE` | Assinatura, validade e política de transporte do cookie de sessão |
+| Barreiras de segurança | `CONTENT_SAFETY_ENDPOINT`, `CONTENT_SAFETY_KEY`, `CONTENT_SAFETY_LIMIAR_SEVERIDADE` | Serviço e limiar de severidade das guardas de conteúdo |
+| Busca vetorial | `VETORIAL_BACKEND`, `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_NAMESPACE` | Provedor e credenciais do índice vetorial da camada de recuperação |
+| Conversão de fala | `SPEECH_KEY`, `SPEECH_ENDPOINT`, `SPEECH_REGION`, `SPEECH_IDIOMA`, `SPEECH_API_VERSION`, `SPEECH_TIMEOUT_SECONDS` | Credencial, região, idioma e tempo limite do serviço de reconhecimento de fala |
+
+Ao acrescentar uma variável, a pessoa responsável deve incluí-la no `.env.example` com valor vazio ou fictício e registrar o nome e a finalidade nesta tabela, na mesma alteração. Variável presente no código e ausente desta seção é divergência a ser corrigida na revisão do merge request.
 
 ## Referências
 
