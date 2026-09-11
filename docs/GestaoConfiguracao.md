@@ -104,6 +104,7 @@
 - [3. Políticas de commit](#3-políticas-de-commit)
   - [3.1 Identidade de autoria](#31-identidade-de-autoria)
 - [4. Política de push e Merge Requests](#4-política-de-push-e-merge-requests)
+  - [4.1 Padrão de Merge Requests](#41-padrão-de-merge-requests)
 - [5. Infraestrutura como código](#5-infraestrutura-como-código)
 - [6. Gestão de arquivos sensíveis](#6-gestão-de-arquivos-sensíveis)
 - [7. Política de rollback](#7-política-de-rollback)
@@ -276,6 +277,8 @@ Para documentar as User Stories do card #22, o fluxo utilizado é:
 
 #### 2.4.1 Exemplos de aplicações práticas no projeto
 
+Os exemplos abaixo reproduzem fluxos ocorridos na Sprint 2 e preservam as convenções vigentes naquele ciclo, tanto nas mensagens de commit em terceira pessoa quanto nos títulos de merge request no formato `TIPO | descrição`. As convenções atuais estão nas seções 3 e 4.1.
+
 **Exemplo 1: Implementação de página principal do frontend**
 
 Card: #112 - Implementa página principal do frontend
@@ -447,12 +450,12 @@ Para branches originadas de `main`, deve-se atualizar `main` no lugar de `develo
 
 ## 3. Políticas de commit
 
-O grupo utiliza Conventional Commits para manter o histórico legível e rastreável.
+O grupo utiliza Conventional Commits, adaptado ao português, para manter o histórico legível e rastreável.
 
 Formato:
 
 ```text
-<tipo>(<escopo opcional>): <descrição objetiva> (#<card>)
+<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> (#<card>)
 ```
 
 Tipos adotados:
@@ -466,16 +469,38 @@ Tipos adotados:
 | `refactor` | Reorganização interna sem nova funcionalidade ou correção |
 | `test` | Adição ou correção de testes |
 | `chore` | Manutenção e configuração auxiliar |
+| `build` | Alteração no processo de build ou empacotamento |
+| `ci` | Alteração em pipelines de integração contínua |
 
-Exemplos:
+**Regras de escrita.**
+
+- O verbo vem no infinitivo: adicionar, criar, corrigir, atualizar, remover, revisar, ajustar, definir, mapear.
+- A descrição começa em letra minúscula logo após o prefixo e não termina em ponto final.
+- A referência ao card é obrigatória, entre parênteses, ao final da linha de título.
+- A linha de título deve caber em 72 caracteres. Explicações que não couberem vão no corpo da mensagem.
+- A descrição informa o que mudou, não como a mudança foi feita.
+- Cada commit representa uma unidade lógica de alteração. Commits que misturam mudanças sem relação entre si dificultam a revisão e inviabilizam o rollback seletivo descrito na seção 7.
+
+Exemplos válidos:
 
 ```text
-feat(pln): adiciona classificação de intenção (#40)
-fix(audio): corrige conversão de áudio para texto (#41)
-docs: adiciona user stories e critérios de aceitação (#22)
+docs: adicionar user stories e critérios de aceitação (#22)
+feat(pln): implementar classificação de intenção (#40)
+fix(audio): corrigir conversão de áudio para texto (#41)
+test: adicionar casos de rejeição fora de domínio (#52)
 ```
 
-Não devem ser usadas mensagens vagas, como “ajustes”, “melhorias” ou “update”, nem commits que misturem mudanças sem relação entre si.
+Exemplos inválidos:
+
+| Mensagem | Problema |
+|---|---|
+| `docs: Adicionar user stories (#22)` | Maiúscula logo após o prefixo |
+| `docs: adicionar user stories.` | Ponto final e ausência da referência ao card |
+| `adicionar user stories (#22)` | Ausência do tipo |
+| `docs: ajustes` | Descrição vaga, sem objeto identificável e sem card |
+| `docs: adiciona user stories (#22)` | Verbo em terceira pessoa |
+
+**Nota sobre o histórico.** Os commits anteriores à Sprint 3 utilizam a terceira pessoa, como em `docs: adiciona requisitos funcionais`. O histórico não é reescrito, pela mesma razão registrada na seção 2.3 quanto aos nomes de branch já integrados: reescrever mensagens de commits já integrados invalidaria as referências usadas nas métricas das sprints anteriores. A regra do infinitivo vale para os commits criados a partir da Sprint 3.
 
 ### 3.1 Identidade de autoria
 
@@ -517,51 +542,62 @@ Todo MR deve receber uma primeira revisão em até **24 horas úteis** após a s
 
 ### 4.1 Padrão de Merge Requests
 
-O título deve seguir a convenção de merge requests utilizada pelo grupo:
+**Título.** O título do merge request segue o mesmo formato da mensagem de commit. Quando o merge request encerra mais de um card, todos são listados entre parênteses, separados por vírgula.
 
 ```text
-TIPO | descrição objetiva da entrega (#issue)
+<tipo>: <verbo no infinitivo> <complemento> (#<card>)
 ```
-
-O prefixo deve identificar a natureza da entrega, como `DOCS`, `DESIGN`, `FEAT`, `FIX` ou `TEST`, seguido de uma descrição objetiva e da issue relacionada. Essa convenção de título é específica dos merge requests e não substitui o padrão Conventional Commits utilizado nas mensagens de commit.
 
 Exemplos:
 
 ```text
-DOCS | user stories dos requisitos funcionais (#22)
-DESIGN | fluxo AS-IS BPMN (#12)
-FEAT | classificação de intenções (#40)
+docs: adicionar user stories dos requisitos funcionais (#22)
+docs: revisar contrato de convivência e registrar ações da Sprint 3 (#233, #234)
+feat: implementar classificação de intenções (#40, #41)
 ```
 
-Estrutura recomendada para a descrição:
+Até a Sprint 2, o grupo utilizava o formato `TIPO | descrição objetiva (#issue)`, visível nos merge requests já integrados e nos exemplos da seção 2.4.1. A unificação com o padrão de commit foi adotada na Sprint 3 para que título do card, mensagem de commit e título do merge request possam ser lidos como uma sequência única. Os merge requests anteriores não são renomeados.
+
+**Descrição.** A descrição possui cinco seções fixas, nesta ordem.
 
 ```markdown
-## Descrição
+## O que foi feito
 
-Resumo do que foi realizado e da motivação da alteração.
+Parágrafo único, em prosa corrida, descrevendo objetivamente o que foi produzido.
+Cite o arquivo alterado e a seção. Enumere os elementos entregues.
 
-## Issue relacionada
+## Por que foi feito
 
-Closes #22
+Parágrafo único justificando a entrega: qual requisito da documentação atende,
+que decisão sustenta, com que outras seções mantém coerência.
+
+## DOR — Definition of Ready
+
+* Critério de prontidão previsto no card, com a evidência de que foi atendido;
+* Critério de prontidão previsto no card, com a evidência de que foi atendido.
+
+## DOD — Definition of Done
+
+* Critério de conclusão previsto no card, com a evidência de que foi atendido;
+* Critério de conclusão previsto no card, com a evidência de que foi atendido.
 
 ## Como testar
 
-Passos para revisar ou validar a mudança.
-
-## Evidências
-
-Capturas de tela, resultados de testes ou caminhos dos arquivos alterados, quando aplicável.
-
-## Checklist
-
-- [ ] Lint/CI do repositório passou, quando aplicável
-- [ ] DoD dos cards relacionados foi atendido
-- [ ] Alterações revisadas
-- [ ] Sem conflitos com a branch de destino
-- [ ] Board atualizado após o merge
+* Acessar o `arquivo.md`;
+* Localizar a seção X — Nome da Seção;
+* Verificar o primeiro elemento;
+* Confirmar a coerência da seção com o contexto e os objetivos do projeto.
 ```
 
-Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a atividade e puder fechar a issue automaticamente. Quando o merge apenas contribuir para uma atividade que continuará aberta, deve-se utilizar `Refs #<issue>`.
+**Regras da descrição.**
+
+- *O que foi feito* e *Por que foi feito* são sempre parágrafo único em prosa, sem lista.
+- *DOR* e *DOD* reproduzem os critérios registrados no card e indicam a evidência de atendimento de cada um. Essas duas seções substituem o checklist genérico utilizado até a Sprint 2, cuja marcação não permitia verificar o que havia sido conferido.
+- *Como testar* é sempre lista com marcadores, cada item iniciado por verbo no infinitivo e verificável por outra pessoa sem contexto prévio. Cada item termina em ponto e vírgula, e o último em ponto.
+- Nomes de arquivo aparecem entre crases, e seções são referenciadas por número e nome.
+- Quando restar pendência que não impeça o merge, acrescenta-se ao final a seção `## Pendências`, em lista, indicando o item e o que falta para resolvê-lo.
+
+**Vinculação ao card.** Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a atividade e puder fechar a issue automaticamente. Quando o merge apenas contribuir para uma atividade que continuará aberta, deve-se utilizar `Refs #<issue>`.
 
 ## 5. Infraestrutura como código
 
