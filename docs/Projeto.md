@@ -8563,9 +8563,15 @@ O que a sanitização alcança, por caminho de vazamento:
 |---|---|
 | Cabeçalho de requisição e de resposta | `filter_headers` do VCR.py mais um hook que preserva o formato (o VCR.py guarda cabeçalho ora como string, ora como lista) |
 | Corpo `form-urlencoded` | `filter_post_data_parameters` — é o formato do POST de token do Entra ID |
-| Corpo JSON, de requisição e de resposta | Hook próprio: o filtro nativo só entende `form-urlencoded`, e a maior parte do tráfego destes serviços é JSON |
+| Corpo JSON, de requisição e de resposta | Hook próprio: o filtro nativo só alcança as chaves de primeiro nível de um POST JSON, e nada da resposta. Como esse filtro reserializa o corpo, o hook recalcula o `Content-Length` da requisição gravada |
 | Parâmetro de query | `filter_query_parameters` |
 | `conversationId` embutido na URL do Direct Line | Substituição por expressão regular, com o **mesmo** valor usado na resposta — assim a URL da reprodução casa com a gravada |
+
+O `code` do Entra ID é redigido pelos filtros de query e de `form-urlencoded`, os
+dois únicos lugares por onde o *authorization code* trafega — e **não** pelo
+hook de JSON. Em corpo JSON, `code` é o código de erro dos serviços Azure
+(`{"error": {"code": "InvalidRequest", ...}}`), e redigi-lo faria toda fita de
+falha dizer apenas que houve erro, sem dizer qual.
 
 Tudo o que é redigido vira a marca literal `REDIGIDO-PELO-VHS`, e não string
 vazia: um segredo redigido para vazio não se distinguiria de um campo que o
@@ -8643,7 +8649,7 @@ VCR.py e cada uma responde a um requisito desta seção:
 | Ajuste | Por quê |
 |---|---|
 | `allow_playback_repeats=True` | É o que dá **comportamento de cache**: uma única interação gravada atende quantas requisições idênticas o teste fizer, em vez de exigir uma cópia da resposta por chamada |
-| `match_on` sem o corpo — método, esquema, host, porta, caminho e query | O corpo vai redigido, e duas chamadas que só diferem no segredo redigido são a mesma interação |
+| `match_on` com o corpo — método, esquema, host, porta, caminho, query e corpo | O Prompt Shields recebe prompt limpo e ataque no **mesmo** endereço, e só o corpo os distingue; sem ele, com `allow_playback_repeats`, toda chamada receberia a primeira interação gravada. Segredo redigido não atrapalha: o VCR.py passa a requisição ao vivo pelo mesmo hook de sanitização antes de casar. Fita de corpo multipart, cujo *boundary* é aleatório, sobrescreve com `match_on` sem o corpo |
 | `decode_compressed_response=True` | Fita é código; corpo gravado em gzip não se lê no `git diff`, e o que não se lê não se revisa (10.5.4.3) |
 | `record_mode` vindo da variável `VHS_GRAVANDO` | Fora da sessão deliberada de gravação o modo é `none`: toca a fita e **falha** se faltar interação, de modo que nenhuma requisição escape por engano de configuração |
 
@@ -8658,6 +8664,10 @@ servidor HTTP local que **conta** quantas requisições de fato chegaram nele:
 | A fita versionada serve sem rede alguma | Roda sob `--block-network`: se o VHS não estivesse tocando, o teste falharia em vez de passar em silêncio |
 | Nenhum segredo sobreviveu à gravação | Três segredos plantados de propósito — um em cabeçalho de requisição, um em corpo de resposta, um em `Set-Cookie` — procurados no **texto bruto** do YAML, como um revisor leria o diff |
 | Os hooks cobrem cabeçalho, corpo e URL | Chamada direta às funções de sanitização, inclusive verificando que campo comum **não** é redigido |
+| Código de erro sobrevive à gravação | `{"error": {"code": ...}}` volta da sanitização idêntico: é a informação que distingue uma falha de outra |
+| Corpos diferentes no mesmo endereço não se confundem | Fita com prompt limpo e ataque para o mesmo caminho, tocada nas duas ordens; cada chamada recebe o próprio veredito |
+| Segredo redigido não impede o casamento pelo corpo | Duas chamadas que só diferem no token casam com a mesma interação gravada |
+| `Content-Length` acompanha o corpo gravado | Corpo sem nada a redigir é gravado byte a byte; corpo redigido tem o tamanho recalculado — e a fita versionada é conferida interação por interação |
 | Corpo não-JSON passa intacto | Áudio e multipart não podem ser corrompidos pelo hook de JSON |
 | Fora da sessão deliberada, o modo é `none` | Chamada direta a `modo_de_gravacao()` com e sem a variável |
 | Fita provisória declara origem e issue | É o caso IT-CTR-05 (10.5.5.9), aplicado à única fita existente |
@@ -9057,13 +9067,13 @@ nesta ordem, no Windows, sobre o ambiente de 10.5.3.4:
 cd src\middleware
 .\.venv\Scripts\Activate.ps1
 
-python -m pytest tests/unit                  # 189 passed
-python -m pytest tests/integration/externos  # 7 passed  -- o VHS, com rede liberada
-python -m pytest tests/integration/externos --block-network --allowed-hosts=127.0.0.1
-                                             # 6 passed, 1 skipped
+python -m pytest tests/unit                  # 367 passed, 5 skipped, 1 failed (ver abaixo)
+python -m pytest -m externo                  # 12 passed  -- o VHS, com rede liberada
+python -m pytest -m externo --block-network --allowed-hosts=127.0.0.1
+                                             # 11 passed, 1 skipped
 ```
 
-A leitura da terceira linha é a que interessa: sob rede bloqueada, os seis casos
+A leitura da terceira linha é a que interessa: sob rede bloqueada, os onze casos
 que dependem da fita **passam sem alcançar socket algum** — é a prova de que a
 reprodução funciona. O caso pulado é o de gravação, que pertence ao modo
 Gravação e se exclui sozinho quando detecta o bloqueio (10.5.4.7).
@@ -9072,12 +9082,8 @@ Duas restrições conhecidas, ambas herdadas e nenhuma delas no VHS:
 
 | Restrição | Efeito | Situação |
 |---|---|---|
-| `settings.BASE_DIR` em `app/servicos/audio_service.py` | `Settings` declara `base_dir`, em minúsculas; a divergência de caixa interrompe a **coleta** de `test_api_audio.py` e `test_fluxo_chat.py`, o que derruba junto qualquer seleção por marcador — inclusive `-m externo` | Por isso os comandos acima selecionam por caminho, e não por marcador. Corrigir é tarefa própria, fora do escopo desta seção |
-| 16 apontamentos do `ruff` em `app/servicos/audio_service.py`, `app/api/routes/voz.py`, `app/utils/validadores.py` e dois testes unitários | `python -m ruff check app tests` termina com erro | Os arquivos do VHS passam limpos: `ruff check tests/integration/vhs.py tests/integration/conftest.py tests/integration/externos/test_vhs.py` → *All checks passed* |
-
-Enquanto a primeira restrição existir, o modo Completo de 10.5.6.1 não é
-executável como escrito. Registrar isso aqui é preferível a publicar um passo a
-passo que falha na primeira tentativa de quem o seguir.
+| SDK do Pinecone fora do ambiente base | Sem o extra `[rag]`, `tests/unit/test_provisionamento_vetorial.py` tem 1 falha, e `tests/integration/externos/test_pinecone_real.py` dá 4 erros quando selecionado por caminho — por marcador ele fica de fora de `-m externo` | `pip install -e '.[rag]'` instala o SDK. É dependência da camada de vetorização, e não do VHS |
+| 9 apontamentos do `ruff` em `app/schemas/mensagem.py`, `app/utils/validadores.py` e três testes unitários | `python -m ruff check app tests` termina com erro | Os arquivos do VHS passam limpos: `ruff check tests/integration/vhs.py tests/integration/conftest.py tests/integration/externos/test_vhs.py` → *All checks passed* |
 
 ```powershell
 cd src\web

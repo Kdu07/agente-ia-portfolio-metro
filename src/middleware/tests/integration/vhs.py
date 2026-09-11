@@ -59,8 +59,15 @@ PARAMETROS_QUERY_SENSIVEIS = (
 )
 
 # Campos que aparecem dentro de corpo JSON, de requisição ou de resposta.
-# `filter_post_data_parameters` do VCR.py só entende form-urlencoded, e a
-# maior parte do tráfego destes serviços é JSON — daí os hooks abaixo.
+# `filter_post_data_parameters` do VCR.py só alcança form-urlencoded e as
+# chaves de primeiro nível de um POST JSON; campo aninhado e corpo de
+# resposta ficam de fora — daí os hooks abaixo.
+#
+# `code` fica de fora de propósito. O authorization code do OAuth nunca
+# chega em JSON — vem na query do callback ou no POST form-urlencoded de
+# token, e as duas listas acima já o cobrem. Em JSON, `code` é o código
+# de erro dos serviços Azure (`{"error": {"code": "InvalidRequest"}}`),
+# e redigi-lo apagaria a única informação que distingue uma falha de outra.
 CAMPOS_JSON_SENSIVEIS = frozenset(
     {
         # Entra ID
@@ -68,7 +75,6 @@ CAMPOS_JSON_SENSIVEIS = frozenset(
         "id_token",
         "refresh_token",
         "client_secret",
-        "code",
         "code_verifier",
         # Claims de pessoa real, que não entram em fita nem anonimizadas
         # pelo serviço (princípio 3 de 10.5.1.3)
@@ -139,7 +145,13 @@ def _redigir_corpo(corpo: Any) -> Any:
     except (ValueError, TypeError):
         return corpo
 
-    redigido = json.dumps(_redigir_estrutura(estrutura))
+    redigida = _redigir_estrutura(estrutura)
+    if redigida == estrutura:
+        # Nada a redigir: devolve o corpo original, byte a byte. Reescrevê-lo
+        # mudaria a formatação e deixaria o `Content-Length` gravado mentindo.
+        return corpo
+
+    redigido = json.dumps(redigida)
     return redigido.encode("utf-8") if isinstance(corpo, (bytes, bytearray)) else redigido
 
 
@@ -171,6 +183,11 @@ def sanitizar_requisicao(request):
     _redigir_cabecalhos(request.headers, CABECALHOS_SENSIVEIS)
     if request.body is not None:
         request.body = _redigir_corpo(request.body)
+        # Acertado sempre, e não só quando este hook redige: o
+        # `filter_post_data_parameters` do VCR.py, que roda antes, já
+        # reserializa todo corpo JSON com `json.dumps` padrão — que põe
+        # espaço depois de `:` e `,` e faz o corpo crescer.
+        _corrigir_content_length(request.headers, request.body)
     return request
 
 
@@ -196,10 +213,11 @@ def sanitizar_resposta(response: dict) -> dict:
 
 
 def _corrigir_content_length(cabecalhos: Any, corpo: Any) -> None:
-    """Acerta o `Content-Length` depois de a redação encurtar o corpo.
+    """Acerta o `Content-Length` depois de a redação mudar o corpo.
 
-    Sem isto a fita declara um tamanho que o corpo gravado não tem, e um
-    cliente HTTP mais rigoroso que o httpx recusaria a reprodução.
+    Sem isto a fita declara um tamanho que o corpo gravado não tem. Na
+    resposta, um cliente HTTP mais rigoroso que o httpx recusaria a
+    reprodução; na requisição, a fita apenas mentiria para quem a lê.
     """
     if not cabecalhos or corpo is None:
         return
@@ -246,9 +264,16 @@ def configuracao_vhs(**sobrescritas: Any) -> dict[str, Any]:
         "filter_query_parameters": [(nome, REDIGIDO) for nome in PARAMETROS_QUERY_SENSIVEIS],
         "before_record_request": sanitizar_requisicao,
         "before_record_response": sanitizar_resposta,
-        # Sem o corpo no casamento: ele já vai redigido, e duas chamadas
-        # que só diferem no segredo redigido são a mesma interação.
-        "match_on": ("method", "scheme", "host", "port", "path", "query"),
+        # O corpo entra no casamento. O Prompt Shields recebe prompt limpo e
+        # ataque no MESMO endereço, e só o corpo os distingue; sem ele, com
+        # `allow_playback_repeats`, toda chamada receberia a primeira
+        # interação gravada. Segredo redigido não atrapalha: o VCR.py passa
+        # a requisição ao vivo pelo mesmo `before_record_request` antes de
+        # casar, e compara JSON já desserializado.
+        # Fita de corpo multipart, cujo boundary é aleatório, nunca casaria:
+        # ela sobrescreve com `match_on` sem "body", via
+        # `configuracao_vhs(match_on=...)` ou `@pytest.mark.vcr(match_on=...)`.
+        "match_on": ("method", "scheme", "host", "port", "path", "query", "body"),
         "allow_playback_repeats": True,
         # Grava o corpo legível, e não o gzip — fita é código, e código
         # que ninguém consegue ler no `git diff` ninguém revisa (10.5.4.3).
