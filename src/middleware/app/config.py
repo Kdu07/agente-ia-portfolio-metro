@@ -101,6 +101,30 @@ class Settings(BaseSettings):
     chunk_tokens: int = 350
     chunk_overlap: int = 40
 
+    # --- Recuperação (executor próprio) ---------------------------------
+    # Seção 3.7 do plano. Trechos entregues ao modelo de geração por
+    # consulta, e o corte de similaridade abaixo do qual um trecho não
+    # conta como evidência. Provisórios no mesmo sentido do limiar de
+    # confiança do catálogo: valem até a bancada do RAG (`python -m
+    # app.rag.bancada`) medir a distribuição de scores. O corte é baixo de
+    # propósito — ele barra só a pergunta sem nada parecido no corpus; a
+    # decisão fina de "não há evidência" é da geração, que lê o texto.
+    rag_top_k: int = 5
+    rag_score_minimo: float = 0.75
+
+    # --- Geração (executor próprio) -------------------------------------
+    # Decisão D3 do plano. O modelo fica atrás da porta
+    # `rag/linguagem/base.py`: trocar de provedor é escrever um adaptador
+    # e mudar `llm_backend`, sem tocar recuperação nem montagem do prompt.
+    llm_backend: str = "gemini"
+    gemini_api_key: str = ""
+    # Família Flash: o contexto de uma consulta é de poucos trechos
+    # curtos, e o que pesa na demonstração é latência e cota gratuita.
+    gemini_modelo: str = "gemini-3.5-flash"
+    # Teto por tentativa. O adaptador repete as falhas transitórias (cota
+    # e indisponibilidade), então o pior caso de uma consulta é maior.
+    gemini_timeout_seconds: float = 30.0
+
     # --- Voz (Azure Speech) ---------------------------------------------
     speech_key: str = ""
     speech_endpoint: str = ""
