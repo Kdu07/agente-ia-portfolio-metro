@@ -73,14 +73,33 @@ class Settings(BaseSettings):
     pinecone_api_key: str = ""
     pinecone_index: str = ""
     # Isola ambientes dentro do mesmo índice. A pasta adversarial da
-    # bancada nunca deve compartilhar namespace com a demonstração.
-    pinecone_namespace: str = "portfolio"
+    # bancada nunca deve compartilhar namespace com a demonstração. O
+    # padrão é o ambiente de desenvolvimento, e não um nome com cara de
+    # produção: quem esquece de configurar deve escrever no namespace
+    # descartável, não no que sustenta a demonstração.
+    pinecone_namespace: str = "dev"
 
     # NOTA: dimensão do vetor (1024) e teto de tokens do e5 (512) NÃO
     # ficam aqui. São propriedades do modelo escolhido, não configuração
     # de ambiente: mudá-las sem trocar o modelo produz um índice quebrado,
     # e trocar o modelo obriga a reindexar o corpus inteiro. Vivem como
     # constantes em rag/vetorial/base.py e rag/embeddings.py.
+
+    # --- Ingestão do corpus (executor próprio) --------------------------
+    # Seção 3.4 de docs/plano-executor-proprio.md. A conta de serviço lê a
+    # pasta controlada do Drive com escopo somente leitura. O JSON da
+    # chave fica fora do repositório — ou em `credenciais/`, que o
+    # .gitignore exclui —, e aqui entra só o caminho até ele.
+    drive_service_account_json: str = ""
+    drive_pasta_id: str = ""
+    # Orçamento de cada trecho, em tokens do e5, linha de contexto
+    # incluída. Bem abaixo do teto de 512 do modelo: trecho menor recupera
+    # com mais precisão, e a folga absorve a linha de contexto. A
+    # sobreposição só se aplica à prosa (ver rag/ingestao/chunking.py).
+    # Provisórios até a bancada da onda B medi-los, como os parâmetros de
+    # recuperação previstos na seção 3.7 do plano.
+    chunk_tokens: int = 350
+    chunk_overlap: int = 40
 
     # --- Voz (Azure Speech) ---------------------------------------------
     speech_key: str = ""

@@ -15,6 +15,8 @@ from alembic import context
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.pool import NullPool
 
+# Registra no metadata as tabelas do schema `rag` (app/rag/tabelas.py).
+import app.rag.tabelas  # noqa: F401
 from app.config import settings
 from app.persistence.tabelas import Base
 
@@ -41,6 +43,26 @@ def incluir_objeto(objeto, nome, tipo, reflexo, objeto_comparado) -> bool:
     return not (tipo == "table" and nome == "apscheduler_jobs")
 
 
+# Schemas deste projeto: o padrão (`None`, o `public`) e o `rag` da
+# ingestão do executor próprio.
+ESQUEMAS = {None, "rag"}
+
+
+def incluir_nome(nome, tipo, pais) -> bool:
+    """Restringe o autogenerate aos schemas deste projeto.
+
+    `include_schemas=True` é o que faz o Alembic refletir o schema `rag`:
+    sem ele, só o `public` é lido, as tabelas de `rag` nunca são
+    encontradas no banco, e toda revisão nova traria `create_table` para
+    elas. Ligado sozinho, porém, ele passaria a comparar QUALQUER schema
+    do servidor — e geraria `drop_table` para o que não conhece. Este
+    filtro deixa entrar só os dois.
+    """
+    if tipo == "schema":
+        return nome in ESQUEMAS
+    return True
+
+
 def migrar_offline() -> None:
     """Gera o SQL sem conectar ao banco (`alembic upgrade --sql`)."""
     context.configure(
@@ -49,6 +71,8 @@ def migrar_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         include_object=incluir_objeto,
+        include_schemas=True,
+        include_name=incluir_nome,
         compare_type=True,
     )
 
@@ -61,6 +85,8 @@ def _executar(conexao) -> None:
         connection=conexao,
         target_metadata=target_metadata,
         include_object=incluir_objeto,
+        include_schemas=True,
+        include_name=incluir_nome,
         # Sem isto, uma mudança de tipo de coluna passa despercebida pelo
         # autogenerate e o esquema diverge do modelo em silêncio.
         compare_type=True,

@@ -1,5 +1,7 @@
 # Segredos e configuração local
 .env
+# Chave da conta de serviço do Drive (ingestão do executor próprio)
+credenciais/
 
 # Python
 __pycache__/

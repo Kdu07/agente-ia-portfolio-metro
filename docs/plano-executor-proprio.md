@@ -245,16 +245,22 @@ src/middleware/app/
 │   └── client.py               # adaptador A — inalterado, passa a declarar a porta
 ├── rag/                        # adaptador B — caminho documental
 │   ├── executor.py             # implementa a porta; roteia por categoria (3.5)
-│   ├── ingestao/
+│   ├── ingestao/               # implementada na onda A (3.9)
+│   │   ├── fonte.py            # porta FonteDocumentos
 │   │   ├── drive.py            # listagem e download da pasta controlada
-│   │   ├── extracao.py         # PDF, DOCX, XLSX e texto -> texto + metadados
+│   │   ├── extracao.py         # DOCX, XLSX e PPTX -> unidades + metadados declarados
+│   │   ├── identificacao.py    # identidade pelo conteúdo e vigência
+│   │   ├── permissoes.py       # perfis do parceiro -> perfis do middleware
 │   │   ├── chunking.py         # divisão respeitando o teto de 512 tokens
 │   │   ├── triagem.py          # guarda de ingestão (4.2)
+│   │   ├── registro.py         # rag.arquivo e rag.trecho no PostgreSQL
 │   │   └── indexacao.py        # embeddings + upsert + registro dos trechos
+│   ├── tabelas.py              # schema rag: registro da ingestão e texto dos trechos
 │   ├── vetorial/
 │   │   ├── base.py             # porta RepositorioVetorial
 │   │   ├── pinecone.py         # adaptador padrão
-│   │   └── pgvector.py         # adaptador de reserva
+│   │   ├── pgvector.py         # adaptador de reserva
+│   │   └── provisionar.py      # cria e valida o índice (3.8)
 │   ├── embeddings.py           # fachada sobre EmbeddingsSentenca (D5)
 │   ├── recuperacao.py          # busca com filtro de permissão na query (4.3)
 │   └── geracao.py              # montagem do prompt e chamada ao Gemini
@@ -374,6 +380,103 @@ comentado do arquivo atual:
 `rag_top_k` e `rag_score_minimo` seguem a mesma disciplina do limiar de
 confiança do catálogo: valor provisório até a bancada existir, derivado por
 medição depois.
+
+### 3.8 O índice vetorial provisionado
+
+As quatro variáveis do banco vetorial saíram do papel na issue #285. O índice
+existe, e estes são os parâmetros com que foi criado:
+
+| Parâmetro | Valor | Por quê |
+|---|---|---|
+| Nome | `portfolio-metro` | Um índice por corpus; os ambientes se separam por namespace, não por índice |
+| Dimensão | **1024** | `intfloat/multilingual-e5-large` (D5). Constante `DIMENSAO` em `rag/vetorial/base.py` |
+| Métrica | **cosine** | `Acerto.score` é definido como cosseno de 0,0 a 1,0, e o e5 entrega vetores normalizados |
+| Tipo | `dense` | Sem busca híbrida no MVP |
+| Infraestrutura | Serverless, `aws` / `us-east-1` | Única combinação oferecida pelo plano gratuito |
+| SDK validado | `pinecone` 10.0.0 | Extra `rag` do `pyproject.toml` |
+
+**Dimensão e métrica são fixadas na criação e não podem ser alteradas.** Trocar
+qualquer uma obriga a apagar o índice e reindexar o corpus inteiro — daí o
+provisionamento ser um script versionado, `app/rag/vetorial/provisionar.py`, e
+não um passo a passo no console:
+
+```powershell
+python -m app.rag.vetorial.provisionar            # verifica, não escreve
+python -m app.rag.vetorial.provisionar --criar    # idempotente
+python -m app.rag.vetorial.provisionar --validar  # upsert, busca e remoção reais
+```
+
+Namespaces, dentro do mesmo índice:
+
+| Namespace | Uso |
+|---|---|
+| `dev` | Desenvolvimento local. É o padrão de `pinecone_namespace` |
+| `bancada` | Medições reproduzíveis da onda 2 |
+| `adversarial` | Corpus com instrução embutida da seção 4.1. **Nunca** compartilha namespace com a demonstração |
+| `demo` | Apresentação ao parceiro |
+| `_validacao` | Descartável: o `--validar` escreve, confere e apaga |
+
+O plano gratuito (Starter) comporta 2 GB (~300 mil registros), 2 M *write units*
+e 1 M *read units* por mês, 5 índices e 100 namespaces por índice. O corpus
+previsto é de dezenas de documentos e milhares de trechos — duas ordens de
+grandeza de folga, e o limite que apertaria primeiro seria o de leitura, não o
+de armazenamento.
+
+**Uma consequência de perímetro que deixa de ser hipotética.** O Starter só
+provisiona em `us-east-1`, fora do Brasil, enquanto Speech e Content Safety
+rodam em `brazilsouth`. A seção 4.5 já sustenta o desenho — o índice guarda
+vetor, identificador e os três campos de filtro, e o texto fica no PostgreSQL —,
+mas a condição declarada em 13.4 de [Arquitetura.md](Arquitetura.md) continua
+valendo sem atenuação: **dado exclusivamente sintético** enquanto o índice
+estiver nessa região.
+
+### 3.9 A ingestão implementada
+
+A onda A saiu do papel sobre o corpus que o parceiro entregou (seção 7): 84
+arquivos soltos numa pasta do Drive, com um LEIA-ME avisando que a
+desorganização e as inconsistências são deliberadas. Quatro decisões do código
+respondem a isso, e nenhuma estava no desenho original:
+
+| Decisão | Por quê |
+|---|---|
+| **Identidade pelo conteúdo, nome como conferência** | Cinco arquivos estão fora da convenção `CÓDIGO_TIPO_vN_AAAAMMDD`, e quatro deles são a única cópia do seu conteúdo: o relatório de julho da Sinalização, o cronograma do Monotrilho Ouro, os riscos da Acessibilidade L4 e o balanço de agosto. Tipo e código vêm do título e da tabela de cabeçalho (.docx), da capa (.pptx) e das abas mais a coluna `ID_PROJETO` (.xlsx). Código divergente entre nome e conteúdo põe o arquivo em quarentena, porque é o código que decide quem lê |
+| **Só o vigente no índice** | Chave lógica `código_tipo` para o que se substitui (termos, normativos, planilhas, consolidado) e `código_tipo_AAAA-MM` para o que se acumula (relatório de status, balanço). Vence a maior versão, depois a data. Os substituídos ficam registrados, fora do índice |
+| **Permissão declarada pelo parceiro** | Cada .docx e .pptx traz `Perfis autorizados` e `Classificação`. Diretoria → `diretoria`, Gerente de Projeto → `lider_projeto`, Equipe → `membro_equipe`; GPM, Auditoria e Consulta Geral não têm equivalente e são ignorados. A planilha de projeto herda a classificação do projeto no consolidado; no consolidado, cada linha leva a da própria linha — é o que mantém o PRJ-2026-012, Restrito, só para a diretoria. Toda dúvida resolve para menos gente |
+| **Planilhas linha a linha** | Cada linha vira `COLUNA: valor`, indivisível, com o documento e a aba na linha de contexto do trecho. A regra de 3.5 continua valendo: quando a base estruturada existir, números e agregações saem dela |
+
+**Registro.** O schema `rag` (migração `5b3f0c9a7e21`) guarda uma linha por
+arquivo visto, com o destino que ele teve — `indexado`, `substituido`,
+`quarentena`, `nao_identificado`, `ignorado` ou `removido` — e o motivo, e o
+texto de cada trecho indexado. Um índice único parcial impede duas versões do
+mesmo documento indexadas ao mesmo tempo.
+
+**Reindexação por assinatura.** md5 do arquivo, versão do pipeline, permissão
+efetiva, nome do projeto, orçamento de trecho e namespace. Uma execução sem
+mudança não baixa nem vetoriza nada; uma classificação revista no consolidado
+reindexa as planilhas do projeto sem que elas tenham mudado.
+
+**Simulação sobre a pasta real** (`--simular`, 10/09/2026): 84 arquivos → 76
+indexados, 7 substituídos (TAP v1 e a cópia da v2 do PRJ-2024-018; o
+consolidado de março a julho) e 1 ignorado (o LEIA-ME); 1.883 trechos, o maior
+com 350 tokens; 5 observações de nome fora da convenção; nenhum documento em
+quarentena.
+
+**Ponta a ponta, com PostgreSQL real** (mesma data, com um índice em memória no
+lugar do Pinecone): a primeira execução gravou os 1.883 trechos no banco e no
+índice; a segunda não baixou nem vetorizou nada; tirar da pasta o arquivo de
+riscos da Acessibilidade L4 tirou os 22 trechos dele dos dois lugares e marcou o
+arquivo como `removido`. O e5 large vetorizou 1,2 trecho por segundo na CPU, o
+que põe a primeira ingestão completa em cerca de meia hora.
+
+```powershell
+python -m app.rag.ingestao --simular     # lê, identifica, divide e tria; não grava nada
+python -m app.rag.ingestao               # indexa o que mudou desde a última execução
+python -m scripts.buscar_trechos "orçamento do Trecho Sul" --perfil lider_projeto --projetos PRJ-2024-018
+```
+
+Fica para depois: o job periódico no `worker` (hoje `NotImplementedError`), o
+Prompt Shields na triagem (depende do classificador da onda 2) e a tabela do
+pgvector (a imagem `postgres:16-alpine` não tem a extensão).
 
 ## 4. Segurança
 
@@ -545,6 +648,14 @@ engenharia, e é o material mais forte que este caminho produz para a
 apresentação.
 
 ## 7. Corpus sintético
+
+> **Atualização da onda A.** O corpus não precisou ser escrito pela equipe: o
+> parceiro entregou 84 arquivos sintéticos — 33 .docx, 6 .pptx, 44 .xlsx e um
+> LEIA-ME —, cobrindo os 18 projetos do consolidado e 8 normativos, gerados por
+> script e com inconsistências plantadas de propósito, cujo gabarito não está na
+> pasta. As subseções abaixo registram o plano original; o que valeu na ingestão
+> está em 3.9. O conjunto de referência da bancada (5.2) continua sendo trabalho
+> da equipe, e continua devendo ser escrito antes de haver o que medir.
 
 ### 7.1 É o caminho crítico
 

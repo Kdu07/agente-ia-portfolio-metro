@@ -25,6 +25,11 @@ from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Registra no metadata as tabelas do schema `rag`, como faz migrations/env.py.
+# Sem o import, o conjunto conferido em `test_esquema_do_banco_bate_com_os_modelos`
+# dependeria da ordem dos testes: qualquer módulo que importasse o registro
+# da ingestão antes deste o mudaria.
+import app.rag.tabelas  # noqa: F401
 from app.persistence.models import (
     Canal,
     Conversa,
@@ -141,14 +146,24 @@ def _interacao(
 # --- Esquema -------------------------------------------------------------
 
 
-async def test_esquema_do_banco_bate_com_os_modelos(sessao: AsyncSession) -> None:
-    """As cinco tabelas existem com o nome que o mapeamento declara.
+def _tabelas_do_banco(conexao) -> set[str]:
+    """Nomes como o metadata os chaveia: `tabela` no schema padrão, `schema.tabela` nos outros."""
+    inspetor = inspect(conexao)
+    nomes = set(inspetor.get_table_names())
+    for esquema in {tabela.schema for tabela in Base.metadata.tables.values() if tabela.schema}:
+        nomes |= {f"{esquema}.{nome}" for nome in inspetor.get_table_names(schema=esquema)}
+    return nomes
 
-    É a checagem que pega o caso de alguém acrescentar uma tabela ao
-    `tabelas.py` e esquecer de gerar a migração: o modelo passaria nos
-    testes de unidade e o banco não teria onde gravar.
+
+async def test_esquema_do_banco_bate_com_os_modelos(sessao: AsyncSession) -> None:
+    """As tabelas existem com o nome que o mapeamento declara.
+
+    As cinco do middleware e as do schema `rag`, da ingestão do executor
+    próprio. É a checagem que pega o caso de alguém acrescentar uma
+    tabela ao `tabelas.py` e esquecer de gerar a migração: o modelo
+    passaria nos testes de unidade e o banco não teria onde gravar.
     """
-    tabelas = await sessao.run_sync(lambda s: set(inspect(s.bind).get_table_names()))
+    tabelas = await sessao.run_sync(lambda s: _tabelas_do_banco(s.bind))
     assert set(Base.metadata.tables) <= tabelas
 
 
