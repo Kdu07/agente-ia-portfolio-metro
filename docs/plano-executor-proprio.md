@@ -138,7 +138,7 @@ obrigatório, tratado em 4.5.
 narrativa de perímetro intacta, com nenhum fornecedor novo além dos dois que já
 estão declarados no R12. Foi preterida pelo prazo de liberação do recurso. Se o
 acesso for concedido antes da onda B, a troca é de adaptador em
-`app/rag/geracao.py` e de variável de ambiente — a porta existe para isso.
+`app/rag/linguagem/` e de variável de ambiente — a porta existe para isso.
 
 ### 2.4 D4 — Pinecone atrás de uma porta
 
@@ -261,9 +261,15 @@ src/middleware/app/
 │   │   ├── pinecone.py         # adaptador padrão
 │   │   ├── pgvector.py         # adaptador de reserva
 │   │   └── provisionar.py      # cria e valida o índice (3.8)
+│   ├── linguagem/
+│   │   ├── base.py             # porta ModeloLinguagem (D3)
+│   │   ├── gemini.py           # adaptador padrão
+│   │   └── fabrica.py          # seleção por llm_backend
 │   ├── embeddings.py           # fachada sobre EmbeddingsSentenca (D5)
 │   ├── recuperacao.py          # busca com filtro de permissão na query (4.3)
-│   └── geracao.py              # montagem do prompt e chamada ao Gemini
+│   ├── geracao.py              # montagem do prompt, abstenção e citações
+│   ├── fluxo.py                # recuperação + geração, com rastreabilidade
+│   └── bancada.py              # bancada de avaliação do RAG (5)
 └── portfolio/                  # base estruturada sintética
     ├── models.py               # Projeto, Marco, Risco, Problema, RegistroAvanco, ...
     ├── consultas.py            # leitura e agregações
@@ -373,7 +379,8 @@ comentado do arquivo atual:
 | `drive_pasta_id` | Pasta controlada de onde a ingestão lê |
 | `vetorial_backend` | `pinecone` ou `pgvector` |
 | `pinecone_api_key`, `pinecone_index`, `pinecone_namespace` | Índice e isolamento |
-| `gemini_api_key`, `gemini_modelo` | Geração |
+| `llm_backend` | Adaptador de geração; `gemini` é o único hoje |
+| `gemini_api_key`, `gemini_modelo`, `gemini_timeout_seconds` | Geração |
 | `rag_top_k`, `rag_score_minimo` | Recuperação; calibrados pela bancada, não arbitrados |
 | `chunk_tokens`, `chunk_overlap` | Divisão, limitados pelo teto do e5 |
 
@@ -477,6 +484,81 @@ python -m scripts.buscar_trechos "orçamento do Trecho Sul" --perfil lider_proje
 Fica para depois: o job periódico no `worker` (hoje `NotImplementedError`), o
 Prompt Shields na triagem (depende do classificador da onda 2) e a tabela do
 pgvector (a imagem `postgres:16-alpine` não tem a extensão).
+
+### 3.10 A resposta implementada
+
+O primeiro fluxo de RAG ponta a ponta liga a recuperação sobre o índice de 3.8
+ao modelo de geração da decisão D3. É o trajeto de 3.3 sem o orquestrador na
+frente: recebe a pergunta e o escopo de quem pergunta e devolve a resposta com
+fontes, ou a abstenção.
+
+```mermaid
+flowchart LR
+    Q["pergunta + escopo"] --> R["recuperacao.py"]
+    R -->|"query: (e5, local)"| E["embeddings.py"]
+    R -->|"busca com filtro de permissão"| V[("Pinecone")]
+    R -->|"texto por id + conferência de permissão"| DB[("PostgreSQL — rag.trecho")]
+    R --> G["geracao.py"]
+    G -->|"instruções e conteúdo separados"| L["linguagem/ → Gemini"]
+    G --> S["texto + fontes, ou abstenção"]
+```
+
+| | |
+|---|---|
+| **Entrada** | Pergunta em linguagem natural e `Escopo` — perfil e projetos de quem pergunta, resolvidos na autenticação, nunca deduzidos pelo fluxo |
+| **Saída** | `RespostaRag`: texto, situação (`respondida`, `sem_contexto`, `sem_evidencia`, `nao_fundamentada`), fontes (arquivo, link, localizador, trecho e score) e modelo que respondeu |
+| **Dependências** | Índice provisionado (3.8); `rag.trecho` populada pela ingestão (3.9); e5 local; chave do Gemini; extra `rag` do `pyproject.toml` |
+| **Módulos** | `rag/recuperacao.py`, `rag/geracao.py`, `rag/linguagem/`, composição em `rag/fluxo.py` |
+
+Decisões do código:
+
+| Decisão | Por quê |
+|---|---|
+| **Modelo atrás de uma porta própria** (`rag/linguagem/`, `ModeloLinguagem`) | A alternativa descartada na D3 — Azure OpenAI no tenant da equipe — continua possível. Trocar de modelo é um adaptador novo e `LLM_BACKEND` no `.env`; recuperação e montagem do prompt não mudam, e a recuperação não conhece o modelo |
+| **Instruções e conteúdo por canais distintos** | As regras vão como instrução de sistema; a pergunta e os trechos, como mensagem, cada trecho delimitado e numerado. Marcas de delimitação que apareçam no texto de um trecho ou na pergunta são neutralizadas antes da montagem, para que um documento não consiga "sair" do bloco de dados (4.4) |
+| **Permissão conferida duas vezes** | O filtro na consulta ao índice é o que protege (4.3). A recuperação confere de novo o texto lido do PostgreSQL contra a permissão gravada junto dele: se índice e banco divergirem, o trecho é descartado e a divergência vai para o log |
+| **Citação obrigatória e verificada** | Toda afirmação cita o número do documento recebido. Resposta sem citação, ou citando documento que o modelo não recebeu, é descartada. As citações são renumeradas pela ordem de aparição, e `[1]` é sempre a primeira fonte da lista |
+| **Novas tentativas só para o transitório** | Cota (429), indisponibilidade (5xx) e tempo esgotado são repetidos com espera crescente; erro de pedido, não. É o risco "limite de taxa do Gemini" da seção 8 |
+| **Rastreabilidade por identificadores** | Cada consulta deixa uma linha de log com a situação, o modelo, o perfil, os trechos recuperados com seus scores e os citados. Nunca o texto dos trechos nem a pergunta: o log não vira mais um lugar onde o corpus vive |
+
+**Comportamento sem evidência.** O agente não responde com informação externa
+aos documentos recuperados, nem para perguntas gerais, e há três caminhos para a
+abstenção:
+
+1. **`sem_contexto`** — nenhum trecho visível ao perfil passou do corte de
+   similaridade. O modelo nem é chamado: sem trecho, ele só poderia responder de
+   memória;
+2. **`sem_evidencia`** — os trechos existem, mas o modelo declarou, pelo
+   marcador combinado nas instruções, que eles não sustentam a resposta;
+3. **`nao_fundamentada`** — o modelo respondeu sem citação válida, e a resposta
+   é descartada.
+
+Nos três casos o usuário recebe a mesma mensagem: *"Não encontrei, nos
+documentos disponíveis para o seu perfil, informação suficiente para responder
+a essa pergunta."* A igualdade é deliberada — "não existe" e "existe, mas você
+não pode ver" precisam ser indistinguíveis, ou a recusa vira oráculo do que há
+no corpus. A distinção fica na situação, que vai para o log e para a bancada.
+Falha do provedor (`ErroGeracao`) **não** é abstenção: propaga, e quem chama a
+trata como falha do executor.
+
+**Parâmetros provisórios.** `RAG_TOP_K=5`, `RAG_SCORE_MINIMO=0.75` e
+`GEMINI_MODELO=gemini-3.5-flash`. O corte é baixo de propósito — barra só a
+pergunta sem nada parecido no corpus, e a decisão fina de "não há evidência" é
+da geração, que lê o texto. Os três valem até a bancada medi-los (seção 5).
+
+```powershell
+python -m scripts.perguntar_rag "Qual o custo total estimado do Trecho Sul?" --perfil lider_projeto --projetos PRJ-2024-018
+python -m scripts.perguntar_rag "Quem aprova mudança de 15% no orçamento?" --perfil membro_equipe --trechos
+python -m app.rag.bancada --saida bancada.md
+```
+
+Fica para depois: `rag/executor.py` implementando a porta `Executor` de 3.1 e a
+seleção por `settings.executor` no orquestrador; a guarda de saída, que hoje
+levanta `NotImplementedError` e é pré-requisito para entregar texto gerado pelo
+pipeline; a lista de projetos do usuário, que `UsuarioAutenticado` ainda não
+carrega e sem a qual o escopo de líder e membro de equipe só alcança documentos
+transversais; e a primeira medição da bancada no namespace `bancada`, que
+substitui os valores provisórios acima e as metas de 5.1.
 
 ## 4. Segurança
 
@@ -614,6 +696,20 @@ Cobertura mínima: todas as intenções documentais e híbridas; perguntas cuja
 resposta está distribuída em mais de um documento; perguntas cuja resposta não
 está no corpus, para medir abstenção; e perguntas cuja resposta correta depende
 da permissão de quem pergunta.
+
+O conjunto está em `src/middleware/dados/bancada-rag.csv`: 26 perguntas sobre o
+corpus de 3.9, cada uma com o perfil e os projetos de quem pergunta, os
+documentos esperados, os termos que a resposta deve conter e os que não pode
+conter. Cobre as cinco situações acima — documento de projeto, normativo,
+resposta distribuída, pergunta fora do corpus e pergunta cuja resposta depende
+do perfil — e inclui casos que só se acertam pela vigência (o custo do TAP v3
+do PRJ-2024-018, e não o da v2 substituída) e pelo período (o relatório de
+julho, e não o de agosto). `python -m app.rag.bancada` mede recall@k,
+abstenção correta, acerto de conteúdo e vazamento de permissão, e reporta a
+distribuição de scores que calibra `rag_score_minimo`. A fidelidade é revisão
+humana sobre o detalhe que `--saida` escreve, com cada resposta ao lado dos
+trechos citados: um juiz automático seria o mesmo tipo de modelo julgando a si
+mesmo.
 
 ### 5.3 Relação com a bancada existente
 

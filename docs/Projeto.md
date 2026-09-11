@@ -600,7 +600,7 @@ Esta seção registra os riscos e as oportunidades **como identificados no artef
 >
 > A separação é deliberada. Uma matriz de risco vale tanto pelo que lista quanto pelo momento em que cada item entrou nela: sobrescrever esta seção a cada sprint apagaria a evolução que torna o acompanhamento verificável. Os identificadores são compartilhados entre os dois documentos, de modo que `R01` aqui e `R01` lá são o mesmo item, em dois instantes distintos.
 
-Referências a riscos feitas ao longo deste documento — em especial `R11` a `R16`, surgidos após a Sprint 1 — apontam para a matriz vigente do `GestaoProjeto.md`, e não para a tabela abaixo.
+Referências a riscos feitas ao longo deste documento — em especial as de `R11` em diante, surgidos após a Sprint 1 — apontam para a matriz vigente do `GestaoProjeto.md`, e não para a tabela abaixo.
 
 ### 2.6.1 Metodologia de avaliação
 
@@ -1506,8 +1506,11 @@ A tabela abaixo é essa enumeração. Ela é o objeto da verificação do RNF01 
 | SharePoint, Power BI e Power Automate | Fontes e operações do portfólio, via conectores do Copilot | **Parceiro (Metrô)** | Dados do portfólio (sintéticos no MVP) |
 | Azure AI Content Safety | Guardas de injeção, de abuso e de saída | **Equipe (g02/Inteli)** | Texto da mensagem e texto da resposta |
 | Azure Speech | Transcrição do canal de voz | **Equipe (g02/Inteli)** | Áudio do usuário |
+| Google Drive | Repositório documental do executor próprio, lido pela ingestão | **Equipe (g02/Inteli)** | Nenhum conteúdo de mensagem; é a origem do corpus sintético |
+| Pinecone | Índice vetorial do executor próprio | **Provedor externo (`us-east-1`)** | Vetores dos trechos e da pergunta, com identificador e campos de filtro (projeto e perfis); nunca o texto |
+| Google Gemini | Geração da resposta no executor próprio | **Provedor externo (Google)** | Pergunta do usuário e trechos recuperados |
 
-Nenhum outro serviço externo participa do caminho de uma mensagem. Em particular, não há serviço de IA generativa de terceiros no pipeline, e o classificador de intenções executa localmente.
+No caminho oficial, nenhum outro serviço externo participa do caminho de uma mensagem: não há serviço de IA generativa de terceiros no pipeline, e o classificador de intenções executa localmente. As três últimas linhas só participam quando o executor próprio (seção 13 de [Arquitetura.md](Arquitetura.md)) está selecionado. Sob ele, há um modelo de geração de terceiros no caminho da mensagem — o Gemini recebe, a cada consulta, a pergunta e os trechos recuperados —, e o índice vetorial recebe representações do corpus e da pergunta. Os embeddings são calculados localmente, e o texto dos trechos fica no PostgreSQL, não no índice. As duas exposições estão registradas como riscos R19 e R20 na matriz vigente e são contidas pela mesma condição do R12: somente dado sintético.
 
 **A consequência que este requisito declara em vez de omitir.** Content Safety e Speech foram provisionados no tenant da equipe, e não no do parceiro. Isso significa que o texto do prompt e o áudio do usuário atravessam, por desenho, um ambiente que o Metrô não homologou. A afirmação de que "todos os serviços de IA residem no tenant homologado" seria mais confortável e não seria verdadeira. A exposição está registrada como risco R12 na matriz vigente ([GestaoProjeto.md](GestaoProjeto.md), seção 4) e é contida no MVP por duas condições: o conteúdo processado é sintético, e os dois serviços ficam isolados atrás de módulos próprios (`pipeline/guardas/` e `voz/`), de modo que reprovisioná-los no tenant do parceiro seja mudança de configuração e não de código. Antes de qualquer uso com dado real, essa migração é pré-condição, não recomendação.
 

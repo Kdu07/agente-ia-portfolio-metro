@@ -108,6 +108,12 @@ de verdade e **pulam limpos** quando ele não responde. Sem banco, a suíte
 continua verde e deixa de verificar as restrições do esquema — para exercitá-las,
 suba o serviço e aplique as migrações antes.
 
+Os testes de `tests/integration/externos/` tocam serviços reais e são pulados
+sem a chave correspondente no ambiente: `test_pinecone_real.py` exige
+`PINECONE_API_KEY`, e `test_gemini_real.py` exige `GEMINI_API_KEY` — este
+confere, contra o modelo configurado, se ele cita, se abstém e ignora ordem
+plantada num documento. Com a camada gratuita, rode-os sob demanda.
+
 ## Aplicação
 
 ```powershell
@@ -234,6 +240,58 @@ python -m scripts.buscar_trechos "cronograma do Monotrilho Ouro" --perfil membro
 A segunda não deve trazer nenhum trecho do PRJ-2024-031 — só normativos, que
 são transversais: o projeto é Corporativo, e a permissão é aplicada dentro da
 consulta ao índice, não depois dela.
+
+## Resposta com RAG (recuperação + geração)
+
+O fluxo de `app/rag/fluxo.py` recebe uma pergunta e o escopo de quem pergunta,
+recupera os trechos visíveis a esse escopo e entrega-os ao modelo de geração,
+que responde citando cada trecho usado — ou se abstém quando eles não bastam. O
+comportamento, as decisões e o que ainda falta para ligá-lo ao orquestrador
+estão na seção 3.10 de
+[plano-executor-proprio.md](../../docs/plano-executor-proprio.md).
+
+Pré-requisitos: o índice provisionado e o corpus ingerido (seções anteriores),
+com o PostgreSQL no ar — o índice guarda só vetores, e o texto que vai ao modelo
+é lido de `rag.trecho`. O SDK do Gemini vem no mesmo extra `rag`.
+
+No `.env`:
+
+```dotenv
+LLM_BACKEND=gemini
+GEMINI_API_KEY=<chave do Google AI Studio, não versionar>
+GEMINI_MODELO=gemini-3.5-flash
+RAG_TOP_K=5
+RAG_SCORE_MINIMO=0.75
+```
+
+```powershell
+python -m scripts.perguntar_rag "Qual o custo total estimado do Trecho Sul?" --perfil lider_projeto --projetos PRJ-2024-018
+python -m scripts.perguntar_rag "Qual o orçamento aprovado da Expansão Leste?" --perfil lider_projeto --projetos PRJ-2024-018
+python -m scripts.perguntar_rag "Quem aprova mudança de 15% no orçamento?" --perfil membro_equipe --trechos
+```
+
+A primeira responde com o valor do termo de abertura vigente (v3) e a fonte. A
+segunda deve se abster: a Expansão Leste é Restrita e só a diretoria a vê, e a
+mensagem é a mesma de uma pergunta sem resposta no corpus — a recusa não revela
+que o projeto existe. `--trechos` mostra também o que foi recuperado, citado ou
+não.
+
+A bancada roda o conjunto de referência (`dados/bancada-rag.csv`) pelo fluxo
+real e mede recuperação e geração separadas:
+
+```powershell
+python -m app.rag.bancada                      # recall@k, abstenção, conteúdo, vazamento
+python -m app.rag.bancada --saida bancada.md   # + respostas e trechos para revisão de fidelidade
+python -m app.rag.bancada --score-minimo 0     # distribuição inteira de scores, para calibrar o corte
+```
+
+Rode a bancada com `PINECONE_NAMESPACE=bancada`, que é o namespace das
+medições reproduzíveis. Ela faz uma chamada ao modelo por caso, com pausa entre
+eles por causa da cota por minuto da camada gratuita.
+
+> A pergunta e os trechos recuperados vão ao Google a cada consulta. Vale a mesma
+> condição do índice: **apenas dado sintético** (riscos R19 e R20 da matriz
+> vigente, em [GestaoProjeto.md](../../docs/GestaoProjeto.md)).
 
 ## Validação isolada do Speech-to-Text
 

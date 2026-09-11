@@ -65,6 +65,10 @@ rag = [
     "python-docx>=1.1",
     "openpyxl>=3.1",
     "python-pptx>=1.0",
+    # Modelo de geração (decisão D3), atrás de app/rag/linguagem/. Major
+    # fixada pelo mesmo motivo do SDK do índice: o adaptador lê a forma
+    # da resposta (`.text`) e o código de erro (`.code`) do provedor.
+    "google-genai>=2.23,<3",
 ]
 dev = [
     "pytest>=8.0",

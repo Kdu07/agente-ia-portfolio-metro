@@ -683,6 +683,15 @@ oficial o rótulo viajava em metadados de uma *activity* do Direct Line, e aqui 
 fronteira é montada por código próprio — ganha-se controle e ganha-se a
 obrigação de testá-la.
 
+O controle sobre a geração traz uma barreira que o Copilot como caixa-preta não
+oferecia: **a resposta sem fundamento não é entregue**. O modelo só pode
+responder com o que está nos trechos recuperados, citando cada um; resposta sem
+citação válida é descartada, e o modelo nem é chamado quando nada visível ao
+perfil é recuperado. Nos três casos de abstenção o usuário recebe a mesma
+mensagem, para que a recusa não revele se a informação não existe ou apenas não
+é visível a ele. O comportamento completo está na seção 3.10 de
+[plano-executor-proprio.md](plano-executor-proprio.md).
+
 ### 13.3 Tecnologias do caminho alternativo
 
 | Camada | Escolha | Por quê |
@@ -690,7 +699,7 @@ obrigação de testá-la.
 | Repositório documental | Google Drive, pasta controlada por conta de serviço | Provisionamento imediato pela equipe; a ingestão é um job no `worker` que já existe, sem serviço novo no compose |
 | Embeddings | `intfloat/multilingual-e5-large`, local | Já carregado pelo ramo de embeddings do classificador, com os prefixos de assimetria da família e5 já tratados. Custo zero e, sobretudo, o corpus não sai da máquina para ser indexado |
 | Banco vetorial | Pinecone, atrás de uma porta `RepositorioVetorial` | O adaptador pgvector sobre o PostgreSQL existente fica como reserva: esgotar a camada gratuita ou desistir de enviar vetores para fora vira mudança de `.env`, não refatoração |
-| Geração | Gemini | Provisionamento imediato e camada gratuita suficiente para dado sintético. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação |
+| Geração | Gemini, atrás de uma porta `ModeloLinguagem` | Provisionamento imediato e camada gratuita suficiente para dado sintético. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação; se chegar, a troca é um adaptador em `rag/linguagem/` e uma linha no `.env` |
 | Base estruturada | PostgreSQL, *schema* `portfolio`, por migração Alembic | Dá destino às 10 intenções de transação e às agregações que caberiam ao Power BI, sem banco novo |
 
 ### 13.4 Perímetro e limites

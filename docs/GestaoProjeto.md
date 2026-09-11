@@ -130,6 +130,7 @@
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
   - [4.1 Metodologia de avaliação](#41-metodologia-de-avaliação)
   - [4.2 Matriz de risco consolidada — revisão da Sprint 3](#42-matriz-de-risco-consolidada--revisão-da-sprint-3)
+    - [4.2.1 Itens acrescentados na Sprint 4](#421-itens-acrescentados-na-sprint-4)
   - [4.3 Histórico de acompanhamento](#43-histórico-de-acompanhamento)
   - [4.4 Riscos materializados e efetividade das respostas](#44-riscos-materializados-e-efetividade-das-respostas)
   - [4.5 Plano de resposta — ameaças](#45-plano-de-resposta--ameaças)
@@ -1175,6 +1176,17 @@ A matriz abaixo mantém o histórico de avaliação desde a identificação inic
 
 **Movimentos relevantes na Sprint 3:** `R06` sobe de 16 para 20 e passa a **Materializado** — a ausência prolongada de retorno do parceiro deixou de ser hipótese e passou a condição observada ao longo de dois ciclos consecutivos. `R08` desce de 15 para 9 e deixa o status Materializado: não houve nova ruptura de escopo rastreável nos commits do período. `R17` sobe de 4 para 6 e entra em monitoramento porque o canal de voz passou a consumir Azure Speech de fato (`#203`–`#206`). `O04` sobe de 12 para 15 com o reforço da autonomia (mensageria e pipeline de voz na própria stack).
 
+#### 4.2.1 Itens acrescentados na Sprint 4
+
+Os dois itens abaixo decorrem do executor próprio ([plano-executor-proprio.md](plano-executor-proprio.md), seção 4.5): com o índice vetorial provisionado e a geração integrada à recuperação, as duas exposições de perímetro deixaram de ser hipótese de desenho e passaram a existir no código. Entram com a avaliação da Sprint 4 e passam a compor a tabela consolidada na revisão desta sprint.
+
+| ID | Categoria | Tipo | Descrição (causa → efeito) | P·I (S4) | Sev. S4 | Criticidade | Responsável | Status na Sprint 4 |
+|---|---|---|---|:-:|:-:|---|---|---|
+| **R19** | **Escopo / Compliance** | **Ameaça** | **Executor próprio envia a pergunta do usuário e os trechos recuperados ao Gemini, provedor externo fora dos dois tenants, a cada consulta → conteúdo consultado exposto a terceiro não homologado; objeção de compliance no handover e impedimento de uso com dado real enquanto a geração não migrar para serviço homologado** | **4·3** | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
+| **R20** | **Escopo / Compliance** | **Ameaça** | **Índice vetorial do executor próprio no Pinecone, em `us-east-1` → vetores dos trechos e da pergunta, com identificadores e campos de filtro, ficam num provedor externo fora do Brasil; vetor não é anonimização, dada a literatura de inversão de embeddings** | **4·2** | **8** | 🟡 Moderada | Resp. infraestrutura | Em Monitoramento |
+
+Os dois têm probabilidade 4 porque a exposição é estrutural: acontece em toda consulta sob o executor próprio, e não por acidente. O impacto fica abaixo do de `R09` pela mesma razão que contém `R12` — o conteúdo é exclusivamente sintético —, e o de `R20` é menor que o de `R19` porque o texto dos trechos não vai para o índice, só vetor, identificador e os campos usados no filtro.
+
 ### 4.3 Histórico de acompanhamento
 
 O histórico registra, por item, a evolução desde a identificação inicial, de modo que seja possível verificar o que mudou em cada ciclo e por quê.
@@ -1249,6 +1261,8 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | **R16** | Criação de índices parciais e compostos no PostgreSQL; consultas agregadas somente-leitura em `analytics/`; implementação da rotina periódica de expurgo no agendador conforme RNF07. | Implementação de views materializadas com atualização assíncrona para o dashboard de telemetria. |
 | **R17** | Configurar alerta de orçamento antes do limite, conforme 6.5.5 do `Projeto.md`; concentrar a campanha de medição do corpus em uma janela única, em vez de diluí-la ao longo do mês; manter a síntese de voz (F80) fora do MVP, que é o lado da franquia com maior consumo por uso. | Suspender o canal de voz até a virada do ciclo de cobrança e sustentar a demonstração pelo canal de texto, registrando a limitação; ou migrar para o nível S0, cujo custo por hora de áudio está dimensionado em 5.7.2.7. |
 | **R18** | Na abertura da sprint, nomear substituto ou pareamento para cada frente crítica; incluir feriados no cálculo de capacity; verificar cobertura na daily | **Acionada parcialmente na Sprint 3** (redistribuição reativa). Formalizar na Sprint 4 via `AM14`/`AM15`: redistribuir issues do integrante indisponível no mesmo dia; reduzir escopo não crítico; registrar o plano B no card |
+| **R19** | Somente dado sintético no corpus e nas perguntas de teste; embeddings calculados localmente, de modo que o corpus não sai para ser indexado e só os trechos recuperados chegam ao modelo, e só no momento da consulta; no máximo `RAG_TOP_K` trechos por consulta, e nenhuma chamada ao modelo quando nada visível ao perfil é recuperado; modelo atrás da porta `rag/linguagem/`, para que a troca por um serviço homologado seja adaptador e configuração, não reescrita | Voltar ao caminho oficial ou suspender o executor próprio até a geração migrar para serviço homologado; havendo indício de dado real enviado ao provedor, tratar como incidente de `R09` |
+| **R20** | Texto dos trechos fora do metadado do índice (só vetor, identificador e campos de filtro); namespaces separados por ambiente; somente dado sintético; banco vetorial atrás da porta `rag/vetorial/`, com o adaptador pgvector como reserva | Acionar o pgvector sobre o PostgreSQL da equipe — o que exige trocar a imagem do banco por uma com a extensão `vector` — e apagar os namespaces do Pinecone |
 
 ### 4.6 Estratégia de aproveitamento — oportunidades
 

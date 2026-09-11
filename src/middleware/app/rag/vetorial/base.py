@@ -120,6 +120,22 @@ class Escopo:
         """True quando o perfil dispensa o filtro por projeto."""
         return self.perfil is Perfil.DIRETORIA
 
+    def alcanca(self, projeto: str | None, perfis: Iterable[Perfil]) -> bool:
+        """True quando um trecho com esta permissão é visível ao escopo.
+
+        A mesma regra que cada adaptador traduz em filtro de consulta,
+        escrita em Python. Não substitui o filtro na query (invariante
+        2): serve à conferência que a recuperação faz sobre o texto lido
+        do PostgreSQL, para que uma divergência entre o índice e o banco
+        — permissão revista num lado e não no outro — descarte o trecho
+        em vez de entregá-lo.
+        """
+        if self.perfil not in frozenset(perfis):
+            return False
+        if self.ve_portfolio_inteiro():
+            return True
+        return projeto in (None, PROJETO_TRANSVERSAL) or projeto in self.projetos
+
 
 @dataclass(frozen=True)
 class Acerto:
