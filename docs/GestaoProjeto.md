@@ -101,7 +101,7 @@
   - [2.4 SLA de entregas](#24-sla-de-entregas)
   - [2.5 Gestão de issues e estimativas](#25-gestão-de-issues-e-estimativas)
   - [2.6 Fluxo e rastreabilidade](#26-fluxo-e-rastreabilidade)
-  - [2.7 Política de commits](#27-política-de-commits)
+  - [2.7 Política de commits e uso do GitLab](#27-política-de-commits-e-uso-do-gitlab)
   - [2.8 Fechamento da sprint](#28-fechamento-da-sprint)
   - [2.9 Revisão do contrato de convivência](#29-revisão-do-contrato-de-convivência)
 - [3. Avaliação das sprints](#3-avaliação-das-sprints)
@@ -327,7 +327,7 @@ Issue → Branch → Desenvolvimento/Documentação → Commit → Push → MR �
 
 - Uma issue somente deve ser iniciada quando seu DoR estiver atendido.
 - Uma issue somente deve ser encerrada quando todos os critérios de seu DoD estiverem atendidos.
-- Quando uma dependência impedir o avanço, a issue deve receber a label `BLOCKED` e registrar o impedimento.
+- Quando uma dependência impedir o avanço, a issue deve receber a label `BLOCK` e registrar o impedimento.
 - Branches, commits e merge requests devem ser relacionados à issue correspondente.
 - A abertura do merge request não caracteriza a conclusão da atividade; revisão, atendimento aos comentários e merge fazem parte da entrega.
 - A pessoa revisora deve verificar o DoD, os arquivos alterados, a coerência com outros artefatos, os conflitos e os testes aplicáveis.
@@ -336,9 +336,28 @@ Ao final, o GitLab deve permitir identificar o que precisava ser feito, quem rea
 
 As dependências entre artefatos devem ser respeitadas. Um exemplo de sequência é: stakeholders → personas → jornadas → User Stories → diagramas. A ordem específica de cada sprint deve seguir o planejamento aprovado pela equipe.
 
-### 2.7 Política de commits
+### 2.7 Política de commits e uso do GitLab
 
-Os commits devem seguir o padrão *Conventional Commits*, no formato `<tipo>(<escopo opcional>): <descrição objetiva> (#<card>)`. Cada commit deve representar uma alteração coerente, possuir uma descrição objetiva e referenciar a issue correspondente. Mensagens vagas e commits que misturem atividades sem relação devem ser evitados. Os tipos aceitos, exemplos e demais regras técnicas estão detalhados no [GestaoConfiguracao.md](GestaoConfiguracao.md).
+**Commits.** Os commits devem seguir o padrão *Conventional Commits*, no formato `<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> (#<card>)`. Cada commit deve representar uma unidade lógica de alteração, iniciar por verbo no infinitivo em letra minúscula, descrever objetivamente o que mudou e referenciar a issue correspondente. Mensagens vagas e commits que misturem atividades sem relação devem ser evitados. O envio direto de alterações para `main` ou `develop` não faz parte do fluxo do grupo: toda alteração chega à `develop` por merge request. Os tipos aceitos, os exemplos válidos e inválidos, o padrão de título e descrição de merge request e as demais regras técnicas estão detalhados no [GestaoConfiguracao.md](GestaoConfiguracao.md).
+
+**Movimentação do quadro.** O quadro é a fonte oficial do estado das atividades. Movimentar o card é responsabilidade da pessoa designada nele, e não do revisor ou do Scrum Master. A correspondência entre coluna e etapa do fluxo é a seguinte.
+
+| Coluna | Quando o card entra |
+|---|---|
+| `open` | Card criado, ainda não comprometido para a sprint |
+| `backlog` | Card comprometido para a sprint corrente, com milestone, labels e estimativa |
+| `doing` | Trabalho iniciado, com o DoR atendido |
+| `waiting review` | Merge request aberto, ainda sem revisor designado |
+| `review` | Revisor designado e revisão em andamento |
+| `closed` | Merge realizado e DoD integralmente atendido |
+
+Regras de uso:
+
+- O card muda de coluna no momento em que o fato ocorre, e não no fechamento do dia. Quadro atualizado em lote deixa de informar durante a daily e inviabiliza as três verificações da seção [2.2.2](#222-dailies).
+- Card impedido permanece na coluna em que está, recebe a label `BLOCK` e registra em comentário o que o bloqueia e qual é o próximo passo.
+- Cada integrante deve manter no máximo duas atividades em `doing` simultaneamente. Acima disso, a verificação de carga perde precisão e o trabalho em curso deixa de refletir o que está efetivamente sendo feito.
+- O fechamento da issue ocorre pelo merge, por meio de `Closes #<issue>` na descrição do merge request. Issue encerrada sem merge request associado deve registrar em comentário a razão do encerramento.
+- Atividade sem evidência no repositório, como reunião ou sessão com usuário externo, recebe a label `MEET` ou `OFFSITE` e é encerrada com registro em comentário descrevendo o resultado.
 
 ### 2.8 Fechamento da sprint
 
@@ -402,7 +421,7 @@ A revisão percorreu o contrato inteiro, e não apenas os pontos que mudaram. As
 
 **Justificativa das alterações**
 
-As alterações desta revisão respondem a situações concretas ocorridas durante a Sprint 3, e não a aprimoramentos genéricos de processo. Duas nasceram de perda efetiva de tempo de trabalho, uma corrige divergência entre a prática do grupo e as regras de qualidade do Escritório de Projetos, e a última resolve um caso que a regra anterior não previa.
+As alterações desta revisão respondem a situações concretas ocorridas durante a Sprint 3, e não a aprimoramentos genéricos de processo. Uma nasceu de perda efetiva de tempo de trabalho, uma responde a prejuízo de rastreabilidade, duas corrigem divergência entre o que o grupo pratica e o que estava registrado, e a última resolve um caso que a regra anterior não previa.
 
 **Alterações aprovadas**
 
@@ -412,6 +431,8 @@ As alterações desta revisão respondem a situações concretas ocorridas duran
 
 - **Taxonomia de labels.** As labels do board passam a seguir a lista oficial do Escritório de Projetos a partir da Sprint 4, com uma label de entrega entre `BUSINESS`, `DESIGN`, `ARCHITECTURE`, `CODE`, `TEST`, `DEPLOY`, `PROCESS` e `CHORE`, acrescida de `DOCS` como forma, nunca utilizada isoladamente. Os cards criados até a Sprint 3 permanecem com as labels originais, pela mesma razão que preservou o nome das branches anteriores à troca de prefixo. A seção 2.5.3 registra a correspondência entre as duas nomenclaturas.
 
+- **Convenção de merge request.** O título do merge request passa a seguir o mesmo formato da mensagem de commit, e a descrição passa a conter as seções O que foi feito, Por que foi feito, DOR, DOD e Como testar. Até a Sprint 2, o `GestaoConfiguracao.md` previa o formato `TIPO | descrição` e um checklist genérico de conferência, que o grupo deixou de utilizar ao longo da Sprint 3 sem atualizar o documento. As seções de DOR e DOD substituem o checklist porque exigem a evidência de atendimento de cada critério, e não apenas a marcação de uma caixa.
+
 - **Branch derivada de outra branch.** A regra de que toda branch nasce da `develop` passa a admitir exceção quando o trabalho documenta ou corrige código ainda não integrado. Nesse caso, a branch pode derivar daquela que contém o código, e o merge request deve declarar a branch-base e o motivo. A exceção surgiu na documentação da interface, que descrevia código presente apenas na branch de origem.
 
 **Fechamento de ação da sprint anterior**
@@ -420,7 +441,7 @@ A ação AM13, que previa repriorizar o quadro no penúltimo dia da sprint, depe
 
 **Impacto esperado**
 
-Espera-se redução do tempo perdido com incidentes de ambiente local, que na Sprint 3 consumiram horas de trabalho sem produzir entrega. A abertura de issue para defeito encontrado deve tornar visível no board um tipo de trabalho que antes ficava embutido em outras entregas. A adequação da taxonomia de labels alinha o board aos critérios pelos quais o grupo é avaliado. A exceção da branch-base elimina a escolha entre cumprir a regra e documentar código existente, situação que a regra anterior não previa.
+Espera-se redução do tempo perdido com incidentes de ambiente local, que na Sprint 3 consumiram horas de trabalho sem produzir entrega. A abertura de issue para defeito encontrado deve tornar visível no board um tipo de trabalho que antes ficava embutido em outras entregas. A adequação da taxonomia de labels alinha o board aos critérios pelos quais o grupo é avaliado. A convenção unificada de merge request elimina a divergência entre documento e prática e permite ler o título do card, o commit e o merge request como uma sequência única. A exceção da branch-base elimina a escolha entre cumprir a regra e documentar código existente, situação que a regra anterior não previa.
 
 ## 3. Avaliação das sprints
 
