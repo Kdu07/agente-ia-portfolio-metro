@@ -166,6 +166,7 @@ O board e o repositório constituem as fontes oficiais de acompanhamento do proj
 - Integrantes devem colaborar na revisão de merge requests e no esclarecimento de dúvidas que bloqueiem o trabalho da equipe.
 - Revisões de merge requests devem ser realizadas em até 24 horas úteis, conforme SLA estabelecido.
 - Quando possível, as revisões devem ser distribuídas entre os integrantes para evitar concentração em uma única pessoa.
+- O repositório não deve ser mantido dentro de pasta sincronizada com serviço de nuvem, conforme a revisão registrada na seção 2.9.2. Quem não puder mover o repositório deve pausar a sincronização enquanto trabalha com Git.
 
 ### 2.2 Comunicação e rituais
 
@@ -184,7 +185,7 @@ O Kanban do GitLab apoia esse acompanhamento ao tornar visíveis o estado das ta
 **Acompanhamento de carga e dependências (revisão da Sprint 2).** Para tornar verificável a regra registrada na seção [2.9.1](#291-revisão-sprint-2), a daily passa a incluir três verificações objetivas, conduzidas pelo Scrum Master da sprint:
 
 1. **Carga.** Comparação da quantidade e do *size* das issues em `Doing` por integrante. Diferença superior a 2:1 entre a maior e a menor carga atribuída deve ser discutida na própria daily e resolvida por redistribuição ou por registro da justificativa no card.
-2. **Dependências.** Verificação das issues que bloqueiam outras atividades. Toda issue impeditiva deve receber a label `BLOCKED`, indicar o que a bloqueia e ter um próximo passo definido com responsável.
+2. **Dependências.** Verificação das issues que bloqueiam outras atividades. Toda issue impeditiva deve receber a label `BLOCK`, indicar o que a bloqueia e ter um próximo passo definido com responsável.
 3. **Fila de revisão.** Verificação das issues em `Waiting Review` e `Review`. Itens que ultrapassem o SLA de 24 horas úteis devem receber um revisor nomeado ainda na daily, priorizando os merge requests que bloqueiam outras entregas.
 
 O resultado dessas três verificações orienta a redistribuição de tarefas do dia e é a base do acompanhamento consolidado na retrospectiva.
@@ -229,6 +230,8 @@ Cada issue deve conter:
 
 As atividades devem ser granulares e produzir entregas verificáveis. Cards amplos, como “Fazer documentação da Sprint”, devem ser divididos em tarefas menores que permitam acompanhar o progresso e distribuir o trabalho entre os integrantes.
 
+Defeito identificado em teste manual ou durante revisão abre issue própria antes da correção, com a label `BUG` acompanhando a label de entrega correspondente. Corrigir um defeito dentro de uma issue de outro escopo rompe a ligação entre o problema e a sua solução, e foi a situação que originou esta regra na revisão registrada na seção 2.9.2.
+
 #### 2.5.2 T-shirt sizing
 
 As estimativas representam referências de esforço relativo, não compromissos de duração exata.
@@ -244,28 +247,75 @@ Quando uma atividade exceder a referência de `SIZE_G`, a equipe deve avaliar su
 
 #### 2.5.3 Labels padronizadas
 
-Devem ser utilizadas somente as labels já existentes no projeto, evitando a criação de nomes diferentes para representar a mesma finalidade.
+A partir da Sprint 4, o board adota a taxonomia oficial definida pelo Escritório de Projetos. Cada issue recebe uma label de cada categoria obrigatória, e as labels devem ser escritas exatamente como listadas, uma vez que espaço e hífen são significativos para a avaliação.
+
+**Entrega.** Obrigatória, uma por issue. Indica a natureza do que é produzido.
 
 | Label | Uso |
 |---|---|
-| `REQUIREMENTS` | Requisitos funcionais e não funcionais, User Stories e business drivers |
-| `DOCUMENTATION` | Documentação e consolidação de artefatos |
-| `DESIGN` | UML, BPMN, C4, jornadas e demais modelagens |
+| `BUSINESS` | Entendimento de negócio, viabilidade financeira, orçamento e proposta de valor |
+| `DESIGN` | UML, BPMN, C4, jornadas, protótipos e demais modelagens visuais |
+| `ARCHITECTURE` | Decisões e documentação técnica da solução, contratos de API e modelagem de dados |
 | `CODE` | Implementação e configuração técnica |
-| `RESEARCH` | Pesquisa e avaliação de alternativas técnicas ou de negócio |
-| `FRONTEND` | Interfaces e experiência implementada no cliente |
-| `BACKEND` | Serviços, regras e integrações executadas no servidor |
-| `DEVOPS` | Ambiente, automação, integração e implantação |
-| `TEST` | Testes |
-| `CODE_REVIEW` | Revisão de código |
-| `DEPLOY` | Implantação |
+| `TEST` | Planejamento, implementação e execução de testes |
+| `DEPLOY` | Ambientes, automação, integração contínua e implantação |
+| `PROCESS` | Gestão de projeto, de equipe e de configuração |
+| `CHORE` | Tarefas de apoio ao repositório, dependências e organização de arquivos |
+
+**Forma.** Aplicada quando a entrega é documentação em markdown. Nunca utilizada isoladamente, sempre acompanhando uma label de entrega.
+
+| Label | Uso |
+|---|---|
+| `DOCS` | Documentação produzida em markdown |
+
+**Natureza.** Aplicada quando a entrega corrige um defeito. Nunca utilizada isoladamente.
+
+| Label | Uso |
+|---|---|
+| `BUG` | Correção de defeito identificado |
+
+**Esforço.** Obrigatória, uma por issue, conforme as referências da seção 2.5.2: `SIZE_PP`, `SIZE_P`, `SIZE_M` e `SIZE_G`.
+
+**Prioridade.** Obrigatória, uma por issue: `P_ALTA`, `P_MEDIA` e `P_BAIXA`.
+
+**Fora do GitLab.** Aplicada quando a evidência da atividade não é um commit.
+
+| Label | Uso |
+|---|---|
 | `MEET` | Reuniões e alinhamentos |
-| `BUG` | Correção de defeitos |
-| `BLOCKED` | Atividade impedida de avançar |
+| `OFFSITE` | Atividades realizadas fora do repositório, como sessões com usuários externos |
 
-As labels de acompanhamento `Backlog`, `Doing`, `Review`, `Waiting Review`, `DOR_INCOMPLETE` e `DOD_INCOMPLETE` devem ser aplicadas quando correspondentes à situação da atividade. A label `Backlog` identifica atividades já registradas e detalhadas, porém ainda não puxadas para execução.
+**Situação.** Posição da atividade no quadro, acrescida da marcação de impedimento.
 
-> **Revisão da Sprint 2.** A tabela acima foi ajustada para refletir a nomenclatura efetivamente utilizada no board: a label de documentação chama-se `DOCUMENTATION` (e não `DOCS`), e a label de acompanhamento `Backlog` passou a integrar o conjunto oficial. O ajuste elimina a divergência entre a política registrada e a prática observada no GitLab.
+| Label | Uso |
+|---|---|
+| `open` | Candidata ainda não comprometida para a sprint |
+| `backlog` | Comprometida para a sprint corrente |
+| `doing` | Em execução |
+| `waiting review` | Aguardando revisor |
+| `review` | Em revisão |
+| `closed` | Integrada, com DoD atendido |
+| `BLOCK` | Atividade impedida de avançar |
+
+Toda issue da sprint corrente deve possuir a milestone no formato `Sprint 0X`. Sem ela, o cartão não é contabilizado.
+
+**Correspondência com a nomenclatura anterior**
+
+Os cards criados até a Sprint 3 permanecem com as labels originais. O histórico não é reescrito, pela mesma razão que preservou o nome das branches anteriores à troca de prefixo descrita em [GestaoConfiguracao.md](GestaoConfiguracao.md). A tabela abaixo registra a correspondência para leitura do quadro anterior.
+
+| Label anterior | Equivalente oficial |
+|---|---|
+| `REQUIREMENTS` | `ARCHITECTURE` com `DOCS` |
+| `DOCUMENTATION` | `DOCS`, acompanhada da label de entrega correspondente |
+| `RESEARCH` | `BUSINESS` ou `ARCHITECTURE`, conforme o objeto da pesquisa |
+| `FRONTEND` | `CODE` |
+| `BACKEND` | `CODE` |
+| `DEVOPS` | `DEPLOY` |
+| `CODE_REVIEW` | Sem equivalente. A revisão passou a ser etapa do fluxo, marcada por `review`, e não atividade com label própria |
+| `BLOCKED` | `BLOCK` |
+| `DOR_INCOMPLETE` e `DOD_INCOMPLETE` | Sem equivalente. A incompletude passa a ser tratada como impedimento, com `BLOCK` |
+
+> **Revisão da Sprint 3.** A tabela desta seção foi substituída pela taxonomia oficial do Escritório de Projetos. A revisão da Sprint 2 havia ajustado o documento à nomenclatura do quadro, trocando `DOCS` por `DOCUMENTATION`, o que eliminou a divergência entre documento e prática mas preservou a divergência entre a prática e a regra pela qual o grupo é avaliado. A adequação vale para os cards criados a partir da Sprint 4.
 
 ### 2.6 Fluxo e rastreabilidade
 
@@ -330,6 +380,47 @@ As revisões são registradas nesta seção para garantir transparência e rastr
 - Adição de critérios para acompanhamento de carga e dependências nas dailies.
 
 **Impacto esperado:** Melhor distribuição do trabalho de revisão, redução de concentração de revisões em uma única pessoa e identificação antecipada de bloqueios.
+
+#### 2.9.2 Revisão Sprint 3
+
+**Data:** 2026-09-11
+
+**Regras revisadas e mantidas**
+
+A revisão percorreu o contrato inteiro, e não apenas os pontos que mudaram. As regras abaixo foram examinadas e mantidas, com a razão registrada.
+
+| Regra | Seção | Razão da manutenção |
+|---|---|---|
+| Regra de ouro | 2.1.1 | Não houve conflito ou episódio de exposição individual na sprint que justificasse revisão. A regra continua descrevendo a prática do grupo |
+| Board e repositório como fontes oficiais | 2.1.1 | A rastreabilidade entre card, commit e merge request se manteve ao longo da sprint |
+| Comunicação oficial em dois canais | 2.2.1 | A separação entre WhatsApp informal e Slack formal funcionou sem ambiguidade registrada |
+| Dailies presenciais às 14h, com 15 minutos | 2.2.2 | Formato e duração se mostraram adequados ao ritmo da sprint |
+| Três verificações da daily | 2.2.2 | Mantidas com avaliação positiva. Criadas na revisão anterior para responder ao apontamento sobre concentração de revisões, elas fizeram diferença na condução da Sprint 3: a verificação de carga tornou visível o desequilíbrio no mesmo dia em que ele surgia, a de dependências antecipou bloqueios que antes só apareciam quando já travavam alguém, e a de fila de revisão reduziu o tempo de espera dos merge requests. A equipe avalia que a regra saiu do papel e passou a orientar a redistribuição diária |
+| SLA de 24 horas úteis para revisão de merge request | 2.2.3 | Mantido. Foi cumprido na maioria das solicitações da sprint, e os descumprimentos foram pontuais. O prazo permanece adequado; o que exige atenção é a regularidade, tratada como ação de melhoria |
+| Resolução de impasses e conflitos | 2.3 | A progressão prevista não precisou ser acionada nesta sprint |
+| SLA de entrega até quinta às 23h59 | 2.4 | Mantido, e não cumprido. As entregas da Sprint 3 se estenderam até a tarde de sexta-feira. A regra é preservada porque cumpre função de organização, antecipando o planejamento da semana e concentrando o esforço antes do prazo formal. A distância entre a meta e o resultado é tratada como ação de melhoria, e não como flexibilização do prazo |
+
+**Justificativa das alterações**
+
+As alterações desta revisão respondem a situações concretas ocorridas durante a Sprint 3, e não a aprimoramentos genéricos de processo. Duas nasceram de perda efetiva de tempo de trabalho, uma corrige divergência entre a prática do grupo e as regras de qualidade do Escritório de Projetos, e a última resolve um caso que a regra anterior não previa.
+
+**Alterações aprovadas**
+
+- **Ambiente de trabalho local.** Fica estabelecido que o repositório não deve ser mantido dentro de pasta sincronizada com serviço de nuvem. A sincronização automática interfere no funcionamento do Git, e a Sprint 3 registrou quatro ocorrências: um arquivo de trava do índice que impediu qualquer operação, um arquivo de configuração que o sistema não conseguiu ler, um arquivo de controle de merge vazio que fez o Git reportar um merge inexistente, e arquivos removidos pela troca de branch sendo restaurados pela sincronização sobre a `develop`. Quem não puder mover o repositório deve pausar a sincronização durante o trabalho com Git.
+
+- **Defeito identificado fora de card.** Todo defeito encontrado em teste manual ou durante revisão passa a abrir issue própria antes da correção. Na Sprint 3, um defeito de interface encontrado em teste manual foi corrigido dentro de uma issue de outro escopo, o que prejudicou a rastreabilidade entre o problema e a sua solução.
+
+- **Taxonomia de labels.** As labels do board passam a seguir a lista oficial do Escritório de Projetos a partir da Sprint 4, com uma label de entrega entre `BUSINESS`, `DESIGN`, `ARCHITECTURE`, `CODE`, `TEST`, `DEPLOY`, `PROCESS` e `CHORE`, acrescida de `DOCS` como forma, nunca utilizada isoladamente. Os cards criados até a Sprint 3 permanecem com as labels originais, pela mesma razão que preservou o nome das branches anteriores à troca de prefixo. A seção 2.5.3 registra a correspondência entre as duas nomenclaturas.
+
+- **Branch derivada de outra branch.** A regra de que toda branch nasce da `develop` passa a admitir exceção quando o trabalho documenta ou corrige código ainda não integrado. Nesse caso, a branch pode derivar daquela que contém o código, e o merge request deve declarar a branch-base e o motivo. A exceção surgiu na documentação da interface, que descrevia código presente apenas na branch de origem.
+
+**Fechamento de ação da sprint anterior**
+
+A ação AM13, que previa repriorizar o quadro no penúltimo dia da sprint, dependia de uma distinção de prioridade que o board não oferecia. As labels `P_ALTA`, `P_MEDIA` e `P_BAIXA` passaram a ser aplicadas aos cards durante a Sprint 3, o que torna a ação executável e encerra o apontamento recebido na avaliação anterior.
+
+**Impacto esperado**
+
+Espera-se redução do tempo perdido com incidentes de ambiente local, que na Sprint 3 consumiram horas de trabalho sem produzir entrega. A abertura de issue para defeito encontrado deve tornar visível no board um tipo de trabalho que antes ficava embutido em outras entregas. A adequação da taxonomia de labels alinha o board aos critérios pelos quais o grupo é avaliado. A exceção da branch-base elimina a escolha entre cumprir a regra e documentar código existente, situação que a regra anterior não previa.
 
 ## 3. Avaliação das sprints
 
@@ -921,6 +1012,8 @@ Os dados mostram que os 50 commits autorais únicos se distribuem entre a `devel
 | Entregas mantidas em branches | 15 dos 50 commits autorais únicos não estavam integrados na `develop` no corte; o MR `!91` permanecia aberto | Parte do trabalho concluído em branch ainda não compunha a linha demonstrável do produto e exigia fechamento ou replanejamento |
 | Integração externa ainda incompleta | Os testes de integração e o módulo VHS estavam preparados, mas o MR `!91` permanecia aberto no corte | A comunicação com serviços externos e a validação do cache precisam de evidência de execução e fechamento na Sprint 4 |
 | Capacidade planejada sem fechamento homogêneo | 55 issues foram atribuídas, mas apenas 23 estavam fechadas no corte | O acompanhamento deve distinguir trabalho iniciado, entregue em branch e integrado na `develop` |
+| Prazo interno de entrega não cumprido | O SLA da seção 2.4 estabelece quinta-feira às 23h59 para disponibilização à revisão interna; as entregas do ciclo se estenderam até a tarde de sexta-feira | A revisão interna perde a margem que o prazo pretendia criar, e a verificação de coerência entre artefatos passa a competir com o fechamento |
+| Incidentes de ambiente local com o Git | Quatro ocorrências em máquina de integrante cujo repositório reside em pasta sincronizada com nuvem: trava do índice, arquivo de configuração ilegível, arquivo de controle de merge vazio e arquivos restaurados pela sincronização sobre a `develop` | Horas de trabalho consumidas sem produzir entrega, e risco de arquivo ressuscitado entrar em commit sem percepção. Originou regra de ambiente na revisão do contrato (seção 2.9.2) |
 
 ##### Riscos do planejamento e acompanhamento no módulo
 
@@ -944,7 +1037,8 @@ A leitura abaixo cruza a matriz da seção 4 com o que o ciclo tornou observáve
 | AM08 | Papel de Tech Lead não documentado nesta seção (board não reextraído) | **Sem evidência no corte** |
 | AM09 | Não há registro, neste arquivo, de issue de propagação por mudança de arquitetura no ciclo | **Sem evidência no corte** |
 | AM10 | Autores do período reconciliados em cinco identidades institucionais; nenhum commit `Administrator` | **Efetiva** |
-| AM11–AM13 | Dependem do estado da milestone no GitLab, não reextraído | **Sem evidência no corte** |
+| AM11–AM12 | Dependem do estado da milestone no GitLab, não reextraído | **Sem evidência no corte** |
+| AM13 | As labels `P_ALTA`, `P_MEDIA` e `P_BAIXA` passaram a existir e a ser aplicadas aos cards durante a Sprint 3, removendo o impedimento apontado na avaliação anterior, segundo o qual o quadro não distinguia o que era mais importante | **Impedimento removido.** A execução da repriorização no penúltimo dia da sprint não é verificável neste corte, e permanece sob acompanhamento |
 
 #### 3.4.5 Melhorias para a Sprint 4
 
@@ -954,6 +1048,8 @@ A leitura abaixo cruza a matriz da seção 4 com o que o ciclo tornou observáve
 | AM15 | Feriados fora do cálculo de capacity | Incluir feriados e recessos no planejamento da sprint (capacity em dias úteis) e refletir a redução nas estimativas da milestone | Scrum Master da Sprint 4 | Planejamento da Sprint 4 | Capacity da milestone declara dias úteis efetivos; feriados listados na issue de planejamento |
 | AM16 | Onda 1 incompleta sob adiantamento de frentes futuras | Priorizar, na primeira metade da Sprint 4, os critérios de aceite da Onda 1 ainda em `NotImplementedError` (persistência, sessão/auth e `/chat` ponta a ponta) antes de novas antecipações de S5 | Tech Lead da Sprint 4 | Primeira semana da Sprint 4 | Issues da Onda 1 remanescentes fechadas ou explicitamente repriorizadas com destino na milestone |
 | AM17 | Desequilíbrio de carga e cobertura de ausências | Manter a verificação diária de carga (`AM07`) combinada ao plano B (`AM14`), registrando no card a redistribuição quando a razão exceder 2:1 ou houver ausência | Scrum Master da Sprint 4 | Diária | Razão máxima de 2:1 nas horas atribuídas no fechamento, ou justificativa + plano B registrados em card |
+| AM18 | Prazo interno de quinta-feira não cumprido, com entregas se estendendo até sexta à tarde | Manter a meta da seção 2.4 e torná-la alcançável: a daily de quarta-feira passa a projetar o que restará para quinta, e o que estiver fora de alcance deve ser redistribuído ou declarado como não entregável ainda na quarta, e não na sexta | Scrum Master da Sprint 4 | Daily de quarta-feira de cada semana | Projeção registrada na daily de quarta; nenhum item declarado não entregável depois de quinta às 23h59 |
+| AM19 | Incidentes de ambiente local com o Git consumindo horas sem produzir entrega | Aplicar a regra de ambiente estabelecida na seção 2.9.2: repositório fora de pasta sincronizada com nuvem, ou sincronização pausada durante o trabalho com Git. Verificar a adequação de cada máquina na abertura da Sprint 4 | Cada integrante, verificado pelo Scrum Master | Abertura da Sprint 4 | Nenhuma ocorrência de incidente de sincronização registrada na sprint; confirmação de cada integrante na issue de abertura |
 
 ### 3.5 Sprint 4
 
