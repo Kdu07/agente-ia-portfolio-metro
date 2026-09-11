@@ -74,11 +74,23 @@ dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "ruff>=0.5",
+    # VHS (Projeto.md 10.5.4): grava uma vez a resposta real do serviço
+    # externo e a reproduz nas execuções seguintes. vcrpy é o motor;
+    # pytest-recording traz o marcador @pytest.mark.vcr, --record-mode e
+    # --block-network.
+    "pytest-recording>=0.13",
+    "vcrpy>=6.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# Marcadores dos modos de execução de Projeto.md 10.5.6.1. Os grupos
+# `banco` e `lento` chegam com as tasks de Testcontainers.
+markers = [
+    "integracao: costura entre componentes, e não função isolada",
+    "externo: exercita integração externa sob fita VHS",
+]
 
 [tool.ruff]
 line-length = 100
