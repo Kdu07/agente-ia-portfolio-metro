@@ -19,6 +19,8 @@ dependencies = [
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
     "httpx>=0.27",
+    # Necessário para UploadFile/Form do endpoint multipart de áudio.
+    "python-multipart>=0.0.9",
     # Persistência: interações, conversas, rotinas e jobstore do agendador
     "sqlalchemy>=2.0",
     "asyncpg>=0.29",
@@ -26,8 +28,10 @@ dependencies = [
     # Agendador das rotinas. O jobstore SQLAlchemy usa o mesmo PostgreSQL,
     # o que evita Redis ou outro broker só para a agenda.
     "apscheduler>=3.10,<4",
-    # Fluxo Authorization Code + PKCE contra o Entra ID
-    "msal>=1.28",
+    # Validação do id_token do Entra ID (assinatura RS256 contra o JWKS do
+    # tenant). A troca do código em si é um POST com o httpx acima — ver
+    # a docstring de auth/entra.py sobre por que não o MSAL.
+    "PyJWT[crypto]>=2.8",
     # Assinatura do cookie de sessão
     "itsdangerous>=2.2",
     # Classificador de intenção. scikit-learn cobre a vetorização
@@ -43,13 +47,28 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Banco vetorial do executor próprio. Extra, e não dependência base,
-# porque o caminho oficial (executor=copilot) não indexa nada e não deve
-# arrastar o SDK do provedor. O adaptador de reserva não aparece aqui: o
-# pgvector é uma extensão do servidor, e rag/vetorial/pgvector.py fala
-# apenas SQL pelo SQLAlchemy que já está na base.
+# Banco vetorial e ingestão do executor próprio. Extra, e não dependência
+# base, porque o caminho oficial (executor=copilot) não indexa nada e não
+# deve arrastar o SDK do provedor. O adaptador de reserva não aparece
+# aqui: o pgvector é uma extensão do servidor, e rag/vetorial/pgvector.py
+# fala apenas SQL pelo SQLAlchemy que já está na base.
 rag = [
-    "pinecone>=5.0",
+    # A major validada contra o índice real (`python -m
+    # app.rag.vetorial.provisionar --validar`). A v9 reescreveu o SDK:
+    # fixar a major impede que uma atualização mude a forma das respostas
+    # debaixo do adaptador sem ninguém ver.
+    "pinecone>=10,<11",
+    # Leitura da pasta controlada do Drive, por conta de serviço.
+    "google-api-python-client>=2.100",
+    "google-auth>=2.23",
+    # Extração dos formatos do corpus (app/rag/ingestao/extracao.py).
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    "python-pptx>=1.0",
+    # Modelo de geração (decisão D3), atrás de app/rag/linguagem/. Major
+    # fixada pelo mesmo motivo do SDK do índice: o adaptador lê a forma
+    # da resposta (`.text`) e o código de erro (`.code`) do provedor.
+    "google-genai>=2.23,<3",
 ]
 dev = [
     "pytest>=8.0",

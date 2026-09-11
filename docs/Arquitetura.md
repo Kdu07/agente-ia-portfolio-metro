@@ -433,29 +433,36 @@ e evita disparo duplicado de rotinas quando ela reinicia ou escala.
 
 ## 9. Modelo de dados
 
-A modelagem entregue na Sprint 2 tem três entidades, detalhadas no capítulo 4
-de [Projeto.md](Projeto.md):
+O esquema em operação tem cinco tabelas, detalhadas no capítulo 4 de
+[Projeto.md](Projeto.md):
 
 | Entidade | Papel |
 |---|---|
-| `Usuario` | Identidade projetada do Entra ID: `entra_id`, `email`, `perfil` e a permissão `pode_ver_intencoes` |
-| `Intencao` | Uma solicitação processada: `id_conversa`, `prompt`, `classificacao_intencao` e o momento |
-| `Rotina` | Prompt agendado, com o usuário sob cuja identidade executa |
+| `usuario` | Identidade projetada do Entra ID: `id` do provedor, `nome`, `email`, `perfil` e `visto_em` |
+| `conversa` | Sessão de diálogo: título, vínculo com o Direct Line e arquivamento |
+| `interacao` | Uma mensagem processada: prompt, resposta, canal, intenção, confiança, desfecho e latência |
+| `rotina` | Prompt agendado, com recorrência, fuso e o usuário sob cuja identidade executa |
+| `execucao_rotina` | Um disparo e seu resultado, com início e fim gravados separadamente |
 
-O esqueleto em `persistence/models.py` antecipa desdobramentos que este modelo
-ainda não representa — a conversa como entidade própria, o histórico de
-execuções de rotina e o vocabulário fechado de desfechos. Eles são evolução
-prevista, cada um ligado a um requisito já registrado (RF11, RF12), e entram
-por migração versionada na onda que os construir.
+A modelagem entregue na Sprint 2 tinha três entidades e antecipava, por escrito,
+os desdobramentos que faltavam: a conversa como entidade própria, o histórico de
+execuções de rotina e o vocabulário fechado de desfechos. Os três estão
+construídos, cada um ligado a um requisito já registrado (RF11, RF12), e
+chegaram por migração versionada — o esquema evolui por Alembic, e o `versions/`
+é a fonte de verdade sobre o que existe no banco.
 
 O campo `canal` parece pequeno e não é: é ele que permite ao dashboard separar
 voz de texto de rotina, e é ele que torna cada disparo agendado rastreável até
 a mensagem que gerou. Sem ele, uma execução de rotina fica indistinguível de
 alguém digitando.
 
-Uma linha de `Interacao` é gravada em **todos** os desfechos, inclusive nos
+Uma linha de `interacao` é gravada em **todos** os desfechos, inclusive nos
 bloqueios. As tentativas de ataque são justamente o dado mais valioso do
 recorte de segurança do dashboard.
+
+As permissões não são persistidas: resolvem-se dos *claims* de grupo a cada
+requisição. Projetá-las no banco criaria uma segunda fonte de verdade capaz de
+conceder um acesso que o Entra já revogou.
 
 ## 10. Decisões de segurança embutidas na estrutura
 
@@ -560,7 +567,7 @@ algo demonstrável ponta a ponta.
 
 | Onda | Escopo | Estado ao fim |
 |---|---|---|
-| 1. Fundação | Auth BFF, persistência real (SQLAlchemy + Alembic), `/chat` ponta a ponta com o Copilot dublado, esqueleto do app React | Dá para logar, conversar e ver a interação gravada |
+| 1. Fundação | ~~Persistência real (SQLAlchemy + Alembic)~~ **concluída** — cinco tabelas, migração versionada, repositórios e scripts de criação e carga; falta o Auth BFF e o `/chat` ponta a ponta com o Copilot dublado | Interação gravada em banco real; login ainda pendente do Entra |
 | 2. Guardas | Regras determinísticas, Content Safety nas duas guardas de entrada, guarda de saída, desfechos novos, testes adversariais | Proteção contra injeção e contra prompts maliciosos, mensurável |
 | 3. Intenções | ~~Classificador, bancada de avaliação, limiar por intenção~~ **concluídos**; falta o registro completo da interação | RNF03 com número: acurácia 0,856, macro-F1 0,851 |
 | 4. Análise | Endpoints de agregação, dashboard responsivo, `VER_INTENCOES` aplicada nos dois lados | Análise dos dados de intenções disponível |
@@ -676,6 +683,15 @@ oficial o rótulo viajava em metadados de uma *activity* do Direct Line, e aqui 
 fronteira é montada por código próprio — ganha-se controle e ganha-se a
 obrigação de testá-la.
 
+O controle sobre a geração traz uma barreira que o Copilot como caixa-preta não
+oferecia: **a resposta sem fundamento não é entregue**. O modelo só pode
+responder com o que está nos trechos recuperados, citando cada um; resposta sem
+citação válida é descartada, e o modelo nem é chamado quando nada visível ao
+perfil é recuperado. Nos três casos de abstenção o usuário recebe a mesma
+mensagem, para que a recusa não revele se a informação não existe ou apenas não
+é visível a ele. O comportamento completo está na seção 3.10 de
+[plano-executor-proprio.md](plano-executor-proprio.md).
+
 ### 13.3 Tecnologias do caminho alternativo
 
 | Camada | Escolha | Por quê |
@@ -683,7 +699,7 @@ obrigação de testá-la.
 | Repositório documental | Google Drive, pasta controlada por conta de serviço | Provisionamento imediato pela equipe; a ingestão é um job no `worker` que já existe, sem serviço novo no compose |
 | Embeddings | `intfloat/multilingual-e5-large`, local | Já carregado pelo ramo de embeddings do classificador, com os prefixos de assimetria da família e5 já tratados. Custo zero e, sobretudo, o corpus não sai da máquina para ser indexado |
 | Banco vetorial | Pinecone, atrás de uma porta `RepositorioVetorial` | O adaptador pgvector sobre o PostgreSQL existente fica como reserva: esgotar a camada gratuita ou desistir de enviar vetores para fora vira mudança de `.env`, não refatoração |
-| Geração | Gemini | Provisionamento imediato e camada gratuita suficiente para dado sintético. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação |
+| Geração | Gemini, atrás de uma porta `ModeloLinguagem` | Provisionamento imediato e camada gratuita suficiente para dado sintético. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação; se chegar, a troca é um adaptador em `rag/linguagem/` e uma linha no `.env` |
 | Base estruturada | PostgreSQL, *schema* `portfolio`, por migração Alembic | Dá destino às 10 intenções de transação e às agregações que caberiam ao Power BI, sem banco novo |
 
 ### 13.4 Perímetro e limites

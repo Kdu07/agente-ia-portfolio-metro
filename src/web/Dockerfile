@@ -7,8 +7,13 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install
+# O package-lock.json entra junto e a instalacao usa `npm ci`, nao
+# `npm install`: e o lock que garante que a imagem seja construida com
+# as mesmas versoes testadas localmente. Com `npm install` sem lock, um
+# `^` no package.json faz a imagem receber uma versao mais nova que
+# ninguem exercitou.
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
 RUN npm run build

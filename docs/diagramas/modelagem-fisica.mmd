@@ -1,0 +1,66 @@
+erDiagram
+    usuario ||--o{ conversa : fk_conversa_usuario
+    usuario ||--o{ interacao : fk_interacao_usuario
+    usuario ||--o{ rotina : fk_rotina_dono
+    conversa ||--o{ interacao : fk_interacao_conversa
+    rotina ||--o{ execucao_rotina : fk_execucao_rotina
+    rotina ||--o{ interacao : fk_interacao_rotina
+    execucao_rotina |o--o| interacao : fk_execucao_interacao
+
+    usuario {
+        text id PK "pk_usuario"
+        text nome "NOT NULL"
+        text email UK "uq_usuario_email"
+        text perfil "NOT NULL, ck_usuario_perfil"
+        timestamptz criado_em "NOT NULL DEFAULT now()"
+        timestamptz visto_em "NOT NULL DEFAULT now()"
+    }
+
+    conversa {
+        text id PK "pk_conversa"
+        text usuario_id FK "NOT NULL, ON DELETE RESTRICT"
+        text conversa_externa_id "NULL"
+        text titulo "NULL"
+        timestamptz criada_em "NOT NULL"
+        timestamptz atualizada_em "NOT NULL, ix_conversa_usuario_atualizada"
+        timestamptz arquivada_em "NULL"
+    }
+
+    interacao {
+        text id PK "pk_interacao"
+        text conversa_id FK "NOT NULL, ix_interacao_conversa_criada"
+        text usuario_id FK "NOT NULL, ix_interacao_usuario_criada"
+        text perfil "NOT NULL, ck_interacao_perfil"
+        text canal "NOT NULL, ck_interacao_canal"
+        text prompt "NOT NULL"
+        text resposta "NOT NULL"
+        text intencao_id "NULL, ix_interacao_intencao_criada"
+        double_precision confianca_intencao "NOT NULL"
+        text desfecho "NOT NULL, ck_interacao_desfecho"
+        integer latencia_ms "NOT NULL"
+        timestamptz criada_em "NOT NULL, ix_interacao_criada_em"
+        text rotina_id FK "NULL, ON DELETE RESTRICT"
+    }
+
+    rotina {
+        text id PK "pk_rotina"
+        text nome "NOT NULL"
+        text prompt "NOT NULL"
+        text agenda_cron "NOT NULL"
+        text timezone "NOT NULL"
+        text dono_id FK "NOT NULL, ix_rotina_dono"
+        boolean ativa "NOT NULL DEFAULT true"
+        timestamptz criada_em "NOT NULL"
+        timestamptz atualizada_em "NOT NULL"
+        text intencao_prevista "NULL"
+    }
+
+    execucao_rotina {
+        text id PK "pk_execucao_rotina"
+        text rotina_id FK "NOT NULL, ix_execucao_rotina_iniciada"
+        timestamptz iniciada_em "NOT NULL"
+        timestamptz concluida_em "NULL"
+        text status "NOT NULL, ck_execucao_rotina_status"
+        text interacao_id FK "NULL, ON DELETE RESTRICT"
+        text erro "NULL"
+    }

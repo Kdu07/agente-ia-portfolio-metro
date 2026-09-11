@@ -158,10 +158,23 @@ class RepositorioPinecone:
         return removidos
 
     def _listar_prefixo(self, prefixo: str) -> list[str]:
-        """Coleta os ids de uma listagem paginada. Roda fora do laço de eventos."""
+        """Coleta os ids de uma listagem paginada. Roda fora do laço de eventos.
+
+        O item da página **não é uma string**: a partir do SDK 6 ele é um
+        `ListItem`, com o identificador em `.id`. A distinção não é
+        cosmética — `str()` sobre ele devolve `"ListItem(id='x#0001')"`,
+        que é um identificador que não existe, e o `delete` seguinte
+        aceita ids inexistentes **em silêncio, sem erro**. O efeito era
+        `remover_documentos` relatar sucesso e não apagar nada, com o
+        documento removido do Drive seguindo citável na resposta — o
+        exato problema que a seção 3.4 do plano manda evitar.
+
+        O `getattr` mantém a listagem funcionando se o SDK voltar a
+        devolver strings, e é o que os dublês dos testes usam.
+        """
         ids: list[str] = []
         for pagina in self._indice.list(prefix=prefixo, namespace=self._namespace):
-            ids.extend(str(item) for item in pagina)
+            ids.extend(str(getattr(item, "id", item)) for item in pagina)
         return ids
 
 

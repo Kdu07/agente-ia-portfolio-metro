@@ -28,10 +28,15 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://middleware:middleware@localhost:5432/middleware"
 
     # --- Identidade (Microsoft Entra ID) --------------------------------
+    # O tenant é o GUID (Directory/tenant ID), não o domínio: o Entra
+    # escreve o GUID no `iss` do token, e é contra ele que se valida.
     entra_tenant_id: str = ""
     entra_client_id: str = ""
     entra_client_secret: str = ""
-    entra_redirect_uri: str = "http://localhost:8000/auth/callback"
+    # Passa pelo proxy /api, e não direto pela porta 8000: o cookie de
+    # sessão precisa nascer na origem do navegador, e o redirect final
+    # para `/` precisa cair no React.
+    entra_redirect_uri: str = "http://localhost:5173/api/auth/callback"
 
     # Ids dos grupos de segurança do tenant que mapeiam perfil e
     # permissão. São CONFIGURAÇÃO e não constantes: variam entre o tenant
@@ -73,8 +78,11 @@ class Settings(BaseSettings):
     pinecone_api_key: str = ""
     pinecone_index: str = ""
     # Isola ambientes dentro do mesmo índice. A pasta adversarial da
-    # bancada nunca deve compartilhar namespace com a demonstração.
-    pinecone_namespace: str = "portfolio"
+    # bancada nunca deve compartilhar namespace com a demonstração. O
+    # padrão é o ambiente de desenvolvimento, e não um nome com cara de
+    # produção: quem esquece de configurar deve escrever no namespace
+    # descartável, não no que sustenta a demonstração.
+    pinecone_namespace: str = "dev"
 
     # NOTA: dimensão do vetor (1024) e teto de tokens do e5 (512) NÃO
     # ficam aqui. São propriedades do modelo escolhido, não configuração
@@ -82,10 +90,53 @@ class Settings(BaseSettings):
     # e trocar o modelo obriga a reindexar o corpus inteiro. Vivem como
     # constantes em rag/vetorial/base.py e rag/embeddings.py.
 
+    # --- Ingestão do corpus (executor próprio) --------------------------
+    # Seção 3.4 de docs/plano-executor-proprio.md. A conta de serviço lê a
+    # pasta controlada do Drive com escopo somente leitura. O JSON da
+    # chave fica fora do repositório — ou em `credenciais/`, que o
+    # .gitignore exclui —, e aqui entra só o caminho até ele.
+    drive_service_account_json: str = ""
+    drive_pasta_id: str = ""
+    # Orçamento de cada trecho, em tokens do e5, linha de contexto
+    # incluída. Bem abaixo do teto de 512 do modelo: trecho menor recupera
+    # com mais precisão, e a folga absorve a linha de contexto. A
+    # sobreposição só se aplica à prosa (ver rag/ingestao/chunking.py).
+    # Provisórios até a bancada da onda B medi-los, como os parâmetros de
+    # recuperação previstos na seção 3.7 do plano.
+    chunk_tokens: int = 350
+    chunk_overlap: int = 40
+
+    # --- Recuperação (executor próprio) ---------------------------------
+    # Seção 3.7 do plano. Trechos entregues ao modelo de geração por
+    # consulta, e o corte de similaridade abaixo do qual um trecho não
+    # conta como evidência. Provisórios no mesmo sentido do limiar de
+    # confiança do catálogo: valem até a bancada do RAG (`python -m
+    # app.rag.bancada`) medir a distribuição de scores. O corte é baixo de
+    # propósito — ele barra só a pergunta sem nada parecido no corpus; a
+    # decisão fina de "não há evidência" é da geração, que lê o texto.
+    rag_top_k: int = 5
+    rag_score_minimo: float = 0.75
+
+    # --- Geração (executor próprio) -------------------------------------
+    # Decisão D3 do plano. O modelo fica atrás da porta
+    # `rag/linguagem/base.py`: trocar de provedor é escrever um adaptador
+    # e mudar `llm_backend`, sem tocar recuperação nem montagem do prompt.
+    llm_backend: str = "gemini"
+    gemini_api_key: str = ""
+    # Família Flash: o contexto de uma consulta é de poucos trechos
+    # curtos, e o que pesa na demonstração é latência e cota gratuita.
+    gemini_modelo: str = "gemini-3.5-flash"
+    # Teto por tentativa. O adaptador repete as falhas transitórias (cota
+    # e indisponibilidade), então o pior caso de uma consulta é maior.
+    gemini_timeout_seconds: float = 30.0
+
     # --- Voz (Azure Speech) ---------------------------------------------
     speech_key: str = ""
+    speech_endpoint: str = ""
     speech_region: str = "brazilsouth"
     speech_idioma: str = "pt-BR"
+    speech_api_version: str = "2025-10-15"
+    speech_timeout_seconds: float = 30.0
 
     # NOTA: o limiar de confiança da classificação de intenção NÃO fica
     # aqui. Ele é definido por intenção em pipeline/intencao/catalogo.py,

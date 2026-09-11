@@ -600,7 +600,7 @@ Esta seção registra os riscos e as oportunidades **como identificados no artef
 >
 > A separação é deliberada. Uma matriz de risco vale tanto pelo que lista quanto pelo momento em que cada item entrou nela: sobrescrever esta seção a cada sprint apagaria a evolução que torna o acompanhamento verificável. Os identificadores são compartilhados entre os dois documentos, de modo que `R01` aqui e `R01` lá são o mesmo item, em dois instantes distintos.
 
-Referências a riscos feitas ao longo deste documento — em especial `R11` a `R16`, surgidos após a Sprint 1 — apontam para a matriz vigente do `GestaoProjeto.md`, e não para a tabela abaixo.
+Referências a riscos feitas ao longo deste documento — em especial as de `R11` em diante, surgidos após a Sprint 1 — apontam para a matriz vigente do `GestaoProjeto.md`, e não para a tabela abaixo.
 
 ### 2.6.1 Metodologia de avaliação
 
@@ -1506,8 +1506,11 @@ A tabela abaixo é essa enumeração. Ela é o objeto da verificação do RNF01 
 | SharePoint, Power BI e Power Automate | Fontes e operações do portfólio, via conectores do Copilot | **Parceiro (Metrô)** | Dados do portfólio (sintéticos no MVP) |
 | Azure AI Content Safety | Guardas de injeção, de abuso e de saída | **Equipe (g02/Inteli)** | Texto da mensagem e texto da resposta |
 | Azure Speech | Transcrição do canal de voz | **Equipe (g02/Inteli)** | Áudio do usuário |
+| Google Drive | Repositório documental do executor próprio, lido pela ingestão | **Equipe (g02/Inteli)** | Nenhum conteúdo de mensagem; é a origem do corpus sintético |
+| Pinecone | Índice vetorial do executor próprio | **Provedor externo (`us-east-1`)** | Vetores dos trechos e da pergunta, com identificador e campos de filtro (projeto e perfis); nunca o texto |
+| Google Gemini | Geração da resposta no executor próprio | **Provedor externo (Google)** | Pergunta do usuário e trechos recuperados |
 
-Nenhum outro serviço externo participa do caminho de uma mensagem. Em particular, não há serviço de IA generativa de terceiros no pipeline, e o classificador de intenções executa localmente.
+No caminho oficial, nenhum outro serviço externo participa do caminho de uma mensagem: não há serviço de IA generativa de terceiros no pipeline, e o classificador de intenções executa localmente. As três últimas linhas só participam quando o executor próprio (seção 13 de [Arquitetura.md](Arquitetura.md)) está selecionado. Sob ele, há um modelo de geração de terceiros no caminho da mensagem — o Gemini recebe, a cada consulta, a pergunta e os trechos recuperados —, e o índice vetorial recebe representações do corpus e da pergunta. Os embeddings são calculados localmente, e o texto dos trechos fica no PostgreSQL, não no índice. As duas exposições estão registradas como riscos R19 e R20 na matriz vigente e são contidas pela mesma condição do R12: somente dado sintético.
 
 **A consequência que este requisito declara em vez de omitir.** Content Safety e Speech foram provisionados no tenant da equipe, e não no do parceiro. Isso significa que o texto do prompt e o áudio do usuário atravessam, por desenho, um ambiente que o Metrô não homologou. A afirmação de que "todos os serviços de IA residem no tenant homologado" seria mais confortável e não seria verdadeira. A exposição está registrada como risco R12 na matriz vigente ([GestaoProjeto.md](GestaoProjeto.md), seção 4) e é contida no MVP por duas condições: o conteúdo processado é sintético, e os dois serviços ficam isolados atrás de módulos próprios (`pipeline/guardas/` e `voz/`), de modo que reprovisioná-los no tenant do parceiro seja mudança de configuração e não de código. Antes de qualquer uso com dado real, essa migração é pré-condição, não recomendação.
 
@@ -1805,20 +1808,22 @@ Essa posição determina o que o banco de dados guarda, e o que ele **não** gua
 
 A distinção é a decisão estruturante desta seção. Um modelo que tentasse espelhar o portfólio criaria uma segunda fonte de verdade, com todos os problemas de sincronização que a arquitetura evita justamente ao delegar a execução (ver [Arquitetura.md](Arquitetura.md), seção 1).
 
-> **Escopo desta modelagem.** O modelo descrito neste capítulo é o entregue na Sprint 2: três entidades, suficientes para sustentar a identidade do usuário, o registro das solicitações classificadas e o cadastro das rotinas agendadas. A construção da persistência real acontece na Onda 1 da Sprint 3 (9.1.2.1), e o esqueleto de código já existente em `src/middleware/app/persistence/` antecipa desdobramentos que este modelo ainda não representa — separação da conversa em entidade própria, histórico de execuções de rotina e vocabulário fechado de desfechos. Esses desdobramentos são evolução prevista, não divergência: cada um deles nasce de um requisito já registrado (RF11, RF12) e será incorporado ao modelo quando a onda correspondente for construída, por migração versionada.
+> **Escopo desta modelagem.** Este capítulo descreve o esquema **em operação**, criado na Sprint 3 e versionado em `src/middleware/migrations/versions/`. Ele sucede a modelagem de três entidades entregue na Sprint 2, que antecipava por escrito os desdobramentos ainda ausentes — separação da conversa em entidade própria, histórico de execuções de rotina e vocabulário fechado de desfechos. Os três foram construídos, cada um a partir de um requisito já registrado (RF11, RF12), e chegaram por migração versionada. Onde uma decisão da Sprint 2 foi revista, a revisão está registrada com o motivo em 4.4.2, e não substituída em silêncio: um modelo que apaga o próprio histórico impede saber por que ele é como é.
 
 ### 4.1.1 Atores e entidades do negócio
 
-- **Usuário** — colaborador autenticado no Entra ID, caracterizado por um perfil corporativo (`DIRETORIA`, `LIDER_PROJETO`, `MEMBRO_EQUIPE`) e pela permissão de visualizar o painel de intenções. Perfil e permissão derivam de *claims* de grupo do Entra ID; o registro local é uma projeção, e não a fonte de verdade.
-- **Intenção** — uma solicitação processada e sua classificação. É a entidade central: existe uma linha para cada mensagem que atravessa o pipeline, com o texto submetido e a intenção que o classificador resolveu.
-- **Rotina** — solicitação em linguagem natural cadastrada para execução automática sob a identidade do seu dono.
+- **Usuário** — colaborador autenticado no Entra ID, caracterizado por um perfil corporativo (`diretoria`, `lider_projeto`, `membro_equipe`). O perfil e as permissões derivam de *claims* de grupo; o registro local é uma projeção para exibição e análise, e não a fonte de verdade da autorização.
+- **Conversa** — uma sessão de diálogo entre o usuário e o agente. Agrupa os turnos em ordem, guarda o título derivado do primeiro turno e o vínculo com a sessão do executor, e pode ser arquivada sem que os turnos sejam apagados.
+- **Interação** — uma mensagem processada e seu desfecho. É a entidade central: existe uma linha para cada mensagem que atravessa o pipeline, inclusive as barradas, com o texto submetido, a resposta entregue, a intenção resolvida, o canal de entrada e quanto tempo o processamento levou.
+- **Rotina** — solicitação em linguagem natural cadastrada para execução automática sob a identidade do seu dono, com expressão de recorrência e fuso horário próprios.
+- **Execução de rotina** — um disparo e seu resultado, com início e fim registrados separadamente, ligado à interação que produziu.
 
 ### 4.1.2 Fluxos principais de dados
 
-1. **Identificação e autorização.** O usuário autentica-se pelo Entra ID. O middleware projeta o identificador federado, o perfil e a permissão de visualização no registro local e resolve o escopo antes de qualquer processamento.
-2. **Ciclo de mensagem e registro.** Toda entrada por chat, voz ou rotina atravessa o orquestrador em ordem fixa e produz **uma** linha de `intencao`, vinculada ao usuário, com o prompt submetido e a classificação resolvida.
-3. **Agendamento.** Rotinas cadastradas são persistidas com o prompt que executam e o usuário sob cuja identidade executam; cada disparo entra pelo mesmo orquestrador e produz seu próprio registro em `intencao`.
-4. **Análise.** As agregações do painel leem a tabela de intenções; nenhuma consulta analítica escreve.
+1. **Identificação e autorização.** O usuário autentica-se pelo Entra ID. O middleware projeta o identificador federado, o nome e o perfil no registro local — por gravação idempotente, a cada requisição — e resolve as permissões a partir dos *claims* antes de qualquer processamento. As permissões não são persistidas: lê-las do banco arriscaria conceder um acesso que o Entra já revogou.
+2. **Ciclo de mensagem e registro.** Toda entrada por chat, voz ou rotina atravessa o orquestrador em ordem fixa e produz **uma** linha de `interacao`, vinculada ao usuário e a uma `conversa`, com o prompt submetido, a resposta entregue, o desfecho e a latência. O registro acontece em todos os desfechos, inclusive nos bloqueios — e o mesmo turno que grava a interação atualiza o momento da conversa, que é o que ordena a lista de histórico.
+3. **Agendamento.** Rotinas cadastradas são persistidas com o prompt, a recorrência, o fuso e o dono sob cuja identidade executam. Cada disparo grava uma linha de `execucao_rotina` **antes** de rodar, entra pelo mesmo orquestrador, produz seu próprio registro em `interacao` e fecha a execução com o resultado. É essa ordem que torna visível um disparo que travou.
+4. **Análise.** As agregações do painel leem a tabela de interações; nenhuma consulta analítica escreve.
 
 ## 4.2 Modelo Conceitual de Dados
 
@@ -1827,21 +1832,28 @@ O modelo conceitual define as entidades do middleware, seus papéis e as associa
 ![Modelagem conceitual do domínio do middleware](/docs/imagens/Modelagem%20Conceitual.png)
 *Figura 17 — Modelagem Conceitual.*
 
+> A imagem é gerada a partir de [`docs/diagramas/modelagem-conceitual.mmd`](diagramas/modelagem-conceitual.mmd). As três modelagens deste capítulo têm fonte versionada em texto; o [README do diretório](diagramas/README.md) traz o comando de regeração. Antes desta revisão as figuras existiam apenas como PNG, e corrigir um relacionamento significava redesenhar o diagrama inteiro.
+
 ### 4.2.1 Entidades do domínio
 
 | Entidade | Papel |
 |---|---|
-| `USUARIO` | Identidade institucional projetada do Entra ID, com perfil e permissão de visualização do painel. |
-| `INTENCAO` | Registro de uma solicitação processada: autor, conversa de origem, prompt submetido, classificação resolvida e momento. |
-| `ROTINA` | Solicitação agendada, com o prompt que executa e o usuário que a criou. |
+| `USUARIO` | Identidade institucional projetada do Entra ID, com nome, perfil observado e momento do último acesso. |
+| `CONVERSA` | Sessão de diálogo: agrupa turnos em ordem, guarda título, vínculo com o executor e arquivamento. |
+| `INTERACAO` | Registro de uma mensagem processada: autor, conversa, canal, prompt, resposta, intenção resolvida, desfecho e latência. |
+| `ROTINA` | Solicitação agendada, com prompt, recorrência, fuso horário e o usuário sob cuja identidade executa. |
+| `EXECUCAO_ROTINA` | Um disparo e seu resultado, ligado à interação que produziu. |
 
 ### 4.2.2 Regras de negócio e cardinalidades
 
-- **`USUARIO` *registra* `INTENCAO` (1:N).** Um usuário registra zero ou mais solicitações; cada solicitação pertence a exatamente um usuário e é acessível apenas a ele, salvo quando o leitor tem a permissão de visualização agregada.
+- **`USUARIO` *mantém* `CONVERSA` (1:N).** Cada conversa pertence a exatamente um usuário e é acessível apenas a ele. A verificação de propriedade acontece na consulta, no servidor: um identificador adivinhado não devolve a conversa de outra pessoa.
+- **`CONVERSA` *agrupa* `INTERACAO` (1:N).** Um turno pertence a uma única conversa. É esse vínculo que permite reconstruir um diálogo em ordem cronológica (RF12). Na modelagem da Sprint 2 a conversa era apenas um identificador solto na tabela de solicitações; promovê-la a entidade foi o que deu lugar ao título, ao arquivamento e à correspondência com a sessão do Direct Line.
+- **`USUARIO` *registra* `INTERACAO` (1:N).** O autor é gravado na própria interação, e não apenas inferido pela conversa. A redundância é deliberada: os recortes do painel agregam por usuário e por perfil sem precisar percorrer as conversas, e o perfil gravado é o **do momento da interação**, que não pode mudar quando o usuário troca de papel.
 - **`USUARIO` *cadastra* `ROTINA` (1:N).** Cada rotina tem um dono exclusivo e executa sob a identidade e as permissões dele, resolvidas no disparo e não no cadastro. Se o dono perder acesso a um projeto, a rotina perde junto no disparo seguinte.
-- **Agrupamento por conversa.** `INTENCAO` guarda o identificador da conversa a que pertence, o que permite reconstruir um diálogo em ordem sem que a conversa seja entidade própria nesta etapa. O custo dessa escolha é que atributos da conversa — título, arquivamento, correspondência com a sessão do Direct Line — não têm onde ser guardados, e é por isso que a separação está prevista para a onda que constrói o histórico (RF12).
-- **Classificação opcional.** `classificacao_intencao` admite nulo, porque nem toda solicitação chega a ser classificada: os bloqueios por injeção e por abuso ocorrem **antes** da classificação, e uma solicitação barrada ali é registrada sem intenção resolvida.
-- **Controle de visualização.** A permissão `pode_ver_intencoes` libera a leitura agregada de todas as solicitações, para o painel; sem ela, o usuário enxerga apenas as próprias. A verificação é feita no servidor, independentemente do que a interface exiba.
+- **`ROTINA` *gera* `EXECUCAO_ROTINA` (1:N).** Cada disparo é uma linha própria. Apagar uma rotina que já disparou é recusado: a operação correta é desativá-la, o que a tira da agenda sem apagar o que ela já fez.
+- **`EXECUCAO_ROTINA` *produz* `INTERACAO` (1:0..1).** A execução aponta para a interação que gerou, e a interação aponta de volta para a rotina de origem. Os dois sentidos existem porque servem a telas diferentes — a aba de resultados navega da execução para a mensagem; o painel filtra as mensagens que nasceram de rotinas. O vínculo é opcional porque a interação ainda não existe quando o disparo começa: a execução é registrada **antes** de o pipeline rodar, para que uma rotina travada apareça em vez de sumir.
+- **Classificação opcional.** `interacao.intencao_id` admite nulo, porque nem toda mensagem chega a ser classificada: os bloqueios por injeção e por abuso ocorrem **antes** da classificação, e uma mensagem barrada ali é registrada sem intenção resolvida. O campo não referencia tabela alguma — o catálogo de intenções é artefato de código, revisado a cada sprint (5.4.9).
+- **Controle de visualização.** A permissão de leitura agregada do painel libera a consulta de todas as interações; sem ela, o usuário enxerga apenas as próprias. A verificação é feita no servidor, independentemente do que a interface exiba, e a permissão vem dos *claims* do Entra a cada requisição — não há coluna de permissão no banco.
 
 ## 4.3 Modelo Lógico de Dados
 
@@ -1850,63 +1862,118 @@ O modelo lógico traduz o domínio em estrutura relacional, com chaves, tipos, r
 ![Modelagem lógica do middleware](/docs/imagens/Modelagem%20Lógica.png)
 *Figura 18 — Modelagem Lógica.*
 
-**Decisão sobre identificadores.** As chaves primárias são inteiros sequenciais (`serial`). A escolha privilegia a simplicidade de leitura e depuração durante a construção do MVP: um identificador legível aparece em log, em consulta manual e em mensagem de erro sem exigir cópia integral de um UUID. A contrapartida é conhecida e está registrada em 4.4.2.
+> Fonte: [`docs/diagramas/modelagem-logica.mmd`](diagramas/modelagem-logica.mmd).
 
-**Decisão sobre vocabulários.** `perfil` e `classificacao_intencao` são colunas de texto com domínio controlado pela aplicação, e não tipos enumerados do banco. É a escolha adequada enquanto o catálogo de intenções ainda evolui a cada sprint (5.4.9): promover o vocabulário a tipo do banco exigiria migração a cada intenção acrescentada, e o catálogo é explicitamente um artefato vivo.
+**Decisão sobre identificadores.** As chaves primárias são UUID armazenados em colunas `text`. A modelagem da Sprint 2 previa inteiros sequenciais (`serial`) pela legibilidade em log e em consulta manual, com a contrapartida registrada: identificador sequencial revela volume de uso e permite enumeração de registros alheios. A troca estava prevista para "a onda que expõe o histórico na interface", e é esta. O tipo é `text`, e não `uuid` nativo, porque o valor circula como cadeia de caracteres em todo o código, nos *schemas* Pydantic e no contrato da API — converter na borda do banco acrescentaria uma tradução sem ganho. A revisão está detalhada em 4.4.2.
+
+**Decisão sobre vocabulários.** `perfil`, `canal`, `desfecho` e `status` são colunas de texto com domínio controlado por restrição `CHECK`, e não tipos enumerados do banco. É a escolha adequada enquanto os vocabulários ainda evoluem a cada sprint (5.4.9): `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria cada valor novo uma migração desconfortável, enquanto um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum. As listas de valores são **geradas a partir dos enums do código**, e não digitadas no DDL — ver 4.4.2. O identificador de intenção é a exceção deliberada: não tem `CHECK` nem chave estrangeira, porque o catálogo é explicitamente um artefato vivo, revisado a cada sprint.
 
 ### 4.3.1 Esquema relacional e dicionário de dados
 
 #### 4.3.1.1 Tabela: `usuario`
 
-Projeção local da identidade federada. Não é a fonte de verdade da autorização: perfil e permissão são resolvidos a cada requisição a partir dos *claims* de grupo do Entra ID, e as colunas abaixo registram o último valor observado, para exibição e para consultas analíticas.
+Projeção local da identidade federada. Não é a fonte de verdade da autorização: perfil e permissões são resolvidos a cada requisição a partir dos *claims* de grupo do Entra ID, e as colunas abaixo registram o último valor observado, para exibição, para as consultas analíticas e para que as demais tabelas tenham a que apontar.
 
 | Coluna | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
-| `id_usuario` | `serial` | `PK` | Identificador interno do usuário. |
-| `entra_id` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Identificador do objeto no Microsoft Entra ID. |
-| `email` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | Endereço corporativo. |
-| `perfil` | `VARCHAR(50)` | `NOT NULL` | Último perfil observado nos *claims*: `DIRETORIA`, `LIDER_PROJETO` ou `MEMBRO_EQUIPE`. |
-| `pode_ver_intencoes` | `BOOLEAN` | `NOT NULL`, `DEFAULT FALSE` | Libera a leitura agregada do painel de intenções. |
+| `id` | `text` | `PK` | Identificador do objeto no provedor de identidade (o `oid` do Entra), projetado. |
+| `nome` | `text` | `NOT NULL` | Nome de exibição observado nos *claims*. |
+| `email` | `text` | `UNIQUE`, `NULL` | Endereço corporativo. Nulo porque nem todo provedor o devolve. |
+| `perfil` | `text` | `NOT NULL`, `CHECK` | Último perfil observado: `diretoria`, `lider_projeto` ou `membro_equipe`. |
 | `criado_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Primeiro acesso registrado. |
+| `visto_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Acesso mais recente. Distingue quem existe de quem usa. |
 
-#### 4.3.1.2 Tabela: `intencao`
+**A chave primária é o identificador do provedor, e não uma chave interna.** É o mesmo valor que a identidade autenticada carrega pela requisição inteira; traduzi-lo para uma chave própria custaria uma consulta a cada escrita e guardaria o mesmo dado em duas colunas.
 
-Entidade central. Uma linha é gravada para cada solicitação que atravessa o pipeline, inclusive as barradas — as tentativas de ataque são o dado mais valioso do recorte de segurança do painel.
+**A linha nasce por projeção, não por cadastro.** Enquanto o registro de aplicação no Entra ID seguir pendente, não existe fluxo de login que insira o usuário. A gravação acontece por `INSERT ... ON CONFLICT DO UPDATE` idempotente na resolução da sessão, a cada requisição autenticada — é o que mantém as chaves estrangeiras íntegras sem depender de um provisionamento que não é controlado pela equipe. Quando o *callback* de autenticação existir, o mesmo comando migra para lá.
 
-| Coluna | Tipo | Restrições | Descrição |
-| :--- | :--- | :--- | :--- |
-| `id_intencao` | `serial` | `PK` | Identificador da solicitação registrada. |
-| `id_usuario` | `INTEGER` | `FK (usuario.id_usuario)`, `NOT NULL` | Autor da mensagem. |
-| `id_conversa` | `INTEGER` | `NOT NULL` | Agrupa as solicitações de um mesmo diálogo, em ordem cronológica. |
-| `prompt` | `TEXT` | `NOT NULL` | Texto submetido, como recebido. |
-| `classificacao_intencao` | `VARCHAR(100)` | `NULL` | Código da intenção resolvida, em *snake_case* (ex.: `consultar_cronograma`); nulo quando o bloqueio antecedeu a classificação. |
-| `criado_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Momento do processamento. |
+**A permissão saiu desta tabela.** A modelagem da Sprint 2 tinha `pode_ver_intencoes` como coluna booleana, com o ponto de virada já registrado: uma segunda capacidade administrativa exigiria uma tabela associativa. A gestão de rotinas (RF11) é essa segunda capacidade, e a virada aconteceu antes da coluna existir — as permissões são resolvidas dos *claims* de grupo a cada requisição e não são persistidas. Projetar autorização localmente criaria uma segunda fonte de verdade que poderia divergir do Entra e conceder acesso indevido.
 
-O `id_conversa` parece pequeno e não é: é ele que permite reconstruir um diálogo a partir de linhas independentes e é a única costura entre turnos do mesmo contexto neste modelo. Sem ele, o histórico de conversas exigido pelo RF12 seria uma lista plana de mensagens sem agrupamento.
+#### 4.3.1.2 Tabela: `conversa`
 
-#### 4.3.1.3 Tabela: `rotina`
+Sessão de diálogo, promovida a entidade própria. Na modelagem da Sprint 2 a conversa era apenas uma coluna `id_conversa` na tabela de solicitações, e a limitação estava registrada: título, arquivamento e correspondência com a sessão do Direct Line não tinham onde ser guardados. Esta é a onda que constrói o histórico (RF12), e a separação aconteceu.
 
 | Coluna | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
-| `id_rotina` | `serial` | `PK` | Identificador da rotina. |
-| `id_usuario` | `INTEGER` | `FK (usuario.id_usuario)`, `NOT NULL` | Usuário sob cuja identidade a rotina executa. |
-| `prompt` | `TEXT` | `NOT NULL` | Solicitação que será executada. |
-| `criado_em` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Cadastro. |
+| `id` | `text` | `PK` | Identificador da conversa, gerado pelo middleware. É o único que aparece no contrato da API. |
+| `usuario_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Dono da conversa. |
+| `conversa_externa_id` | `text` | `NULL` | `conversationId` do Direct Line. Só existe após o primeiro turno efetivamente encaminhado — turnos bloqueados não criam conversa no executor. |
+| `titulo` | `text` | `NULL` | Derivado do primeiro turno. Sem ele, a lista de histórico exibiria uma coluna de identificadores. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Abertura da conversa. |
+| `atualizada_em` | `TIMESTAMPTZ` | `NOT NULL` | Último turno registrado. Ordena a lista de histórico. |
+| `arquivada_em` | `TIMESTAMPTZ` | `NULL` | Preenchido no arquivamento. Nulo significa ativa. |
 
-A rotina guarda o prompt e o dono, que é o mínimo para que ela exista e execute sob a identidade certa. A expressão de recorrência e o fuso horário — indispensáveis para que "todo dia 5 às 8h" signifique 8h em `America/Sao_Paulo`, e não em UTC — são mantidos pelo agendador em seu próprio *jobstore*, e entram no modelo relacional na onda que constrói as rotinas (RF11).
+#### 4.3.1.3 Tabela: `interacao`
+
+Entidade central. Uma linha é gravada para cada mensagem que atravessa o pipeline, inclusive as barradas — as tentativas de ataque são o dado mais valioso do recorte de segurança do painel.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador da interação registrada. |
+| `conversa_id` | `text` | `FK (conversa.id)`, `NOT NULL` | Conversa a que o turno pertence. |
+| `usuario_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Autor da mensagem. |
+| `perfil` | `text` | `NOT NULL`, `CHECK` | Perfil do autor **no momento da interação**. |
+| `canal` | `text` | `NOT NULL`, `CHECK` | Por onde a mensagem entrou: `chat`, `voz` ou `rotina`. |
+| `prompt` | `text` | `NOT NULL` | Texto submetido, como recebido. |
+| `resposta` | `text` | `NOT NULL` | Texto entregue ao usuário — a resposta do executor ou a recusa. |
+| `intencao_id` | `text` | `NULL` | Código da intenção resolvida, em *snake_case*; nulo quando o bloqueio antecedeu a classificação. Sem chave estrangeira: o catálogo é artefato de código. |
+| `confianca_intencao` | `DOUBLE PRECISION` | `NOT NULL` | Confiança do classificador. Alimenta o recorte de baixa confiança. |
+| `desfecho` | `text` | `NOT NULL`, `CHECK` | Como o pipeline decidiu tratar a mensagem — oito valores, ver 4.4.1. |
+| `latencia_ms` | `INTEGER` | `NOT NULL` | Tempo total do pipeline. É o custo do pedágio, medido. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Momento do processamento. |
+| `rotina_id` | `text` | `FK (rotina.id)`, `NULL` | Preenchido quando `canal` é `rotina`. |
+
+**O `perfil` é redundante com `usuario.perfil`, e a redundância é deliberada.** Aqui fica o perfil no momento da interação, que é dado de auditoria e não pode mudar quando o usuário troca de papel; lá fica o último valor observado. As duas colunas respondem a perguntas diferentes, e unificá-las reescreveria o passado a cada promoção.
+
+**O `canal` parece pequeno e não é.** É ele que permite ao painel separar uso digitado de ditado de agendado, e é ele que torna cada disparo de rotina rastreável até a mensagem que gerou. Sem ele, uma execução de rotina fica indistinguível de alguém digitando.
+
+#### 4.3.1.4 Tabela: `rotina`
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador da rotina. |
+| `nome` | `text` | `NOT NULL` | Rótulo exibido na tela de gestão. |
+| `prompt` | `text` | `NOT NULL` | Solicitação que será executada. |
+| `agenda_cron` | `text` | `NOT NULL` | Expressão de recorrência (ex.: `0 8 5 * *`). |
+| `timezone` | `text` | `NOT NULL` | Fuso em que a expressão é interpretada (ex.: `America/Sao_Paulo`). |
+| `dono_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Usuário sob cuja identidade a rotina executa. |
+| `ativa` | `BOOLEAN` | `NOT NULL`, `DEFAULT TRUE` | Desativar tira da agenda sem apagar o histórico. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Cadastro. |
+| `atualizada_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração. |
+| `intencao_prevista` | `text` | `NULL` | Intenção resolvida na validação do cadastro. Permite mostrar ao usuário o que a rotina fará e detectar quando o catálogo mudou sob os pés dela. |
+
+**A recorrência e o fuso passaram a ser colunas.** A modelagem da Sprint 2 os deixava no *jobstore* do agendador, e isso os tornava invisíveis à tela de gestão: mostrar "todo dia 5 às 8h" exigiria consultar a estrutura interna do APScheduler. O `timezone` é campo da rotina, e não constante do sistema, porque "8h" significa 8h no fuso de quem cadastrou — um cron interpretado em UTC dispara na hora errada.
+
+#### 4.3.1.5 Tabela: `execucao_rotina`
+
+Um disparo e seu resultado. Não existia na modelagem da Sprint 2.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador do disparo. |
+| `rotina_id` | `text` | `FK (rotina.id)`, `NOT NULL` | Rotina disparada. |
+| `iniciada_em` | `TIMESTAMPTZ` | `NOT NULL` | Início, gravado **antes** de o pipeline rodar. |
+| `concluida_em` | `TIMESTAMPTZ` | `NULL` | Fim. Nulo enquanto o disparo não termina. |
+| `status` | `text` | `NOT NULL`, `CHECK` | `sucesso`, `bloqueada` (o pipeline barrou o prompt) ou `falha` (erro de execução). |
+| `interacao_id` | `text` | `FK (interacao.id)`, `NULL` | Interação que o disparo produziu. Nula até o fim, porque ela ainda não existe quando ele começa. |
+| `erro` | `text` | `NULL` | Mensagem do erro, quando houver. |
+
+**Início e fim são gravados separadamente, e é isso que torna visível uma rotina travada.** Se a linha só pudesse ser escrita completa, um disparo que nunca termina não apareceria em lugar nenhum — nem para quem a cadastrou, nem para quem opera.
 
 ### 4.3.2 Integridade referencial e restrições
 
-- **Unicidade de identidade.** `usuario.entra_id` e `usuario.email` são únicos, impedindo duplicação do mesmo colaborador.
-- **`intencao` → `usuario` (`ON DELETE RESTRICT`).** O registro de auditoria não pode ser removido por efeito colateral da exclusão de um usuário. Preservar a trilha prevalece sobre a conveniência da limpeza.
-- **`rotina` → `usuario` (`ON DELETE RESTRICT`).** Apagar um usuário apagaria silenciosamente rotinas agendadas cujos disparos já estão registrados na trilha. Desativar é a operação correta.
-- **`intencao.prompt` e `rotina.prompt` são `NOT NULL`.** Uma solicitação sem texto não é registro incompleto, é registro inválido: não há o que auditar nem o que classificar.
+- **Unicidade de identidade.** `usuario.id` é a chave primária e `usuario.email` é único, impedindo duplicação do mesmo colaborador.
+- **Todas as chaves estrangeiras são `ON DELETE RESTRICT` e `ON UPDATE CASCADE`.** São sete: `conversa → usuario`, `interacao → conversa`, `interacao → usuario`, `interacao → rotina`, `rotina → usuario`, `execucao_rotina → rotina` e `execucao_rotina → interacao`. O registro de auditoria não pode ser removido por efeito colateral da exclusão de um usuário ou de uma rotina: preservar a trilha prevalece sobre a conveniência da limpeza.
+- **Apagar uma rotina que já disparou é recusado pela aplicação, com orientação.** A restrição do banco barraria de qualquer forma, mas devolveria uma violação de integridade que o chamador teria de interpretar. A operação correta é desativar (`ativa = FALSE`), que tira a rotina da agenda sem apagar o que ela já fez.
+- **Arquivar não apaga.** `conversa.arquivada_em` marca a conversa como fora da lista, e as interações continuam onde estavam. Excluí-las abriria caminho para alguém limpar a própria trilha depois de um bloqueio.
+- **`interacao.prompt`, `interacao.resposta` e `rotina.prompt` são `NOT NULL`.** Uma solicitação sem texto não é registro incompleto, é registro inválido: não há o que auditar nem o que classificar.
+- **Dois vínculos ligam interação e rotina, e ambos são necessários.** `interacao.rotina_id` responde "de qual rotina esta mensagem nasceu", e sustenta o recorte do painel por canal; `execucao_rotina.interacao_id` responde "que interação este disparo produziu", e sustenta a aba de resultados. São navegações opostas, cada uma em uma tela, e manter só uma custaria uma junção a mais na outra.
 
 ### 4.3.3 Justificativa de normalização (3FN)
 
-1. **Primeira Forma Normal.** Todos os atributos são atômicos. A permissão de visualização, que poderia crescer para um conjunto multivalorado, é representada nesta etapa por um único booleano — decisão registrada em 4.4.2, com o custo que ela implica.
+1. **Primeira Forma Normal.** Todos os atributos são atômicos nas cinco tabelas. As permissões, que seriam o candidato natural a atributo multivalorado, não são persistidas: resolvem-se dos *claims* a cada requisição (4.3.1.1).
 2. **Segunda Forma Normal.** Todas as chaves primárias são simples, e portanto não há dependência parcial em nenhuma tabela.
-3. **Terceira Forma Normal.** Nenhum atributo não-chave depende de outro atributo não-chave. Em `intencao`, `prompt` e `classificacao_intencao` dependem exclusivamente de `id_intencao`; a classificação é resultado do processamento daquela solicitação específica, e não um atributo derivável do usuário ou da conversa.
+3. **Terceira Forma Normal.** Nenhum atributo não-chave depende de outro atributo não-chave. Em `interacao`, `prompt`, `resposta`, `intencao_id`, `desfecho` e `latencia_ms` dependem exclusivamente de `id`: todos são resultado do processamento daquela mensagem específica, e não derivam do usuário nem da conversa. A única redundância do modelo é `interacao.perfil`, e ela é **desnormalização deliberada e documentada** (4.3.1.3): o perfil histórico não é derivável do estado atual do usuário, porque o estado atual muda.
 
 ## 4.4 Modelo Físico de Dados
 
@@ -1915,76 +1982,163 @@ O modelo físico implementa o esquema para **PostgreSQL 16**, com as restriçõe
 ![Modelagem física do middleware](/docs/imagens/Modelagem%20Física.png)
 *Figura 19 — Modelagem Física.*
 
+> Fonte: [`docs/diagramas/modelagem-fisica.mmd`](diagramas/modelagem-fisica.mmd). O diagrama traz os tipos e os índices como estão no banco criado pela migração inicial; o DDL completo está em 4.4.1.
+
 ### 4.4.1 Script DDL
+
+O DDL abaixo foi **extraído do banco em operação** (`pg_dump --schema-only`), e não redigido à parte. A diferença importa: um script escrito à mão diverge do esquema real na primeira migração que ninguém lembra de refletir aqui. A fonte de verdade é a migração Alembic em `src/middleware/migrations/versions/`; esta seção é a leitura dela.
 
 ```sql
 -- TABELA: usuario
 
 CREATE TABLE usuario (
-    id_usuario          serial       PRIMARY KEY,
-    entra_id            VARCHAR(255) NOT NULL,
-    email               VARCHAR(255) NOT NULL,
-    perfil              VARCHAR(50)  NOT NULL,
-    pode_ver_intencoes  BOOLEAN      NOT NULL DEFAULT FALSE,
-    criado_em           TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    CONSTRAINT uk_usuario_entra UNIQUE (entra_id),
-    CONSTRAINT uk_usuario_email UNIQUE (email),
-    -- o perfil é vocabulário fechado, validado aqui enquanto não é tipo do banco
+    id          text        NOT NULL,
+    nome        text        NOT NULL,
+    email       text,
+    perfil      text        NOT NULL,
+    criado_em   timestamptz NOT NULL DEFAULT now(),
+    visto_em    timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT pk_usuario PRIMARY KEY (id),
+    CONSTRAINT uq_usuario_email UNIQUE (email),
+    -- vocabulário fechado, validado aqui enquanto não é tipo do banco.
+    -- A lista é gerada a partir do enum Perfil do código (ver 4.4.2).
     CONSTRAINT ck_usuario_perfil CHECK (
-        perfil IN ('DIRETORIA', 'LIDER_PROJETO', 'MEMBRO_EQUIPE')
+        perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')
     )
 );
 
--- TABELA: intencao
+-- TABELA: conversa
 
-CREATE TABLE intencao (
-    id_intencao             serial       PRIMARY KEY,
-    id_usuario              INTEGER      NOT NULL,
-    id_conversa             INTEGER      NOT NULL,
-    prompt                  TEXT         NOT NULL,
-    classificacao_intencao  VARCHAR(100) NULL,
-    criado_em               TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    CONSTRAINT fk_intencao_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT
+CREATE TABLE conversa (
+    id                   text        NOT NULL,
+    usuario_id           text        NOT NULL,
+    conversa_externa_id  text,
+    titulo               text,
+    criada_em            timestamptz NOT NULL,
+    atualizada_em        timestamptz NOT NULL,
+    arquivada_em         timestamptz,
+    CONSTRAINT pk_conversa PRIMARY KEY (id),
+    CONSTRAINT fk_conversa_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- TABELA: rotina
 
 CREATE TABLE rotina (
-    id_rotina   serial      PRIMARY KEY,
-    id_usuario  INTEGER     NOT NULL,
-    prompt      TEXT        NOT NULL,
-    criado_em   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT fk_rotina_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT
+    id                 text        NOT NULL,
+    nome               text        NOT NULL,
+    prompt             text        NOT NULL,
+    agenda_cron        text        NOT NULL,
+    timezone           text        NOT NULL,
+    dono_id            text        NOT NULL,
+    ativa              boolean     NOT NULL DEFAULT true,
+    criada_em          timestamptz NOT NULL,
+    atualizada_em      timestamptz NOT NULL,
+    intencao_prevista  text,
+    CONSTRAINT pk_rotina PRIMARY KEY (id),
+    CONSTRAINT fk_rotina_dono_id_usuario FOREIGN KEY (dono_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- TABELA: interacao
+
+CREATE TABLE interacao (
+    id                  text             NOT NULL,
+    conversa_id         text             NOT NULL,
+    usuario_id          text             NOT NULL,
+    perfil              text             NOT NULL,
+    canal               text             NOT NULL,
+    prompt              text             NOT NULL,
+    resposta            text             NOT NULL,
+    intencao_id         text,
+    confianca_intencao  double precision NOT NULL,
+    desfecho            text             NOT NULL,
+    latencia_ms         integer          NOT NULL,
+    criada_em           timestamptz      NOT NULL,
+    rotina_id           text,
+    CONSTRAINT pk_interacao PRIMARY KEY (id),
+    CONSTRAINT ck_interacao_perfil CHECK (
+        perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')
+    ),
+    CONSTRAINT ck_interacao_canal CHECK (
+        canal IN ('chat', 'voz', 'rotina')
+    ),
+    -- Os oito desfechos do pipeline. Injeção por regra e por modelo são
+    -- valores distintos porque a origem do bloqueio muda a leitura do
+    -- painel de segurança.
+    CONSTRAINT ck_interacao_desfecho CHECK (
+        desfecho IN ('encaminhada', 'bloqueada_injecao_regra',
+                     'bloqueada_injecao_modelo', 'bloqueada_abuso',
+                     'recusada_fora_escopo', 'recusada_baixa_confianca',
+                     'bloqueada_saida', 'falha_executor')
+    ),
+    CONSTRAINT fk_interacao_conversa_id_conversa FOREIGN KEY (conversa_id)
+        REFERENCES conversa (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_interacao_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_interacao_rotina_id_rotina FOREIGN KEY (rotina_id)
+        REFERENCES rotina (id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- TABELA: execucao_rotina
+
+CREATE TABLE execucao_rotina (
+    id            text        NOT NULL,
+    rotina_id     text        NOT NULL,
+    iniciada_em   timestamptz NOT NULL,
+    concluida_em  timestamptz,
+    status        text        NOT NULL,
+    interacao_id  text,
+    erro          text,
+    CONSTRAINT pk_execucao_rotina PRIMARY KEY (id),
+    CONSTRAINT ck_execucao_rotina_status CHECK (
+        status IN ('sucesso', 'bloqueada', 'falha')
+    ),
+    CONSTRAINT fk_execucao_rotina_rotina_id_rotina FOREIGN KEY (rotina_id)
+        REFERENCES rotina (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_execucao_rotina_interacao_id_interacao FOREIGN KEY (interacao_id)
+        REFERENCES interacao (id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- ÍNDICES
 
 -- Turnos de uma conversa, em ordem (RF12)
-CREATE INDEX idx_intencao_conversa ON intencao (id_conversa, criado_em);
+CREATE INDEX ix_interacao_conversa_criada ON interacao (conversa_id, criada_em);
 
 -- Histórico do usuário e recortes do painel (RF10, RF12)
-CREATE INDEX idx_intencao_usuario ON intencao (id_usuario, criado_em DESC);
-CREATE INDEX idx_intencao_criado_em ON intencao (criado_em DESC);
+CREATE INDEX ix_interacao_usuario_criada ON interacao (usuario_id, criada_em DESC);
+CREATE INDEX ix_interacao_criada_em ON interacao (criada_em DESC);
 
 -- Volume por intenção, base do painel e do backlog de novas intenções (RF10)
-CREATE INDEX idx_intencao_classificacao ON intencao (classificacao_intencao, criado_em);
+CREATE INDEX ix_interacao_intencao_criada ON interacao (intencao_id, criada_em);
 
--- Agrupamento das solicitações não classificadas, que incluem os bloqueios
-CREATE INDEX idx_intencao_sem_classe ON intencao (criado_em DESC)
-    WHERE classificacao_intencao IS NULL;
+-- Distribuição de desfechos e série temporal de bloqueios por guarda
+CREATE INDEX ix_interacao_desfecho_criada ON interacao (desfecho, criada_em);
+
+-- Índice parcial: as mensagens sem intenção resolvida incluem os bloqueios
+-- e alimentam tanto o backlog de novas intenções quanto o painel de segurança
+CREATE INDEX ix_interacao_sem_intencao ON interacao (criada_em DESC)
+    WHERE intencao_id IS NULL;
+
+-- Lista de histórico, ordenada pelo turno mais recente (RF12)
+CREATE INDEX ix_conversa_usuario_atualizada ON conversa (usuario_id, atualizada_em DESC);
 
 -- Rotinas de um dono (RF11)
-CREATE INDEX idx_rotina_usuario ON rotina (id_usuario);
+CREATE INDEX ix_rotina_dono ON rotina (dono_id);
+
+-- Disparos recentes de uma rotina
+CREATE INDEX ix_execucao_rotina_iniciada ON execucao_rotina (rotina_id, iniciada_em DESC);
 ```
 
 ### 4.4.2 Decisões técnicas de implementação
 
 - **`TIMESTAMPTZ` em todas as colunas temporais.** Grava o instante absoluto, independentemente do fuso da sessão. É o que permite ao agendador respeitar `America/Sao_Paulo` sem que os registros fiquem ambíguos no horário de verão, e o que torna comparável o momento de solicitações registradas em máquinas distintas.
-- **Chave sequencial, com a contrapartida declarada.** `serial` é legível e barato, e é a escolha certa para a fase de construção. Ela tem um custo que precisa estar registrado antes de o sistema sair do ambiente de teste: identificadores sequenciais aparecem em URLs e revelam volume de uso, além de permitirem enumeração de registros alheios. A defesa neste modelo é de aplicação — toda leitura verifica a propriedade do registro no servidor —, e a troca por identificador opaco é candidata natural à onda que expõe o histórico na interface.
-- **Permissão como booleano, enquanto for uma.** `pode_ver_intencoes` resolve o caso atual com uma coluna. Se uma segunda capacidade administrativa surgir — a gestão de rotinas é a candidata imediata (RF11) —, a forma correta deixa de ser um segundo booleano e passa a ser uma tabela associativa, porque cada nova capacidade exigiria alterar o esquema. O ponto de virada é conhecido e está registrado aqui para que a decisão seja tomada quando ele chegar, e não descoberta depois.
-- **Índices derivados dos recortes, não do palpite.** Cada índice acima corresponde a uma consulta nomeada em [Arquitetura.md](Arquitetura.md), seção 5. O índice parcial sobre as solicitações sem classificação serve ao agrupamento que alimenta tanto o backlog de novas intenções quanto o recorte de segurança, já que ambos os casos chegam ao banco sem intenção resolvida.
+- **UUID em coluna `text`, revisando a decisão da Sprint 2.** O modelo anterior adotava `serial` pela legibilidade, com o custo declarado: identificador sequencial revela volume de uso e permite enumeração de registros alheios, e a troca por identificador opaco ficava "para a onda que expõe o histórico na interface". Esta é essa onda, e a inversão aconteceu por dois motivos que se somam. O primeiro é o custo já previsto. O segundo é que o orquestrador implementado gera o identificador **antes** de gravar — a interação precisa de um id no início do pipeline, para correlacionar o registro com os alertas de segurança emitidos ao longo dele, e um `serial` só existiria depois do `INSERT`. A defesa de aplicação continua valendo: toda leitura verifica a propriedade do registro no servidor.
+- **`CHECK` gerado, nunca digitado.** As listas de valores de `perfil`, `canal`, `desfecho` e `status` são produzidas a partir dos enums do código na definição do esquema, e não escritas à mão no DDL. A razão é concreta: a versão anterior desta seção trazia `CHECK (perfil IN ('DIRETORIA', ...))` em maiúsculas, enquanto o código grava `'diretoria'` — divergência que passaria despercebida até a primeira gravação real ser recusada em produção. Gerar a lista faz de "acrescentar um desfecho e esquecer o banco" um erro de migração, que aparece antes de chegar ao usuário.
+- **Sem tipo enumerado do banco.** `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria desconfortável cada valor novo; um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum. `interacao.intencao_id` não tem nem `CHECK` nem chave estrangeira, porque o catálogo de intenções é artefato de código revisado a cada sprint (5.4.9) e amarrá-lo ao banco faria de cada revisão uma migração.
+- **Permissões fora do esquema.** A modelagem anterior previa `pode_ver_intencoes` como coluna booleana, registrando o ponto de virada: uma segunda capacidade administrativa exigiria tabela associativa. A gestão de rotinas (RF11) é essa segunda capacidade, e a virada chegou antes de a coluna existir. As permissões passaram a ser resolvidas dos *claims* de grupo a cada requisição, sem persistência — projetá-las localmente criaria uma segunda fonte de verdade capaz de divergir do Entra e conceder acesso que já foi revogado.
+- **Índices derivados dos recortes, não do palpite.** Cada um dos nove índices corresponde a uma consulta nomeada em [Arquitetura.md](Arquitetura.md), seção 5, e a lista está em `src/middleware/migrations/README.md`. O índice parcial sobre as mensagens sem classificação serve ao agrupamento que alimenta tanto o backlog de novas intenções quanto o recorte de segurança, já que ambos os casos chegam ao banco sem intenção resolvida. Não há índice sobre `rotina.ativa`: a consulta que o usaria roda uma vez na subida do worker, sobre dezenas de linhas.
+- **Verificação do esquema por teste, e não por inspeção.** `tests/integration/test_persistencia.py` roda contra o PostgreSQL real e exercita o que só o servidor sabe responder: se cada valor dos enums passa no `CHECK`, se a chave estrangeira recusa apagar um usuário com registro, se o índice parcial existe com a cláusula `WHERE` correta. A suíte pula limpa quando o banco não responde.
 - **Sem vista materializada nesta etapa.** Para o volume esperado de um MVP, a agregação em SQL sobre `intencao` é suficiente. Materializar antes de medir seria otimização especulativa, com custo de atualização e de invalidação.
 - **Cifra em repouso e retenção (RNF07).** Sem a camada de mascaramento removida na revisão de escopo, `intencao.prompt` guarda o texto do usuário em claro, inclusive o das tentativas de ataque. Duas medidas são parte do esquema, e não recomendações: a cifra em repouso é habilitada no nível da instância PostgreSQL, e o expurgo das solicitações além do prazo de retenção é executado como tarefa periódica do próprio agendador. O risco correspondente é o R13, registrado na matriz vigente ([GestaoProjeto.md](GestaoProjeto.md), seção 4).
 - **Migrações versionadas.** O esquema evolui por Alembic. Como o modelo tem desdobramentos previstos para as ondas seguintes — conversa como entidade própria, histórico de execuções de rotina, vocabulário fechado de desfechos —, versionar é o que permite acrescentá-los sem recriar o banco e reverter uma alteração que se mostre errada.
@@ -5074,11 +5228,60 @@ Estabelece essas cinco coisas sob uma condição que prefere declarar a omitir: 
 
 A seção 5.7 optou por dizer isso onde a afirmação é feita, em 5.7.4.8, em 5.7.5.5 e aqui, em vez de apresentar como resultado o que ainda é expectativa. É a mesma escolha que a subseção 8.3 do glossário fez ao delimitar o alcance de sua própria verificação, e ela tem um custo: a seção entrega menos certeza do que poderia aparentar entregar. O que ela ganha em troca é que cada certeza que entrega pode ser conferida.
 
+### 5.7.8 Bibliotecas e frameworks utilizados no Speech-to-Text e no NLP
+
+Esta subseção registra a pilha efetivamente usada na implementação do canal de voz e do classificador de intenções. As versões abaixo são as **faixas de compatibilidade declaradas** em `src/middleware/pyproject.toml`; elas não representam, por si só, uma versão exata instalada. Como o projeto ainda não mantém um arquivo de *lock* para as dependências Python, duas instalações realizadas em datas diferentes podem resolver versões distintas dentro dessas faixas. A exceção é a versão da API REST do Azure, fixada pela configuração da aplicação.
+
+#### 5.7.8.1 Componentes centrais
+
+| Biblioteca, modelo ou serviço | Versão ou referência adotada | Finalidade na solução | Limitações e cuidados conhecidos |
+|---|---|---|---|
+| **Azure AI Speech — Fast Transcription REST API** | API `2025-10-15`, configurável por `SPEECH_API_VERSION` | Converte os arquivos aceitos pela rota de áudio em texto e devolve idioma, confiança, duração e latência normalizados para o restante do middleware | É um serviço externo: depende de rede, credenciais, disponibilidade e cota. O áudio sai do ambiente da aplicação e, por conter dado potencialmente sensível, o uso com dados reais depende da homologação do parceiro. Não existe mecanismo local de contingência implementado. |
+| **Azure Cognitive Services Speech SDK para Python** (`azure-cognitiveservices-speech`) | `>=1.51,<2` | Sustenta a verificação isolada de reconhecimento de arquivos WAV e prepara a integração do modo contínuo pelo navegador | No estado atual, o teste direto pelo SDK está limitado a WAV. A emissão de token efêmero em `/voz/token` e o trajeto contínuo ainda não estão implementados; portanto, a presença da biblioteca não significa que esse modo já esteja disponível. |
+| **HTTPX** (`httpx`) | `>=0.27` | Realiza de forma assíncrona o envio `multipart/form-data` do áudio à API de transcrição e permite substituir o cliente nos testes | Continua sujeito a falhas de rede, tempo limite e respostas do provedor. O arquivo é lido para a chamada externa, de modo que o limite de 25 MB da API também protege o consumo de memória do processo. |
+| **scikit-learn** (`scikit-learn`) | `>=1.4` | Implementa os vetorizadores TF-IDF de palavras e caracteres, os estimadores lineares, a calibração de probabilidades e o ensemble usado para classificar a intenção | O ramo TF-IDF depende do vocabulário observado e perde desempenho em formulações muito distantes do corpus. Mudanças no catálogo ou nos exemplos exigem novo treino e nova avaliação. O artefato serializado também deve ser carregado com versões compatíveis da biblioteca. |
+| **Sentence Transformers** (`sentence-transformers`) | `>=3.0` | Carrega e executa o encoder de sentenças do ramo semântico, mantendo-o em cache no processo | A primeira execução pode precisar baixar os pesos e exige mais memória e tempo de inferência que o TF-IDF. O uso local depois do download reduz o envio de texto a terceiros, mas o cache e a origem dos pesos precisam ser controlados no ambiente de implantação. |
+| **`intfloat/multilingual-e5-large`** | Identificador do modelo no Hugging Face; revisão não fixada no código | Produz embeddings multilíngues normalizados para reconhecer paráfrases em português; o classificador usa o prefixo `query: ` recomendado para consultas | Os pesos ocupam aproximadamente 2 GB e aumentam a latência em CPU. O modelo é menos explicável que o TF-IDF. Como a revisão não está fixada, uma instalação limpa pode obter pesos diferentes no futuro; a implantação homologada deve registrar ou fixar a revisão utilizada. |
+| **joblib** (`joblib`) | `>=1.4` | Serializa e recupera o classificador treinado, seus limiares e metadados em `dados/classificador.joblib` | O formato depende do ecossistema Python e não deve ser tratado como contrato portátil entre versões arbitrárias. O artefato deve ter acesso restrito e ser regenerado a partir do corpus versionado, não recebido de origem não confiável. |
+
+O classificador de produção combina dois ramos complementares: TF-IDF captura termos literais, códigos e pequenos erros de digitação; o `multilingual-e5-large` captura proximidade semântica e paráfrases. As probabilidades são combinadas com peso `0,6` para embeddings e `0,4` para TF-IDF. Esse ensemble é executado localmente; somente o áudio destinado à transcrição é enviado ao Azure.
+
+#### 5.7.8.2 Bibliotecas de integração
+
+| Biblioteca ou framework | Versão declarada | Papel no fluxo | Limitações e cuidados conhecidos |
+|---|---|---|---|
+| **FastAPI** (`fastapi`) | `>=0.115` | Expõe as rotas de upload e conversa, aplica dependências e traduz os resultados e erros internos em respostas HTTP | As tarefas em segundo plano usadas no processamento de áudio pertencem ao processo da aplicação e não constituem mensageria durável; uma interrupção do processo pode exigir reenvio. |
+| **Pydantic** e **pydantic-settings** | `pydantic>=2.7`; `pydantic-settings>=2.3` | Validam contratos de entrada e saída e carregam configurações como endpoint, região, chave, idioma e versão da API de fala | A validação estrutural não substitui a validação do conteúdo real do arquivo nem a gestão segura dos segredos. Alterações nos modelos devem permanecer compatíveis com os clientes ou ser versionadas. |
+| **python-multipart** (`python-multipart`) | `>=0.0.9` | Permite ao FastAPI interpretar o campo de arquivo enviado por `multipart/form-data` | Apenas interpreta o corpo da requisição; formato real, tamanho e assinatura do arquivo continuam sendo verificados pela aplicação. |
+| **SQLAlchemy**, **asyncpg** e **Alembic** | `sqlalchemy>=2.0`; `asyncpg>=0.29`; `alembic>=1.13` | Persistem assincronamente conversa, interação e resultado do NLP em PostgreSQL e versionam a evolução do esquema | O fluxo persistente depende de PostgreSQL disponível e da migração na revisão esperada. Transações, pool e migrações precisam ser administrados em conjunto; esses componentes não armazenam o áudio bruto. |
+
+#### 5.7.8.3 Mapeamento entre componentes e código
+
+| Responsabilidade | Implementação principal |
+|---|---|
+| Configuração do Azure Speech e versão da API | `src/middleware/app/config.py` |
+| Envio do áudio e normalização da resposta do provedor | `src/middleware/app/voz/transcricao.py` |
+| Verificação isolada pelo SDK e contrato futuro de token | `src/middleware/app/voz/speech.py` |
+| Validação de formato e limite do áudio | `src/middleware/app/utils/validadores.py` |
+| Rotas HTTP do canal de voz | `src/middleware/app/api/routes/voz.py` |
+| Construção dos ramos TF-IDF, embeddings e ensemble | `src/middleware/app/pipeline/intencao/modelo.py` |
+| Treino e serialização do artefato | `src/middleware/app/pipeline/intencao/treino.py` |
+| Classificação usada pelo pipeline | `src/middleware/app/pipeline/intencao/classificador.py` |
+| Persistência assíncrona dos resultados | `src/middleware/app/persistence/repository.py` e `src/middleware/app/persistence/sessao.py` |
+
+O fluxo implementado pode ser resumido assim: a rota recebe e valida o arquivo; o serviço de transcrição o envia ao Azure e normaliza o texto retornado; o cliente confirma ou utiliza esse texto na chamada de conversa; o pipeline aplica pré-processamento, classifica a intenção pelo ensemble e executa as guardas; por fim, a interação e o resultado do NLP são gravados no PostgreSQL. A integração de persistência não retém o áudio bruto.
+
+#### 5.7.8.4 Reprodutibilidade e evolução
+
+Para reproduzir um resultado de NLP não basta registrar o nome das bibliotecas. Devem acompanhar a evidência: o commit do código, a versão do corpus, o arquivo `classificador.joblib`, o identificador e a revisão dos pesos E5, as versões efetivamente instaladas e os limiares do catálogo de intenções. A faixa registrada em `pyproject.toml` define compatibilidade mínima, mas não substitui esse inventário.
+
+Antes da implantação homologada, recomenda-se gerar um arquivo de dependências travadas a partir do ambiente validado e fixar a revisão do `intfloat/multilingual-e5-large`. Essa medida reduz variações entre desenvolvimento, CI e produção sem alterar a escolha arquitetural já avaliada nas seções 5.4.11 e 5.7.2.
+
 ## 5.8 Diagrama de Classes da Solução — Sprint 2
 
 O diagrama de classes abaixo apresenta a modelagem técnica atual do middleware responsável por intermediar as solicitações entre os usuários e o Copilot Studio. Diferentemente do modelo conceitual apresentado na seção 3.2.2, elaborado na Sprint 1, esta versão detalha os componentes de processamento, as guardas de segurança, a persistência das interações e a execução de rotinas agendadas previstos para a Sprint 2.
 
-O modelo mantém o catálogo de intenções como referência para a classificação e o roteamento, mas explicita as decisões que acontecem antes e depois da chamada ao Copilot Studio: detecção de injeção, controle de abuso, verificação da saída, registro do desfecho e associação com o perfil do usuário. A representação é conceitual-técnica; os identificadores UUID, os tipos de dados e os nomes das classes servem para orientar a implementação e ainda podem ser refinados durante a evolução da arquitetura.
+O modelo mantém o catálogo de intenções como referência para a classificação e o roteamento, mas explicita as decisões que acontecem antes e depois da chamada ao Copilot Studio: detecção de injeção, controle de abuso, verificação da saída, registro do desfecho e associação com o perfil do usuário. A representação é conceitual-técnica. Os cinco modelos de persistência já correspondem ao esquema construído na Sprint 3 — a modelagem física está no capítulo 4, e o identificador do usuário é o do provedor de identidade, não um UUID interno. `IntencaoCatalogo` é a exceção deliberada: continua sendo artefato de código, e não tabela, porque o catálogo é revisado a cada sprint (5.4.9). As classes de serviço permanecem sujeitas a refinamento conforme as ondas seguintes forem construídas.
 
 ```mermaid
 classDiagram
@@ -5125,10 +5328,9 @@ classDiagram
 
     %% Modelos de Persistência (SQLAlchemy 2 / PostgreSQL)
     class Usuario {
-        +UUID id
-        +String entra_object_id
-        +String email
+        +String id
         +String nome
+        +String email
         +Perfil perfil
         +DateTime criado_em
         +DateTime visto_em
@@ -5136,7 +5338,7 @@ classDiagram
 
     class Conversa {
         +UUID id
-        +UUID usuario_id
+        +String usuario_id
         +String titulo
         +String conversa_externa_id
         +DateTime arquivada_em
@@ -5146,10 +5348,10 @@ classDiagram
     class Interacao {
         +UUID id
         +UUID conversa_id
-        +UUID usuario_id
+        +String usuario_id
         +String prompt
         +String resposta
-        +UUID intencao_id
+        +String intencao_id
         +Decimal confianca
         +Desfecho desfecho
         +Perfil perfil
@@ -5159,24 +5361,25 @@ classDiagram
         +DateTime criada_em
     }
 
+    %% Artefato de CÓDIGO, não tabela: o catálogo vive em
+    %% pipeline/intencao/catalogo.py e é revisado a cada sprint.
+    %% interacao.intencao_id guarda o código, sem chave estrangeira.
     class IntencaoCatalogo {
-        +UUID id
         +String codigo
         +String nome
         +String descricao
         +Decimal limiar_confianca
         +Boolean eh_fora_de_escopo
-        +DateTime versao_atualizada_em
     }
 
     class Rotina {
         +UUID id
-        +UUID dono_id
+        +String dono_id
         +String nome
         +String prompt
         +String agenda_cron
         +String timezone
-        +UUID intencao_prevista
+        +String intencao_prevista
         +Boolean ativa
         +DateTime criada_em
     }
@@ -6094,6 +6297,70 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 - Escalação de privilégio em rotinas antigas
 - Disparos duplicados ou perdidos por falha do worker
 
+#### 9.1.2.6 Sistema de troca de mensagens (S5)
+
+O sistema de troca de mensagens será implementado com **RabbitMQ**, usando AMQP 0-9-1. A escolha mantém a operação no mesmo perímetro do `middleware` e do `worker`, oferece confirmação de publicação, reconhecimento explícito pelo consumidor, retentativas e fila de mensagens rejeitadas sem introduzir um segundo banco para coordenar o trabalho. A primeira entrega deve tratar esta seção como contrato de implementação; o broker ainda não faz parte da infraestrutura atual.
+
+**Topologia inicial:**
+
+| Elemento | Nome | Responsabilidade |
+|---|---|---|
+| Exchange | `prata.events` (`topic`, durable) | Receber eventos publicados pelo middleware e pelos webhooks |
+| Fila | `prata.audio.transcription` (durable) | Entregar solicitações de transcrição ao consumidor de áudio |
+| Fila | `prata.routines.execution` (durable) | Entregar disparos de rotinas ao consumidor do worker |
+| Fila | `prata.webhooks.incoming` (durable) | Isolar eventos recebidos de sistemas externos |
+| Exchange | `prata.dead-letter` (`direct`, durable) | Reter mensagens que excederam as tentativas |
+| Fila | `prata.failed` (durable) | Permitir inspeção e reprocessamento controlado de falhas |
+
+As chaves de roteamento iniciais são `audio.transcription.requested`, `routine.execution.requested` e `webhook.received`. As filas de trabalho usam `x-dead-letter-exchange=prata.dead-letter`; a publicação deve usar mensagem persistente e `publisher confirms`. A ordem é garantida apenas dentro da fila e não deve ser usada para coordenar conversas diferentes.
+
+**Contrato da mensagem:**
+
+Todo evento será um JSON UTF-8 com o envelope abaixo. `message_id` é único para a tentativa lógica, `correlation_id` acompanha a solicitação de ponta a ponta e `occurred_at` é UTC no formato ISO 8601.
+
+```json
+{
+  "message_id": "uuid",
+  "event_type": "audio.transcription.requested",
+  "schema_version": 1,
+  "occurred_at": "2026-01-01T12:00:00Z",
+  "correlation_id": "uuid",
+  "producer": "middleware",
+  "payload": {}
+}
+```
+
+O produtor rejeita eventos sem `message_id`, `event_type`, `schema_version`, `correlation_id` ou `payload`. O consumidor registra `message_id` antes de executar um efeito externo e ignora uma mensagem já processada, tornando a entrega **at-least-once** idempotente. Mensagens inválidas ou que excederem três tentativas vão para `prata.failed`; falhas transitórias devem ser reencaminhadas com atraso crescente.
+
+**Produtores e consumidores:**
+
+- O endpoint de áudio publica `audio.transcription.requested` e continua respondendo `202` com o identificador da solicitação.
+- O endpoint de webhook valida autenticação, assinatura, tamanho e `event_type`, registra o evento e publica `webhook.received`; ele não executa a regra de negócio dentro da requisição HTTP.
+- O agendador publica `routine.execution.requested` quando uma rotina vence, preservando dono, conversa, permissões a resolver e `correlation_id`.
+- O `worker` consome as filas de áudio e rotinas com `prefetch` limitado, confirma (`ack`) somente após o processamento e rejeita (`nack`) mensagens para retentativa ou dead letter conforme a classe do erro.
+- O consumidor de webhook encaminha o evento validado ao serviço correspondente; não há chamada direta a serviços externos antes da validação e da deduplicação.
+
+O webhook deve responder rapidamente com `202` após a publicação confirmada. Sem confirmação do RabbitMQ, responde erro transitório e não declara o evento recebido. A assinatura deve ser validada com segredo configurado fora do código e comparação em tempo constante; o corpo bruto usado na assinatura não pode ser reconstruído a partir de um JSON reserializado.
+
+**Configuração e operação:**
+
+As variáveis mínimas são `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_LETTER_EXCHANGE`, `RABBITMQ_PREFETCH_COUNT` e `RABBITMQ_MAX_RETRIES`. Em desenvolvimento, o RabbitMQ será um serviço do `docker-compose`; em produção, as credenciais serão fornecidas pelo ambiente de implantação. Não devem ser gravados payloads sensíveis nos logs. Métricas mínimas: mensagens publicadas, confirmadas, consumidas, rejeitadas, idade da mensagem, tamanho da fila e mensagens em dead letter.
+
+**Casos de uso e testes:**
+
+| Caso | Comportamento verificável |
+|---|---|
+| Publicação confirmada | O produtor serializa o envelope, publica na exchange correta e só retorna sucesso após `publisher confirm`. |
+| Broker indisponível | A API não perde o evento, retorna erro transitório e registra a correlação para nova tentativa. |
+| Consumo com sucesso | O consumidor executa o handler e confirma a mensagem uma única vez. |
+| Falha transitória | A mensagem é rejeitada para retentativa até o limite, sem perder o `message_id`. |
+| Falha permanente ou payload inválido | A mensagem não é processada e vai para `prata.failed`. |
+| Redelivery | A mesma mensagem não produz efeito externo duas vezes. |
+| Webhook válido | A assinatura é validada, o evento é publicado e a resposta é `202`. |
+| Webhook inválido ou duplicado | A assinatura inválida é recusada; o `message_id` duplicado é tratado de forma idempotente. |
+
+Esta entrega documenta o desenho e os critérios de aceite. A implementação posterior deve adicionar o cliente RabbitMQ compartilhado, declarar a topologia na inicialização, integrar o endpoint de webhook e substituir os `NotImplementedError` do `worker` por consumidores testados com um broker efêmero ou dublado.
+
 ### 9.1.3 Integração com Voz
 
 A funcionalidade de voz não depende de nenhuma onda específica e nenhuma onda depende dela. Deve ser encaixada onde houver folga na Sprint 3 ou 4, preferencialmente na Onda 1, já que a transcrição alimenta o mesmo `/chat`.
@@ -6224,7 +6491,585 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 
 ## 9.2 Arquitetura de Codificação e Estrutura de Diretórios
 
-[Preencher]
+Esta seção documenta como o código-fonte da solução está organizado, quais
+convenções governam a escrita e como as partes se comunicam. As subseções 9.2.2
+a 9.2.17 cobrem a camada de interface, entregue na Sprint 3 e correspondente ao
+item 5 do Artefato 7. A organização interna do middleware é descrita nas seções
+5.2 e 5.6, que tratam do diagrama de componentes e da arquitetura em blocos.
+
+A entrega do item 5 do Artefato 7 se distribui em duas seções: a estrutura, os
+componentes, a integração com as APIs e a execução do protótipo estão descritos
+aqui; os testes automatizados implementados estão documentados em 9.5.
+
+### 9.2.1 Organização do código-fonte
+
+O código-fonte reside em `src/`, dividido em duas aplicações independentes que
+se comunicam exclusivamente por HTTP:
+
+| Diretório | Aplicação | Responsabilidade |
+| --- | --- | --- |
+| `src/middleware` | Serviço FastAPI em Python | Sessão, guardas de injeção e abuso, classificação de intenção, execução, canal de voz e registro |
+| `src/web` | Interface React em TypeScript | Interação com o usuário, apresentação dos desfechos, gestão de rotinas e visualização das intenções |
+
+A separação é deliberada e sustenta duas decisões já registradas neste
+documento. A primeira é a adoção do middleware como intermediário obrigatório
+entre usuário e Copilot Studio, descrita na seção 5.6: nenhuma parte da
+interface fala diretamente com o Copilot. A segunda é o padrão BFF, pelo qual o
+FastAPI executa o fluxo de autenticação e devolve a sessão em cookie, de modo
+que o navegador nunca manipula token de acesso.
+
+### 9.2.2 Pilha tecnológica da interface
+
+| Tecnologia | Versão | Papel | Justificativa |
+| --- | --- | --- | --- |
+| React | 18.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
+| TypeScript | 5.5 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
+| Vite | 5.4 | Empacotador e servidor de desenvolvimento | Recarga rápida durante o desenvolvimento e divisão automática de pacote na construção |
+| React Router | 6.26 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
+| TanStack Query | 5.51 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
+| Tailwind CSS | 3.4 | Estilização | Vocabulário visual declarado em configuração única, com breakpoints responsivos prontos |
+| Recharts | 2.12 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
+| Azure Speech SDK | 1.38 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
+| MSW | 2.15 | Dublês de API | Interceptação na camada de rede, o que permite exercitar a interface sem alterar o código de produção |
+| Vitest | 2.0 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
+| Testing Library | 16.0 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
+| ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações |
+
+### 9.2.3 Estrutura de diretórios da interface
+
+```
+src/web/
+├── public/                     Estáticos servidos sem processamento
+│   ├── logo-prata.png
+│   └── mockServiceWorker.js    Worker do MSW, removido do pacote de produção
+├── src/
+│   ├── componentes/
+│   │   ├── chat/               Componentes da tela de conversa
+│   │   ├── graficos/           Visualizações do painel de intenções
+│   │   └── ui/                 Componentes transversais de interface
+│   ├── estilos/
+│   │   └── global.css          Camada de estilo compartilhada
+│   ├── hooks/                  Lógica de estado reutilizável
+│   ├── mocks/
+│   │   ├── dados/              Massa de teste por domínio
+│   │   ├── handlers.ts         Rotas dubladas
+│   │   └── navegador.ts        Inicialização do worker
+│   ├── paginas/                Uma pasta por tela, com index.tsx
+│   ├── servicos/
+│   │   ├── api.ts              Cliente HTTP tipado
+│   │   └── chaves.ts           Chaves de cache do TanStack Query
+│   ├── testes/                 Suítes automatizadas e utilitários de teste
+│   ├── tipos/
+│   │   └── index.ts            Contratos da API espelhando app/schemas
+│   ├── utilitarios/
+│   │   └── formato.ts          Formatação de data e hora
+│   ├── main.tsx                Ponto de entrada
+│   └── rotas.tsx               Mapa de rotas
+├── index.html
+├── package.json
+├── tailwind.config.ts
+├── tsconfig.json               Configuração do código da aplicação
+├── tsconfig.node.json          Configuração dos arquivos de build
+├── vite.config.ts
+├── Dockerfile
+└── nginx.conf
+```
+
+O critério de divisão é a natureza do que o arquivo faz, e não a tela em que
+aparece. Um componente usado por três páginas mora em `componentes/`, não na
+pasta da primeira página que o utilizou. A regra evita a situação em que
+reaproveitar um componente exige importá-lo de dentro de outra tela, o que cria
+dependência entre páginas que deveriam ser independentes.
+
+A existência de dois arquivos de configuração do TypeScript merece registro. O
+`tsconfig.json` cobre `src/` e serve à aplicação; o `tsconfig.node.json` cobre
+`vite.config.ts` e `tailwind.config.ts`, que rodam em Node e não no navegador.
+Sem o segundo, os arquivos de configuração ficavam fora da verificação de tipos
+e um erro real neles só apareceria em tempo de execução do build.
+
+### 9.2.4 Convenções de codificação
+
+**Nomenclatura em português.** Arquivos, funções, variáveis e tipos de domínio
+usam português, acompanhando a linguagem do glossário em
+`documentos/glossario-dominio.md`. Termos consagrados da tecnologia permanecem
+em inglês quando traduzi-los produziria confusão, como `hook`, `build` e
+`token`. O objetivo é que quem lê o código reconheça os mesmos nomes que lê na
+documentação do projeto.
+
+**Alias de importação.** O prefixo `@/` aponta para `src/` e está declarado em
+dois lugares, `tsconfig.json` e `vite.config.ts`. Ambos são necessários e
+precisam concordar: o primeiro serve ao editor e ao verificador de tipos, o
+segundo serve ao empacotador. Declarar apenas no `tsconfig.json` faz a
+verificação de tipos passar e o build falhar ao resolver a importação.
+
+**Tipos espelhando o backend.** Os contratos em `tipos/index.ts` reproduzem à
+mão os schemas de `app/schemas/` do middleware. A geração automática a partir do
+OpenAPI é o passo correto quando o esquema estabilizar, mas hoje acoplaria o
+build da interface a uma API que ainda muda com frequência. A contrapartida é
+uma regra de disciplina: alterar um schema no backend exige alterar o tipo
+correspondente na mesma mudança.
+
+**Classes utilitárias escritas por extenso.** O Tailwind gera a regra de uma
+classe apenas quando a encontra literalmente no código. Construções como
+`text-desfecho-${cor}` compilam sem erro e não pintam nada. Por isso as classes
+de cada desfecho estão escritas inteiras em `componentes/chat/desfechos.ts`.
+
+**Comentários explicam decisão, não mecânica.** Os comentários do código
+registram por que uma escolha foi feita e o que aconteceria sem ela. Descrever o
+que a linha faz é redundante com a própria linha; descrever a razão preserva a
+informação que se perde quando o autor sai do projeto.
+
+### 9.2.5 Componentes da interface
+
+| Componente | Responsabilidade |
+| --- | --- |
+| `ui/Layout.tsx` | Moldura da aplicação: barra lateral, navegação principal e identidade da sessão. Atua como rota-pai e renderiza `Outlet`, o que permite que a tela de entrada exista fora da moldura |
+| `ui/EstadoVazio.tsx` | Estado vazio padrão das telas, com título, descrição e ação opcional |
+| `chat/BolhaMensagem.tsx` | Uma mensagem da conversa, com avatar, horário, filete lateral e etiqueta de desfecho |
+| `chat/Composer.tsx` | Campo de envio, com Enter para enviar e Shift mais Enter para quebrar linha, e exibição da transcrição parcial durante a gravação |
+| `chat/BotaoMicrofone.tsx` | Acionamento da captura de voz, com estado visível e `aria-pressed` |
+| `chat/ConversaVazia.tsx` | Estado inicial de uma conversa nova, com quatro sugestões correspondentes a intenções reais do catálogo |
+| `chat/IndicadorDigitando.tsx` | Sinaliza que o agente compõe a resposta, com `role="status"` e texto equivalente para leitor de tela |
+| `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo e classes visuais |
+
+O arquivo `componentes/graficos/README.md` registra as três regras que valem
+para as visualizações do painel de intenções e a lista de componentes previstos
+para a onda 4: uso obrigatório de contêiner responsivo, séries de bloqueio nunca
+somadas em um total agregado, e exibição de intenções com contagem zero, que
+são achado e não ausência de dado.
+
+**Apresentação dos desfechos.** O backend informa o desfecho, não a cor nem o
+rótulo. A tradução acontece em um único arquivo para que a bolha, o histórico e
+a aba de rotinas usem a mesma linguagem visual para o mesmo evento.
+
+| Desfecho | Rótulo exibido | Cor semântica |
+| --- | --- | --- |
+| `encaminhada` | sem etiqueta | `ok` |
+| `bloqueada_injecao_regra` | Não atendida | `injecao` |
+| `bloqueada_injecao_modelo` | Não atendida | `injecao` |
+| `bloqueada_abuso` | Fora das regras de uso | `abuso` |
+| `recusada_fora_escopo` | Fora do escopo | `recusa` |
+| `recusada_baixa_confianca` | Precisa de mais detalhes | `recusa` |
+| `bloqueada_saida` | Resposta não entregue | `injecao` |
+| `falha_executor` | Indisponível | `falha` |
+
+Dois critérios governam essa tabela. O primeiro é que o rótulo é escrito para o
+usuário e por isso é deliberadamente vago nos bloqueios de segurança: a recusa
+não deve ensinar qual barreira interceptou a mensagem, e isso vale tanto para o
+texto da resposta quanto para a etiqueta ao lado. Os dois desfechos de injeção
+compartilham o rótulo "Não atendida" por essa razão. O segundo critério é o
+1.4.1 da WCAG, segundo o qual a cor nunca é o único portador de significado: o
+rótulo textual carrega a mesma informação e é ele que chega a quem usa leitor de
+tela ou não distingue as cores.
+
+As cores estão definidas em `tailwind.config.ts` e nomeadas pelo significado, e
+não pelo tom, de modo que uma mudança de paleta não exija alteração no código
+que as consome. Todas foram verificadas contra os dois fundos em que aparecem, o
+branco da página e o cinza da bolha do agente, com o mínimo de 4,5:1 exigido
+pelo nível AA da WCAG para texto pequeno.
+
+| Cor | Valor | Contraste sobre página | Contraste sobre bolha |
+| --- | --- | --- | --- |
+| `ok` | `#186B48` | 6,49 | 5,79 |
+| `injecao` | `#B4342A` | 6,06 | 5,41 |
+| `abuso` | `#8A5309` | 6,32 | 5,64 |
+| `recusa` | `#0B5EA8` | 6,60 | 5,89 |
+| `falha` | `#63488B` | 7,42 | 6,62 |
+
+Além das cores dos desfechos, o texto da interface usa uma escala de tokens
+nomeados pelo papel que exercem na hierarquia de leitura, definidos em
+`src/web/src/estilos/global.css`. A adoção dos tokens substituiu seis cinzas
+declarados de forma avulsa ao longo da folha de estilo, o que tornava a
+verificação de contraste inviável na prática: não havia um lugar único a
+auditar.
+
+A verificação foi feita contra todos os fundos claros em que a interface
+efetivamente aplica cada token, e não apenas contra o branco. A distinção não é
+formal: o cinza secundário anterior aprovava sobre a página e reprovava sobre a
+bolha do agente e sobre a etiqueta de status, de modo que uma verificação
+restrita ao branco teria declarado conformidade inexistente.
+
+| Token | Valor | Uso | Pior caso medido | Mínimo exigido |
+| --- | --- | --- | --- | --- |
+| `--texto-forte` | `#172033` | Títulos e corpo do documento | 14,51 | 4,5 |
+| `--texto-padrao` | `#344054` | Texto de interface, rótulos e navegação | 9,33 | 4,5 |
+| `--texto-suave` | `#646d82` | Texto secundário, horários, legendas e metadados | 4,62 | 4,5 |
+| `--indicador-neutro` | `#8691a5` | Ponto de status inativo | 3,18 | 3,0 |
+| `--texto-desabilitado` | `#98a2b3` | Texto de controle desabilitado | 2,30 | isento |
+
+As correções aplicadas foram as seguintes.
+
+| Elemento | Antes | Razão anterior | Depois | Razão |
+| --- | --- | --- | --- | --- |
+| Aviso sob o campo de mensagem | `#a3abba` | 2,31 | `--texto-suave` | 5,18 |
+| Horário das mensagens | `#98a2b3` | 2,58 | `--texto-suave` | 5,18 |
+| Datas do histórico | `#8b95a5` | 2,80 | `--texto-suave` | 4,79 |
+| Rótulos dos campos de rotina | `#8a94a4` | 3,06 | `--texto-suave` | 5,18 |
+| Cabeçalho do histórico | `#7a8493` | 3,50 | `--texto-suave` | 4,79 |
+| Etiqueta de status | `#667085` | 4,44 | `--texto-suave` | 4,62 |
+| Destaque do cartão de notificação | `#e13b3b` | 4,29 | `#df2d2d` | 4,61 |
+| Ponto de status inativo | `#98a2b3` | 2,58 | `--indicador-neutro` | 3,18 |
+
+Duas exceções permanecem, ambas por decisão registrada e não por omissão. A
+primeira é o texto do botão de envio desabilitado, que a WCAG 1.4.3 isenta por
+se tratar de componente inativo: escurecê-lo o faria parecer acionável, o que
+prejudicaria a compreensão em vez de melhorá-la. A segunda são os pontos
+animados do indicador de digitação, que são decorativos, estão marcados com
+`aria-hidden` e têm seu significado carregado pelo texto equivalente lido por
+leitor de tela, conforme descrito em 9.2.5.
+
+### 9.2.6 Páginas e navegabilidade
+
+| Rota | Página | Proteção | Finalidade |
+| --- | --- | --- | --- |
+| `/entrar` | `Login` | pública | Entrada na aplicação, fora da moldura de navegação |
+| `/` | `Principal` | sessão | Conversa com o agente, iniciando um contexto novo |
+| `/conversas/:conversaId` | `Principal` | sessão | Conversa com o agente, retomando um contexto gravado |
+| `/historico` | `Historico` | sessão | Lista das conversas anteriores |
+| `/intencoes` | `Intencoes` | `ver_intencoes` | Painel de análise das intenções registradas |
+| `/rotinas` | `Rotinas` | `gerir_rotinas` | Cadastro e acompanhamento das rotinas agendadas |
+| qualquer outra | `NaoEncontrada` | sessão | Destino explícito para rota inexistente |
+
+A tela de entrada fica fora do `Layout` porque quem ainda não tem sessão não
+deve ver a navegação de uma aplicação a que não tem acesso. As demais entram
+como rotas filhas.
+
+**Limite da proteção de rota.** O componente `RotaProtegida` e a ocultação de
+itens no menu são conveniências de navegação, e não controle de acesso. Elas
+evitam que o usuário alcance uma tela que retornaria 403. Quem barra de fato é a
+verificação de permissão no backend, aplicada em cada rota da API, porque
+qualquer pessoa consegue digitar o endereço na barra do navegador ou chamar a
+API diretamente. Essa distinção está registrada em comentário no próprio código
+para sobreviver a refatorações futuras.
+
+**Remontagem ao trocar de contexto.** A página de conversa é envolvida por um
+componente que lhe atribui uma `key` derivada do identificador da conversa ou da
+chave de navegação. Sem isso, navegar de uma conversa para outra manteria a
+instância montada, porque a rota é a mesma e apenas o parâmetro muda, e a
+conversa anterior permaneceria na tela enquanto a nova carregasse por baixo. O
+uso da chave de navegação como alternativa é o que faz o botão de nova conversa
+efetivamente iniciar um contexto novo quando o usuário já está na página
+principal. Há teste automatizado cobrindo os dois comportamentos.
+
+### 9.2.7 Gerência de estado
+
+A regra que organiza o estado da interface é a separação entre o que pertence ao
+servidor e o que morre com a tela. Tudo que vem do servidor passa pelo TanStack
+Query; `useState` fica reservado ao que não precisa sobreviver a uma navegação.
+
+| Hook | Responsabilidade |
+| --- | --- |
+| `useUsuario` | Identidade e permissões da sessão atual, obtidas em `GET /auth/eu`. Como o cookie é `httpOnly`, perguntar ao servidor é a única forma de saber quem está autenticado |
+| `useConversa` | Turnos carregados, envio de mensagem, fila otimista e tratamento de erro de uma conversa |
+| `useMicrofone` | Ciclo de vida da captura de voz, incluindo obtenção e renovação do token e liberação do microfone ao desmontar |
+
+O `useConversa` concentra uma conversão que não deveria estar nos componentes.
+Um turno do backend carrega prompt e resposta juntos, porque representa uma
+linha de interação, enquanto a conversa na tela mostra duas bolhas. A tradução
+acontece no hook para que a página não precise conhecer o formato de
+persistência.
+
+A fila otimista existe para o intervalo entre o clique em enviar e a chegada da
+resposta. Sem ela, o texto que a pessoa acabou de escrever desapareceria do
+campo sem aparecer em lugar nenhum até o servidor responder.
+
+As chaves de cache estão centralizadas em `servicos/chaves.ts`. A centralização
+é o que torna a invalidação confiável: com as chaves espalhadas pelos
+componentes, um `["conversas"]` em um arquivo e um `["conversa"]` em outro
+produzem cache que nunca invalida, e o defeito aparece muito depois como "a tela
+não atualiza". A hierarquia das chaves é significativa, porque o TanStack Query
+as trata como prefixo, de modo que invalidar a lista de conversas invalida
+também cada conversa individual.
+
+A política de repetição foi ajustada para uma tentativa, e não as três padrão.
+Um 403 ou 422 não melhora com repetição, e o usuário esperaria três vezes mais
+para ver o mesmo erro.
+
+### 9.2.8 Integração com as APIs do middleware
+
+Toda comunicação passa por um único cliente HTTP tipado em `servicos/api.ts`,
+que concentra três decisões.
+
+**Origem compartilhada.** As chamadas usam o prefixo `/api`, servido pela mesma
+origem da interface. Em produção o Nginx serve os estáticos e faz proxy do
+prefixo para o middleware, conforme `nginx.conf`; em desenvolvimento o servidor
+do Vite cumpre o mesmo papel apontando para `http://localhost:8000`. A paridade
+é necessária, e não conveniência: o cookie de sessão é `SameSite=Strict` e não
+seria enviado em uma configuração de origem cruzada, de modo que a autenticação
+funcionaria apenas dentro do contêiner.
+
+**Envio do cookie de sessão.** Toda requisição usa `credentials: "include"`. A
+sessão vive em cookie `httpOnly`, que o JavaScript não consegue ler nem anexar
+manualmente; sem essa opção o navegador simplesmente não o envia e toda chamada
+retorna 401. Não existe no cliente nenhuma função que leia, guarde ou transmita
+token, e essa ausência é a propriedade que justifica o middleware como BFF. O
+aparecimento de um cabeçalho `Authorization` neste arquivo indicaria que o token
+voltou ao navegador e que a decisão de arquitetura foi desfeita.
+
+**Tratamento uniforme de erro.** Respostas fora da faixa de sucesso viram uma
+exceção tipada que carrega o código e o detalhe enviados pelo servidor, o que
+permite às telas exibirem a mensagem real em vez de um texto genérico. O caso
+401 é tratado uma única vez, no cliente, redirecionando ao fluxo de
+autenticação: distribuir esse tratamento pelas telas faria uma sessão expirada
+aparecer como erro genérico em quatro lugares diferentes. Quando a falha não
+traz detalhe do servidor, a interface apresenta uma orientação de recuperação e
+oferece reenvio da última mensagem, em vez de informar apenas que houve erro.
+
+**Endpoints consumidos.**
+
+| Método e rota | Consumidor | Finalidade |
+| --- | --- | --- |
+| `GET /auth/eu` | `useUsuario` | Identidade e permissões da sessão |
+| `POST /auth/logout` | `Layout` | Encerramento da sessão |
+| `POST /chat` | `useConversa` | Envio de mensagem e recebimento do desfecho |
+| `GET /conversas` | `Historico` | Lista de conversas |
+| `GET /conversas/:id` | `useConversa` | Turnos de uma conversa gravada |
+| `DELETE /conversas/:id` | `Historico` | Exclusão de conversa |
+| `GET /rotinas` | `Rotinas` | Lista de rotinas cadastradas |
+| `POST /rotinas/validar` | `Rotinas` | Validação de agenda antes do cadastro |
+| `POST /rotinas` | `Rotinas` | Criação de rotina |
+| `PUT /rotinas/:id` | `Rotinas` | Alteração de rotina |
+| `DELETE /rotinas/:id` | `Rotinas` | Exclusão de rotina |
+| `GET /rotinas/:id/execucoes` | `Rotinas` | Histórico de execuções |
+| `GET /intencoes/volume` | `Intencoes` | Volume de intenções por janela |
+| `GET /intencoes/desfechos` | `Intencoes` | Distribuição dos desfechos |
+| `GET /intencoes/seguranca/resumo` | `Intencoes` | Indicadores consolidados de bloqueio |
+| `GET /intencoes/seguranca/serie` | `Intencoes` | Série temporal dos bloqueios |
+| `GET /intencoes/catalogo/resumo` | `Intencoes` | Cobertura do catálogo de intenções |
+| `GET /intencoes/catalogo/fora-de-escopo` | `Intencoes` | Enunciados recusados por escopo |
+| `GET /intencoes/catalogo/baixa-confianca` | `Intencoes` | Enunciados de baixa confiança |
+| `GET /voz/token` | `useMicrofone` | Token efêmero de reconhecimento de fala |
+
+**Canal de voz.** A seção 5.7.1.3 define uma topologia híbrida com duas
+trajetórias. A interface web consome a trajetória de transmissão contínua: o
+middleware emite um token de curta duração e o áudio segue do navegador direto
+ao Azure, o que preserva a transcrição parcial em tempo real e mantém a chave do
+recurso fora do navegador. A renovação do token é antecipada, disparada a
+oitenta por cento da validade, porque renovar apenas na expiração interromperia
+a fala no meio da frase. A trajetória de ingestão, com envio do arquivo de áudio
+ao middleware, é o contrato canônico e está implementada no backend; sua adoção
+pela interface está prevista para as ondas seguintes.
+
+A opção pelo SDK do Azure em vez da Web Speech API do navegador, embora esta
+seja gratuita e mais simples, decorre do requisito de confidencialidade: a API
+do navegador envia o áudio a servidores de terceiros fora do tenant do parceiro,
+e o microfone seria o primeiro furo no argumento de confidencialidade da solução.
+O SDK é carregado sob demanda, no primeiro uso do microfone, porque pesa
+centenas de kilobytes e a maior parte das sessões nunca usa voz.
+
+### 9.2.9 Camada de dublês de API
+
+A interface é desenvolvida e testada contra uma camada de dublês construída com
+MSW, que intercepta as requisições na camada de rede do navegador. A escolha da
+ferramenta é relevante: por interceptar a rede, e não substituir o cliente HTTP,
+ela permite que a interface exercite exatamente o mesmo caminho de código que
+usará em produção. Nenhum componente, hook ou serviço contém ramo condicional
+para ambiente de desenvolvimento.
+
+Os dublês reproduzem vinte rotas fiéis ao contrato descrito em
+`documentos/api/openapi-voz.yaml` e nos tipos de `tipos/index.ts`, incluindo os
+oito desfechos possíveis do pipeline com os textos de resposta correspondentes.
+Isso permite verificar, sem backend, que a distinção entre bloqueio seco de
+injeção e recusa orientativa de abuso chega corretamente à tela.
+
+Três propriedades da camada foram estabelecidas deliberadamente:
+
+* Os dublês são inicializados antes da primeira renderização. Montar a aplicação
+  primeiro faria a consulta inicial de identidade sair antes de o worker assumir
+  a rede, receber 401 e redirecionar o usuário ao login;
+* Requisições sem dublê correspondente seguem para a rede em vez de falhar. Uma
+  rota do backend ainda não dublada deve mostrar o erro real, e não um erro da
+  ferramenta de teste;
+* A camada não alcança o artefato de produção. O módulo de inicialização é
+  removido pelo empacotador junto com a verificação de ambiente, e o worker
+  copiado de `public/` é excluído do diretório de construção por um plugin
+  dedicado, para que não fique publicado um arquivo que nada registra e que
+  apenas confundiria quem inspecionasse os estáticos.
+
+**Estado atual da integração.** A interface consome os contratos definidos e
+está pronta para operar contra o middleware. A ligação efetiva depende da
+resolução de sessão no backend, ainda não implementada, da qual todas as rotas
+autenticadas dependem. Enquanto essa peça não existe, os dublês sustentam o
+desenvolvimento e a verificação da interface sem alterar o código que irá a
+produção. A integração completa entre interface e backend, com testes de
+integração e tratamento de falhas de comunicação, é escopo do item 7 do Artefato
+7 e está prevista para a Sprint 5.
+
+### 9.2.10 Verificação automatizada
+
+A interface possui um encadeamento de verificação de quatro etapas, executáveis
+individualmente ou em sequência:
+
+| Comando | Verificação |
+| --- | --- |
+| `npm run lint` | Análise estática, incluindo regras de hooks do React |
+| `npm run typecheck` | Verificação de tipos do código da aplicação e dos arquivos de build |
+| `npm run test` | Execução das suítes automatizadas |
+| `npm run build` | Construção do pacote de produção, precedida da verificação de tipos |
+
+As suítes cobrem dezessete casos distribuídos em três arquivos:
+
+| Arquivo | Casos | Escopo |
+| --- | --- | --- |
+| `testes/desfechos.test.ts` | 4 | Cobertura dos oito desfechos, ausência de etiqueta no desfecho atendido, presença de filete nos demais e verificação de que o rótulo não nomeia a barreira acionada |
+| `testes/navegacao.test.tsx` | 4 | Substituição de conteúdo ao trocar de conversa, sugestões de partida em conversa nova, ausência de repetição de alerta em conversa gravada e destino explícito para rota inexistente |
+| `testes/paginas.test.tsx` | 9 | Envio e recebimento de mensagem, recusa fora de escopo tratada como resposta e não como erro, não revelação da barreira em tentativa de injeção, envio por Enter com quebra de linha por Shift mais Enter, indicação de entrada por voz ativa, e filtragem, criação e exclusão de rotinas |
+
+A escolha de consultar elementos por papel acessível, e não por classe ou
+identificador, faz com que a quebra de um atributo de acessibilidade derrube o
+teste correspondente. O caso que verifica a não revelação da barreira é o
+exemplo mais direto dessa estratégia: ele falha se algum rótulo passar a
+distinguir bloqueio por regra de bloqueio por modelo, o que reintroduziria na
+interface a informação que o pipeline deliberadamente omite.
+
+### 9.2.11 Execução do protótipo em máquina local
+
+A interface é executável de forma independente, sem middleware, banco de dados
+ou credenciais de nuvem, porque conversa com a camada de dublês descrita em
+9.2.9. Isso permite que qualquer pessoa da equipe execute, avalie e teste o
+protótipo isoladamente.
+
+| Item | Versão | Observação |
+| --- | --- | --- |
+| Node.js | 20 ou superior | Mesma versão utilizada na imagem de contêiner |
+| npm | 10 ou superior | Acompanha a instalação do Node 20 |
+| Navegador | Chromium, Firefox ou Edge atualizados | O registro do *service worker* dos dublês exige suporte a *Service Workers* |
+
+A partir da raiz do repositório:
+
+```bash
+cd src/web
+npm install
+npm run dev
+```
+
+O servidor de desenvolvimento sobe em `http://localhost:5173`. A primeira
+execução leva mais tempo, porque instala as dependências e registra o *service
+worker* dos dublês.
+
+O console do navegador registra a ativação da camada de dublês. A ausência dessa
+mensagem indica que o arquivo `public/mockServiceWorker.js` não está presente,
+situação que se resolve executando `npx msw init public` a partir de `src/web`.
+
+Para conferir o artefato de produção, `npm run build` seguido de `npm run
+preview` serve localmente o conteúdo de `dist/`, que não deve conter o arquivo
+`mockServiceWorker.js`.
+
+### 9.2.12 Identidade apresentada pelos dublês
+
+A identidade devolvida pelo dublê corresponde a uma líder de projeto com as duas
+permissões da solução, `ver_intencoes` e `gerir_rotinas`. Isso é deliberado:
+permite que as telas protegidas sejam percorridas em avaliação, sem que se
+afrouxe controle de acesso algum, uma vez que a verificação real ocorre no
+backend a cada rota e o arquivo de identidade dublada não entra no pacote de
+produção.
+
+Em consequência, a barra lateral apresenta os quatro destinos de navegação. Uma
+sessão com permissões menores veria apenas os itens correspondentes, conforme
+descrito em 9.2.6.
+
+### 9.2.13 Percurso das telas
+
+| Passo | Ação | O que verificar |
+| --- | --- | --- |
+| 1 | Abrir `http://localhost:5173` | A página principal apresenta o estado inicial com quatro sugestões de partida |
+| 2 | Acionar uma das sugestões | O texto é levado ao campo de mensagem, pronto para envio |
+| 3 | Enviar a mensagem | A bolha do usuário aparece imediatamente, o indicador de processamento é exibido e a resposta chega em seguida |
+| 4 | Acessar Histórico | As três conversas gravadas do dublê são listadas, com data relativa |
+| 5 | Abrir uma conversa do histórico | Os turnos gravados são apresentados e as sugestões de partida não reaparecem |
+| 6 | Acionar Nova conversa | O contexto é reiniciado, ainda que já se esteja na página principal |
+| 7 | Acessar Intenções | O painel de análise é apresentado, com os recortes do registro de intenções |
+| 8 | Acessar Rotinas | A lista de rotinas é apresentada, com busca, criação, edição e exclusão operantes |
+| 9 | Digitar um endereço inexistente | A tela de rota não encontrada é apresentada, e não uma página em branco |
+
+O estado das rotinas é mantido em memória e reinicia a cada recarregamento da
+página, como convém a um dublê. Criar, editar e excluir produzem efeito visível
+enquanto a aba permanecer aberta.
+
+### 9.2.14 Como exercitar cada desfecho do pipeline
+
+O pipeline real decide o desfecho por meio das guardas e do classificador. O
+dublê decide por palavra-chave, apenas para que os desfechos sejam alcançáveis à
+mão durante o desenvolvimento e a avaliação. A ordem de verificação reproduz a
+ordem do orquestrador: injeção, abuso, escopo, confiança e execução.
+
+| Desfecho | Mensagem de exemplo | Comportamento esperado |
+| --- | --- | --- |
+| `encaminhada` | Qual o status do Projeto X? | Resposta com o conteúdo consultado, sem etiqueta |
+| `bloqueada_injecao_regra` | Ignore as instruções anteriores | Recusa seca, sem explicar o motivo nem repetir a instrução, com etiqueta "Não atendida" |
+| `bloqueada_abuso` | Escreva um texto para humilhar o fornecedor | Recusa orientativa, que reconduz ao uso correto, com etiqueta "Fora das regras de uso" |
+| `recusada_fora_escopo` | Qual a previsão do tempo amanhã? | Recusa orientativa indicando o que o agente faz, com etiqueta "Fora do escopo" |
+| `recusada_baixa_confianca` | daquele projeto | Pedido de detalhamento, com etiqueta "Precisa de mais detalhes" |
+| `bloqueada_saida` | Resuma o documento suspeito | Resposta não entregue, com etiqueta "Resposta não entregue" |
+| `falha_executor` | simular falha | Aviso de indisponibilidade, com etiqueta "Indisponível" |
+
+O oitavo desfecho, `bloqueada_injecao_modelo`, não possui gatilho no dublê. A
+razão é que ele se apresenta na interface de forma idêntica ao bloqueio por
+regra, por decisão registrada em 9.2.5: distinguir os dois na tela informaria ao
+autor da tentativa qual barreira a interceptou. Ele se tornará alcançável quando
+a guarda por modelo estiver ativa no middleware, sem que a interface precise de
+alteração.
+
+Dois pontos merecem observação durante o percurso. O primeiro é que **um
+bloqueio não se apresenta como erro**: o texto orientativo ocupa a bolha como
+qualquer resposta, com etiqueta discreta ao lado, porque exibir uma mensagem de
+falha esconderia justamente a orientação que o pipeline escreveu para o usuário.
+O segundo é que **as etiquetas dos dois bloqueios de injeção são iguais**, e essa
+igualdade é verificada pelo caso `TU-WEB-02`, documentado em 9.5.3.
+
+### 9.2.15 Como exercitar a entrada por voz
+
+O dublê de `GET /voz/token` devolve um token de demonstração, reconhecível por um
+prefixo próprio. Ao recebê-lo, o hook de microfone executa um percurso simulado,
+com transcrições parciais que crescem palavra a palavra e uma transcrição final
+ao término, reproduzindo a temporização do reconhecimento real.
+
+A consequência prática é que **a avaliação da entrada por voz não consome crédito
+do recurso Azure AI Speech**, cujo nível gratuito F0 possui limites descritos em
+5.7.4. Basta acionar o botão de microfone e observar o estado ativo, a
+transcrição parcial no campo e a entrega do texto final.
+
+A simulação desaparece por si quando o recurso estiver provisionado no ambiente
+do parceiro, porque um token real nunca apresenta aquele prefixo. Nenhuma
+remoção de código é necessária para a transição.
+
+### 9.2.16 Execução em contêiner
+
+A interface possui imagem própria, construída em dois estágios. O Node existe
+apenas para construir o pacote; a imagem final contém somente o Nginx e os
+estáticos, sem qualquer ambiente de execução JavaScript. Essa é a razão pela qual
+a solução mantém um único servidor de aplicação, o Python do middleware.
+
+```bash
+cd src/web
+docker build -t agente-portfolio-web .
+docker run --rm -p 8080:80 agente-portfolio-web
+```
+
+A instalação de dependências dentro da imagem usa `npm ci`, e não `npm install`,
+porque é o arquivo de trava que garante a construção com as mesmas versões
+exercitadas localmente. Com `npm install` e sem trava, um intervalo de versão no
+`package.json` faria a imagem receber uma versão que ninguém testou.
+
+O Nginx serve os estáticos e encaminha o prefixo `/api` ao middleware, o que
+preserva a origem única exigida pelo cookie de sessão, conforme 9.2.8. A
+configuração dos ambientes de nuvem e o processo de implantação em produção são
+tratados na seção 11.
+
+### 9.2.17 Limitações conhecidas do protótipo
+
+| Limitação | Consequência para quem avalia | Situação |
+| --- | --- | --- |
+| As respostas provêm da camada de dublês | O conteúdo apresentado é massa de teste, e não dado do portfólio | Depende da resolução de sessão no middleware |
+| O estado das rotinas é mantido em memória | Alterações se perdem ao recarregar a página | Comportamento esperado de dublê |
+| A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
+| A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
+| Os gráficos do painel de intenções ainda não estão implementados | O painel apresenta a estrutura, sem as visualizações | Componentes previstos para a onda 4, listados em `src/web/src/componentes/graficos/README.md` |
+
+A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
+elas produz duas leituras erradas em direções opostas: a de que a solução já
+consulta o portfólio real, e a de que a interface não funciona quando o avaliador
+percebe que o dado é fixo.
 
 ## 9.3 Modelo de Recomendação
 
@@ -6236,7 +7081,145 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 
 ## 9.5 Testes Unitários e de Integração
 
-[Preencher]
+Esta seção registra os testes automatizados implementados durante o
+desenvolvimento, com seus casos, entradas, resultados esperados e forma de
+execução. As subseções abaixo cobrem a camada de interface, entregue na Sprint
+3. Os testes do middleware serão acrescentados nesta mesma seção pela pessoa
+responsável por aquela camada.
+
+A distinção entre esta seção e a seção 10 merece registro, porque as duas tratam
+de teste e respondem a perguntas diferentes. A seção 10 é o **planejamento** dos
+testes da solução, derivado dos requisitos e organizado por requisito de origem,
+e sua execução ocorre nas Sprints 4 e 5. Esta seção documenta os testes que
+**já existem no repositório** e que rodam a cada alteração da interface. Um caso
+de 10.1 pode vir a ser implementado como caso desta seção; a recíproca não é
+verdadeira, porque parte do que se verifica aqui é comportamento de componente,
+sem correspondência direta em requisito.
+
+### 9.5.1 Estratégia de teste da interface
+
+Três decisões estruturam a suíte e explicam por que ela verifica o que verifica.
+
+**Os testes usam os mesmos dublês do navegador.** O servidor de dublês montado
+em `testes/setup.ts` recebe os handlers de `mocks/handlers.ts`, sem redefinição.
+Se a suíte tivesse respostas próprias, ela passaria a verificar uma API que só
+existe dentro dela, e um handler quebrado durante o desenvolvimento continuaria
+verde no teste. A consequência prática é que corrigir um dublê corrige o
+desenvolvimento e a suíte na mesma alteração.
+
+**Requisição sem dublê é erro, e não passagem.** No navegador, uma rota sem
+handler segue para a rede, porque ali o comportamento correto é mostrar o erro
+real do backend. No teste a política é `onUnhandledRequest: "error"`: uma
+requisição que ninguém previu indica caminho de código não mapeado, e falhar
+alto é preferível a deixar passar silenciosamente.
+
+**As consultas são por papel acessível, e não por classe ou identificador.**
+Um teste que localiza o campo de mensagem pelo seu papel e pelo seu nome
+acessível falha quando o rótulo desaparece. Um teste que o localiza por classe
+CSS continua verde com a acessibilidade quebrada. A escolha transforma parte dos
+critérios de acessibilidade em verificação automática, em vez de item de
+inspeção manual.
+
+Duas configurações valem apenas no ambiente de teste e estão isoladas em
+`testes/utilitarios.tsx`: a repetição de requisições é desativada, porque
+repetir uma chamada que falhou de propósito faz a suíte esperar sem verificar
+nada, e o cache é descartado entre casos, para que um teste não observe o
+resultado do anterior. A latência simulada dos dublês também é zerada em teste,
+pela mesma razão.
+
+O polyfill de `scrollIntoView` reside em `testes/setup.ts`, e não no componente
+que usa o método. O jsdom não implementa a função porque não possui layout nem
+viewport reais; acrescentar ao código da aplicação uma verificação que existe
+apenas por limitação do ambiente de teste inverteria a relação entre os dois.
+
+### 9.5.2 Identificação dos casos
+
+A convenção de 10.1.1 numera os casos a partir do requisito de origem, no
+formato `TF-RFxx-nn`. Ela não se aplica sem ajuste aos testes desta seção, e a
+razão é a mesma que motivou o prefixo `TNF-DES` naquela seção: parte dos casos
+aqui não deriva de um requisito. Verificar que a tecla Enter envia a mensagem e
+que Shift mais Enter quebra linha é comportamento de componente, e forçá-lo sob
+um requisito produziria identificador limpo e rastreabilidade falsa.
+
+Adota-se, portanto, o prefixo `TU-WEB-nn`, sequencial e contínuo, com a coluna
+de rastreabilidade indicando o requisito de origem quando ele existe e a decisão
+de projeto quando não existe. A coluna "Onda" da convenção de 10.1.1 é omitida
+porque todos os casos desta seção já estão implementados e em execução.
+
+### 9.5.3 Casos implementados
+
+**Apresentação dos desfechos**, em `testes/desfechos.test.ts`.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
+| --- | --- | --- | --- | --- | --- |
+| TU-WEB-01 | Positivo | Cobertura do vocabulário fechado de desfechos | Tabela de aparência dos desfechos | Existe entrada para os oito desfechos declarados em `tipos/index.ts`, sem ausência nem excedente | RF03, RF09 |
+| TU-WEB-02 | Negativo | Rótulo não nomeia a barreira acionada | Desfechos de bloqueio por injeção, por abuso e de saída | Nenhum rótulo contém termo que identifique a barreira; os dois desfechos de injeção compartilham o mesmo rótulo | RF09 |
+| TU-WEB-03 | Positivo | Desfecho atendido não recebe etiqueta | Desfecho `encaminhada` | Rótulo vazio e ausência de filete lateral, para que a conversa normal não seja marcada | RF03 |
+| TU-WEB-04 | Positivo | Todo desfecho não atendido recebe distinção visual | Os sete desfechos restantes | Cada um possui filete lateral e etiqueta, garantindo que a informação não dependa apenas da cor | RF03, WCAG 1.4.1 |
+
+**Navegação entre conversas**, em `testes/navegacao.test.tsx`.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
+| --- | --- | --- | --- | --- | --- |
+| TU-WEB-05 | Positivo | Troca de conversa substitui o conteúdo | Mensagem enviada em uma conversa, seguida de navegação para outra | O conteúdo da conversa anterior deixa a tela e o da nova é apresentado, sem sobreposição | RF12 |
+| TU-WEB-06 | Positivo | Conversa nova apresenta sugestões de partida | Rota da página principal sem identificador de conversa | As quatro sugestões correspondentes a intenções do catálogo são exibidas | RF02, RF03 |
+| TU-WEB-07 | Negativo | Conversa gravada não repete o estado inicial | Rota de conversa com turnos gravados | As sugestões de partida não são exibidas sobre uma conversa que já possui histórico | RF12 |
+| TU-WEB-08 | Negativo | Rota inexistente leva a destino explícito | Endereço não registrado no mapa de rotas | Tela de rota não encontrada, e não tela em branco ou redirecionamento silencioso | Decisão de projeto, seção 9.2.6 |
+
+**Página principal e página de rotinas**, em `testes/paginas.test.tsx`.
+
+| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
+| --- | --- | --- | --- | --- | --- |
+| TU-WEB-09 | Positivo | Envio de mensagem e recebimento da resposta | Mensagem de consulta ao portfólio | A mensagem do usuário aparece antes da resposta, e a resposta do agente é apresentada em seguida | RF02, RF04 |
+| TU-WEB-10 | Negativo | Recusa fora de escopo não é tratada como erro | Mensagem sobre assunto alheio ao portfólio | O texto orientativo ocupa a bolha como qualquer resposta, com etiqueta de recusa, e nenhuma mensagem de falha do sistema é exibida | RF03 |
+| TU-WEB-11 | Negativo | Tentativa de injeção não revela a barreira | Mensagem contendo instrução de manipulação do agente | Resposta seca, sem explicação do motivo e sem repetição da instrução recebida; a etiqueta não distingue bloqueio por regra de bloqueio por modelo | RF09 |
+| TU-WEB-12 | Positivo | Pedido ambíguo solicita detalhamento | Mensagem curta ou com referência indefinida | Resposta pede a informação faltante em vez de recusar ou de responder por suposição | RF03 |
+| TU-WEB-13 | Positivo | Enter envia e Shift mais Enter quebra linha | Texto digitado no campo de mensagem | Shift mais Enter preserva o texto sem criar bolha; Enter cria a bolha e esvazia o campo | Decisão de projeto, seção 9.2.5 |
+| TU-WEB-14 | Positivo | Entrada por voz sinaliza estado e entrega a transcrição | Acionamento do botão de microfone | O estado ativo é indicado de forma perceptível e o texto transcrito chega ao campo de mensagem | RF02 |
+| TU-WEB-15 | Positivo | Filtragem das rotinas cadastradas | Lista de rotinas do dublê e termo de busca | Apenas as rotinas correspondentes ao termo permanecem visíveis | RF11 |
+| TU-WEB-16 | Positivo | Validação e criação de rotina | Prompt e agenda informados no formulário | A validação é acionada antes da criação e a rotina passa a constar da lista | RF11 |
+| TU-WEB-17 | Negativo | Exclusão exige confirmação | Acionamento da exclusão de uma rotina | A exclusão não ocorre sem confirmação explícita do usuário | RF11 |
+
+### 9.5.4 Execução
+
+Os comandos são executados a partir de `src/web`.
+
+| Comando | Efeito |
+| --- | --- |
+| `npm run test` | Executa a suíte inteira uma vez e retorna código de saída diferente de zero em caso de falha |
+| `npm run test -- --watch` | Reexecuta os casos afetados a cada alteração de arquivo, durante o desenvolvimento |
+| `npm run test -- desfechos` | Executa apenas os arquivos cujo nome contém o termo informado |
+
+A suíte compõe, com a análise estática e a verificação de tipos, o encadeamento
+descrito em 9.2.10. A ordem recomendada antes de abrir uma *merge request* é
+`npm run lint`, `npm run typecheck`, `npm run test` e `npm run build`, porque
+cada etapa é mais rápida que a seguinte e falha mais cedo.
+
+### 9.5.5 Abrangência e limites
+
+Os dezessete casos cobrem os quatro comportamentos que a interface não pode
+errar sem consequência para o usuário ou para a segurança: a apresentação
+correta e não reveladora dos desfechos, a substituição de contexto ao trocar de
+conversa, o envio de mensagem em suas duas formas de acionamento e o ciclo de
+gestão das rotinas.
+
+Três limites devem ser declarados.
+
+O primeiro é que **não há testes de integração nesta entrega**. Todos os casos
+executam contra dublês, e a comunicação real entre interface e middleware
+depende da resolução de sessão no backend, ainda não implementada. Os testes de
+integração são escopo do item 7 do Artefato 7 e estão previstos para a Sprint 5,
+com o planejamento correspondente registrado em 10.5.
+
+O segundo é que **as telas de entrada, histórico e intenções ainda não possuem
+casos próprios**. Elas são exercitadas indiretamente, pela navegação e pelas
+regras de permissão, mas não por asserção específica sobre seu conteúdo. A
+ampliação está registrada em *issue* própria.
+
+O terceiro é que **a cobertura não é medida nesta entrega**. A meta de oitenta
+por cento definida em 9.1.8 é consolidada em 10.7, junto com a cobertura do
+middleware, e a instrumentação correspondente será acrescentada quando as duas
+camadas tiverem suíte executável no mesmo encadeamento de integração contínua.
 
 # 10. Planejamento e Execução de Testes
 
