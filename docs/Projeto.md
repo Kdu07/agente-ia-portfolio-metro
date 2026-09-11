@@ -5225,6 +5225,55 @@ Estabelece essas cinco coisas sob uma condição que prefere declarar a omitir: 
 
 A seção 5.7 optou por dizer isso onde a afirmação é feita, em 5.7.4.8, em 5.7.5.5 e aqui, em vez de apresentar como resultado o que ainda é expectativa. É a mesma escolha que a subseção 8.3 do glossário fez ao delimitar o alcance de sua própria verificação, e ela tem um custo: a seção entrega menos certeza do que poderia aparentar entregar. O que ela ganha em troca é que cada certeza que entrega pode ser conferida.
 
+### 5.7.8 Bibliotecas e frameworks utilizados no Speech-to-Text e no NLP
+
+Esta subseção registra a pilha efetivamente usada na implementação do canal de voz e do classificador de intenções. As versões abaixo são as **faixas de compatibilidade declaradas** em `src/middleware/pyproject.toml`; elas não representam, por si só, uma versão exata instalada. Como o projeto ainda não mantém um arquivo de *lock* para as dependências Python, duas instalações realizadas em datas diferentes podem resolver versões distintas dentro dessas faixas. A exceção é a versão da API REST do Azure, fixada pela configuração da aplicação.
+
+#### 5.7.8.1 Componentes centrais
+
+| Biblioteca, modelo ou serviço | Versão ou referência adotada | Finalidade na solução | Limitações e cuidados conhecidos |
+|---|---|---|---|
+| **Azure AI Speech — Fast Transcription REST API** | API `2025-10-15`, configurável por `SPEECH_API_VERSION` | Converte os arquivos aceitos pela rota de áudio em texto e devolve idioma, confiança, duração e latência normalizados para o restante do middleware | É um serviço externo: depende de rede, credenciais, disponibilidade e cota. O áudio sai do ambiente da aplicação e, por conter dado potencialmente sensível, o uso com dados reais depende da homologação do parceiro. Não existe mecanismo local de contingência implementado. |
+| **Azure Cognitive Services Speech SDK para Python** (`azure-cognitiveservices-speech`) | `>=1.51,<2` | Sustenta a verificação isolada de reconhecimento de arquivos WAV e prepara a integração do modo contínuo pelo navegador | No estado atual, o teste direto pelo SDK está limitado a WAV. A emissão de token efêmero em `/voz/token` e o trajeto contínuo ainda não estão implementados; portanto, a presença da biblioteca não significa que esse modo já esteja disponível. |
+| **HTTPX** (`httpx`) | `>=0.27` | Realiza de forma assíncrona o envio `multipart/form-data` do áudio à API de transcrição e permite substituir o cliente nos testes | Continua sujeito a falhas de rede, tempo limite e respostas do provedor. O arquivo é lido para a chamada externa, de modo que o limite de 25 MB da API também protege o consumo de memória do processo. |
+| **scikit-learn** (`scikit-learn`) | `>=1.4` | Implementa os vetorizadores TF-IDF de palavras e caracteres, os estimadores lineares, a calibração de probabilidades e o ensemble usado para classificar a intenção | O ramo TF-IDF depende do vocabulário observado e perde desempenho em formulações muito distantes do corpus. Mudanças no catálogo ou nos exemplos exigem novo treino e nova avaliação. O artefato serializado também deve ser carregado com versões compatíveis da biblioteca. |
+| **Sentence Transformers** (`sentence-transformers`) | `>=3.0` | Carrega e executa o encoder de sentenças do ramo semântico, mantendo-o em cache no processo | A primeira execução pode precisar baixar os pesos e exige mais memória e tempo de inferência que o TF-IDF. O uso local depois do download reduz o envio de texto a terceiros, mas o cache e a origem dos pesos precisam ser controlados no ambiente de implantação. |
+| **`intfloat/multilingual-e5-large`** | Identificador do modelo no Hugging Face; revisão não fixada no código | Produz embeddings multilíngues normalizados para reconhecer paráfrases em português; o classificador usa o prefixo `query: ` recomendado para consultas | Os pesos ocupam aproximadamente 2 GB e aumentam a latência em CPU. O modelo é menos explicável que o TF-IDF. Como a revisão não está fixada, uma instalação limpa pode obter pesos diferentes no futuro; a implantação homologada deve registrar ou fixar a revisão utilizada. |
+| **joblib** (`joblib`) | `>=1.4` | Serializa e recupera o classificador treinado, seus limiares e metadados em `dados/classificador.joblib` | O formato depende do ecossistema Python e não deve ser tratado como contrato portátil entre versões arbitrárias. O artefato deve ter acesso restrito e ser regenerado a partir do corpus versionado, não recebido de origem não confiável. |
+
+O classificador de produção combina dois ramos complementares: TF-IDF captura termos literais, códigos e pequenos erros de digitação; o `multilingual-e5-large` captura proximidade semântica e paráfrases. As probabilidades são combinadas com peso `0,6` para embeddings e `0,4` para TF-IDF. Esse ensemble é executado localmente; somente o áudio destinado à transcrição é enviado ao Azure.
+
+#### 5.7.8.2 Bibliotecas de integração
+
+| Biblioteca ou framework | Versão declarada | Papel no fluxo | Limitações e cuidados conhecidos |
+|---|---|---|---|
+| **FastAPI** (`fastapi`) | `>=0.115` | Expõe as rotas de upload e conversa, aplica dependências e traduz os resultados e erros internos em respostas HTTP | As tarefas em segundo plano usadas no processamento de áudio pertencem ao processo da aplicação e não constituem mensageria durável; uma interrupção do processo pode exigir reenvio. |
+| **Pydantic** e **pydantic-settings** | `pydantic>=2.7`; `pydantic-settings>=2.3` | Validam contratos de entrada e saída e carregam configurações como endpoint, região, chave, idioma e versão da API de fala | A validação estrutural não substitui a validação do conteúdo real do arquivo nem a gestão segura dos segredos. Alterações nos modelos devem permanecer compatíveis com os clientes ou ser versionadas. |
+| **python-multipart** (`python-multipart`) | `>=0.0.9` | Permite ao FastAPI interpretar o campo de arquivo enviado por `multipart/form-data` | Apenas interpreta o corpo da requisição; formato real, tamanho e assinatura do arquivo continuam sendo verificados pela aplicação. |
+| **SQLAlchemy**, **asyncpg** e **Alembic** | `sqlalchemy>=2.0`; `asyncpg>=0.29`; `alembic>=1.13` | Persistem assincronamente conversa, interação e resultado do NLP em PostgreSQL e versionam a evolução do esquema | O fluxo persistente depende de PostgreSQL disponível e da migração na revisão esperada. Transações, pool e migrações precisam ser administrados em conjunto; esses componentes não armazenam o áudio bruto. |
+
+#### 5.7.8.3 Mapeamento entre componentes e código
+
+| Responsabilidade | Implementação principal |
+|---|---|
+| Configuração do Azure Speech e versão da API | `src/middleware/app/config.py` |
+| Envio do áudio e normalização da resposta do provedor | `src/middleware/app/voz/transcricao.py` |
+| Verificação isolada pelo SDK e contrato futuro de token | `src/middleware/app/voz/speech.py` |
+| Validação de formato e limite do áudio | `src/middleware/app/utils/validadores.py` |
+| Rotas HTTP do canal de voz | `src/middleware/app/api/routes/voz.py` |
+| Construção dos ramos TF-IDF, embeddings e ensemble | `src/middleware/app/pipeline/intencao/modelo.py` |
+| Treino e serialização do artefato | `src/middleware/app/pipeline/intencao/treino.py` |
+| Classificação usada pelo pipeline | `src/middleware/app/pipeline/intencao/classificador.py` |
+| Persistência assíncrona dos resultados | `src/middleware/app/persistence/repository.py` e `src/middleware/app/persistence/sessao.py` |
+
+O fluxo implementado pode ser resumido assim: a rota recebe e valida o arquivo; o serviço de transcrição o envia ao Azure e normaliza o texto retornado; o cliente confirma ou utiliza esse texto na chamada de conversa; o pipeline aplica pré-processamento, classifica a intenção pelo ensemble e executa as guardas; por fim, a interação e o resultado do NLP são gravados no PostgreSQL. A integração de persistência não retém o áudio bruto.
+
+#### 5.7.8.4 Reprodutibilidade e evolução
+
+Para reproduzir um resultado de NLP não basta registrar o nome das bibliotecas. Devem acompanhar a evidência: o commit do código, a versão do corpus, o arquivo `classificador.joblib`, o identificador e a revisão dos pesos E5, as versões efetivamente instaladas e os limiares do catálogo de intenções. A faixa registrada em `pyproject.toml` define compatibilidade mínima, mas não substitui esse inventário.
+
+Antes da implantação homologada, recomenda-se gerar um arquivo de dependências travadas a partir do ambiente validado e fixar a revisão do `intfloat/multilingual-e5-large`. Essa medida reduz variações entre desenvolvimento, CI e produção sem alterar a escolha arquitetural já avaliada nas seções 5.4.11 e 5.7.2.
+
 ## 5.8 Diagrama de Classes da Solução — Sprint 2
 
 O diagrama de classes abaixo apresenta a modelagem técnica atual do middleware responsável por intermediar as solicitações entre os usuários e o Copilot Studio. Diferentemente do modelo conceitual apresentado na seção 3.2.2, elaborado na Sprint 1, esta versão detalha os componentes de processamento, as guardas de segurança, a persistência das interações e a execução de rotinas agendadas previstos para a Sprint 2.
