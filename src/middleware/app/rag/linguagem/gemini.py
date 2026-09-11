@@ -112,7 +112,9 @@ class ModeloGemini:
                 )
             except TimeoutError:
                 motivo = f"tempo esgotado ({self._timeout:.0f}s)"
-            except Exception as erro:  # noqa: BLE001 — o SDK tem hierarquia própria de erros
+            except Exception as erro:
+                # Genérico de propósito: o SDK tem hierarquia própria de
+                # erros, e o que decide aqui é só o código HTTP em `.code`.
                 codigo = getattr(erro, "code", None)
                 if codigo not in CODIGOS_TRANSITORIOS:
                     # Sem a mensagem do erro: ela pode ecoar o conteúdo enviado.
