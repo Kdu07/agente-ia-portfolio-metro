@@ -59,6 +59,24 @@ def trecho(trecho_id: str = "termo-abertura-018#0001", projeto: str | None = "PR
 # --- Dublês -----------------------------------------------------------------
 
 
+class ItemListado:
+    """Item de `Index.list` como o SDK devolve de fato.
+
+    O identificador vem em `.id`, e não como string solta. A diferença
+    parece cosmética e não é: `str()` sobre o item produz
+    `"ListItem(id='a#0001')"`, um id que não existe, e o `delete` do
+    Pinecone aceita id inexistente **sem erro**. O dublê antigo
+    devolvia strings, e foi exatamente por isso que a remoção quebrada
+    passou pela suíte inteira e só apareceu na validação contra o
+    serviço real (#285).
+    """
+
+    def __init__(self, identificador: str) -> None:
+        # O atributo se chama `id` porque é assim que o SDK o expõe, e é
+        # por esse nome que `_listar_prefixo` o procura.
+        self.id = identificador
+
+
 class IndiceFalso:
     """Índice do Pinecone dublado, registrando o que recebeu."""
 
@@ -81,7 +99,7 @@ class IndiceFalso:
         self.remocoes.append({"ids": ids, "namespace": namespace})
 
     def list(self, *, prefix, namespace):
-        yield self._ids.get(prefix, [])
+        yield [ItemListado(id_) for id_ in self._ids.get(prefix, [])]
 
 
 class ResultadoFalso:
@@ -302,7 +320,33 @@ async def test_pinecone_remove_documento_listando_por_prefixo() -> None:
     )
 
     assert removidos == 2
+    # O que se afirma aqui é que os ids chegaram ao `delete` **crus**.
+    # Com `str()` no lugar da leitura de `.id`, este assert veria
+    # "ListItem(id='a#0001')" — e o Pinecone apagaria nada, em silêncio.
     assert indice.remocoes[0]["ids"] == ["a#0001", "a#0002"]
+
+
+async def test_pinecone_tolera_listagem_que_devolve_strings() -> None:
+    """Compatibilidade: SDK antigo lista ids como strings.
+
+    A leitura do id é por `getattr(item, "id", item)`, e não por
+    `item.id` direto, para que uma versão do SDK que volte a devolver
+    strings não quebre a remoção — o modo de falha aqui é silencioso, e
+    silencioso é o que não se quer repetir.
+    """
+
+    class IndiceQueListaStrings(IndiceFalso):
+        def list(self, *, prefix, namespace):
+            yield list(self._ids.get(prefix, []))
+
+    indice = IndiceQueListaStrings(ids_por_prefixo={"termo-abertura-018#": ["a#0001"]})
+
+    removidos = await RepositorioPinecone(indice, "bancada").remover_documentos(
+        ["termo-abertura-018"]
+    )
+
+    assert removidos == 1
+    assert indice.remocoes[0]["ids"] == ["a#0001"]
 
 
 async def test_pgvector_remove_documento_em_uma_instrucao() -> None:

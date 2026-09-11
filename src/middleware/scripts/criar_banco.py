@@ -57,14 +57,26 @@ async def _verificar_conexao() -> None:
         await engine.dispose()
 
 
+def _tabelas(sincrona) -> list[str]:
+    """Tabelas do schema padrão e, prefixadas, as do schema `rag`.
+
+    O `rag` é criado pela migração da ingestão do executor próprio. Sem
+    listá-lo, o relatório diria que a migração rodou e não mostraria o
+    que ela criou.
+    """
+    inspetor = inspect(sincrona)
+    tabelas = sorted(inspetor.get_table_names())
+    if "rag" in inspetor.get_schema_names():
+        tabelas += [f"rag.{nome}" for nome in sorted(inspetor.get_table_names(schema="rag"))]
+    return tabelas
+
+
 async def _relatar() -> int:
     """Imprime as tabelas e a revisão aplicada. Devolve quantas tabelas há."""
     engine = criar_engine()
     try:
         async with engine.connect() as conexao:
-            tabelas = await conexao.run_sync(
-                lambda sincrona: sorted(inspect(sincrona).get_table_names())
-            )
+            tabelas = await conexao.run_sync(_tabelas)
             revisao = await conexao.scalar(text("SELECT version_num FROM alembic_version"))
     finally:
         await engine.dispose()

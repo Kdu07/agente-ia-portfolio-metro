@@ -45,13 +45,24 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Banco vetorial do executor próprio. Extra, e não dependência base,
-# porque o caminho oficial (executor=copilot) não indexa nada e não deve
-# arrastar o SDK do provedor. O adaptador de reserva não aparece aqui: o
-# pgvector é uma extensão do servidor, e rag/vetorial/pgvector.py fala
-# apenas SQL pelo SQLAlchemy que já está na base.
+# Banco vetorial e ingestão do executor próprio. Extra, e não dependência
+# base, porque o caminho oficial (executor=copilot) não indexa nada e não
+# deve arrastar o SDK do provedor. O adaptador de reserva não aparece
+# aqui: o pgvector é uma extensão do servidor, e rag/vetorial/pgvector.py
+# fala apenas SQL pelo SQLAlchemy que já está na base.
 rag = [
-    "pinecone>=5.0",
+    # A major validada contra o índice real (`python -m
+    # app.rag.vetorial.provisionar --validar`). A v9 reescreveu o SDK:
+    # fixar a major impede que uma atualização mude a forma das respostas
+    # debaixo do adaptador sem ninguém ver.
+    "pinecone>=10,<11",
+    # Leitura da pasta controlada do Drive, por conta de serviço.
+    "google-api-python-client>=2.100",
+    "google-auth>=2.23",
+    # Extração dos formatos do corpus (app/rag/ingestao/extracao.py).
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    "python-pptx>=1.0",
 ]
 dev = [
     "pytest>=8.0",
