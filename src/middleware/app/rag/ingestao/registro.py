@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.rag.ingestao.modelos import Ficha, SituacaoArquivo
 from app.rag.tabelas import ArquivoTabela, TrechoTabela
+from app.schemas.usuario import Perfil
 
 
 @dataclass(frozen=True)
@@ -44,6 +45,10 @@ class TrechoLido:
     localizador: str
     nome_arquivo: str
     link: str | None
+    # A permissão gravada junto do texto. A recuperação confere com ela o
+    # que o índice devolveu (ver `Escopo.alcanca`).
+    projeto: str | None
+    perfis: frozenset[Perfil]
 
 
 def ficha_guardada(metadados: Mapping[str, Any] | None) -> Ficha | None:
@@ -144,6 +149,8 @@ class RegistroIngestao:
                 localizador=trecho.localizador,
                 nome_arquivo=nome,
                 link=link,
+                projeto=trecho.projeto,
+                perfis=frozenset(Perfil(perfil) for perfil in trecho.perfis),
             )
             for trecho, nome, link in resultado
         }

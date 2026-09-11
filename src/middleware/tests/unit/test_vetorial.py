@@ -239,6 +239,59 @@ async def test_escopo_sem_projetos_ainda_alcanca_os_transversais() -> None:
     assert sessao.ultimos_parametros["projetos"] == [PROJETO_TRANSVERSAL]
 
 
+def _casa_filtro(filtro: dict, projeto: str | None, perfis: frozenset[Perfil]) -> bool:
+    """Como o Pinecone avaliaria o filtro sobre os metadados de um trecho."""
+    metadados = MetadadosTrecho("doc", projeto, perfis).como_filtro()
+    if not set(filtro["perfis"]["$in"]) & set(metadados["perfis"]):
+        return False
+    return "projeto" not in filtro or metadados["projeto"] in filtro["projeto"]["$in"]
+
+
+def test_alcanca_concorda_com_o_filtro_do_pinecone() -> None:
+    """A conferência da recuperação e o filtro da consulta são a mesma
+    regra escrita duas vezes; se divergirem, a conferência passa a
+    descartar o que o índice devolveu com razão, ou a aceitar o que ele
+    não devia ter devolvido."""
+    escopos = [
+        ESCOPO_LIDER,
+        ESCOPO_DIRETORIA,
+        Escopo(perfil=Perfil.MEMBRO_EQUIPE),
+        Escopo(perfil=Perfil.MEMBRO_EQUIPE, projetos=frozenset({"PRJ-2024-018", "PRJ-2025-042"})),
+    ]
+    projetos = [None, "PRJ-2024-018", "PRJ-2025-042", "PRJ-2026-012"]
+    permissoes = [
+        frozenset({Perfil.DIRETORIA}),
+        frozenset({Perfil.DIRETORIA, Perfil.LIDER_PROJETO}),
+        frozenset(Perfil),
+    ]
+
+    for escopo in escopos:
+        filtro = filtro_de_escopo(escopo)
+        for projeto in projetos:
+            for perfis in permissoes:
+                assert escopo.alcanca(projeto, perfis) == _casa_filtro(filtro, projeto, perfis), (
+                    escopo,
+                    projeto,
+                    perfis,
+                )
+
+
+def test_alcanca_exige_o_perfil_mesmo_no_proprio_projeto() -> None:
+    """Membro alocado ao projeto não lê o relatório Corporativo dele."""
+    escopo = Escopo(perfil=Perfil.MEMBRO_EQUIPE, projetos=frozenset({"PRJ-2024-031"}))
+
+    assert not escopo.alcanca("PRJ-2024-031", {Perfil.DIRETORIA, Perfil.LIDER_PROJETO})
+
+
+def test_alcanca_aceita_o_marcador_de_transversal() -> None:
+    """O texto no banco guarda `None`; o índice guarda o marcador. Os dois
+    precisam valer como transversal."""
+    escopo = Escopo(perfil=Perfil.MEMBRO_EQUIPE)
+
+    assert escopo.alcanca(None, frozenset(Perfil))
+    assert escopo.alcanca(PROJETO_TRANSVERSAL, frozenset(Perfil))
+
+
 # --- Invariante 3: a dimensão é verificada na entrada -----------------------
 
 
