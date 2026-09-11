@@ -28,8 +28,10 @@ dependencies = [
     # Agendador das rotinas. O jobstore SQLAlchemy usa o mesmo PostgreSQL,
     # o que evita Redis ou outro broker só para a agenda.
     "apscheduler>=3.10,<4",
-    # Fluxo Authorization Code + PKCE contra o Entra ID
-    "msal>=1.28",
+    # Validação do id_token do Entra ID (assinatura RS256 contra o JWKS do
+    # tenant). A troca do código em si é um POST com o httpx acima — ver
+    # a docstring de auth/entra.py sobre por que não o MSAL.
+    "PyJWT[crypto]>=2.8",
     # Assinatura do cookie de sessão
     "itsdangerous>=2.2",
     # Classificador de intenção. scikit-learn cobre a vetorização

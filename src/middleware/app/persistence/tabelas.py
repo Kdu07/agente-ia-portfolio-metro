@@ -33,6 +33,7 @@ from datetime import datetime
 from enum import Enum as EnumPython
 
 from sqlalchemy import (
+    ARRAY,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -56,7 +57,7 @@ from app.persistence.models import (
     Usuario,
 )
 from app.pipeline.desfechos import Desfecho
-from app.schemas.usuario import Perfil
+from app.schemas.usuario import Perfil, Permissao
 
 # Sem convenção de nomes, o PostgreSQL batiza as restrições sozinho e o
 # `downgrade` de uma migração não encontra o que precisa remover. O nome
@@ -97,10 +98,9 @@ class UsuarioTabela(Base):
     """Projeção local da identidade federada do Entra ID.
 
     A linha é criada e atualizada pelo upsert de `UsuarioRepository`, e
-    não por um cadastro: enquanto `app/auth/` não estiver implementado e
-    o registro de aplicação seguir pendente no tenant do parceiro, é o
-    primeiro uso que materializa o usuário. Sem isso, as chaves
-    estrangeiras das outras quatro tabelas não teriam a que apontar.
+    não por um cadastro: é o primeiro login que materializa o usuário
+    (routes/auth.py), e cada requisição autenticada a atualiza. Quem cria
+    a pessoa é o administrador do tenant, no Entra ID.
 
     `id` é o identificador do provedor, não uma chave interna — ver a
     docstring de `models.Usuario`.
@@ -144,6 +144,47 @@ class UsuarioTabela(Base):
             criado_em=self.criado_em,
             visto_em=self.visto_em,
         )
+
+
+class SessaoUsuarioTabela(Base):
+    """Sessão de login aberta, guardada no servidor.
+
+    Existe para que o logout e a revogação sejam imediatos: um cookie
+    autocontido continuaria valendo até expirar, mesmo depois de a pessoa
+    sair ou perder o acesso. Lida e escrita só por `auth/sessao.py`.
+
+    `id` é o SHA-256 do token que viaja no cookie, não o token. Quem ler
+    esta tabela — um backup, um dump de suporte — não consegue montar um
+    cookie válido a partir dela.
+
+    `perfil` e `permissoes` são o retrato do login: valem até a sessão
+    expirar, e uma mudança de grupo no tenant só chega no login seguinte.
+    Nome e e-mail não se repetem aqui; vêm de `usuario` pela chave.
+    """
+
+    __tablename__ = "sessao_usuario"
+
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    # CASCADE, e não o RESTRICT das outras tabelas: sessão não é dado de
+    # auditoria, e remover um usuário deve encerrar o acesso dele junto.
+    usuario_id: Mapped[str] = mapped_column(
+        Text,
+        ForeignKey("usuario.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
+    perfil: Mapped[str] = mapped_column(Text, nullable=False)
+    permissoes: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default=text("'{}'")
+    )
+    criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(_CHECK_PERFIL, name="perfil"),
+        CheckConstraint(f"permissoes <@ ARRAY[{_valores(Permissao)}]::text[]", name="permissoes"),
+        # Limpeza das sessões vencidas de um usuário a cada novo login.
+        Index("ix_sessao_usuario_usuario", "usuario_id"),
+    )
 
 
 class ConversaTabela(Base):

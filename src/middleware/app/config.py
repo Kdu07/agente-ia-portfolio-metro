@@ -28,10 +28,15 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://middleware:middleware@localhost:5432/middleware"
 
     # --- Identidade (Microsoft Entra ID) --------------------------------
+    # O tenant é o GUID (Directory/tenant ID), não o domínio: o Entra
+    # escreve o GUID no `iss` do token, e é contra ele que se valida.
     entra_tenant_id: str = ""
     entra_client_id: str = ""
     entra_client_secret: str = ""
-    entra_redirect_uri: str = "http://localhost:8000/auth/callback"
+    # Passa pelo proxy /api, e não direto pela porta 8000: o cookie de
+    # sessão precisa nascer na origem do navegador, e o redirect final
+    # para `/` precisa cair no React.
+    entra_redirect_uri: str = "http://localhost:5173/api/auth/callback"
 
     # Ids dos grupos de segurança do tenant que mapeiam perfil e
     # permissão. São CONFIGURAÇÃO e não constantes: variam entre o tenant

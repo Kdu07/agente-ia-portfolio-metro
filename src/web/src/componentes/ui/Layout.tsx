@@ -11,9 +11,11 @@
  */
 
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useUsuario } from "@/hooks/useUsuario";
+import { api } from "@/servicos/api";
 
 type NomeIcone = "menu" | "chat" | "rotinas" | "historico" | "intencoes" | "plus" | "login";
 
@@ -33,8 +35,18 @@ function Icone({ nome }: { nome: NomeIcone }) {
 export function Layout() {
   const [aberto, setAberto] = useState(false);
   const { usuario } = useUsuario();
+  const navegar = useNavigate();
+  const consultas = useQueryClient();
 
   const fechar = () => setAberto(false);
+
+  // O servidor invalida a sessao; aqui so falta esquecer o que o cache
+  // sabia do usuario, senao a moldura continuaria mostrando o nome dele.
+  async function sair() {
+    await api.post("/auth/logout");
+    consultas.clear();
+    navegar("/entrar", { replace: true });
+  }
   const podeVerIntencoes = usuario?.permissoes.includes("ver_intencoes") ?? false;
   const podeGerirRotinas = usuario?.permissoes.includes("gerir_rotinas") ?? false;
 
@@ -79,7 +91,7 @@ export function Layout() {
         <div className="sidebar-spacer" />
 
         {usuario ? (
-          <div className="profile-card"><span className="avatar">{usuario.nome.slice(0, 2).toUpperCase()}</span><span><strong>{usuario.nome}</strong><small>{usuario.email ?? usuario.perfil}</small></span></div>
+          <div className="profile-card"><span className="avatar">{usuario.nome.slice(0, 2).toUpperCase()}</span><span><strong>{usuario.nome}</strong><small>{usuario.email ?? usuario.perfil}</small></span><button type="button" className="text-button" onClick={sair}>Sair</button></div>
         ) : (
           <NavLink className="microsoft-login" to="/entrar" onClick={fechar}><span className="ms-grid"><i /><i /><i /><i /></span><span><strong>Entrar com Microsoft</strong><small>Acessar com conta corporativa</small></span><Icone nome="login" /></NavLink>
         )}
