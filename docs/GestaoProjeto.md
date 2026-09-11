@@ -1012,6 +1012,8 @@ Os dados mostram que os 50 commits autorais únicos se distribuem entre a `devel
 | Entregas mantidas em branches | 15 dos 50 commits autorais únicos não estavam integrados na `develop` no corte; o MR `!91` permanecia aberto | Parte do trabalho concluído em branch ainda não compunha a linha demonstrável do produto e exigia fechamento ou replanejamento |
 | Integração externa ainda incompleta | Os testes de integração e o módulo VHS estavam preparados, mas o MR `!91` permanecia aberto no corte | A comunicação com serviços externos e a validação do cache precisam de evidência de execução e fechamento na Sprint 4 |
 | Capacidade planejada sem fechamento homogêneo | 55 issues foram atribuídas, mas apenas 23 estavam fechadas no corte | O acompanhamento deve distinguir trabalho iniciado, entregue em branch e integrado na `develop` |
+| Prazo interno de entrega não cumprido | O SLA da seção 2.4 estabelece quinta-feira às 23h59 para disponibilização à revisão interna; as entregas do ciclo se estenderam até a tarde de sexta-feira | A revisão interna perde a margem que o prazo pretendia criar, e a verificação de coerência entre artefatos passa a competir com o fechamento |
+| Incidentes de ambiente local com o Git | Quatro ocorrências em máquina de integrante cujo repositório reside em pasta sincronizada com nuvem: trava do índice, arquivo de configuração ilegível, arquivo de controle de merge vazio e arquivos restaurados pela sincronização sobre a `develop` | Horas de trabalho consumidas sem produzir entrega, e risco de arquivo ressuscitado entrar em commit sem percepção. Originou regra de ambiente na revisão do contrato (seção 2.9.2) |
 
 ##### Riscos do planejamento e acompanhamento no módulo
 
@@ -1035,7 +1037,8 @@ A leitura abaixo cruza a matriz da seção 4 com o que o ciclo tornou observáve
 | AM08 | Papel de Tech Lead não documentado nesta seção (board não reextraído) | **Sem evidência no corte** |
 | AM09 | Não há registro, neste arquivo, de issue de propagação por mudança de arquitetura no ciclo | **Sem evidência no corte** |
 | AM10 | Autores do período reconciliados em cinco identidades institucionais; nenhum commit `Administrator` | **Efetiva** |
-| AM11–AM13 | Dependem do estado da milestone no GitLab, não reextraído | **Sem evidência no corte** |
+| AM11–AM12 | Dependem do estado da milestone no GitLab, não reextraído | **Sem evidência no corte** |
+| AM13 | As labels `P_ALTA`, `P_MEDIA` e `P_BAIXA` passaram a existir e a ser aplicadas aos cards durante a Sprint 3, removendo o impedimento apontado na avaliação anterior, segundo o qual o quadro não distinguia o que era mais importante | **Impedimento removido.** A execução da repriorização no penúltimo dia da sprint não é verificável neste corte, e permanece sob acompanhamento |
 
 #### 3.4.5 Melhorias para a Sprint 4
 
@@ -1045,6 +1048,8 @@ A leitura abaixo cruza a matriz da seção 4 com o que o ciclo tornou observáve
 | AM15 | Feriados fora do cálculo de capacity | Incluir feriados e recessos no planejamento da sprint (capacity em dias úteis) e refletir a redução nas estimativas da milestone | Scrum Master da Sprint 4 | Planejamento da Sprint 4 | Capacity da milestone declara dias úteis efetivos; feriados listados na issue de planejamento |
 | AM16 | Onda 1 incompleta sob adiantamento de frentes futuras | Priorizar, na primeira metade da Sprint 4, os critérios de aceite da Onda 1 ainda em `NotImplementedError` (persistência, sessão/auth e `/chat` ponta a ponta) antes de novas antecipações de S5 | Tech Lead da Sprint 4 | Primeira semana da Sprint 4 | Issues da Onda 1 remanescentes fechadas ou explicitamente repriorizadas com destino na milestone |
 | AM17 | Desequilíbrio de carga e cobertura de ausências | Manter a verificação diária de carga (`AM07`) combinada ao plano B (`AM14`), registrando no card a redistribuição quando a razão exceder 2:1 ou houver ausência | Scrum Master da Sprint 4 | Diária | Razão máxima de 2:1 nas horas atribuídas no fechamento, ou justificativa + plano B registrados em card |
+| AM18 | Prazo interno de quinta-feira não cumprido, com entregas se estendendo até sexta à tarde | Manter a meta da seção 2.4 e torná-la alcançável: a daily de quarta-feira passa a projetar o que restará para quinta, e o que estiver fora de alcance deve ser redistribuído ou declarado como não entregável ainda na quarta, e não na sexta | Scrum Master da Sprint 4 | Daily de quarta-feira de cada semana | Projeção registrada na daily de quarta; nenhum item declarado não entregável depois de quinta às 23h59 |
+| AM19 | Incidentes de ambiente local com o Git consumindo horas sem produzir entrega | Aplicar a regra de ambiente estabelecida na seção 2.9.2: repositório fora de pasta sincronizada com nuvem, ou sincronização pausada durante o trabalho com Git. Verificar a adequação de cada máquina na abertura da Sprint 4 | Cada integrante, verificado pelo Scrum Master | Abertura da Sprint 4 | Nenhuma ocorrência de incidente de sincronização registrada na sprint; confirmação de cada integrante na issue de abertura |
 
 ### 3.5 Sprint 4
 
