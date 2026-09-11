@@ -60,13 +60,10 @@ async def obter_usuario_atual(
     Cookie ausente, adulterado ou expirado resultam no MESMO 401. A
     distinção seria um oráculo útil a quem tenta forjar sessões.
 
-    Projeta a identidade no banco antes de devolvê-la. É aqui, e não no
-    registro da interação, porque é aqui que a identidade está completa:
-    `Interacao` carrega apenas `usuario_id` e `perfil`, sem nome nem
-    e-mail. Enquanto o fluxo de login do Entra não existir, esta é a
-    única passagem por onde todo usuário autenticado passa — e sem a
-    linha em `usuario` as chaves estrangeiras das outras quatro tabelas
-    não teriam a que apontar.
+    Atualiza a projeção da identidade no banco antes de devolvê-la. A
+    linha em `usuario` nasce no callback do login; aqui o upsert mantém
+    `visto_em` como o último uso, e não o último login — é o que o
+    dashboard precisa para distinguir quem existe de quem usa.
 
     Uma falha aqui propaga. Se o banco não responde, a requisição não
     teria como gravar nada mesmo; devolver 200 sugerindo o contrário
@@ -75,7 +72,7 @@ async def obter_usuario_atual(
     if sessao is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sessão ausente")
 
-    resolvida = await auth_sessao.resolver(sessao)
+    resolvida = await auth_sessao.resolver(banco, sessao)
     if resolvida is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sessão inválida")
 

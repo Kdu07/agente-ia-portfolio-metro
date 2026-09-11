@@ -9,9 +9,18 @@
  * no servidor e a sessao volta em cookie httpOnly: o React nunca ve um
  * `access_token`. Se algum dia esta tela passar a receber ou guardar um
  * token, a decisao de arquitetura do BFF foi desfeita.
+ *
+ * `?erro=login` e o retorno do callback quando o Entra recusou o acesso
+ * ou o token nao conferiu. A mensagem nao diz qual dos dois: o detalhe
+ * fica no log do servidor, e a acao do usuario e a mesma nos dois casos.
  */
 
+import { useSearchParams } from "react-router-dom";
+
 export function Login() {
+  const [parametros] = useSearchParams();
+  const falhou = parametros.get("erro") === "login";
+
   function entrar() {
     window.location.assign("/api/auth/login");
   }
@@ -28,6 +37,14 @@ export function Login() {
           Acesse com a sua conta corporativa para consultar o portfólio,
           acompanhar marcos e registrar atualizações.
         </p>
+
+        {falhou ? (
+          <p role="alert" className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Não foi possível concluir o login. Tente de novo; se o problema
+            continuar, peça ao administrador para confirmar o seu acesso ao
+            aplicativo.
+          </p>
+        ) : null}
 
         <button
           type="button"

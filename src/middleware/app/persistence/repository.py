@@ -53,12 +53,10 @@ class _RepositorioBase:
 class UsuarioRepository(_RepositorioBase):
     """Projeção local da identidade federada.
 
-    Existe para que conversas, interações e rotinas tenham a que apontar.
-    Enquanto `app/auth/` não estiver implementado e o registro de
-    aplicação seguir pendente no tenant do parceiro, não há fluxo de
-    login que insira a linha — por isso `garantir` é chamado pela
-    dependência que resolve a sessão (api/deps.py), a cada requisição
-    autenticada.
+    Existe para que conversas, interações, rotinas e sessões tenham a que
+    apontar. `garantir` é chamado no callback do login, que materializa a
+    linha, e pela dependência que resolve a sessão (api/deps.py), a cada
+    requisição autenticada, que mantém `visto_em` atualizado.
     """
 
     async def garantir(
