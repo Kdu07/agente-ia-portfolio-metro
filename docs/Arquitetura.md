@@ -433,8 +433,8 @@ e evita disparo duplicado de rotinas quando ela reinicia ou escala.
 
 ## 9. Modelo de dados
 
-O esquema em operação tem cinco tabelas, detalhadas no capítulo 4 de
-[Projeto.md](Projeto.md):
+O esquema versionado tem **oito tabelas**. O capítulo 4 de
+[Projeto.md](Projeto.md) detalha o núcleo inicial e delimita as adições de autenticação e RAG:
 
 | Entidade | Papel |
 |---|---|
@@ -443,6 +443,9 @@ O esquema em operação tem cinco tabelas, detalhadas no capítulo 4 de
 | `interacao` | Uma mensagem processada: prompt, resposta, canal, intenção, confiança, desfecho e latência |
 | `rotina` | Prompt agendado, com recorrência, fuso e o usuário sob cuja identidade executa |
 | `execucao_rotina` | Um disparo e seu resultado, com início e fim gravados separadamente |
+| `sessao_usuario` | Sessão de login, perfil e permissões observados no login, com expiração |
+| `rag.arquivo` | Proveniência e controle dos arquivos ingeridos para recuperação documental |
+| `rag.trecho` | Trechos dos arquivos ingeridos e vínculo com sua origem |
 
 A modelagem entregue na Sprint 2 tinha três entidades e antecipava, por escrito,
 os desdobramentos que faltavam: a conversa como entidade própria, o histórico de
@@ -567,7 +570,7 @@ algo demonstrável ponta a ponta.
 
 | Onda | Escopo | Estado ao fim |
 |---|---|---|
-| 1. Fundação | ~~Persistência real (SQLAlchemy + Alembic)~~ **concluída** — cinco tabelas, migração versionada, repositórios e scripts de criação e carga; falta o Auth BFF e o `/chat` ponta a ponta com o Copilot dublado | Interação gravada em banco real; login ainda pendente do Entra |
+| 1. Fundação | Persistência e Auth BFF implementados; integração `/chat` ponta a ponta ainda parcial. A criação limpa do banco exige conciliar as duas heads atuais do Alembic antes de usar `upgrade head`. | Validar migrações, login no ambiente configurado e fluxo completo; mocks não comprovam homologação externa |
 | 2. Guardas | Regras determinísticas, Content Safety nas duas guardas de entrada, guarda de saída, desfechos novos, testes adversariais | Proteção contra injeção e contra prompts maliciosos, mensurável |
 | 3. Intenções | ~~Classificador, bancada de avaliação, limiar por intenção~~ **concluídos**; falta o registro completo da interação | RNF03 com número: acurácia 0,856, macro-F1 0,851 |
 | 4. Análise | Endpoints de agregação, dashboard responsivo, `VER_INTENCOES` aplicada nos dois lados | Análise dos dados de intenções disponível |
@@ -606,9 +609,12 @@ data de entrega é fixa e o provisionamento não é controlado pela equipe, exis
 um **segundo executor**, construído sobre serviços que a equipe provisiona
 sozinha.
 
-Ele não substitui esta arquitetura. Os dois executores coexistem atrás da mesma
-porta e são selecionados por configuração. O plano de construção, com as
-decisões e suas alternativas descartadas, está em
+Ele não substitui esta arquitetura. A coexistência atrás de uma porta comum e a
+seleção por configuração são **planejadas**: o fluxo RAG existe em `app/rag/` e
+nos scripts de bancada, mas `executor/base.py`, `rag/executor.py` e a seleção
+`EXECUTOR` mostrados abaixo ainda não estão implementados no `/chat`.
+O diagrama da seção 13.1 representa essa integração prevista, não um segundo
+fluxo já conectado à API. O plano de construção, com as decisões e suas alternativas descartadas, está em
 [plano-executor-proprio.md](plano-executor-proprio.md).
 
 ### 13.1 A porta e os dois adaptadores

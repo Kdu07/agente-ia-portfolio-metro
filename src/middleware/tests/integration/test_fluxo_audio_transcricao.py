@@ -1,5 +1,6 @@
 """Integração do upload até a consulta da transcrição."""
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.api import deps
@@ -25,7 +26,16 @@ def _cliente_isolado(tmp_path, monkeypatch, transcrever):
     return TestClient(app)
 
 
-def test_fluxo_completo_do_upload_ate_transcricao(tmp_path, monkeypatch) -> None:
+@pytest.mark.parametrize(
+    ("nome", "conteudo", "mime"),
+    [
+        ("pergunta.wav", b"RIFF" + b"\x00" * 100, "audio/wav"),
+        ("pergunta.webm", b"\x1a\x45\xdf\xa3\x87\x42\x82\x84webm", "audio/webm"),
+    ],
+)
+def test_fluxo_completo_do_upload_ate_transcricao(
+    tmp_path, monkeypatch, nome, conteudo, mime
+) -> None:
     chamadas = []
 
     async def transcrever(caminho, *, idioma):
@@ -41,7 +51,7 @@ def test_fluxo_completo_do_upload_ate_transcricao(tmp_path, monkeypatch) -> None
     with _cliente_isolado(tmp_path, monkeypatch, transcrever) as cliente:
         upload = cliente.post(
             "/voz/audios",
-            files={"audio": ("pergunta.wav", b"RIFF" + b"\x00" * 100, "audio/wav")},
+            files={"audio": (nome, conteudo, mime)},
             data={"idioma": "pt-BR"},
         )
         assert upload.status_code == 202
@@ -60,7 +70,23 @@ def test_fluxo_completo_do_upload_ate_transcricao(tmp_path, monkeypatch) -> None
         "mensagem_erro": None,
     }
     assert chamadas[0][1] == "pt-BR"
+    assert chamadas[0][0].suffix == "." + nome.rsplit(".", 1)[1]
     assert not chamadas[0][0].exists()
+
+
+def test_upload_matroska_renomeado_webm_retorna_415(tmp_path, monkeypatch) -> None:
+    async def transcrever(caminho, *, idioma):
+        raise AssertionError("arquivo rejeitado não deve chegar ao STT")
+
+    conteudo = b"\x1a\x45\xdf\xa3\x8b\x42\x82\x88matroska"
+    try:
+        with _cliente_isolado(tmp_path, monkeypatch, transcrever) as cliente:
+            resposta = cliente.post(
+                "/voz/audios", files={"audio": ("falso.webm", conteudo, "audio/webm")}
+            )
+        assert resposta.status_code == 415
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_falha_da_transcricao_fica_disponivel_para_consulta(tmp_path, monkeypatch) -> None:

@@ -1,6 +1,5 @@
 """Testes unitários para validadores de formato de áudio."""
 
-import io
 from io import BytesIO
 
 import pytest
@@ -102,6 +101,52 @@ class TestValidarFormatoAudio:
         """Deve detectar OGG."""
         arquivo = BytesIO(b"OggS" + b"\x00" * 20)
         assert validar_formato_audio(arquivo) == "ogg"
+
+    @pytest.mark.parametrize("tamanho", [b"\x87", b"\x40\x07", b"\x01" + b"\x00" * 6 + b"\x07"])
+    def test_webm(self, tamanho):
+        """Reconhece DocType webm com diferentes larguras de tamanho EBML."""
+        arquivo = BytesIO(b"\x1a\x45\xdf\xa3" + tamanho + b"\x42\x82\x84webm")
+        assert validar_formato_audio(arquivo) == "webm"
+
+    def test_webm_com_outros_campos_no_cabecalho(self):
+        campos = b"\x42\x86\x81\x01\x42\x82\x84webm\x42\x85\x81\x02"
+        arquivo = BytesIO(b"\x1a\x45\xdf\xa3\x8f" + campos)
+        assert validar_formato_audio(arquivo) == "webm"
+
+    @pytest.mark.parametrize(
+        "conteudo",
+        [
+            b"\x1a\x45\xdf\xa3",  # Só assinatura, sem cabeçalho.
+            b"\x1a\x45\xdf\xa3\xff\x42\x82\x84webm",  # Tamanho indefinido.
+            b"\x1a\x45\xdf\xa3\x00\x42\x82\x84webm",  # VINT inválido.
+            b"\x1a\x45\xdf\xa3\x8b\x42\x82\x88matroska",  # Outro DocType.
+            b"\x1a\x45\xdf\xa3\x87\x42\x82\x84web",  # Cabeçalho truncado.
+            b"\x1a\x45\xdf\xa3\x87\x42\x82\x88webm",  # Campo excede cabeçalho.
+            b"\x1a\x45\xdf\xa3\x84\x42\x86\x81\x01",  # DocType ausente.
+            b"\x1a\x45\xdf\xa3\x80\x42\x82\x84webm",  # DocType fora do header.
+            b"\x1a\x45\xdf\xa3\x89\xec\x87\x42\x82\x84webm",  # Dentro de Void.
+            b"FAKE\x42\x82\x84webm",  # DocType sem assinatura EBML.
+            b"\x1a\x45\xdf\xa3\x8e" + b"\x42\x82\x84webm" * 2,  # Duplicado.
+            b"\x1a\x45\xdf\xa3\x50\x00" + b"\x00" * 4096,  # Excede inspeção.
+        ],
+    )
+    def test_rejeita_webm_com_cabecalho_invalido(self, conteudo):
+        arquivo = BytesIO(conteudo)
+        arquivo.seek(2)
+        with pytest.raises(ValueError, match="Formato de arquivo não reconhecido"):
+            validar_formato_audio(arquivo)
+        assert arquivo.tell() == 2
+
+    def test_webm_preserva_posicao_e_limita_leitura(self):
+        class LeituraLimitada(BytesIO):
+            def read(self, size=-1):
+                assert 0 < size <= 4096
+                return super().read(size)
+
+        arquivo = LeituraLimitada(b"\x1a\x45\xdf\xa3\x87\x42\x82\x84webm")
+        arquivo.seek(5)
+        assert validar_formato_audio(arquivo) == "webm"
+        assert arquivo.tell() == 5
 
     def test_formato_invalido(self):
         """Deve rejeitar formato não reconhecido."""

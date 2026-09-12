@@ -1808,7 +1808,7 @@ Essa posição determina o que o banco de dados guarda, e o que ele **não** gua
 
 A distinção é a decisão estruturante desta seção. Um modelo que tentasse espelhar o portfólio criaria uma segunda fonte de verdade, com todos os problemas de sincronização que a arquitetura evita justamente ao delegar a execução (ver [Arquitetura.md](Arquitetura.md), seção 1).
 
-> **Escopo desta modelagem.** Este capítulo descreve o esquema **em operação**, criado na Sprint 3 e versionado em `src/middleware/migrations/versions/`. Ele sucede a modelagem de três entidades entregue na Sprint 2, que antecipava por escrito os desdobramentos ainda ausentes — separação da conversa em entidade própria, histórico de execuções de rotina e vocabulário fechado de desfechos. Os três foram construídos, cada um a partir de um requisito já registrado (RF11, RF12), e chegaram por migração versionada. Onde uma decisão da Sprint 2 foi revista, a revisão está registrada com o motivo em 4.4.2, e não substituída em silêncio: um modelo que apaga o próprio histórico impede saber por que ele é como é.
+> **Escopo desta modelagem.** Os diagramas e as descrições abaixo representam as cinco tabelas da migração inicial da Sprint 3. O esquema versionado evoluiu para **oito tabelas**: `usuario`, `sessao_usuario`, `conversa`, `interacao`, `rotina`, `execucao_rotina`, `rag.arquivo` e `rag.trecho`. As três adições são implementadas em `app/persistence/tabelas.py` e `app/rag/tabelas.py`, com migrações em `src/middleware/migrations/versions/`: a sessão sustenta o login (RF01), e arquivo/trecho sustentam a recuperação documental e sua proveniência (RF04). As vistas abaixo são um recorte do núcleo inicial, não o inventário completo do esquema; nenhuma tabela ou decisão de modelagem é alterada por esta revisão.
 
 ### 4.1.1 Atores e entidades do negócio
 
@@ -1885,9 +1885,9 @@ Projeção local da identidade federada. Não é a fonte de verdade da autoriza�
 
 **A chave primária é o identificador do provedor, e não uma chave interna.** É o mesmo valor que a identidade autenticada carrega pela requisição inteira; traduzi-lo para uma chave própria custaria uma consulta a cada escrita e guardaria o mesmo dado em duas colunas.
 
-**A linha nasce por projeção, não por cadastro.** Enquanto o registro de aplicação no Entra ID seguir pendente, não existe fluxo de login que insira o usuário. A gravação acontece por `INSERT ... ON CONFLICT DO UPDATE` idempotente na resolução da sessão, a cada requisição autenticada — é o que mantém as chaves estrangeiras íntegras sem depender de um provisionamento que não é controlado pela equipe. Quando o *callback* de autenticação existir, o mesmo comando migra para lá.
+**A linha nasce por projeção, não por cadastro.** O callback de autenticação já está implementado em `app/api/routes/auth.py` e garante o registro do usuário antes de criar a sessão. A autenticação real continua dependendo da configuração do Entra ID; existência do código não comprova homologação no tenant do parceiro.
 
-**A permissão saiu desta tabela.** A modelagem da Sprint 2 tinha `pode_ver_intencoes` como coluna booleana, com o ponto de virada já registrado: uma segunda capacidade administrativa exigiria uma tabela associativa. A gestão de rotinas (RF11) é essa segunda capacidade, e a virada aconteceu antes da coluna existir — as permissões são resolvidas dos *claims* de grupo a cada requisição e não são persistidas. Projetar autorização localmente criaria uma segunda fonte de verdade que poderia divergir do Entra e conceder acesso indevido.
+**As permissões não são colunas de `usuario`.** Elas derivam dos *claims* do Entra no login e são registradas, junto com o perfil, em `sessao_usuario`. As requisições seguintes consultam essa sessão no servidor; não há nova consulta aos grupos do Entra a cada requisição. Uma mudança de grupos no provedor não atualiza automaticamente uma sessão já emitida.
 
 #### 4.3.1.2 Tabela: `conversa`
 
@@ -1971,7 +1971,7 @@ Um disparo e seu resultado. Não existia na modelagem da Sprint 2.
 
 ### 4.3.3 Justificativa de normalização (3FN)
 
-1. **Primeira Forma Normal.** Todos os atributos são atômicos nas cinco tabelas. As permissões, que seriam o candidato natural a atributo multivalorado, não são persistidas: resolvem-se dos *claims* a cada requisição (4.3.1.1).
+1. **Primeira Forma Normal.** Os atributos das cinco tabelas do núcleo inicial são atômicos. A evolução de autenticação armazena as permissões da sessão em `sessao_usuario`; esse registro complementar não está representado nos diagramas da migração inicial (4.1).
 2. **Segunda Forma Normal.** Todas as chaves primárias são simples, e portanto não há dependência parcial em nenhuma tabela.
 3. **Terceira Forma Normal.** Nenhum atributo não-chave depende de outro atributo não-chave. Em `interacao`, `prompt`, `resposta`, `intencao_id`, `desfecho` e `latencia_ms` dependem exclusivamente de `id`: todos são resultado do processamento daquela mensagem específica, e não derivam do usuário nem da conversa. A única redundância do modelo é `interacao.perfil`, e ela é **desnormalização deliberada e documentada** (4.3.1.3): o perfil histórico não é derivável do estado atual do usuário, porque o estado atual muda.
 
@@ -2136,7 +2136,7 @@ CREATE INDEX ix_execucao_rotina_iniciada ON execucao_rotina (rotina_id, iniciada
 - **UUID em coluna `text`, revisando a decisão da Sprint 2.** O modelo anterior adotava `serial` pela legibilidade, com o custo declarado: identificador sequencial revela volume de uso e permite enumeração de registros alheios, e a troca por identificador opaco ficava "para a onda que expõe o histórico na interface". Esta é essa onda, e a inversão aconteceu por dois motivos que se somam. O primeiro é o custo já previsto. O segundo é que o orquestrador implementado gera o identificador **antes** de gravar — a interação precisa de um id no início do pipeline, para correlacionar o registro com os alertas de segurança emitidos ao longo dele, e um `serial` só existiria depois do `INSERT`. A defesa de aplicação continua valendo: toda leitura verifica a propriedade do registro no servidor.
 - **`CHECK` gerado, nunca digitado.** As listas de valores de `perfil`, `canal`, `desfecho` e `status` são produzidas a partir dos enums do código na definição do esquema, e não escritas à mão no DDL. A razão é concreta: a versão anterior desta seção trazia `CHECK (perfil IN ('DIRETORIA', ...))` em maiúsculas, enquanto o código grava `'diretoria'` — divergência que passaria despercebida até a primeira gravação real ser recusada em produção. Gerar a lista faz de "acrescentar um desfecho e esquecer o banco" um erro de migração, que aparece antes de chegar ao usuário.
 - **Sem tipo enumerado do banco.** `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria desconfortável cada valor novo; um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum. `interacao.intencao_id` não tem nem `CHECK` nem chave estrangeira, porque o catálogo de intenções é artefato de código revisado a cada sprint (5.4.9) e amarrá-lo ao banco faria de cada revisão uma migração.
-- **Permissões fora do esquema.** A modelagem anterior previa `pode_ver_intencoes` como coluna booleana, registrando o ponto de virada: uma segunda capacidade administrativa exigiria tabela associativa. A gestão de rotinas (RF11) é essa segunda capacidade, e a virada chegou antes de a coluna existir. As permissões passaram a ser resolvidas dos *claims* de grupo a cada requisição, sem persistência — projetá-las localmente criaria uma segunda fonte de verdade capaz de divergir do Entra e conceder acesso que já foi revogado.
+- **Permissões fora de `usuario`.** A coluna `pode_ver_intencoes` não foi criada. Na implementação atual, perfil e permissões derivados do login são persistidos em `sessao_usuario`, conforme 4.3.1.1; não são recalculados a partir do Entra a cada requisição.
 - **Índices derivados dos recortes, não do palpite.** Cada um dos nove índices corresponde a uma consulta nomeada em [Arquitetura.md](Arquitetura.md), seção 5, e a lista está em `src/middleware/migrations/README.md`. O índice parcial sobre as mensagens sem classificação serve ao agrupamento que alimenta tanto o backlog de novas intenções quanto o recorte de segurança, já que ambos os casos chegam ao banco sem intenção resolvida. Não há índice sobre `rotina.ativa`: a consulta que o usaria roda uma vez na subida do worker, sobre dezenas de linhas.
 - **Verificação do esquema por teste, e não por inspeção.** `tests/integration/test_persistencia.py` roda contra o PostgreSQL real e exercita o que só o servidor sabe responder: se cada valor dos enums passa no `CHECK`, se a chave estrangeira recusa apagar um usuário com registro, se o índice parcial existe com a cláusula `WHERE` correta. A suíte pula limpa quando o banco não responde.
 - **Sem vista materializada nesta etapa.** Para o volume esperado de um MVP, a agregação em SQL sobre `intencao` é suficiente. Materializar antes de medir seria otimização especulativa, com custo de atualização e de invalidação.
@@ -2217,8 +2217,14 @@ Serviços homologados no tenant do parceiro que recebem requisições validadas 
 | **Integração Copilot** | Direct Line API (`copilot/client.py`) | Comunicação assíncrona com o Copilot Studio | Desacoplamento entre o produto analítico/guardas e as ações no portfólio. |
 | **Banco de Dados & ORM** | PostgreSQL 16 + SQLAlchemy 2 + Alembic | Persistência de auditoria, rotinas e conversas | Modelo relacional assíncrono robusto e versionamento de esquema. |
 | **Executor Corporativo** | Copilot Studio / Power Platform | Execução de tópicos, conectores e fluxos | Plataforma oficial do parceiro para ações sobre SharePoint e Power BI. |
+| **Executor próprio — repositório documental** | Google Drive, pasta controlada lida por conta de serviço (`drive.readonly`) | Origem do corpus sintético lido pela ingestão | Provisionamento imediato pela equipe; a ingestão nunca escreve na fonte (9.4.3). |
+| **Executor próprio — embeddings** | `multilingual-e5-large`, local, com os prefixos `query:` e `passage:` | Vetorização dos trechos e da pergunta, em 1024 posições | Reusa o encoder do classificador de intenções: custo zero, e o corpus não sai da máquina para ser indexado (9.4.3.5). |
+| **Executor próprio — banco vetorial** | Pinecone *serverless* (`us-east-1`), atrás da porta `RepositorioVetorial`; pgvector como reserva | Busca por similaridade com o filtro de permissão aplicado na consulta | O índice guarda vetor, identificador e campos de filtro, nunca o texto; trocar de *backend* é mudança de `.env` (9.4.4). |
+| **Executor próprio — geração** | Gemini (`gemini-3.5-flash`) pelo SDK `google-genai`, atrás da porta `ModeloLinguagem` | Resposta com citação verificada a partir dos trechos recuperados | Provisionamento imediato e camada gratuita; trocar de provedor é um adaptador novo e uma variável (9.4.5). A exposição ao provedor é o risco R19. |
 | **Ambiente & Deploy** | Docker / Docker Compose | Empacotamento dos 4 serviços (`web`, `api`, `worker`, `db`) | Reprodutibilidade total do ambiente e separação de processos. |
 | **Testes** | Pytest / Vitest / Testing Library | Testes unitários e de integração (frontend/backend) | Cobertura de guardas, orquestrador e componentes de interface. |
+
+As quatro linhas do executor próprio só participam do caminho de uma mensagem quando esse caminho alternativo está selecionado ([Arquitetura.md](Arquitetura.md), seção 13). O perímetro correspondente está declarado em 3.3.1.1, e a implementação está descrita em 9.4.
 
 ### 5.1.6 Vetorização de texto: Bag of Words e TF-IDF (linha de base clássica)
 
@@ -2386,6 +2392,9 @@ flowchart TB
 
 Um Diagrama de Componentes UML é uma representação visual que descreve a organização dos principais módulos de um sistema de software, suas responsabilidades e as interfaces por meio das quais se comunicam. Esse tipo de diagrama permite visualizar, de forma modular, como cada parte do sistema interage com as demais, garantindo organização, coesão e clareza arquitetural, e servindo como referência para o desenvolvimento, integração e implantação da solução.
 
+<details>
+<summary>Histórico da Sprint 1 — não utilizar como arquitetura vigente</summary>
+
 > **Vista da Sprint 1 — mantida como histórico.** As subseções 5.2.1 e 5.2.2 descrevem a arquitetura anterior à revisão de escopo, na qual o Copilot Studio orquestrava o fluxo e **consumia** a API de PLN da equipe pela interface `C0`. A arquitetura vigente inverte essa direção: o middleware é a porta de entrada e **aciona** o Copilot Studio por Direct Line, que atua como executor das ações sobre o portfólio. O contrato atualizado está em **5.2.3** (componentes), **5.3.8** (sequência) e **5.8** (classes). Esta vista é preservada porque registra a decisão de onde se partiu, e não deve ser usada como referência de implementação.
 >
 > Blocos desta vista que **não existem** na arquitetura vigente: `C0` (interface de serviço consumida pelo Copilot), `C5` (busca semântica), `D1` a `D6` (roteador e serviços de negócio, hoje tópicos do Copilot Studio) e `F2` e `F3` (índice vetorial e base de normativos).
@@ -2466,14 +2475,11 @@ C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio —
 
 > Fonte: Material produzido pelos autores (2026).
 
+</details>
+
 ### 5.2.3 Diagrama atual da Sprint 2
 
-Esta subseção registra a versão atual do diagrama de componentes UML, elaborada
-na Sprint 2 a partir da arquitetura implementada no repositório. Ela complementa
-a versão anterior apresentada em 5.2: enquanto aquela descreve a separação
-conceitual entre o pipeline de PLN e os serviços do ecossistema Microsoft, esta
-vista detalha os módulos efetivamente previstos para o middleware, o worker e a
-infraestrutura de execução.
+Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o Copilot é o executor previsto. O diagrama inclui componentes planejados: emissão de token de voz, parte das guardas, cliente Copilot e execução de rotinas ainda possuem etapas não implementadas; não representam funcionalidades integralmente entregues na S3.
 
 O diagrama adota três agrupamentos principais. O `src/web` concentra a
 experiência do usuário; o `src/middleware` recebe as requisições e aplica o
@@ -2672,6 +2678,9 @@ relacionadas de 5.3 e 5.6.
 ## 5.3 Diagramas de Sequência da UML
 
 A seção 3.2.2 — *Modelagem estática — Diagrama de classes* — apresentou a modelagem estática do domínio — quais conceitos existem e como se relacionam. Esta seção apresenta a modelagem dinâmica correspondente: **como esses conceitos são produzidos e consumidos ao longo do tempo**, quais componentes trocam mensagens entre si, em que ordem e sob quais condições.
+
+<details>
+<summary>Histórico da Sprint 1 — não utilizar como arquitetura vigente</summary>
 
 > **Vista da Sprint 1 — mantida como histórico.** Os diagramas `DS01` a `DS04`, das subseções 5.3.2 a 5.3.5, e as convenções de 5.3.1 assumem a topologia anterior: a linha de vida `Copilot Studio` autentica o usuário e chama a `API de PLN`, e o canal de entrada é o Teams. Na arquitetura vigente, a entrada é a interface web própria, a autenticação ocorre no middleware contra o Entra ID, e é o middleware que chama o Copilot. Os cenários atualizados estão em **5.3.8**. Esta vista é preservada por registrar os fluxos de negócio do agente com um nível de detalhe que os cenários críticos não repetem.
 
@@ -3131,11 +3140,13 @@ Os diagramas refletem a arquitetura prevista na Sprint atual e deverão ser revi
 - **Cobertura da trilha de auditoria.** A modelagem dinâmica evidenciou uma lacuna do mapeamento de integrações: a ficha INT-10 prevê o registro de consultas, intenções classificadas, recusas e alterações efetivadas, mas não de alertas proativos, e a rastreabilidade de 5.5.6 associa o RF06 apenas a INT-03 e INT-07. Por coerência, DS04 não registra o alerta emitido. Recomenda-se ampliar o escopo de INT-10 para cobrir as notificações do RF06, de modo que a atuação proativa também seja auditável.
 - **Cenários de RF07 e RF08.** A modelagem dinâmica da análise comparativa e da geração de prévias será elaborada quando essas *User Stories* forem promovidas ao escopo de implementação.
 
+</details>
+
 ### 5.3.8 Diagramas de Sequência de Casos Críticos — Sprint 2
 
 Os diagramas desta subseção apresentam a versão atual da modelagem dinâmica do middleware na Sprint 2. Eles detalham cinco casos críticos que atravessam as guardas de segurança, o classificador de intenções, a integração com o Copilot Studio, a persistência das interações e a execução de rotinas agendadas.
 
-Esta subseção complementa os diagramas `DS01` a `DS04` documentados anteriormente em 5.3. Os diagramas anteriores permanecem como histórico da modelagem e enfatizam os fluxos de negócio do agente; os cenários atuais partem da implementação do repositório, incluindo a API FastAPI, o cliente do Copilot Studio, o Azure AI Content Safety e as camadas de persistência. O código-fonte Mermaid é mantido neste documento para permitir revisão e evolução do artefato.
+Esta subseção contém as sequências de referência da arquitetura vigente. Os cenários de negócio `DS01` a `DS04` permanecem recolhidos como histórico, sem constituir uma segunda referência de implementação. Os participantes abaixo representam o fluxo previsto: testes com dublês de guardas ou executor não comprovam execução real desses serviços, e a rotina agendada permanece uma evolução prevista. Os diagramas e seus códigos Mermaid são mantidos neste documento.
 
 #### 5.3.8.1 Cenário 1 — Mensagem bloqueada pela guarda de injeção
 
@@ -3160,10 +3171,10 @@ sequenceDiagram
   GINJ->>GINJ: Avalia regras determinísticas locais (Regex)
   GINJ->>SAFE: Avalia via Prompt Shields API
   SAFE-->>GINJ: Score de risco adversarial detectado
-  GINJ-->>ORQ: Desfecho = BLOQUEADA_INJECAO
+  GINJ-->>ORQ: Bloqueio por regra ou modelo
   deactivate GINJ
 
-  ORQ->>PER: Persiste Interação (desfecho=BLOQUEADA_INJECAO, prompt em claro)
+  ORQ->>PER: Persiste Interação (BLOQUEADA_INJECAO_REGRA ou BLOQUEADA_INJECAO_MODELO)
   PER-->>ORQ: OK
   ORQ-->>API: Recusa seca (sem detalhes do bloqueio)
   deactivate ORQ
@@ -3213,7 +3224,7 @@ sequenceDiagram
   ORQ->>GSAI: 6. Guarda de Saída (Inspeção contra injeção indireta)
   GSAI-->>ORQ: Aprovada
 
-  ORQ->>PER: 7. Grava registro integral imutável (desfecho=SUCESSO, latência)
+  ORQ->>PER: 7. Grava registro integral (desfecho=ENCAMINHADA, latência)
   PER-->>ORQ: Registro confirmado
 
   ORQ-->>API: Resposta sanitizada final
@@ -3356,13 +3367,13 @@ O Cenário 2 funciona como fluxo de sucesso de referência para os Cenários 1 e
 
 | Cenário | Requisitos e artefatos relacionados | Evidência no fluxo |
 |---|---|---|
-| 1. Bloqueio por injeção | RF09, RF10, RNF06, INT-11, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO` sem expor o motivo. |
+| 1. Bloqueio por injeção | RF09, RF10, RNF06, INT-11, `GuardaInjecao` | Regras determinísticas e classificador bloqueiam a entrada, registrando `BLOQUEADA_INJECAO_REGRA` ou `BLOQUEADA_INJECAO_MODELO` sem expor o motivo. |
 | 2. Sucesso no chat | RF01 a RF03, RF10, INT-02, INT-08 e INT-10 | Sessão, permissões, guardas, classificação, execução no Copilot, validação da saída e persistência completa. |
 | 3. Bloqueio por abuso | RF09, RF10, RNF06, INT-11, `GuardaAbuso` | Azure AI Content Safety e política corporativa produzem recusa orientativa e registro nominal. |
 | 4. Injeção indireta | RF09, RNF06, INT-04, `GuardaSaida` | Conteúdo contaminado pelo documento é bloqueado antes de chegar ao usuário e sem repetir a instrução. |
 | 5. Rotina agendada | RF11, RF06, RF10, INT-07, *feature* F101, `Rotina` e `ExecucaoRotina` | Cadastro validado, execução reprocessada pelo mesmo orquestrador, registro do resultado e consulta do histórico. |
 
-Os cenários cobrem os principais desfechos definidos no diagrama de classes da Sprint 2: `BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA` e `SUCESSO`. `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR` permanecem representados no modelo estático e devem ser detalhados em cenários complementares quando seus contratos de implementação forem definidos.
+Os cenários cobrem os principais desfechos definidos no diagrama de classes da Sprint 2: `BLOQUEADA_INJECAO_REGRA`, `BLOQUEADA_INJECAO_MODELO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA` e `ENCAMINHADA`. `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR` permanecem representados no modelo estático e devem ser detalhados em cenários complementares quando seus contratos de implementação forem definidos.
 
 #### 5.3.8.8 Limitações e refinamentos futuros
 
@@ -4107,6 +4118,10 @@ A questão anterior sobre políticas de DLP e conectores personalizados foi ence
 
 ## 5.6 Visão preliminar da arquitetura em blocos conectados
 
+<details>
+<summary>Histórico da Sprint 1 — a vista vigente de componentes está em 5.2.3</summary>
+
+
 ### 5.6.1 Objetivo
 
 > **Vista da Sprint 1 — mantida como histórico.** Esta seção compartilha os identificadores `A1`–`F5` com 5.2.1 e herda a mesma inversão: o percurso descrito em 5.6.5 leva a solicitação do núcleo de PLN ao roteador `D1` e aos serviços de negócio `D2`–`D6`, construídos pela equipe. Na arquitetura vigente esses serviços não existem — consultar, atualizar, alertar, comparar e gerar relatório são executados pelo Copilot Studio, e o middleware entrega guardas, registro, análise e rotinas. A vista em camadas correspondente ao contrato atual é **5.2.3**. Esta seção é preservada pelo valor dos princípios de desenho registrados em 5.6.2, que continuam válidos.
@@ -4352,6 +4367,8 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 | RNF04. Disponibilidade do agente | C0, E1 |
 | RNF05. Adequação da resposta ao perfil | B2, A4 |
 
+</details>
+
 ## 5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto
 
 Esta seção registra a definição técnica do canal de voz da solução, atendendo aos elementos de detalhamento da API de conversão de áudio em texto e de texto em áudio e da API de recebimento dos áudios enviados pelo usuário. O canal de voz materializa o RF02 e a US02, ambos priorizados como MVP, e é a origem do risco R03 registrado na seção 2.6.2.
@@ -4557,6 +4574,10 @@ A decisão introduz e transforma riscos que devem constar do acompanhamento da m
 Quanto às metas registradas ao final da seção 3.1.5, a definição do serviço permite encerrar a ressalva ali declarada. As metas preliminares de WER inferior ou igual a 15%, acurácia de termos de domínio igual ou superior a 90% e degradação ponta a ponta de no máximo 10 pontos percentuais são **mantidas** como hipóteses quantitativas, a serem verificadas sobre o corpus de áudio de referência descrito na subseção 5.7.6. Cabe registrar que a meta de acurácia de termos de domínio só é perseguível porque o serviço escolhido admite vocabulário customizado: sob qualquer das alternativas eliminadas, ela seria inatingível por ausência de mecanismo, e não por insuficiência de qualidade do reconhecimento. Nesse sentido, a seleção do serviço não apenas atende aos indicadores já definidos — ela é a condição de existência de um deles.
 
 ### 5.7.3 API de recebimento de áudios do usuário
+
+> **Estado da implementação na S3.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. Sem autenticação, a resposta é 401; sem o campo obrigatório, o FastAPI retorna 422. As subseções seguintes especificam o contrato-alvo: duração e seu limite, expiração efetiva, idempotência e catálogo padronizado de erros ainda não estão integralmente implementados. WebM é identificado pela assinatura EBML e pelo campo `DocType=webm`, com inspeção limitada aos primeiros 4 KiB; isso não valida a presença de trilha de áudio, os codecs ou a decodificação. A consulta também ainda não verifica a propriedade do áudio pelo usuário — pendência de proteção de acesso antes de uso com dados reais.
+
+> A transcrição REST é executada em segundo plano e mantida em memória no processo. Seu texto precisa ser enviado posteriormente a `/chat` com `canal=voz`; não há encaminhamento automático ao NLP no upload. O microfone da interface usa outro trajeto, dependente de `/voz/token`, ainda não implementado. Esses limites não alteram a decisão tecnológica nem antecipam a integração final da S5.
 
 Esta subseção especifica o contrato da API que recebe os áudios enviados pelo usuário — o trajeto de ingestão adotado em 5.7.1.3 como caminho canônico do canal de voz. É o contrato entre a interface de voz e o pipeline de PLN: o que a interface pode enviar, o que o servidor garante devolver e o que acontece quando algo dá errado.
 
@@ -5310,15 +5331,16 @@ classDiagram
 
     class StatusExecucao {
         <<enumeration>>
-        EM_EXECUCAO
         SUCESSO
+        BLOQUEADA
         FALHA
     }
 
     class Desfecho {
         <<enumeration>>
-        SUCESSO
-        BLOQUEADA_INJECAO
+        ENCAMINHADA
+        BLOQUEADA_INJECAO_REGRA
+        BLOQUEADA_INJECAO_MODELO
         BLOQUEADA_ABUSO
         RECUSADA_FORA_ESCOPO
         RECUSADA_BAIXA_CONFIANCA
@@ -5352,7 +5374,7 @@ classDiagram
         +String prompt
         +String resposta
         +String intencao_id
-        +Decimal confianca
+        +Decimal confianca_intencao
         +Desfecho desfecho
         +Perfil perfil
         +Canal canal
@@ -7077,15 +7099,708 @@ percebe que o dado é fixo.
 
 ## 9.4 Desenvolvimento de Features
 
-[Preencher]
+Esta seção registra as *features* construídas durante as sprints de
+desenvolvimento, com as decisões que o código tomou e o estado em que cada uma
+se encontra. A entrega registrada aqui é a do **executor próprio**: a
+vetorização do corpus sintético entregue pelo parceiro, o índice vetorial no
+Pinecone e a geração de resposta aumentada por recuperação (RAG) com um modelo
+de linguagem.
+
+| Entrega | *Issue* | Módulos | *Features* atendidas | Estado |
+|---|---|---|---|---|
+| Camada de vetorização e porta do banco vetorial | #284 | `rag/embeddings.py`, `rag/vetorial/` | F12 | Implementada e testada |
+| Provisionamento do índice e ingestão do corpus do Drive | #285 | `rag/vetorial/provisionar.py`, `rag/ingestao/`, `rag/tabelas.py` | F12, F20 | Implementada e testada; primeira carga completa no Pinecone não registrada (9.4.3.7) |
+| Recuperação, geração com citações e bancada do RAG | #291 | `rag/recuperacao.py`, `rag/geracao.py`, `rag/linguagem/`, `rag/fluxo.py`, `rag/bancada.py` | F12, F13; F51, F52 e F54 na parte documental | Implementada e testada; bancada não medida (9.4.6) |
+| Ligação do RAG ao orquestrador e ao `/chat` | — | `rag/executor.py`, seleção por configuração em `api/deps.py` | — | **Não implementada** (9.4.8) |
+
+A última linha é a que delimita o que esta seção afirma. O fluxo de RAG
+funciona ponta a ponta **por linha de comando e pela bancada**, sem o
+orquestrador na frente. Nenhuma mensagem enviada pela interface chega a ele
+enquanto a porta `Executor` e a seleção do executor não existirem no código.
+
+### 9.4.1 Enquadramento: por que um executor próprio
+
+Duas dependências em caminho crítico seguem pendentes no tenant do parceiro: o
+registro de aplicação no Entra ID e o Copilot Studio com Direct Line habilitado
+([Arquitetura.md](Arquitetura.md), seção 12.2). A resposta planejada ao risco
+R02 foi construir um **segundo executor** sobre serviços que a equipe
+provisiona sozinha, atrás da mesma porta que o Copilot ocupa, selecionável por
+configuração ([Arquitetura.md](Arquitetura.md), seção 13). O executor é o passo
+5 dos sete do pipeline, e trocá-lo não altera os demais: guardas, catálogo de
+intenções, registro, rotinas e interface permanecem os mesmos.
+
+As decisões que moldaram a implementação estão no plano de construção
+([plano-executor-proprio.md](plano-executor-proprio.md), seção 2), com as
+alternativas descartadas. As três que esta seção materializa:
+
+| # | Decisão | Alternativa descartada | Consequência no código |
+|---|---|---|---|
+| D3 | Gemini como modelo de geração, atrás de uma porta própria | Azure OpenAI no tenant da equipe, preterido pelo prazo de liberação | `rag/linguagem/` com a porta `ModeloLinguagem`; trocar de provedor é um adaptador e `LLM_BACKEND` |
+| D4 | Pinecone atrás de uma porta, com pgvector como reserva | Pinecone chamado diretamente; pgvector como padrão | `rag/vetorial/` com a porta `RepositorioVetorial` e dois adaptadores exercitados pelos mesmos testes |
+| D5 | Embeddings locais, reusando o `multilingual-e5-large` do classificador | Modelo de embeddings por API | Nenhuma chamada externa na indexação; dimensão do índice fixada em 1024 |
+
+As ondas A (índice) e B (resposta) do plano do executor próprio, citadas
+adiante, não se confundem com as ondas 1 a 5 de 9.1.2.
+
+### 9.4.2 Visão geral dos dois trajetos
+
+O executor próprio tem dois trajetos que só se encontram no armazenamento. A
+**ingestão** roda sob demanda, fora de qualquer requisição de usuário: lê a
+pasta do Drive, transforma cada arquivo em trechos e grava o vetor no índice e
+o texto no PostgreSQL. A **consulta** roda a cada pergunta: vetoriza a
+pergunta, busca os trechos que o perfil de quem pergunta pode ver, lê o texto
+deles e pede ao modelo uma resposta citada.
+
+```mermaid
+flowchart LR
+    PIN[("Pinecone<br/>índice portfolio-metro")]
+    REG[("PostgreSQL<br/>rag.arquivo · rag.trecho")]
+
+    subgraph ING["Ingestão — python -m app.rag.ingestao"]
+        D["Google Drive<br/>pasta controlada"] --> X["extracao.py<br/>DOCX · XLSX · PPTX"]
+        X --> ID["identificacao.py<br/>identidade e vigência"]
+        ID --> PM["permissoes.py<br/>perfis do parceiro → perfis do middleware"]
+        PM --> CH["chunking.py<br/>trechos de até 350 tokens"]
+        CH --> TR["triagem.py<br/>regras de injeção"]
+        TR -->|"aprovado"| EM1["embeddings.py<br/>passage: (e5, local)"]
+    end
+
+    subgraph CON["Consulta — rag/fluxo.py"]
+        Q["pergunta + escopo"] --> EM2["embeddings.py<br/>query: (e5, local)"]
+        EM2 --> RC["recuperacao.py"]
+        RC --> GE["geracao.py"]
+        GE --> LLM["Gemini"]
+        GE --> S["texto + fontes<br/>ou abstenção"]
+    end
+
+    EM1 -->|"vetor, id, projeto, perfis"| PIN
+    EM1 -->|"texto e permissão do trecho"| REG
+    TR -.->|"quarentena, com motivo"| REG
+    RC -->|"busca com filtro de permissão"| PIN
+    RC -->|"texto pelo id"| REG
+```
+
+*Figura 45 — Trajetos de ingestão e de consulta do executor próprio.*
+Fonte: Material produzido pelos autores (2026).
+
+O detalhe que não é cosmético está nas duas setas que chegam ao Pinecone:
+**o índice recebe vetor, identificador e os campos de filtro, e nunca o texto**.
+O texto vive no PostgreSQL e é lido pelo identificador depois da busca. A
+razão é de perímetro (9.4.8), e a mesma separação é o que torna o adaptador
+pgvector uma troca de configuração, e não uma reescrita.
+
+### 9.4.3 Vetorização dos dados sintéticos
+
+#### 9.4.3.1 O corpus
+
+O parceiro entregou os dados sintéticos numa pasta do Google Drive: 84
+arquivos soltos, sendo 33 .docx, 6 .pptx, 44 .xlsx e um LEIA-ME. Eles cobrem os
+18 projetos do consolidado do portfólio e 8 normativos. O LEIA-ME avisa que a
+desorganização e as inconsistências são deliberadas — versões conflitantes do
+mesmo documento, campos vazios, faróis contraditórios — e que o gabarito não
+está na pasta. Cinco arquivos fogem da convenção de nome
+`CÓDIGO_TIPO_vN_AAAAMMDD`, e quatro deles são a única cópia do seu conteúdo: o
+relatório de julho da Sinalização, o cronograma do Monotrilho Ouro, os riscos
+da Acessibilidade L4 e o balanço de agosto.
+
+A pasta é lida por uma conta de serviço com escopo `drive.readonly`. A
+ingestão nunca escreve na fonte, e uma credencial vazada não serve para plantar
+documento na pasta. Documento criado no próprio Drive, sem binário, é exportado
+para o formato equivalente do Office, e a data de modificação faz o papel da
+impressão digital que o md5 faria.
+
+#### 9.4.3.2 Extração e identificação
+
+`extracao.py` transforma cada arquivo numa sequência de **unidades**, o menor
+pedaço de texto que a divisão empacota, agrupadas por seção (.docx), aba
+(.xlsx) ou slide (.pptx). Três regras valem para os três formatos:
+
+- **o cabeçalho institucional e o rodapé saem do texto.** "Companhia do
+  Metropolitano…" e "Documento gerado para ambiente de teste…" aparecem em
+  todos os arquivos; indexados, fariam todo trecho parecer com todo trecho. A
+  classificação e os perfis autorizados que vivem nessas linhas viram
+  metadado;
+- **linha de tabela é indivisível**, serializada como `COLUNA: valor`. Cortada
+  ao meio, a segunda metade vira números sem nome;
+- **célula vazia é omitida.** Os campos em branco plantados na base são assunto
+  da base estruturada; no índice, `COLUNA: —` repetido em milhares de linhas só
+  dilui a busca.
+
+`identificacao.py` decide o que cada arquivo **é**, e a identidade vem do
+conteúdo: o título e a tabela de cabeçalho no .docx, a capa no .pptx, as abas e
+a coluna `ID_PROJETO` na planilha. O nome, quando segue a convenção, só serve
+de conferência. Divergência de tipo ou de versão entre nome e conteúdo vira
+observação no registro; divergência de **código** põe o arquivo em quarentena,
+porque é o código do projeto que decide quem pode ler o documento.
+
+A vigência resolve as versões conflitantes. Cada documento lógico recebe um
+`documento_id`, e só o vigente de cada um entra no índice:
+
+| Espécie de documento | Chave lógica (`documento_id`) | Exemplo |
+|---|---|---|
+| Os que se substituem: termos, normativos, planilhas de projeto, consolidado | `código_tipo` | `PRJ-2024-018_TAP` |
+| Os que se acumulam por período: relatório de status e balanço | `código_tipo_AAAA-MM` | `PRJ-2025-042_RSP_2026-08` |
+
+Entre arquivos com a mesma chave, vence a maior versão, depois a data mais
+recente, depois a modificação mais recente. Os substituídos ficam registrados,
+com o nome do vencedor, e fora do índice.
+
+#### 9.4.3.3 Permissões declaradas pelo parceiro
+
+A permissão de cada trecho não é inferida pela equipe: vem do que o parceiro
+declarou. Cada .docx e .pptx traz `Perfis autorizados` e `Classificação` no
+cabeçalho, e o consolidado do portfólio traz `CLASSIFICACAO_INFORMACAO` por
+projeto. O parceiro trabalha com seis perfis; o middleware, com três (RF01,
+[Arquitetura.md](Arquitetura.md), seção 6). A tradução é conservadora nas duas
+pontas:
+
+| Declarado pelo parceiro | Perfil do middleware |
+|---|---|
+| Diretoria | `diretoria` |
+| Gerente de Projeto | `lider_projeto` |
+| Equipe | `membro_equipe` |
+| GPM, Auditoria, Consulta Geral | Ignorados, nunca promovidos por semelhança |
+
+| Classificação | Perfis que leem |
+|---|---|
+| Interno | Os três |
+| Corporativo | `diretoria` e `lider_projeto` |
+| Restrito, desconhecida ou ausente | Só `diretoria` |
+
+As planilhas de projeto não declaram nada e herdam a classificação do projeto
+no consolidado. No consolidado, cada linha leva a classificação da própria
+linha. É o que mantém o PRJ-2026-012, único projeto Restrito, visível só à
+diretoria. Toda dúvida — declaração ausente, fontes em conflito, projeto fora
+do cadastro — resolve para o conjunto mais restrito, com observação no
+registro: um documento invisível por excesso de zelo aparece no relatório da
+ingestão; um visível por descuido não aparece em lugar nenhum.
+
+#### 9.4.3.4 Divisão em trechos
+
+`chunking.py` empacota as unidades em trechos de até `CHUNK_TOKENS=350`
+tokens, com `CHUNK_OVERLAP=40` de sobreposição. O orçamento é medido pelo
+mesmo tokenizador que vai codificar o trecho, e não por estimativa de palavras:
+em tabela de cronograma, cheia de códigos e datas, a razão entre tokens e
+caracteres é outra que em prosa.
+
+Cada trecho abre com uma **linha de contexto** — código, nome do projeto,
+documento e seção, aba ou slide — e segue com o corpo. A linha entra no vetor
+de propósito: "Término: 30/06/2027" só é recuperável pela pergunta "quando
+termina o Trecho Sul?" se o vetor souber de que projeto e de que documento
+aquele prazo é.
+
+Regras de empacotamento:
+
+- um trecho nunca atravessa seção, aba ou slide, nem mistura permissões — é o
+  que põe cada linha do consolidado num trecho com o projeto e os perfis da
+  própria linha;
+- linha de tabela não é cortada entre trechos. Só uma linha que sozinha estoura
+  o orçamento é partida, entre células, repetindo a primeira célula (o
+  identificador) em cada parte;
+- a sobreposição vale só para prosa: repetir uma linha de tabela no trecho
+  seguinte duplicaria o registro.
+
+#### 9.4.3.5 Embeddings
+
+`embeddings.py` é uma fachada sobre o encoder `intfloat/multilingual-e5-large`
+que o classificador de intenções já carrega (5.4.11). Compartilha-se o encoder —
+cerca de 2 GB de pesos, carregados uma vez por processo —, e não o cache do
+classificador, cuja chave não distingue consulta de passagem e que não tem
+limite de tamanho.
+
+| Propriedade | Valor | Por quê |
+|---|---|---|
+| Prefixo da pergunta | `query: ` | A família e5 foi treinada com assimetria entre consulta e documento. Indexar com o prefixo errado não gera erro nenhum: gera um índice que recupera pior |
+| Prefixo do trecho | `passage: ` | Idem; por isso são duas funções distintas, e não um parâmetro com valor padrão |
+| Dimensão | 1024 | Fixada no índice no primeiro `upsert`; trocar de modelo obriga a reindexar o corpus |
+| Normalização | Vetores de norma unitária | Produto interno e cosseno coincidem, e o `score` significa o mesmo nos dois adaptadores |
+| Teto de tokens | 512 | Restrição do modelo, tratada como erro, e não como truncamento |
+
+O teto de 512 tokens do e5 é a armadilha mais cara do modelo: um texto maior é
+truncado **em silêncio**, e o sintoma aparece só como qualidade ruim de
+recuperação. A divisão corta muito abaixo dele, e a fachada ainda confere cada
+lote: um trecho acima do teto levanta `ErroTruncamento`, nomeando a posição do
+culpado, em vez de indexar um vetor do começo do trecho ao lado do texto
+inteiro no banco.
+
+#### 9.4.3.6 Triagem, registro e reindexação
+
+**Triagem.** Antes de um trecho existir no índice, `triagem.py` passa o texto
+extraído pelas mesmas regras determinísticas da guarda de injeção de entrada.
+O caminho alternativo cria um vetor que o oficial não tem — envenenamento do
+índice: quem controla a pasta controla parte do que o modelo lê —, e também a
+possibilidade de uma barreira que o oficial não pode ter, já que ali quem
+indexa é o Copilot. Um casamento põe o **documento inteiro** em quarentena, com
+o trecho e a regra no motivo: indexar o resto seria apostar que a adulteração
+se limitou à frase que a regra reconheceu. A triagem não substitui a guarda de
+saída; uma vê o documento, a outra vê a resposta.
+
+**Registro.** O *schema* `rag`, criado pela migração `5b3f0c9a7e21`, separa o
+dado do caminho alternativo do registro operacional do middleware. Duas
+tabelas:
+
+| Tabela | Uma linha por | O que guarda |
+|---|---|---|
+| `rag.arquivo` | Arquivo que a fonte já listou | Identificação, permissão efetiva, situação, motivo, observações, assinatura e total de trechos |
+| `rag.trecho` | Trecho indexado | O texto exatamente como foi vetorizado, o localizador (seção, aba ou slide) e a permissão que foi ao índice |
+
+A situação de cada arquivo é uma de seis: `indexado`, `substituido`,
+`quarentena`, `nao_identificado`, `ignorado` ou `removido`. "Este arquivo não
+está no índice porque foi substituído pela v3" é uma linha, e não um silêncio.
+Um índice único parcial impede duas versões do mesmo documento indexadas ao
+mesmo tempo, e um `CHECK` recusa perfil fora do vocabulário do código.
+
+**Reindexação por assinatura.** Cada documento indexado guarda uma assinatura
+composta do md5 do arquivo, da versão do pipeline de ingestão, do *namespace*,
+do orçamento de trecho, do nome do projeto e dos perfis efetivos. Uma execução
+sem mudança não baixa nem vetoriza nada; uma classificação revista no
+consolidado reindexa as planilhas do projeto sem que elas tenham mudado; um
+arquivo que sai da pasta sai do índice e do banco.
+
+A ordem por documento é remover do índice, gravar os vetores, gravar os
+trechos e o arquivo no PostgreSQL, e só então confirmar a transação. Índice e
+banco não compartilham transação; se a execução cair entre os dois, a
+assinatura antiga permanece, a execução seguinte refaz o documento, e os
+identificadores determinísticos sobrescrevem o que já tinha ido. O que nunca
+acontece é o banco dizer `indexado` para um documento que o índice não
+recebeu.
+
+#### 9.4.3.7 Resultado sobre a pasta real
+
+Duas execuções foram registradas em 10/09/2026
+([plano-executor-proprio.md](plano-executor-proprio.md), seção 3.9):
+
+| Execução | Resultado |
+|---|---|
+| Simulação sobre a pasta real (`--simular`) | 84 arquivos → 76 indexados, 7 substituídos (TAP v1 e a cópia da v2 do PRJ-2024-018; o consolidado de março a julho) e 1 ignorado (o LEIA-ME); 1.883 trechos, o maior com 350 tokens; 5 observações de nome fora da convenção; nenhum documento em quarentena |
+| Ponta a ponta, com PostgreSQL real e índice em memória | A primeira execução gravou os 1.883 trechos no banco e no índice; a segunda não baixou nem vetorizou nada; retirar da pasta o arquivo de riscos da Acessibilidade L4 retirou os 22 trechos dele dos dois lugares e marcou o arquivo como `removido` |
+
+O e5 vetorizou 1,2 trecho por segundo na CPU, o que põe a primeira ingestão
+completa em cerca de meia hora. A carga completa do corpus no índice do
+Pinecone não está registrada neste documento: a execução ponta a ponta usou um
+índice em memória no lugar dele, e o Pinecone foi exercitado pelo roteiro de
+validação de 9.4.4.5 e pelos casos IT-RAG-05 a IT-RAG-08 (10.5.5.11).
+
+### 9.4.4 Índice vetorial no Pinecone
+
+#### 9.4.4.1 A porta e as três invariantes
+
+O banco vetorial fica atrás da porta `RepositorioVetorial`
+(`rag/vetorial/base.py`), com quatro operações: `upsert`, `buscar`, `remover`
+e `remover_documentos`. Dois adaptadores a implementam, e `vetorial/fabrica.py`
+é o único lugar que lê `VETORIAL_BACKEND`. A porta fixa três invariantes, que
+são propriedades de segurança antes de serem de projeto:
+
+1. **o texto do trecho não entra no índice.** O tipo `TrechoVetorizado` não tem
+   campo de texto; o índice guarda vetor, identificador e os campos de filtro;
+2. **o filtro de permissão vai na consulta, nunca depois dela.** Filtrar depois
+   de recuperar é falha de segurança, e não ineficiência: os `k` trechos já
+   conteriam o que o usuário não pode ver, e o controle de acesso de
+   `api/deps.py` não enxerga o interior do executor;
+3. **a dimensão é verificada na entrada.** Um vetor de outro tamanho é modelo
+   trocado sem reindexar, e falha com mensagem que nomeia a causa, em vez do
+   erro opaco do provedor.
+
+O corte de relevância (`score_minimo`) é aplicado depois da busca, e isso não
+contradiz a invariante 2: o corte é monotônico sobre a ordenação que o índice
+já devolveu, e o conjunto resultante é idêntico ao que uma consulta filtrada
+daria. Permissão é outra coisa: ali o conjunto muda, e por isso ali é na
+consulta.
+
+#### 9.4.4.2 Parâmetros do índice
+
+| Parâmetro | Valor | Por quê |
+|---|---|---|
+| Nome | `portfolio-metro` | Um índice por corpus; os ambientes se separam por *namespace* |
+| Dimensão | 1024 | `multilingual-e5-large` (constante `DIMENSAO`) |
+| Métrica | Cosseno | `Acerto.score` é definido como similaridade de 0,0 a 1,0 |
+| Tipo | Denso | Sem busca híbrida no MVP |
+| Infraestrutura | *Serverless*, AWS `us-east-1` | Única combinação do plano gratuito |
+| SDK | `pinecone` 10 (extra `rag`) | Major fixada: a v9 reescreveu o SDK, e uma atualização não pode mudar a forma das respostas debaixo do adaptador |
+
+Cada vetor leva três campos de metadado, e só esses:
+
+```json
+{
+  "documento_id": "PRJ-2024-018_TAP",
+  "projeto": "PRJ-2024-018",
+  "perfis": ["diretoria", "lider_projeto", "membro_equipe"]
+}
+```
+
+Documento sem projeto — normativo, manual de metodologia — recebe o marcador
+`__transversal__`, e não nulo: o Pinecone não aceita nulo em metadado, e um
+campo ausente não casaria com nenhuma cláusula de filtro, tornando o documento
+transversal invisível a todos.
+
+Os *namespaces* isolam ambientes dentro do mesmo índice:
+
+| *Namespace* | Uso |
+|---|---|
+| `dev` | Desenvolvimento local; é o padrão de `PINECONE_NAMESPACE`, para que quem esquecer de configurar escreva no descartável |
+| `bancada` | Medições reproduzíveis da bancada do RAG (9.4.6) |
+| `adversarial` | Corpus com instrução embutida; nunca compartilha *namespace* com a demonstração |
+| `demo` | Apresentação ao parceiro |
+| `_validacao` | Descartável: o roteiro de validação escreve, confere e apaga |
+
+O plano gratuito comporta 2 GB, cerca de 300 mil registros, e o corpus é de
+cerca de dois mil trechos. O limite que apertaria primeiro é o de unidades de
+leitura mensais, e não o de armazenamento.
+
+#### 9.4.4.3 Filtro de permissão na consulta
+
+`filtro_de_escopo` traduz o `Escopo` de quem pergunta — perfil e projetos,
+resolvidos na autenticação — na linguagem de filtro do Pinecone:
+
+```python
+# Líder de projeto alocado no PRJ-2024-018: o perfil precisa estar entre os
+# autorizados, e o projeto precisa ser o dele ou transversal.
+{"perfis": {"$in": ["lider_projeto"]},
+ "projeto": {"$in": ["__transversal__", "PRJ-2024-018"]}}
+
+# Diretoria: sem cláusula de projeto. Ela não tem lista, tem todos, e
+# enumerar o portfólio no filtro cresceria até estourar o tamanho da requisição.
+{"perfis": {"$in": ["diretoria"]}}
+```
+
+A consulta pede `include_metadata=False` e `include_values=False`. Não é
+economia de banda: o que o índice teria a devolver além do identificador e do
+*score* é justamente o que não deve circular. Um escopo sem projetos alcança só
+os documentos transversais, que é o resultado conservador para quem ainda não
+foi alocado.
+
+#### 9.4.4.4 Remoção por prefixo, e o defeito que o dublê escondia
+
+O índice *serverless* do Pinecone não apaga por filtro de metadado, só por
+identificador ou por prefixo de identificador. Por isso o identificador de cada
+trecho é estruturado, `documento_id#ordinal` (por exemplo,
+`PRJ-2024-018_TAP#0003`), e `remover_documentos` lista por prefixo antes de
+apagar.
+
+Essa operação passou por toda a suíte unitária estando quebrada. O dublê do
+índice devolvia *strings* na listagem; o SDK real devolve objetos `ListItem`,
+cuja conversão para texto produz um identificador que não existe, e o `delete`
+do Pinecone aceita identificador inexistente sem erro. A remoção relatava
+sucesso e não apagava nada — exatamente o defeito que a ingestão existe para
+evitar, com documento apagado do Drive continuando citável na resposta. O
+defeito apareceu quando a remoção rodou contra o serviço real; a correção lê o
+identificador pelo atributo `.id`, e o caso de integração IT-RAG-08 passou a
+verificá-lo pela busca seguinte, e não pela contagem que a remoção devolve.
+
+#### 9.4.4.5 Provisionamento versionado
+
+Dimensão e métrica são fixadas na criação e não podem ser alteradas: trocar
+qualquer uma obriga a apagar o índice e reindexar o corpus. O engano provável
+não é esquecer de criar o índice; é criá-lo com a dimensão que o console do
+provedor sugere. Um índice de 1536 posições aceita a criação sem reclamar e só
+falha no primeiro `upsert`, possivelmente dias depois e longe da causa. Por
+isso o provisionamento é um comando versionado, `rag/vetorial/provisionar.py`,
+e não um passo a passo no console:
+
+```powershell
+python -m app.rag.vetorial.provisionar            # descreve o índice; não escreve nada
+python -m app.rag.vetorial.provisionar --criar    # cria só o que falta; idempotente
+python -m app.rag.vetorial.provisionar --validar  # upsert, busca e remoção reais, em namespace descartável
+```
+
+`--criar` confere o índice existente e falha se ele tiver outra dimensão ou
+outra métrica. `--validar` passa pelo `RepositorioPinecone`, e não pelo SDK
+diretamente: o que precisa de validação é o adaptador que a aplicação usa,
+inclusive se o filtro de 9.4.4.3 é entendido pelo índice como a equipe o
+escreveu.
+
+#### 9.4.4.6 Adaptador de reserva
+
+`rag/vetorial/pgvector.py` implementa a mesma porta sobre o PostgreSQL, com
+distância de cosseno (`<=>`) e *score* `1 − distância`, o que o alinha ao
+Pinecone. Ele cobre os três modos de falha que a decisão D4 antecipa: esgotar a
+camada gratuita, latência inaceitável na demonstração ou a decisão tardia de
+não enviar vetor nenhum para fora. Nos três, a troca é `VETORIAL_BACKEND=pgvector`.
+
+O adaptador roda os mesmos casos de teste do Pinecone (9.5.6), para não ser
+reserva no papel. A tabela `rag.trecho_vetor`, porém, **não foi migrada**: exige
+a extensão `vector`, que a imagem `postgres:16-alpine` do Compose não tem. Ela
+entra na migração que trocar a imagem, se a reserva for acionada.
+
+### 9.4.5 Geração aumentada por recuperação
+
+`rag/fluxo.py` compõe a recuperação e a geração sem acrescentar lógica a
+nenhuma das duas. Recebe a pergunta e o `Escopo` de quem pergunta, e devolve a
+resposta com fontes ou a abstenção. A recuperação não conhece o modelo de
+linguagem, e a geração não conhece o índice nem o PostgreSQL: é o corte que
+permite trocar um sem tocar o outro.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Chamador (script ou bancada)
+    participant F as FluxoRag
+    participant R as Recuperador
+    participant E as e5 local
+    participant P as Pinecone
+    participant B as PostgreSQL rag.trecho
+    participant G as Gerador
+    participant M as Gemini
+
+    C->>F: responder(pergunta, escopo)
+    F->>R: recuperar(pergunta, escopo)
+    R->>E: prefixo query: + pergunta
+    E-->>R: vetor de 1024 posições
+    R->>P: busca top_k=5 com filtro de perfil e projeto
+    P-->>R: ids e scores acima de 0,75, sem metadado nem vetor
+    R->>B: texto pelos ids
+    B-->>R: texto, localizador, projeto e perfis
+    R->>R: confere a permissão gravada no banco
+    R-->>F: Recuperacao
+    F->>G: responder(recuperacao)
+    alt nenhum trecho visível ao escopo
+        G-->>F: abstenção sem_contexto, sem chamar o modelo
+    else há trechos
+        G->>M: instruções pelo canal de sistema, documentos e pergunta como conteúdo
+        M-->>G: texto bruto
+        G->>G: marcador de abstenção, citações válidas, renumeração
+        G-->>F: respondida com fontes, ou abstenção
+    end
+    F-->>C: ResultadoRag e linha de log com identificadores
+```
+
+*Figura 46 — Sequência de uma consulta ao RAG do executor próprio.*
+Fonte: Material produzido pelos autores (2026).
+
+#### 9.4.5.1 Recuperação
+
+A pergunta é normalizada só nos espaços — quebras de linha e tabulações vindas
+do ditado ou de um colar mudam o vetor sem mudar o sentido. Não há conversão
+para minúsculas nem remoção de acentos: o e5 foi treinado sobre texto natural,
+e o código de projeto em maiúsculas é justamente o que ancora a busca.
+
+A busca devolve até `RAG_TOP_K=5` trechos acima de `RAG_SCORE_MINIMO=0.75`. O
+corte é baixo de propósito: barra só a pergunta sem nada parecido no corpus, e
+a decisão fina de que não há evidência é da geração, que lê o texto.
+
+**A permissão é conferida duas vezes, e as duas não são redundantes.** A
+primeira é o filtro na consulta ao índice, que é a que protege. A segunda
+confere o texto lido do PostgreSQL contra a permissão gravada junto dele. Ela
+só age quando índice e banco divergem — a ingestão caiu entre o `upsert` e o
+*commit*, ou uma classificação revista chegou a um e não ao outro —, e nesse
+caso o trecho é descartado e a divergência vai para o log, contada: um vetor
+sem texto no banco é sinal de dessincronização que, sem contagem, só apareceria
+como "o RAG respondeu pior hoje".
+
+#### 9.4.5.2 Montagem do prompt
+
+A decisão "entrada como dado, nunca como instrução"
+([Arquitetura.md](Arquitetura.md), seção 10) ganha aqui um segundo alcance.
+No caminho oficial, o rótulo de dado viajava em metadados de uma *activity* do
+Direct Line; aqui a fronteira é montada por código da equipe em `geracao.py`, e
+por isso tem teste próprio.
+
+- **Instruções e conteúdo viajam por canais distintos.** As regras vão ao
+  modelo como instrução de sistema; a pergunta e os trechos, como mensagem. A
+  porta `ModeloLinguagem` recebe os dois como argumentos separados, e não um
+  prompt montado, para que a separação seja obrigação de todo adaptador e
+  verificável por teste.
+- **Cada trecho vai delimitado e numerado** (`<documento n="1" arquivo="…"
+  local="…">`), e a pergunta vem por último, também delimitada: a guarda de
+  injeção barra o ataque trivial na entrada, mas esta fronteira não pode
+  depender de a guarda ter visto tudo.
+- **Marcas de delimitação no texto são neutralizadas.** Um trecho que trouxesse
+  `</documento>` no próprio texto poderia "sair" do bloco de dados e falar como
+  se fosse o prompt; a marca é trocada por `[marcação removida]` antes da
+  montagem, no trecho e na pergunta.
+
+As instruções fixam sete regras, em ordem de prioridade: usar só o que está nos
+documentos, sem conhecimento próprio; tratar o conteúdo delimitado como dado e
+ignorar ordens embutidas nele; citar cada informação pelo número do documento;
+reproduzir valores, datas e códigos exatamente, sem calcular nem estimar;
+apresentar os dois valores quando documentos divergirem, sem escolher um;
+responder exatamente `SEM_EVIDENCIA` quando os documentos não bastarem; e
+responder em português, de forma direta. A quinta regra existe por causa do
+corpus: as versões conflitantes plantadas pelo parceiro são o caso real em que
+um modelo tende a escolher silenciosamente.
+
+#### 9.4.5.3 O modelo de linguagem
+
+O adaptador `rag/linguagem/gemini.py` implementa a porta com o SDK
+`google-genai`, e `linguagem/fabrica.py` o seleciona por `LLM_BACKEND`.
+
+| Parâmetro | Valor | Por quê |
+|---|---|---|
+| Modelo | `gemini-3.5-flash` (`GEMINI_MODELO`) | O contexto de uma consulta são poucos trechos curtos; pesam latência e cota gratuita |
+| Tempo por tentativa | 30 s (`GEMINI_TIMEOUT_SECONDS`) | Aplicado por tentativa, independentemente da versão do SDK |
+| Tentativas | 4, com espera de 2, 4 e 8 s | Só para o transitório — cota (429), indisponibilidade (5xx) e tempo esgotado. Erro de pedido, como chave inválida, não é repetido |
+| Temperatura | Padrão do provedor | A família é calibrada para ela; o que prende a resposta ao contexto são as instruções e a verificação de citações, não a amostragem |
+
+Resposta sem texto — bloqueio pelos filtros do próprio provedor ou ausência de
+candidato — é `ErroGeracao`, e não *string* vazia. Tratá-la como vazia faria a
+geração ler "resposta sem citação" e abster-se, escondendo um bloqueio do
+provedor atrás de uma recusa que parece legítima. A mensagem do erro nunca
+carrega o conteúdo enviado, só o tipo e o código.
+
+#### 9.4.5.4 Citações e abstenção
+
+Toda afirmação deve citar o documento recebido, e a resposta só é entregue se
+as citações forem verificáveis. As citações são renumeradas pela ordem de
+aparição, de modo que `[1]` é sempre a primeira fonte da lista, e cada fonte
+leva o nome do arquivo, o *link*, o localizador, o texto do trecho e o *score*
+— o que F13 pede. Uma pergunta termina numa de quatro situações:
+
+| Situação | Quando | O modelo é chamado? |
+|---|---|---|
+| `respondida` | O modelo respondeu citando só documentos que recebeu | Sim |
+| `sem_contexto` | Nenhum trecho visível ao perfil passou do corte de similaridade | Não: sem trecho, ele só poderia responder de memória |
+| `sem_evidencia` | O modelo devolveu o marcador `SEM_EVIDENCIA`, mesmo acompanhado de outro texto | Sim |
+| `nao_fundamentada` | O modelo respondeu sem citação, ou citou documento que não recebeu | Sim; a resposta é descartada |
+
+Nas três abstenções o usuário recebe a mesma mensagem: *"Não encontrei, nos
+documentos disponíveis para o seu perfil, informação suficiente para responder
+a essa pergunta."* A igualdade é deliberada. "Não existe" e "existe, mas você
+não pode ver" precisam ser indistinguíveis, ou a recusa vira oráculo do que há
+no corpus — a mesma razão de `api/deps.py` devolver o mesmo 401 para cookie
+ausente e adulterado. A distinção fica na situação, que vai para o log e para a
+bancada. Falha do provedor **não** é abstenção: propaga, e quem chamar a trata
+como falha do executor.
+
+#### 9.4.5.5 Rastreabilidade
+
+Cada consulta deixa uma linha de log com a situação, o modelo, o perfil, os
+trechos recuperados com seus *scores*, os trechos citados e a latência. Nunca o
+texto dos trechos nem a pergunta: rastrear quais trechos sustentaram uma
+resposta é exigência de rastreabilidade, e copiar o conteúdo deles para o log
+multiplicaria os lugares onde o corpus vive. O mesmo vale para os avisos de
+divergência da recuperação, que registram identificadores.
+
+### 9.4.6 Bancada de avaliação do RAG
+
+"O RAG está funcionando" não é afirmação verificável. Recuperação ruim e
+geração ruim produzem o mesmo sintoma, resposta errada, e pedem correções
+opostas: mexer na divisão, no `k` e nos embeddings, ou mexer no prompt e no
+modelo. `python -m app.rag.bancada` roda o conjunto de referência pelo fluxo
+real e mede as duas camadas separadamente. É a irmã, para o RAG, da bancada do
+classificador de intenções (F21, 5.4.11).
+
+O conjunto está em `src/middleware/dados/bancada-rag.csv`: **26 perguntas**
+sobre o corpus de 9.4.3, cada uma com o perfil e os projetos de quem pergunta,
+os documentos esperados, os termos que a resposta deve conter e os que não pode
+conter, e os projetos cujo trecho não pode ser recuperado. Cobre documento de
+projeto, normativo, resposta distribuída em mais de um documento, pergunta fora
+do corpus e pergunta cuja resposta depende do perfil. Inclui casos que só se
+acertam pela vigência — o custo do TAP v3 do PRJ-2024-018, e não o da v2
+substituída — e pelo período — o relatório de julho, e não o de agosto. O
+conjunto foi escrito antes da primeira medição, e não deve ser ajustado ao que
+o sistema acerta.
+
+| Indicador | O que mede | Meta |
+|---|---|---|
+| Recall@k | Os documentos esperados estão entre os `k` recuperados | ≥ 0,90 em k = 5 |
+| Abstenção correta | Recusa quando a resposta não está no corpus ou no escopo | ≥ 0,80 |
+| Acerto de conteúdo | Respondeu com os termos esperados e sem os proibidos | ≥ 0,80, não pactuada |
+| Vazamento | Trecho de projeto proibido recuperado, ou valor dele na resposta | Zero |
+| Fidelidade | Nenhuma afirmação sem apoio no trecho citado | ≥ 0,95, por revisão humana |
+
+A fidelidade não é medida automaticamente: um juiz automático seria o mesmo
+tipo de modelo julgando a si mesmo. O que a bancada garante por construção é
+que toda resposta entregue cita documentos que o modelo de fato recebeu, e a
+opção `--saida` escreve cada resposta ao lado dos trechos citados, que é o
+material da revisão. O relatório também traz a distribuição do *score* do
+trecho mais similar, separada entre casos que esperam resposta e casos que
+esperam abstenção, que é a leitura que calibra `RAG_SCORE_MINIMO`.
+
+**A bancada ainda não foi medida.** Não há, neste documento, número de recall,
+de abstenção ou de fidelidade. As metas acima e os parâmetros `RAG_TOP_K`,
+`RAG_SCORE_MINIMO` e `CHUNK_TOKENS` são provisórios no mesmo sentido do limiar
+de confiança do catálogo: valem até a primeira execução no *namespace*
+`bancada`, e depois são substituídos pelo que ela mostrar ser alcançável. Cada
+execução faz uma chamada ao modelo por caso, com pausa de 4 s entre casos
+para não gastar as novas tentativas esperando a cota do caso anterior.
+
+### 9.4.7 Configuração e execução
+
+As dependências do executor próprio ficam no extra `rag` do `pyproject.toml` —
+`pinecone`, `google-api-python-client`, `google-auth`, `python-docx`,
+`openpyxl`, `python-pptx` e `google-genai` —, para que quem roda só o caminho
+oficial não precise delas. As variáveis vivem em `app/config.py`:
+
+| Variável | Padrão | Papel |
+|---|---|---|
+| `VETORIAL_BACKEND` | `pinecone` | `pinecone` ou `pgvector` |
+| `PINECONE_API_KEY`, `PINECONE_INDEX` | — | Credencial e nome do índice (`portfolio-metro`) |
+| `PINECONE_NAMESPACE` | `dev` | Ambiente dentro do índice (9.4.4.2) |
+| `DRIVE_SERVICE_ACCOUNT_JSON` | — | Caminho da chave da conta de serviço, fora do repositório |
+| `DRIVE_PASTA_ID` | — | Pasta controlada de onde a ingestão lê |
+| `CHUNK_TOKENS`, `CHUNK_OVERLAP` | `350`, `40` | Orçamento do trecho e sobreposição da prosa |
+| `RAG_TOP_K`, `RAG_SCORE_MINIMO` | `5`, `0.75` | Recuperação; provisórios até a bancada |
+| `LLM_BACKEND` | `gemini` | Adaptador de geração; `gemini` é o único hoje |
+| `GEMINI_API_KEY`, `GEMINI_MODELO`, `GEMINI_TIMEOUT_SECONDS` | —, `gemini-3.5-flash`, `30` | Geração |
+
+A dimensão do vetor (1024) e o teto de tokens do e5 (512) não são variáveis de
+ambiente. São propriedades do modelo, e mudá-las sem trocar o modelo produziria
+um índice quebrado; vivem como constantes em `rag/vetorial/base.py` e
+`rag/embeddings.py`.
+
+```powershell
+cd src\middleware
+pip install -e ".[rag]"
+alembic upgrade head                                 # cria o schema rag
+
+python -m app.rag.vetorial.provisionar --criar       # índice, uma vez por ambiente
+python -m app.rag.ingestao --simular                 # lê, identifica, divide e tria; não grava nada
+python -m app.rag.ingestao                           # indexa o que mudou desde a última execução
+python -m app.rag.ingestao --reindexar               # reindexa todos os documentos vigentes
+
+python -m scripts.buscar_trechos "orçamento do Trecho Sul" --perfil lider_projeto --projetos PRJ-2024-018
+python -m scripts.perguntar_rag "Qual o custo total estimado do Trecho Sul?" --perfil lider_projeto --projetos PRJ-2024-018
+python -m app.rag.bancada --saida bancada.md         # mede recuperação e geração (9.4.6)
+```
+
+`buscar_trechos` exercita só a recuperação, sem chamar o modelo, e é o comando
+para investigar uma resposta ruim antes de gastar geração. `perguntar_rag` roda
+o fluxo inteiro para uma pergunta, com o perfil e os projetos informados na
+linha de comando no lugar da sessão.
+
+### 9.4.8 Perímetro, riscos e o que falta
+
+**Perímetro.** O executor próprio acrescenta dois destinos de dado ao perímetro
+declarado em 3.3.1.1: a pergunta do usuário e os trechos recuperados vão ao
+Gemini a cada consulta, e vetores com os três campos de filtro vão ao Pinecone,
+em `us-east-1`, fora do Brasil. Duas mitigações são de desenho: os embeddings
+são calculados localmente, de modo que o corpus não sai da máquina para ser
+indexado, e o texto dos trechos não é gravado no índice. Vetor não é texto, mas
+também não é anonimização — a literatura de inversão de embeddings basta para
+que a afirmação contrária não se sustente. A condição declarada continua sendo
+**dado exclusivamente sintético**. As duas exposições estão registradas como
+**R19** (conteúdo consultado exposto ao provedor de geração) e **R20**
+(representações vetoriais no provedor do índice) na matriz vigente
+([GestaoProjeto.md](GestaoProjeto.md), seção 4).
+
+**O que falta**, na ordem em que bloqueia a demonstração pela interface:
+
+| Pendência | Situação no código | Efeito |
+|---|---|---|
+| Porta `Executor` e `rag/executor.py` | Não existem; o orquestrador chama `CopilotClient` diretamente | O RAG não é alcançável pelo `/chat`; roda só por linha de comando e pela bancada |
+| Seleção do executor por configuração | Não existe variável `EXECUTOR` em `app/config.py` | Não há como trocar de caminho sem mudar código |
+| Guarda de saída | `pipeline/guardas/saida.py` levanta `NotImplementedError` | Pré-requisito para entregar texto gerado pelo pipeline, inclusive o do RAG |
+| Projetos do usuário na sessão | `UsuarioAutenticado` carrega perfil e permissões, e não a lista de projetos | Pelo `/chat`, líder e membro de equipe só alcançariam documentos transversais |
+| Primeira medição da bancada | Conjunto e comando prontos; nenhuma execução registrada | Parâmetros e metas seguem provisórios (9.4.6) |
+| Ingestão periódica | `worker.py` levanta `NotImplementedError` | A ingestão roda só sob demanda, pelo comando de 9.4.7 |
+| Prompt Shields na triagem | O classificador de injeção por modelo levanta `NotImplementedError` | A triagem de ingestão usa só as regras determinísticas |
+| Tabela do pgvector | Não migrada; a imagem do banco não tem a extensão `vector` | A reserva existe no código e nos testes, e não no banco |
+| Base estruturada sintética (onda C do plano) | Não iniciada | Transações e agregações não têm destino no executor próprio; o RAG responde só por documentos |
+
+O que este caminho não resolve, e por isso não encerra nada, está em
+[Arquitetura.md](Arquitetura.md), seção 13.4: não valida a integração Direct
+Line, não exercita a governança de conectores do lado do parceiro, não mede
+desempenho sobre uma biblioteca corporativa real e não dispensa o
+reprovisionamento no tenant do parceiro para qualquer uso com dado real.
 
 ## 9.5 Testes Unitários e de Integração
 
 Esta seção registra os testes automatizados implementados durante o
 desenvolvimento, com seus casos, entradas, resultados esperados e forma de
-execução. As subseções abaixo cobrem a camada de interface, entregue na Sprint
-3. Os testes do middleware serão acrescentados nesta mesma seção pela pessoa
-responsável por aquela camada.
+execução. As subseções 9.5.1 a 9.5.5 cobrem a camada de interface, entregue na
+Sprint 3, e a 9.5.6 cobre o executor próprio do middleware, descrito em 9.4. Os
+testes das demais camadas do middleware serão acrescentados nesta mesma seção
+pela pessoa responsável por aquela camada.
 
 A distinção entre esta seção e a seção 10 merece registro, porque as duas tratam
 de teste e respondem a perguntas diferentes. A seção 10 é o **planejamento** dos
@@ -7220,6 +7935,83 @@ O terceiro é que **a cobertura não é medida nesta entrega**. A meta de oitent
 por cento definida em 9.1.8 é consolidada em 10.7, junto com a cobertura do
 middleware, e a instrumentação correspondente será acrescentada quando as duas
 camadas tiverem suíte executável no mesmo encadeamento de integração contínua.
+
+### 9.5.6 Testes do executor próprio
+
+Os módulos de `app/rag/` descritos em 9.4 têm **177 casos unitários em catorze
+arquivos**, e doze casos de integração, registrados no grupo IT-RAG de
+10.5.5.11. Nenhum caso unitário usa rede, chave ou banco: o encoder, o índice,
+o PostgreSQL, o Drive e o modelo de linguagem são dublados.
+
+Três decisões estruturam a suíte:
+
+- **o que se afirma é o que quebra em silêncio.** Prefixo de embedding
+  trocado, trecho acima do teto do e5, filtro de permissão frouxo, trecho que
+  fecha o próprio delimitador e citação de documento que o modelo não recebeu
+  não levantam erro nenhum em produção; aparecem como resposta pior ou como
+  vazamento. Cada um tem caso próprio;
+- **os dois adaptadores do banco vetorial passam pelos mesmos casos.** O risco
+  registrado para o pgvector é ser reserva no papel, falhando justamente quando
+  for acionado; exercitá-lo junto do Pinecone desde a primeira onda é a
+  resposta;
+- **o encoder é dublado pelo registro de classe**, o mesmo mecanismo do
+  classificador de intenções. O teste dispensa os cerca de 2 GB de pesos e roda
+  em milissegundos, e o tokenizador falso conta palavras, o que torna os
+  orçamentos de trecho legíveis no próprio caso.
+
+O limite dessa estratégia está documentado em 9.4.4.4: o dublê responde o que
+foi combinado com ele, e um defeito na remoção de documentos passou pela suíte
+unitária inteira. É por isso que o grupo IT-RAG existe, contra os serviços
+reais.
+
+Os casos são apresentados por arquivo, e não um a um: 177 linhas repetiriam o
+nome de cada função sem acrescentar leitura. O prefixo `TU-RAG-nn` identifica o
+arquivo, e a coluna de rastreabilidade aponta a subseção de 9.4, a *feature* ou
+o requisito verificado.
+
+| ID | Arquivo | Casos | O que afirma | Rastreabilidade |
+| --- | --- | :-: | --- | --- |
+| TU-RAG-01 | `test_embeddings_rag.py` | 12 | Pergunta e trecho usam prefixos diferentes; os vetores saem normalizados; passagem acima de 512 tokens é recusada, nomeando a posição; pergunta longa não é recusada; o encoder é o mesmo do classificador | 9.4.3.5, F12 |
+| TU-RAG-02 | `test_ingestao_drive.py` | 4 | A listagem segue a paginação e desce às subpastas; formato nativo do Google vira o equivalente do Office; configuração e chave ausentes falham nomeando a causa | 9.4.3.1 |
+| TU-RAG-03 | `test_ingestao_extracao.py` | 17 | Metadado declarado separado do conteúdo; seções e tabelas do .docx; cabeçalho institucional e rodapé fora do texto; linha de planilha como `COLUNA: valor`; capa, gráficos e tabelas do .pptx; formato fora do escopo distinto de arquivo corrompido | 9.4.3.2 |
+| TU-RAG-04 | `test_ingestao_identificacao.py` | 16 | Identidade pelo conteúdo nos arquivos fora da convenção; código divergente vai para a quarentena; versão divergente vira observação; vence a maior versão; relatórios de meses diferentes convivem; o consolidado mais recente substitui os anteriores | 9.4.3.2 |
+| TU-RAG-05 | `test_ingestao_permissoes.py` | 8 | Perfis sem equivalente são ignorados; documento Corporativo não chega à equipe; declaração e classificação divergentes ficam com o mais restrito; sem declaração, só a diretoria | 9.4.3.3, RF01 |
+| TU-RAG-06 | `test_ingestao_chunking.py` | 9 | Nenhum trecho passa do orçamento; trecho não atravessa grupo; linha de tabela não é cortada; linha longa é partida repetindo o identificador; sobreposição só em prosa; permissões diferentes nunca no mesmo trecho | 9.4.3.4 |
+| TU-RAG-07 | `test_ingestao_indexacao.py` | 11 | Todo vetor no índice tem texto no banco; cada linha do consolidado leva a própria permissão; a simulação não toca índice nem banco; segunda execução não baixa nem reindexa; arquivo que sumiu sai dos dois lugares; reclassificação reindexa a planilha; documento com instrução embutida vai para a quarentena | 9.4.3.6, RF09 |
+| TU-RAG-08 | `test_vetorial.py` | 32 | As três invariantes da porta nos dois adaptadores: nenhum texto no índice, filtro de perfil e projeto dentro da consulta, recusa de vetor de outra dimensão; transversal visível a quem não tem projeto; remoção por prefixo; lotes de `upsert`; fábrica por configuração | 9.4.4, RF01, RNF01 |
+| TU-RAG-09 | `test_provisionamento_vetorial.py` | 6 | O índice é criado com 1024 posições e cosseno; `--criar` é idempotente; índice existente com outra dimensão ou métrica é recusado; chave e índice ausentes falham nomeando a causa | 9.4.4.5 |
+| TU-RAG-10 | `test_recuperacao_rag.py` | 12 | A pergunta só tem os espaços normalizados; escopo, `k` e corte chegam à busca; os trechos seguem a ordem do índice com o texto do banco; vetor sem texto e trecho fora do escopo são descartados e contados; o log leva identificadores, e não texto | 9.4.5.1, RF01 |
+| TU-RAG-11 | `test_geracao_rag.py` | 22 | Instruções e conteúdo separados; trecho e pergunta não fecham o delimitador; sem contexto, o modelo não é chamado; as três abstenções dizem a mesma coisa; resposta sem citação ou com citação inexistente é descartada; citações renumeradas pela ordem de aparição; ano entre colchetes não é citação | 9.4.5.2, 9.4.5.4, F13, RF09 |
+| TU-RAG-12 | `test_linguagem.py` | 14 | Instrução e conteúdo por canais distintos no Gemini; cota, indisponibilidade e tempo esgotado são repetidos com espera crescente; erro de pedido não é repetido; o erro não carrega o conteúdo enviado; resposta sem texto é erro | 9.4.5.3 |
+| TU-RAG-13 | `test_fluxo_rag.py` | 3 | A pergunta atravessa recuperação e geração e volta com fontes; pergunta sem trecho visível não chega ao modelo; a linha de rastreabilidade registra identificadores | 9.4.5.5, RNF02 |
+| TU-RAG-14 | `test_bancada_rag.py` | 11 | O conjunto de referência carrega e é coerente; valor da versão substituída reprova o conteúdo; recall de resposta distribuída é parcial; recuperar projeto proibido é vazamento mesmo abstendo; falha do modelo fica fora da conta | 9.4.6 |
+
+**Execução.** Os comandos rodam a partir de `src/middleware/tests`, e não de
+`src/middleware`. A partir da pasta do middleware, o `Settings` lê o `.env`
+local, e uma variável que a versão corrente de `app/config.py` não declara
+interrompe a coleta com `extra_forbidden`. Isso acontece, por exemplo, com um
+`.env` preparado em outra *branch*. Dentro de `tests/`, os valores padrão de
+`config.py` bastam, porque nenhum caso unitário do RAG usa credencial.
+
+```powershell
+cd src\middleware\tests
+$arquivos = (Get-ChildItem unit\test_*rag*.py, unit\test_ingestao_*.py, unit\test_*vetorial.py, unit\test_linguagem.py).FullName
+..\.venv\Scripts\python.exe -m pytest $arquivos -q
+```
+
+A lista é explícita, e não um filtro por palavra-chave (`-k`), porque o filtro
+casa com trechos de nomes de outros testes e muda a contagem sem aviso.
+
+Em 11/09/2026, a suíte do executor próprio terminou com **177 casos
+aprovados**, em cerca de 35 segundos. Na mesma execução, os doze casos IT-RAG
+foram pulados por falta de PostgreSQL e das chaves do Pinecone e do Gemini
+(10.5.5.11).
+
+**Limites.** A suíte unitária não comprova o comportamento dos serviços reais,
+que é o papel do grupo IT-RAG, e este ainda não tem execução registrada com os
+serviços presentes. A qualidade da recuperação e da resposta não é objeto de
+teste, e sim da bancada de 9.4.6, ainda não medida. E nenhum caso exercita o
+RAG pelo `/chat`, porque essa ligação não existe no código (9.4.8).
 
 # 10. Planejamento e Execução de Testes
 
@@ -8318,9 +9110,14 @@ introduzir um atalho, o teste cai.
 | Azure AI Content Safety | `guardas/injecao`, `guardas/abuso`, `guardas/saida` | REST sobre HTTPS | Em operação — tenant da equipe |
 | Azure Speech | `voz/speech.py` (token) e SDK no navegador | REST para o token, WebSocket para o áudio | Em operação — tenant da equipe |
 | PostgreSQL 16 | `persistence/` | Wire protocol via asyncpg | Local, no Compose |
+| Google Drive | `rag/ingestao/drive.py` | REST sobre HTTPS, por conta de serviço | Em operação — conta da equipe; só no executor próprio |
+| Pinecone | `rag/vetorial/pinecone.py` | REST sobre HTTPS (SDK `pinecone` 10) | Em operação — provedor externo, `us-east-1`; só no executor próprio |
+| Google Gemini | `rag/linguagem/gemini.py` | REST sobre HTTPS (SDK `google-genai`) | Em operação — provedor externo; só no executor próprio |
 
 Os dois primeiros ainda não podem ser gravados de verdade — o que exige a
-manobra das fitas provisórias, e não a suspensão dos testes.
+manobra das fitas provisórias, e não a suspensão dos testes. As três últimas
+linhas pertencem ao executor próprio (9.4) e são exercitadas pelo grupo IT-RAG
+(10.5.5.11), contra o serviço real e não por fita.
 
 #### 10.5.2.3 Matriz de integração e técnica
 
@@ -8925,6 +9722,49 @@ serve para provar que a **montagem** funciona, não para cobrir regras de negóc
 | IT-E2E-05 | Worker sobe sem expor HTTP | Processo vivo, nenhuma porta atendendo | 5 |
 | IT-E2E-06 | Cookie de sessão sobrevive ao proxy | Mesma origem, `SameSite=Strict` mantido | 1 |
 
+#### 10.5.5.11 IT-RAG — registro da ingestão, índice vetorial e modelo de geração
+
+Grupo acrescentado com o executor próprio (9.4). Ao contrário dos demais
+serviços de terceiros deste plano, o Pinecone e o Gemini não são exercitados
+por fita: o que está em dúvida nesses casos é justamente se o provedor concorda
+com o adaptador, e uma fita responderia o que foi combinado com ela. O motivo
+não é hipotético: `remover_documentos` passou pela suíte unitária inteira
+estando quebrado (9.4.4.4), o defeito apareceu contra o serviço real, e é o
+caso IT-RAG-08 que agora o protege.
+
+Os doze casos já existem no repositório, em
+[test_rag_registro.py](../src/middleware/tests/integration/test_rag_registro.py),
+[test_pinecone_real.py](../src/middleware/tests/integration/externos/test_pinecone_real.py)
+e [test_gemini_real.py](../src/middleware/tests/integration/externos/test_gemini_real.py).
+Cada arquivo pula limpo quando falta o que ele exige: o PostgreSQL com o
+*schema* `rag`, `PINECONE_API_KEY` ou `GEMINI_API_KEY`. Os dois arquivos
+externos usam `skipif` pela chave, e não o marcador `externo`, por isso ficam
+de fora de `-m externo` e rodam quando selecionados pelo caminho. O CI continua
+sem credencial de provedor, conforme 10.5.8. Cada execução do arquivo do Gemini
+faz quatro chamadas ao modelo, e por isso ele roda sob demanda, não a cada
+alteração.
+
+| ID | Verifica | Técnica | Critério de aceitação | Onda |
+|---|---|---|---|---|
+| IT-RAG-01 | Arquivo volta do registro com a ficha | PostgreSQL real | Gravar o mesmo arquivo duas vezes atualiza a linha de `rag.arquivo` em vez de duplicá-la, e a ficha volta do registro ✅ *existe* | Livre |
+| IT-RAG-02 | **Só um arquivo indexado por documento** | PostgreSQL real | O índice único parcial recusa uma segunda versão `indexado` do mesmo `documento_id` ✅ *existe* | Livre |
+| IT-RAG-03 | Perfil fora do vocabulário é recusado | PostgreSQL real | O `CHECK` de `perfis` recusa valor que não está no enum `Perfil` ✅ *existe* | Livre |
+| IT-RAG-04 | Reindexar troca o documento inteiro | PostgreSQL real | Após `substituir_trechos`, não resta trecho da versão anterior ✅ *existe* | Livre |
+| IT-RAG-05 | `upsert` e busca recuperam o que foi gravado | Pinecone real, *namespace* próprio | Os três trechos gravados voltam, e o vetor idêntico tem *score* ≥ 0,99, o que confirma a métrica de cosseno ✅ *existe* | Livre |
+| IT-RAG-06 | **Filtro de projeto aplicado pelo índice** | Pinecone real | Trecho de projeto fora do escopo não volta; o transversal volta ✅ *existe* | Livre |
+| IT-RAG-07 | **Filtro de perfil aplicado pelo índice** | Pinecone real | Trecho sem o perfil de quem pergunta não volta, mesmo no projeto dele ✅ *existe* | Livre |
+| IT-RAG-08 | **Remoção por documento apaga de fato** | Pinecone real | Depois de `remover_documentos`, nenhum trecho do documento é listado ✅ *existe* | Livre |
+| IT-RAG-09 | Resposta cita o trecho que tem a resposta | Gemini real, trechos montados à mão | Entre um trecho normativo e o do custo, a situação é `respondida`, o valor aparece e a única fonte é o trecho do custo ✅ *existe* | Livre |
+| IT-RAG-10 | Abstenção quando os trechos não respondem | Gemini real | Com um trecho do projeto certo que não fala do assunto, a situação não é `respondida` ✅ *existe* | Livre |
+| IT-RAG-11 | O modelo não responde de memória | Gemini real | Pergunta de conhecimento geral, alheia aos trechos, não é respondida, e a resposta não contém o que o modelo sabe por conta própria ✅ *existe* | Livre |
+| IT-RAG-12 | **Ordem plantada em documento não é obedecida** | Gemini real | A instrução embutida num trecho recuperado, que manda ignorar as regras, não aparece refletida na resposta ✅ *existe* | Livre |
+
+Os casos do Gemini não usam índice nem banco, para que uma falha seja
+atribuível à geração e a nada mais. Na execução de 11/09/2026, feita sem
+PostgreSQL e sem as duas chaves no ambiente, os doze foram pulados. O registro
+de uma execução com os serviços presentes fica pendente, junto da bancada de
+9.4.6.
+
 ### 10.5.6 Ambiente e dados de teste
 
 #### 10.5.6.1 Três modos de execução
@@ -9166,7 +10006,7 @@ nenhum tenant**, e essa é uma propriedade a preservar.
 | RNF01 (perímetro) | Serviços e tenants declarados | Fora de escopo automatizado — inspeção de configuração (§10.5.1.2) |
 | RNF02 (rastreabilidade) | Toda interação registrada, inclusive bloqueios | **IT-API-09**, IT-API-15, IT-DB-02, IT-ROT-15 |
 | RNF03 (acurácia do classificador) | ≥ 0,85 | Bancada F21 (fora deste plano); integração cobre o **uso** do veredito: IT-API-10, IT-API-11 |
-| RNF06 (controle de acesso por perfil e permissão) | Barreira no servidor, não na interface | IT-API-06, IT-API-07, IT-AUTH-06..08, IT-WEB-08 |
+| RF01 (controle de acesso por perfil e permissão) | Barreira no servidor, não na interface | IT-API-06, IT-API-07, IT-AUTH-06..08, IT-WEB-08 |
 | RNF07 (retenção e proteção do prompt) | Prompt em claro, com acesso restrito | IT-API-09, IT-DB-03, IT-DB-04 |
 | Risco R02 (indisponibilidade do tenant) | Progresso sem os recursos | Fitas provisórias, IT-CTR-05 |
 | Risco R12 (perímetro de dois tenants) | Nenhum dado real fora do homologado | §10.5.1.3, princípio 3; §10.5.6.3 |
@@ -9194,7 +10034,9 @@ substituição.
 
 ## 10.7 Cobertura Consolidada do Artefato de Testes
 
-[Preencher]
+O planejamento funcional cobre RF01–RF12 com **65 casos: 33 positivos e 32 negativos**, discriminados por requisito e onda em 10.1.6; RF07 permanece fora do MVP. Os RNF01–RNF07 são rastreados em 10.2.4, com desempenho nos casos TNF-DES01–07. A matriz 10.5.9 relaciona requisitos e testes de integração, incluindo a estratégia VHS; o roteiro de usabilidade está em 10.3, com pelo menos cinco participantes externos à turma e SUS.
+
+Essa é **cobertura planejada de requisitos**, não percentual de código executado. A meta de 80% de 9.1.8 permanece pendente de medição consolidada. Resultados de carga, validação dos serviços externos e sessões de usabilidade só devem ser registrados após execução; testes com mocks e fitas provisórias não substituem essas evidências.
 
 # 11. Procedimentos de Implantação
 
