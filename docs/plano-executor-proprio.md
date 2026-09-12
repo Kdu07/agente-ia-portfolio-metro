@@ -138,7 +138,7 @@ obrigatório, tratado em 4.5.
 narrativa de perímetro intacta, com nenhum fornecedor novo além dos dois que já
 estão declarados no R12. Foi preterida pelo prazo de liberação do recurso. Se o
 acesso for concedido antes da onda B, a troca é de adaptador em
-`app/rag/geracao.py` e de variável de ambiente — a porta existe para isso.
+`app/rag/linguagem/` e de variável de ambiente — a porta existe para isso.
 
 ### 2.4 D4 — Pinecone atrás de uma porta
 
@@ -245,19 +245,31 @@ src/middleware/app/
 │   └── client.py               # adaptador A — inalterado, passa a declarar a porta
 ├── rag/                        # adaptador B — caminho documental
 │   ├── executor.py             # implementa a porta; roteia por categoria (3.5)
-│   ├── ingestao/
+│   ├── ingestao/               # implementada na onda A (3.9)
+│   │   ├── fonte.py            # porta FonteDocumentos
 │   │   ├── drive.py            # listagem e download da pasta controlada
-│   │   ├── extracao.py         # PDF, DOCX, XLSX e texto -> texto + metadados
+│   │   ├── extracao.py         # DOCX, XLSX e PPTX -> unidades + metadados declarados
+│   │   ├── identificacao.py    # identidade pelo conteúdo e vigência
+│   │   ├── permissoes.py       # perfis do parceiro -> perfis do middleware
 │   │   ├── chunking.py         # divisão respeitando o teto de 512 tokens
 │   │   ├── triagem.py          # guarda de ingestão (4.2)
+│   │   ├── registro.py         # rag.arquivo e rag.trecho no PostgreSQL
 │   │   └── indexacao.py        # embeddings + upsert + registro dos trechos
+│   ├── tabelas.py              # schema rag: registro da ingestão e texto dos trechos
 │   ├── vetorial/
 │   │   ├── base.py             # porta RepositorioVetorial
 │   │   ├── pinecone.py         # adaptador padrão
-│   │   └── pgvector.py         # adaptador de reserva
+│   │   ├── pgvector.py         # adaptador de reserva
+│   │   └── provisionar.py      # cria e valida o índice (3.8)
+│   ├── linguagem/
+│   │   ├── base.py             # porta ModeloLinguagem (D3)
+│   │   ├── gemini.py           # adaptador padrão
+│   │   └── fabrica.py          # seleção por llm_backend
 │   ├── embeddings.py           # fachada sobre EmbeddingsSentenca (D5)
 │   ├── recuperacao.py          # busca com filtro de permissão na query (4.3)
-│   └── geracao.py              # montagem do prompt e chamada ao Gemini
+│   ├── geracao.py              # montagem do prompt, abstenção e citações
+│   ├── fluxo.py                # recuperação + geração, com rastreabilidade
+│   └── bancada.py              # bancada de avaliação do RAG (5)
 └── portfolio/                  # base estruturada sintética
     ├── models.py               # Projeto, Marco, Risco, Problema, RegistroAvanco, ...
     ├── consultas.py            # leitura e agregações
@@ -367,13 +379,186 @@ comentado do arquivo atual:
 | `drive_pasta_id` | Pasta controlada de onde a ingestão lê |
 | `vetorial_backend` | `pinecone` ou `pgvector` |
 | `pinecone_api_key`, `pinecone_index`, `pinecone_namespace` | Índice e isolamento |
-| `gemini_api_key`, `gemini_modelo` | Geração |
+| `llm_backend` | Adaptador de geração; `gemini` é o único hoje |
+| `gemini_api_key`, `gemini_modelo`, `gemini_timeout_seconds` | Geração |
 | `rag_top_k`, `rag_score_minimo` | Recuperação; calibrados pela bancada, não arbitrados |
 | `chunk_tokens`, `chunk_overlap` | Divisão, limitados pelo teto do e5 |
 
 `rag_top_k` e `rag_score_minimo` seguem a mesma disciplina do limiar de
 confiança do catálogo: valor provisório até a bancada existir, derivado por
 medição depois.
+
+### 3.8 O índice vetorial provisionado
+
+As quatro variáveis do banco vetorial saíram do papel na issue #285. O índice
+existe, e estes são os parâmetros com que foi criado:
+
+| Parâmetro | Valor | Por quê |
+|---|---|---|
+| Nome | `portfolio-metro` | Um índice por corpus; os ambientes se separam por namespace, não por índice |
+| Dimensão | **1024** | `intfloat/multilingual-e5-large` (D5). Constante `DIMENSAO` em `rag/vetorial/base.py` |
+| Métrica | **cosine** | `Acerto.score` é definido como cosseno de 0,0 a 1,0, e o e5 entrega vetores normalizados |
+| Tipo | `dense` | Sem busca híbrida no MVP |
+| Infraestrutura | Serverless, `aws` / `us-east-1` | Única combinação oferecida pelo plano gratuito |
+| SDK validado | `pinecone` 10.0.0 | Extra `rag` do `pyproject.toml` |
+
+**Dimensão e métrica são fixadas na criação e não podem ser alteradas.** Trocar
+qualquer uma obriga a apagar o índice e reindexar o corpus inteiro — daí o
+provisionamento ser um script versionado, `app/rag/vetorial/provisionar.py`, e
+não um passo a passo no console:
+
+```powershell
+python -m app.rag.vetorial.provisionar            # verifica, não escreve
+python -m app.rag.vetorial.provisionar --criar    # idempotente
+python -m app.rag.vetorial.provisionar --validar  # upsert, busca e remoção reais
+```
+
+Namespaces, dentro do mesmo índice:
+
+| Namespace | Uso |
+|---|---|
+| `dev` | Desenvolvimento local. É o padrão de `pinecone_namespace` |
+| `bancada` | Medições reproduzíveis da onda 2 |
+| `adversarial` | Corpus com instrução embutida da seção 4.1. **Nunca** compartilha namespace com a demonstração |
+| `demo` | Apresentação ao parceiro |
+| `_validacao` | Descartável: o `--validar` escreve, confere e apaga |
+
+O plano gratuito (Starter) comporta 2 GB (~300 mil registros), 2 M *write units*
+e 1 M *read units* por mês, 5 índices e 100 namespaces por índice. O corpus
+previsto é de dezenas de documentos e milhares de trechos — duas ordens de
+grandeza de folga, e o limite que apertaria primeiro seria o de leitura, não o
+de armazenamento.
+
+**Uma consequência de perímetro que deixa de ser hipotética.** O Starter só
+provisiona em `us-east-1`, fora do Brasil, enquanto Speech e Content Safety
+rodam em `brazilsouth`. A seção 4.5 já sustenta o desenho — o índice guarda
+vetor, identificador e os três campos de filtro, e o texto fica no PostgreSQL —,
+mas a condição declarada em 13.4 de [Arquitetura.md](Arquitetura.md) continua
+valendo sem atenuação: **dado exclusivamente sintético** enquanto o índice
+estiver nessa região.
+
+### 3.9 A ingestão implementada
+
+A onda A saiu do papel sobre o corpus que o parceiro entregou (seção 7): 84
+arquivos soltos numa pasta do Drive, com um LEIA-ME avisando que a
+desorganização e as inconsistências são deliberadas. Quatro decisões do código
+respondem a isso, e nenhuma estava no desenho original:
+
+| Decisão | Por quê |
+|---|---|
+| **Identidade pelo conteúdo, nome como conferência** | Cinco arquivos estão fora da convenção `CÓDIGO_TIPO_vN_AAAAMMDD`, e quatro deles são a única cópia do seu conteúdo: o relatório de julho da Sinalização, o cronograma do Monotrilho Ouro, os riscos da Acessibilidade L4 e o balanço de agosto. Tipo e código vêm do título e da tabela de cabeçalho (.docx), da capa (.pptx) e das abas mais a coluna `ID_PROJETO` (.xlsx). Código divergente entre nome e conteúdo põe o arquivo em quarentena, porque é o código que decide quem lê |
+| **Só o vigente no índice** | Chave lógica `código_tipo` para o que se substitui (termos, normativos, planilhas, consolidado) e `código_tipo_AAAA-MM` para o que se acumula (relatório de status, balanço). Vence a maior versão, depois a data. Os substituídos ficam registrados, fora do índice |
+| **Permissão declarada pelo parceiro** | Cada .docx e .pptx traz `Perfis autorizados` e `Classificação`. Diretoria → `diretoria`, Gerente de Projeto → `lider_projeto`, Equipe → `membro_equipe`; GPM, Auditoria e Consulta Geral não têm equivalente e são ignorados. A planilha de projeto herda a classificação do projeto no consolidado; no consolidado, cada linha leva a da própria linha — é o que mantém o PRJ-2026-012, Restrito, só para a diretoria. Toda dúvida resolve para menos gente |
+| **Planilhas linha a linha** | Cada linha vira `COLUNA: valor`, indivisível, com o documento e a aba na linha de contexto do trecho. A regra de 3.5 continua valendo: quando a base estruturada existir, números e agregações saem dela |
+
+**Registro.** O schema `rag` (migração `5b3f0c9a7e21`) guarda uma linha por
+arquivo visto, com o destino que ele teve — `indexado`, `substituido`,
+`quarentena`, `nao_identificado`, `ignorado` ou `removido` — e o motivo, e o
+texto de cada trecho indexado. Um índice único parcial impede duas versões do
+mesmo documento indexadas ao mesmo tempo.
+
+**Reindexação por assinatura.** md5 do arquivo, versão do pipeline, permissão
+efetiva, nome do projeto, orçamento de trecho e namespace. Uma execução sem
+mudança não baixa nem vetoriza nada; uma classificação revista no consolidado
+reindexa as planilhas do projeto sem que elas tenham mudado.
+
+**Simulação sobre a pasta real** (`--simular`, 10/09/2026): 84 arquivos → 76
+indexados, 7 substituídos (TAP v1 e a cópia da v2 do PRJ-2024-018; o
+consolidado de março a julho) e 1 ignorado (o LEIA-ME); 1.883 trechos, o maior
+com 350 tokens; 5 observações de nome fora da convenção; nenhum documento em
+quarentena.
+
+**Ponta a ponta, com PostgreSQL real** (mesma data, com um índice em memória no
+lugar do Pinecone): a primeira execução gravou os 1.883 trechos no banco e no
+índice; a segunda não baixou nem vetorizou nada; tirar da pasta o arquivo de
+riscos da Acessibilidade L4 tirou os 22 trechos dele dos dois lugares e marcou o
+arquivo como `removido`. O e5 large vetorizou 1,2 trecho por segundo na CPU, o
+que põe a primeira ingestão completa em cerca de meia hora.
+
+```powershell
+python -m app.rag.ingestao --simular     # lê, identifica, divide e tria; não grava nada
+python -m app.rag.ingestao               # indexa o que mudou desde a última execução
+python -m scripts.buscar_trechos "orçamento do Trecho Sul" --perfil lider_projeto --projetos PRJ-2024-018
+```
+
+Fica para depois: o job periódico no `worker` (hoje `NotImplementedError`), o
+Prompt Shields na triagem (depende do classificador da onda 2) e a tabela do
+pgvector (a imagem `postgres:16-alpine` não tem a extensão).
+
+### 3.10 A resposta implementada
+
+O primeiro fluxo de RAG ponta a ponta liga a recuperação sobre o índice de 3.8
+ao modelo de geração da decisão D3. É o trajeto de 3.3 sem o orquestrador na
+frente: recebe a pergunta e o escopo de quem pergunta e devolve a resposta com
+fontes, ou a abstenção.
+
+```mermaid
+flowchart LR
+    Q["pergunta + escopo"] --> R["recuperacao.py"]
+    R -->|"query: (e5, local)"| E["embeddings.py"]
+    R -->|"busca com filtro de permissão"| V[("Pinecone")]
+    R -->|"texto por id + conferência de permissão"| DB[("PostgreSQL — rag.trecho")]
+    R --> G["geracao.py"]
+    G -->|"instruções e conteúdo separados"| L["linguagem/ → Gemini"]
+    G --> S["texto + fontes, ou abstenção"]
+```
+
+| | |
+|---|---|
+| **Entrada** | Pergunta em linguagem natural e `Escopo` — perfil e projetos de quem pergunta, resolvidos na autenticação, nunca deduzidos pelo fluxo |
+| **Saída** | `RespostaRag`: texto, situação (`respondida`, `sem_contexto`, `sem_evidencia`, `nao_fundamentada`), fontes (arquivo, link, localizador, trecho e score) e modelo que respondeu |
+| **Dependências** | Índice provisionado (3.8); `rag.trecho` populada pela ingestão (3.9); e5 local; chave do Gemini; extra `rag` do `pyproject.toml` |
+| **Módulos** | `rag/recuperacao.py`, `rag/geracao.py`, `rag/linguagem/`, composição em `rag/fluxo.py` |
+
+Decisões do código:
+
+| Decisão | Por quê |
+|---|---|
+| **Modelo atrás de uma porta própria** (`rag/linguagem/`, `ModeloLinguagem`) | A alternativa descartada na D3 — Azure OpenAI no tenant da equipe — continua possível. Trocar de modelo é um adaptador novo e `LLM_BACKEND` no `.env`; recuperação e montagem do prompt não mudam, e a recuperação não conhece o modelo |
+| **Instruções e conteúdo por canais distintos** | As regras vão como instrução de sistema; a pergunta e os trechos, como mensagem, cada trecho delimitado e numerado. Marcas de delimitação que apareçam no texto de um trecho ou na pergunta são neutralizadas antes da montagem, para que um documento não consiga "sair" do bloco de dados (4.4) |
+| **Permissão conferida duas vezes** | O filtro na consulta ao índice é o que protege (4.3). A recuperação confere de novo o texto lido do PostgreSQL contra a permissão gravada junto dele: se índice e banco divergirem, o trecho é descartado e a divergência vai para o log |
+| **Citação obrigatória e verificada** | Toda afirmação cita o número do documento recebido. Resposta sem citação, ou citando documento que o modelo não recebeu, é descartada. As citações são renumeradas pela ordem de aparição, e `[1]` é sempre a primeira fonte da lista |
+| **Novas tentativas só para o transitório** | Cota (429), indisponibilidade (5xx) e tempo esgotado são repetidos com espera crescente; erro de pedido, não. É o risco "limite de taxa do Gemini" da seção 8 |
+| **Rastreabilidade por identificadores** | Cada consulta deixa uma linha de log com a situação, o modelo, o perfil, os trechos recuperados com seus scores e os citados. Nunca o texto dos trechos nem a pergunta: o log não vira mais um lugar onde o corpus vive |
+
+**Comportamento sem evidência.** O agente não responde com informação externa
+aos documentos recuperados, nem para perguntas gerais, e há três caminhos para a
+abstenção:
+
+1. **`sem_contexto`** — nenhum trecho visível ao perfil passou do corte de
+   similaridade. O modelo nem é chamado: sem trecho, ele só poderia responder de
+   memória;
+2. **`sem_evidencia`** — os trechos existem, mas o modelo declarou, pelo
+   marcador combinado nas instruções, que eles não sustentam a resposta;
+3. **`nao_fundamentada`** — o modelo respondeu sem citação válida, e a resposta
+   é descartada.
+
+Nos três casos o usuário recebe a mesma mensagem: *"Não encontrei, nos
+documentos disponíveis para o seu perfil, informação suficiente para responder
+a essa pergunta."* A igualdade é deliberada — "não existe" e "existe, mas você
+não pode ver" precisam ser indistinguíveis, ou a recusa vira oráculo do que há
+no corpus. A distinção fica na situação, que vai para o log e para a bancada.
+Falha do provedor (`ErroGeracao`) **não** é abstenção: propaga, e quem chama a
+trata como falha do executor.
+
+**Parâmetros provisórios.** `RAG_TOP_K=5`, `RAG_SCORE_MINIMO=0.75` e
+`GEMINI_MODELO=gemini-3.5-flash`. O corte é baixo de propósito — barra só a
+pergunta sem nada parecido no corpus, e a decisão fina de "não há evidência" é
+da geração, que lê o texto. Os três valem até a bancada medi-los (seção 5).
+
+```powershell
+python -m scripts.perguntar_rag "Qual o custo total estimado do Trecho Sul?" --perfil lider_projeto --projetos PRJ-2024-018
+python -m scripts.perguntar_rag "Quem aprova mudança de 15% no orçamento?" --perfil membro_equipe --trechos
+python -m app.rag.bancada --saida bancada.md
+```
+
+Fica para depois: `rag/executor.py` implementando a porta `Executor` de 3.1 e a
+seleção por `settings.executor` no orquestrador; a guarda de saída, que hoje
+levanta `NotImplementedError` e é pré-requisito para entregar texto gerado pelo
+pipeline; a lista de projetos do usuário, que `UsuarioAutenticado` ainda não
+carrega e sem a qual o escopo de líder e membro de equipe só alcança documentos
+transversais; e a primeira medição da bancada no namespace `bancada`, que
+substitui os valores provisórios acima e as metas de 5.1.
 
 ## 4. Segurança
 
@@ -512,6 +697,20 @@ resposta está distribuída em mais de um documento; perguntas cuja resposta nã
 está no corpus, para medir abstenção; e perguntas cuja resposta correta depende
 da permissão de quem pergunta.
 
+O conjunto está em `src/middleware/dados/bancada-rag.csv`: 26 perguntas sobre o
+corpus de 3.9, cada uma com o perfil e os projetos de quem pergunta, os
+documentos esperados, os termos que a resposta deve conter e os que não pode
+conter. Cobre as cinco situações acima — documento de projeto, normativo,
+resposta distribuída, pergunta fora do corpus e pergunta cuja resposta depende
+do perfil — e inclui casos que só se acertam pela vigência (o custo do TAP v3
+do PRJ-2024-018, e não o da v2 substituída) e pelo período (o relatório de
+julho, e não o de agosto). `python -m app.rag.bancada` mede recall@k,
+abstenção correta, acerto de conteúdo e vazamento de permissão, e reporta a
+distribuição de scores que calibra `rag_score_minimo`. A fidelidade é revisão
+humana sobre o detalhe que `--saida` escreve, com cada resposta ao lado dos
+trechos citados: um juiz automático seria o mesmo tipo de modelo julgando a si
+mesmo.
+
 ### 5.3 Relação com a bancada existente
 
 A bancada do classificador de intenção (F21, F22) mede outra coisa e continua
@@ -545,6 +744,14 @@ engenharia, e é o material mais forte que este caminho produz para a
 apresentação.
 
 ## 7. Corpus sintético
+
+> **Atualização da onda A.** O corpus não precisou ser escrito pela equipe: o
+> parceiro entregou 84 arquivos sintéticos — 33 .docx, 6 .pptx, 44 .xlsx e um
+> LEIA-ME —, cobrindo os 18 projetos do consolidado e 8 normativos, gerados por
+> script e com inconsistências plantadas de propósito, cujo gabarito não está na
+> pasta. As subseções abaixo registram o plano original; o que valeu na ingestão
+> está em 3.9. O conjunto de referência da bancada (5.2) continua sendo trabalho
+> da equipe, e continua devendo ser escrito antes de haver o que medir.
 
 ### 7.1 É o caminho crítico
 

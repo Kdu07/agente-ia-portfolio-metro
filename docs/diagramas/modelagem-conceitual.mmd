@@ -1,0 +1,44 @@
+erDiagram
+    USUARIO ||--o{ CONVERSA : mantem
+    USUARIO ||--o{ INTERACAO : registra
+    USUARIO ||--o{ ROTINA : cadastra
+    CONVERSA ||--o{ INTERACAO : agrupa
+    ROTINA ||--o{ EXECUCAO_ROTINA : gera
+    EXECUCAO_ROTINA |o--o| INTERACAO : produz
+    ROTINA ||--o{ INTERACAO : origina
+
+    USUARIO {
+        identidade federada_do_entra
+        texto nome
+        perfil corporativo
+        datahora ultimo_acesso
+    }
+
+    CONVERSA {
+        texto titulo
+        referencia sessao_no_executor
+        datahora arquivamento
+    }
+
+    INTERACAO {
+        texto prompt
+        texto resposta
+        canal chat_voz_ou_rotina
+        intencao classificacao_resolvida
+        desfecho decisao_do_pipeline
+        duracao latencia
+    }
+
+    ROTINA {
+        texto nome
+        texto prompt
+        recorrencia expressao_e_fuso
+        estado ativa_ou_desativada
+    }
+
+    EXECUCAO_ROTINA {
+        datahora inicio
+        datahora fim
+        status sucesso_bloqueada_falha
+        texto erro
+    }

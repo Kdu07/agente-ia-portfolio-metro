@@ -11,11 +11,30 @@ Execução local:
     uvicorn app.main:app --reload
 """
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app.api.routes import auth, chat, conversas, health, intencoes, rotinas, voz
+from app.persistence import sessao as db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Cria o pool de conexões na subida e o fecha no encerramento.
+
+    O engine vive pelo processo inteiro. Criá-lo por requisição
+    descartaria o pool e transformaria cada mensagem num handshake novo
+    com o PostgreSQL.
+    """
+    db.iniciar()
+    yield
+    await db.encerrar()
+
 
 app = FastAPI(
+    lifespan=lifespan,
     title="Middleware — Agente de Portfólio Metrô SP",
     description=(
         "Camada entre a interface web e o Copilot Studio: bloqueia prompt "
@@ -33,7 +52,3 @@ app.include_router(voz.router, tags=["voz"])
 # Rotas restritas: a permissão é exigida no próprio router (ver cada módulo).
 app.include_router(intencoes.router, tags=["intencoes"])
 app.include_router(rotinas.router, tags=["rotinas"])
-
-# TODO (onda 1): ligar o ciclo de vida do engine do banco ao lifespan da
-# aplicação, para que o pool de conexões seja criado uma vez por processo
-# e fechado no encerramento.
