@@ -258,9 +258,9 @@ consulta ao índice, não depois dela.
 
 O fluxo de `app/rag/fluxo.py` recebe uma pergunta e o escopo de quem pergunta,
 recupera os trechos visíveis a esse escopo e entrega-os ao modelo de geração,
-que responde citando cada trecho usado — ou se abstém quando eles não bastam. O
-comportamento, as decisões e o que ainda falta para ligá-lo ao orquestrador
-estão na seção 3.10 de
+que responde citando cada trecho usado — ou se abstém quando eles não bastam.
+Com `EXECUTOR=proprio` no `.env`, é ele que responde o `/chat`, no lugar do
+Copilot Studio. O comportamento e as decisões estão nas seções 3.10 e 3.11 de
 [plano-executor-proprio.md](../../docs/plano-executor-proprio.md).
 
 Pré-requisitos: o índice provisionado e o corpus ingerido (seções anteriores),
@@ -270,7 +270,8 @@ com o PostgreSQL no ar — o índice guarda só vetores, e o texto que vai ao mo
 No `.env`:
 
 ```dotenv
-LLM_BACKEND=gemini
+EXECUTOR=proprio        # só para o /chat; os comandos abaixo não dependem dele
+LLM_BACKEND=gemini      # ou openrouter, com OPENROUTER_API_KEY e OPENROUTER_MODELO
 GEMINI_API_KEY=<chave do Google AI Studio, não versionar>
 GEMINI_MODELO=gemini-3.5-flash
 RAG_TOP_K=5

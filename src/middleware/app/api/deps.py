@@ -9,8 +9,9 @@ Três responsabilidades:
    rotas restritas. O frontend esconde essas telas por conveniência, mas
    quem barra é aqui — uma rota escondida no React é decoração, não
    controle de acesso.
-3. Montar o orquestrador com seus colaboradores. Concentrar a montagem
-   aqui é o que permite aos testes trocarem o Copilot por um dublê via
+3. Montar o orquestrador com seus colaboradores, inclusive o executor
+   escolhido por `settings.executor`. Concentrar a montagem aqui é o que
+   permite aos testes trocarem o executor por um dublê via
    `app.dependency_overrides`, sem monkeypatch.
 """
 
@@ -21,7 +22,9 @@ from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import sessao as auth_sessao
+from app.config import settings
 from app.copilot.client import CopilotClient
+from app.executor.base import Executor
 from app.persistence.repository import (
     ConversaRepository,
     ExecucaoRepository,
@@ -39,8 +42,8 @@ __all__ = [
     "UsuarioAutenticado",
     "exige_permissao",
     "obter_conversas",
-    "obter_copilot",
     "obter_execucoes",
+    "obter_executor",
     "obter_interacoes",
     "obter_orquestrador",
     "obter_rotinas",
@@ -111,9 +114,31 @@ def exige_permissao(permissao: Permissao) -> Callable[..., UsuarioAutenticado]:
     return verificar
 
 
-def obter_copilot() -> CopilotClient:
-    """Cliente do executor. Ponto de troca nos testes de integração."""
-    return CopilotClient()
+EXECUTORES = ("copilot", "proprio")
+
+
+def obter_executor(banco: SessaoBanco, usuario: UsuarioAtual) -> Executor:
+    """O executor escolhido por `settings.executor` — único ponto dessa leitura.
+
+    O executor próprio é montado por requisição porque recupera no
+    escopo de quem pergunta, e a porta não recebe o usuário: o `Escopo`
+    nasce aqui, da identidade resolvida pela autenticação, e não é
+    deduzido em nenhum lugar adiante. O `usuario` é o mesmo da rota — o
+    FastAPI resolve a dependência uma vez por requisição.
+
+    O import é local para que o caminho `copilot` não exija o extra `rag`.
+    """
+    escolhido = settings.executor.strip().lower()
+
+    if escolhido == "copilot":
+        return CopilotClient()
+
+    if escolhido == "proprio":
+        from app.rag.executor import montar_executor
+
+        return montar_executor(banco, usuario)
+
+    raise ValueError(f"executor inválido: {escolhido!r}. Esperado um de {EXECUTORES}")
 
 
 def obter_interacoes(banco: SessaoBanco) -> InteracaoRepository:
@@ -144,6 +169,7 @@ def obter_usuarios(banco: SessaoBanco) -> UsuarioRepository:
 def obter_orquestrador(
     interacoes: Annotated[InteracaoRepository, Depends(obter_interacoes)],
     conversas: Annotated[ConversaRepository, Depends(obter_conversas)],
+    executor: Annotated[Executor, Depends(obter_executor)],
 ) -> Orquestrador:
     """Monta o orquestrador com seus colaboradores.
 
@@ -153,7 +179,7 @@ def obter_orquestrador(
     deixa conversa órfã.
     """
     return Orquestrador(
-        copilot=obter_copilot(),
+        executor=executor,
         interacoes=interacoes,
         conversas=conversas,
     )

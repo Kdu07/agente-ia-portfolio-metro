@@ -10,7 +10,7 @@ Ordem das etapas (invariante de segurança, não reordenar):
     1. injecao  - ataque AO agente, barrado antes de qualquer outra coisa
     2. abuso    - uso indevido DO agente por usuário legítimo
     3. intencao - classifica e valida a intenção contra o catálogo
-    4. copilot  - encaminha o prompt validado ao executor
+    4. executor - encaminha o prompt validado ao executor (porta executor/base.py)
     5. saida    - verifica a resposta antes de entregá-la
     6. registro - grava a interação, qualquer que tenha sido o desfecho
 
@@ -21,7 +21,7 @@ conteúdo hostil a mais um serviço.
 
 Este módulo é o ÚNICO ponto de entrada do pipeline. O agendador de
 rotinas (rotinas/execucao.py) chama `processar` como qualquer outro
-canal, mudando apenas o `canal` e o `rotina_id` — nunca o `copilot`
+canal, mudando apenas o `canal` e o `rotina_id` — nunca o executor
 diretamente. Se um caminho alternativo aparecer aqui, as guardas
 deixaram de ser obrigatórias e a proteção virou opcional.
 """
@@ -32,7 +32,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from app.copilot.client import CopilotClient
+from app.executor.base import Executor
 from app.persistence.models import Canal, Conversa, Interacao
 from app.persistence.repository import ConversaRepository, InteracaoRepository
 from app.pipeline.desfechos import Desfecho
@@ -74,17 +74,18 @@ class Orquestrador:
 
     def __init__(
         self,
-        copilot: CopilotClient,
+        executor: Executor,
         interacoes: InteracaoRepository,
         conversas: ConversaRepository,
     ) -> None:
         """Recebe os colaboradores prontos.
 
-        A injeção existe para que os testes possam dublar o Copilot e a
+        A injeção existe para que os testes possam dublar o executor e a
         persistência, e para que conexões (pool HTTP, pool do banco)
-        sejam reaproveitadas entre requisições em vez de recriadas.
+        sejam reaproveitadas entre requisições em vez de recriadas. Qual
+        executor chega aqui é decidido em `api/deps.py`.
         """
-        self._copilot = copilot
+        self._executor = executor
         self._interacoes = interacoes
         self._conversas = conversas
 
@@ -161,7 +162,7 @@ class Orquestrador:
         # O limiar é verificado antes da classe negativa de propósito: uma
         # classificação incerta não sustenta nem a recusa categórica. Pedir
         # reformulação é o tratamento correto para incerteza, e continua sem
-        # acionar o Copilot.
+        # acionar o executor.
         #
         # O limiar calibrado do artefato tem precedência sobre o do
         # catálogo: aquele veio da validação cruzada da bancada (F21),
@@ -193,9 +194,9 @@ class Orquestrador:
             # orientativa e a sessão continua ativa para o próximo turno.
             return await self._encerrar(ctx, Desfecho.RECUSADA_FORA_ESCOPO)
 
-        # --- 4. Execução no Copilot ---------------------------------------
+        # --- 4. Execução -----------------------------------------------------
         try:
-            resposta = await self._copilot.enviar(
+            resposta = await self._executor.enviar(
                 ctx.prompt,
                 intencao.id,
                 intencao.exige_confirmacao,
@@ -205,13 +206,15 @@ class Orquestrador:
             # Sem exc_info e sem a mensagem: o traço do executor pode
             # carregar o payload enviado. Correlacionar pelo interacao_id.
             logger.warning(
-                "Falha ao acionar o Copilot (interacao=%s, intencao=%s)",
+                "Falha ao acionar o executor (interacao=%s, intencao=%s)",
                 ctx.interacao_id,
                 intencao.id,
             )
             return await self._encerrar(ctx, Desfecho.FALHA_EXECUTOR)
 
-        if ctx.conversa.conversa_externa_id is None:
+        # Só executor com sessão própria (o Copilot) tem o que vincular. O
+        # executor próprio guarda o estado no middleware (D6) e devolve None.
+        if ctx.conversa.conversa_externa_id is None and resposta.conversa_externa_id is not None:
             await self._conversas.vincular_externa(
                 ctx.conversa.id, resposta.conversa_externa_id
             )
@@ -219,7 +222,7 @@ class Orquestrador:
         # --- 5. Guarda de saída --------------------------------------------
         # O usuário não fez nada errado: o que se verifica aqui é se a
         # resposta traz instrução embutida vinda de um documento que o
-        # Copilot recuperou. É a única barreira que enxerga injeção
+        # executor recuperou. É a única barreira que enxerga injeção
         # indireta, e por isso ela existe depois da execução.
         veredito_saida = await guarda_saida.verificar(resposta.texto, intencao.id)
         if veredito_saida.suspeita:

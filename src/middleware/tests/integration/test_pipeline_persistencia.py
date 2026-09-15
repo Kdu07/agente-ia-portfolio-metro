@@ -95,7 +95,7 @@ async def test_pipeline_grava_e_recupera_resultado_do_nlp(
 
     interacoes = InteracaoRepository(sessao_banco)
     pipeline = Orquestrador(
-        copilot=CopilotFalso(),
+        executor=CopilotFalso(),
         interacoes=interacoes,
         conversas=ConversaRepository(sessao_banco),
     )

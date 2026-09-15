@@ -107,7 +107,7 @@ def test_texto_transcrito_percorre_pipeline_como_canal_de_voz(tmp_path, monkeypa
     repositorio = RepositorioMemoria()
     app.dependency_overrides[deps.obter_usuario_atual] = lambda: USUARIO
     app.dependency_overrides[deps.obter_orquestrador] = lambda: Orquestrador(
-        copilot=copilot,
+        executor=copilot,
         interacoes=repositorio,
         conversas=repositorio,
     )

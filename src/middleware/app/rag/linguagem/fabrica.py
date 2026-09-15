@@ -9,7 +9,7 @@ modelo ser adaptador novo mais uma linha no `.env`.
 from app.config import settings
 from app.rag.linguagem.base import ModeloLinguagem
 
-BACKENDS = ("gemini",)
+BACKENDS = ("gemini", "openrouter")
 
 
 def obter_modelo_linguagem() -> ModeloLinguagem:
@@ -20,5 +20,10 @@ def obter_modelo_linguagem() -> ModeloLinguagem:
         from app.rag.linguagem.gemini import ModeloGemini
 
         return ModeloGemini.de_configuracao()
+
+    if backend == "openrouter":
+        from app.rag.linguagem.openrouter import ModeloOpenRouter
+
+        return ModeloOpenRouter.de_configuracao()
 
     raise ValueError(f"llm_backend inválido: {backend!r}. Esperado um de {BACKENDS}")

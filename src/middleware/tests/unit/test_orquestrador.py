@@ -185,6 +185,23 @@ async def test_mensagem_legitima_e_encaminhada(etapas: dict) -> None:
     assert interacoes.unica.desfecho is Desfecho.ENCAMINHADA
 
 
+async def test_executor_sem_sessao_propria_nao_vincula_conversa(etapas: dict) -> None:
+    """O executor próprio devolve `conversa_externa_id=None` (D6): nada a vincular."""
+
+    class ExecutorSemSessao(CopilotFake):
+        async def enviar(self, *args, **kwargs) -> RespostaCopilot:
+            resposta = await super().enviar(*args, **kwargs)
+            return RespostaCopilot(texto=resposta.texto)
+
+    pipeline, _, interacoes, conversas = montar(ExecutorSemSessao())
+
+    resposta = await pipeline.processar(pedido(), USUARIO)
+
+    assert resposta.desfecho == Desfecho.ENCAMINHADA.value
+    assert conversas.vinculos == []
+    assert interacoes.unica.desfecho is Desfecho.ENCAMINHADA
+
+
 async def test_bloqueia_injecao_por_regra(etapas: dict) -> None:
     etapas["regra_suspeita"] = True
     pipeline, copilot, _, _ = montar()
