@@ -257,8 +257,8 @@ class Marco:
     id: str
     projeto_codigo: str
     nome: str
-    descricao: str | None = None
     data_prevista: date
+    descricao: str | None = None
     data_real: date | None = None
     status: str = StatusMarco.NAO_INICIADO.value
     criado_em: datetime = datetime.now()
