@@ -160,6 +160,10 @@ class SessaoUsuarioTabela(Base):
     `perfil` e `permissoes` são o retrato do login: valem até a sessão
     expirar, e uma mudança de grupo no tenant só chega no login seguinte.
     Nome e e-mail não se repetem aqui; vêm de `usuario` pela chave.
+
+    `projetos` é a lista de códigos de projetos aos quais o usuário tem
+    acesso, carregada no login para evitar consultas adicionais em cada
+    requisição.
     """
 
     __tablename__ = "sessao_usuario"
@@ -175,6 +179,9 @@ class SessaoUsuarioTabela(Base):
     perfil: Mapped[str] = mapped_column(Text, nullable=False)
     permissoes: Mapped[list[str]] = mapped_column(
         ARRAY(Text), nullable=False, server_default=text("'{}'")
+    )
+    projetos: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default=text("'{}'::text[]")
     )
     criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

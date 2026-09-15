@@ -36,6 +36,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.entra import ConfiguracaoAusente, FluxoPendente
 from app.config import settings
+from app.persistence.repository_portfolio import (
+    ProjetoRepository,
+    UsuarioProjetoRepository,
+)
 from app.persistence.tabelas import SessaoUsuarioTabela, UsuarioTabela
 from app.schemas.usuario import Perfil, Permissao, UsuarioAutenticado
 
@@ -108,12 +112,34 @@ async def criar(banco: AsyncSession, usuario: UsuarioAutenticado) -> tuple[Sessa
     Aproveita o login para apagar as sessões vencidas da mesma pessoa:
     sem isso a tabela só cresceria, e um job de limpeza à parte seria
     mais uma peça no `worker` para uma tabela deste tamanho.
+
+    Carrega também a lista de projetos aos quais o usuário tem acesso
+    para controle de acesso por projeto.
     """
     agora = datetime.now(UTC)
     token = secrets.token_urlsafe(32)
+
+    # Carrega projetos do usuário
+    repo_usuario_projeto = UsuarioProjetoRepository(banco)
+    projetos = await repo_usuario_projeto.listar_projetos_do_usuario(usuario.id)
+
+    # Se for diretoria, tem acesso a todos os projetos
+    if usuario.perfil == Perfil.DIRETORIA:
+        from app.persistence.repository_portfolio import ProjetoRepository
+        repo_projeto = ProjetoRepository(banco)
+        todos_projetos = await repo_projeto.listar_todos()
+        projetos = [p.codigo for p in todos_projetos]
+
     sessao = Sessao(
         id=_id_de(token),
-        usuario=usuario,
+        usuario=UsuarioAutenticado(
+            id=usuario.id,
+            nome=usuario.nome,
+            email=usuario.email,
+            perfil=usuario.perfil,
+            permissoes=usuario.permissoes,
+            projetos=frozenset(projetos),
+        ),
         criada_em=agora,
         expira_em=agora + timedelta(seconds=settings.session_max_age_seconds),
     )
@@ -131,6 +157,7 @@ async def criar(banco: AsyncSession, usuario: UsuarioAutenticado) -> tuple[Sessa
             usuario_id=usuario.id,
             perfil=usuario.perfil.value,
             permissoes=sorted(p.value for p in usuario.permissoes),
+            projetos=sorted(projetos),
             criada_em=sessao.criada_em,
             expira_em=sessao.expira_em,
         )
@@ -186,6 +213,7 @@ async def resolver(banco: AsyncSession, valor_cookie: str) -> Sessao | None:
             email=usuario.email,
             perfil=Perfil(registro.perfil),
             permissoes=frozenset(Permissao(p) for p in registro.permissoes),
+            projetos=frozenset(registro.projetos),
         ),
         criada_em=registro.criada_em,
         expira_em=registro.expira_em,
