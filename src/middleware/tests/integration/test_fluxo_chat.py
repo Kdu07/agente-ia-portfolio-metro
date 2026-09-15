@@ -114,7 +114,7 @@ def cliente(dublar_pipeline):
 
     app.dependency_overrides[deps.obter_usuario_atual] = lambda: USUARIO
     app.dependency_overrides[deps.obter_orquestrador] = lambda: Orquestrador(
-        copilot=copilot, interacoes=repositorio, conversas=repositorio
+        executor=copilot, interacoes=repositorio, conversas=repositorio
     )
     with TestClient(app) as client:
         yield client, copilot, repositorio
@@ -135,6 +135,69 @@ def test_fluxo_completo_com_copilot_mockado(cliente) -> None:
     assert corpo["conversa_id"]
     assert "60% de avanço" in corpo["resposta"]
     assert len(copilot.recebidas) == 1
+    assert len(repositorio.interacoes) == 1
+
+
+def test_executor_proprio_responde_o_chat(dublar_pipeline, monkeypatch) -> None:
+    """Com EXECUTOR=proprio, a montagem real de deps entrega o RAG ao orquestrador.
+
+    Só o fluxo de RAG é dublado — recuperação e geração têm testes
+    próprios. O que se afirma é a costura: a seleção em `obter_executor`,
+    o escopo do usuário autenticado, as fontes no texto e a conversa sem
+    vínculo externo.
+    """
+    from app.config import settings
+    from app.persistence.sessao import obter_sessao
+    from app.rag import executor as rag_executor
+    from app.rag.fluxo import ResultadoRag
+    from app.rag.geracao import Fonte, RespostaRag, Situacao
+    from app.rag.recuperacao import Recuperacao
+
+    escopos = []
+
+    class FluxoFalso:
+        async def responder(self, pergunta, escopo):
+            escopos.append(escopo)
+            fonte = Fonte(
+                documento="PRJ-2024-018_TAP_v3_20250822.docx",
+                link=None,
+                trecho="8. CUSTO — Total estimado: R$ 847.900.000,00",
+                score=0.87,
+                localizador="8. CUSTO",
+                trecho_id="PRJ-2024-018_TAP#0008",
+            )
+            return ResultadoRag(
+                resposta=RespostaRag(
+                    texto="O custo total estimado é R$ 847.900.000,00 [1].",
+                    situacao=Situacao.RESPONDIDA,
+                    fontes=(fonte,),
+                ),
+                recuperacao=Recuperacao(consulta=pergunta, trechos=()),
+                latencia_ms=1,
+            )
+
+    monkeypatch.setattr(settings, "executor", "proprio")
+    monkeypatch.setattr(rag_executor, "montar_fluxo", lambda sessao: FluxoFalso())
+
+    repositorio = RepositorioMemoria()
+    app.dependency_overrides[obter_sessao] = lambda: None
+    app.dependency_overrides[deps.obter_usuario_atual] = lambda: USUARIO
+    app.dependency_overrides[deps.obter_interacoes] = lambda: repositorio
+    app.dependency_overrides[deps.obter_conversas] = lambda: repositorio
+    try:
+        with TestClient(app) as client:
+            resultado = client.post("/chat", json={"mensagem": "Qual o custo do Trecho Sul?"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert resultado.status_code == 200
+    corpo = resultado.json()
+    assert corpo["desfecho"] == Desfecho.ENCAMINHADA.value
+    assert corpo["resposta"].endswith(
+        "\n\nFontes:\n[1] PRJ-2024-018_TAP_v3_20250822.docx — 8. CUSTO"
+    )
+    assert escopos[0].perfil is Perfil.LIDER_PROJETO
+    assert repositorio.conversas[corpo["conversa_id"]].conversa_externa_id is None
     assert len(repositorio.interacoes) == 1
 
 

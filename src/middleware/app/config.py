@@ -68,6 +68,14 @@ class Settings(BaseSettings):
     # calibrado na bancada da onda 2.
     content_safety_limiar_severidade: int = 2
 
+    # --- Executor ---------------------------------------------------------
+    # A única chave que troca o caminho (seção 3.7 de
+    # docs/plano-executor-proprio.md): `copilot` é o Copilot Studio via
+    # Direct Line, o caminho oficial; `proprio` é o RAG sobre o corpus do
+    # Drive. Lida só em api/deps.py — o orquestrador conhece a porta, não a
+    # escolha.
+    executor: str = "copilot"
+
     # --- Banco vetorial (executor próprio) ------------------------------
     # Caminho alternativo, seção 3.7 de docs/plano-executor-proprio.md. O
     # backend fica atrás da porta `rag/vetorial/base.py`: `pinecone` é o
@@ -129,6 +137,12 @@ class Settings(BaseSettings):
     # Teto por tentativa. O adaptador repete as falhas transitórias (cota
     # e indisponibilidade), então o pior caso de uma consulta é maior.
     gemini_timeout_seconds: float = 30.0
+    # `llm_backend=openrouter`: o mesmo papel pela API do OpenRouter, que
+    # cobra por uso em vez de cota gratuita. O modelo é o identificador do
+    # OpenRouter (`provedor/modelo`), e o padrão é o mesmo Gemini Flash.
+    openrouter_api_key: str = ""
+    openrouter_modelo: str = "google/gemini-3.5-flash"
+    openrouter_timeout_seconds: float = 30.0
 
     # --- Voz (Azure Speech) ---------------------------------------------
     speech_key: str = ""

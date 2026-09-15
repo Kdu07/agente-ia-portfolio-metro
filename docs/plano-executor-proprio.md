@@ -235,6 +235,13 @@ executor por injeção de dependência, então `tests/unit/test_orquestrador.py`
 continua passando sem edição — e é ele que confirma que a troca não afetou
 nenhuma invariante de ordem ou de registro.
 
+**Como ficou no código** (`app/executor/base.py`). O ajuste 1 saiu pela metade:
+o campo continuou `conversa_externa_id`, o nome da coluna em `Conversa`, e passou
+a ser opcional. Renomear mudaria a grafia em três camadas sem mudar o contrato.
+A seleção é `obter_executor()` em `api/deps.py`, e o executor próprio é montado
+por requisição, porque recupera no escopo de quem pergunta e a porta não recebe
+o usuário.
+
 ### 3.2 Estrutura de pastas
 
 ```text
@@ -379,8 +386,9 @@ comentado do arquivo atual:
 | `drive_pasta_id` | Pasta controlada de onde a ingestão lê |
 | `vetorial_backend` | `pinecone` ou `pgvector` |
 | `pinecone_api_key`, `pinecone_index`, `pinecone_namespace` | Índice e isolamento |
-| `llm_backend` | Adaptador de geração; `gemini` é o único hoje |
-| `gemini_api_key`, `gemini_modelo`, `gemini_timeout_seconds` | Geração |
+| `llm_backend` | Adaptador de geração: `gemini` ou `openrouter` |
+| `gemini_api_key`, `gemini_modelo`, `gemini_timeout_seconds` | Geração pelo Gemini direto |
+| `openrouter_api_key`, `openrouter_modelo`, `openrouter_timeout_seconds` | Geração pelo OpenRouter; o modelo é o id `provedor/modelo` |
 | `rag_top_k`, `rag_score_minimo` | Recuperação; calibrados pela bancada, não arbitrados |
 | `chunk_tokens`, `chunk_overlap` | Divisão, limitados pelo teto do e5 |
 
@@ -552,13 +560,30 @@ python -m scripts.perguntar_rag "Quem aprova mudança de 15% no orçamento?" --p
 python -m app.rag.bancada --saida bancada.md
 ```
 
-Fica para depois: `rag/executor.py` implementando a porta `Executor` de 3.1 e a
-seleção por `settings.executor` no orquestrador; a guarda de saída, que hoje
-levanta `NotImplementedError` e é pré-requisito para entregar texto gerado pelo
-pipeline; a lista de projetos do usuário, que `UsuarioAutenticado` ainda não
+Fica para depois: as guardas de entrada por modelo e a guarda de saída, que hoje
+levantam `NotImplementedError` e são pré-requisito para entregar pelo `/chat` o
+texto que o executor de 3.11 já gera; a lista de projetos do usuário, que `UsuarioAutenticado` ainda não
 carrega e sem a qual o escopo de líder e membro de equipe só alcança documentos
 transversais; e a primeira medição da bancada no namespace `bancada`, que
 substitui os valores provisórios acima e as metas de 5.1.
+
+### 3.11 O executor ligado ao orquestrador
+
+Com `EXECUTOR=proprio`, o passo 4 do orquestrador aciona `rag/executor.py`,
+que implementa a porta de 3.1 sobre o fluxo de 3.10. O orquestrador não sabe
+qual executor recebeu, e as guardas continuam antes e depois dele.
+
+| Decisão | Por quê |
+|---|---|
+| **Todas as intenções vão ao RAG** | A base estruturada de 3.6 ainda não existe, então a tabela de 3.5 não tem para onde mandar os registros. Transações também chegam ao RAG e tendem a terminar em abstenção |
+| **Escopo pelo perfil, sem projetos** | O executor é montado por requisição com o perfil do usuário. Até `UsuarioAutenticado` carregar a alocação, líder e membro de equipe alcançam só documentos transversais |
+| **Abstenção é resposta, falha é falha** | As três situações de abstenção chegam ao usuário como resposta encaminhada. `ErroGeracao` vira `falha_executor` |
+| **Fontes ao fim do texto** | Um bloco `Fontes:`, numerado como as citações, com arquivo e local. É o que a interface mostra hoje e o que fica gravado no registro. As fontes estruturadas seguem em `RespostaExecutor.fontes` |
+| **Sem sessão externa** | `conversa_externa_id` volta `None`, e o orquestrador só vincula a conversa quando há o que vincular. Os turnos anteriores ainda não entram no contexto (D6) |
+
+`LLM_BACKEND=openrouter` troca o Gemini direto pelo mesmo modelo via OpenRouter
+(`rag/linguagem/openrouter.py`), com as mesmas regras de canal, novas tentativas
+e resposta vazia.
 
 ## 4. Segurança
 
