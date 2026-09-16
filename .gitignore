@@ -5,6 +5,10 @@
 # Chave da conta de serviço do Drive (ingestão do executor próprio)
 credenciais/
 
+# Resíduo de testes: um MagicMock usado como caminho vira diretório real
+# quando o código sob teste escreve nele (uploads de áudio).
+MagicMock/
+
 # Python
 __pycache__/
 *.pyc
