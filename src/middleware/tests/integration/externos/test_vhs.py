@@ -1,9 +1,11 @@
 """Validação do módulo de VHS: cache, sanitização e modo de gravação.
 
 Estes testes não exercitam nenhuma integração externa de verdade — os
-clientes de Entra ID, Direct Line, Content Safety e Speech ainda são
-`NotImplementedError` (ondas 1 e 2 de Arquitetura.md §12.1). O que se
-verifica aqui é o **mecanismo** que essas integrações vão usar: que uma
+clientes de Entra ID, Direct Line e Speech ainda são
+`NotImplementedError` (onda 1 de Arquitetura.md §12.1), e o de Content
+Safety, implementado na onda 2, é dublado por `httpx.MockTransport` nos
+testes das guardas, sem tocar a rede nem estas fitas. O que se verifica
+aqui é o **mecanismo** que essas integrações vão usar: que uma
 resposta gravada uma vez atende chamadas repetidas sem tocar a rede, e
 que nada sensível sobrevive à gravação.
 

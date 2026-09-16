@@ -67,6 +67,16 @@ class Settings(BaseSettings):
     # escala do serviço é 0-6; 2 é o padrão conservador e deve ser
     # calibrado na bancada da onda 2.
     content_safety_limiar_severidade: int = 2
+    # Domínios que a resposta do executor pode citar em link. Fora deles, a
+    # guarda de saída trata a URL como possível exfiltração. Subdomínios
+    # valem (`contoso.sharepoint.com`). Os dois do Google cobrem o link das
+    # fontes do executor próprio, que lê o corpus do Drive.
+    saida_dominios_permitidos: list[str] = [
+        "metro.sp.gov.br",
+        "sharepoint.com",
+        "drive.google.com",
+        "docs.google.com",
+    ]
 
     # --- Executor ---------------------------------------------------------
     # A única chave que troca o caminho (seção 3.7 de
