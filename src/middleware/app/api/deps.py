@@ -32,6 +32,13 @@ from app.persistence.repository import (
     RotinaRepository,
     UsuarioRepository,
 )
+from app.persistence.repository_portfolio import (
+    IndicadorRepository,
+    MarcoRepository,
+    ProjetoRepository,
+    RiscoRepository,
+    UsuarioProjetoRepository,
+)
 from app.persistence.sessao import obter_sessao
 from app.pipeline.orquestrador import Orquestrador
 from app.schemas.usuario import Permissao, UsuarioAutenticado
@@ -44,10 +51,15 @@ __all__ = [
     "obter_conversas",
     "obter_execucoes",
     "obter_executor",
+    "obter_indicadores",
     "obter_interacoes",
+    "obter_marcos",
     "obter_orquestrador",
+    "obter_projetos",
+    "obter_riscos",
     "obter_rotinas",
     "obter_usuario_atual",
+    "obter_usuario_projeto",
     "obter_usuarios",
 ]
 
@@ -183,3 +195,28 @@ def obter_orquestrador(
         interacoes=interacoes,
         conversas=conversas,
     )
+
+
+def obter_projetos(banco: SessaoBanco) -> ProjetoRepository:
+    """Repositório de projetos do portfólio."""
+    return ProjetoRepository(banco)
+
+
+def obter_riscos(banco: SessaoBanco) -> RiscoRepository:
+    """Repositório de riscos de projetos."""
+    return RiscoRepository(banco)
+
+
+def obter_marcos(banco: SessaoBanco) -> MarcoRepository:
+    """Repositório de marcos de projetos."""
+    return MarcoRepository(banco)
+
+
+def obter_indicadores(banco: SessaoBanco) -> IndicadorRepository:
+    """Repositório de indicadores de projetos."""
+    return IndicadorRepository(banco)
+
+
+def obter_usuario_projeto(banco: SessaoBanco) -> UsuarioProjetoRepository:
+    """Repositório da relação usuário-projeto."""
+    return UsuarioProjetoRepository(banco)
