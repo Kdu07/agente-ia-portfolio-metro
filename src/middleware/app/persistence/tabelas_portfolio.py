@@ -16,6 +16,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    MetaData,
     Numeric,
     Text,
     text,
@@ -39,7 +40,15 @@ from app.persistence.models import (
 class Base(DeclarativeBase):
     """Base declarativa. `metadata` é o alvo do autogenerate do Alembic."""
 
-    metadata = None  # Será definido no contexto do schema portfolio
+    metadata = MetaData(
+        naming_convention={
+            "ix": "ix_%(table_name)s_%(column_0_name)s",
+            "uq": "uq_%(table_name)s_%(column_0_name)s",
+            "ck": "ck_%(table_name)s_%(constraint_name)s",
+            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+            "pk": "pk_%(table_name)s",
+        }
+    )
 
 
 def _valores(enum) -> str:
@@ -76,9 +85,9 @@ class ProjetoTabela(Base):
     atualizado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
-        CheckConstraint(_STATUS_PROJETO, name="ck_projeto_status"),
-        CheckConstraint(_PRIORIDADE, name="ck_projeto_prioridade"),
-        CheckConstraint("avanco_percentual >= 0 AND avanco_percentual <= 100", name="ck_projeto_avanco"),
+        CheckConstraint(_STATUS_PROJETO, name="status"),
+        CheckConstraint(_PRIORIDADE, name="prioridade"),
+        CheckConstraint("avanco_percentual >= 0 AND avanco_percentual <= 100", name="avanco"),
         Index("ix_projeto_status", "status"),
         Index("ix_projeto_lider", "lider_id"),
         {"schema": "portfolio"},
@@ -140,9 +149,9 @@ class RiscoTabela(Base):
     atualizado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
-        CheckConstraint("probabilidade >= 1 AND probabilidade <= 5", name="ck_risco_probabilidade"),
-        CheckConstraint("impacto >= 1 AND impacto <= 5", name="ck_risco_impacto"),
-        CheckConstraint(_STATUS_RISCO, name="ck_risco_status"),
+        CheckConstraint("probabilidade >= 1 AND probabilidade <= 5", name="probabilidade"),
+        CheckConstraint("impacto >= 1 AND impacto <= 5", name="impacto"),
+        CheckConstraint(_STATUS_RISCO, name="status"),
         Index("ix_risco_projeto", "projeto_codigo"),
         Index("ix_risco_status", "status"),
         {"schema": "portfolio"},
@@ -195,7 +204,7 @@ class MarcoTabela(Base):
     atualizado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
-        CheckConstraint(_STATUS_MARCO, name="ck_marco_status"),
+        CheckConstraint(_STATUS_MARCO, name="status"),
         Index("ix_marco_projeto", "projeto_codigo"),
         Index("ix_marco_data_prevista", "data_prevista"),
         {"schema": "portfolio"},
@@ -293,7 +302,7 @@ class UsuarioProjetoTabela(Base):
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
-        CheckConstraint(_PAPEL_PROJETO, name="ck_usuario_projeto_papel"),
+        CheckConstraint(_PAPEL_PROJETO, name="papel"),
         Index("ix_usuario_projeto_usuario", "usuario_id"),
         Index("ix_usuario_projeto_projeto", "projeto_codigo"),
         {"schema": "portfolio"},
