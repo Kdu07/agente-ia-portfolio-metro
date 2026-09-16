@@ -44,6 +44,10 @@ class UsuarioAutenticado:
     identidade não deve ser alterada por nenhuma etapa seguinte. Uma
     etapa que precise de outro contexto deve recebê-lo explicitamente,
     não reescrever quem é o usuário.
+
+    `projetos` é a lista de códigos de projetos aos quais o usuário tem
+    acesso, carregada no login para aplicar controle de acesso por projeto
+    sem consultas adicionais.
     """
 
     id: str
@@ -51,7 +55,12 @@ class UsuarioAutenticado:
     perfil: Perfil
     permissoes: frozenset[Permissao] = frozenset()
     email: str | None = None
+    projetos: frozenset[str] = frozenset()
 
     def pode(self, permissao: Permissao) -> bool:
         """True se o usuário detém a permissão informada."""
         return permissao in self.permissoes
+
+    def tem_acesso_projeto(self, projeto_codigo: str) -> bool:
+        """True se o usuário tem acesso ao projeto informado."""
+        return projeto_codigo in self.projetos
