@@ -24,42 +24,42 @@ docker compose -f infra/docker-compose.yml up --build
 ### 3. Scripts auxiliares criados
 - ✅ `scripts/verificar_configuracao.py` - Verifica configurações do .env
 - ✅ `scripts/provisionar_pinecone.py` - Cria índice Pinecone automaticamente
-- ✅ `.env.adicoes` - Template de variáveis faltantes
+- ✅ `.env.adicoes` - Template de variáveis faltantes (atualizado para OpenRouter)
 - ✅ `credenciais/` - Diretório para arquivos de credenciais
 
 ## ⚠️ O que você precisa fazer manualmente (MÍNIMO)
 
 ### 1. Adicionar variáveis faltantes ao .env
 
-Você já tem a maioria das configurações! Adicione apenas estas linhas ao seu `.env`:
+Como você já está usando OpenRouter com Gemini (executor próprio), adicione apenas estas linhas ao seu `.env`:
 
 ```bash
-# --- Variáveis faltantes ---
-DIRECTLINE_SECRET=  # Obter no portal do Copilot Studio
-EXECUTOR=copilot  # Escolha: copilot ou proprio
+# --- Executor (ja configurado para proprio) ---
+EXECUTOR=proprio
 
-# --- Recuperação RAG (valores padrão) ---
+# --- Geração (usando OpenRouter - ja deve estar configurado) ---
+LLM_BACKEND=openrouter
+OPENROUTER_API_KEY=  # Sua chave ja existente
+OPENROUTER_MODELO=google/gemini-3.5-flash
+OPENROUTER_TIMEOUT_SECONDS=30
+
+# --- Recuperação RAG (valores padrao) ---
 RAG_TOP_K=5
 RAG_SCORE_MINIMO=0.75
-
-# --- Geração (se usar executor proprio) ---
-LLM_BACKEND=gemini
-GEMINI_API_KEY=  # Obter em https://aistudio.google.com/
-GEMINI_MODELO=gemini-3.5-flash
-GEMINI_TIMEOUT_SECONDS=30
 ```
 
-**Nota:** O arquivo `.env.adicoes` contém todas as variáveis que você pode adicionar.
+**Nota:** O arquivo `.env.adicoes` foi atualizado com estas configurações específicas para o seu caso.
 
-### 2. Obter credenciais (apenas uma delas)
+### 2. Verificar Pinecone (se ainda não tiver índice)
 
-**Se usar EXECUTOR=copilot (recomendado):**
-- Obter `DIRECTLINE_SECRET` no portal do Copilot Studio
+Você ja tem a API key do Pinecone configurada. Verifique se o índice existe:
 
-**Se usar EXECUTOR=proprio:**
-- Obter `GEMINI_API_KEY` em https://aistudio.google.com/
-- Executar: `python -m scripts.provisionar_pinecone`
-- Colocar arquivo JSON em `credenciais/conta-de-servico.json` (ver `CREDENCIAIS_README.md`)
+```bash
+cd src/middleware
+.venv\Scripts\python.exe -m scripts.provisionar_pinecone
+```
+
+Se o índice não existir, o script vai criar automaticamente.
 
 ### 3. Iniciar o projeto
 
@@ -70,7 +70,7 @@ docker compose -f infra/docker-compose.yml up --build
 # A interface estará em http://localhost:5173
 ```
 
-## � Resumo Final
+## 📋 Resumo Final
 
 **Já feito automaticamente:**
 - ✅ PostgreSQL com schema portfolio
@@ -80,20 +80,27 @@ docker compose -f infra/docker-compose.yml up --build
 - ✅ Integração com sistema de sessão
 - ✅ Scripts de verificação e provisionamento
 
+**Você ja tem configurado:**
+- ✅ Pinecone API key
+- ✅ OpenRouter API key (ja estava funcionando)
+- ✅ Google Drive configurado
+
 **Você só precisa fazer:**
-- ⚠️ Adicionar 3-4 linhas ao `.env` (veja `.env.adicoes`)
-- ⚠️ Obter 1 credencial (DIRECTLINE_SECRET ou GEMINI_API_KEY)
+- ⚠️ Adicionar 4-5 linhas ao `.env` (veja `.env.adicoes` atualizado)
+- ⚠️ Verificar se o índice Pinecone existe (script provisionar_pinecone)
 - ⚠️ Rodar `docker compose -f infra/docker-compose.yml up --build`
 
 **Opcional:**
 - 📌 Azure AI Content Safety (proteção adicional)
-- 📌 Configurar credenciais do Drive (se usar RAG)
+- 📌 Copilot Studio (quando tiver acesso no futuro)
 
 ## 🎯 Próximos passos
 
-1. Copie as linhas de `.env.adicoes` para o seu `.env`
-2. Obtenha a credencial necessária (DIRECTLINE_SECRET ou GEMINI_API_KEY)
+1. Copie as linhas atualizadas de `.env.adicoes` para o seu `.env`
+2. Execute: `python -m scripts.provisionar_pinecone` (para verificar/criar índice)
 3. Execute: `docker compose -f infra/docker-compose.yml up --build`
 4. Acesse: http://localhost:5173
 
 **O PostgreSQL com schema portfolio está 100% pronto e funcionará automaticamente!**
+
+**Como você ja estava usando OpenRouter com Gemini, muito pouco precisa ser configurado manualmente!**
