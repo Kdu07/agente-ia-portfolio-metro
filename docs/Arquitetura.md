@@ -570,7 +570,7 @@ algo demonstrável ponta a ponta.
 
 | Onda | Escopo | Estado ao fim |
 |---|---|---|
-| 1. Fundação | Persistência e Auth BFF implementados; integração `/chat` ponta a ponta ainda parcial. A criação limpa do banco exige conciliar as duas heads atuais do Alembic antes de usar `upgrade head`. | Validar migrações, login no ambiente configurado e fluxo completo; mocks não comprovam homologação externa |
+| 1. Fundação | Persistência e Auth BFF implementados; integração `/chat` ponta a ponta ainda parcial. As duas heads do Alembic foram conciliadas por linearização das revisões, e a criação limpa do banco roda com `upgrade head`. | Validar migrações, login no ambiente configurado e fluxo completo; mocks não comprovam homologação externa |
 | 2. Guardas | Regras determinísticas, Content Safety nas duas guardas de entrada, guarda de saída, desfechos novos, testes adversariais | Proteção contra injeção e contra prompts maliciosos, mensurável |
 | 3. Intenções | ~~Classificador, bancada de avaliação, limiar por intenção~~ **concluídos**; falta o registro completo da interação | RNF03 com número: acurácia 0,856, macro-F1 0,851 |
 | 4. Análise | Endpoints de agregação, dashboard responsivo, `VER_INTENCOES` aplicada nos dois lados | Análise dos dados de intenções disponível |
