@@ -51,6 +51,12 @@ export function useConversa(conversaId?: string) {
   const clienteQuery = useQueryClient();
   const [linhasLocais, setLinhasLocais] = useState<Linha[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  // Numa conversa nova nao ha id na rota: quem cria a conversa e o
+  // backend, no primeiro turno. Sem guardar o id devolvido, cada mensagem
+  // seguinte iria com `conversa_id: null` e abriria outra conversa, e o
+  // executor perderia o contexto dos turnos anteriores.
+  const [conversaCriada, setConversaCriada] = useState<string | null>(null);
+  const conversaAtual = conversaId ?? conversaCriada;
 
   const { data: conversa, isLoading: carregando } = useQuery<ConversaDetalhe>({
     queryKey: chaves.conversa(conversaId ?? ""),
@@ -62,10 +68,11 @@ export function useConversa(conversaId?: string) {
     mutationFn: (dados: { mensagem: string; canal: Canal }) =>
       api.post<ChatResponse>("/chat", {
         mensagem: dados.mensagem,
-        conversa_id: conversaId ?? null,
+        conversa_id: conversaAtual,
         canal: dados.canal,
       }),
     onSuccess: (resposta) => {
+      if (!conversaId) setConversaCriada(resposta.conversa_id);
       setLinhasLocais((atuais) => [
         ...atuais,
         {

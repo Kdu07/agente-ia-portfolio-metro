@@ -16,7 +16,16 @@
 
 import { HttpResponse, delay, http } from "msw";
 
-import type { ChatRequest, ChatResponse, Desfecho, Rotina, TokenVoz } from "@/tipos";
+import type {
+  ChatRequest,
+  ChatResponse,
+  Desfecho,
+  Execucao,
+  Latencia,
+  Rotina,
+  TokenVoz,
+  ValidacaoRotina,
+} from "@/tipos";
 import { USUARIO } from "./dados/usuario";
 import { CONVERSAS, detalharConversa } from "./dados/conversas";
 import { EXECUCOES, ROTINAS } from "./dados/rotinas";
@@ -54,7 +63,14 @@ const LATENCIA_CONSULTA = import.meta.env.MODE === "test" ? 0 : 350;
  * de palavras-chave, apenas para que os oito desfechos sejam alcancaveis
  * a mao durante o desenvolvimento e o teste manual. A ordem reproduz a
  * ordem do orquestrador: injecao, abuso, escopo, confianca, execucao.
+ *
+ * Os textos, ao contrario, sao copiados de `app/pipeline/respostas.py`.
+ * Um texto proprio do duble faria a tela e os testes serem escritos para
+ * uma frase que o backend nunca devolve.
  */
+const CAPACIDADES =
+  "Posso ajudar com consultas, atualizações, pendências e relatórios dos projetos do portfólio.";
+
 const GATILHOS: { padrao: RegExp; desfecho: Desfecho; resposta: string }[] = [
   {
     padrao: /ignore as instru|esque[cç]a as regras|revele o prompt|voc[eê] agora [eé]/i,
@@ -62,37 +78,35 @@ const GATILHOS: { padrao: RegExp; desfecho: Desfecho; resposta: string }[] = [
     // Bloqueio de injecao e seco: nao explica o motivo nem repete a
     // mensagem recebida. Uma recusa que ensina qual barreira pegou a
     // tentativa e um mapa para a proxima.
-    resposta: "Não posso atender esta solicitação.",
+    resposta: "Não consigo atender essa solicitação.",
   },
   {
     padrao: /xingar|ofender|humilhar|demitir o|difamar/i,
     desfecho: "bloqueada_abuso",
     // Recusa de abuso e orientativa: o usuario e conhecido e legitimo, e
     // o objetivo e reconduzir ao uso correto.
-    resposta:
-      "Não posso ajudar com isso. Posso apoiar consultas ao portfólio, acompanhamento de marcos e registro de atualizações.",
+    resposta: `Não posso ajudar com esse tipo de solicitação. ${CAPACIDADES}`,
   },
   {
     padrao: /previs[aã]o do tempo|receita|futebol|piada/i,
     desfecho: "recusada_fora_escopo",
-    resposta:
-      "Isso está fora do que eu faço. Posso ajudar com status de projetos, riscos, marcos e atualizações do portfólio.",
+    resposta: `Essa solicitação está fora do que eu faço. ${CAPACIDADES}`,
   },
   {
     padrao: /^.{0,12}$|daquele|por l[aá]|aquela coisa/i,
     desfecho: "recusada_baixa_confianca",
-    resposta:
-      "Não tenho certeza do que você precisa. Pode dizer a qual projeto se refere e o que deseja saber?",
+    resposta: `Não tenho certeza do que você precisa. Pode reformular com mais detalhes? ${CAPACIDADES}`,
   },
   {
     padrao: /simular falha|forcar erro|for[cç]ar erro/i,
     desfecho: "falha_executor",
-    resposta: "O executor está indisponível no momento. Tente novamente em alguns instantes.",
+    resposta: "Não consegui completar a ação agora. Tente novamente em instantes.",
   },
   {
     padrao: /documento suspeito|conteudo embutido|conte[uú]do embutido/i,
     desfecho: "bloqueada_saida",
-    resposta: "Não foi possível entregar a resposta desta solicitação.",
+    resposta:
+      "Não consegui montar uma resposta confiável para essa solicitação. Tente reformular; se persistir, acione o suporte.",
   },
 ];
 
@@ -121,12 +135,21 @@ export const handlers = [
     const pedido = (await request.json()) as ChatRequest;
     await delay(LATENCIA_CHAT);
     const { desfecho, resposta } = responderChat(pedido.mensagem ?? "");
+    // Espelha o orquestrador: sem `conversa_id` o backend abre uma conversa
+    // nova e devolve o id dela; `bloqueada` e verdadeiro para todo desfecho
+    // que nao entregou a resposta do executor, inclusive as recusas; e a
+    // recusa por escopo carrega a intencao `fora_de_escopo` do catalogo.
     const corpo: ChatResponse = {
       resposta,
-      conversa_id: pedido.conversa_id ?? "projeto-x",
-      intencao_id: desfecho === "encaminhada" ? "consultar_status_projeto" : null,
+      conversa_id: pedido.conversa_id ?? `conversa-${Date.now()}`,
+      intencao_id:
+        desfecho === "encaminhada"
+          ? "consultar_status_projeto"
+          : desfecho === "recusada_fora_escopo"
+            ? "fora_de_escopo"
+            : null,
       desfecho,
-      bloqueada: desfecho.startsWith("bloqueada"),
+      bloqueada: desfecho !== "encaminhada",
     };
     return HttpResponse.json(corpo);
   }),
@@ -153,11 +176,12 @@ export const handlers = [
     const pedido = (await request.json()) as Partial<Rotina>;
     await delay(LATENCIA_CONSULTA);
     const valida = (pedido.prompt ?? "").trim().length >= 10;
-    return HttpResponse.json({
+    const corpo: ValidacaoRotina = {
       valida,
       intencao_prevista: valida ? "consultar_status_portfolio" : null,
-      motivo: valida ? null : "O prompt não resolve em nenhuma intenção do catálogo.",
-    });
+      erro: valida ? null : "O prompt não resolve em nenhuma intenção do catálogo.",
+    };
+    return HttpResponse.json(corpo);
   }),
   http.post(`${BASE}/rotinas`, async ({ request }) => {
     const pedido = (await request.json()) as Partial<Rotina>;
@@ -199,6 +223,23 @@ export const handlers = [
     await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(EXECUCOES[String(params.id)] ?? []);
   }),
+  http.post(`${BASE}/rotinas/:id/executar`, async ({ params }) => {
+    const id = String(params.id);
+    if (!rotinas.some((rotina) => rotina.id === id)) return new HttpResponse(null, { status: 404 });
+    await delay(LATENCIA_CHAT);
+    const agora = new Date().toISOString();
+    const execucao: Execucao = {
+      id: `execucao-${Date.now()}`,
+      rotina_id: id,
+      iniciada_em: agora,
+      concluida_em: agora,
+      status: "sucesso",
+      resposta: "Resumo consolidado de 12 projetos ativos, com 7 marcos no mês.",
+      desfecho: "encaminhada",
+      erro: null,
+    };
+    return HttpResponse.json(execucao);
+  }),
 
   // Analise de intencoes
   http.get(`${BASE}/intencoes/volume`, async () => {
@@ -229,9 +270,11 @@ export const handlers = [
     await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(BAIXA_CONFIANCA);
   }),
-  // TODO: /intencoes/latencia fica de fora ate o schema de resposta ser
-  // definido no backend. Inventar o formato aqui criaria um contrato
-  // falso que a tela teria de desfazer depois.
+  http.get(`${BASE}/intencoes/latencia`, async () => {
+    await delay(LATENCIA_CONSULTA);
+    const corpo: Latencia = { p50: 1350, p95: 2900 };
+    return HttpResponse.json(corpo);
+  }),
 
   // Voz
   http.get(`${BASE}/voz/token`, () => {

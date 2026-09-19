@@ -83,6 +83,13 @@ export interface ConversaDetalhe {
   turnos: Turno[];
 }
 
+/** Retorno de POST /rotinas/validar. */
+export interface ValidacaoRotina {
+  valida: boolean;
+  intencao_prevista: string | null;
+  erro: string | null;
+}
+
 export type StatusExecucao = "sucesso" | "bloqueada" | "falha";
 
 export interface Rotina {
@@ -138,6 +145,12 @@ export interface ResumoSeguranca {
   bloqueios_abuso: number;
   bloqueios_saida: number;
   taxa_de_bloqueio: number;
+}
+
+/** Percentis de latencia do pipeline, em milissegundos. */
+export interface Latencia {
+  p50: number;
+  p95: number;
 }
 
 export interface ResumoCatalogo {
