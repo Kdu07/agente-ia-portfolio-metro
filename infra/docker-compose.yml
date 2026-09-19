@@ -19,6 +19,8 @@ services:
     build: ../src/middleware
     env_file:
       - ../src/middleware/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://middleware:middleware@db:5432/middleware
     depends_on:
       db:
         condition: service_healthy
@@ -36,6 +38,8 @@ services:
     build: ../src/middleware
     env_file:
       - ../src/middleware/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://middleware:middleware@db:5432/middleware
     depends_on:
       db:
         condition: service_healthy
