@@ -31,7 +31,7 @@ describe("Página principal", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
 
-    expect(await screen.findByText(/Isso está fora do que eu faço/, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText(/Essa solicitação está fora do que eu faço/, {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByText("Fora do escopo")).toBeInTheDocument();
   });
 
@@ -43,7 +43,7 @@ describe("Página principal", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
 
-    const resposta = await screen.findByText("Não posso atender esta solicitação.", {}, { timeout: 3000 });
+    const resposta = await screen.findByText("Não consigo atender essa solicitação.", {}, { timeout: 3000 });
     expect(resposta).toBeInTheDocument();
 
     // A etiqueta e o texto nao podem nomear a guarda que barrou.

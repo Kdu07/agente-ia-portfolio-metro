@@ -136,6 +136,39 @@ uvicorn app.main:app --reload
 Requer `.env` — parta de [.env.example](.env.example). O PostgreSQL e demais
 serviços sobem por [infra/docker-compose.yml](../../infra/docker-compose.yml).
 
+### Interface contra esta API, sem dublês
+
+Em desenvolvimento a interface responde com os dublês do MSW
+(`src/web/src/mocks/handlers.ts`), e nenhuma chamada chega aqui. Para exercitar
+o caminho real — login no Entra, cookie de sessão, proxy de `/api` e os
+contratos das rotas:
+
+```powershell
+# 1. banco com esquema e carga de demonstração (seção "Banco de dados")
+# 2. a API, nesta pasta
+uvicorn app.main:app --port 8000
+# 3. a interface, em src/web, com os dublês desligados
+$env:VITE_SEM_DUBLES = "true"; npm run dev
+```
+
+Quatro cuidados que não se leem no código:
+
+- **Worker preso.** Um service worker do MSW registrado numa sessão anterior
+  continua respondendo mesmo com `VITE_SEM_DUBLES=true`. Antes de testar,
+  remova-o em DevTools → Application → Service Workers → *Unregister*. Se
+  `/api/auth/eu` aparecer como respondido pelo worker, é isso.
+- **Origem `http://localhost:5173`.** É o redirect URI registrado no Entra. Abrir
+  por `127.0.0.1` ou pelo IP da máquina quebra o login: o Entra devolve para
+  `localhost`, e o cookie do fluxo ficou gravado no outro host. Os cookies saem
+  `Secure`, o que o navegador tolera em HTTP só no `localhost` — fora dele,
+  `SESSION_COOKIE_SECURE` precisa acompanhar o HTTPS.
+- **Partida a frio.** A primeira mensagem que chega ao classificador carrega os
+  pesos do modelo, e a resposta pode passar de dois minutos. As seguintes
+  levam poucos segundos.
+- **Rotas ainda não implementadas respondem 500.** Conversas, rotinas,
+  intenções e o token de voz levantam `NotImplementedError`; a interface mostra
+  uma mensagem genérica. O mapa por rota está na issue #353.
+
 ## Banco vetorial (Pinecone)
 
 O banco vetorial do executor próprio fica atrás da porta
