@@ -9,13 +9,13 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
     Index,
     Integer,
+    MetaData,
     Numeric,
     Text,
     text,
@@ -39,7 +39,15 @@ from app.persistence.models import (
 class Base(DeclarativeBase):
     """Base declarativa. `metadata` é o alvo do autogenerate do Alembic."""
 
-    metadata = None  # Será definido no contexto do schema portfolio
+    metadata = MetaData(
+        naming_convention={
+            "ix": "ix_%(table_name)s_%(column_0_name)s",
+            "uq": "uq_%(table_name)s_%(column_0_name)s",
+            "ck": "ck_%(table_name)s_%(constraint_name)s",
+            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+            "pk": "pk_%(table_name)s",
+        }
+    )
 
 
 def _valores(enum) -> str:
