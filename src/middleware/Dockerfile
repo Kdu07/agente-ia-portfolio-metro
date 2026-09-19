@@ -8,7 +8,10 @@ WORKDIR /app
 # Copiado antes do código para que a camada de dependências seja
 # reaproveitada quando só a aplicação muda.
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir .
+# sentence-transformers aceita o torch CPU já instalado e deixa de puxar
+# os enormes wheels CUDA para uma imagem que não usa GPU.
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple "torch>=2.2"
+RUN pip install --no-cache-dir ".[rag]"
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large')"
 
 COPY app ./app

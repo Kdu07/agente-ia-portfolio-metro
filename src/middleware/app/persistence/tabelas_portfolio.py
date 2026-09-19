@@ -9,16 +9,14 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
     Date,
     DateTime,
-    ForeignKey,
     Index,
     Integer,
+    MetaData,
     Numeric,
     Text,
-    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -39,7 +37,15 @@ from app.persistence.models import (
 class Base(DeclarativeBase):
     """Base declarativa. `metadata` é o alvo do autogenerate do Alembic."""
 
-    metadata = None  # Será definido no contexto do schema portfolio
+    metadata = MetaData(
+        naming_convention={
+            "ix": "ix_%(table_name)s_%(column_0_name)s",
+            "uq": "uq_%(table_name)s_%(column_0_name)s",
+            "ck": "ck_%(table_name)s_%(constraint_name)s",
+            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+            "pk": "pk_%(table_name)s",
+        }
+    )
 
 
 def _valores(enum) -> str:
@@ -58,7 +64,6 @@ class ProjetoTabela(Base):
     """Tabela de projetos do portfólio."""
 
     __tablename__ = "projeto"
-    __table_args__ = {"schema": "portfolio"}
 
     codigo: Mapped[str] = mapped_column(Text, primary_key=True)
     nome: Mapped[str] = mapped_column(Text, nullable=False)
@@ -126,7 +131,6 @@ class RiscoTabela(Base):
     """Tabela de riscos de projetos."""
 
     __tablename__ = "risco"
-    __table_args__ = {"schema": "portfolio"}
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     projeto_codigo: Mapped[str] = mapped_column(Text, nullable=False)
@@ -182,7 +186,6 @@ class MarcoTabela(Base):
     """Tabela de marcos de projetos."""
 
     __tablename__ = "marco"
-    __table_args__ = {"schema": "portfolio"}
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     projeto_codigo: Mapped[str] = mapped_column(Text, nullable=False)
@@ -233,7 +236,6 @@ class IndicadorTabela(Base):
     """Tabela de indicadores de projetos."""
 
     __tablename__ = "indicador"
-    __table_args__ = {"schema": "portfolio"}
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     projeto_codigo: Mapped[str] = mapped_column(Text, nullable=False)
@@ -285,7 +287,6 @@ class UsuarioProjetoTabela(Base):
     """Tabela de relação usuário-projeto."""
 
     __tablename__ = "usuario_projeto"
-    __table_args__ = {"schema": "portfolio"}
 
     usuario_id: Mapped[str] = mapped_column(Text, primary_key=True)
     projeto_codigo: Mapped[str] = mapped_column(Text, primary_key=True)

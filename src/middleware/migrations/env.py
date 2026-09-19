@@ -19,6 +19,7 @@ from sqlalchemy.pool import NullPool
 import app.rag.tabelas  # noqa: F401
 from app.config import settings
 from app.persistence.tabelas import Base
+from app.persistence.tabelas_portfolio import Base as PortfolioBase
 
 config = context.config
 
@@ -26,7 +27,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Alvo do `--autogenerate`: o metadata das tabelas mapeadas.
-target_metadata = Base.metadata
+target_metadata = [Base.metadata, PortfolioBase.metadata]
 
 config.set_main_option("sqlalchemy.url", settings.database_url)
 
@@ -45,7 +46,7 @@ def incluir_objeto(objeto, nome, tipo, reflexo, objeto_comparado) -> bool:
 
 # Schemas deste projeto: o padrão (`None`, o `public`) e o `rag` da
 # ingestão do executor próprio.
-ESQUEMAS = {None, "rag"}
+ESQUEMAS = {None, "rag", "portfolio"}
 
 
 def incluir_nome(nome, tipo, pais) -> bool:

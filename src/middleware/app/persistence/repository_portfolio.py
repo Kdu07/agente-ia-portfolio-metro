@@ -221,7 +221,7 @@ class UsuarioProjetoRepository(_RepositorioBase):
             select(UsuarioProjetoTabela.projeto_codigo)
             .where(UsuarioProjetoTabela.usuario_id == usuario_id)
         )
-        return [linha[0] for linha in resultado.scalars()]
+        return list(resultado.scalars())
 
     async def listar_usuarios_do_projeto(self, projeto_codigo: str) -> list[str]:
         """Lista IDs de usuários que têm acesso ao projeto."""
@@ -229,7 +229,7 @@ class UsuarioProjetoRepository(_RepositorioBase):
             select(UsuarioProjetoTabela.usuario_id)
             .where(UsuarioProjetoTabela.projeto_codigo == projeto_codigo)
         )
-        return [linha[0] for linha in resultado.scalars()]
+        return list(resultado.scalars())
 
     async def adicionar(self, usuario_projeto: UsuarioProjeto) -> None:
         """Adiciona um usuário a um projeto."""

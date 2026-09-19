@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.routes import auth, chat, conversas, health, intencoes, rotinas, voz
+from app.api.routes import auth, chat, conversas, health, intencoes, portfolio, rotinas, voz
 from app.persistence import sessao as db
 
 
@@ -52,3 +52,4 @@ app.include_router(voz.router, tags=["voz"])
 # Rotas restritas: a permissão é exigida no próprio router (ver cada módulo).
 app.include_router(intencoes.router, tags=["intencoes"])
 app.include_router(rotinas.router, tags=["rotinas"])
+app.include_router(portfolio.router, tags=["portfolio"])
