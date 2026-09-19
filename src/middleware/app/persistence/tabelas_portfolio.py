@@ -12,13 +12,11 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
-    ForeignKey,
     Index,
     Integer,
     MetaData,
     Numeric,
     Text,
-    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -66,7 +64,6 @@ class ProjetoTabela(Base):
     """Tabela de projetos do portfólio."""
 
     __tablename__ = "projeto"
-    __table_args__ = {"schema": "portfolio"}
 
     codigo: Mapped[str] = mapped_column(Text, primary_key=True)
     nome: Mapped[str] = mapped_column(Text, nullable=False)
@@ -134,7 +131,6 @@ class RiscoTabela(Base):
     """Tabela de riscos de projetos."""
 
     __tablename__ = "risco"
-    __table_args__ = {"schema": "portfolio"}
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     projeto_codigo: Mapped[str] = mapped_column(Text, nullable=False)
@@ -190,7 +186,6 @@ class MarcoTabela(Base):
     """Tabela de marcos de projetos."""
 
     __tablename__ = "marco"
-    __table_args__ = {"schema": "portfolio"}
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     projeto_codigo: Mapped[str] = mapped_column(Text, nullable=False)
@@ -241,7 +236,6 @@ class IndicadorTabela(Base):
     """Tabela de indicadores de projetos."""
 
     __tablename__ = "indicador"
-    __table_args__ = {"schema": "portfolio"}
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     projeto_codigo: Mapped[str] = mapped_column(Text, nullable=False)
@@ -293,7 +287,6 @@ class UsuarioProjetoTabela(Base):
     """Tabela de relação usuário-projeto."""
 
     __tablename__ = "usuario_projeto"
-    __table_args__ = {"schema": "portfolio"}
 
     usuario_id: Mapped[str] = mapped_column(Text, primary_key=True)
     projeto_codigo: Mapped[str] = mapped_column(Text, primary_key=True)

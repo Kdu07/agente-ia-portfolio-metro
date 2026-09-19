@@ -1,8 +1,7 @@
 """Rotas de consulta do portfólio persistido no PostgreSQL."""
 
-from typing import Annotated
-
 from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 

@@ -33,10 +33,10 @@ from app.persistence.repository import (
     UsuarioRepository,
 )
 from app.persistence.repository_portfolio import (
+    IndicadorRepository,
+    MarcoRepository,
     ProjetoRepository,
     RiscoRepository,
-    MarcoRepository,
-    IndicadorRepository,
     UsuarioProjetoRepository,
 )
 from app.persistence.sessao import obter_sessao
@@ -51,8 +51,8 @@ __all__ = [
     "obter_conversas",
     "obter_execucoes",
     "obter_executor",
-    "obter_interacoes",
     "obter_indicadores",
+    "obter_interacoes",
     "obter_marcos",
     "obter_orquestrador",
     "obter_projetos",

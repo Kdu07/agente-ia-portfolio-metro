@@ -17,9 +17,9 @@ from sqlalchemy.pool import NullPool
 
 # Registra no metadata as tabelas do schema `rag` (app/rag/tabelas.py).
 import app.rag.tabelas  # noqa: F401
-from app.persistence.tabelas_portfolio import Base as PortfolioBase
 from app.config import settings
 from app.persistence.tabelas import Base
+from app.persistence.tabelas_portfolio import Base as PortfolioBase
 
 config = context.config
 
