@@ -23,7 +23,7 @@ dado de outra pessoa, e basta um `return` mal colocado para vazá-lo.
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -145,6 +145,16 @@ class ConversaRepository(_RepositorioBase):
 
         resultado = await self._sessao.execute(consulta)
         return [linha.to_dominio() for linha in resultado.scalars()]
+
+    async def contar_interacoes(self, conversa_id: str, usuario_id: str) -> int:
+        """Conta os turnos de uma conversa pertencente ao usuário."""
+        resultado = await self._sessao.execute(
+            select(func.count(InteracaoTabela.id)).where(
+                InteracaoTabela.conversa_id == conversa_id,
+                InteracaoTabela.usuario_id == usuario_id,
+            )
+        )
+        return int(resultado.scalar_one())
 
     async def definir_titulo(self, conversa_id: str, titulo: str) -> None:
         """Grava o título derivado do primeiro turno da conversa."""
