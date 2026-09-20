@@ -27,7 +27,7 @@ async def listar(
     incluir_arquivadas: bool = False,
 ) -> list[ConversaResumo]:
     """Conversas do usuário, mais recente primeiro."""
-    conversas_do_usuario = await conversas.listar_por_usuario(
+    conversas_do_usuario = await conversas.listar_com_total_por_usuario(
         usuario.id, incluir_arquivadas=incluir_arquivadas
     )
     return [
@@ -36,9 +36,9 @@ async def listar(
             titulo=conversa.titulo,
             criada_em=conversa.criada_em,
             atualizada_em=conversa.atualizada_em,
-            total_turnos=await conversas.contar_interacoes(conversa.id, usuario.id),
+            total_turnos=total_turnos,
         )
-        for conversa in conversas_do_usuario
+        for conversa, total_turnos in conversas_do_usuario
     ]
 
 

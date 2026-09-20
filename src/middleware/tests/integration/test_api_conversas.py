@@ -43,9 +43,11 @@ class RepositorioConversasMemoria:
             "conversa-b": [],
         }
 
-    async def listar_por_usuario(self, usuario_id: str, *, incluir_arquivadas: bool = False):
+    async def listar_com_total_por_usuario(
+        self, usuario_id: str, *, incluir_arquivadas: bool = False
+    ):
         return [
-            conversa
+            (conversa, len(self.interacoes.get(conversa.id, [])))
             for conversa in self.conversas.values()
             if conversa.usuario_id == usuario_id
             and (incluir_arquivadas or conversa.arquivada_em is None)
@@ -54,10 +56,6 @@ class RepositorioConversasMemoria:
     async def obter(self, conversa_id: str, usuario_id: str):
         conversa = self.conversas.get(conversa_id)
         return conversa if conversa and conversa.usuario_id == usuario_id else None
-
-    async def contar_interacoes(self, conversa_id: str, usuario_id: str) -> int:
-        conversa = await self.obter(conversa_id, usuario_id)
-        return len(self.interacoes.get(conversa_id, [])) if conversa else 0
 
     async def arquivar(self, conversa_id: str, usuario_id: str) -> None:
         conversa = await self.obter(conversa_id, usuario_id)
@@ -91,6 +89,7 @@ def test_usuario_ve_apenas_as_proprias_conversas(api_conversas):
     resposta = client.get("/conversas")
     assert resposta.status_code == 200
     assert [item["id"] for item in resposta.json()] == ["conversa-a"]
+    assert resposta.json()[0]["total_turnos"] == 1
 
 
 def test_usuario_nao_acessa_detalhe_de_outro(api_conversas):

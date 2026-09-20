@@ -198,6 +198,7 @@ def test_executor_proprio_responde_o_chat(dublar_pipeline, monkeypatch) -> None:
     )
     assert escopos[0].perfil is Perfil.LIDER_PROJETO
     assert repositorio.conversas[corpo["conversa_id"]].conversa_externa_id is None
+    assert repositorio.conversas[corpo["conversa_id"]].titulo == "Qual o custo do Trecho Sul?"
     assert len(repositorio.interacoes) == 1
 
 

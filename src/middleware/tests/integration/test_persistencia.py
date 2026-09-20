@@ -314,13 +314,16 @@ async def test_listar_conversas_esconde_arquivadas_por_padrao(
     visivel = await _conversa(sessao, dono)
     oculta = await _conversa(sessao, dono)
     conversas = ConversaRepository(sessao)
+    await InteracaoRepository(sessao).salvar(_interacao(visivel))
     await conversas.arquivar(oculta.id, dono)
 
     padrao = await conversas.listar_por_usuario(dono)
     completa = await conversas.listar_por_usuario(dono, incluir_arquivadas=True)
+    com_totais = await conversas.listar_com_total_por_usuario(dono)
 
     assert [c.id for c in padrao] == [visivel.id]
     assert {c.id for c in completa} == {visivel.id, oculta.id}
+    assert [(c.id, total) for c, total in com_totais] == [(visivel.id, 1)]
 
 
 async def test_vincular_externa_e_definir_titulo(sessao: AsyncSession) -> None:

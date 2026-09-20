@@ -48,6 +48,21 @@ from app.schemas.usuario import UsuarioAutenticado
 
 logger = logging.getLogger(__name__)
 
+LIMITE_TITULO_CONVERSA = 80
+
+
+def titulo_do_primeiro_turno(prompt: str) -> str:
+    """Produz um título reconhecível sem enviar o prompt a outro serviço.
+
+    Espaços são normalizados porque áudio transcrito e texto colado podem
+    carregar quebras de linha. O limite mantém a lista legível; as reticências
+    deixam explícito que o enunciado original continua completo no turno.
+    """
+    normalizado = " ".join(prompt.split())
+    if len(normalizado) <= LIMITE_TITULO_CONVERSA:
+        return normalizado
+    return normalizado[: LIMITE_TITULO_CONVERSA - 3].rstrip() + "..."
+
 
 @dataclass
 class _Contexto:
@@ -111,7 +126,9 @@ class Orquestrador:
         """
         ctx = _Contexto(
             interacao_id=str(uuid.uuid4()),
-            conversa=await self._resolver_conversa(request.conversa_id, usuario),
+            conversa=await self._resolver_conversa(
+                request.conversa_id, usuario, request.mensagem
+            ),
             usuario=usuario,
             canal=canal,
             prompt=request.mensagem,
@@ -237,7 +254,10 @@ class Orquestrador:
         return await self._encerrar(ctx, Desfecho.ENCAMINHADA, texto=resposta.texto)
 
     async def _resolver_conversa(
-        self, conversa_id: str | None, usuario: UsuarioAutenticado
+        self,
+        conversa_id: str | None,
+        usuario: UsuarioAutenticado,
+        primeiro_prompt: str,
     ) -> Conversa:
         """Recupera a conversa informada ou cria uma nova.
 
@@ -258,6 +278,7 @@ class Orquestrador:
             conversa_externa_id=None,  # só existe após o primeiro turno encaminhado
             criada_em=agora,
             atualizada_em=agora,
+            titulo=titulo_do_primeiro_turno(primeiro_prompt),
         )
         await self._conversas.criar(nova)
         return nova
