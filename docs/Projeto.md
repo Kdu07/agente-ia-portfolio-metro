@@ -8565,7 +8565,22 @@ Os números não são convenção. Eles decorrem da resolução exigida pelas du
 
 `TNF-RNF06-06` fecha uma lacuna que a matriz de 3.4 já apontava: o RNF06 alcança o RF11 porque o prompt de uma rotina atravessa as mesmas barreiras, e sem operador presente para perceber um falso positivo. Uma detecção que caísse no canal de rotina passaria despercebida por semanas, que é justamente o intervalo entre um disparo e o seguinte.
 
-**Execução.** O conjunto adversarial é versionado em `src/middleware/dados/adversarial/`, com um arquivo por vetor e a contraparte legítima em arquivo próprio, cada item marcado com vetor, barreira esperada e origem. A medição roda em `src/middleware/tests/rnf/test_rnf06_barreiras.py`, com o Azure AI Content Safety **real** e não dublado — dublar a barreira que se está medindo produziria o número do dublê. É a única exceção à regra de dublagem declarada em 10.1 e nesta seção, e ela vale apenas para o RNF06. Enquanto o conjunto não estiver construído, este bloco descreve o procedimento e não produz número; a construção é pré-condição para a recalibração dos limiares que 3.3.1 prevê.
+**Execução.** O conjunto adversarial completo será versionado em `src/middleware/dados/adversarial/`, com um arquivo por vetor e a contraparte legítima em arquivo próprio, cada item marcado com vetor, barreira esperada e origem. A medição sistêmica rodará em `src/middleware/tests/rnf/test_rnf06_barreiras.py`, com o Azure AI Content Safety **real** e não dublado — dublar a barreira que se está medindo produziria o número do dublê. É a única exceção à regra de dublagem declarada em 10.1 e nesta seção, e ela vale apenas para o RNF06.
+
+Uma primeira bancada binária, de escopo menor, foi implementada em `app/pipeline/guardas/abuso/bancada.py` para calibrar especificamente o limiar das categorias de conteúdo. O conjunto `dados/bancada-content-safety.csv` contém 32 enunciados definidos antes da medição: 16 solicitações legítimas de portfólio e 16 casos sintéticos distribuídos igualmente entre `Hate`, `SelfHarm`, `Sexual` e `Violence`. A execução de 19/09/2026 contra o recurso real produziu:
+
+| Limiar | Bloqueio indevido | Taxa | Passagem indevida | Taxa |
+|---:|---:|---:|---:|---:|
+| 2 | 0/16 | 0,0% | 5/16 | 31,2% |
+| 4 | 0/16 | 0,0% | 9/16 | 56,2% |
+| 6 | 0/16 | 0,0% | 14/16 | 87,5% |
+
+O limiar **2** foi mantido em `config.py` e `.env.example`: não bloqueou nenhum caso legítimo e apresentou a menor passagem indevida entre os valores comparados. A taxa de 31,2% ainda é alta e impede interpretar esta calibração como aprovação do RNF06. Ela mostra que as categorias genéricas não reconhecem sozinhas todos os pedidos abusivos e reforça a necessidade das regras corporativas e do conjunto adversarial completo. A execução é reproduzida com:
+
+```powershell
+cd src\middleware
+python -m app.pipeline.guardas.abuso.bancada --limiares 2 4 6
+```
 
 #### 10.2.3.7 RNF07 — Retenção e proteção do registro de interações
 
@@ -8600,7 +8615,7 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
 | RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética periódica no *worker*, sobre janela declarada | A construir |
 | RNF05 | 10.2.3.5 | 2 | 2 | Conjunto de enunciados por perfil, com avaliação humana da adequação e verificação automatizada da exposição | A construir |
-| RNF06 | 10.2.3.6 | 3 | 3 | Conjunto adversarial em cinco vetores mais contraparte legítima, contra o Content Safety real | **Não existe** — a construção é pré-condição |
+| RNF06 | 10.2.3.6 | 3 | 3 | Conjunto adversarial em cinco vetores mais contraparte legítima, contra o Content Safety real | Parcial: bancada de calibração da guarda de abuso executada; conjunto sistêmico completo ainda a construir |
 | RNF07 | 10.2.3.7 | 2 | 2 | Inspeção do estado da base e execução dirigida do expurgo | A construir |
 | Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência, com o executor dublado em latência sintética | A construir |
 | **Total** | — | **21** | **16** | — | — |
