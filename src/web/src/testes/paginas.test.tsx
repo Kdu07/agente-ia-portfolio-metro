@@ -3,6 +3,10 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { Principal } from "@/paginas/Principal";
 import { Rotinas } from "@/paginas/Rotinas";
+import { Historico } from "@/paginas/Historico";
+import { Rotas } from "@/rotas";
+import { servidor } from "./setup";
+import { HttpResponse, http } from "msw";
 import { renderizar } from "./utilitarios";
 
 afterEach(cleanup);
@@ -144,5 +148,42 @@ describe("Página de rotinas", () => {
     expect(screen.getByRole("alertdialog", { name: "Excluir rotina?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(screen.queryByRole("alertdialog", { name: "Excluir rotina?" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Página de histórico", () => {
+  it("mostra carregamento, sucesso e conversas reais", async () => {
+    renderizar(<Historico />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Carregando histórico");
+    expect(await screen.findByRole("link", { name: /Status do Projeto X/ })).toBeInTheDocument();
+  });
+
+  it("mostra um estado vazio quando a API devolve uma lista vazia", async () => {
+    servidor.use(http.get("/api/conversas", () => HttpResponse.json([])));
+    renderizar(<Historico />);
+
+    expect(await screen.findByText("Nenhuma conversa registrada")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("distingue falha de carregamento e permite tentar novamente", async () => {
+    servidor.use(
+      http.get("/api/conversas", () => HttpResponse.json({ detail: "Falha temporária" }, { status: 503 })),
+    );
+    renderizar(<Historico />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Falha temporária");
+    expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeInTheDocument();
+    expect(screen.queryByText("Nenhuma conversa registrada")).not.toBeInTheDocument();
+  });
+
+  it("abre a conversa selecionada na rota correspondente", async () => {
+    renderizar(<Rotas />, "/historico");
+    const conversa = await screen.findByRole("link", { name: /Status do Projeto X/ });
+
+    expect(conversa).toHaveAttribute("href", "/conversas/projeto-x");
+    fireEvent.click(conversa);
+    expect(await screen.findByRole("textbox", { name: "Mensagem" })).toBeInTheDocument();
   });
 });

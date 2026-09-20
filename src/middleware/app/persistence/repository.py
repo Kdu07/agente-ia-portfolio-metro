@@ -23,7 +23,7 @@ dado de outra pessoa, e basta um `return` mal colocado para vazá-lo.
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -145,6 +145,44 @@ class ConversaRepository(_RepositorioBase):
 
         resultado = await self._sessao.execute(consulta)
         return [linha.to_dominio() for linha in resultado.scalars()]
+
+    async def listar_com_total_por_usuario(
+        self, usuario_id: str, *, incluir_arquivadas: bool = False
+    ) -> list[tuple[Conversa, int]]:
+        """Conversas e total de turnos em uma consulta, para o histórico.
+
+        A subconsulta correlacionada evita uma consulta de contagem por item
+        da lista. O filtro de usuário aparece também na contagem para que uma
+        inconsistência de dados nunca some interação de outra pessoa.
+        """
+        total_turnos = (
+            select(func.count(InteracaoTabela.id))
+            .where(
+                InteracaoTabela.conversa_id == ConversaTabela.id,
+                InteracaoTabela.usuario_id == usuario_id,
+            )
+            .correlate(ConversaTabela)
+            .scalar_subquery()
+        )
+        consulta = select(ConversaTabela, total_turnos.label("total_turnos")).where(
+            ConversaTabela.usuario_id == usuario_id
+        )
+        if not incluir_arquivadas:
+            consulta = consulta.where(ConversaTabela.arquivada_em.is_(None))
+        consulta = consulta.order_by(ConversaTabela.atualizada_em.desc())
+
+        resultado = await self._sessao.execute(consulta)
+        return [(linha.to_dominio(), int(total)) for linha, total in resultado.all()]
+
+    async def contar_interacoes(self, conversa_id: str, usuario_id: str) -> int:
+        """Conta os turnos de uma conversa pertencente ao usuário."""
+        resultado = await self._sessao.execute(
+            select(func.count(InteracaoTabela.id)).where(
+                InteracaoTabela.conversa_id == conversa_id,
+                InteracaoTabela.usuario_id == usuario_id,
+            )
+        )
+        return int(resultado.scalar_one())
 
     async def definir_titulo(self, conversa_id: str, titulo: str) -> None:
         """Grava o título derivado do primeiro turno da conversa."""

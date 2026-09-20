@@ -18,7 +18,7 @@ from app.pipeline.guardas.injecao.classificador import ResultadoInjection
 from app.pipeline.guardas.saida import ResultadoSaida
 from app.pipeline.intencao.catalogo import FORA_DE_ESCOPO, TENTATIVA_INJECAO
 from app.pipeline.intencao.classificador import ResultadoIntencao
-from app.pipeline.orquestrador import Orquestrador
+from app.pipeline.orquestrador import Orquestrador, titulo_do_primeiro_turno
 from app.schemas.chat import ChatRequest
 from app.schemas.usuario import Perfil, UsuarioAutenticado
 
@@ -168,6 +168,14 @@ def pedido(mensagem: str = "Qual o status do projeto 123XXX?", **kwargs) -> Chat
     return ChatRequest(mensagem=mensagem, **kwargs)
 
 
+def test_titulo_normaliza_espacos_e_limita_o_tamanho() -> None:
+    assert titulo_do_primeiro_turno("  Status\n da   Linha 15  ") == "Status da Linha 15"
+
+    titulo = titulo_do_primeiro_turno("a" * 100)
+    assert len(titulo) == 80
+    assert titulo.endswith("...")
+
+
 # --- Um caso por desfecho ------------------------------------------------
 
 
@@ -180,6 +188,7 @@ async def test_mensagem_legitima_e_encaminhada(etapas: dict) -> None:
     assert resposta.bloqueada is False
     assert resposta.intencao_id == INTENCAO_CONSULTA
     assert len(copilot.chamadas) == 1
+    assert conversas.criadas[0].titulo == "Qual o status do projeto 123XXX?"
     # A conversa criada agora está vinculada ao conversationId do executor.
     assert conversas.vinculos == [(resposta.conversa_id, "dl-123")]
     assert interacoes.unica.desfecho is Desfecho.ENCAMINHADA
