@@ -2675,6 +2675,45 @@ MVP. Alterações na divisão de responsabilidades, nos serviços externos ou no
 fluxo fixo do orquestrador devem ser refletidas neste diagrama e nas vistas
 relacionadas de 5.3 e 5.6.
 
+#### 5.2.3.4 Guardas e ordem invariante do pipeline
+
+As três guardas não são filtros intercambiáveis. Cada uma observa um ponto
+diferente da solicitação, e a posição de cada chamada em
+`pipeline/orquestrador.py::Orquestrador.processar` faz parte do mecanismo de
+segurança. Dentro do orquestrador, a ordem é sempre: **injeção → abuso →
+classificação de intenção → executor → guarda de saída → registro**. O chat,
+o texto transcrito da voz e as rotinas agendadas devem entrar por esse mesmo
+método; chamar o executor diretamente transformaria as guardas em proteção
+opcional.
+
+| Ordem | Guarda | O que protege | Implementação e decisão |
+|---:|---|---|---|
+| 1 | **Injeção de entrada** | O agente contra instruções que tentam redefinir seu papel, extrair o *system prompt* ou contornar regras | Primeiro aplica os padrões determinísticos de `guardas/injecao/regras.py`; somente o que não casar segue para o Prompt Shields em `guardas/injecao/classificador.py`, no campo `userPrompt`. Vem antes de qualquer classificação ou chamada ao executor para que um ataque direto não alcance outros serviços. |
+| 2 | **Abuso** | O uso do agente corporativo por um usuário autenticado para conteúdo nocivo ou proibido pelas políticas da organização | `guardas/abuso/classificador.py` combina as categorias `Hate`, `SelfHarm`, `Sexual` e `Violence` do Content Safety, com limiar 2 calibrado na bancada, e as regras locais de `politicas.py`. Vem depois da injeção porque mau uso e ataque ao agente têm tratamento operacional diferente, mas ainda antes da intenção e do executor. |
+| 3 | **Saída** | O usuário contra instruções hostis que entraram indiretamente por documentos recuperados ou pela resposta do executor | `guardas/saida.py` examina a resposta depois do executor e antes da entrega. Combina regras para instrução embutida, pedido de credencial e destino externo com Prompt Shields no campo `documents`. Não pode ser antecipada: antes da execução ainda não existe resposta para inspecionar. |
+
+O processamento para na primeira guarda que bloquear. Mesmo nesse caminho, o
+controle passa por `_encerrar`, que persiste uma única `Interacao` com o
+desfecho correspondente. Por isso, "bloquear antes do executor" não significa
+"descartar sem rastro": o executor não recebe o conteúdo, mas a decisão fica
+disponível para auditoria e para o recorte analítico de segurança.
+
+**Falha do Azure AI Content Safety.** Timeout, erro HTTP e resposta fora do
+contrato são tratados como indisponibilidade, mas o resultado deliberadamente
+não é igual nas três guardas:
+
+| Guarda | Comportamento quando o serviço falha | Razão |
+|---|---|---|
+| Injeção | **Falha fechada:** devolve suspeita com motivo interno `servico_indisponivel`; o executor não é acionado | Liberar a mensagem transformaria a indisponibilidade da barreira em uma janela de ataque direto. |
+| Abuso | **Falha aberta:** as categorias genéricas deixam de decidir, mas as políticas corporativas locais continuam sendo aplicadas | Interromper todo o uso legítimo durante uma queda do moderador seria uma indisponibilidade total. O risco residual é aceito e sinalizado no *log*, depois de a mensagem já ter atravessado a guarda de injeção. |
+| Saída | **Falha fechada:** a resposta é considerada suspeita e fica retida | Entregar uma resposta possivelmente contaminada por um documento é pior que pedir ao usuário uma nova tentativa; a retenção também é persistida como `BLOQUEADA_SAIDA`. |
+
+Credencial ausente é distinguida de falha em tempo de execução. Sem
+`CONTENT_SAFETY_ENDPOINT` ou `CONTENT_SAFETY_KEY`, as três guardas mantêm apenas
+suas regras locais e registram aviso no *log*: trata-se de uma configuração de
+implantação incompleta, não de um veredito produzido pelo serviço. Em ambiente
+integrado, endpoint e chave são, portanto, pré-condição operacional.
+
 ## 5.3 Diagramas de Sequência da UML
 
 A seção 3.2.2 — *Modelagem estática — Diagrama de classes* — apresentou a modelagem estática do domínio — quais conceitos existem e como se relacionam. Esta seção apresenta a modelagem dinâmica correspondente: **como esses conceitos são produzidos e consumidos ao longo do tempo**, quais componentes trocam mensagens entre si, em que ordem e sob quais condições.
