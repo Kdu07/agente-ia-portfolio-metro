@@ -189,6 +189,21 @@ não um atalho ao lado dele.
 e as permissões do dono, resolvidas **na execução** e não no cadastro. Se o dono
 perder acesso a um projeto, a rotina perde junto no disparo seguinte.
 
+Essa revalidação é concreta: `auth/entra.py::consultar_usuario` usa o fluxo
+OAuth 2.0 *client credentials* e consulta no Microsoft Graph o usuário e seus
+grupos transitivos. O registro de aplicação requer `User.Read.All` como
+permissão **Application**, com consentimento administrativo. Os grupos são
+novamente traduzidos por `auth/permissoes.py`, e os vínculos atuais da tabela
+`usuario_projeto` recompõem o filtro de projetos usado pelo RAG. Nenhuma sessão
+antiga nem permissão copiada no cadastro da rotina é reutilizada.
+
+As falhas são separadas por permanência. Usuário inexistente/desativado ou
+perda de `GERIR_ROTINAS` fecha a execução como `falha` e desativa a rotina;
+repeti-la nunca devolveria o acesso. Timeout, 5xx ou falha de token do Graph
+também fecha o disparo como `falha`, mas mantém a rotina ativa para uma nova
+tentativa no próximo horário. Tokens e respostas pessoais do Graph não são
+gravados no histórico.
+
 A validação do prompt acontece em dois momentos. No cadastro, com o usuário
 presente, ele passa pelas guardas e pelo classificador: se não resolver numa
 intenção do catálogo, o cadastro é recusado ali, com explicação — falhar cedo,
@@ -198,6 +213,9 @@ catálogo e as permissões podem ter mudado desde então.
 O resultado é entregue no próprio app: cada disparo produz uma `ExecucaoRotina`
 ligada à `Interacao` correspondente, e a tela de rotinas exibe o histórico com
 status. Não depende de e-mail, Teams ou integração externa para funcionar.
+O estado inicial `em_execucao` é confirmado antes da chamada externa; ao fim,
+ele muda para `sucesso`, `bloqueada` ou `falha`. Assim, um processo interrompido
+continua aparecendo como execução aberta em vez de desaparecer do histórico.
 
 Dois detalhes operacionais que o agendador precisa tratar explicitamente:
 
@@ -584,7 +602,7 @@ algo demonstrável ponta a ponta.
 | 2. Guardas | Regras determinísticas, Content Safety nas duas guardas de entrada, guarda de saída, desfechos novos, testes adversariais | Proteção contra injeção e contra prompts maliciosos, mensurável |
 | 3. Intenções | ~~Classificador, bancada de avaliação, limiar por intenção~~ **concluídos**; falta o registro completo da interação | RNF03 com número: acurácia 0,856, macro-F1 0,851 |
 | 4. Análise | Endpoints de agregação, dashboard responsivo, `VER_INTENCOES` aplicada nos dois lados | Análise dos dados de intenções disponível |
-| 5. Rotinas | CRUD, validação no cadastro, worker com APScheduler, execuções e aba de resultados | Rotinas em operação |
+| 5. Rotinas | Validação, APScheduler persistente e execução pelo pipeline implementados; CRUD HTTP, worker e aba de resultados seguem na sequência das issues | Parcial: núcleo de domínio executável, exposição ao usuário pendente |
 
 A **voz** não entra nessa cadeia: não depende de nenhuma onda e nenhuma depende
 dela. Encaixa onde houver folga, com preferência pela onda 1, já que a
@@ -598,7 +616,7 @@ tenant da equipe:
 
 | Recurso | Necessário para | Onde está |
 |---|---|---|
-| Entra ID — registro de aplicação | Autenticação, perfis e permissões (onda 1) | **Pendente** — tenant do parceiro |
+| Entra ID + Microsoft Graph | Autenticação, perfis e permissões atuais das rotinas | Cliente implementado; uso real requer registro com `User.Read.All` (Application) e consentimento administrativo no tenant |
 | Copilot Studio com Direct Line habilitado | Execução das ações (onda 1 em diante) | **Pendente** — tenant do parceiro |
 | Azure AI Content Safety | Guardas de injeção, abuso e saída (onda 2) | Em operação — tenant da equipe |
 | Azure Speech | Entrada por voz | Em operação — tenant da equipe |
@@ -612,9 +630,10 @@ completo está em 3.3.1.1 de [Projeto.md](Projeto.md).
 
 ## 13. Caminho alternativo: executor próprio
 
-Duas das quatro dependências externas da seção 12.2 — o registro de aplicação no
-Entra ID e o Copilot Studio com Direct Line — estão pendentes no tenant do
-parceiro e são pré-requisito da onda 1, da qual todas as outras dependem. Como a
+Duas das quatro dependências externas da seção 12.2 — a configuração do registro
+de aplicação no Entra ID/Graph e o Copilot Studio com Direct Line — dependem de
+concessões no tenant. Os clientes estão implementados, mas essa configuração é
+pré-requisito para demonstrar o caminho oficial contra os serviços reais. Como a
 data de entrega é fixa e o provisionamento não é controlado pela equipe, existe
 um **segundo executor**, construído sobre serviços que a equipe provisiona
 sozinha.

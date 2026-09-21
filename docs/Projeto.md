@@ -9205,7 +9205,7 @@ introduzir um atalho, o teste cai.
 
 | Serviço | Módulo que o isola | Protocolo | Situação (Arquitetura §12.2) |
 |---|---|---|---|
-| Microsoft Entra ID | `auth/entra.py` | OIDC/OAuth2 sobre HTTPS (MSAL) | **Pendente** — tenant do parceiro |
+| Microsoft Entra ID + Graph | `auth/entra.py` | OIDC/OAuth2 e REST sobre HTTPS (`httpx` + PyJWT) | Cliente implementado; validação real depende do registro de aplicação e de `User.Read.All` no tenant |
 | Copilot Studio | `copilot/client.py` | Direct Line 3.0 (REST + WebSocket opcional) | **Pendente** — tenant do parceiro |
 | Azure AI Content Safety | `guardas/injecao`, `guardas/abuso`, `guardas/saida` | REST sobre HTTPS | Em operação — tenant da equipe |
 | Azure Speech | `voz/speech.py` (token) e SDK no navegador | REST para o token, WebSocket para o áudio | Em operação — tenant da equipe |
@@ -9214,10 +9214,11 @@ introduzir um atalho, o teste cai.
 | Pinecone | `rag/vetorial/pinecone.py` | REST sobre HTTPS (SDK `pinecone` 10) | Em operação — provedor externo, `us-east-1`; só no executor próprio |
 | Google Gemini | `rag/linguagem/gemini.py` | REST sobre HTTPS (SDK `google-genai`) | Em operação — provedor externo; só no executor próprio |
 
-Os dois primeiros ainda não podem ser gravados de verdade — o que exige a
-manobra das fitas provisórias, e não a suspensão dos testes. As três últimas
-linhas pertencem ao executor próprio (9.4) e são exercitadas pelo grupo IT-RAG
-(10.5.5.11), contra o serviço real e não por fita.
+Entra/Graph e Direct Line possuem clientes implementados, mas a evidência contra
+o ambiente real depende das concessões no tenant; até lá, os cenários externos
+usam fitas ou transportes controlados, e não são apresentados como homologação.
+As três últimas linhas pertencem ao executor próprio (9.4) e são exercitadas
+pelo grupo IT-RAG (10.5.5.11), contra o serviço real e não por fita.
 
 #### 10.5.2.3 Matriz de integração e técnica
 
@@ -9776,6 +9777,19 @@ Fitas em `fitas/directline/`. Provisórias até o provisionamento.
 | IT-ROT-15 | Execução liga-se à interação | Banco real | `ExecucaoRotina.interacao_id` aponta para o registro gravado | 5 |
 | IT-ROT-16 | `carregar_agenda` reconcilia na subida | Jobstore real | Rotina desativada com worker fora não dispara ao voltar | 5 |
 | IT-ROT-17 | Desfecho bloqueado não é erro de sistema | Banco real | `StatusExecucao.BLOQUEADA`, visível na aba de resultados | 5 |
+
+**Implementação da identidade no disparo.** `app/rotinas/execucao.py` registra
+primeiro uma `ExecucaoRotina` com estado `em_execucao` e então chama
+`app/auth/entra.py::consultar_usuario`. A consulta usa credenciais da aplicação
+contra o Microsoft Graph (`/users/{oid}` e
+`/users/{oid}/transitiveMemberOf/microsoft.graph.group`), exigindo
+`User.Read.All` do tipo **Application** com *admin consent*. Os grupos e os
+vínculos atuais de `usuario_projeto` recompõem perfil, permissões e projetos;
+só depois o prompt entra em `Orquestrador.processar` com `canal=ROTINA`.
+Usuário removido/desativado ou sem `GERIR_ROTINAS` produz falha e desativa a
+rotina. Indisponibilidade transitória do Graph produz falha no disparo sem
+desativá-la. A interação gravada pelo pipeline é ligada à execução, cujo estado
+final distingue `sucesso`, `bloqueada` e `falha`.
 
 #### 10.5.5.8 IT-WEB — interface contra o middleware
 

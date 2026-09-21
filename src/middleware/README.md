@@ -136,6 +136,34 @@ uvicorn app.main:app --reload
 Requer `.env` — parta de [.env.example](.env.example). O PostgreSQL e demais
 serviços sobem por [infra/docker-compose.yml](../../infra/docker-compose.yml).
 
+Para o worker executar rotinas com as permissões atuais do dono, o registro de
+aplicação indicado por `ENTRA_CLIENT_ID` precisa ter a permissão Microsoft Graph
+`User.Read.All` do tipo **Application**, com consentimento do administrador do
+tenant. Essa permissão é diferente da opção **Delegated**: no horário agendado
+não existe usuário conectado para delegar acesso. O worker usa
+`ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID` e `ENTRA_CLIENT_SECRET` no fluxo *client
+credentials*, lê usuário e grupos no Graph e nunca persiste o token obtido.
+
+Configuração no portal Azure/Entra:
+
+1. abra **Microsoft Entra ID → App registrations** e selecione o registro cujo
+   *Application (client) ID* está em `ENTRA_CLIENT_ID`;
+2. em **API permissions**, escolha **Add a permission → Microsoft Graph →
+   Application permissions** e adicione `User.Read.All`;
+3. escolha **Grant admin consent** para o tenant — adicionar sem consentir ainda
+   produz 403 no Graph;
+4. confirme no `.env` o tenant, cliente, segredo e os *object IDs* dos grupos
+   `ENTRA_GRUPO_*`; o segredo é valor de *client secret*, não seu identificador;
+5. com um `oid` de teste ativo, valide sem imprimir token ou dados pessoais:
+
+```powershell
+python -c "import asyncio; from app.auth.entra import consultar_usuario; u=asyncio.run(consultar_usuario('OID-DE-TESTE')); print('Graph OK:', bool(u.oid), 'grupos:', len(u.grupos))"
+```
+
+Um 401 indica credencial/tenant inválido; 403 costuma indicar permissão ausente
+ou consentimento administrativo pendente; 404 indica que o `oid` não pertence
+ao tenant configurado. Não copie o token ou o segredo para logs e evidências.
+
 ### Interface contra esta API, sem dublês
 
 Em desenvolvimento a interface responde com os dublês do MSW
