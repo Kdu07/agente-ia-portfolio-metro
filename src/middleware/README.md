@@ -133,6 +133,16 @@ plantada num documento. Com a camada gratuita, rode-os sob demanda.
 uvicorn app.main:app --reload
 ```
 
+O agendador roda em outro processo. Com o banco e as migrações disponíveis,
+inicie-o em um segundo terminal. Ao receber `Ctrl+C`, o worker aguarda a
+execução corrente e fecha o pool antes de terminar:
+
+```powershell
+python -m app.worker
+```
+
+O serviço `worker` do Compose executa esse mesmo comando.
+
 Requer `.env` — parta de [.env.example](.env.example). O PostgreSQL e demais
 serviços sobem por [infra/docker-compose.yml](../../infra/docker-compose.yml).
 
