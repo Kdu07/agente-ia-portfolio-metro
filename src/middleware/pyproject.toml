@@ -24,6 +24,9 @@ dependencies = [
     # Persistência: interações, conversas, rotinas e jobstore do agendador
     "sqlalchemy>=2.0",
     "asyncpg>=0.29",
+    # O SQLAlchemyJobStore do APScheduler 3 é síncrono. A aplicação segue
+    # usando asyncpg; somente o jobstore abre conexões com psycopg.
+    "psycopg[binary]>=3.2",
     "alembic>=1.13",
     # Agendador das rotinas. O jobstore SQLAlchemy usa o mesmo PostgreSQL,
     # o que evita Redis ou outro broker só para a agenda.
