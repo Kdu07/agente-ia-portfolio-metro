@@ -10,7 +10,7 @@ rotulado (activity com metadados de intenção), nunca concatenada a
 instruções — parte da defesa contra prompt injection.
 """
 
-from app.executor.base import RespostaExecutor
+from app.executor.base import RespostaExecutor, TurnoContexto
 
 # Nome anterior à porta, mantido para quem já o importa. O Copilot sempre
 # preenche `conversa_externa_id` (o conversationId do Direct Line).
@@ -26,6 +26,7 @@ class CopilotClient:
         intencao_id: str,
         exige_confirmacao: bool,
         conversa_externa_id: str | None = None,
+        historico: tuple[TurnoContexto, ...] = (),
     ) -> RespostaExecutor:
         """Envia a mensagem sanitizada e aguarda a resposta do Copilot.
 

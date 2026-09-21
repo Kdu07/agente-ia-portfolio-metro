@@ -32,7 +32,8 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from app.executor.base import Executor
+from app.config import settings
+from app.executor.base import Executor, TurnoContexto
 from app.persistence.models import Canal, Conversa, Interacao
 from app.persistence.repository import ConversaRepository, InteracaoRepository
 from app.pipeline.desfechos import Desfecho
@@ -134,6 +135,7 @@ class Orquestrador:
             prompt=request.mensagem,
             rotina_id=rotina_id,
         )
+        historico = await self._historico_seguro(ctx)
 
         # --- 1. Guarda de injeção -----------------------------------------
         # Regra primeiro: é determinística e barata, e evita pagar a
@@ -218,6 +220,7 @@ class Orquestrador:
                 intencao.id,
                 intencao.exige_confirmacao,
                 ctx.conversa.conversa_externa_id,
+                historico,
             )
         except Exception:  # noqa: BLE001 — qualquer falha do executor vira resposta amigável
             # Sem exc_info e sem a mensagem: o traço do executor pode
@@ -329,3 +332,31 @@ class Orquestrador:
             desfecho=desfecho.value,
             bloqueada=desfecho.bloqueada,
         )
+
+    async def _historico_seguro(self, ctx: _Contexto) -> tuple[TurnoContexto, ...]:
+        """Carrega e filtra os turnos do dono antes de compor o prompt."""
+        limite = settings.historico_max_turnos
+        if limite == 0:
+            return ()
+
+        interacoes = await self._interacoes.listar_por_conversa(
+            ctx.conversa.id, ctx.usuario.id, limite=limite
+        )
+        seguros: list[TurnoContexto] = []
+        for interacao in interacoes:
+            textos = (interacao.prompt, interacao.resposta)
+            suspeita = any(injecao_regras.contem_padrao_suspeito(texto) for texto in textos)
+            if not suspeita:
+                vereditos = [await injecao_classificador.classificar(texto) for texto in textos]
+                suspeita = any(veredito.suspeita for veredito in vereditos)
+            if suspeita:
+                logger.warning(
+                    "Turno anterior removido do contexto por suspeita de injeção "
+                    "(conversa=%s, usuario=%s, turno=%s)",
+                    ctx.conversa.id,
+                    ctx.usuario.id,
+                    interacao.id,
+                )
+                continue
+            seguros.append(TurnoContexto(interacao.prompt, interacao.resposta))
+        return tuple(seguros)

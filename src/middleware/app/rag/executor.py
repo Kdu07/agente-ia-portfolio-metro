@@ -36,7 +36,7 @@ orquestrador a registra como falha do executor.
 from collections.abc import Sequence
 from typing import Any
 
-from app.executor.base import Fonte, RespostaExecutor
+from app.executor.base import Fonte, RespostaExecutor, TurnoContexto
 from app.rag.fluxo import FluxoRag, montar_fluxo
 from app.rag.vetorial.base import Escopo
 from app.schemas.usuario import UsuarioAutenticado
@@ -55,9 +55,10 @@ class ExecutorRag:
         intencao_id: str,
         exige_confirmacao: bool,
         conversa_externa_id: str | None = None,
+        historico: tuple[TurnoContexto, ...] = (),
     ) -> RespostaExecutor:
         """Responde pelo RAG, no escopo de quem pergunta."""
-        resultado = await self._fluxo.responder(texto, self._escopo)
+        resultado = await self._fluxo.responder(compor_prompt(texto, historico), self._escopo)
         fontes = tuple(
             Fonte(
                 documento=fonte.documento,
@@ -69,6 +70,18 @@ class ExecutorRag:
             for fonte in resultado.resposta.fontes
         )
         return RespostaExecutor(texto=com_fontes(resultado.resposta.texto, fontes), fontes=fontes)
+
+
+def compor_prompt(texto: str, historico: tuple[TurnoContexto, ...]) -> str:
+    """Delimita o historico como dado antes da mensagem atual."""
+    if not historico:
+        return texto
+    turnos = "\n".join(
+        f"<turno>\n<mensagem_usuario>{turno.mensagem_usuario}</mensagem_usuario>\n"
+        f"<resposta_agente>{turno.resposta_agente}</resposta_agente>\n</turno>"
+        for turno in historico
+    )
+    return f"<historico_nao_confiavel>\n{turnos}\n</historico_nao_confiavel>\n<mensagem_atual>{texto}</mensagem_atual>"
 
 
 def com_fontes(texto: str, fontes: Sequence[Fonte]) -> str:

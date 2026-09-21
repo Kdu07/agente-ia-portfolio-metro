@@ -7,6 +7,7 @@ middleware documenta as variáveis esperadas.
 
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -60,6 +61,12 @@ class Settings(BaseSettings):
     # Desligar apenas em desenvolvimento local sem HTTPS. Em qualquer
     # ambiente compartilhado o cookie precisa ser Secure.
     session_cookie_secure: bool = True
+
+    # Um turno e o par mensagem do usuario + resposta do agente. O limite
+    # controla quantos pares entram no proximo prompt; zero desliga o
+    # historico sem desligar a persistencia. O valor sera calibrado pela
+    # equipe depois de observar custo e qualidade das jornadas.
+    historico_max_turnos: int = Field(default=3, ge=0)
 
     # --- Guardas (Azure AI Content Safety) ------------------------------
     # Uma única dependência cobre as duas features de proteção: Prompt
