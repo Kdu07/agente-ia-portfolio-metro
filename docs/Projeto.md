@@ -2336,6 +2336,7 @@ A confiabilidade da solução é sustentada por **defesa em profundidade**, **is
    - Garante rastreabilidade integral de autoria, canal, momento, confiança e latência sem perda de trilha de auditoria.
 3. **Resiliência do Agendador de Rotinas (RF11, RNF04):**
    - O `worker` (APScheduler) opera com *jobstore* relacional diretamente no PostgreSQL.
+   - A API altera a tabela `rotina`, e o único scheduler, no `worker`, reconcilia essas alterações com o *jobstore* a cada 30 segundos (`ROTINAS_RECONCILIACAO_SEGUNDOS`), sem exigir reinício e sem compartilhar o *jobstore* entre processos.
    - Configurações explícitas de `coalesce=True` e `misfire_grace_time` evitam disparos em rajada ou execuções duplicadas após indisponibilidade temporária do contêiner.
    - Toda rotina reexecuta sob as permissões e contexto do dono **no instante do disparo**, prevenindo escalonamento indevido de privilégios.
 

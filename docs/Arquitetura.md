@@ -209,6 +209,16 @@ Dois detalhes operacionais que o agendador precisa tratar explicitamente:
   `coalesce` e `misfire_grace_time` são o que impede o relatório de sair três
   vezes seguidas.
 
+O PostgreSQL é a fonte de verdade tanto para as rotinas quanto para o
+*jobstore*. Somente o `worker` instancia o APScheduler: a API cria, edita ou
+desativa a linha de `rotina`, e o `worker` reconcilia as rotinas ativas com os
+*jobs* persistidos a cada **30 segundos** (configurável por
+`ROTINAS_RECONCILIACAO_SEGUNDOS`). Uma criação ou edição, portanto, entra na
+agenda em até esse intervalo sem reiniciar o processo. A separação evita dois
+schedulers compartilhando o mesmo *jobstore*, condição que poderia duplicar
+disparos. O APScheduler 3 acessa o *jobstore* de forma síncrona com `psycopg`,
+enquanto os repositórios da aplicação continuam assíncronos com `asyncpg`.
+
 ## 5. Registro e análise de intenções
 
 Registro e análise são duas features, mas formam um circuito só: o que o

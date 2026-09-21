@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     # APScheduler. Um único PostgreSQL evita um broker separado só para a
     # agenda.
     database_url: str = "postgresql+asyncpg://middleware:middleware@localhost:5432/middleware"
+    # Intervalo em que o worker reconcilia a tabela `rotina` com o
+    # jobstore. A API e o worker são processos distintos; essa leitura
+    # periódica faz uma edição chegar ao agendador sem reiniciar o worker.
+    rotinas_reconciliacao_segundos: int = 30
 
     # --- Identidade (Microsoft Entra ID) --------------------------------
     # O tenant é o GUID (Directory/tenant ID), não o domínio: o Entra
