@@ -1,7 +1,9 @@
 import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { HttpResponse, http } from "msw";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Rotas } from "@/rotas";
+import { servidor } from "./setup";
 import { renderizar } from "./utilitarios";
 
 afterEach(cleanup);
@@ -41,6 +43,33 @@ describe("Navegação entre conversas", () => {
     expect(
       screen.getByRole("button", { name: "Quais marcos estão atrasados no portfólio?" }),
     ).toBeInTheDocument();
+  });
+
+  it("preserva a conversa ao passar pelo Histórico e voltar", async () => {
+    servidor.use(
+      http.post("/api/chat", () =>
+        HttpResponse.json({
+          resposta: "Resposta persistida",
+          conversa_id: "projeto-x",
+          intencao_id: "consultar_status_projeto",
+          desfecho: "encaminhada",
+          bloqueada: false,
+        }),
+      ),
+    );
+    renderizar(<Rotas />, "/");
+
+    const campo = screen.getByRole("textbox", { name: "Mensagem" });
+    fireEvent.change(campo, { target: { value: "Qual o status?" } });
+    fireEvent.keyDown(campo, { key: "Enter" });
+    expect(await screen.findByText("Resposta persistida")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("link", { name: "Histórico" }));
+    expect(await screen.findByText("Histórico de conversas")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Página principal" }));
+
+    expect(await screen.findByText(/62% de avanço físico/)).toBeInTheDocument();
+    expect(screen.queryByText("Como posso ajudar?")).not.toBeInTheDocument();
   });
 
   it("não repete o alerta de marco em uma conversa já gravada", async () => {

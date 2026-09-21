@@ -57,14 +57,15 @@ function RotaProtegida({
  * o parametro mudou. O resultado e a conversa anterior continuar na tela
  * enquanto a nova carrega por baixo.
  *
- * `location.key` muda a cada navegacao, inclusive de "/" para "/", e e
- * o que faz o botao Nova conversa comecar de fato uma conversa nova em
- * vez de nao fazer nada quando ja se esta na pagina principal.
+ * O estado `novaConversa` vem do botao da barra lateral. Assim, voltar ao
+ * caminho "/" pela navegacao normal preserva a conversa ativa, enquanto o
+ * comando explicito cria uma tela vazia.
  */
 function Conversa() {
   const { conversaId } = useParams<{ conversaId: string }>();
   const localizacao = useLocation();
-  return <Principal key={conversaId ?? localizacao.key} />;
+  const novaConversa = localizacao.state?.novaConversa === true;
+  return <Principal key={conversaId ?? (novaConversa ? localizacao.key : "conversa-ativa")} />;
 }
 
 export function Rotas() {

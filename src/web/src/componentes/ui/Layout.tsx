@@ -16,6 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useUsuario } from "@/hooks/useUsuario";
 import { useConversas } from "@/hooks/useConversas";
+import { CHAVE_CONVERSA_ATIVA } from "@/hooks/useConversa";
 import { api } from "@/servicos/api";
 import { quandoFoi } from "@/utilitarios/formato";
 
@@ -63,7 +64,17 @@ export function Layout() {
           <img className="brand-logo" src="/logo-prata.png" alt="Prata Agent" />
         </div>
 
-        <NavLink className="new-chat" to="/" onClick={fechar}><Icone nome="plus" /> Nova conversa</NavLink>
+        <NavLink
+          className="new-chat"
+          to="/"
+          state={{ novaConversa: true }}
+          onClick={() => {
+            sessionStorage.removeItem(CHAVE_CONVERSA_ATIVA);
+            fechar();
+          }}
+        >
+          <Icone nome="plus" /> Nova conversa
+        </NavLink>
 
         <p className="nav-label">Navegação</p>
         <nav aria-label="Navegação principal" className="nav-list">

@@ -17,13 +17,15 @@
  * hook nao deve mudar com isso.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api, ErroApi } from "@/servicos/api";
 import { chaves } from "@/servicos/chaves";
 import { horaCurta } from "@/utilitarios/formato";
 import type { Canal, ChatResponse, ConversaDetalhe, Desfecho, Turno } from "@/tipos";
+
+export const CHAVE_CONVERSA_ATIVA = "prata.conversa.ativa";
 
 export interface Linha {
   id: string;
@@ -55,13 +57,20 @@ export function useConversa(conversaId?: string) {
   // backend, no primeiro turno. Sem guardar o id devolvido, cada mensagem
   // seguinte iria com `conversa_id: null` e abriria outra conversa, e o
   // executor perderia o contexto dos turnos anteriores.
-  const [conversaCriada, setConversaCriada] = useState<string | null>(null);
+  const [conversaCriada, setConversaCriada] = useState<string | null>(() => {
+    if (conversaId) return conversaId;
+    return sessionStorage.getItem(CHAVE_CONVERSA_ATIVA);
+  });
   const conversaAtual = conversaId ?? conversaCriada;
 
+  useEffect(() => {
+    if (conversaAtual) sessionStorage.setItem(CHAVE_CONVERSA_ATIVA, conversaAtual);
+  }, [conversaAtual]);
+
   const { data: conversa, isLoading: carregando } = useQuery<ConversaDetalhe>({
-    queryKey: chaves.conversa(conversaId ?? ""),
-    queryFn: () => api.get<ConversaDetalhe>(`/conversas/${conversaId}`),
-    enabled: Boolean(conversaId),
+    queryKey: chaves.conversa(conversaAtual ?? ""),
+    queryFn: () => api.get<ConversaDetalhe>(`/conversas/${conversaAtual}`),
+    enabled: Boolean(conversaAtual),
   });
 
   const envio = useMutation({
@@ -72,7 +81,8 @@ export function useConversa(conversaId?: string) {
         canal: dados.canal,
       }),
     onSuccess: (resposta) => {
-      if (!conversaId) setConversaCriada(resposta.conversa_id);
+      setConversaCriada(resposta.conversa_id);
+      sessionStorage.setItem(CHAVE_CONVERSA_ATIVA, resposta.conversa_id);
       setLinhasLocais((atuais) => [
         ...atuais,
         {
@@ -127,6 +137,7 @@ export function useConversa(conversaId?: string) {
 
   return {
     linhas: [...linhasGravadas, ...linhasLocais],
+    conversaIdAtual: conversaAtual,
     carregando,
     enviando: envio.isPending,
     erro,

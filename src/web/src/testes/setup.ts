@@ -26,5 +26,8 @@ Element.prototype.scrollIntoView = vi.fn();
 export const servidor = setupServer(...handlers);
 
 beforeAll(() => servidor.listen({ onUnhandledRequest: "error" }));
-afterEach(() => servidor.resetHandlers());
+afterEach(() => {
+	servidor.resetHandlers();
+	sessionStorage.clear();
+});
 afterAll(() => servidor.close());
