@@ -512,6 +512,17 @@ async def test_registrar_fim_liga_a_execucao_a_interacao(
     assert fechada.concluida_em is not None
     assert fechada.interacao_id == interacao.id
 
+    detalhada = await execucoes.obter_com_interacao(execucao_id)
+    assert detalhada is not None
+    assert detalhada[0].status is StatusExecucao.SUCESSO
+    assert detalhada[1] is not None
+    assert detalhada[1].resposta == interacao.resposta
+
+    historico = await execucoes.listar_com_interacao_por_rotina(rotina.id)
+    assert [(item.id, turno.id if turno else None) for item, turno in historico] == [
+        (execucao_id, interacao.id)
+    ]
+
 
 async def test_remover_rotina_com_execucao_e_recusado(sessao: AsyncSession) -> None:
     """Apagar uma rotina que já disparou levaria a trilha junto.

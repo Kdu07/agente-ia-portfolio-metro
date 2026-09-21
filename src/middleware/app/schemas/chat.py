@@ -32,3 +32,4 @@ class ChatResponse(BaseModel):
     # Uso interno da execução de rotinas: permite ligar o disparo à linha
     # que o pipeline gravou sem ampliar o contrato público de /chat.
     interacao_id: str | None = Field(default=None, exclude=True)
+    execucao_id: str | None = Field(default=None, exclude=True)

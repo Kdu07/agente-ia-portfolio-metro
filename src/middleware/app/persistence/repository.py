@@ -390,3 +390,40 @@ class ExecucaoRepository(_RepositorioBase):
             .limit(limite)
         )
         return [linha.to_dominio() for linha in resultado.scalars()]
+
+    async def obter_com_interacao(
+        self, execucao_id: str
+    ) -> tuple[ExecucaoRotina, Interacao | None] | None:
+        """Recupera um disparo e, quando existente, seu resultado no pipeline."""
+        resultado = await self._sessao.execute(
+            select(ExecucaoRotinaTabela, InteracaoTabela)
+            .outerjoin(
+                InteracaoTabela,
+                ExecucaoRotinaTabela.interacao_id == InteracaoTabela.id,
+            )
+            .where(ExecucaoRotinaTabela.id == execucao_id)
+        )
+        linha = resultado.one_or_none()
+        if linha is None:
+            return None
+        execucao, interacao = linha
+        return execucao.to_dominio(), interacao.to_dominio() if interacao else None
+
+    async def listar_com_interacao_por_rotina(
+        self, rotina_id: str, *, limite: int = 20
+    ) -> list[tuple[ExecucaoRotina, Interacao | None]]:
+        """Histórico com a resposta, sem uma consulta adicional por disparo."""
+        resultado = await self._sessao.execute(
+            select(ExecucaoRotinaTabela, InteracaoTabela)
+            .outerjoin(
+                InteracaoTabela,
+                ExecucaoRotinaTabela.interacao_id == InteracaoTabela.id,
+            )
+            .where(ExecucaoRotinaTabela.rotina_id == rotina_id)
+            .order_by(ExecucaoRotinaTabela.iniciada_em.desc())
+            .limit(limite)
+        )
+        return [
+            (execucao.to_dominio(), interacao.to_dominio() if interacao else None)
+            for execucao, interacao in resultado.all()
+        ]

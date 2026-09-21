@@ -91,6 +91,7 @@ async def executar(rotina: Rotina) -> ChatResponse:
         status=_status_da_resposta(resposta),
         interacao_id=resposta.interacao_id,
     )
+    resposta.execucao_id = execucao_id
     return resposta
 
 
