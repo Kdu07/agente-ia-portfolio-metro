@@ -22,9 +22,8 @@ from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import sessao as auth_sessao
-from app.config import settings
-from app.copilot.client import CopilotClient
 from app.executor.base import Executor
+from app.executor.fabrica import montar_executor
 from app.persistence.repository import (
     ConversaRepository,
     ExecucaoRepository,
@@ -126,11 +125,8 @@ def exige_permissao(permissao: Permissao) -> Callable[..., UsuarioAutenticado]:
     return verificar
 
 
-EXECUTORES = ("copilot", "proprio")
-
-
 def obter_executor(banco: SessaoBanco, usuario: UsuarioAtual) -> Executor:
-    """O executor escolhido por `settings.executor` — único ponto dessa leitura.
+    """Entrega à rota o executor montado pela fábrica compartilhada.
 
     O executor próprio é montado por requisição porque recupera no
     escopo de quem pergunta, e a porta não recebe o usuário: o `Escopo`
@@ -138,19 +134,10 @@ def obter_executor(banco: SessaoBanco, usuario: UsuarioAtual) -> Executor:
     deduzido em nenhum lugar adiante. O `usuario` é o mesmo da rota — o
     FastAPI resolve a dependência uma vez por requisição.
 
-    O import é local para que o caminho `copilot` não exija o extra `rag`.
+    A decisão por `settings.executor` fica em `executor/fabrica.py`, também
+    usada pelo worker. Assim API e rotinas não criam caminhos divergentes.
     """
-    escolhido = settings.executor.strip().lower()
-
-    if escolhido == "copilot":
-        return CopilotClient()
-
-    if escolhido == "proprio":
-        from app.rag.executor import montar_executor
-
-        return montar_executor(banco, usuario)
-
-    raise ValueError(f"executor inválido: {escolhido!r}. Esperado um de {EXECUTORES}")
+    return montar_executor(banco, usuario)
 
 
 def obter_interacoes(banco: SessaoBanco) -> InteracaoRepository:

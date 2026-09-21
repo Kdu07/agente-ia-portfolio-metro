@@ -84,4 +84,7 @@ def com_fontes(texto: str, fontes: Sequence[Fonte]) -> str:
 
 def montar_executor(sessao: Any, usuario: UsuarioAutenticado) -> ExecutorRag:
     """Executor com os adaptadores do `.env` e o escopo do usuário."""
-    return ExecutorRag(montar_fluxo(sessao), Escopo(perfil=usuario.perfil))
+    return ExecutorRag(
+        montar_fluxo(sessao),
+        Escopo(perfil=usuario.perfil, projetos=usuario.projetos),
+    )

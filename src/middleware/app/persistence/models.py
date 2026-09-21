@@ -34,8 +34,9 @@ class Canal(Enum):
 
 
 class StatusExecucao(Enum):
-    """Como terminou um disparo de rotina."""
+    """Estado atual ou resultado final de um disparo de rotina."""
 
+    EM_EXECUCAO = "em_execucao"
     SUCESSO = "sucesso"
     BLOQUEADA = "bloqueada"  # o pipeline barrou o prompt da rotina
     FALHA = "falha"  # erro de execução (executor fora, banco indisponível)

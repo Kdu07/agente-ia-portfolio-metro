@@ -428,7 +428,7 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
         rotina_id=rotina_mensal.id,
         iniciada_em=agora - timedelta(days=4, seconds=4),
         concluida_em=None,
-        status=StatusExecucao.SUCESSO,
+        status=StatusExecucao.EM_EXECUCAO,
     )
     await execucoes.registrar_inicio(execucao_ok)
     contagem["execucoes"] += 1
@@ -489,7 +489,7 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
         rotina_id=rotina_semanal.id,
         iniciada_em=agora - timedelta(hours=6),
         concluida_em=None,
-        status=StatusExecucao.BLOQUEADA,
+        status=StatusExecucao.EM_EXECUCAO,
     )
     await execucoes.registrar_inicio(travada)
     contagem["execucoes"] += 1
