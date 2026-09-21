@@ -16,11 +16,48 @@ Execução local:
 
 import asyncio
 import logging
+import signal
+from collections.abc import Callable
+
+from app.persistence import sessao
+from app.rotinas.agendador import carregar_agenda, criar_agendador
 
 logger = logging.getLogger(__name__)
 
 
-async def principal() -> None:
+def _registrar_sinais(evento_encerramento: asyncio.Event) -> Callable[[], None]:
+    """Faz SIGINT/SIGTERM acordarem o ciclo assíncrono e devolve a limpeza.
+
+    ``loop.add_signal_handler`` é o caminho usado no contêiner Linux. O
+    fallback com ``signal.signal`` mantém a execução local no Windows, cujo
+    loop não implementa a primeira API.
+    """
+    loop = asyncio.get_running_loop()
+    registrados_no_loop: list[signal.Signals] = []
+    anteriores: dict[signal.Signals, signal.Handlers] = {}
+
+    def solicitar_encerramento(numero: int, _frame: object | None = None) -> None:
+        logger.info("Sinal %s recebido; encerrando o worker", numero)
+        loop.call_soon_threadsafe(evento_encerramento.set)
+
+    for sinal in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(sinal, solicitar_encerramento, sinal)
+            registrados_no_loop.append(sinal)
+        except NotImplementedError:
+            anteriores[sinal] = signal.getsignal(sinal)
+            signal.signal(sinal, solicitar_encerramento)
+
+    def remover() -> None:
+        for sinal in registrados_no_loop:
+            loop.remove_signal_handler(sinal)
+        for sinal, anterior in anteriores.items():
+            signal.signal(sinal, anterior)
+
+    return remover
+
+
+async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None:
     """Sobe o agendador e mantém o processo vivo.
 
     Passos previstos (onda 5):
@@ -33,7 +70,28 @@ async def principal() -> None:
     4. no encerramento, parar o scheduler com `wait=True` para não
        interromper uma execução em curso no meio.
     """
-    raise NotImplementedError("Worker a implementar na onda 5")
+    evento = evento_encerramento or asyncio.Event()
+    remover_sinais = _registrar_sinais(evento) if evento_encerramento is None else lambda: None
+    agendador = None
+
+    sessao.iniciar()
+    try:
+        agendador = criar_agendador()
+        # Pausado enquanto a tabela de rotinas é reconciliada com o jobstore:
+        # nenhum job antigo pode disparar antes de seu estado atual ser lido.
+        agendador.start(paused=True)
+        await carregar_agenda()
+        agendador.resume()
+        logger.info("Worker de rotinas iniciado")
+
+        await evento.wait()
+    finally:
+        remover_sinais()
+        if agendador is not None and agendador.running:
+            # Não interrompe uma rotina que já entrou no pipeline.
+            agendador.shutdown(wait=True)
+        await sessao.encerrar()
+        logger.info("Worker de rotinas encerrado")
 
 
 if __name__ == "__main__":
