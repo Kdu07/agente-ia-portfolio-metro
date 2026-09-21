@@ -466,7 +466,7 @@ async def test_execucao_iniciada_e_nao_concluida_fica_visivel(
             rotina_id=rotina.id,
             iniciada_em=AGORA,
             concluida_em=None,
-            status=StatusExecucao.SUCESSO,
+            status=StatusExecucao.EM_EXECUCAO,
         )
     )
 
@@ -495,7 +495,7 @@ async def test_registrar_fim_liga_a_execucao_a_interacao(
             rotina_id=rotina.id,
             iniciada_em=AGORA,
             concluida_em=None,
-            status=StatusExecucao.SUCESSO,
+            status=StatusExecucao.EM_EXECUCAO,
         )
     )
     interacao = _interacao(conversa, canal=Canal.ROTINA)
