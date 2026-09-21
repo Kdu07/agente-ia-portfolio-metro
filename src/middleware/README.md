@@ -193,9 +193,9 @@ Quatro cuidados que não se leem no código:
 - **Partida a frio.** A primeira mensagem que chega ao classificador carrega os
   pesos do modelo, e a resposta pode passar de dois minutos. As seguintes
   levam poucos segundos.
-- **Rotas ainda não implementadas respondem 500.** Conversas, rotinas,
-  intenções e o token de voz levantam `NotImplementedError`; a interface mostra
-  uma mensagem genérica. O mapa por rota está na issue #353.
+- **Rotas ainda não implementadas respondem 500.** Intenções e o token de voz
+  ainda levantam `NotImplementedError`; a interface mostra uma mensagem
+  genérica. Conversas e rotinas já possuem implementação real no middleware.
 
 ## Banco vetorial (Pinecone)
 

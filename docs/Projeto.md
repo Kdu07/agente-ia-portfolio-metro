@@ -6937,6 +6937,7 @@ oferece reenvio da última mensagem, em vez de informar apenas que houve erro.
 | `POST /rotinas` | `Rotinas` | Criação de rotina |
 | `PUT /rotinas/:id` | `Rotinas` | Alteração de rotina |
 | `DELETE /rotinas/:id` | `Rotinas` | Exclusão de rotina |
+| `POST /rotinas/:id/executar` | `Rotinas` | Disparo imediato sob a identidade atual do dono |
 | `GET /rotinas/:id/execucoes` | `Rotinas` | Histórico de execuções |
 | `GET /intencoes/volume` | `Intencoes` | Volume de intenções por janela |
 | `GET /intencoes/desfechos` | `Intencoes` | Distribuição dos desfechos |
