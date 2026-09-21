@@ -90,7 +90,7 @@ export interface ValidacaoRotina {
   erro: string | null;
 }
 
-export type StatusExecucao = "sucesso" | "bloqueada" | "falha";
+export type StatusExecucao = "em_execucao" | "sucesso" | "bloqueada" | "falha";
 
 export interface Rotina {
   id: string;
