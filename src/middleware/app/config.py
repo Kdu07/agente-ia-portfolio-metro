@@ -64,8 +64,9 @@ class Settings(BaseSettings):
     content_safety_endpoint: str = ""
     content_safety_key: str = ""
     # Severidade a partir da qual a categoria de conteúdo bloqueia. A
-    # escala do serviço é 0-6; 2 é o padrão conservador e deve ser
-    # calibrado na bancada da onda 2.
+    # escala usada pelo serviço é 0, 2, 4 e 6. O valor 2 foi mantido pela
+    # bancada da issue #411: entre 2, 4 e 6, apresentou a menor passagem
+    # indevida sem bloquear os enunciados legítimos do conjunto.
     content_safety_limiar_severidade: int = 2
     # Domínios que a resposta do executor pode citar em link. Fora deles, a
     # guarda de saída trata a URL como possível exfiltração. Subdomínios
