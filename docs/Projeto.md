@@ -6468,6 +6468,59 @@ As variáveis mínimas são `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_
 
 Esta entrega documenta o desenho e os critérios de aceite. A implementação posterior deve adicionar o cliente RabbitMQ compartilhado, declarar a topologia na inicialização, integrar o endpoint de webhook e substituir os `NotImplementedError` do `worker` por consumidores testados com um broker efêmero ou dublado.
 
+#### 9.1.2.7 Definição dos webhooks (S4)
+
+**Situação da definição:** em elaboração na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini. Esta primeira unidade registra as premissas verificadas e uma proposta para revisão; a seleção final e os contratos completos ainda estão pendentes. A base de inspeção é a `develop` no commit `6999f9d`, consultada em 21/09/2026. Não há evidência de execução dos webhooks nesta entrega.
+
+O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint e descreveu a interação de voz desejada: gravar, concluir a gravação, obter a transcrição, revisar ou editar o texto e só então enviá-lo ao agente. Não há emissor de callback de áudio definido pela equipe.
+
+A recomendação técnica é preservar essa revisão explícita do texto e concentrar os webhooks na atualização das fontes do portfólio. Um webhook é uma chamada entre sistemas, sem implicar notificação visual ao usuário, mas a interação de microfone descrita não depende dele.
+
+| Candidato | Evento de negócio | Objetivo e justificativa | Situação e rastreabilidade |
+|---|---|---|---|
+| Atualização documental | Mudança em arquivo do corpus acompanhado no Google Drive | Solicitar atualização do índice usado pelo RAG, preservando origem e permissões e reduzindo a defasagem das respostas. | Recomendado para a PoC; RF04/US04 e RF01/US01; seção 9.4.3; revisar o provedor de #390. |
+| Atualização de dados estruturados | Edição humana de status, marco ou indicador em uma planilha Google Sheets controlada, com envio por Apps Script | Sincronizar os registros estruturados consultados pela aplicação, com identificação do projeto e da alteração. Esse efeito é distinto da reindexação documental. | Alternativa em avaliação; RF04/US04; depende de confirmar a necessidade da sincronização, a fonte autorizada e o esforço. Substituiria o escopo de #389 somente após decisão da equipe. |
+
+A segunda alternativa exige uma planilha nativa do Google Sheets, configuração de gatilho e implementação do emissor; os arquivos `.xlsx` existentes no Drive não demonstram essa capacidade. As duas propostas usam dados sintéticos, não autorizam escrita nos documentos do parceiro nem concedem acesso adicional ao conteúdo. A notificação por Teams ou correio eletrônico da feature F57 continua fora desse recorte.
+
+**Estado atual e impacto nos contratos**
+
+| Frente | Evidência no repositório | Consequência para a definição |
+|---|---|---|
+| Microfone da interface | [`useMicrofone.ts`](../src/web/src/hooks/useMicrofone.ts) prevê Speech SDK e mantém uma simulação; [`Composer.tsx`](../src/web/src/componentes/chat/Composer.tsx) separa o campo de texto da ação de enviar. | O microfone e a API de upload são trajetos distintos hoje. Consolidar a experiência solicitada pertence à frente de voz; esta definição não muda o SDK nem implementa envio de gravação pelo navegador. |
+| Recebimento de áudio | [`voz.py`](../src/middleware/app/api/routes/voz.py) retorna `202`, executa `_processar_transcricao` em `BackgroundTasks` e disponibiliza consulta por `id_audio`. | O processamento é assíncrono para o cliente da aplicação, mas isso não demonstra a existência de um callback do provedor. |
+| Serviço de transcrição | [`transcricao.py`](../src/middleware/app/voz/transcricao.py) chama `transcriptions:transcribe` e extrai o resultado da resposta HTTP. | A integração atual usa Fast Transcription. A revisão do texto pelo usuário pode ser atendida sem callback de conclusão. |
+| Armazenamento do resultado | [`audio_service.py`](../src/middleware/app/servicos/audio_service.py) mantém `_transcricoes` em memória de processo. | A necessidade de persistência permanece. Ao revisar #389, manter responsável e tarefa para vincular resultado, áudio e proprietário em armazenamento durável. |
+| Fonte documental | A seção 9.4.3.1 e [`drive.py`](../src/middleware/app/rag/ingestao/drive.py) identificam o Google Drive como fonte do corpus sintético. | Implementar e demonstrar o contrato do Drive; a equivalência de negócio com SharePoint não significa equivalência de protocolo nem homologação no ambiente Microsoft. |
+| Dados estruturados | [`portfolio.py`](../src/middleware/app/api/routes/portfolio.py) consulta projetos, riscos, marcos e indicadores persistidos. | Há um destino possível para a segunda proposta, mas ainda é necessário definir mapeamento, autoridade da fonte e autorização de cada atualização. |
+
+A documentação da Microsoft confirma que a [Fast Transcription devolve o resultado de forma síncrona](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/fast-transcription-create). Já os [webhooks de Speech são associados a Batch Transcription e Custom Speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text). Acrescentar Batch Transcription apenas para criar um segundo webhook introduziria outro trajeto de áudio sem necessidade demonstrada para a experiência descrita.
+
+Para a fonte documental, a referência é a [notificação de mudanças do Google Drive](https://developers.google.com/workspace/drive/api/guides/push). O provedor envia `POST` com cabeçalhos `X-Goog-*` e corpo vazio; os detalhes precisam ser consultados pela API. O contrato deverá prever registro e renovação de canais, validação do token de canal, consulta incremental, filtragem para o corpus autorizado e processamento de exclusões. Não se deve exigir um JSON ou HMAC de corpo que o provedor não envia.
+
+Para a segunda alternativa, [gatilhos instaláveis do Apps Script](https://developers.google.com/apps-script/guides/triggers/installable) podem reagir a edições humanas em planilhas, e [`UrlFetchApp`](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) permite emitir o POST. O payload e sua assinatura seriam um contrato desenvolvido pela equipe. Alterações feitas por API ou por scripts não disparam automaticamente o gatilho de edição; retentativa, registro durável do evento e prevenção de duplicatas também precisam ser implementados.
+
+**Limites comuns da implementação planejada**
+
+1. Distinguir o contrato HTTP de cada provedor do envelope interno da seção 9.1.2.6. O middleware produzirá os campos internos que não existirem na notificação original e preservará a referência à origem.
+2. Validar o mecanismo de autenticidade próprio de cada integração, o recurso permitido e os limites do corpo antes de publicar trabalho. A verificação de desafio de inscrição deve seguir a resposta específica do provedor.
+3. Responder às notificações de trabalho somente após confirmação de recebimento durável. A aceitação não significa transcrição persistida ou corpus já atualizado; falha na publicação deve permitir nova tentativa.
+4. Executar persistência, consulta à origem e reindexação no processamento assíncrono. A chave de idempotência e a transação que impede efeitos repetidos devem ser definidas para cada webhook e sobreviver a reinícios.
+5. Manter as guardas, as permissões documentais e a autorização de atualização dos registros nos serviços consumidores. Autenticar o emissor não substitui a autorização de acesso aos dados.
+6. Distinguir testes com payload sintético de homologação no provedor real. #391 registrará contratos observados e exemplos sanitizados após a implementação; #413 verificará sucesso, rejeição, repetição e falha de consumo.
+
+**Decisões necessárias para concluir a #386**
+
+| Decisão | Alternativas e impacto | Responsável e momento de resolução |
+|---|---|---|
+| Escopo do segundo webhook | Avaliar a sincronização estruturada proposta e identificar planilha, campos e destino. Se esse fluxo não for necessário, selecionar outro evento de negócio antes de fechar os contratos. | Eduardo, com a equipe, antes de substituir o escopo de #389. |
+| Ambiente do webhook documental | Confirmar permissões da conta de serviço para criar canais na fonte acessível, URL HTTPS e tratamento das mudanças na pasta do corpus. Registrar Drive como provedor da PoC no card. | Eduardo, antes do contrato definitivo e do início de #390. |
+| Autenticidade e proteção contra repetição | A premissa de #388 de uma assinatura e um timestamp comuns aos dois provedores precisa ser revista. O token de canal do Drive não equivale a uma assinatura HMAC do corpo; a proteção contra repetição precisa considerar o identificador e o cursor efetivamente disponíveis. | Eduardo, ao concluir os contratos da #386, antes de implementar #388. |
+| Persistência do áudio | Preservar a demanda de persistência e pertencimento hoje incluída em #389, mesmo que o webhook de transcrição seja substituído por outro evento. | Eduardo, na revisão do backlog, antes de retirar essa responsabilidade de #389. |
+| Consistência do escopo | A seção 2.7.4 ainda declara webhooks e mensageria fora da solução, enquanto 9.1.2.6 os planeja. #387 deve reconciliar essas afirmações com a decisão final. | Eduardo, em #387, após fechar a definição da #386. |
+
+A conclusão da #386 requer, para ambos os webhooks, provedor e evento definidos, rota e método HTTP, campos e tipos, autenticação, respostas de aceitação e erro, regra de idempotência e exemplos consistentes. O levantamento acima não substitui esses contratos nem permite considerar concluídas #388, #389 ou #390.
+
 ### 9.1.3 Integração com Voz
 
 A funcionalidade de voz não depende de nenhuma onda específica e nenhuma onda depende dela. Deve ser encaixada onde houver folga na Sprint 3 ou 4, preferencialmente na Onda 1, já que a transcrição alimenta o mesmo `/chat`.
