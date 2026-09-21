@@ -126,9 +126,7 @@ class Orquestrador:
         """
         ctx = _Contexto(
             interacao_id=str(uuid.uuid4()),
-            conversa=await self._resolver_conversa(
-                request.conversa_id, usuario, request.mensagem
-            ),
+            conversa=await self._resolver_conversa(request.conversa_id, usuario, request.mensagem),
             usuario=usuario,
             canal=canal,
             prompt=request.mensagem,
@@ -162,9 +160,7 @@ class Orquestrador:
         # --- 3. Intenção ---------------------------------------------------
         resultado = await intencao_classificador.classificar(ctx.prompt)
         ctx.confianca = resultado.confianca
-        intencao = (
-            catalogo.obter(resultado.intencao_id) if resultado.intencao_id else None
-        )
+        intencao = catalogo.obter(resultado.intencao_id) if resultado.intencao_id else None
 
         if intencao is None:
             # Rótulo desconhecido ou ausente: o classificador devolveu algo
@@ -232,9 +228,7 @@ class Orquestrador:
         # Só executor com sessão própria (o Copilot) tem o que vincular. O
         # executor próprio guarda o estado no middleware (D6) e devolve None.
         if ctx.conversa.conversa_externa_id is None and resposta.conversa_externa_id is not None:
-            await self._conversas.vincular_externa(
-                ctx.conversa.id, resposta.conversa_externa_id
-            )
+            await self._conversas.vincular_externa(ctx.conversa.id, resposta.conversa_externa_id)
 
         # --- 5. Guarda de saída --------------------------------------------
         # O usuário não fez nada errado: o que se verifica aqui é se a
@@ -328,4 +322,5 @@ class Orquestrador:
             intencao_id=ctx.intencao_id,
             desfecho=desfecho.value,
             bloqueada=desfecho.bloqueada,
+            interacao_id=ctx.interacao_id,
         )

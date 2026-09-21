@@ -29,3 +29,6 @@ class ChatResponse(BaseModel):
     intencao_id: str | None = None  # intenção classificada (transparência)
     desfecho: str  # valor de pipeline.desfechos.Desfecho
     bloqueada: bool = False  # True quando o pipeline não entregou a resposta
+    # Uso interno da execução de rotinas: permite ligar o disparo à linha
+    # que o pipeline gravou sem ampliar o contrato público de /chat.
+    interacao_id: str | None = Field(default=None, exclude=True)
