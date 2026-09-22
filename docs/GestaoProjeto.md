@@ -126,6 +126,8 @@
     - [3.4.4 Análise dos pontos identificados na Sprint 3](#344-análise-dos-pontos-identificados-na-sprint-3)
     - [3.4.5 Melhorias para a Sprint 4](#345-melhorias-para-a-sprint-4)
   - [3.5 Sprint 4](#35-sprint-4)
+    - [3.5.1 Planejamento e matriz de responsabilidades](#351-planejamento-e-matriz-de-responsabilidades)
+      - [Matriz de papéis e responsabilidades da Sprint 4](#matriz-de-papéis-e-responsabilidades-da-sprint-4)
     - [3.5.2 Retrospectiva da Sprint 4](#352-retrospectiva-da-sprint-4)
     - [3.5.3 Indicadores quantitativos da Sprint 4](#353-indicadores-quantitativos-da-sprint-4)
     - [3.5.4 Reconciliação com o fechamento da Sprint 3](#354-reconciliação-com-o-fechamento-da-sprint-3)
@@ -1092,6 +1094,25 @@ A leitura abaixo cruza a matriz da seção 4 com o que o ciclo tornou observáve
 | AM19 | Incidentes de ambiente local com o Git consumindo horas sem produzir entrega | Aplicar a regra de ambiente estabelecida na seção 2.9.2: repositório fora de pasta sincronizada com nuvem, ou sincronização pausada durante o trabalho com Git. Verificar a adequação de cada máquina na abertura da Sprint 4 | Cada integrante, verificado pelo Scrum Master | Abertura da Sprint 4 | Nenhuma ocorrência de incidente de sincronização registrada na sprint; confirmação de cada integrante na issue de abertura |
 
 ### 3.5 Sprint 4
+
+#### 3.5.1 Planejamento e matriz de responsabilidades
+
+O planejamento operacional da Sprint 4 está no [Kanban do GitLab](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/boards), milestone `Sprint 04`: 97 cards, todos com responsável, *size* e prioridade desde a abertura. A matriz abaixo foi derivada desse board — o papel principal de cada integrante é a frente que concentra os seus cards, e não uma atribuição declarada à parte —, o que permite conferir cada linha contra o próprio Kanban.
+
+##### Matriz de papéis e responsabilidades da Sprint 4
+
+| Integrante | Papel principal na Sprint 4 | Artefatos e tasks sob responsabilidade | Principais responsabilidades e entregas |
+|---|---|---|---|
+| Alexsander Barbosa | Viabilidade financeira e comunicação da entrega | `#356`–`#360` (custos de pessoal e de tecnologia, orçamento, viabilidade financeira, horas por papel); `#361`–`#363` (README, tags SemVer, correção documental); `#364` (slides da Sprint Review); `#431` | Levantar os custos da solução e compor o orçamento e a análise de viabilidade; manter o README e as tags de versão coerentes com o estado do projeto; preparar a apresentação da Sprint Review |
+| Carlos Eduardo Serrano Quaglia | Implantação em nuvem e integração contínua | `#375`–`#385` (Container Registry, Container Apps de desenvolvimento e produção, PostgreSQL gerenciado, Key Vault, migrações, pipelines de CI e CD, monitoramento, capítulo 11 do `Projeto.md`); `#350`–`#353` (executor próprio, guardas com Content Safety, heads do Alembic, validação ponta a ponta); `#374`, `#437`, `#432` | Colocar a solução em ambientes de nuvem reproduzíveis, com segredos fora do código e implantação automatizada; ligar o executor próprio e as guardas ao `/chat`; integrar o cliente Direct Line |
+| Celso Rocha | Painel de análise de intenções e gestão evolutiva | `#365`–`#369` (consultas agregadas, métricas de latência, oito rotas, componentes de gráfico e página de Intenções); `#370`–`#373` (análise da Sprint 4, matriz de risco, matriz de papéis, planejamento da Sprint 5); `#433` | Implementar o painel do RF10 de ponta a ponta, do SQL à interface, incluindo a medição de latência por etapa do pipeline; conduzir a análise do ciclo e o planejamento do seguinte |
+| Eduardo Casarini | Integrações assíncronas e canal de voz real | `#386`–`#395` (contratos e implementação dos webhooks, RabbitMQ, produtor e consumidor AMQP, documentação da mensageria); `#396`–`#400` (token efêmero do Speech, transcrição real, troca dos dublês pelas rotas reais, tratamento de falhas na interface); `#401`–`#403` (dailies, contrato de convivência, GitFlow); `#434` | Conectar os eventos externos ao middleware por webhook e fila; substituir a voz simulada pela real; ligar a interface às rotas do backend; atualizar as políticas de processo |
+| Mariana Reis | Rotinas agendadas e testes funcionais e de requisitos não funcionais | `#404`–`#410` e `#438` (validação, agendador, execução, rotas, worker e página de Rotinas); `#411`–`#412` (calibração do Content Safety e documentação das guardas); `#413`–`#416`, `#440`, `#443`, `#445` (testes de webhooks, testes funcionais, carga, cobertura, RNF04 e RNF06); `#435` | Entregar o RF11 de ponta a ponta; conduzir a verificação funcional e a de desempenho, com as evidências registradas |
+| Mirela Bianchi | Dados, histórico de conversas e testes de integração e desempenho | `#296`–`#298`, `#303`, `#417`–`#420` (população, scripts, índices e documentação do banco); `#421`–`#425` (rotas de conversas, página de Histórico, contexto multi-turno); `#426`–`#430`, `#441`, `#442`, `#446` (desempenho, fitas VHS, Direct Line com VHS, roteiro no Maze, consolidação dos testes, RNF01, RNF02 e RNF07, fluxos ponta a ponta); `#436` | Consolidar a camada de dados e o RF12; conduzir os testes de integração, desempenho e usabilidade, e consolidar a cobertura |
+
+**Condução do ciclo.** Eduardo Casarini foi o Scrum Master da Sprint 4, e Carlos Eduardo Serrano Quaglia, o Tech Lead. É a primeira sprint do módulo com Tech Lead designado desde a Sprint 1, o que atende, com um ciclo de atraso, a `AM08`. Os dois papéis também rodaram: o Scrum Master foi Carlos Eduardo na Sprint 2 e Mirela Bianchi na Sprint 3.
+
+Cada integrante conduziu uma sessão de usabilidade com participante externo (`#431`–`#436`), e por isso esses cards não entram na definição do papel principal: são trabalho coletivo distribuído por igual.
 
 #### 3.5.2 Retrospectiva da Sprint 4
 
