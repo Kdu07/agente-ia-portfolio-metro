@@ -6470,7 +6470,7 @@ Esta entrega documenta o desenho e os critérios de aceite. A implementação po
 
 #### 9.1.2.7 Definição dos webhooks (S4)
 
-**Situação da definição:** em elaboração na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini. Esta primeira unidade registra as premissas verificadas e uma proposta para revisão; a seleção final e os contratos completos ainda estão pendentes. A base de inspeção é a `develop` no commit `6999f9d`, consultada em 21/09/2026. Não há evidência de execução dos webhooks nesta entrega.
+**Situação da definição:** em elaboração na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini. O contrato do webhook documental está definido em 9.1.2.7.1; a definição do segundo webhook permanece pendente. A base de inspeção do código é a `develop` no commit `6999f9d`, consultada em 21/09/2026. Os comportamentos novos abaixo são requisitos de implementação, não evidência de webhooks em execução.
 
 O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint e descreveu a interação de voz desejada: gravar, concluir a gravação, obter a transcrição, revisar ou editar o texto e só então enviá-lo ao agente. Não há emissor de callback de áudio definido pela equipe.
 
@@ -6478,7 +6478,7 @@ A recomendação técnica é preservar essa revisão explícita do texto e conce
 
 | Candidato | Evento de negócio | Objetivo e justificativa | Situação e rastreabilidade |
 |---|---|---|---|
-| Atualização documental | Mudança em arquivo do corpus acompanhado no Google Drive | Solicitar atualização do índice usado pelo RAG, preservando origem e permissões e reduzindo a defasagem das respostas. | Recomendado para a PoC; RF04/US04 e RF01/US01; seção 9.4.3; revisar o provedor de #390. |
+| WH-01: atualização documental | Mudança em arquivo do corpus acompanhado no Google Drive | Solicitar atualização do índice usado pelo RAG, preservando origem e permissões e reduzindo a defasagem das respostas. | Contrato definido em 9.1.2.7.1; RF04/US04 e RF01/US01; seção 9.4.3; revisar o provedor de #390. |
 | Atualização de dados estruturados | Edição humana de status, marco ou indicador em uma planilha Google Sheets controlada, com envio por Apps Script | Sincronizar os registros estruturados consultados pela aplicação, com identificação do projeto e da alteração. Esse efeito é distinto da reindexação documental. | Alternativa em avaliação; RF04/US04; depende de confirmar a necessidade da sincronização, a fonte autorizada e o esforço. Substituiria o escopo de #389 somente após decisão da equipe. |
 
 A segunda alternativa exige uma planilha nativa do Google Sheets, configuração de gatilho e implementação do emissor; os arquivos `.xlsx` existentes no Drive não demonstram essa capacidade. As duas propostas usam dados sintéticos, não autorizam escrita nos documentos do parceiro nem concedem acesso adicional ao conteúdo. A notificação por Teams ou correio eletrônico da feature F57 continua fora desse recorte.
@@ -6514,12 +6514,179 @@ Para a segunda alternativa, [gatilhos instaláveis do Apps Script](https://devel
 | Decisão | Alternativas e impacto | Responsável e momento de resolução |
 |---|---|---|
 | Escopo do segundo webhook | Avaliar a sincronização estruturada proposta e identificar planilha, campos e destino. Se esse fluxo não for necessário, selecionar outro evento de negócio antes de fechar os contratos. | Eduardo, com a equipe, antes de substituir o escopo de #389. |
-| Ambiente do webhook documental | Confirmar permissões da conta de serviço para criar canais na fonte acessível, URL HTTPS e tratamento das mudanças na pasta do corpus. Registrar Drive como provedor da PoC no card. | Eduardo, antes do contrato definitivo e do início de #390. |
+| Ambiente do webhook documental | Validar em ambiente de teste as permissões da conta de serviço, o cadastro de canal e a URL HTTPS exigidos pelo contrato 9.1.2.7.1. Registrar Drive como provedor da PoC no card. | Eduardo, antes de homologar #390; a definição do contrato não comprova acesso ao provedor. |
 | Autenticidade e proteção contra repetição | A premissa de #388 de uma assinatura e um timestamp comuns aos dois provedores precisa ser revista. O token de canal do Drive não equivale a uma assinatura HMAC do corpo; a proteção contra repetição precisa considerar o identificador e o cursor efetivamente disponíveis. | Eduardo, ao concluir os contratos da #386, antes de implementar #388. |
 | Persistência do áudio | Preservar a demanda de persistência e pertencimento hoje incluída em #389, mesmo que o webhook de transcrição seja substituído por outro evento. | Eduardo, na revisão do backlog, antes de retirar essa responsabilidade de #389. |
 | Consistência do escopo | A seção 2.7.4 ainda declara webhooks e mensageria fora da solução, enquanto 9.1.2.6 os planeja. #387 deve reconciliar essas afirmações com a decisão final. | Eduardo, em #387, após fechar a definição da #386. |
 
 A conclusão da #386 requer, para ambos os webhooks, provedor e evento definidos, rota e método HTTP, campos e tipos, autenticação, respostas de aceitação e erro, regra de idempotência e exemplos consistentes. O levantamento acima não substitui esses contratos nem permite considerar concluídas #388, #389 ou #390.
+
+##### 9.1.2.7.1 WH-01: atualização documental do Google Drive
+
+**Decisão e finalidade.** Adotar as notificações da Drive API v3 para disparar a reconciliação do corpus sintético. A inscrição será feita em `changes.watch`, vinculada à conta de serviço usada na ingestão, com `spaces=drive`, `includeRemoved=true`, `supportsAllDrives=true` e `includeItemsFromAllDrives=true`. Não limitar a `restrictToMyDrive=true`, pois isso pode excluir arquivos compartilhados com a conta. A inscrição acompanha mudanças acessíveis à identidade; a pasta e suas subpastas autorizadas continuam delimitadas por `DRIVE_PASTA_ID` no servidor. O contrato da [operação `changes.watch`](https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/watch) admite o escopo `drive.readonly` já usado pelo projeto.
+
+Uma alteração em documento da pasta pode afetar RF04/US04; os filtros de RF01/US01 continuam obrigatórios. O processamento deve atualizar a base mesmo quando nenhum usuário assina avisos. Preferências por projeto ou tipo de alteração governarão uma eventual notificação ao usuário, não a consistência do corpus. Este webhook não envia e-mail, Teams ou mensagem de chat.
+
+**Entrada HTTP e dados recebidos**
+
+| Item | Contrato do projeto |
+|---|---|
+| Provedor e evento | Google Drive; disponibilidade de mudanças na fonte documental |
+| Método e rota no middleware | `POST /webhooks/google-drive` |
+| URL pública | `https://<host-do-ambiente>/api/webhooks/google-drive`; o proxy atual remove `/api/`, conforme [`nginx.conf`](../src/web/nginx.conf) |
+| Corpo | Vazio; não exigir JSON nem `Content-Type` |
+| Autenticação | Token exclusivo do canal, cadastro local do canal e recurso correspondente; sem cookie de usuário |
+| Efeito imediato | Registrar o recebimento e publicar um evento interno confirmado; não baixar documentos na requisição |
+| Prazo interno | Orçamento de 3 segundos para validar e confirmar a publicação; meta do projeto a medir em #413, não SLA do Google |
+
+Na [notificação nativa do Drive](https://developers.google.com/workspace/drive/api/guides/push), o corpo é vazio e os dados chegam por cabeçalhos. A implementação aplicará as seguintes regras; limites e obrigatoriedades adicionais são decisões deste contrato:
+
+| Cabeçalho | Tipo e regra de validação |
+|---|---|
+| `X-Goog-Channel-ID` | String; UUID criado pela aplicação, presente no cadastro local |
+| `X-Goog-Channel-Token` | String obrigatória neste projeto; valor secreto gerado no cadastro, com até 256 caracteres |
+| `X-Goog-Resource-ID` | String opaca não vazia; igual ao recurso confirmado na inscrição. Não representa o ID de um arquivo específico |
+| `X-Goog-Resource-URI` | String URI não vazia; deve corresponder ao recurso inscrito. Nunca usada diretamente como URL de download |
+| `X-Goog-Resource-State` | String; `sync` inicial ou `change`. Aceitar também `changed`, grafia presente no exemplo oficial, normalizando-a para `change` |
+| `X-Goog-Message-Number` | Inteiro positivo representado como string decimal; até 64 dígitos por decisão local, preservados sem conversão para ponto flutuante |
+| `X-Goog-Channel-Expiration` | String opcional; informativa. A validade é determinada pelo cadastro confirmado do canal |
+
+Cabeçalhos obrigatórios repetidos ou vazios devem ser recusados. Limitar cada valor a 2 KiB, respeitando os limites menores da tabela, e o conjunto de cabeçalhos a 16 KiB no proxy. Interromper leitura do corpo acima de 1 KiB; qualquer corpo não vazio é inválido. Não há campo de documento, texto, usuário, `message_id` interno nem timestamp assinado fornecido por esse protocolo. Campos adicionais não devem ser repassados indiscriminadamente à fila ou aos logs.
+
+**Inscrição, validade e proteção da origem**
+
+1. Obter o cursor com [`changes.getStartPageToken`](https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/getStartPageToken), antes da reconciliação inicial, e persistir sua associação à identidade e ao corpus. `pageToken` serve à leitura das mudanças; não é credencial nem chave de deduplicação.
+2. Gerar um UUID de canal e 32 bytes aleatórios para seu token, codificados em hexadecimal. Persistir o canal como `pendente`, associado à fonte configurada, antes de chamar `changes.watch` usando o cursor no parâmetro `pageToken`. Enviar o token somente na inscrição autenticada; armazenar seu hash SHA-256 para a comparação de recebimentos e ocultar o valor em logs e fitas.
+3. Usar URL HTTPS pública com certificado válido. Confirmar `resourceId`, `resourceUri` e `expiration` a partir da resposta autenticada da inscrição e ativar o canal. A representação desses dados é a de [`Channel`](https://developers.google.com/workspace/drive/api/reference/rest/v3/channels). Nunca vincular um recurso novo apenas porque apareceu num callback.
+4. Comparar em tempo constante o hash do token recebido com o cadastrado, conferir recurso, fonte e validade. A rota não aceita a identidade do chamador como permissão de leitura de documentos. As chamadas ao Drive usam credenciais e endpoints configurados no servidor; não seguem URLs arbitrárias de cabeçalhos.
+5. Tratar a corrida de criação: se `sync` chegar enquanto o cadastro estiver `pendente`, validar UUID e token, responder `204` e aguardar a confirmação da inscrição, sem publicar trabalho. Um evento de mudança nessa fase recebe `503`. Após ativar, disparar a reconciliação inicial pelo cursor salvo, independentemente do recebimento de `sync`.
+6. Criar canal substituto antes da expiração registrada, com UUID e token novos. A política local é solicitar validade de 24 horas e renovar ao atingir 80% da validade efetivamente concedida. Manter os dois cadastros durante a transição e encerrar o antigo após a ativação do novo. A renovação preserva o cursor do corpus.
+
+O token do canal é um segredo de posse, não uma assinatura do corpo. A proteção contra repetição usa o cadastro vigente e a chave de recebimento abaixo; não se pode exigir uma janela temporal assinada que o Drive não fornece. #388 deve implementar essa modalidade explicitamente. Respostas e logs nunca devem revelar o token, credenciais, texto de documentos ou qual comparação de autenticação falhou.
+
+**Resposta ao provedor**
+
+Validar método, limites e campos antes do processamento. Verificar a origem antes de consultar a deduplicação ou produzir qualquer efeito sobre o corpus. As respostas de sucesso são vazias; os erros da aplicação usam `{"detail":{"codigo":"...","mensagem":"..."}}`, com mensagens genéricas. `405`, `413` e `431` podem ser produzidos pelo framework ou proxy, sem esse envelope.
+
+| HTTP | Condição | Consequência |
+|---|---|---|
+| `202 Accepted` | Mudança válida, registro durável e publicação roteada confirmada | Trabalho aceito para processamento assíncrono; não afirma que o índice já foi atualizado |
+| `204 No Content` | `sync` válido ou repetição cuja publicação/processamento já foi confirmada | Nenhuma nova publicação |
+| `204 No Content` | Estado novo não suportado, com origem e formato válidos | Ignorar com métrica para revisão de compatibilidade; a reconciliação de recuperação continua disponível |
+| `400 Bad Request` | Campo ausente/malformado (exceto ausência de token, tratada como `401`), repetido ou corpo não vazio dentro do limite | `WEBHOOK_INVALIDO`; nenhum trabalho criado |
+| `401 Unauthorized` | Token ausente/incorreto, canal desconhecido, expirado ou recurso divergente | `WEBHOOK_NAO_AUTORIZADO`; nenhum trabalho criado |
+| `405 Method Not Allowed` | Método diferente de POST | Retornar `Allow: POST` |
+| `413 Content Too Large` / `431 Request Header Fields Too Large` | Limites de corpo/cabeçalhos excedidos | Interromper a leitura, sem publicação |
+| `503 Service Unavailable` | Banco indisponível, canal ainda pendente para mudança, limite de 3 segundos ou publicação sem confirmação de rota e persistência | `WEBHOOK_INDISPONIVEL`, `Retry-After: 5`; não declarar aceitação |
+| `500 Internal Server Error` | Falha inesperada | `WEBHOOK_ERRO_INTERNO`; correlação nos logs, sem detalhes internos na resposta |
+
+Uma repetição ainda `pendente` deve retomar a tentativa de publicação com os mesmos identificadores; se não confirmar dentro do orçamento, recebe `503`, nunca `204` apenas por já existir um registro. A aplicação não depende exclusivamente de nova entrega pelo provedor para recuperar trabalho pendente.
+
+**Idempotência, armazenamento e integração com a fila**
+
+A chave externa é a tupla `("google_drive", channel_id, message_number)`, protegida por unicidade no PostgreSQL. Números menores recebidos depois não são descartados como antigos: comparar a chave inteira, sem presumir chegada ordenada nem sequência sem lacunas. O `resource_id` é validado contra o canal, mas não basta como chave, pois várias mudanças pertencem ao mesmo recurso.
+
+Os registros abaixo são necessários à implementação e **ainda não existem** na base inspecionada:
+
+| Registro lógico | Campos mínimos e invariantes |
+|---|---|
+| Canal | `channel_id` UUID único; `fonte_id` string interna; `token_hash` string; `resource_id` e `resource_uri` strings confirmadas; `expira_em` timestamp UTC; `estado` em `pendente`, `ativo`, `encerrado` |
+| Recebimento | Chave externa única; `message_id` e `correlation_id` UUID; `recebido_em` timestamp UTC; `resource_state` string normalizada; evento normalizado; `publicado_em` e `processado_em` timestamps opcionais; tentativas e código de erro sem conteúdo sensível |
+| Sincronização da fonte | `fonte_id` único; cursor de mudanças confirmado; horário da última conclusão; estado operacional; exclusão mútua entre consumidores do mesmo corpus |
+
+Na primeira entrega, criar o recebimento e o evento pendente na mesma transação, atribuindo os dois UUIDs uma única vez. Publicar mensagem persistente na exchange `prata.events`, com routing key `webhook.received` e destino `prata.webhooks.incoming`, como em 9.1.2.6. Exigir `publisher confirms` e detecção de mensagem sem fila de destino (`mandatory`/retorno de publicação); confirmação de uma mensagem sem rota não é sucesso.
+
+Gravar `publicado_em` após confirmar a publicação e então devolver `202`. Se a publicação ocorrer e a gravação do marcador falhar, a recuperação poderá publicar de novo o mesmo `message_id`; isso é entrega **at-least-once**. A recuperação de pendentes precisa rodar após reinício e periodicamente. O consumidor só grava `processado_em` e emite `ack` após a sincronização ter terminado; em reentrega de evento já processado, apenas confirma sem repetir o trabalho. Falhas transitórias seguem o limite de três tentativas e dead letter da seção 9.1.2.6, com reprocessamento controlado.
+
+Manter recebimentos concluídos por pelo menos 30 dias após a última entrega; não expurgar pendências ou falhas ainda não resolvidas. São decisões operacionais da PoC, sujeitas à revisão de volume. Canais encerrados são preservados enquanto houver recebimentos retidos. Um token expirado continua inválido para entrada HTTP, mesmo que um evento interno aceito anteriormente ainda esteja sendo processado.
+
+**Processamento e atualização incremental do RAG**
+
+1. Serializar a sincronização por fonte, inclusive execuções manuais, usando bloqueio compartilhado entre réplicas, liberável após falha do processo. Dentro do bloqueio, revalidar se o evento já terminou e usar o cursor persistido da fonte, nunca um cursor vindo do callback.
+2. Consultar [`changes.list`](https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/list) com a mesma identidade e escopo da inscrição. Percorrer `nextPageToken` até obter `newStartPageToken`; manter o novo cursor provisório até concluir a sincronização. Registrar IDs afetados para rastreabilidade, incluindo exclusões e perda de acesso. Nenhuma página isolada representa a lista completa de arquivos da pasta.
+3. Reconciliar o corpus autorizado com `FonteDrive`, construindo `Ingestao` com `reindexar=False` e chamando `executar()`. A integração deve manter a **listagem completa dos metadados** da pasta e subpastas como entrada da ingestão: hoje ela interpreta ausências como remoções. Passar somente os arquivos retornados no delta apagaria indevidamente outros documentos. Alterações fora da pasta podem produzir uma verificação sem efeito no índice.
+4. Reutilizar a assinatura e a resolução de versões já existentes. Só baixar e gerar embeddings para documentos novos ou afetados por conteúdo, contexto ou classificação. Mudança de permissão no consolidado pode afetar documentos cujo arquivo não mudou. Listar metadados de todos os arquivos não equivale a vetorizar todos eles.
+5. Ao terminar, persistir o cursor provisório e `processado_em` na mesma transação e confirmar a mensagem. Em falha, manter o cursor anterior; os documentos já concluídos são reaproveitados na nova execução. Uma falha de API, autenticação ou paginação não pode ser convertida em lista vazia para eliminar o corpus.
+
+O comportamento atual está em [`indexacao.py`](../src/middleware/app/rag/ingestao/indexacao.py), [`registro.py`](../src/middleware/app/rag/ingestao/registro.py) e [`base.py`](../src/middleware/app/rag/vetorial/base.py):
+
+| Situação | Efeito sobre vetores e textos |
+|---|---|
+| Documento inalterado | Preservar vetores; assinatura igual evita nova codificação |
+| Documento novo ou alterado | Gerar embeddings de **todos os chunks daquele documento**, remover seus vetores anteriores e fazer `upsert`; substituir seus textos no PostgreSQL |
+| Documento removido, fora da pasta ou substituído | Reconciliar a versão vigente; retirar vetores/textos que não devem continuar disponíveis |
+| Classificação/contexto alterado no consolidado | Reavaliar documentos dependentes e reindexar aqueles cuja assinatura mudou |
+| Modelo de embeddings ou versão global do pipeline alterada | Executar migração/reindexação planejada; não misturar espaços vetoriais de modelos distintos |
+
+Os IDs reais usam `documento_id#ordinal`, como `PRJ-2024-018_RSK#0000`; o webhook preservará essa convenção. A implementação atual não faz comparação de chunks individuais para reaproveitar embeddings dentro de um documento alterado. Similaridade continua calculada na consulta contra o índice disponível, sem recalcular uma matriz entre todos os documentos.
+
+Há duas limitações a tratar antes de homologar #390. A decisão de reaproveitamento atual não compara o nome do arquivo; renomeações que mudam sua identificação exigem invalidar a ficha e retirar a identidade antiga quando necessário. Além disso, índice vetorial e PostgreSQL não compartilham transação: o fluxo atual remove vetores antes de inserir os novos, podendo haver indisponibilidade parcial durante a atualização. Não prometer troca atômica; testar queda entre remoção, `upsert` e commit, confirmar recuperação e preservação dos filtros de acesso.
+
+Na ativação do canal, após reinício e a cada 15 minutos, executar uma reconciliação de recuperação pela mesma rotina e bloqueio, mesmo sem callback. Esse intervalo é uma escolha inicial da PoC a validar contra volume e cota. Monitorar canal próximo da expiração, pendências, idade da última sincronização e dead letter. A verificação periódica recupera a defasagem; não é reindexação completa nem garantia de atualização instantânea.
+
+**Exemplo de recebimento e processamento**
+
+Os valores abaixo são sintéticos e pressupõem canal ativo previamente registrado. O domínio `.example` e o token são ilustrativos; não representam ambiente ou segredo provisionado. O POST não contém JSON:
+
+```http
+POST /api/webhooks/google-drive HTTP/1.1
+Host: prata.example
+Content-Length: 0
+X-Goog-Channel-ID: 34803c79-56b1-431b-9571-bb1d947f0361
+X-Goog-Channel-Token: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+X-Goog-Resource-ID: recurso-sintetico-corpus
+X-Goog-Resource-URI: https://www.googleapis.com/drive/v3/changes
+X-Goog-Resource-State: change
+X-Goog-Message-Number: 23
+```
+
+Após registro e publicação confirmada:
+
+```http
+HTTP/1.1 202 Accepted
+Content-Length: 0
+```
+
+O evento interno correspondente, que **não é enviado pelo Google**, será:
+
+```json
+{
+  "message_id": "6cd6b886-b4fa-4bf8-9b90-9fa4f03f86e1",
+  "event_type": "webhook.received",
+  "schema_version": 1,
+  "occurred_at": "2026-09-21T22:00:00Z",
+  "correlation_id": "788eac70-86b2-4cba-a25b-d3189ff90c46",
+  "producer": "middleware",
+  "payload": {
+    "provider": "google_drive",
+    "fonte_id": "corpus_metro_sintetico",
+    "channel_id": "34803c79-56b1-431b-9571-bb1d947f0361",
+    "resource_id": "recurso-sintetico-corpus",
+    "resource_state": "change",
+    "message_number": "23"
+  }
+}
+```
+
+O envelope segue os tipos de 9.1.2.6; todos os campos de `payload` acima são strings obrigatórias. `provider` e `resource_state` são os valores fixos desse exemplo; `fonte_id` é resolvido no cadastro do canal. `occurred_at` representa o recebimento UTC pelo middleware, pois o callback não informa a hora da alteração. Token, URI recebida e conteúdo de documentos não entram no evento.
+
+Se a consulta posterior identificar a atualização do arquivo sintético `PRJ-2024-018_RSK_v1_20260811.xlsx`, a ingestão substituirá os vetores e textos do documento lógico `PRJ-2024-018_RSK`. Uma segunda entrega do número `23` para o mesmo canal, já publicada, receberá `204`. Um número diferente pode produzir nova sincronização, mas, sem mudança de assinatura, não produzirá novos embeddings. Esse é um cenário de aceite, não resultado executado.
+
+**Aceite e rastreabilidade da implementação**
+
+| Caso planejado | Evidência exigida em #390/#413 |
+|---|---|
+| Inscrição e `sync` antecipado | Canal pendente não é ativado pelo callback; ativação confirmada dispara reconciliação inicial |
+| Evento válido | POST externo, recebimento no PostgreSQL, confirmação roteada no broker e `202`, sem conteúdo sensível em logs |
+| Rejeição | Token ausente/incorreto, recurso divergente, canal expirado, método/campos/corpo inválidos; nenhum efeito no corpus |
+| Duplicata concorrente e fora de ordem | Unicidade por canal/número; UUIDs preservados e ausência de efeitos duplicados após reinício |
+| Publicação incerta | Falha antes/depois da confirmação, fila sem binding e falha ao gravar marcador; recuperação publica o mesmo evento e não devolve falso sucesso |
+| Atualização incremental | Arquivo novo, alterado, excluído e inalterado; somente documentos afetados vetorizados e ausência de chunks antigos |
+| Metadados e permissões | Renomeação sem alteração de conteúdo, mudança do consolidado, movimentação de pasta e perda de acesso; nenhuma ampliação indevida de acesso |
+| Falha de consumo | Queda entre índice/banco, cursor não avançado antes da conclusão, repetição recuperável e dead letter verificável |
+| Ciclo do canal | Renovação com sobreposição, expiração e retomada após ausência de callback; reconciliação sem duplicar documentos |
+
+Os testes existentes de [`test_ingestao_indexacao.py`](../src/middleware/tests/unit/test_ingestao_indexacao.py) já descrevem ingestão inalterada, atualização, remoção e reclassificação. Eles não homologam o receptor HTTP, o cadastro de canais ou a fila; a inspeção desses testes não é registro de execução nesta entrega. #388 deve incorporar token de canal; #390 deve refletir o provedor Drive e cobrir cadastro, receptor e integração documental; #392 a #394 devem prover broker, publicação e consumo; #391 deve acrescentar exemplos reais sanitizados. Eduardo acompanha esses ajustes e as evidências antes do fechamento da #386 e da homologação de WH-01.
 
 ### 9.1.3 Integração com Voz
 
