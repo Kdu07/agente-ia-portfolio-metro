@@ -21,6 +21,68 @@ from app.pipeline.desfechos import Desfecho
 from app.pipeline.orquestrador import ETAPAS
 from app.schemas.usuario import Perfil
 
+# Nome legível de cada intenção do catálogo, como aparece no eixo do
+# gráfico. O id técnico continua sendo a chave; o rótulo é só exibição.
+# Um id sem entrada aqui — uma intenção nova ainda não rotulada, ou uma
+# antiga que saiu do catálogo — recebe um rótulo derivado do próprio id,
+# e não some do gráfico.
+ROTULO_DE_INTENCAO: dict[str, str] = {
+    "consultar_status_projeto": "Consultar status de projeto",
+    "consultar_avanco": "Consultar avanço",
+    "consultar_cronograma": "Consultar cronograma",
+    "consultar_marcos": "Consultar marcos",
+    "consultar_riscos": "Consultar riscos",
+    "consultar_problemas": "Consultar problemas",
+    "consultar_aderencia_normativa": "Consultar aderência normativa",
+    "consultar_documento_projeto": "Consultar documento do projeto",
+    "consultar_conceito_gestao": "Consultar conceito de gestão",
+    "consultar_faturas_vencidas": "Consultar faturas vencidas",
+    "comparar_projetos": "Comparar projetos",
+    "consultar_indicadores_portfolio": "Consultar indicadores do portfólio",
+    "gerar_relatorio_status": "Gerar relatório de status",
+    "gerar_previa_diretoria": "Gerar prévia para a diretoria",
+    "gerar_relatorio_encerramento": "Gerar relatório de encerramento",
+    "criar_projeto": "Criar projeto",
+    "atualizar_avanco": "Atualizar avanço",
+    "atualizar_cronograma": "Atualizar cronograma",
+    "registrar_risco": "Registrar risco",
+    "registrar_problema": "Registrar problema",
+    "atualizar_termo_abertura": "Atualizar termo de abertura",
+    "registrar_entrega_marco": "Registrar entrega de marco",
+    "atualizar_mapa_beneficios": "Atualizar mapa de benefícios",
+    "registrar_mudanca": "Registrar mudança",
+    "encerrar_projeto": "Encerrar projeto",
+    "consultar_pendencias": "Consultar pendências",
+}
+
+# Rótulos do painel para cada desfecho. Diferentes dos da bolha do chat
+# de propósito: lá o leitor é quem teve a mensagem recusada, e o rótulo
+# não deve ensinar qual barreira a pegou; aqui o leitor tem
+# `ver_intencoes` e precisa justamente dessa distinção para agir.
+ROTULO_DE_DESFECHO: dict[Desfecho, str] = {
+    Desfecho.ENCAMINHADA: "Atendida",
+    Desfecho.BLOQUEADA_INJECAO_REGRA: "Bloqueada por regra",
+    Desfecho.BLOQUEADA_INJECAO_MODELO: "Bloqueada por modelo",
+    Desfecho.BLOQUEADA_ABUSO: "Bloqueada por uso indevido",
+    Desfecho.RECUSADA_FORA_ESCOPO: "Fora do escopo",
+    Desfecho.RECUSADA_BAIXA_CONFIANCA: "Baixa confiança",
+    Desfecho.BLOQUEADA_SAIDA: "Resposta não entregue",
+    Desfecho.FALHA_EXECUTOR: "Falha do executor",
+}
+
+
+def rotulo_de_intencao(intencao_id: str) -> str:
+    """Nome legível da intenção, derivado do id quando não há rótulo."""
+    rotulo = ROTULO_DE_INTENCAO.get(intencao_id)
+    if rotulo is not None:
+        return rotulo
+    return intencao_id.replace("_", " ").capitalize()
+
+
+def rotulo_de_desfecho(desfecho: str) -> str:
+    """Nome legível do desfecho, a partir do valor gravado."""
+    return ROTULO_DE_DESFECHO[Desfecho(desfecho)]
+
 
 class Janela(Enum):
     """Períodos oferecidos pelo dashboard."""

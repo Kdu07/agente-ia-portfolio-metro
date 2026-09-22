@@ -185,3 +185,21 @@ async def test_latencia_por_etapa_ignora_interacoes_anteriores_a_medicao(
 
     assert resultado.p50 == pytest.approx(5000)
     assert all(item.amostras == 0 for item in resultado.etapas)
+
+
+# --- Rótulos ------------------------------------------------------------------
+
+
+def test_toda_intencao_acionavel_tem_rotulo_proprio():
+    """Uma intenção nova no catálogo precisa ganhar nome no painel."""
+    sem_rotulo = set(consultas.intencoes_acionaveis()) - set(metricas.ROTULO_DE_INTENCAO)
+    assert sem_rotulo == set()
+
+
+def test_intencao_sem_rotulo_recebe_nome_derivado_do_id():
+    assert metricas.rotulo_de_intencao("intencao_antiga") == "Intencao antiga"
+
+
+def test_todo_desfecho_tem_rotulo():
+    assert set(metricas.ROTULO_DE_DESFECHO) == set(Desfecho)
+    assert metricas.rotulo_de_desfecho("bloqueada_abuso") == "Bloqueada por uso indevido"
