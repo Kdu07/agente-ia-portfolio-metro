@@ -134,8 +134,10 @@ uvicorn app.main:app --reload
 ```
 
 O agendador roda em outro processo. Com o banco e as migrações disponíveis,
-inicie-o em um segundo terminal. Ao receber `Ctrl+C`, o worker aguarda a
-execução corrente e fecha o pool antes de terminar:
+inicie-o em um segundo terminal. Ao receber `Ctrl+C` ou `SIGTERM`, o worker
+pausa novos disparos e aguarda por até 50 segundos as execuções correntes.
+Somente depois ele encerra o agendador e fecha o pool; se o prazo for excedido,
+as execuções restantes são canceladas antes do fechamento:
 
 ```powershell
 python -m app.worker

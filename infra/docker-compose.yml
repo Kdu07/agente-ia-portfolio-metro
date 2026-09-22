@@ -36,6 +36,9 @@ services:
 
   worker:
     build: ../src/middleware
+    # O worker aguarda até 50 s por uma rotina em curso antes de cancelá-la.
+    # A margem evita que o Docker envie SIGKILL durante esse encerramento.
+    stop_grace_period: 60s
     env_file:
       - ../src/middleware/.env
     environment:
