@@ -21,7 +21,6 @@ import type {
   ChatResponse,
   Desfecho,
   Execucao,
-  Latencia,
   Rotina,
   TokenVoz,
   ValidacaoRotina,
@@ -33,6 +32,7 @@ import {
   BAIXA_CONFIANCA,
   DISTRIBUICAO_DESFECHOS,
   FORA_DE_ESCOPO,
+  LATENCIA,
   RESUMO_CATALOGO,
   RESUMO_SEGURANCA,
   SERIE_BLOQUEIOS,
@@ -272,8 +272,7 @@ export const handlers = [
   }),
   http.get(`${BASE}/intencoes/latencia`, async () => {
     await delay(LATENCIA_CONSULTA);
-    const corpo: Latencia = { p50: 1350, p95: 2900 };
-    return HttpResponse.json(corpo);
+    return HttpResponse.json(LATENCIA);
   }),
 
   // Voz

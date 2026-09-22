@@ -15,6 +15,9 @@ export type Permissao = "ver_intencoes" | "gerir_rotinas";
 
 export type Canal = "chat" | "voz" | "rotina";
 
+/** Periodos do painel de intencoes, como `Janela` em app/analytics/metricas.py. */
+export type Janela = "7d" | "30d" | "90d";
+
 /**
  * Vocabulário fechado de app/pipeline/desfechos.py. O frontend usa isto
  * para colorir a bolha e explicar o que aconteceu — nunca para decidir
@@ -147,10 +150,20 @@ export interface ResumoSeguranca {
   taxa_de_bloqueio: number;
 }
 
+/** Percentis de uma etapa do pipeline, em milissegundos. */
+export interface LatenciaEtapa {
+  etapa: string;
+  p50: number;
+  p95: number;
+  /** Zero indica etapa nao percorrida na janela, e nao etapa instantanea. */
+  amostras: number;
+}
+
 /** Percentis de latencia do pipeline, em milissegundos. */
 export interface Latencia {
   p50: number;
   p95: number;
+  etapas: LatenciaEtapa[];
 }
 
 export interface ResumoCatalogo {
