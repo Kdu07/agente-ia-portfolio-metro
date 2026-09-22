@@ -355,9 +355,12 @@ class InteracaoTabela(Base):
     # Documento, e não uma coluna por etapa, porque o conjunto de etapas
     # acompanha o orquestrador: uma guarda nova não deve exigir migração
     # para passar a ser medida. JSONB no PostgreSQL; JSON genérico no
-    # SQLite dos testes unitários.
+    # SQLite dos testes unitários. `none_as_null` grava a ausência como
+    # NULL de SQL, e não como o valor JSON `null`, para que o filtro
+    # `IS NOT NULL` das consultas do painel a reconheça.
     latencia_etapas: Mapped[dict[str, int] | None] = mapped_column(
-        JSON().with_variant(JSONB(), "postgresql"), nullable=True
+        JSON(none_as_null=True).with_variant(JSONB(none_as_null=True), "postgresql"),
+        nullable=True,
     )
     criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     # Preenchido quando `canal` é `rotina`. Responde "de qual rotina esta
