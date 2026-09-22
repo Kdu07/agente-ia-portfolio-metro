@@ -507,6 +507,57 @@ fase_desligar() {
   echo "  de volta a zero réplicas quando ocioso"
 }
 
+estado_banco() {
+  azv postgres flexible-server show -g "$RG" -n "$PG" --query state
+}
+
+aguardar_banco() {
+  local i
+  for i in $(seq 1 60); do
+    [ "$(estado_banco)" = Ready ] && return 0
+    sleep 15
+  done
+  echo "  o banco não ficou pronto a tempo" >&2
+  return 1
+}
+
+aguardar_replica() { # nome do app
+  local i
+  for i in $(seq 1 60); do
+    [ "$(azv containerapp replica list -g "$RG" -n "$1" \
+      --query '[0].properties.containers[0].ready')" = True ] && return 0
+    sleep 15
+  done
+  echo "  $1 não ficou pronto a tempo; ver 'az containerapp logs show'" >&2
+  return 1
+}
+
+# Para o ambiente inteiro entre um uso e outro: apps a zero réplicas e o
+# banco desligado, que é o que zera a conta. O servidor parado guarda os
+# dados e não cobra computação; a Azure o religa sozinha depois de 7 dias.
+fase_parar() {
+  fase_desligar
+  if [ "$(estado_banco)" = Ready ]; then
+    az postgres flexible-server stop -g "$RG" -n "$PG" -o none
+    echo "  banco parado"
+  else
+    echo "  banco já estava parado"
+  fi
+}
+
+# Retoma na ordem certa: primeiro o banco, senão o middleware sobe e falha
+# na primeira consulta. Termina quando /api/health responde.
+fase_retomar() {
+  if [ "$(estado_banco)" != Ready ]; then
+    az postgres flexible-server start -g "$RG" -n "$PG" -o none
+  fi
+  aguardar_banco
+  echo "  banco pronto"
+  fase_ligar
+  aguardar_replica "$APP_API"
+  fase_saude
+}
+
 fase_saude() {
   local url
   url="https://$(web_fqdn)/api/health"

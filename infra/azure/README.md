@@ -32,16 +32,28 @@ bash infra/azure/implantar.sh dev           # publica a versão do commit atual
 Cada fase também roda sozinha, por exemplo `provisionar.sh dev apps`. A lista
 está no cabeçalho do `provisionar.sh`.
 
-## Custo
+## Parar e retomar
 
-Tudo fica a zero réplicas quando ocioso, e a primeira requisição depois do
-repouso espera a réplica subir e o classificador aquecer. Antes de uma
-demonstração, e depois dela:
+Entre um uso e outro, o ambiente inteiro pode ficar parado. São dois comandos:
 
 ```bash
-bash infra/azure/provisionar.sh dev ligar
-bash infra/azure/provisionar.sh dev desligar
+bash infra/azure/provisionar.sh dev parar     # apps a zero e banco desligado
+bash infra/azure/provisionar.sh dev retomar   # banco, apps e verificação de saúde
 ```
+
+O `parar` leva uns 4 minutos e o `retomar`, uns 10. O servidor parado guarda os
+dados e não cobra computação, mas a Azure o religa sozinha depois de 7 dias —
+basta rodar `parar` de novo quando isso acontecer.
+
+Com o banco já no ar, `ligar` e `desligar` mexem só nos apps:
+
+```bash
+bash infra/azure/provisionar.sh dev ligar     # uma réplica sempre pronta
+bash infra/azure/provisionar.sh dev desligar  # volta a zero quando ocioso
+```
+
+A zero réplicas o ambiente continua funcionando: a primeira requisição espera a
+réplica subir e o classificador aquecer, o que leva alguns minutos.
 
 A fase `alertas` cria um orçamento anual de `ORCAMENTO` (padrão 300, na moeda
 de cobrança da assinatura) com avisos por e-mail em 50, 80 e 100%. O
