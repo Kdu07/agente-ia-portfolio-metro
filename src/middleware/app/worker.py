@@ -19,10 +19,50 @@ import logging
 import signal
 from collections.abc import Callable
 
+from apscheduler.events import (
+    EVENT_JOB_ERROR,
+    EVENT_JOB_EXECUTED,
+    EVENT_JOB_MISSED,
+    EVENT_JOB_SUBMITTED,
+    SchedulerEvent,
+)
+
 from app.persistence import sessao
 from app.rotinas.agendador import carregar_agenda, criar_agendador
 
 logger = logging.getLogger(__name__)
+
+PRAZO_ENCERRAMENTO_SEGUNDOS = 50
+PRAZO_CANCELAMENTO_SEGUNDOS = 5
+EVENTOS_TERMINO_JOB = EVENT_JOB_EXECUTED | EVENT_JOB_ERROR | EVENT_JOB_MISSED
+EVENTOS_MONITORADOS = EVENT_JOB_SUBMITTED | EVENTOS_TERMINO_JOB
+
+
+class _MonitorExecucoes:
+    """Conta submissões em curso usando somente eventos públicos do APScheduler."""
+
+    def __init__(self) -> None:
+        self._quantidade = 0
+        self._sem_execucoes = asyncio.Event()
+        self._sem_execucoes.set()
+
+    def registrar(self, evento: SchedulerEvent) -> None:
+        if evento.code == EVENT_JOB_SUBMITTED:
+            self._quantidade += 1
+            self._sem_execucoes.clear()
+            return
+
+        if evento.code & EVENTOS_TERMINO_JOB and self._quantidade > 0:
+            self._quantidade -= 1
+            if self._quantidade == 0:
+                self._sem_execucoes.set()
+
+    async def aguardar(self, prazo_segundos: float) -> bool:
+        try:
+            await asyncio.wait_for(self._sem_execucoes.wait(), timeout=prazo_segundos)
+        except TimeoutError:
+            return False
+        return True
 
 
 def _registrar_sinais(evento_encerramento: asyncio.Event) -> Callable[[], None]:
@@ -60,23 +100,27 @@ def _registrar_sinais(evento_encerramento: asyncio.Event) -> Callable[[], None]:
 async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None:
     """Sobe o agendador e mantém o processo vivo.
 
-    Passos previstos (onda 5):
-
     1. criar o engine do banco (persistence/sessao.py) — o jobstore do
        APScheduler usa o mesmo PostgreSQL;
     2. `rotinas.agendador.criar_agendador()` e `carregar_agenda()`, que
        reconcilia os jobs persistidos com a tabela de rotinas ativas;
     3. iniciar o scheduler e aguardar indefinidamente;
-    4. no encerramento, parar o scheduler com `wait=True` para não
-       interromper uma execução em curso no meio.
+    4. no encerramento, pausar novos disparos e aguardar as execuções em
+       curso antes de desligar o scheduler e fechar o pool.
+
+    O ``AsyncIOExecutor`` do APScheduler 3 cancela tarefas mesmo quando
+    ``shutdown(wait=True)`` é usado. Por isso a espera precisa acontecer antes
+    do shutdown, acompanhando submissões e conclusões pelos eventos públicos.
     """
     evento = evento_encerramento or asyncio.Event()
     remover_sinais = _registrar_sinais(evento) if evento_encerramento is None else lambda: None
     agendador = None
+    monitor = _MonitorExecucoes()
 
     sessao.iniciar()
     try:
         agendador = criar_agendador()
+        agendador.add_listener(monitor.registrar, EVENTOS_MONITORADOS)
         # Pausado enquanto a tabela de rotinas é reconciliada com o jobstore:
         # nenhum job antigo pode disparar antes de seu estado atual ser lido.
         agendador.start(paused=True)
@@ -88,8 +132,20 @@ async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None
     finally:
         remover_sinais()
         if agendador is not None and agendador.running:
-            # Não interrompe uma rotina que já entrou no pipeline.
-            agendador.shutdown(wait=True)
+            agendador.pause()
+            terminou = await monitor.aguardar(PRAZO_ENCERRAMENTO_SEGUNDOS)
+            if not terminou:
+                logger.warning(
+                    "Prazo de %ss esgotado; cancelando execuções restantes",
+                    PRAZO_ENCERRAMENTO_SEGUNDOS,
+                )
+
+            # A espera real já ocorreu acima. O argumento wait não é honrado
+            # pelo AsyncIOExecutor; o shutdown apenas conclui ou cancela o que
+            # excedeu o prazo.
+            agendador.shutdown(wait=False)
+            if not terminou:
+                await monitor.aguardar(PRAZO_CANCELAMENTO_SEGUNDOS)
         await sessao.encerrar()
         logger.info("Worker de rotinas encerrado")
 
