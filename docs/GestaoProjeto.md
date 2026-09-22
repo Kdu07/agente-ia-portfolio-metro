@@ -129,6 +129,7 @@
     - [3.5.2 Retrospectiva da Sprint 4](#352-retrospectiva-da-sprint-4)
     - [3.5.3 Indicadores quantitativos da Sprint 4](#353-indicadores-quantitativos-da-sprint-4)
     - [3.5.4 Reconciliação com o fechamento da Sprint 3](#354-reconciliação-com-o-fechamento-da-sprint-3)
+    - [3.5.5 Análise dos pontos identificados na Sprint 4](#355-análise-dos-pontos-identificados-na-sprint-4)
   - [3.6 Sprint 5](#36-sprint-5)
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
   - [4.1 Metodologia de avaliação](#41-metodologia-de-avaliação)
@@ -1203,6 +1204,30 @@ Com os dados completos, as ações da Sprint 2 que estavam sem evidência recebe
 | AM11 | Nenhuma issue em `Backlog` na milestone no fechamento | 0 | **Efetiva** |
 | AM12 | Nenhuma issue concluída sem responsável | 0 de 51 | **Efetiva** — contra 24,7% na Sprint 2 |
 | AM13 | No máximo 25% das issues concluídas no último dia | 45% em 11/09 | **Ineficaz** |
+
+#### 3.5.5 Análise dos pontos identificados na Sprint 4
+
+##### Pontos fortes
+
+| Ponto forte | Evidência observada | Impacto no processo |
+|---|---|---|
+| A Onda 1 saiu do esqueleto | `NotImplementedError` em `src/middleware/app` caiu de 45 para 23. Dos 23 restantes, 19 estão no painel de intenções, cuja implementação já está na MR `!127`; integrada, restam 4, em voz, no cliente do Copilot e no worker | Os critérios de aceite que a `AM16` pedia para priorizar viraram código, e as funcionalidades deixam de ser demonstráveis só como contrato |
+| Revisor nomeado desde a abertura do MR | 23 dos 24 merge requests do período têm revisor nomeado | A fila de revisão tem dono desde o primeiro minuto, que é a condição para medir o SLA de `AM06` |
+| Board íntegro sem regularização | 97 de 97 issues com responsável, *size* e prioridade; nenhuma concluída sem responsável | Os indicadores individuais desta seção são confiáveis sem ajuste, e a regularização em bloco da Sprint 2 não se repetiu |
+| Integração ao longo do ciclo | Commits em sete dias do período e 17 merges na `develop` antes do corte | A `develop` acompanhou o trabalho em vez de recebê-lo de uma vez no encerramento |
+| Métrica refeita depois do último merge | Seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3), com a Sprint 3 reapurada no fechamento e cinco ações reavaliadas com evidência | Fecha a lacuna apontada na avaliação anterior e deixa a comparação entre ciclos sobre a mesma régua |
+
+##### Pontos de atenção
+
+| Ponto de atenção | Evidência observada | Consequência para o processo |
+|---|---|---|
+| Operação acima da capacidade declarada | 135,50 h atribuídas contra 96,00 h declaradas (141%); quatro de seis integrantes acima de 16 h; commits no sábado e no domingo, 19 e 20/09 | O ciclo depende de esforço acima do contratado, o que não se sustenta como padrão e empurra a conclusão para o fim da semana |
+| Razão de carga acima do limite | 2,25:1 em horas atribuídas, acima do teto de 2:1 de `AM17`, sem justificativa registrada em card | A melhora em relação aos 2,50:1 da Sprint 3 é real, mas o critério da ação não foi cumprido |
+| Conclusão atrasada em relação ao tempo decorrido | No corte, a três dias úteis do fim, 28 de 97 issues (29%) e 38,25 de 135,50 h (28%) concluídas | Repete o padrão que levou 45% das issues da Sprint 3 ao último dia (`AM13`) |
+| Integração concentrada | 14 dos 17 merges (82%) executados por duas integrantes; um integrante com revisões nomeadas não executou nenhum merge | Quem integra concentra o conhecimento do que entra na `develop` e vira gargalo nos dias de maior volume |
+| Trabalho pronto aguardando integração | 6 merge requests em revisão no corte; 65 dos 123 commits autorais do período ainda estão fora da `develop` | Até a revisão, esse trabalho não é demonstrável na linha principal e não aparece nas métricas integradas |
+
+Os pontos de atenção descrevem o processo, e não o desempenho individual. A compressão de escopo explica boa parte deles: com um ciclo e meio de trabalho em uma semana, é esperado que a conclusão se acumule e que a revisão vire gargalo. O que o registro permite é separar o que decorre da compressão do que decorre do processo — e é esse o critério das ações da seção [3.5.6](#356-melhorias-para-a-sprint-5).
 
 ### 3.6 Sprint 5
 
