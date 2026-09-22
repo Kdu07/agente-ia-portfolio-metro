@@ -1395,6 +1395,42 @@ flowchart LR
 
 O caminho crítico é a cadeia de usabilidade — S5-05 → S5-06 → S5-07 → S5-08, 4,5 h em série — porque é a única que termina em código e precisa de nova rodada de teste. É ela que decide se a Sprint 5 fecha na quinta.
 
+##### Detalhamento das tasks
+
+**S5-01 — Reapurar os indicadores da Sprint 4 depois do último merge.** *Tipo:* `DOCS`. *Descrição:* refazer, com a mesma extração, os indicadores da seção 3.5.3 sobre o commit de fechamento da Sprint 4, e atualizar as conclusões que dependem do fechamento — taxa de conclusão, perfil de fechamento e efetividade de `AM18`. *DoR:* último merge da Sprint 4 integrado na `develop`; board da Sprint 4 sem movimentação pendente. *DoD:* nota metodológica cita o commit de fechamento; seções 3.5.3 a 3.5.5 sem valor de corte intermediário nas conclusões; `AM24` avaliada.
+
+**S5-02 — Adequar `copilot/solucao/` à restrição de não exportar agentes.** *Tipo:* `DOCS`. *Descrição:* reescrever `copilot/solucao/README.md`, que hoje prevê versionar o export da *solution* do Copilot Studio, para proibir esse versionamento, conforme a restrição do parceiro de 04/09 (`R23`). *DoR:* texto da restrição do parceiro disponível. *DoD:* README reescrito; nenhum `.zip` de *solution* nem link do ambiente no repositório; `R23` passa a Mitigado na matriz.
+
+**S5-03 — Comparar a base sintética aos dados de exemplo do SharePoint de teste.** *Tipo:* `TEST`, `DOCS`. *Descrição:* confrontar vocabulário, estrutura e campos da base sintética com os dados de exemplo do ambiente do parceiro, registrando as divergências e o efeito esperado nas métricas de 5.4.11 (`R01`, `O06`). *DoR:* acesso ao SharePoint de teste. *DoD:* divergências registradas no `Projeto.md`, sem reproduzir dados nem endereços do ambiente; `R01` reavaliado com base na comparação.
+
+**S5-04 — Preparar a demonstração final no ambiente do parceiro.** *Tipo:* `DEPLOY`. *Descrição:* montar o roteiro e o ambiente da demonstração de RF04 a RF08 pelo Copilot Studio do parceiro, com o executor próprio como alternativa (`O06`). *DoR:* S5-02 concluída; cliente Direct Line (`#374`) integrado. *DoD:* roteiro executado de ponta a ponta ao menos uma vez antes da apresentação; nenhum agente exportado.
+
+**S5-05 — Consolidar os achados das sessões de usabilidade.** *Tipo:* `TEST`, `DOCS`. *Descrição:* reunir os resultados das seis sessões com participantes externos, com as pontuações SUS e os problemas observados por tela. *DoR:* sessões `#431` a `#436` realizadas e registradas nos cards. *DoD:* achados consolidados no `Projeto.md`, com SUS por participante e médio, e cada problema com tela, frequência e severidade.
+
+**S5-06 — Priorizar as correções de usabilidade por severidade.** *Tipo:* `DESIGN`. *Descrição:* classificar os problemas de S5-05 e decidir quais entram na sprint. *DoR:* S5-05 concluída. *DoD:* lista priorizada com o critério de corte registrado; correções de severidade alta com card próprio ou dentro de S5-07.
+
+**S5-07 — Implementar as correções de usabilidade de severidade alta.** *Tipo:* `CODE`. *Descrição:* corrigir na interface os problemas de severidade alta priorizados em S5-06. *DoR:* S5-06 concluída. *DoD:* correções integradas na `develop`; `npm run test` e `npm run typecheck` passando; cada correção referenciada ao problema que resolve.
+
+**S5-08 — Reaplicar o roteiro de usabilidade nas telas corrigidas.** *Tipo:* `TEST`. *Descrição:* repetir as tarefas do roteiro que falharam, nas telas corrigidas, para verificar se a correção resolveu. *DoR:* S5-07 integrada. *DoD:* resultado da reaplicação registrado ao lado do da primeira rodada.
+
+**S5-09 — Medir o SLA de primeira revisão dos merge requests.** *Tipo:* `DOCS`. *Descrição:* medir, pela API do GitLab, o tempo entre a abertura de cada merge request e a primeira manifestação do revisor, desde a Sprint 3 (`AM23`). *DoR:* acesso de leitura à API. *DoD:* mediana e maior espera publicadas por sprint na seção 5.2; merge requests acima de 24 h úteis identificados.
+
+**S5-10 — Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria.** *Tipo:* `DOCS`. *Descrição:* retrospectiva da Sprint 5 no formato da seção 3.5, redigida sobre o corte de quinta, para a revisão interna, e refeita depois do último merge (`AM24`). *DoR:* S5-09 concluída; corte de quinta extraído. *DoD:* indicadores com corte, fonte e commit de fechamento declarados; efetividade de `AM20` a `AM25` avaliada item a item.
+
+**S5-11 — Atualizar a matriz de risco no fechamento do módulo.** *Tipo:* `DOCS`. *Descrição:* revisão final da seção 4, com o status de encerramento de cada item. *DoR:* S5-10 concluída. *DoD:* todos os itens com status final e justificativa; histórico da seção 4.3 completo da Sprint 1 à Sprint 5.
+
+**S5-12 — Atualizar a matriz de papéis e responsabilidades da Sprint 5.** *Tipo:* `DOCS`. *Descrição:* matriz e rotação da Sprint 5 no formato da seção 3.5.1. *DoR:* board da Sprint 5 com todos os cards atribuídos. *DoD:* seis integrantes com papel, tasks e entregas; rotação comparada às Sprints 3 e 4; razão de carga calculada.
+
+**S5-13 — Conduzir a retrospectiva final do módulo com a equipe.** *Tipo:* `MEET`. *Descrição:* sessão com os seis integrantes sobre o módulo inteiro, para levantar sucessos, oportunidades de melhoria e lições aprendidas. *DoR:* S5-10 concluída; a análise das cinco sprints disponível. *DoD:* registro da sessão com os pontos levantados por integrante.
+
+**S5-14 — Escrever a análise post-mortem do projeto.** *Tipo:* `DOCS`. *Descrição:* preencher a seção 6 a partir da retrospectiva final e dos indicadores das cinco sprints. *DoR:* S5-13 concluída. *DoD:* seções 6.1 a 6.3 sem marcadores pendentes, cada ponto com evidência de uma das sprints.
+
+**S5-15 — Preencher o manual de instalação.** *Tipo:* `DOCS`. *Descrição:* substituir o template de `Manual-instalacao.md` pelo processo real de instalação local e nos ambientes de nuvem. *DoR:* ambientes de desenvolvimento e produção provisionados (`#376`, `#377`). *DoD:* manual executado do zero por um integrante que não o escreveu, sem passo faltante.
+
+**S5-16 — Criar os slides e conduzir a apresentação final.** *Tipo:* `DOCS`. *Descrição:* apresentação final do módulo, apoiada na demonstração de S5-04. *DoR:* S5-04 concluída. *DoD:* slides revisados pela equipe; demonstração ensaiada ao menos uma vez.
+
+**S5-17 — Criar a tag SemVer da Sprint 5 e publicar a versão final.** *Tipo:* `DEPLOY`. *Descrição:* tag anotada da versão final sobre a `main`, conforme a seção 2.5 do `GestaoConfiguracao.md`. *DoR:* todos os merges da Sprint 5 integrados. *DoD:* tag da Sprint 5 publicada; tabela de versionamento do `README.md` atualizada.
+
 #### 3.6.2 Retrospectiva da Sprint 5
 
 [Preencher após a retrospectiva da Sprint 5.]
