@@ -31,3 +31,6 @@ dbdata/
 .claude
 
 claude-gitlab/
+
+# Codex
+.codex
