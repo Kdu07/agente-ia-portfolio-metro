@@ -1367,6 +1367,34 @@ Os cards da milestone `Sprint 04` permanecem nela até a conclusão: a Sprint 5 
 
 Doze das dezessete tasks são `P_ALTA`, proporção parecida com a da Sprint 4, mas por uma razão própria da última sprint: quase tudo o que sobra é condição para fechar o módulo. As cinco `P_MEDIA` são as que podem ser cortadas primeiro se a folga não bastar para as correções de usabilidade — e a ordem de corte é a da tabela, de baixo para cima dentro de cada prioridade.
 
+##### Sequenciamento
+
+As dependências formam quatro cadeias independentes, que podem correr em paralelo desde o primeiro dia, e uma convergência final:
+
+```mermaid
+flowchart LR
+    F4["Último merge da Sprint 4"] --> S501["S5-01 Reapurar indicadores"]
+    S502["S5-02 Adequar copilot/solucao"] --> S504["S5-04 Demonstração no ambiente do parceiro"]
+    DL["#374 Cliente Direct Line"] --> S504
+    S504 --> S516["S5-16 Apresentação final"]
+    SU["#431–#436 Sessões de usabilidade"] --> S505["S5-05 Consolidar achados"] --> S506["S5-06 Priorizar correções"] --> S507["S5-07 Implementar correções"] --> S508["S5-08 Reaplicar roteiro"]
+    S509["S5-09 Medir SLA de revisão"] --> S510["S5-10 Analisar a Sprint 5"]
+    S510 -. "reapuração após o último merge" .-> S517
+    S510 --> S511["S5-11 Matriz de risco final"]
+    S510 --> S513["S5-13 Retrospectiva final"] --> S514["S5-14 Post-mortem"]
+    AMB["#376, #377 Ambientes de nuvem"] --> S515["S5-15 Manual de instalação"]
+    S508 & S511 & S512["S5-12 Matriz de papéis"] & S514 & S515 & S516 --> S517["S5-17 Tag e versão final"]
+```
+
+| Ordem | Momento | Tasks | Por quê |
+|:---:|---|---|---|
+| 1 | Primeiro dia | S5-01, S5-02, S5-05, S5-09, S5-03 | Destravam o resto: a reapuração fecha a leitura da Sprint 4; a adequação do `copilot/solucao/` tem de vir antes de qualquer export; a consolidação da usabilidade abre a única cadeia de código |
+| 2 | Segundo e terceiro dias | S5-06, S5-07, S5-04, S5-15, S5-12 | A correção de usabilidade é a task mais longa do caminho crítico; a demonstração depende do Direct Line e é o que a apresentação mostra |
+| 3 | Quarto dia, até o prazo interno de quinta às 23h59 | S5-08, S5-16, S5-10, S5-11 | Fecha o que a revisão interna precisa ler, dentro do SLA da seção 2.4 |
+| 4 | Último dia | S5-13, S5-14, reapuração de S5-10, S5-17 | A retrospectiva e o post-mortem precisam do ciclo encerrado; a análise redigida na quinta é refeita sobre o último merge (`AM24`); a tag vem por último, sobre a `develop` integrada |
+
+O caminho crítico é a cadeia de usabilidade — S5-05 → S5-06 → S5-07 → S5-08, 4,5 h em série — porque é a única que termina em código e precisa de nova rodada de teste. É ela que decide se a Sprint 5 fecha na quinta.
+
 #### 3.6.2 Retrospectiva da Sprint 5
 
 [Preencher após a retrospectiva da Sprint 5.]
