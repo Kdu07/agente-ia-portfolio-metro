@@ -136,6 +136,10 @@ class Settings(BaseSettings):
     chunk_tokens: int = 350
     chunk_overlap: int = 40
 
+    # --- Autenticidade dos webhooks -------------------------------------
+    # Cadastro de chaves HMAC fora do repositorio, relido a cada recebimento.
+    webhook_portfolio_chaves_arquivo: str = ""
+
     # --- Recuperação (executor próprio) ---------------------------------
     # Seção 3.7 do plano. Trechos entregues ao modelo de geração por
     # consulta, e o corte de similaridade abaixo do qual um trecho não
