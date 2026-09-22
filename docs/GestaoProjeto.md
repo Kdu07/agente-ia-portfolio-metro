@@ -140,7 +140,7 @@
   - [4.4 Riscos materializados e efetividade das respostas](#44-riscos-materializados-e-efetividade-das-respostas)
   - [4.5 Plano de resposta — ameaças](#45-plano-de-resposta--ameaças)
   - [4.6 Estratégia de aproveitamento — oportunidades](#46-estratégia-de-aproveitamento--oportunidades)
-  - [4.7 Matriz probabilidade × impacto — Sprint 3](#47-matriz-probabilidade--impacto--sprint-3)
+  - [4.7 Matriz probabilidade × impacto — Sprint 4](#47-matriz-probabilidade--impacto--sprint-4)
   - [4.8 Análise dos três itens mais críticos](#48-análise-dos-três-itens-mais-críticos)
 - [5. Melhorias de processo](#5-melhorias-de-processo)
   - [5.1 Ações de melhoria](#51-ações-de-melhoria)
@@ -1464,17 +1464,19 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | O05 | **Encerrada.** O adiantamento foi capturado e seu custo está registrado em `R21` |
 | **O06** | Integrar o cliente Direct Line (`#374`) e exercitar RF04 a RF08 no ambiente liberado; comparar a base sintética aos dados de exemplo do SharePoint de teste; conduzir a demonstração final no ambiente do parceiro, sem exportar agentes nem versionar dados do ambiente (`R23`) |
 
-### 4.7 Matriz probabilidade × impacto — Sprint 3
+### 4.7 Matriz probabilidade × impacto — Sprint 4
 
 | P \ I | 1 | 2 | 3 | 4 | 5 |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **5** | | O03 | R11, O04 | R01, R02, R06 | |
-| **4** | | | R05, R07, R12, R18, O02, O05 | | |
-| **3** | | R17 | R03, R08, R10, R14, R16 | R13, O01 | |
-| **2** | | | | R15 | R09 |
+| **5** | | O03 | R11 | **R21** | |
+| **4** | | R20 | R05, R07, R12, R18, R19, R22, O02, O04 | R01, **O06** | |
+| **3** | | R17 | R03, R08, R10, R14 | R06, R13, O01 | **R23** |
+| **2** | | | R16 | R02, R15 | R09 |
 | **1** | | | | R04 | |
 
-Em relação à Sprint 2, a faixa crítica passa a ter **três** ameaças (R01, R02 e R06). R06 entra na célula (P5, I4) pela materialização da ausência prolongada do parceiro. R08 deixa a linha P5 e volta a (P3, I3). R18 e O05 ocupam a linha P4 junto às ameaças de cronograma e equipe. R17 sobe de (P2, I2) para (P3, I2) com o consumo real de Speech.
+`O05`, encerrada, deixa a matriz.
+
+Em relação à Sprint 3, a faixa crítica troca de composição. Saem `R01`, `R02` e `R06`, que caem com a liberação do ambiente do parceiro, e entra `R21`, na célula (P5, I4), pela compressão de escopo. `R02` desce da linha P5 para (P2, I4), e `R06` para (P3, I4). `R23` inaugura a célula (P3, I5), ao lado de `R09` na coluna de impacto máximo. `O06` entra em (P4, I4), junto a `R01`: a mesma liberação que reduz o risco dos dados é a oportunidade de validá-los.
 
 A figura da matriz produzida no artefato de entendimento de negócio permanece como registro da avaliação inicial:
 
@@ -1484,13 +1486,13 @@ A figura da matriz produzida no artefato de entendimento de negócio permanece c
 
 ### 4.8 Análise dos três itens mais críticos
 
-**1º — R01 · Representatividade dos dados sintéticos (Sev. 20, 🔴 crítica).** Permanece no topo. A Sprint 3 avançou o pipeline de voz e a documentação de testes de RF/RNF, mas nenhuma dessas entregas substitui a validação externa da base sintética. Enquanto R06 estiver materializado, a mitigação original de R01 (amostras com o PMO) continua bloqueada. A resposta para a Sprint 4 é enriquecer a base com o material já disponível, declarar o limite de validação nos entregáveis e não tratar as métricas de 5.4.11 como prova de aderência ao portfólio real.
+**1º — R21 · Compressão de escopo (Sev. 20, 🔴 crítica, materializado).** É o único item na faixa crítica. A antecipação do escopo da Sprint 5 levou a carga atribuída a 141% da capacidade declarada, e o efeito é visível no ritmo: a três dias úteis do fim, 29% das issues estavam concluídas. O risco está no fechamento: a Sprint 5 fica reservada às correções de usabilidade e ao encerramento do módulo, então os cards da Sprint 4 precisam fechar dentro da própria sprint. A resposta combina a priorização dos cards `P_ALTA` até o encerramento, a redistribuição entre integrantes e, para o ciclo seguinte, o planejamento dentro da capacidade (`AM20`) com checkpoint na daily de quarta (`AM25`).
 
-**2º — R02 · Restrições do ecossistema Microsoft e acesso ao ambiente (Sev. 20, 🔴 crítica, materializado).** Continua materializado. A contingência (stack própria + executor dublado) mostrou-se efetiva de novo: o ciclo integrou voz (`#192`–`#206`) e o contrato de mensageria (`#198`) sem Direct Line. O efeito residual segue no handover e em RF04–RF08. A oportunidade O04 sobe para severidade 15 justamente porque essa autonomia deixou de ser remendo e passou a ser trilha principal de demonstração.
+**2º — R01 · Representatividade dos dados sintéticos (Sev. 16, 🟠 alta).** Sai da faixa crítica pela primeira vez desde a Sprint 2, mas continua o item de maior severidade entre os que não se materializaram. O SharePoint de teste traz dados de exemplo produzidos pelo parceiro, e é por isso que a probabilidade cai. A queda, porém, é de potencial, e não de fato: enquanto a base sintética não for comparada a esses dados, as métricas de 5.4.11 continuam sem prova de aderência ao portfólio real. A captura de `O06` é a mitigação de `R01`.
 
-**3º — R06 · Disponibilidade do parceiro (Sev. 20, 🔴 crítica, materializado).** Era 16 na Sprint 2 e sobe para 20: dois ciclos consecutivos sem retorno transformam a espera em condição do módulo. É a causa-raiz compartilhada de R01 e R02. A postura iniciada na Sprint 3 — premissas documentadas e decisões reversíveis — deve ser explicitada na Sprint 4, com escala via orientadora e sem recolocar o ambiente do parceiro no caminho crítico das ondas sob controle da equipe.
+**3º — R23 · Export do Copilot Studio no repositório (Sev. 15, 🟠 alta, aberto).** Empata em severidade com `R11` e fica à frente pelo impacto: 5 contra 3. `R11` compromete a continuidade da infraestrutura; `R23`, se materializar, viola uma restrição de confidencialidade expressa pelo parceiro, e o dano não se desfaz removendo o arquivo — o link e as conexões já estariam no histórico. É também o item de mitigação mais barata da matriz: basta reescrever um README antes do primeiro export, e o momento de fazer isso é antes de o cliente Direct Line (`#374`) sair do `Backlog`.
 
-> **Nota de processo (fora do pódio de severidade).** `R18` (Sev. 12, materializado) não integra os três mais críticos por nota, mas é o principal aprendizado interno do ciclo: feriado e mal-estar sem plano B. Suas respostas são `AM14` e `AM15`.
+> **Nota de processo (fora do pódio de severidade).** `R02` e `R06`, que ocupavam o pódio desde a Sprint 2, deixam a faixa crítica juntos, e pela mesma razão. A resposta que os tirou de lá — escalar via orientadora e seguir com premissas documentadas — foi a contingência prevista desde a Sprint 1. O aprendizado registrável é que a contingência funcionou, mas a revisão da Sprint 3 não percebeu a mudança: a correção acima existe para isso.
 
 ## 5. Melhorias de processo
 
