@@ -1523,21 +1523,22 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 
 ### 5.2 Indicadores de processo
 
-| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (corte 09/09, `c00d712`) | Uso no acompanhamento |
-|---|---:|---:|---:|---|
-| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 23 fechadas de 55 atribuídas | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
-| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | 47,50 h atribuídas; 19,50 h fechadas | Comparar carga planejada e concluída |
-| Commits na `develop` | 65 | 129, sendo 91 autorais | 35 autorais integrados; 50 autorais únicos no total | Evidenciar integração e rastreabilidade |
-| Merge requests | 33 criados / 33 revisados | 35 integrados na `develop` | 16 integrados (`!75`–`!93`) | Acompanhar equilíbrio entre produção e integração |
-| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | não reextraído (board) | Detectar acúmulo (`AM06`) |
-| SLA de primeira revisão | até 24 h úteis | não instrumentado | não instrumentado | Identificar espera no fluxo de integração |
-| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues e 2,92:1 em horas | 13:1 em commits autorais (entre quem registrou) | Apoiar redistribuição (`AM07` / `AM17`) |
-| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | não reextraído (board) | Confiabilidade da atribuição (`AM12`) |
-| Concentração do fechamento | não medido | 51% nos dois últimos dias | não reextraído (board) | Fluxo contínuo vs. encerramento (`AM13`) |
-| Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | Capacity e plano B (`AM14` / `AM15` / R18) |
-| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | não auditado neste corte | Verificar se o board representa a execução |
+| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (fechamento, 12/09, `7255196`) | Sprint 4 (corte 22/09, `61a67b8`) | Uso no acompanhamento |
+|---|---:|---:|---:|---:|---|
+| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 51/51 — 100% | 28/97 — 29% no corte | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
+| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | 55,5 h, todas concluídas | 135,5 h atribuídas; 38,25 h concluídas no corte | Comparar carga planejada e concluída |
+| Capacidade declarada | não medida | não medida | não medida | 96 h — carga a 141% | Verificar se o plano cabe na equipe (`AM20`) |
+| Commits na `develop` | 65 | 129, sendo 91 autorais | 98 autorais | 58 autorais integrados; 123 em todas as branches | Evidenciar integração e rastreabilidade |
+| Merge requests | 33 criados / 33 revisados | 35 integrados na `develop` | 33 integrados na `develop` | 17 integrados de 24 abertos; 23 com revisor nomeado | Acompanhar equilíbrio entre produção e integração |
+| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | 0 no fechamento | 7 em `Waiting Review` no corte | Detectar acúmulo (`AM06`) |
+| SLA de primeira revisão | até 24 h úteis | não instrumentado | não instrumentado | não instrumentado | Identificar espera no fluxo de integração (`AM23`) |
+| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues e 2,92:1 em horas | 2,50:1 em horas | 2,25:1 em horas | Apoiar redistribuição (`AM17` / `AM21`) |
+| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | 0 | 0 | Confiabilidade da atribuição (`AM12`) |
+| Concentração do fechamento | não medido | 51% nos dois últimos dias | 45% no último dia | refeita no fechamento (`AM24`) | Fluxo contínuo vs. encerramento (`AM13` / `AM25`) |
+| Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | 14/09 e 18/09; commits no fim de semana de 19 e 20/09 | Capacity e plano B (`AM14` / `AM15` / R18) |
+| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | todas as issues com responsável no fechamento | 97 de 97 cards com responsável, *size* e prioridade | Verificar se o board representa a execução |
 
-As colunas não são diretamente comparáveis em valor absoluto entre sprints: a Sprint 3, neste corte, usa apenas métricas verificáveis no repositório. O que se compara entre ciclos são razões, padrões e a presença/ausência de instrumentação — não os totais de issues sem export do GitLab.
+A coluna da Sprint 3 passa a trazer os valores do fechamento, reapurados na seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3); os do corte de 09/09 ficam registrados na seção 3.4.3. A da Sprint 4 é o corte intermediário de 22/09 e é substituída pelos valores de fechamento depois do último merge do ciclo, conforme `AM24`.
 
 Os dados são extraídos com data, horário, branch-base e regra de atribuição registrados. A análise não converte contagens em ranking individual: qualidade, complexidade, dependências, papel exercido e revisão cruzada permanecem parte da interpretação.
 
