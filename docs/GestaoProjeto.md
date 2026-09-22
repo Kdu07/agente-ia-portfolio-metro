@@ -128,6 +128,7 @@
   - [3.5 Sprint 4](#35-sprint-4)
     - [3.5.1 Planejamento e matriz de responsabilidades](#351-planejamento-e-matriz-de-responsabilidades)
       - [Matriz de papéis e responsabilidades da Sprint 4](#matriz-de-papéis-e-responsabilidades-da-sprint-4)
+      - [Rotação de papéis em relação às Sprints 2 e 3](#rotação-de-papéis-em-relação-às-sprints-2-e-3)
     - [3.5.2 Retrospectiva da Sprint 4](#352-retrospectiva-da-sprint-4)
     - [3.5.3 Indicadores quantitativos da Sprint 4](#353-indicadores-quantitativos-da-sprint-4)
     - [3.5.4 Reconciliação com o fechamento da Sprint 3](#354-reconciliação-com-o-fechamento-da-sprint-3)
@@ -1113,6 +1114,19 @@ O planejamento operacional da Sprint 4 está no [Kanban do GitLab](https://git.i
 **Condução do ciclo.** Eduardo Casarini foi o Scrum Master da Sprint 4, e Carlos Eduardo Serrano Quaglia, o Tech Lead. É a primeira sprint do módulo com Tech Lead designado desde a Sprint 1, o que atende, com um ciclo de atraso, a `AM08`. Os dois papéis também rodaram: o Scrum Master foi Carlos Eduardo na Sprint 2 e Mirela Bianchi na Sprint 3.
 
 Cada integrante conduziu uma sessão de usabilidade com participante externo (`#431`–`#436`), e por isso esses cards não entram na definição do papel principal: são trabalho coletivo distribuído por igual.
+
+##### Rotação de papéis em relação às Sprints 2 e 3
+
+| Integrante | Papel principal na Sprint 2 | Papel principal na Sprint 3 | Papel principal na Sprint 4 | Evidência da rotação |
+|---|---|---|---|---|
+| Alexsander Barbosa | Pilha de tecnologias e modelagem de dados | Qualidade, usabilidade e apresentação | Viabilidade financeira e comunicação da entrega | Migrou de testes com usuários para análise econômica. A preparação da Sprint Review (`#364`) se repete como tarefa secundária |
+| Carlos Eduardo Serrano Quaglia | Scrum Master e camada de PLN | Dados, integração e infraestrutura técnica | Implantação em nuvem e integração contínua | Migrou de dados e testes de integração para implantação, pipelines e ambientes gerenciados |
+| Celso Rocha | Pré-processamento textual e catálogo de intenções | Qualidade e testes de requisitos | Painel de análise de intenções e gestão evolutiva | Migrou da verificação de requisitos para implementação de ponta a ponta e condução da análise do ciclo |
+| Eduardo Casarini | Canal de voz e contratos de API | Frontend e gestão do processo | Integrações assíncronas e canal de voz real | Papel principal novo: webhooks e mensageria. Duas repetições secundárias: as políticas de processo (`#401`–`#403`) seguem com ele desde a Sprint 3, e o canal de voz, especificado por ele na Sprint 2, volta como implementação (`#396`–`#397`) |
+| Mariana Reis | Projeto visual e implantação em nuvem | PLN e integração do canal de voz | Rotinas agendadas e testes funcionais e de requisitos não funcionais | Migrou de PLN e voz para agendamento e verificação de requisitos |
+| Mirela Bianchi | Prototipação exploratória e modelagem UML | API de áudio, mensageria e Scrum Master | Dados, histórico de conversas e testes de integração e desempenho | Migrou de serviços de áudio e condução do processo para dados e testes |
+
+Os seis integrantes assumiram na Sprint 4 um papel principal diferente dos dois anteriores, e nenhuma frente principal permaneceu com a mesma pessoa em ciclos consecutivos. As duas repetições estão em tarefas secundárias e estão registradas acima em vez de omitidas. A rotação também ampliou o repertório: cinco integrantes implementaram backend e interface no ciclo, e a frente de implantação em nuvem, que na Sprint 2 era especificação, virou execução com um responsável diferente.
 
 #### 3.5.2 Retrospectiva da Sprint 4
 
