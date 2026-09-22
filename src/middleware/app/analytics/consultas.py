@@ -31,7 +31,8 @@ justificativa de cada função.
 """
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,6 +43,21 @@ from app.pipeline.intencao import catalogo
 from app.schemas.usuario import Perfil
 
 _I = InteracaoTabela
+
+# Fuso em que os pontos da série são agrupados. O painel é lido por
+# quem opera em São Paulo, e um bloqueio às 22h de segunda precisa cair
+# na segunda — em UTC, cairia na terça.
+FUSO_DO_PAINEL = ZoneInfo("America/Sao_Paulo")
+
+# A guarda que produziu cada desfecho de bloqueio. As duas camadas da
+# guarda de injeção compartilham a linha; guardas diferentes, nunca.
+GUARDA_POR_DESFECHO: dict[Desfecho, str] = {
+    Desfecho.BLOQUEADA_INJECAO_REGRA: "injecao",
+    Desfecho.BLOQUEADA_INJECAO_MODELO: "injecao",
+    Desfecho.BLOQUEADA_ABUSO: "abuso",
+    Desfecho.BLOQUEADA_SAIDA: "saida",
+}
+GUARDAS: tuple[str, ...] = ("injecao", "abuso", "saida")
 
 
 @dataclass(frozen=True)
@@ -172,16 +188,78 @@ async def distribuicao_de_desfechos(
     return [ContagemPorChave(d.value, contagens.get(d.value, 0)) for d in Desfecho]
 
 
+def _truncar(momento: datetime, granularidade: str) -> datetime:
+    """Início do dia ou da hora que contém o instante, no fuso do painel."""
+    local = _em_utc(momento).astimezone(FUSO_DO_PAINEL)
+    if granularidade == "dia":
+        return local.replace(hour=0, minute=0, second=0, microsecond=0)
+    return local.replace(minute=0, second=0, microsecond=0)
+
+
+def _baldes(inicio: datetime, fim: datetime, granularidade: str) -> list[datetime]:
+    """Todos os intervalos da janela, inclusive os que não tiveram evento.
+
+    O dia avança pelo calendário, e não somando 24 horas, para que um
+    eventual horário de verão não desloque a meia-noite dos pontos.
+    """
+    baldes: list[datetime] = []
+    atual = _truncar(inicio, granularidade)
+    while atual < fim:
+        baldes.append(atual)
+        if granularidade == "dia":
+            atual = datetime.combine(
+                atual.date() + timedelta(days=1), time.min, tzinfo=FUSO_DO_PAINEL
+            )
+        else:
+            atual = (atual.astimezone(UTC) + timedelta(hours=1)).astimezone(FUSO_DO_PAINEL)
+    return baldes
+
+
 async def serie_de_bloqueios(
-    inicio: datetime, fim: datetime, *, granularidade: str = "dia"
+    sessao: AsyncSession,
+    inicio: datetime,
+    fim: datetime,
+    *,
+    granularidade: str = "dia",
+    perfil: Perfil | None = None,
 ) -> dict[str, list[PontoSerie]]:
     """Série temporal de bloqueios, uma linha por guarda.
 
     Separa injeção de abuso de saída de propósito: um pico em injeção é
     incidente de segurança e um pico em abuso é problema de uso. Somá-los
-    num único número esconderia os dois.
+    num único número esconderia os dois. As duas camadas da guarda de
+    injeção — regra e modelo — compõem a mesma linha, porque barram o
+    mesmo tipo de evento; o que não se soma são guardas diferentes.
+
+    Cada linha traz um ponto por intervalo da janela, com zero onde não
+    houve bloqueio. Uma série que só tivesse os dias com evento ligaria
+    dois picos distantes por uma reta, e o gráfico sugeriria atividade
+    onde não houve nenhuma.
+
+    O agrupamento por intervalo é feito em Python, e não com
+    `date_trunc`: o truncamento precisa acontecer no fuso de quem lê o
+    painel, e a função equivalente muda de nome e de semântica entre o
+    PostgreSQL e o SQLite dos testes. O custo é pequeno porque só as
+    linhas bloqueadas são lidas, e elas são uma fração do tráfego.
     """
-    raise NotImplementedError("Agregações a implementar na onda 4")
+    if granularidade not in ("dia", "hora"):
+        raise ValueError(f"Granularidade desconhecida: {granularidade!r}")
+
+    consulta = select(_I.desfecho, _I.criada_em).where(
+        _I.desfecho.in_([desfecho.value for desfecho in GUARDA_POR_DESFECHO])
+    )
+    linhas = await sessao.execute(_na_janela(consulta, inicio, fim, perfil))
+
+    contagens: dict[tuple[str, datetime], int] = {}
+    for desfecho, criada_em in linhas.all():
+        chave = (GUARDA_POR_DESFECHO[Desfecho(desfecho)], _truncar(criada_em, granularidade))
+        contagens[chave] = contagens.get(chave, 0) + 1
+
+    baldes = _baldes(inicio, fim, granularidade)
+    return {
+        guarda: [PontoSerie(balde, contagens.get((guarda, balde), 0)) for balde in baldes]
+        for guarda in GUARDAS
+    }
 
 
 async def enunciados_fora_de_escopo(

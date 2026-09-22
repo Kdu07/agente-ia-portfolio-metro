@@ -172,3 +172,91 @@ async def test_desfechos_filtram_pelo_perfil(banco_analitico, registrar):
     )
 
     assert contagem[Desfecho.ENCAMINHADA.value] == 1
+
+
+# --- Série de bloqueios -------------------------------------------------------
+
+
+async def test_serie_traz_uma_linha_por_guarda(banco_analitico):
+    serie = await consultas.serie_de_bloqueios(banco_analitico, INICIO, FIM)
+
+    assert tuple(serie) == consultas.GUARDAS
+
+
+async def test_serie_nao_soma_guardas_diferentes(banco_analitico, registrar):
+    await registrar(criada_em=DENTRO, intencao_id=None, desfecho=Desfecho.BLOQUEADA_INJECAO_REGRA)
+    await registrar(criada_em=DENTRO, intencao_id=None, desfecho=Desfecho.BLOQUEADA_ABUSO)
+    await registrar(criada_em=DENTRO, desfecho=Desfecho.BLOQUEADA_SAIDA)
+
+    serie = await consultas.serie_de_bloqueios(banco_analitico, INICIO, FIM)
+
+    assert {guarda: sum(p.total for p in pontos) for guarda, pontos in serie.items()} == {
+        "injecao": 1,
+        "abuso": 1,
+        "saida": 1,
+    }
+    assert "total" not in serie
+
+
+async def test_serie_junta_as_duas_camadas_da_injecao(banco_analitico, registrar):
+    await registrar(criada_em=DENTRO, intencao_id=None, desfecho=Desfecho.BLOQUEADA_INJECAO_REGRA)
+    await registrar(criada_em=DENTRO, desfecho=Desfecho.BLOQUEADA_INJECAO_MODELO)
+
+    serie = await consultas.serie_de_bloqueios(banco_analitico, INICIO, FIM)
+
+    assert sum(ponto.total for ponto in serie["injecao"]) == 2
+
+
+async def test_serie_ignora_desfechos_que_nao_sao_bloqueio(banco_analitico, registrar):
+    await registrar(criada_em=DENTRO, desfecho=Desfecho.ENCAMINHADA)
+    await registrar(criada_em=DENTRO, desfecho=Desfecho.RECUSADA_FORA_ESCOPO)
+    await registrar(criada_em=DENTRO, desfecho=Desfecho.FALHA_EXECUTOR)
+
+    serie = await consultas.serie_de_bloqueios(banco_analitico, INICIO, FIM)
+
+    assert all(ponto.total == 0 for pontos in serie.values() for ponto in pontos)
+
+
+async def test_serie_preenche_com_zero_os_dias_sem_evento(banco_analitico):
+    serie = await consultas.serie_de_bloqueios(banco_analitico, INICIO, FIM)
+
+    # Sete dias de janela terminando ao meio-dia tocam oito datas locais.
+    assert len(serie["injecao"]) == 8
+    momentos = [ponto.momento for ponto in serie["injecao"]]
+    assert momentos == sorted(momentos)
+    assert all(m.hour == 0 and m.minute == 0 for m in momentos)
+
+
+async def test_serie_agrupa_no_fuso_de_sao_paulo(banco_analitico, registrar):
+    # 01h UTC de 21/09 ainda é 22h de 20/09 em São Paulo.
+    await registrar(
+        criada_em=datetime(2026, 9, 21, 1, 0, tzinfo=UTC),
+        intencao_id=None,
+        desfecho=Desfecho.BLOQUEADA_ABUSO,
+    )
+
+    serie = await consultas.serie_de_bloqueios(banco_analitico, INICIO, FIM)
+
+    com_evento = [p for p in serie["abuso"] if p.total]
+    assert len(com_evento) == 1
+    assert com_evento[0].momento.date().isoformat() == "2026-09-20"
+    assert com_evento[0].momento.utcoffset() == timedelta(hours=-3)
+
+
+async def test_serie_por_hora(banco_analitico, registrar):
+    inicio = FIM - timedelta(hours=6)
+    await registrar(
+        criada_em=FIM - timedelta(minutes=90),
+        intencao_id=None,
+        desfecho=Desfecho.BLOQUEADA_INJECAO_REGRA,
+    )
+
+    serie = await consultas.serie_de_bloqueios(banco_analitico, inicio, FIM, granularidade="hora")
+
+    assert len(serie["injecao"]) == 6
+    assert sum(ponto.total for ponto in serie["injecao"]) == 1
+
+
+async def test_serie_recusa_granularidade_desconhecida(banco_analitico):
+    with pytest.raises(ValueError, match="Granularidade"):
+        await consultas.serie_de_bloqueios(banco_analitico, INICIO, FIM, granularidade="semana")
