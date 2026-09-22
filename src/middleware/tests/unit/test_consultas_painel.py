@@ -388,3 +388,40 @@ async def test_volume_por_perfil_e_canal_cruza_todas_as_combinacoes(banco_analit
     assert volume["diretoria/voz"] == 2
     assert volume["membro_equipe/rotina"] == 1
     assert volume["lider_projeto/chat"] == 0
+
+
+# --- Latência -----------------------------------------------------------------
+
+
+def test_percentil_interpola_entre_vizinhos():
+    assert consultas.percentil([100, 200, 300, 400], 0.5) == pytest.approx(250)
+    assert consultas.percentil([100, 200, 300, 400], 0.95) == pytest.approx(385)
+
+
+def test_percentil_de_amostra_unica_e_o_proprio_valor():
+    assert consultas.percentil([730], 0.5) == 730
+    assert consultas.percentil([730], 0.95) == 730
+
+
+def test_percentil_sem_amostras_e_zero():
+    assert consultas.percentil([], 0.95) == 0.0
+
+
+def test_percentil_recusa_fracao_fora_do_intervalo():
+    with pytest.raises(ValueError):
+        consultas.percentil([1, 2], 1.5)
+
+
+async def test_latencia_calcula_p50_e_p95_da_janela(banco_analitico, registrar):
+    for latencia_ms in (800, 1000, 1200, 1400, 5000):
+        await registrar(criada_em=DENTRO, latencia_ms=latencia_ms)
+    await registrar(criada_em=INICIO - timedelta(days=1), latencia_ms=90_000)
+
+    resultado = await consultas.latencia(banco_analitico, INICIO, FIM)
+
+    assert resultado["p50"] == pytest.approx(1200)
+    assert resultado["p95"] == pytest.approx(4280)
+
+
+async def test_latencia_sem_mensagens_e_zero(banco_analitico):
+    assert await consultas.latencia(banco_analitico, INICIO, FIM) == {"p50": 0.0, "p95": 0.0}

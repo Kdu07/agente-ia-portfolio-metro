@@ -393,10 +393,45 @@ async def volume_por_perfil_e_canal(
     ]
 
 
-async def latencia(inicio: datetime, fim: datetime) -> dict[str, float]:
+def percentil(valores: list[float], fracao: float) -> float:
+    """Percentil por interpolação linear entre as posições vizinhas.
+
+    É o mesmo critério do `percentile_cont` do PostgreSQL, para que o
+    número do painel não mude se o cálculo um dia descer para o banco.
+    Sem amostras, devolve 0.0: o cartão mostra a ausência pelo total de
+    mensagens, e não por um valor especial aqui.
+    """
+    if not 0.0 <= fracao <= 1.0:
+        raise ValueError(f"Fração fora de [0, 1]: {fracao}")
+    if not valores:
+        return 0.0
+    ordenados = sorted(valores)
+    posicao = (len(ordenados) - 1) * fracao
+    abaixo = int(posicao)
+    acima = min(abaixo + 1, len(ordenados) - 1)
+    peso = posicao - abaixo
+    return float(ordenados[abaixo] + (ordenados[acima] - ordenados[abaixo]) * peso)
+
+
+async def latencia(
+    sessao: AsyncSession,
+    inicio: datetime,
+    fim: datetime,
+    *,
+    perfil: Perfil | None = None,
+) -> dict[str, float]:
     """Percentis p50 e p95 da latência do pipeline, em milissegundos.
 
     É o custo do pedágio, medido. Sustenta o argumento de desempenho
     frente à latência extra assumida na seção 1.3 da Arquitetura.
+
+    O percentil é calculado em Python sobre a coluna lida, porque os
+    agregados de conjunto ordenado não existem no SQLite. Lê-se um inteiro
+    por mensagem da janela, o que no volume do MVP cabe folgado em
+    memória; se deixar de caber, o cálculo desce para `percentile_cont`
+    com o mesmo resultado, pela escolha de interpolação de `percentil`.
     """
-    raise NotImplementedError("Agregações a implementar na onda 4")
+    consulta = select(_I.latencia_ms)
+    linhas = await sessao.execute(_na_janela(consulta, inicio, fim, perfil))
+    valores = [float(valor) for valor in linhas.scalars().all()]
+    return {"p50": percentil(valores, 0.5), "p95": percentil(valores, 0.95)}
