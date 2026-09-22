@@ -1358,6 +1358,12 @@ A matriz mantém o histórico de avaliação desde a identificação de cada ite
 
 `O06` é o lado positivo da mesma liberação: pela primeira vez no módulo, RF04 a RF08 podem ser demonstrados no ambiente real, e a base sintética pode ser comparada aos dados de exemplo do parceiro. Entra como **Aberto** porque ainda não foi capturada — o cliente Direct Line (`#374`) segue em `Backlog`.
 
+**Movimentos relevantes na Sprint 4:** `R02` desce de 20 para 8 e deixa o status Materializado — o acesso ao ambiente do parceiro foi liberado em 04/09; a exposição residual é a das restrições de licença e conectores, ainda não exercitadas. `R06` desce de 20 para 12 e também deixa o status Materializado: o parceiro respondeu, pela via de escalada prevista na contingência. `R01` desce de 20 para 16 porque o SharePoint de teste traz dados de exemplo produzidos pelo parceiro, mais próximos da estrutura real do que a base só da equipe. `R16` desce de 9 para 6 com os índices da tabela `interacao` integrados (`#417`) e as agregações do painel limitadas por janela. `O04` desce de 15 para 12: o desacoplamento deixou de ser forçado e passou a ser opção. `O05` é encerrada — o adiantamento se realizou e virou a antecipação de escopo registrada em `R21`.
+
+> **Registro de correção.** A liberação do ambiente ocorreu em **04/09/2026**, durante a Sprint 3. A revisão daquela sprint, escrita depois dessa data, manteve `R02` e `R06` como materializados. As notas da Sprint 3 são preservadas como estavam, porque foram as registradas naquele momento; a reversão entra nesta revisão, com a data real do evento e a evidência abaixo.
+
+**Evidência da reversão de `R02` e `R06`:** mensagem da orientadora Vanessa Nunes no canal da turma no Slack, em 04/09/2026, repassando o comunicado do parceiro com o link do SharePoint de teste com dados de exemplo, o acesso ao Copilot Studio e a distribuição das credenciais aos alunos responsáveis. Os endereços e as credenciais não são reproduzidos neste documento, pela restrição de confidencialidade que acompanha a mesma mensagem (ver `R23`).
+
 ### 4.3 Histórico de acompanhamento
 
 O histórico registra, por item, a evolução desde a identificação inicial, de modo que seja possível verificar o que mudou em cada ciclo e por quê.
