@@ -59,7 +59,14 @@ _agendador: AsyncIOScheduler | None = None
 
 
 def _url_sincrona_jobstore(database_url: str) -> str:
-    """Troca somente o driver assíncrono pelo driver síncrono do jobstore."""
+    """Troca o driver assíncrono pelo driver síncrono do jobstore.
+
+    O resto da URL passa intacto, com uma exceção: o TLS. O asyncpg o lê
+    em `ssl=require`, e o psycopg só entende `sslmode=require` — e recusa
+    a conexão ao ver o parâmetro que não conhece. Sem a tradução, a mesma
+    `DATABASE_URL` que funciona na API derrubaria o worker no banco
+    gerenciado, que exige TLS.
+    """
     url = make_url(database_url)
     drivers = {
         "postgresql+asyncpg": "postgresql+psycopg",
@@ -68,7 +75,10 @@ def _url_sincrona_jobstore(database_url: str) -> str:
     driver = drivers.get(url.drivername, url.drivername)
     if driver.endswith(("+asyncpg", "+aiosqlite")):
         raise ValueError(f"Driver assíncrono sem equivalente para o jobstore: {url.drivername}")
-    return url.set(drivername=driver).render_as_string(hide_password=False)
+    consulta = dict(url.query)
+    if driver == "postgresql+psycopg" and "ssl" in consulta:
+        consulta["sslmode"] = consulta.pop("ssl")
+    return url.set(drivername=driver, query=consulta).render_as_string(hide_password=False)
 
 
 def _obter_agendador() -> AsyncIOScheduler:
