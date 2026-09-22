@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Principal } from "@/paginas/Principal";
@@ -136,18 +136,63 @@ describe("Página de rotinas", () => {
     fireEvent.change(screen.getByPlaceholderText("Descreva o que o Prata deve consultar ou acompanhar"), { target: { value: "Listar pendências críticas dos projetos ativos." } });
     fireEvent.click(screen.getByRole("button", { name: "Criar rotina" }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Rotina criada com sucesso.");
-    expect(screen.getByText("Pendências diárias")).toBeInTheDocument();
+    expect(await screen.findByRole("status", {}, { timeout: 3000 })).toHaveTextContent("Rotina criada com sucesso.");
+    expect(await screen.findByText("Pendências diárias")).toBeInTheDocument();
   });
 
   it("solicita confirmação antes de excluir", async () => {
     renderizar(<Rotinas />);
     await screen.findByText("Riscos da Linha 6");
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    const cartao = screen.getByText("Riscos da Linha 6").closest("article");
+    expect(cartao).not.toBeNull();
+    fireEvent.click(within(cartao!).getByRole("button", { name: "Excluir" }));
     expect(screen.getByRole("alertdialog", { name: "Excluir rotina?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(screen.queryByRole("alertdialog", { name: "Excluir rotina?" })).not.toBeInTheDocument();
+  });
+
+  it("edita e exclui uma rotina pelas rotas reais", async () => {
+    renderizar(<Rotinas />);
+    const titulo = await screen.findByText("Riscos da Linha 6");
+    const cartao = titulo.closest("article");
+    expect(cartao).not.toBeNull();
+
+    fireEvent.click(within(cartao!).getByRole("button", { name: "Editar" }));
+    fireEvent.change(screen.getByPlaceholderText("Ex.: Resumo semanal do portfólio"), {
+      target: { value: "Riscos críticos atualizados" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    expect(await screen.findByText("Riscos críticos atualizados")).toBeInTheDocument();
+
+    const cartaoAtualizado = screen.getByText("Riscos críticos atualizados").closest("article");
+    fireEvent.click(within(cartaoAtualizado!).getByRole("button", { name: "Excluir" }));
+    fireEvent.click(screen.getByRole("button", { name: "Excluir rotina" }));
+    await waitFor(() => expect(screen.queryByText("Riscos críticos atualizados")).not.toBeInTheDocument());
+  });
+
+  it("consulta e apresenta o histórico de execuções", async () => {
+    renderizar(<Rotinas />);
+    const titulo = await screen.findByText("Resumo semanal do portfólio");
+    const cartao = titulo.closest("article");
+    expect(cartao).not.toBeNull();
+
+    fireEvent.click(within(cartao!).getByRole("button", { name: "Resultados" }));
+
+    expect(await screen.findByText(/Resumo consolidado de 12 projetos ativos/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Executar agora" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Rotina executada");
+  });
+
+  it("distingue falha de carregamento de uma lista vazia", async () => {
+    servidor.use(
+      http.get("/api/rotinas", () => HttpResponse.json({ detail: "Banco temporariamente indisponível" }, { status: 503 })),
+    );
+    renderizar(<Rotinas />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Banco temporariamente indisponível");
+    expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeInTheDocument();
+    expect(screen.queryByText("Crie sua primeira rotina")).not.toBeInTheDocument();
   });
 });
 
