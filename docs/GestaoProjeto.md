@@ -1229,6 +1229,17 @@ Com os dados completos, as ações da Sprint 2 que estavam sem evidência recebe
 
 Os pontos de atenção descrevem o processo, e não o desempenho individual. A compressão de escopo explica boa parte deles: com um ciclo e meio de trabalho em uma semana, é esperado que a conclusão se acumule e que a revisão vire gargalo. O que o registro permite é separar o que decorre da compressão do que decorre do processo — e é esse o critério das ações da seção [3.5.6](#356-melhorias-para-a-sprint-5).
 
+##### Efetividade das ações da Sprint 3
+
+| ID | Ação | Situação no corte | Avaliação |
+|---|---|---|---|
+| AM14 | Plano B para ausência, mal-estar ou feriado | Nenhuma frente crítica teve substituto ou pareamento combinado. Não houve ausência no ciclo que exigisse cobertura | **Não executada** — e sem efeito observável, porque não foi posta à prova. Permanece em vigor na Sprint 5 |
+| AM15 | Feriados e recessos no cálculo de capacity | Capacidade declarada de 16 h por integrante; o período de 14/09 a 25/09 não tem feriado. A declaração não está registrada na milestone, cuja descrição segue vazia | **Parcialmente efetiva** — a capacity foi declarada e usada, mas não no lugar que a ação definia |
+| AM16 | Priorizar os critérios de aceite remanescentes da Onda 1 | `NotImplementedError` caiu de 45 para 23; os 19 do painel estão na MR `!127` | **Efetiva em execução** — a verificação final é a contagem depois do último merge |
+| AM17 | Razão máxima de 2:1, ou justificativa e plano B em card | 2,25:1, sem justificativa registrada | **Ineficaz**, com melhora sobre os 2,50:1 do fechamento da Sprint 3 |
+| AM18 | Projeção na daily de quarta; nada declarado não entregável depois de quinta às 23h59 | O prazo de quinta, 24/09, ainda não chegou no corte | **Em execução** — avaliada no fechamento |
+| AM19 | Repositório fora de pasta sincronizada com nuvem | Nenhum incidente de ambiente local com o Git no ciclo, contra quatro na Sprint 3 | **Efetiva** |
+
 ### 3.6 Sprint 5
 
 [Preencher após a retrospectiva da Sprint 5.]
