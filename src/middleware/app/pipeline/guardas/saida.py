@@ -130,6 +130,9 @@ async def verificar(
     if motivo is not None:
         return ResultadoSaida(suspeita=True, confianca=1.0, motivo=f"{motivo}@{intencao_id}")
 
+    if settings.performance_mode:
+        return ResultadoSaida(suspeita=False, confianca=0.0, motivo="duble_desempenho")
+
     if not content_safety.configurado():
         logger.warning("Guarda de saída sem Content Safety configurado; só as regras valem")
         return ResultadoSaida(suspeita=False, confianca=0.0, motivo="limpo_so_regras")

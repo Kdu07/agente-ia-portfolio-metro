@@ -8895,6 +8895,61 @@ python -m pytest tests/desempenho/test_micro_latencia.py --benchmark-only
 python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
 ```
 
+#### 10.2.2.1 Resultado da execução — 22/09/2026
+
+O ambiente Docker foi iniciado com PostgreSQL populado, API e frontend. Para
+isolar o middleware, a execução usou `PERFORMANCE_MODE=true`: o executor devolve
+resposta sintética com atraso de 50 ms, Content Safety é dublado no perfil de
+carga e o classificador usa uma intenção determinística. O modo é opt-in e
+desligado por padrão; o benchmark isolado de `TNF-DES-02` continua medindo o
+classificador real com `httpx.MockTransport`.
+
+| Cenário | Requisições | Falhas | p50 | p95 | Situação |
+|---|---:|---:|---:|---:|---|
+| `TNF-DES-01` — baseline, 1 usuário | 77 | 0 | 77 ms | 81 ms | Aprovado |
+| `TNF-DES-03` — carga nominal, 10 usuários | 415 | 0 | 320 ms | 1.600 ms | Aprovado |
+| `TNF-DES-04` — pico, 30 usuários | 396 | 0 | 1.300 ms | 4.800 ms | Aprovado |
+| `TNF-DES-06` — executor excede timeout | 17 | 0 | 130 ms | 140 ms | Aprovado |
+
+O limite operacional de `TNF-DES-07` é p95 menor ou igual a 8 s. Os resultados
+de `TNF-DES-03` e `TNF-DES-04` permanecem abaixo desse limite, portanto o
+critério foi aprovado nos dois recortes. O pico aumentou o p95 em 3,2 s sobre
+o nominal, desvio compatível com contenção de CPU e conexões durante a carga,
+mas sem recusa HTTP.
+
+O cenário `TNF-DES-06` configurou atraso sintético de 1.000 ms e timeout de
+100 ms. As respostas retornaram `falha_executor`, foram registradas pelo
+pipeline e o Locust confirmou o desfecho esperado. O cenário `TNF-DES-05`
+não foi aprovado: o worker encerra na inicialização com
+`NotImplementedError("Worker a implementar na onda 5")`, logo não existe ainda
+um disparo de rotina executável para medir concorrência com o chat.
+
+O `TNF-DES-02` também passou no benchmark isolado, com Content Safety dublado:
+
+| Etapa | Média | Mediana | Referência |
+|---|---:|---:|---|
+| Regra determinística de injeção | 1,89 µs | 1,70 µs | sub-100 ms arquitetural |
+| Pré-processamento textual | 9,78 µs | 9,10 µs | sub-100 ms arquitetural |
+| Classificador de injeção + dublê HTTP | 1,51 ms | 3,15 ms | 150–300 ms |
+| Classificador de abuso + dublê HTTP | 1,23 ms | 2,48 ms | 150–300 ms |
+| Guarda de saída + dublê HTTP | 1,10 ms | 1,54 ms | 100–200 ms |
+
+Os números acima são medições contra o ambiente Docker local com serviços
+externos dublados, não contra Content Safety ou Copilot reais. A execução real
+dos serviços de terceiro permanece fora desta evidência; misturá-la ao número
+do middleware tornaria a comparação com o orçamento não reproduzível.
+
+Com o ambiente ativo, a execução reproduzível usa uma sessão de teste e o
+executor sintético:
+
+```powershell
+$env:PERF_TARGET = "http://localhost:5173"
+$env:PERF_CHAT_PATH = "/api/chat"
+$env:PERF_SESSION_COOKIE = "<cookie-da-sessao-de-teste>"
+$env:PERF_EXPECTED_DESFECHO = "encaminhada"
+python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
+```
+
 ### 10.2.3 Testes dos requisitos não funcionais
 
 **Nota de escopo.** O card que originou esta entrega foi escrito sobre RNF01 a RNF05. O RNF06 e o RNF07 entraram na mesma revisão de escopo que acrescentou RF09 a RF12, conforme as notas de 3.3.1 e 3.4, e não possuem card próprio. Cobri-los aqui é o que evita que a eficácia das barreiras e a proteção do registro — os dois requisitos que sustentam, respectivamente, o RF09 e o par RF10 e RF12 — fiquem sem procedimento de medição. A extensão fica registrada neste parágrafo e na descrição do *merge request*.

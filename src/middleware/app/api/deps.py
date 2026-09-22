@@ -22,7 +22,9 @@ from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import sessao as auth_sessao
+from app.config import settings
 from app.executor.base import Executor
+from app.executor.desempenho import ExecutorDesempenho
 from app.executor.fabrica import montar_executor
 from app.persistence.repository import (
     ConversaRepository,
@@ -137,6 +139,8 @@ def obter_executor(banco: SessaoBanco, usuario: UsuarioAtual) -> Executor:
     A decisão por `settings.executor` fica em `executor/fabrica.py`, também
     usada pelo worker. Assim API e rotinas não criam caminhos divergentes.
     """
+    if settings.performance_mode:
+        return ExecutorDesempenho()
     return montar_executor(banco, usuario)
 
 
