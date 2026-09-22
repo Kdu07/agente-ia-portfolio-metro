@@ -1261,9 +1261,9 @@ Os pontos de atenção descrevem o processo, e não o desempenho individual. A c
 
 ## 4. Gestão de riscos e oportunidades
 
-Os dois documentos tratam do mesmo conjunto de riscos, com recortes distintos e complementares. A **seção 2.6 de [Projeto.md](Projeto.md)** registra a identificação: metodologia, descrição de cada item, avaliação vigente, planos de resposta e análise dos mais críticos. **Esta seção** registra o acompanhamento ao longo do tempo: a evolução das notas entre sprints e a justificativa de cada reavaliação, os itens materializados e a efetividade das respostas efetivamente acionadas.
+Os dois documentos tratam do mesmo conjunto de riscos, em instantes distintos. A **seção 2.6 de [Projeto.md](Projeto.md)** preserva a identificação feita na Sprint 1 — metodologia, itens originais, planos de resposta e análise dos mais críticos daquele momento — como registro histórico, sem atualização a cada ciclo. **Esta seção** é a matriz vigente: os itens acrescentados depois, as notas reavaliadas sprint a sprint com a justificativa de cada movimento, os itens materializados e a efetividade das respostas efetivamente acionadas.
 
-A divisão evita a duplicação que importa. O que raramente muda — o que é cada risco e como se responde a ele — fica no `Projeto.md`; o que muda a cada ciclo — quanto vale hoje, o que aconteceu e o que a resposta produziu — fica aqui. Os identificadores são compartilhados, e a avaliação vigente da seção 4.2 é a mesma apresentada em 2.6.2: quando uma reavaliação alterar uma nota, os dois pontos devem ser atualizados na mesma passada.
+A divisão preserva as duas coisas que uma matriz de risco precisa mostrar: o que se sabia no começo e como a exposição evoluiu. Os identificadores são compartilhados, de modo que `R01` lá e `R01` aqui são o mesmo item, em dois instantes. Para saber onde o projeto está hoje, vale a seção 4.2.
 
 ### 4.1 Metodologia de avaliação
 
