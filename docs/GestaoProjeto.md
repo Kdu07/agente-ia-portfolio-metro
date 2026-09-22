@@ -127,6 +127,7 @@
     - [3.4.5 Melhorias para a Sprint 4](#345-melhorias-para-a-sprint-4)
   - [3.5 Sprint 4](#35-sprint-4)
     - [3.5.2 Retrospectiva da Sprint 4](#352-retrospectiva-da-sprint-4)
+    - [3.5.3 Indicadores quantitativos da Sprint 4](#353-indicadores-quantitativos-da-sprint-4)
   - [3.6 Sprint 5](#36-sprint-5)
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
   - [4.1 Metodologia de avaliação](#41-metodologia-de-avaliação)
@@ -1093,6 +1094,38 @@ A leitura abaixo cruza a matriz da seção 4 com o que o ciclo tornou observáve
 A Sprint 4 foi o ciclo em que a solução deixou de ser contrato e esqueleto e passou a código integrado e testado: autenticação pelo Entra ID, persistência, executor próprio com recuperação aumentada por geração, webhooks, rotinas agendadas e painel de intenções chegaram à `develop` ou a merge requests em revisão. O ciclo teve uma condição que o distingue dos anteriores: o escopo previsto para a Sprint 5 foi antecipado para a Sprint 4, e a equipe operou acima da capacidade declarada de dezesseis horas por integrante. A seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4) quantifica essa diferença, e ela é a chave de leitura dos demais indicadores: volume alto de trabalho iniciado, conclusão que se acumula para o fim da semana e carga desigual entre as frentes.
 
 A retrospectiva também corrige o método da anterior. Os indicadores da Sprint 3 haviam sido tirados de um corte parcial, e uma conclusão foi sustentada sobre ele. A seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3) refaz aquela conta depois do último merge do ciclo, com o board extraído pela API do GitLab, e reavalia as ações que tinham ficado sem evidência.
+
+#### 3.5.3 Indicadores quantitativos da Sprint 4
+
+> **Nota metodológica.** Corte de **22/09/2026 às 19h24 (UTC−03:00)**, a três dias úteis do encerramento. As fontes são as mesmas dos ciclos anteriores, agora extraídas diretamente da API do GitLab em vez do export manual:
+>
+> 1. **Board**, milestone `Sprint 04`: issues, responsáveis, *sizes*, prioridades, colunas e datas de fechamento. A conversão de esforço é a de sempre — `SIZE_PP` = 0,25 h, `SIZE_P` = 0,5 h, `SIZE_M` = 1 h e `SIZE_G` = 2 h.
+> 2. **Branch `develop`**, de `7255196` (último merge da Sprint 3, 12/09 às 01h12) até `61a67b8` (22/09 às 16h37), com autoria reconciliada pelo `.mailmap`, conforme `AM10`.
+>
+> **Corte e reapuração.** O corte é intermediário e declarado como tal. Carga atribuída, capacidade e composição do escopo não dependem do fechamento: são o plano da sprint, e valem como estão. Taxa de conclusão, perfil de fechamento e a efetividade de `AM18` dependem, e são refeitas depois do último merge do ciclo, com a mesma extração — é a ação `AM24`.
+
+##### Situação do board no corte
+
+| Situação | Issues | Horas convertidas |
+|---|---:|---:|
+| Concluídas | 28 | 38,25 h |
+| `Waiting Review` | 7 | — |
+| `Doing` | 2 | — |
+| `Backlog` | 60 | — |
+| **Total na milestone `Sprint 04`** | **97** | **135,50 h** |
+
+Nenhuma das 97 issues está sem responsável, sem *size* ou sem prioridade. É a primeira milestone do projeto com os três campos preenchidos em todos os cards desde a abertura, e não por regularização no fechamento.
+
+##### Capacidade declarada e carga atribuída
+
+| Medida | Valor |
+|---|---:|
+| Capacidade declarada | 6 integrantes × 16 h = **96,00 h** |
+| Carga atribuída na milestone | **135,50 h** |
+| Carga atribuída sobre a capacidade | **141%** |
+| Integrantes com carga acima de 16 h | 4 de 6 |
+
+A diferença de 39,5 h não é erro de estimativa. É a antecipação do escopo da Sprint 5 convertida em horas: as mesmas 97 issues, com os mesmos critérios de *size*, somam 41% a mais do que a capacidade que a equipe declarou ter. O registro explícito importa porque, sem ele, o burndown desta sprint contradiria o texto — mostraria uma equipe que planejou mal, e não uma equipe que absorveu um ciclo e meio de escopo.
 
 ### 3.6 Sprint 5
 
