@@ -136,6 +136,8 @@
     - [3.5.5 Análise dos pontos identificados na Sprint 4](#355-análise-dos-pontos-identificados-na-sprint-4)
     - [3.5.6 Melhorias para a Sprint 5](#356-melhorias-para-a-sprint-5)
   - [3.6 Sprint 5](#36-sprint-5)
+    - [3.6.1 Planejamento da Sprint 5](#361-planejamento-da-sprint-5)
+    - [3.6.2 Retrospectiva da Sprint 5](#362-retrospectiva-da-sprint-5)
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
   - [4.1 Metodologia de avaliação](#41-metodologia-de-avaliação)
   - [4.2 Matriz de risco consolidada — revisão da Sprint 4](#42-matriz-de-risco-consolidada--revisão-da-sprint-4)
@@ -1319,6 +1321,53 @@ Os pontos de atenção descrevem o processo, e não o desempenho individual. A c
 `AM14`, não executada na Sprint 4, permanece em vigor na Sprint 5 com o mesmo critério. A última sprint do módulo não tem ciclo seguinte para absorver uma ausência sem cobertura.
 
 ### 3.6 Sprint 5
+
+#### 3.6.1 Planejamento da Sprint 5
+
+Com o escopo previsto para a Sprint 5 antecipado para a Sprint 4, a última sprint do módulo não repete o formato das anteriores. Ela concentra duas coisas: as correções apontadas nos testes de usabilidade e o fechamento do projeto — post-mortem, demonstração final no ambiente do parceiro e versão final. Planejar um ciclo com escopo novo seria planejar um ciclo fictício. O que segue é o que de fato resta.
+
+As tasks abaixo compõem o planejamento e são registradas como cards na milestone `Sprint 05` do [Kanban do GitLab](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/boards); no registro, os identificadores provisórios `S5-01` a `S5-17` dão lugar aos números das issues.
+
+##### Capacidade
+
+| Medida | Valor |
+|---|---:|
+| Capacidade declarada | 6 integrantes × 16 h = **96,00 h** |
+| Tasks planejadas | **20,75 h** (17 tasks) |
+| Folga em relação à capacidade | **75,25 h** |
+
+A Sprint 5 é planejada dentro da capacidade, como pede a `AM20`, e a folga é deliberada. O tamanho das correções de usabilidade só é conhecido depois da consolidação das sessões (`S5-04`), e a última sprint do módulo não tem ciclo seguinte para absorver estouro.
+
+##### Cards da Sprint 4
+
+Os cards da milestone `Sprint 04` permanecem nela até a conclusão: a Sprint 5 não herda cards da Sprint 4. É esse o destino explícito de todos eles, inclusive dos dois de prioridade baixa ainda abertos no corte de 22/09 — `#383`, do pipeline de entrega contínua, e `#362`, das tags SemVer das Sprints 3 e 4 —, que seguem na Sprint 4 com a mesma prioridade.
+
+##### Lista de tasks, estimativa e prioridade
+
+| ID | Task | Tipo | *Size* | Horas | Prioridade | Depende de |
+|---|---|---|---|---:|---|---|
+| S5-01 | Reapurar os indicadores da Sprint 4 depois do último merge | `DOCS` | P | 0,50 | `P_ALTA` | Último merge da Sprint 4 |
+| S5-02 | Adequar `copilot/solucao/` à restrição de não exportar agentes | `DOCS` | P | 0,50 | `P_ALTA` | — |
+| S5-03 | Comparar a base sintética aos dados de exemplo do SharePoint de teste | `TEST` `DOCS` | G | 2,00 | `P_MEDIA` | — |
+| S5-04 | Preparar a demonstração final no ambiente do parceiro | `DEPLOY` | G | 2,00 | `P_ALTA` | S5-02, `#374` |
+| S5-05 | Consolidar os achados das sessões de usabilidade | `TEST` `DOCS` | M | 1,00 | `P_ALTA` | `#431`–`#436` |
+| S5-06 | Priorizar as correções de usabilidade por severidade | `DESIGN` | P | 0,50 | `P_ALTA` | S5-05 |
+| S5-07 | Implementar as correções de usabilidade de severidade alta | `CODE` | G | 2,00 | `P_ALTA` | S5-06 |
+| S5-08 | Reaplicar o roteiro de usabilidade nas telas corrigidas | `TEST` | M | 1,00 | `P_MEDIA` | S5-07 |
+| S5-09 | Medir o SLA de primeira revisão dos merge requests | `DOCS` | M | 1,00 | `P_MEDIA` | — |
+| S5-10 | Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria | `DOCS` | G | 2,00 | `P_ALTA` | S5-09, corte de quinta |
+| S5-11 | Atualizar a matriz de risco no fechamento do módulo | `DOCS` | M | 1,00 | `P_ALTA` | S5-10 |
+| S5-12 | Atualizar a matriz de papéis e responsabilidades da Sprint 5 | `DOCS` | M | 1,00 | `P_MEDIA` | Board da Sprint 5 estabilizado |
+| S5-13 | Conduzir a retrospectiva final do módulo com a equipe | `MEET` | M | 1,00 | `P_ALTA` | S5-10 |
+| S5-14 | Escrever a análise post-mortem do projeto | `DOCS` | G | 2,00 | `P_ALTA` | S5-13 |
+| S5-15 | Preencher o manual de instalação | `DOCS` | M | 1,00 | `P_MEDIA` | `#376`, `#377` |
+| S5-16 | Criar os slides e conduzir a apresentação final | `DOCS` | G | 2,00 | `P_ALTA` | S5-04 |
+| S5-17 | Criar a tag SemVer da Sprint 5 e publicar a versão final | `DEPLOY` | PP | 0,25 | `P_ALTA` | Todos os merges da Sprint 5 |
+| | **Total** | | | **20,75** | | |
+
+Doze das dezessete tasks são `P_ALTA`, proporção parecida com a da Sprint 4, mas por uma razão própria da última sprint: quase tudo o que sobra é condição para fechar o módulo. As cinco `P_MEDIA` são as que podem ser cortadas primeiro se a folga não bastar para as correções de usabilidade — e a ordem de corte é a da tabela, de baixo para cima dentro de cada prioridade.
+
+#### 3.6.2 Retrospectiva da Sprint 5
 
 [Preencher após a retrospectiva da Sprint 5.]
 
