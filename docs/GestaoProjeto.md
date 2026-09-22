@@ -129,6 +129,7 @@
     - [3.5.1 Planejamento e matriz de responsabilidades](#351-planejamento-e-matriz-de-responsabilidades)
       - [Matriz de papéis e responsabilidades da Sprint 4](#matriz-de-papéis-e-responsabilidades-da-sprint-4)
       - [Rotação de papéis em relação às Sprints 2 e 3](#rotação-de-papéis-em-relação-às-sprints-2-e-3)
+      - [Distribuição de carga](#distribuição-de-carga)
     - [3.5.2 Retrospectiva da Sprint 4](#352-retrospectiva-da-sprint-4)
     - [3.5.3 Indicadores quantitativos da Sprint 4](#353-indicadores-quantitativos-da-sprint-4)
     - [3.5.4 Reconciliação com o fechamento da Sprint 3](#354-reconciliação-com-o-fechamento-da-sprint-3)
@@ -1127,6 +1128,33 @@ Cada integrante conduziu uma sessão de usabilidade com participante externo (`#
 | Mirela Bianchi | Prototipação exploratória e modelagem UML | API de áudio, mensageria e Scrum Master | Dados, histórico de conversas e testes de integração e desempenho | Migrou de serviços de áudio e condução do processo para dados e testes |
 
 Os seis integrantes assumiram na Sprint 4 um papel principal diferente dos dois anteriores, e nenhuma frente principal permaneceu com a mesma pessoa em ciclos consecutivos. As duas repetições estão em tarefas secundárias e estão registradas acima em vez de omitidas. A rotação também ampliou o repertório: cinco integrantes implementaram backend e interface no ciclo, e a frente de implantação em nuvem, que na Sprint 2 era especificação, virou execução com um responsável diferente.
+
+##### Distribuição de carga
+
+| Integrante | Cards | Horas atribuídas | Participação | Em relação à capacidade de 16 h |
+|---|---:|---:|---:|---:|
+| Mirela Bianchi | 22 | 29,75 h | 22,0% | 186% |
+| Mariana Reis | 18 | 27,00 h | 19,9% | 169% |
+| Carlos Eduardo Serrano Quaglia | 18 | 25,00 h | 18,5% | 156% |
+| Eduardo Casarini | 19 | 24,50 h | 18,1% | 153% |
+| Celso Rocha | 10 | 16,00 h | 11,8% | 100% |
+| Alexsander Barbosa | 10 | 13,25 h | 9,8% | 83% |
+| **Total** | **97** | **135,50 h** | **100%** | **141%** |
+
+A razão entre a maior e a menor carga atribuída é de **2,25:1** (29,75 h contra 13,25 h), acima do teto de 2:1 que a `AM17` fixou para esta sprint. É uma melhora sobre os **2,50:1** do fechamento da Sprint 3 — e não sobre os 13:1 que a seção 3.4.3 registrou, que mediam commits num corte parcial (ver [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3)). O desequilíbrio desta sprint tem uma causa identificável: a antecipação do escopo da Sprint 5 caiu principalmente sobre as frentes de implementação e de testes, e as frentes de viabilidade e de análise ficaram perto da capacidade declarada. A resposta está em `AM21`, que leva a redistribuição para o planejamento.
+
+A contribuição medida no repositório — commits integrados e em branch, merge requests e merges — está na seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4), ao lado desta tabela. Ler as duas juntas evita a impressão que um corte isolado produz: no corte de 22/09, por exemplo, um integrante com 34 commits no ciclo aparece com zero na `develop`, porque o trabalho está em merge request aguardando revisão. A matriz responde por quem responde pelo quê; a produção, pela seção de indicadores; nenhuma das duas é ranking.
+
+##### Alinhamento aos critérios do Escritório de Projetos
+
+| Critério | Evidência no projeto |
+|---|---|
+| Análise crítica da Sprint 4 | Seções [3.5.2](#352-retrospectiva-da-sprint-4) a [3.5.6](#356-melhorias-para-a-sprint-5): indicadores com corte, fonte e commit-base declarados, operação acima da capacidade registrada, reconciliação com o fechamento da Sprint 3 e ações `AM20` a `AM25` |
+| Revisão e acompanhamento dos riscos | Seção 4: status revisado, reversão de `R02` e `R06` com data e evidência, itens novos da compressão de escopo (`R21`, `R22`) e da restrição do parceiro (`R23`), matriz probabilidade × impacto e três itens mais críticos |
+| Papéis e responsabilidades | Esta seção: matriz derivada do board, rotação em relação às Sprints 2 e 3 e carga com razão calculada |
+| Contrato, SLA e rituais | Seção 2.9 |
+| Planejamento da Sprint 5 | Seção [3.6](#36-sprint-5): tasks estimadas, priorizadas, sequenciadas e detalhadas, com destino explícito para o que não fechar na Sprint 4 |
+| Gestão do processo e de configuração | Seções 2.2 a 2.8 e 5, e `GestaoConfiguracao.md` |
 
 #### 3.5.2 Retrospectiva da Sprint 4
 
