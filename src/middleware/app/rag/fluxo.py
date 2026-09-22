@@ -53,10 +53,18 @@ class FluxoRag:
         self._recuperador = recuperador
         self._gerador = gerador
 
-    async def responder(self, pergunta: str, escopo: Escopo) -> ResultadoRag:
+    async def responder(
+        self,
+        pergunta: str,
+        escopo: Escopo,
+        *,
+        pergunta_para_geracao: str | None = None,
+    ) -> ResultadoRag:
         inicio = time.perf_counter()
         recuperacao = await self._recuperador.recuperar(pergunta, escopo)
-        resposta = await self._gerador.responder(recuperacao)
+        resposta = await self._gerador.responder(
+            recuperacao, pergunta=pergunta_para_geracao
+        )
         latencia_ms = int((time.perf_counter() - inicio) * 1000)
 
         logger.info(

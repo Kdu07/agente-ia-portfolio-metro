@@ -90,6 +90,22 @@ async def test_pergunta_vira_resposta_com_fontes() -> None:
     assert TEXTO_DO_TRECHO in modelo.chamadas[0]["conteudo"]
 
 
+async def test_contexto_da_conversa_vai_so_para_a_geracao() -> None:
+    modelo = ModeloFalso("O custo total estimado e R$ 847.900.000,00 [1].")
+    rag, _ = fluxo([Acerto(TRECHO_ID, 0.87)], [trecho_do_tap()], modelo)
+    pergunta_atual = "E qual e o custo?"
+    contexto = "Historico: falavamos do Trecho Sul.\nPergunta atual: E qual e o custo?"
+
+    resultado = await rag.responder(
+        pergunta_atual,
+        LIDER,
+        pergunta_para_geracao=contexto,
+    )
+
+    assert resultado.recuperacao.consulta == pergunta_atual
+    assert contexto in modelo.chamadas[0]["conteudo"]
+
+
 async def test_pergunta_sem_trecho_visivel_nao_chega_ao_modelo() -> None:
     """O caso da Expansão Leste para quem não é da diretoria: o índice não
     devolve nada, e o modelo não tem chance de responder de memória."""

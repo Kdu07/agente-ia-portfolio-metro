@@ -20,8 +20,9 @@ carregar a alocação: líder e membro de equipe alcançam só documentos
 transversais, que é o resultado conservador (ver `Escopo`).
 
 **Sem sessão externa.** O estado da conversa é do middleware (D6), e
-`conversa_externa_id` volta `None`. Os turnos anteriores ainda não
-entram no contexto: cada pergunta é respondida sozinha.
+`conversa_externa_id` volta `None`. Os turnos anteriores enriquecem a
+geração, mas não a consulta vetorial: a busca usa somente a mensagem
+atual para não diluir sua semântica com assuntos passados.
 
 **Fontes no texto.** A resposta leva ao fim um bloco com o arquivo e o
 local de cada citação, na ordem dos números entre colchetes. É o que a
@@ -58,7 +59,14 @@ class ExecutorRag:
         historico: tuple[TurnoContexto, ...] = (),
     ) -> RespostaExecutor:
         """Responde pelo RAG, no escopo de quem pergunta."""
-        resultado = await self._fluxo.responder(compor_prompt(texto, historico), self._escopo)
+        if historico:
+            resultado = await self._fluxo.responder(
+                texto,
+                self._escopo,
+                pergunta_para_geracao=compor_prompt(texto, historico),
+            )
+        else:
+            resultado = await self._fluxo.responder(texto, self._escopo)
         fontes = tuple(
             Fonte(
                 documento=fonte.documento,

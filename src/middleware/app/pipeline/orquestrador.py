@@ -135,8 +135,6 @@ class Orquestrador:
             prompt=request.mensagem,
             rotina_id=rotina_id,
         )
-        historico = await self._historico_seguro(ctx)
-
         # --- 1. Guarda de injeção -----------------------------------------
         # Regra primeiro: é determinística e barata, e evita pagar a
         # inferência do classificador nos ataques triviais. As duas
@@ -214,6 +212,10 @@ class Orquestrador:
             return await self._encerrar(ctx, Desfecho.RECUSADA_FORA_ESCOPO)
 
         # --- 4. Execução -----------------------------------------------------
+        # O historico so e consultado depois que a mensagem atual atravessa
+        # todas as guardas. Assim, uma entrada bloqueada nao dispara leituras
+        # nem chamadas externas para sanear turnos anteriores.
+        historico = await self._historico_seguro(ctx)
         try:
             resposta = await self._executor.enviar(
                 ctx.prompt,
