@@ -98,7 +98,7 @@ async def test_resumo_de_seguranca_filtra_pelo_perfil(banco_analitico, registrar
 async def test_resumo_de_catalogo_conta_classes_acionadas_e_sem_uso(banco_analitico, registrar):
     await registrar(criada_em=ONTEM, intencao_id="consultar_status_projeto")
     await registrar(criada_em=ONTEM, intencao_id="consultar_status_projeto")
-    await registrar(criada_em=ONTEM, intencao_id="consultar_riscos_projeto")
+    await registrar(criada_em=ONTEM, intencao_id="consultar_riscos")
     await registrar(
         criada_em=ONTEM,
         intencao_id=catalogo.FORA_DE_ESCOPO,

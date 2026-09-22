@@ -49,12 +49,12 @@ async def test_janela_inclui_o_inicio_e_exclui_o_fim(banco_analitico, registrar)
 async def test_volume_conta_mensagens_por_intencao(banco_analitico, registrar):
     for _ in range(3):
         await registrar(criada_em=DENTRO, intencao_id="consultar_status_projeto")
-    await registrar(criada_em=DENTRO, intencao_id="consultar_riscos_projeto")
+    await registrar(criada_em=DENTRO, intencao_id="consultar_riscos")
 
     volume = _por_chave(await consultas.volume_por_intencao(banco_analitico, INICIO, FIM))
 
     assert volume["consultar_status_projeto"] == 3
-    assert volume["consultar_riscos_projeto"] == 1
+    assert volume["consultar_riscos"] == 1
 
 
 async def test_volume_preserva_intencoes_com_contagem_zero(banco_analitico, registrar):
@@ -111,12 +111,12 @@ async def test_volume_ignora_mensagens_sem_intencao(banco_analitico, registrar):
 async def test_volume_ordena_do_maior_para_o_menor(banco_analitico, registrar):
     await registrar(criada_em=DENTRO, intencao_id="consultar_status_projeto")
     for _ in range(2):
-        await registrar(criada_em=DENTRO, intencao_id="consultar_riscos_projeto")
+        await registrar(criada_em=DENTRO, intencao_id="consultar_riscos")
 
     volume = await consultas.volume_por_intencao(banco_analitico, INICIO, FIM)
 
     assert [linha.chave for linha in volume[:2]] == [
-        "consultar_riscos_projeto",
+        "consultar_riscos",
         "consultar_status_projeto",
     ]
     totais = [linha.total for linha in volume]
@@ -361,13 +361,13 @@ async def test_enunciados_recusam_limite_nao_positivo(banco_analitico):
 async def test_confianca_media_por_intencao(banco_analitico, registrar):
     await registrar(criada_em=DENTRO, intencao_id="consultar_status_projeto", confianca=0.8)
     await registrar(criada_em=DENTRO, intencao_id="consultar_status_projeto", confianca=0.6)
-    await registrar(criada_em=DENTRO, intencao_id="consultar_riscos_projeto", confianca=0.9)
+    await registrar(criada_em=DENTRO, intencao_id="consultar_riscos", confianca=0.9)
 
     medias = await consultas.confianca_media_por_intencao(banco_analitico, INICIO, FIM)
 
     assert medias == {
         "consultar_status_projeto": pytest.approx(0.7),
-        "consultar_riscos_projeto": pytest.approx(0.9),
+        "consultar_riscos": pytest.approx(0.9),
     }
 
 
