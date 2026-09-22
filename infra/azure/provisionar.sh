@@ -522,13 +522,16 @@ aguardar_banco() {
 }
 
 aguardar_replica() { # nome do app
-  local i
-  for i in $(seq 1 60); do
-    [ "$(azv containerapp replica list -g "$RG" -n "$1" \
-      --query '[0].properties.containers[0].ready')" = True ] && return 0
+  local i pronta
+  for i in $(seq 1 40); do
+    # A consulta devolve o booleano em minúsculas; o `case` aceita as duas
+    # grafias, porque o formato já mudou entre versões da CLI.
+    pronta=$(azv containerapp replica list -g "$RG" -n "$1" \
+      --query '[0].properties.containers[0].ready')
+    case "$pronta" in [Tt]rue) return 0 ;; esac
     sleep 15
   done
-  echo "  $1 não ficou pronto a tempo; ver 'az containerapp logs show'" >&2
+  echo "  $1 ainda não respondeu pronto; ver 'az containerapp logs show'" >&2
   return 1
 }
 
@@ -554,7 +557,8 @@ fase_retomar() {
   aguardar_banco
   echo "  banco pronto"
   fase_ligar
-  aguardar_replica "$APP_API"
+  # A espera é informativa: quem prova que o ambiente voltou é o /api/health.
+  aguardar_replica "$APP_API" || true
   fase_saude
 }
 
