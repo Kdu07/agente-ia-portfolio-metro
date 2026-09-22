@@ -1404,23 +1404,26 @@ O histórico registra, por item, a evolução desde a identificação, de modo q
 
 | Item | O que ocorreu | Contingência acionada | Efetividade observada | Encaminhamento |
 |---|---|---|---|---|
-| **R02** — Restrições do ecossistema Microsoft | Acesso ao ambiente do parceiro indisponível desde a Sprint 2; permanece assim na Sprint 3 | Demonstração pela stack própria (middleware, interface, voz, mensageria) com executor dublado; guia de implantação do Copilot | **Efetiva e sustentada.** O ciclo avançou voz (`#192`–`#206`) e contrato de mensageria (`#198`) sem depender do tenant do parceiro | Manter O04/O05; não reintroduzir dependência dura de Direct Line no caminho crítico da Sprint 4 |
-| **R06** — Disponibilidade do parceiro | Premissas e validações seguem sem retorno ao longo de S2 e S3 | Premissas documentadas; decisões reversíveis; redução de dependência externa | **Parcialmente efetiva.** O trabalho técnico avançou, mas R01 permanece sem validação externa e RF04–RF08 seguem não demonstráveis de ponta a ponta no ambiente real | Escalar via orientadora; lista única de dúvidas; registrar premissas assumidas na Sprint 4 |
-| **R08** — Desalinhamento de expectativas | Materializado na Sprint 2 (redefinição de escopo) | Realinhamento e reorganização do `Projeto.md`; `AM09` | **Efetiva residual na Sprint 3.** Não houve nova ruptura rastreável nos commits do período; severidade reduzida para 9 | Manter issue de propagação (`AM09`) se houver mudança de arquitetura |
-| **R11** — Credenciais de nuvem | Infraestrutura ainda vinculada a conta pessoal (sem evidência de credencial institucional no ciclo) | Provisionamento pessoal + documentação reproduzível | **Efetiva quanto à continuidade; exposição residual mantida** | Retomar solicitação institucional; scripts de reprovisionamento |
-| **R18** — Perda de capacity sem plano B | Feriado de 07/09 sem desenvolvimento; redução de capacidade por indisposição | Redistribuição informal e adiantamento de outras frentes | **Parcialmente efetiva.** O ciclo registrou 50 commits autorais, 35 integrados na `develop` e 16 MRs integrados; a concentração entre volumes autorais permanece um ponto de acompanhamento | Formalizar plano B (`AM14`) e capacity com feriados (`AM15`) na Sprint 4 |
+| **R02** — Restrições do ecossistema Microsoft | Acesso indisponível da Sprint 2 até 04/09, quando o parceiro liberou o SharePoint de teste e o Copilot Studio | Demonstração pela stack própria com executor dublado, depois pelo executor próprio; guia de implantação do Copilot | **Efetiva e encerrada.** Sustentou três ciclos de desenvolvimento sem o ambiente do parceiro; com a liberação, deixa de ser necessária como condição | Integrar o cliente Direct Line (`#374`) e capturar `O06`; manter o executor próprio como caminho alternativo |
+| **R06** — Disponibilidade do parceiro | Premissas sem retorno ao longo das Sprints 2 e 3 | Escalada via orientadora; premissas documentadas e decisões reversíveis | **Efetiva.** A liberação de 04/09 chegou pela via de escalada prevista, a mensagem da orientadora repassando o comunicado do parceiro | Validar as premissas documentadas no ambiente liberado; manter a lista única de dúvidas |
+| **R11** — Credenciais de nuvem | Infraestrutura ainda vinculada a conta pessoal | Provisionamento pessoal com documentação reproduzível | **Efetiva quanto à continuidade; exposição residual mantida** | Retomar a solicitação institucional; o provisionamento no Azure (`#375`–`#384`) é a oportunidade de fazê-lo sob credencial do projeto |
+| **R18** — Perda de capacity sem plano B | Nenhum feriado no período e nenhuma ausência registrada que exigisse cobertura | Plano B formal previsto em `AM14` | **Não testada** — não houve ausência que exigisse cobertura, e o plano B formal não chegou a ser combinado (`AM14`) | Manter `AM14` na Sprint 5, última do módulo, sem folga para absorver ausência |
+| **R21** — Compressão de escopo | Escopo da Sprint 5 antecipado para a Sprint 4; 141% da capacidade declarada | Priorização por label, com `P_ALTA` em 71% dos cards; redistribuição ao longo da semana | **Parcialmente efetiva.** O código da Onda 1 avançou, mas a conclusão estava em 29% a três dias úteis do fim | Concluir os cards na própria Sprint 4, priorizando `P_ALTA`; `AM20` e `AM25` no ciclo seguinte |
 
 As ações de mitigação em curso são classificadas como `Não iniciada`, `Em execução`, `Efetiva`, `Ineficaz` ou `Encerrada`:
 
-| Ação acompanhada | Evidência na Sprint 3 | Estado | Próxima verificação |
+| Ação acompanhada | Evidência na Sprint 4 | Estado | Próxima verificação |
 |---|---|---|---|
-| Uso exclusivo de dados sintéticos ou anonimizados | Nenhum incidente registrado; canal de voz operando sobre áudios de teste | Efetiva | Revisar datasets e serviços externos na Sprint 4 |
-| Contingência de desacoplamento (R02 / O04) | Mensageria e voz avançaram na stack própria | Efetiva | Critérios de aceite da Onda 1 + integração do classificador (Onda 3) |
-| Acompanhamento do cronograma | 50 commits autorais, 35 integrados na `develop` e 16 MRs integrados; Onda 1 ainda com `NotImplementedError`; feriado e indisposição consumiram capacity | Em execução | `AM15` e `AM16` na Sprint 4 |
-| Validação com o parceiro | Sem retorno rastreável; R06 materializado | **Ineficaz por impedimento externo** | Escala via orientadora; premissas documentadas |
-| Plano B para ausências (R18) | Não havia plano formal; resposta foi redistribuição reativa | **Ineficaz / não iniciada formalmente** | `AM14` na abertura da Sprint 4 |
-| Monitoramento do consumo Speech (R17) | Azure Speech em uso (`#203`–`#206`); token streaming ainda pendente | Em execução | Alerta de orçamento e medição de minutos na Sprint 4 |
-| Verificação de carga (`AM07`) | Razão 13:1 em commits autorais | Ineficaz no indicador de volume | Combinar com `AM14`/`AM17` |
+| Uso exclusivo de dados sintéticos ou anonimizados | Nenhum incidente; os dados do parceiro também são de exemplo | Efetiva | Manter na demonstração no ambiente do parceiro |
+| Contingência de desacoplamento (`R02` / `O04`) | Sustentou o desenvolvimento até a liberação de 04/09 | **Encerrada** como condição; mantida como alternativa | Não se aplica |
+| Acompanhamento do cronograma | 141% da capacidade; 29% de conclusão no corte de 22/09 | Em execução | Reapuração no fechamento (`AM24`) |
+| Validação com o parceiro | Ambiente e dados de exemplo liberados em 04/09 | **Efetiva** quanto ao acesso; validação das premissas pendente | Sprint 5, no ambiente liberado |
+| Plano B para ausências (`R18`) | Não foi combinado; não houve ausência que exigisse cobertura | Não iniciada | `AM14` na Sprint 5 |
+| Monitoramento do consumo Speech (`R17`) | Transcrição real ainda não integrada | Em execução | Ao integrar `#397` |
+| Verificação de carga (`AM07` / `AM17`) | 2,25:1 em horas atribuídas | Ineficaz, com melhora sobre 2,50:1 | `AM21`, no planejamento |
+| Medição de latência (`R14`) | Latência por etapa gravada e exposta no painel (MR `!127`) | **Efetiva** como instrumentação | Campanha em voz na Sprint 5 |
+| Índices e agregação por janela (`R16`) | Índices integrados (`#417`); consultas do painel limitadas por janela | **Efetiva** | Volume de demonstração |
+| Proibição de exportar agentes para o repositório (`R23`) | Pasta `copilot/solucao/` vazia; procedimento ainda contradiz a restrição | Não iniciada | Card de adequação na Sprint 5 |
 
 ### 4.5 Plano de resposta — ameaças
 
