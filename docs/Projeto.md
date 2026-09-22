@@ -8897,41 +8897,56 @@ python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
 
 #### 10.2.2.1 Resultado da execução — 22/09/2026
 
-O instrumento foi instalado com `pip install -e ".[dev]"` e os cinco
-benchmarks de `TNF-DES-02` foram executados em Windows 11, Python 3.11,
-com o Content Safety substituído por `httpx.MockTransport`. Os valores abaixo
-são a média e a mediana observadas após o aquecimento; não incluem rede nem
-serviços externos reais.
+O ambiente Docker foi iniciado com PostgreSQL populado, API e frontend. Para
+isolar o middleware, a execução usou `PERFORMANCE_MODE=true`: o executor devolve
+resposta sintética com atraso de 50 ms, Content Safety é dublado no perfil de
+carga e o classificador usa uma intenção determinística. O modo é opt-in e
+desligado por padrão; o benchmark isolado de `TNF-DES-02` continua medindo o
+classificador real com `httpx.MockTransport`.
 
-| Etapa | Média | Mediana | Referência | Situação |
-|---|---:|---:|---|---|
-| Regra determinística de injeção | 1,89 µs | 1,70 µs | sub-100 ms arquitetural | Dentro |
-| Pré-processamento textual | 9,78 µs | 9,10 µs | sub-100 ms arquitetural | Dentro |
-| Classificador de injeção + dublê HTTP | 1,51 ms | 3,15 ms | 150–300 ms do orçamento | Dentro |
-| Classificador de abuso + dublê HTTP | 1,23 ms | 2,48 ms | 150–300 ms do orçamento | Dentro |
-| Guarda de saída + dublê HTTP | 1,10 ms | 1,54 ms | 100–200 ms do orçamento | Dentro |
+| Cenário | Requisições | Falhas | p50 | p95 | Situação |
+|---|---:|---:|---:|---:|---|
+| `TNF-DES-01` — baseline, 1 usuário | 77 | 0 | 77 ms | 81 ms | Aprovado |
+| `TNF-DES-03` — carga nominal, 10 usuários | 415 | 0 | 320 ms | 1.600 ms | Aprovado |
+| `TNF-DES-04` — pico, 30 usuários | 396 | 0 | 1.300 ms | 4.800 ms | Aprovado |
+| `TNF-DES-06` — executor excede timeout | 17 | 0 | 130 ms | 140 ms | Aprovado |
 
-As medições isoladas não podem ser somadas diretamente ao p95 ponta a ponta:
-o benchmark mede uma chamada por vez, enquanto o orçamento inclui persistência,
-executor e serialização HTTP. Ainda assim, elas indicam que o código local não
-é o provável gargalo; a diferença entre o orçamento de 5.1.7.3 e o resultado
-final deve ser procurada na persistência, no executor ou na rede.
+O limite operacional de `TNF-DES-07` é p95 menor ou igual a 8 s. Os resultados
+de `TNF-DES-03` e `TNF-DES-04` permanecem abaixo desse limite, portanto o
+critério foi aprovado nos dois recortes. O pico aumentou o p95 em 3,2 s sobre
+o nominal, desvio compatível com contenção de CPU e conexões durante a carga,
+mas sem recusa HTTP.
 
-Os cenários `TNF-DES-01`, `TNF-DES-03`, `TNF-DES-04`, `TNF-DES-06` e
-`TNF-DES-07` não puderam ser executados contra o ambiente representativo nesta
-data. `docker compose -f infra/docker-compose.yml ps` falhou porque o Docker
-Desktop não estava disponível (`dockerDesktopLinuxEngine` ausente); sem o
-PostgreSQL populado e a API, uma carga Locust contra `/chat` não produziria
-uma medição válida. Portanto, não há p50/p95/p99 de carga registrados nem
-afirmação de aprovação para esses cenários. A causa provável da pendência é
-ambiental, não um desvio de latência observado no código.
+O cenário `TNF-DES-06` configurou atraso sintético de 1.000 ms e timeout de
+100 ms. As respostas retornaram `falha_executor`, foram registradas pelo
+pipeline e o Locust confirmou o desfecho esperado. O cenário `TNF-DES-05`
+não foi aprovado: o worker encerra na inicialização com
+`NotImplementedError("Worker a implementar na onda 5")`, logo não existe ainda
+um disparo de rotina executável para medir concorrência com o chat.
 
-Com o ambiente ativo, a execução pendente deve usar a sessão de teste e o
-executor dublado, por exemplo:
+O `TNF-DES-02` também passou no benchmark isolado, com Content Safety dublado:
+
+| Etapa | Média | Mediana | Referência |
+|---|---:|---:|---|
+| Regra determinística de injeção | 1,89 µs | 1,70 µs | sub-100 ms arquitetural |
+| Pré-processamento textual | 9,78 µs | 9,10 µs | sub-100 ms arquitetural |
+| Classificador de injeção + dublê HTTP | 1,51 ms | 3,15 ms | 150–300 ms |
+| Classificador de abuso + dublê HTTP | 1,23 ms | 2,48 ms | 150–300 ms |
+| Guarda de saída + dublê HTTP | 1,10 ms | 1,54 ms | 100–200 ms |
+
+Os números acima são medições contra o ambiente Docker local com serviços
+externos dublados, não contra Content Safety ou Copilot reais. A execução real
+dos serviços de terceiro permanece fora desta evidência; misturá-la ao número
+do middleware tornaria a comparação com o orçamento não reproduzível.
+
+Com o ambiente ativo, a execução reproduzível usa uma sessão de teste e o
+executor sintético:
 
 ```powershell
-$env:PERF_TARGET = "http://localhost:8000"
+$env:PERF_TARGET = "http://localhost:5173"
+$env:PERF_CHAT_PATH = "/api/chat"
 $env:PERF_SESSION_COOKIE = "<cookie-da-sessao-de-teste>"
+$env:PERF_EXPECTED_DESFECHO = "encaminhada"
 python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
 ```
 

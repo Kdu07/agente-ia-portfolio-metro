@@ -21,6 +21,9 @@ services:
       - ../src/middleware/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://middleware:middleware@db:5432/middleware
+      PERFORMANCE_MODE: ${PERFORMANCE_MODE:-false}
+      PERFORMANCE_EXECUTOR_DELAY_MS: ${PERFORMANCE_EXECUTOR_DELAY_MS:-50}
+      PERFORMANCE_EXECUTOR_TIMEOUT_MS: ${PERFORMANCE_EXECUTOR_TIMEOUT_MS:-8000}
     depends_on:
       db:
         condition: service_healthy
@@ -40,6 +43,9 @@ services:
       - ../src/middleware/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://middleware:middleware@db:5432/middleware
+      PERFORMANCE_MODE: ${PERFORMANCE_MODE:-false}
+      PERFORMANCE_EXECUTOR_DELAY_MS: ${PERFORMANCE_EXECUTOR_DELAY_MS:-50}
+      PERFORMANCE_EXECUTOR_TIMEOUT_MS: ${PERFORMANCE_EXECUTOR_TIMEOUT_MS:-8000}
     depends_on:
       db:
         condition: service_healthy

@@ -59,4 +59,10 @@ class ChatUser(HttpUser):
             if not conversa_id or not dados.get("desfecho"):
                 resposta.failure("contrato ChatResponse incompleto")
                 return
+            esperado = os.getenv("PERF_EXPECTED_DESFECHO")
+            if esperado and dados["desfecho"] != esperado:
+                resposta.failure(
+                    f"desfecho esperado={esperado}, observado={dados['desfecho']}"
+                )
+                return
             self.conversa_id = conversa_id

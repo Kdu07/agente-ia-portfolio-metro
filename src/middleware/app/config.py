@@ -97,6 +97,9 @@ class Settings(BaseSettings):
     # Drive. Lida só em api/deps.py — o orquestrador conhece a porta, não a
     # escolha.
     executor: str = "copilot"
+    performance_mode: bool = False
+    performance_executor_delay_ms: int = 50
+    performance_executor_timeout_ms: int = 8000
 
     # --- Banco vetorial (executor próprio) ------------------------------
     # Caminho alternativo, seção 3.7 de docs/plano-executor-proprio.md. O
