@@ -32,10 +32,10 @@ function conteineres(elemento: HTMLElement) {
 
 describe("Regra 1: conteiner responsivo", () => {
   it.each([
-    ["BarrasPorIntencao", <BarrasPorIntencao key="b" dados={VOLUME_POR_INTENCAO} />],
-    ["DistribuicaoDesfechos", <DistribuicaoDesfechos key="d" dados={DISTRIBUICAO_DESFECHOS} />],
-    ["SerieBloqueios", <SerieBloqueios key="s" series={SERIE_BLOQUEIOS} />],
-  ])("%s desenha dentro de ResponsiveContainer", (_nome, elemento) => {
+    { nome: "BarrasPorIntencao", elemento: <BarrasPorIntencao dados={VOLUME_POR_INTENCAO} /> },
+    { nome: "DistribuicaoDesfechos", elemento: <DistribuicaoDesfechos dados={DISTRIBUICAO_DESFECHOS} /> },
+    { nome: "SerieBloqueios", elemento: <SerieBloqueios series={SERIE_BLOQUEIOS} /> },
+  ])("$nome desenha dentro de ResponsiveContainer", ({ elemento }) => {
     const { container } = render(elemento);
 
     expect(conteineres(container)).toHaveLength(1);
