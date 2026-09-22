@@ -1127,6 +1127,55 @@ Nenhuma das 97 issues está sem responsável, sem *size* ou sem prioridade. É a
 
 A diferença de 39,5 h não é erro de estimativa. É a antecipação do escopo da Sprint 5 convertida em horas: as mesmas 97 issues, com os mesmos critérios de *size*, somam 41% a mais do que a capacidade que a equipe declarou ter. O registro explícito importa porque, sem ele, o burndown desta sprint contradiria o texto — mostraria uma equipe que planejou mal, e não uma equipe que absorveu um ciclo e meio de escopo.
 
+##### Composição do escopo
+
+| *Size* | Issues | Horas convertidas |
+|---|---:|---:|
+| `SIZE_G` | 42 | 84,00 h |
+| `SIZE_M` | 49 | 49,00 h |
+| `SIZE_P` | 4 | 2,00 h |
+| `SIZE_PP` | 2 | 0,50 h |
+| **Total** | **97** | **135,50 h** |
+
+| Tipo | Issues | | Prioridade | Issues |
+|---|---:|---|---|---:|
+| `CODE` | 37 | | `P_ALTA` | 69 (71%) |
+| `DOCS` | 25 | | `P_MEDIA` | 25 (26%) |
+| `TEST` | 23 | | `P_BAIXA` | 3 (3%) |
+| `DEPLOY` | 12 | | | |
+| `OFFSITE` | 6 | | | |
+| `BUG` | 3 | | | |
+
+Pela primeira vez no módulo o código supera a documentação na composição do escopo, o que é coerente com a Onda 1 saindo do papel. A concentração em `P_ALTA` — sete em cada dez cards — é o outro sinal da compressão: com dois ciclos de escopo em um, quase tudo passou a ser prioritário, e a priorização perdeu parte da sua função de ordenar.
+
+##### Indicadores verificáveis no repositório
+
+| Métrica | Resultado |
+|---|---:|
+| Commits autorais integrados na `develop` | 58 |
+| Commits autorais em todas as branches, incluindo MRs em revisão | 123 |
+| Merges na `develop` | 17 |
+| Merge requests para a `develop` abertos no período | 24 — 17 integrados, 6 em revisão, 1 fechado sem merge |
+| Merge requests com revisor nomeado | 23 de 24 |
+| Ocorrências de `NotImplementedError` em `src/middleware/app` | **45 → 23** |
+| Dias com commit no período | 7 — incluindo sábado e domingo, 19 e 20/09; nenhum em 14/09 e 18/09 |
+
+##### Distribuição por integrante
+
+| Integrante | Issues | Horas atribuídas | Concluídas | Horas concluídas | Commits na `develop` | Commits em todas as branches | MRs abertos | Revisões nomeadas | Merges executados |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Mirela Bianchi | 22 | 29,75 h | 13 | 15,75 h | 20 | 26 | 4 | 10 | 8 |
+| Mariana Reis | 18 | 27,00 h | 7 | 11,00 h | 24 | 34 | 9 | 8 | 6 |
+| Carlos Eduardo Serrano Quaglia | 18 | 25,00 h | 4 | 5,50 h | 4 | 14 | 5 | 3 | 0 |
+| Eduardo Casarini | 19 | 24,50 h | 1 | 1,00 h | 10 | 15 | 3 | 1 | 2 |
+| Celso Rocha | 10 | 16,00 h | 3 | 5,00 h | 0 | 34 | 3 | 1 | 1 |
+| Alexsander Barbosa | 10 | 13,25 h | 0 | 0,00 h | 0 | 0 | 0 | 0 | 0 |
+| **Total** | **97** | **135,50 h** | **28** | **38,25 h** | **58** | **123** | **24** | **23** | **17** |
+
+As colunas medem coisas distintas e não se somam entre si. A leitura que a Sprint 3 ensinou está na diferença entre as duas colunas de commits: *commits na `develop`* é o trabalho já integrado; *commits em todas as branches* inclui o que está em merge request aguardando revisão. No corte, 34 commits de Celso Rocha estão nas MRs `!127` e `!128`, do painel de intenções, e por isso ele aparece com zero na `develop`. Ler só a primeira coluna repetiria o erro apontado na avaliação anterior, em que um integrante com o segundo maior volume do ciclo aparecia sem nenhum commit integrado. Alexsander Barbosa responde por cards `OFFSITE` — sessões de usabilidade e a apresentação da Sprint Review —, trabalho que acontece fora do repositório e não deixa commit.
+
+A razão entre a maior e a menor carga atribuída é de **2,25:1** (29,75 h contra 13,25 h). A integração segue concentrada: 14 dos 17 merges, ou 82%, foram executados por duas integrantes.
+
 ### 3.6 Sprint 5
 
 [Preencher após a retrospectiva da Sprint 5.]
