@@ -1,7 +1,7 @@
-# Ambiente de desenvolvimento local: interface, API, agendador e banco.
-# Uso: docker compose -f infra/docker-compose.yml up --build
+# Ambiente de desenvolvimento local: interface, API, agendador, banco e mensageria.
+# Uso: docker compose --env-file src/middleware/.env -f infra/docker-compose.yml up --build
 #
-# Quatro serviços. O `worker` é separado da `middleware` de propósito:
+# Cinco serviços. O `worker` é separado da `middleware` de propósito:
 # mantém a API sem estado e evita que duas réplicas disparem a mesma
 # rotina duas vezes.
 services:
@@ -24,21 +24,27 @@ services:
       PERFORMANCE_MODE: ${PERFORMANCE_MODE:-false}
       PERFORMANCE_EXECUTOR_DELAY_MS: ${PERFORMANCE_EXECUTOR_DELAY_MS:-50}
       PERFORMANCE_EXECUTOR_TIMEOUT_MS: ${PERFORMANCE_EXECUTOR_TIMEOUT_MS:-8000}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-prata}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-prata-local}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-prata}
+      RABBITMQ_URL: ${RABBITMQ_URL:-}
     depends_on:
       db:
         condition: service_healthy
-    # Aplica as migrações antes de subir a API: um esquema desatualizado
-    # falharia na primeira consulta, e não na subida, onde é visível.
+      rabbitmq:
+        condition: service_healthy
+    # Aplica as migrações antes de subir a API.
     command: >
       sh -c "alembic upgrade head &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000"
-    # Sem `ports`: quem expõe a API ao navegador é o nginx do serviço web.
-    # Publicar a porta aqui abriria um caminho que ignora o proxy.
     expose:
       - "8000"
 
   worker:
     build: ../src/middleware
+    stop_grace_period: 60s
     env_file:
       - ../src/middleware/.env
     environment:
@@ -46,13 +52,20 @@ services:
       PERFORMANCE_MODE: ${PERFORMANCE_MODE:-false}
       PERFORMANCE_EXECUTOR_DELAY_MS: ${PERFORMANCE_EXECUTOR_DELAY_MS:-50}
       PERFORMANCE_EXECUTOR_TIMEOUT_MS: ${PERFORMANCE_EXECUTOR_TIMEOUT_MS:-8000}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-prata}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-prata-local}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-prata}
+      RABBITMQ_URL: ${RABBITMQ_URL:-}
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       middleware:
         condition: service_started
-    # Mesma imagem da API, entrypoint diferente. Não expõe porta: o
-    # agendador não atende HTTP.
+    # Mesma imagem da API, entrypoint diferente. Não expõe porta.
     command: ["python", "-m", "app.worker"]
 
   db:
@@ -65,14 +78,33 @@ services:
       - "5432:5432"
     volumes:
       - dbdata:/var/lib/postgresql/data
-    # O healthcheck evita a corrida clássica: `depends_on` sozinho espera
-    # o contêiner subir, não o PostgreSQL aceitar conexões. Sem ele, o
-    # `alembic upgrade` do middleware falha em máquinas mais lentas.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U middleware -d middleware"]
       interval: 5s
       timeout: 3s
       retries: 10
 
+  rabbitmq:
+    image: rabbitmq:4.3.6-management-alpine
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-prata}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-prata-local}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-prata}
+    ports:
+      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+
 volumes:
   dbdata:
+  rabbitmqdata:

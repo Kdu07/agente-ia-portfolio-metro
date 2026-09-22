@@ -159,6 +159,7 @@ O frontend, a partir de `src/web/`:
 npm install
 npm run dev     # interface em http://localhost:5173
 npm run test    # suíte de testes
+npm run test:coverage  # suíte com relatório em src/web/coverage/
 ```
 
 ## Estado atual

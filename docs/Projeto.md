@@ -2228,7 +2228,7 @@ Serviços homologados no tenant do parceiro que recebem requisições validadas 
 | **Executor próprio — banco vetorial** | Pinecone *serverless* (`us-east-1`), atrás da porta `RepositorioVetorial`; pgvector como reserva | Busca por similaridade com o filtro de permissão aplicado na consulta | O índice guarda vetor, identificador e campos de filtro, nunca o texto; trocar de *backend* é mudança de `.env` (9.4.4). |
 | **Executor próprio — geração** | Gemini (`gemini-3.5-flash`) pelo SDK `google-genai`, atrás da porta `ModeloLinguagem` | Resposta com citação verificada a partir dos trechos recuperados | Provisionamento imediato e camada gratuita; trocar de provedor é um adaptador novo e uma variável (9.4.5). A exposição ao provedor é o risco R19. |
 | **Ambiente & Deploy** | Docker / Docker Compose | Empacotamento dos 4 serviços (`web`, `api`, `worker`, `db`) | Reprodutibilidade total do ambiente e separação de processos. |
-| **Testes** | Pytest / Vitest / Testing Library | Testes unitários e de integração (frontend/backend) | Cobertura de guardas, orquestrador e componentes de interface. |
+| **Testes** | Pytest / pytest-cov / pytest-benchmark / Locust / Vitest / Testing Library / `@vitest/coverage-v8` | Testes unitários, de integração, cobertura, micro-latência e carga | A mesma pilha automatiza backend e frontend; Locust gera concorrência em Python, enquanto os provedores de cobertura reportam separadamente as duas camadas. |
 
 As quatro linhas do executor próprio só participam do caminho de uma mensagem quando esse caminho alternativo está selecionado ([Arquitetura.md](Arquitetura.md), seção 13). O perímetro correspondente está declarado em 3.3.1.1, e a implementação está descrita em 9.4.
 
@@ -8511,13 +8511,13 @@ As ferramentas são as declaradas em 5.1.2, acrescidas de três adições que es
 | `pytest-cov` | Cobertura, consolidada em 10.7 contra a meta de 80% de 9.1.8 | Declarado em 5.1.2 |
 | Vitest e Testing Library | Casos cuja asserção é sobre componente de interface | Declaradas em 5.1.2 |
 | `httpx.AsyncClient` com `ASGITransport` | Chamada às rotas da API dentro do processo de teste, sem subir servidor nem rede | Adição desta seção |
-| `pytest-benchmark` | Micro-latência isolada das guardas e do classificador | Adição desta seção, usada em 10.2 |
-| Locust | Carga e concorrência | Adição desta seção, usada em 10.2 |
+| `pytest-benchmark` | Micro-latência isolada das guardas e do classificador | Configurado no extra `dev`, usado em 10.2 |
+| Locust | Carga e concorrência | Configurado no extra `dev`, usado em 10.2 |
 | PostgreSQL 16 em contêiner de teste | Banco real, com esquema aplicado por Alembic | Declarado em 5.1.2 como banco da solução |
 
 O `httpx.AsyncClient` com `ASGITransport` não é uma quarta biblioteca de teste: `httpx` já é dependência do middleware, e o transporte ASGI apenas dispensa o servidor. A escolha do banco real em contêiner, em vez de um substituto em memória, decorre de os testes precisarem observar restrições de integridade e comportamento transacional que só existem no PostgreSQL — testar contra um banco diferente do de produção verificaria outro sistema.
 
-**Nota sobre a matriz de tecnologias.** Locust e `pytest-benchmark` **não constam da matriz consolidada de 5.1.5**. Esta seção os utiliza por necessidade dos testes de desempenho, e a inclusão dos dois na pilha oficial deve ser tratada em *issue* própria, com a atualização de 5.1.5 feita por quem mantém aquela seção. Registrar a divergência aqui é preferível a alterar uma seção que pertence a outro recorte do documento.
+**Estado das ferramentas.** O card #440 incorporou Locust e `pytest-benchmark` ao extra `dev` do middleware e à matriz consolidada de 5.1.5. `pytest-cov` mede o backend e `@vitest/coverage-v8` mede a interface; os resultados consolidados e sua comparação com a meta de 80% permanecem para 10.7, depois da execução das suítes completas.
 
 ### 10.1.2 Acesso e interação — RF01 a RF03
 
@@ -9147,7 +9147,7 @@ A **exposição do risco R12** não é eliminada por nenhum teste. Content Safet
 
 A **ausência de um RNF de desempenho** permanece. Os sete casos `TNF-DES` medem contra parâmetros que existem fora de 3.3.1, pela reconciliação de 10.2.1, e a recomendação de formalizar o requisito na próxima revisão fica registrada lá e repetida aqui, porque é o tipo de pendência que some quando fica em um único lugar.
 
-**Locust e `pytest-benchmark` estão fora da matriz de 5.1.5.** Os dois foram introduzidos por esta seção, declarados como adição em 10.1.1, e a inclusão na pilha oficial deve ser tratada em *issue* própria por quem mantém aquela seção.
+**Ferramentas de desempenho configuradas.** Locust e `pytest-benchmark` foram incorporados à matriz de 5.1.5 e ao extra `dev` pelo card #440. A configuração torna os comandos reproduzíveis; a implementação e a execução dos sete cenários `TNF-DES` pertencem ao card de desempenho.
 
 **O que a seção 10.2 estabelece, e sob que condição.** A seção estabelece quatro coisas. Como cada um dos sete requisitos não funcionais é medido, com instrumento nomeado e cenário negativo que exercite a medição. Que o RNF03 já foi medido e atende à meta, com a evidência reproduzível de 5.4.11. Onde os testes de desempenho se ancoram na ausência de requisito que os sustente, e qual dos dois conjuntos de parâmetros decide aprovação. E a especificação do conjunto adversarial do RNF06, com composição, tamanho mínimo e a justificativa de ambos.
 
@@ -9684,7 +9684,9 @@ de ter, e não a que se pode rodar hoje.
 | `alembic` | 1.13 | Aplica as migrações no banco de teste | Em uso (runtime) |
 | `respx` | 0.21 | Dublê de `httpx` para o que não se grava: timeout, 5xx, conexão recusada | Previsto — onda 2 |
 | `testcontainers[postgres]` | 4.0 | PostgreSQL 16 efêmero por sessão de teste | Previsto — grupo IT-DB |
-| `pytest-cov` | 5.0 | Cobertura, meta de 80% em código crítico | Previsto — junto da CI |
+| `pytest-cov` | >= 5.0 | Cobertura do middleware, confrontada com a meta de 80% em 10.7 | Configurado no extra `dev` |
+| `pytest-benchmark` | >= 4.0 | Micro-latência isolada de guardas e classificador | Configurado no extra `dev`; cenários em 10.2.2 |
+| `locust` | >= 2.31 | Carga, concorrência e ponto de saturação da API | Configurado no extra `dev`; cenários em 10.2.2 |
 | `time-machine` | 2.14 | Relógio controlado para agenda, fuso e expiração de sessão | Previsto — onda 5 |
 | `schemathesis` | 3.25 | Contrato: gera casos a partir do OpenAPI e confronta a implementação | Previsto — grupo IT-CTR |
 
@@ -9707,7 +9709,7 @@ porque decidem entre falhar aberto e falhar fechado.
 | `@testing-library/react` | 16.0 | Renderização e interação | Sim |
 | `@testing-library/user-event` | 14.5 | Interação fiel ao navegador (foco, teclado) | **A adicionar** |
 | `msw` | 2.3 | **Dublê de `/api` no nível de rede**, sem tocar em `servicos/api.ts` | **A adicionar** |
-| `@vitest/coverage-v8` | 2.0 | Cobertura do frontend | **A adicionar** |
+| `@vitest/coverage-v8` | ^2.0.5 | Cobertura do frontend | Configurado por `npm run test:coverage` |
 
 MSW intercepta o `fetch` no nível de rede, e não por *mock* de módulo. A
 diferença importa: um `vi.mock("@/servicos/api")` deixaria de exercitar
@@ -10432,7 +10434,7 @@ python -m pytest -m "not banco and not lento"      # ciclo curto
 python -m pytest -m integracao --block-network     # tudo, sem rede
 python -m pytest -m externo                        # só as fitas
 python -m pytest -m banco                          # só o que precisa de Docker
-python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=80
+python -m pytest --cov=app --cov-report=term-missing
 python -m ruff check app tests
 ```
 
@@ -10465,7 +10467,7 @@ Duas restrições conhecidas, ambas herdadas e nenhuma delas no VHS:
 cd src\web
 
 npm run test                    # vitest run
-npm run test -- --coverage
+npm run test:coverage
 npm run gerar:fixtures          # regenera handlers do MSW a partir do openapi.json
 ```
 

@@ -98,6 +98,21 @@ python -m pytest -q          # suíte completa
 python -m ruff check app tests
 ```
 
+As ferramentas de cobertura, microbenchmark e carga fazem parte do extra
+`dev`. A cobertura mede `app/`, com decisões de ramo habilitadas, e mostra as
+linhas que ainda não foram exercitadas:
+
+```powershell
+python -m pytest --cov=app --cov-report=term-missing
+python -m pytest tests/desempenho/test_micro_latencia.py --benchmark-only
+python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
+```
+
+Os dois arquivos de desempenho pertencem à implementação dos cenários da
+seção 10.2 do `Projeto.md`; até que sejam adicionados, os comandos de versão
+`python -m locust --version` e `python -m pytest --trace-config` confirmam que
+Locust, `pytest-benchmark` e `pytest-cov` foram carregados pelo ambiente.
+
 Os testes que dependem de API externa rodam sobre **fitas VHS**: a resposta do
 serviço é gravada uma vez e reproduzida depois, o que evita a requisição
 repetida e mantém a suíte offline.
@@ -132,6 +147,18 @@ plantada num documento. Com a camada gratuita, rode-os sob demanda.
 ```powershell
 uvicorn app.main:app --reload
 ```
+
+O agendador roda em outro processo. Com o banco e as migrações disponíveis,
+inicie-o em um segundo terminal. Ao receber `Ctrl+C` ou `SIGTERM`, o worker
+pausa novos disparos e aguarda por até 50 segundos as execuções correntes.
+Somente depois ele encerra o agendador e fecha o pool; se o prazo for excedido,
+as execuções restantes são canceladas antes do fechamento:
+
+```powershell
+python -m app.worker
+```
+
+O serviço `worker` do Compose executa esse mesmo comando.
 
 Requer `.env` — parta de [.env.example](.env.example). O PostgreSQL e demais
 serviços sobem por [infra/docker-compose.yml](../../infra/docker-compose.yml).
