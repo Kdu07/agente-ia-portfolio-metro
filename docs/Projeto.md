@@ -1920,6 +1920,7 @@ Entidade central. Uma linha é gravada para cada mensagem que atravessa o pipeli
 | `confianca_intencao` | `DOUBLE PRECISION` | `NOT NULL` | Confiança do classificador. Alimenta o recorte de baixa confiança. |
 | `desfecho` | `text` | `NOT NULL`, `CHECK` | Como o pipeline decidiu tratar a mensagem — oito valores, ver 4.4.1. |
 | `latencia_ms` | `INTEGER` | `NOT NULL` | Tempo total do pipeline. É o custo do pedágio, medido. |
+| `latencia_etapas` | `JSONB` | `NULL` | Tempo de cada etapa efetivamente percorrida, em milissegundos, como `{"injecao": 12, "executor": 1830}`. Etapa não percorrida não aparece, em vez de constar como zero. Nulo nas interações gravadas antes da medição por etapa. |
 | `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Momento do processamento. |
 | `rotina_id` | `text` | `FK (rotina.id)`, `NULL` | Preenchido quando `canal` é `rotina`. |
 
@@ -2056,6 +2057,7 @@ CREATE TABLE interacao (
     latencia_ms         integer          NOT NULL,
     criada_em           timestamptz      NOT NULL,
     rotina_id           text,
+    latencia_etapas     jsonb,
     CONSTRAINT pk_interacao PRIMARY KEY (id),
     CONSTRAINT ck_interacao_perfil CHECK (
         perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')
@@ -5465,6 +5467,7 @@ classDiagram
         +Canal canal
         +UUID rotina_id
         +Integer latencia_ms
+        +Json latencia_etapas
         +DateTime criada_em
     }
 

@@ -93,6 +93,7 @@ Uma interação usuário-agente, registrada para histórico e análise.
 | `confianca_intencao` | FLOAT | NOT NULL | Confiança da classificação (0-1) |
 | `desfecho` | TEXT | NOT NULL, CHECK | Resultado do processamento |
 | `latencia_ms` | INTEGER | NOT NULL | Latência em milissegundos |
+| `latencia_etapas` | JSONB | NULL | Milissegundos de cada etapa percorrida (`injecao`, `abuso`, `intencao`, `executor`, `saida`); nulo nas interações anteriores à medição por etapa |
 | `criada_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
 | `rotina_id` | TEXT (FK) | NULL, RESTRICT | Referência para rotina.id (se canal=rotina) |
 
