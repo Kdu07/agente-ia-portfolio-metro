@@ -408,7 +408,7 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
         id=f"{PREFIXO}rotina-marcos",
         nome="Marcos da semana",
         prompt="Quais marcos vencem esta semana?",
-        agenda_cron="0 9 * * 1",
+        agenda_cron="0 9 * * mon",
         timezone="America/Sao_Paulo",
         dono_id=USUARIOS[0][0],
         ativa=False,  # desativada: a tela precisa mostrar os dois estados

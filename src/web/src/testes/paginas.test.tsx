@@ -125,10 +125,22 @@ describe("Página de rotinas", () => {
   });
 
   it("valida e cria uma rotina", async () => {
+    let agendaRecebida = "";
+    servidor.use(
+      http.post("/api/rotinas/validar", async ({ request }) => {
+        const pedido = (await request.json()) as { agenda_cron: string };
+        agendaRecebida = pedido.agenda_cron;
+        return HttpResponse.json({ valida: true, intencao_prevista: "consultar_status_portfolio", erro: null });
+      }),
+    );
     renderizar(<Rotinas />);
     await screen.findByText("Riscos da Linha 6");
 
     fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+    expect(screen.getByRole("combobox", { name: /Repetir/ })).toHaveValue("dias_uteis");
+    expect(screen.getByLabelText(/Horário/)).toHaveValue("08:00");
+    expect(screen.getByRole("combobox", { name: /Fuso/ })).toHaveValue("America/Sao_Paulo");
+    expect(screen.getByText("Esta rotina será executada de segunda a sexta, às 08:00.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Criar rotina" }));
     expect(screen.getByText("Informe um nome com pelo menos 3 caracteres.")).toBeInTheDocument();
 
@@ -138,6 +150,49 @@ describe("Página de rotinas", () => {
 
     expect(await screen.findByRole("status", {}, { timeout: 3000 })).toHaveTextContent("Rotina criada com sucesso.");
     expect(await screen.findByText("Pendências diárias")).toBeInTheDocument();
+    expect(agendaRecebida).toBe("0 8 * * mon-fri");
+  });
+
+  it("mostra apenas o complemento necessário para agendas semanais e mensais", async () => {
+    renderizar(<Rotinas />);
+    await screen.findByText("Riscos da Linha 6");
+    fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "semanal" } });
+    expect(screen.getByRole("combobox", { name: /Dia da semana/ })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Dia do mês/)).not.toBeInTheDocument();
+    expect(screen.getByText("Esta rotina será executada toda segunda-feira, às 08:00.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "mensal" } });
+    expect(screen.getByLabelText(/Dia do mês/)).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: /Dia da semana/ })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "dias_personalizados" } });
+    expect(screen.getByRole("checkbox", { name: "Seg" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Qua" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Sex" })).toBeChecked();
+    expect(screen.getByText("Esta rotina será executada às segundas-feiras, quartas-feiras e sextas-feiras, às 08:00.")).toBeInTheDocument();
+  });
+
+  it("gera cron com nomes para os dias personalizados", async () => {
+    let agendaRecebida = "";
+    servidor.use(
+      http.post("/api/rotinas/validar", async ({ request }) => {
+        const pedido = (await request.json()) as { agenda_cron: string };
+        agendaRecebida = pedido.agenda_cron;
+        return HttpResponse.json({ valida: true, intencao_prevista: "consultar_status_portfolio", erro: null });
+      }),
+    );
+    renderizar(<Rotinas />);
+    await screen.findByText("Riscos da Linha 6");
+    fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+    fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "dias_personalizados" } });
+    fireEvent.change(screen.getByPlaceholderText("Ex.: Resumo semanal do portfólio"), { target: { value: "Acompanhamento alternado" } });
+    fireEvent.change(screen.getByPlaceholderText("Descreva o que o Prata deve consultar ou acompanhar"), { target: { value: "Listar riscos críticos dos projetos ativos." } });
+    fireEvent.click(screen.getByRole("button", { name: "Criar rotina" }));
+
+    expect(await screen.findByText("Acompanhamento alternado")).toBeInTheDocument();
+    expect(agendaRecebida).toBe("0 8 * * mon,wed,fri");
   });
 
   it("solicita confirmação antes de excluir", async () => {

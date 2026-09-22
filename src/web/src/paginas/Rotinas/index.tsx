@@ -8,8 +8,23 @@ import type { Execucao, Rotina, ValidacaoRotina } from "@/tipos";
 type FiltroStatus = "todas" | "ativas" | "pausadas";
 type Ordenacao = "proximo" | "nome" | "atualizacao";
 type ModoFormulario = "criar" | "editar";
+type Repeticao = "diaria" | "dias_uteis" | "semanal" | "mensal" | "dias_personalizados" | "legada";
+type DiaSemana = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 interface FormularioRotina {
+  nome: string;
+  prompt: string;
+  repeticao: Repeticao;
+  horario: string;
+  dia_semana: DiaSemana;
+  dias_selecionados: DiaSemana[];
+  dia_mes: string;
+  agenda_legada: string;
+  timezone: string;
+  ativa: boolean;
+}
+
+interface DadosRotinaApi {
   nome: string;
   prompt: string;
   agenda_cron: string;
@@ -17,21 +32,101 @@ interface FormularioRotina {
   ativa: boolean;
 }
 
+const DIAS_SEMANA: { valor: DiaSemana; rotulo: string; plural: string }[] = [
+  { valor: "mon", rotulo: "Segunda-feira", plural: "segundas-feiras" },
+  { valor: "tue", rotulo: "Terça-feira", plural: "terças-feiras" },
+  { valor: "wed", rotulo: "Quarta-feira", plural: "quartas-feiras" },
+  { valor: "thu", rotulo: "Quinta-feira", plural: "quintas-feiras" },
+  { valor: "fri", rotulo: "Sexta-feira", plural: "sextas-feiras" },
+  { valor: "sat", rotulo: "Sábado", plural: "sábados" },
+  { valor: "sun", rotulo: "Domingo", plural: "domingos" },
+];
+
 const FORMULARIO_VAZIO: FormularioRotina = {
   nome: "",
   prompt: "",
-  agenda_cron: "0 8 * * 1-5",
+  repeticao: "dias_uteis",
+  horario: "08:00",
+  dia_semana: "mon",
+  dias_selecionados: ["mon", "wed", "fri"],
+  dia_mes: "1",
+  agenda_legada: "",
   timezone: "America/Sao_Paulo",
   ativa: true,
 };
 
+function cronDoFormulario(formulario: FormularioRotina) {
+  if (formulario.repeticao === "legada") return formulario.agenda_legada.trim();
+  const [hora, minuto] = formulario.horario.split(":");
+  if (formulario.repeticao === "diaria") return `${Number(minuto)} ${Number(hora)} * * *`;
+  if (formulario.repeticao === "dias_uteis") return `${Number(minuto)} ${Number(hora)} * * mon-fri`;
+  if (formulario.repeticao === "semanal") return `${Number(minuto)} ${Number(hora)} * * ${formulario.dia_semana}`;
+  if (formulario.repeticao === "dias_personalizados") return `${Number(minuto)} ${Number(hora)} * * ${formulario.dias_selecionados.join(",")}`;
+  return `${Number(minuto)} ${Number(hora)} ${Number(formulario.dia_mes)} * *`;
+}
+
+function formularioDaAgenda(cron: string): Pick<FormularioRotina, "repeticao" | "horario" | "dia_semana" | "dias_selecionados" | "dia_mes" | "agenda_legada"> {
+  const legada = { repeticao: "legada" as const, horario: "08:00", dia_semana: "mon" as const, dias_selecionados: [] as DiaSemana[], dia_mes: "1", agenda_legada: cron };
+  const [minuto, hora, diaMes, mes, diaSemana, ...restante] = cron.trim().split(/\s+/);
+  const minutoNumero = Number(minuto);
+  const horaNumero = Number(hora);
+  if (restante.length || !Number.isInteger(minutoNumero) || minutoNumero < 0 || minutoNumero > 59 || !Number.isInteger(horaNumero) || horaNumero < 0 || horaNumero > 23 || mes !== "*") return legada;
+
+  const horario = `${String(horaNumero).padStart(2, "0")}:${String(minutoNumero).padStart(2, "0")}`;
+  const base = { horario, dia_semana: "mon" as DiaSemana, dias_selecionados: ["mon", "wed", "fri"] as DiaSemana[], dia_mes: "1", agenda_legada: "" };
+  if (diaMes === "*" && diaSemana === "*") return { ...base, repeticao: "diaria" };
+  if (diaMes === "*" && diaSemana.toLowerCase() === "mon-fri") return { ...base, repeticao: "dias_uteis" };
+
+  const diaNome = diaSemana.toLowerCase() as DiaSemana;
+  if (diaMes === "*" && DIAS_SEMANA.some((dia) => dia.valor === diaNome)) return { ...base, repeticao: "semanal", dia_semana: diaNome };
+
+  const diasNomeados = diaSemana.toLowerCase().split(",") as DiaSemana[];
+  if (diaMes === "*" && diasNomeados.length > 1 && diasNomeados.every((valor) => DIAS_SEMANA.some((dia) => dia.valor === valor))) {
+    return { ...base, repeticao: "dias_personalizados", dias_selecionados: DIAS_SEMANA.filter((dia) => diasNomeados.includes(dia.valor)).map((dia) => dia.valor) };
+  }
+
+  // No APScheduler 3.x, o dia numérico zero é segunda-feira.
+  const diaNumerico = Number(diaSemana);
+  if (diaMes === "*" && Number.isInteger(diaNumerico) && diaNumerico >= 0 && diaNumerico <= 6) {
+    return { ...base, repeticao: "semanal", dia_semana: DIAS_SEMANA[diaNumerico].valor };
+  }
+
+  const diaMesNumero = Number(diaMes);
+  if (diaSemana === "*" && Number.isInteger(diaMesNumero) && diaMesNumero >= 1 && diaMesNumero <= 31) {
+    return { ...base, repeticao: "mensal", dia_mes: String(diaMesNumero) };
+  }
+  return legada;
+}
+
+function resumoDaAgenda(formulario: FormularioRotina) {
+  if (formulario.repeticao === "diaria") return `Esta rotina será executada todos os dias, às ${formulario.horario}.`;
+  if (formulario.repeticao === "dias_uteis") return `Esta rotina será executada de segunda a sexta, às ${formulario.horario}.`;
+  if (formulario.repeticao === "semanal") {
+    const dia = DIAS_SEMANA.find((item) => item.valor === formulario.dia_semana)?.rotulo.toLowerCase();
+    return `Esta rotina será executada toda ${dia}, às ${formulario.horario}.`;
+  }
+  if (formulario.repeticao === "dias_personalizados") {
+    const dias = DIAS_SEMANA.filter((dia) => formulario.dias_selecionados.includes(dia.valor)).map((dia) => dia.plural);
+    const lista = new Intl.ListFormat("pt-BR", { style: "long", type: "conjunction" }).format(dias);
+    return dias.length ? `Esta rotina será executada às ${lista}, às ${formulario.horario}.` : "Selecione pelo menos um dia da semana.";
+  }
+  if (formulario.repeticao === "mensal") return `Esta rotina será executada todo dia ${formulario.dia_mes} de cada mês, às ${formulario.horario}.`;
+  return "Esta rotina possui um agendamento antigo. Escolha uma nova frequência para alterá-lo.";
+}
+
 function descreverAgenda(cron: string) {
-  const conhecidas: Record<string, string> = {
-    "0 8 * * 1-5": "Seg. a sex., às 08:00",
-    "0 9 * * 1": "Toda segunda, às 09:00",
-    "0 17 5 * *": "Todo dia 5, às 17:00",
+  const agenda = { ...FORMULARIO_VAZIO, ...formularioDaAgenda(cron) };
+  return agenda.repeticao === "legada" ? "Agendamento antigo preservado" : resumoDaAgenda(agenda).replace("Esta rotina será executada ", "").replace(/\.$/, "");
+}
+
+function dadosParaApi(formulario: FormularioRotina): DadosRotinaApi {
+  return {
+    nome: formulario.nome,
+    prompt: formulario.prompt,
+    agenda_cron: cronDoFormulario(formulario),
+    timezone: formulario.timezone,
+    ativa: formulario.ativa,
   };
-  return conhecidas[cron] ?? `Cron: ${cron}`;
 }
 
 function formatarData(valor: string | null) {
@@ -49,7 +144,10 @@ function validarFormulario(formulario: FormularioRotina) {
   const erros: Partial<Record<keyof FormularioRotina, string>> = {};
   if (formulario.nome.trim().length < 3) erros.nome = "Informe um nome com pelo menos 3 caracteres.";
   if (formulario.prompt.trim().length < 10) erros.prompt = "Descreva a ação da rotina com pelo menos 10 caracteres.";
-  if (formulario.agenda_cron.trim().split(/\s+/).length !== 5) erros.agenda_cron = "Use uma expressão cron com cinco campos.";
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(formulario.horario)) erros.horario = "Informe um horário válido.";
+  const diaMes = Number(formulario.dia_mes);
+  if (formulario.repeticao === "mensal" && (!Number.isInteger(diaMes) || diaMes < 1 || diaMes > 31)) erros.dia_mes = "Informe um dia entre 1 e 31.";
+  if (formulario.repeticao === "dias_personalizados" && !formulario.dias_selecionados.length) erros.dias_selecionados = "Selecione pelo menos um dia da semana.";
   if (!formulario.timezone.trim()) erros.timezone = "Selecione um fuso horário.";
   return erros;
 }
@@ -88,7 +186,8 @@ export function Rotinas() {
   });
 
   const salvarRotina = useMutation({
-    mutationFn: async ({ id, dados }: { id?: string; dados: FormularioRotina }) => {
+    mutationFn: async ({ id, formulario }: { id?: string; formulario: FormularioRotina }) => {
+      const dados = dadosParaApi(formulario);
       const validacao = await api.post<ValidacaoRotina>("/rotinas/validar", dados);
       if (!validacao.valida) throw new Error(validacao.erro ?? "A rotina não passou pela validação do backend.");
       return id
@@ -157,10 +256,24 @@ export function Rotinas() {
   function abrirEdicao(rotina: Rotina) {
     setModoFormulario("editar");
     setRotinaSelecionada(rotina);
-    setFormulario({ nome: rotina.nome, prompt: rotina.prompt, agenda_cron: rotina.agenda_cron, timezone: rotina.timezone, ativa: rotina.ativa });
+    setFormulario({
+      nome: rotina.nome,
+      prompt: rotina.prompt,
+      ...formularioDaAgenda(rotina.agenda_cron),
+      timezone: rotina.timezone,
+      ativa: rotina.ativa,
+    });
     setErros({});
     setErroOperacao("");
     setModalAberto(true);
+  }
+
+  function alternarDiaPersonalizado(dia: DiaSemana) {
+    const selecionados = formulario.dias_selecionados.includes(dia)
+      ? formulario.dias_selecionados.filter((item) => item !== dia)
+      : [...formulario.dias_selecionados, dia];
+    const ordenados = DIAS_SEMANA.filter((item) => selecionados.includes(item.valor)).map((item) => item.valor);
+    setFormulario({ ...formulario, dias_selecionados: ordenados });
   }
 
   async function salvar(evento: FormEvent) {
@@ -173,7 +286,7 @@ export function Rotinas() {
     try {
       await salvarRotina.mutateAsync({
         id: modoFormulario === "editar" ? rotinaSelecionada?.id : undefined,
-        dados: formulario,
+        formulario,
       });
       setModalAberto(false);
       setToast(modoFormulario === "editar" ? "Rotina atualizada com sucesso." : "Rotina criada com sucesso.");
@@ -271,7 +384,64 @@ export function Rotinas() {
               {erroOperacao ? <div className="routines-error" role="alert">{erroOperacao}</div> : null}
               <label><span>Nome da rotina *</span><input value={formulario.nome} onChange={(evento) => setFormulario({ ...formulario, nome: evento.target.value })} aria-invalid={Boolean(erros.nome)} aria-describedby={erros.nome ? "erro-nome" : undefined} placeholder="Ex.: Resumo semanal do portfólio" />{erros.nome ? <small className="field-error" id="erro-nome">{erros.nome}</small> : null}</label>
               <label><span>Ação em linguagem natural *</span><textarea value={formulario.prompt} onChange={(evento) => setFormulario({ ...formulario, prompt: evento.target.value })} aria-invalid={Boolean(erros.prompt)} aria-describedby={erros.prompt ? "erro-prompt" : "ajuda-prompt"} placeholder="Descreva o que o Prata deve consultar ou acompanhar" rows={4} /><small id="ajuda-prompt">O backend validará as guardas e a intenção antes de salvar.</small>{erros.prompt ? <small className="field-error" id="erro-prompt">{erros.prompt}</small> : null}</label>
-              <div className="form-grid"><label><span>Agendamento (cron) *</span><input value={formulario.agenda_cron} onChange={(evento) => setFormulario({ ...formulario, agenda_cron: evento.target.value })} aria-invalid={Boolean(erros.agenda_cron)} aria-describedby={erros.agenda_cron ? "erro-agenda" : "ajuda-agenda"} /><small id="ajuda-agenda">Minuto, hora, dia, mês e dia da semana.</small>{erros.agenda_cron ? <small className="field-error" id="erro-agenda">{erros.agenda_cron}</small> : null}</label><label><span>Fuso horário *</span><select value={formulario.timezone} onChange={(evento) => setFormulario({ ...formulario, timezone: evento.target.value })}><option value="America/Sao_Paulo">America/Sao_Paulo</option><option value="UTC">UTC</option></select></label></div>
+              <div className="schedule-grid">
+                <label>
+                  <span>Repetir *</span>
+                  <select value={formulario.repeticao} onChange={(evento) => setFormulario({ ...formulario, repeticao: evento.target.value as Repeticao })}>
+                    <option value="diaria">Todos os dias</option>
+                    <option value="dias_uteis">Segunda a sexta</option>
+                    <option value="semanal">Semanalmente</option>
+                    <option value="mensal">Mensalmente</option>
+                    <option value="dias_personalizados">Dias personalizados</option>
+                    {formulario.repeticao === "legada" ? <option value="legada">Agendamento antigo</option> : null}
+                  </select>
+                </label>
+                <label>
+                  <span>Horário *</span>
+                  <input type="time" value={formulario.horario} onChange={(evento) => setFormulario({ ...formulario, horario: evento.target.value })} aria-invalid={Boolean(erros.horario)} aria-describedby={erros.horario ? "erro-horario" : undefined} />
+                  {erros.horario ? <small className="field-error" id="erro-horario">{erros.horario}</small> : null}
+                </label>
+                <label>
+                  <span>Fuso *</span>
+                  <select value={formulario.timezone} onChange={(evento) => setFormulario({ ...formulario, timezone: evento.target.value })}>
+                    <option value="America/Sao_Paulo">America/Sao_Paulo</option>
+                    <option value="UTC">UTC</option>
+                  </select>
+                </label>
+              </div>
+              {formulario.repeticao === "semanal" ? (
+                <label>
+                  <span>Dia da semana *</span>
+                  <select value={formulario.dia_semana} onChange={(evento) => setFormulario({ ...formulario, dia_semana: evento.target.value as DiaSemana })}>
+                    {DIAS_SEMANA.map((dia) => <option key={dia.valor} value={dia.valor}>{dia.rotulo}</option>)}
+                  </select>
+                </label>
+              ) : null}
+              {formulario.repeticao === "mensal" ? (
+                <label>
+                  <span>Dia do mês *</span>
+                  <input type="number" min="1" max="31" value={formulario.dia_mes} onChange={(evento) => setFormulario({ ...formulario, dia_mes: evento.target.value })} aria-invalid={Boolean(erros.dia_mes)} aria-describedby={erros.dia_mes ? "erro-dia-mes" : undefined} />
+                  {erros.dia_mes ? <small className="field-error" id="erro-dia-mes">{erros.dia_mes}</small> : null}
+                </label>
+              ) : null}
+              {formulario.repeticao === "dias_personalizados" ? (
+                <fieldset className="schedule-days" aria-describedby={erros.dias_selecionados ? "erro-dias" : undefined}>
+                  <legend>Dias da semana *</legend>
+                  <div>
+                    {DIAS_SEMANA.map((dia) => (
+                      <label key={dia.valor}>
+                        <input type="checkbox" checked={formulario.dias_selecionados.includes(dia.valor)} onChange={() => alternarDiaPersonalizado(dia.valor)} />
+                        <span>{dia.rotulo.slice(0, 3)}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {erros.dias_selecionados ? <small className="field-error" id="erro-dias">{erros.dias_selecionados}</small> : null}
+                </fieldset>
+              ) : null}
+              {formulario.repeticao === "legada" ? (
+                <div className="schedule-legacy" role="note">Este agendamento foi criado em um formato antigo e será preservado. Para modificá-lo, escolha uma nova opção em <strong>Repetir</strong>.</div>
+              ) : null}
+              <div className="schedule-summary" aria-live="polite"><strong>Resumo:</strong> {resumoDaAgenda(formulario)}</div>
               <label className="switch-field"><input type="checkbox" checked={formulario.ativa} onChange={(evento) => setFormulario({ ...formulario, ativa: evento.target.checked })} /><span><strong>Rotina ativa</strong><small>Agendar assim que a configuração for salva.</small></span></label>
               <footer><button className="secondary-button" type="button" onClick={() => setModalAberto(false)}>Cancelar</button><button className="primary-button" type="submit" disabled={salvarRotina.isPending}>{salvarRotina.isPending ? "Validando e salvando..." : modoFormulario === "criar" ? "Criar rotina" : "Salvar alterações"}</button></footer>
             </form>

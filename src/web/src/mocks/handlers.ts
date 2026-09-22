@@ -190,7 +190,7 @@ export const handlers = [
       id: `rotina-${Date.now()}`,
       nome: pedido.nome ?? "Sem nome",
       prompt: pedido.prompt ?? "",
-      agenda_cron: pedido.agenda_cron ?? "0 9 * * 1",
+      agenda_cron: pedido.agenda_cron ?? "0 9 * * mon",
       timezone: pedido.timezone ?? "America/Sao_Paulo",
       ativa: pedido.ativa ?? true,
       intencao_prevista: "consultar_status_portfolio",
