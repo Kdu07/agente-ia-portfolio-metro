@@ -1,0 +1,1359 @@
+# Agendamento server-side das transicoes do board.
+#
+# ARQUIVO GERADO por .claude/scripts/gerar-agenda.py - nao edite na mao, a
+# proxima geracao desfaz. Vive na branch orfa `ci/agenda-cadu`, que tem este
+# unico arquivo e nenhum ancestral comum com o resto do repositorio: nao polui a
+# pipeline do projeto, nao dispara em push e nunca aparece como origem de MR.
+#
+# Disparo:
+#   glab ci run -b ci/agenda-cadu --variables AGENDA_KEY:DOING_60,ISSUE:412   # Backlog -> Doing
+#   glab ci run -b ci/agenda-cadu --variables AGENDA_KEY:REVIEW_60,ISSUE:412  # Doing -> Waiting Review
+#   glab ci run -b ci/agenda-cadu --variables AGENDA_KEY:CLOSE_60,ISSUE:412   # sai da coluna e fecha a issue
+#
+# O numero na chave e o atraso em minutos, de 5 em 5, ate 720.
+#
+# Pre-requisito: Project Access Token com escopo `api` e papel Reporter ou
+# superior, na variavel mascarada AGENDA_TOKEN, **nao-protected** (esta branch
+# nao e protegida; marcada como protected, o job recebe vazio e falha com 401).
+# O CI_JOB_TOKEN nao serve: nao tem permissao para alterar issues.
+
+stages:
+  - agenda
+
+.mover:
+  stage: agenda
+  image: alpine:3
+  interruptible: false          # pipeline nova nao cancela agendamento pendente
+  variables:
+    GIT_STRATEGY: none          # nao precisa clonar o repo
+  before_script:
+    - apk add --no-cache curl
+
+
+# Backlog -> Doing
+mover-para-doing:
+  extends: .mover
+  script:
+    - 'test -n "$ISSUE"'
+    - 'curl --fail --silent --show-error --request PUT --header "PRIVATE-TOKEN: $AGENDA_TOKEN" --data-urlencode "add_labels=Doing" --data-urlencode "remove_labels=Backlog" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues/$ISSUE" > /dev/null'
+    - 'echo "issue #$ISSUE: Backlog -> Doing"'
+  rules:
+    - if: '$AGENDA_KEY == "DOING_5"'
+      when: delayed
+      start_in: 5 minutes
+    - if: '$AGENDA_KEY == "DOING_10"'
+      when: delayed
+      start_in: 10 minutes
+    - if: '$AGENDA_KEY == "DOING_15"'
+      when: delayed
+      start_in: 15 minutes
+    - if: '$AGENDA_KEY == "DOING_20"'
+      when: delayed
+      start_in: 20 minutes
+    - if: '$AGENDA_KEY == "DOING_25"'
+      when: delayed
+      start_in: 25 minutes
+    - if: '$AGENDA_KEY == "DOING_30"'
+      when: delayed
+      start_in: 30 minutes
+    - if: '$AGENDA_KEY == "DOING_35"'
+      when: delayed
+      start_in: 35 minutes
+    - if: '$AGENDA_KEY == "DOING_40"'
+      when: delayed
+      start_in: 40 minutes
+    - if: '$AGENDA_KEY == "DOING_45"'
+      when: delayed
+      start_in: 45 minutes
+    - if: '$AGENDA_KEY == "DOING_50"'
+      when: delayed
+      start_in: 50 minutes
+    - if: '$AGENDA_KEY == "DOING_55"'
+      when: delayed
+      start_in: 55 minutes
+    - if: '$AGENDA_KEY == "DOING_60"'
+      when: delayed
+      start_in: 60 minutes
+    - if: '$AGENDA_KEY == "DOING_65"'
+      when: delayed
+      start_in: 65 minutes
+    - if: '$AGENDA_KEY == "DOING_70"'
+      when: delayed
+      start_in: 70 minutes
+    - if: '$AGENDA_KEY == "DOING_75"'
+      when: delayed
+      start_in: 75 minutes
+    - if: '$AGENDA_KEY == "DOING_80"'
+      when: delayed
+      start_in: 80 minutes
+    - if: '$AGENDA_KEY == "DOING_85"'
+      when: delayed
+      start_in: 85 minutes
+    - if: '$AGENDA_KEY == "DOING_90"'
+      when: delayed
+      start_in: 90 minutes
+    - if: '$AGENDA_KEY == "DOING_95"'
+      when: delayed
+      start_in: 95 minutes
+    - if: '$AGENDA_KEY == "DOING_100"'
+      when: delayed
+      start_in: 100 minutes
+    - if: '$AGENDA_KEY == "DOING_105"'
+      when: delayed
+      start_in: 105 minutes
+    - if: '$AGENDA_KEY == "DOING_110"'
+      when: delayed
+      start_in: 110 minutes
+    - if: '$AGENDA_KEY == "DOING_115"'
+      when: delayed
+      start_in: 115 minutes
+    - if: '$AGENDA_KEY == "DOING_120"'
+      when: delayed
+      start_in: 120 minutes
+    - if: '$AGENDA_KEY == "DOING_125"'
+      when: delayed
+      start_in: 125 minutes
+    - if: '$AGENDA_KEY == "DOING_130"'
+      when: delayed
+      start_in: 130 minutes
+    - if: '$AGENDA_KEY == "DOING_135"'
+      when: delayed
+      start_in: 135 minutes
+    - if: '$AGENDA_KEY == "DOING_140"'
+      when: delayed
+      start_in: 140 minutes
+    - if: '$AGENDA_KEY == "DOING_145"'
+      when: delayed
+      start_in: 145 minutes
+    - if: '$AGENDA_KEY == "DOING_150"'
+      when: delayed
+      start_in: 150 minutes
+    - if: '$AGENDA_KEY == "DOING_155"'
+      when: delayed
+      start_in: 155 minutes
+    - if: '$AGENDA_KEY == "DOING_160"'
+      when: delayed
+      start_in: 160 minutes
+    - if: '$AGENDA_KEY == "DOING_165"'
+      when: delayed
+      start_in: 165 minutes
+    - if: '$AGENDA_KEY == "DOING_170"'
+      when: delayed
+      start_in: 170 minutes
+    - if: '$AGENDA_KEY == "DOING_175"'
+      when: delayed
+      start_in: 175 minutes
+    - if: '$AGENDA_KEY == "DOING_180"'
+      when: delayed
+      start_in: 180 minutes
+    - if: '$AGENDA_KEY == "DOING_185"'
+      when: delayed
+      start_in: 185 minutes
+    - if: '$AGENDA_KEY == "DOING_190"'
+      when: delayed
+      start_in: 190 minutes
+    - if: '$AGENDA_KEY == "DOING_195"'
+      when: delayed
+      start_in: 195 minutes
+    - if: '$AGENDA_KEY == "DOING_200"'
+      when: delayed
+      start_in: 200 minutes
+    - if: '$AGENDA_KEY == "DOING_205"'
+      when: delayed
+      start_in: 205 minutes
+    - if: '$AGENDA_KEY == "DOING_210"'
+      when: delayed
+      start_in: 210 minutes
+    - if: '$AGENDA_KEY == "DOING_215"'
+      when: delayed
+      start_in: 215 minutes
+    - if: '$AGENDA_KEY == "DOING_220"'
+      when: delayed
+      start_in: 220 minutes
+    - if: '$AGENDA_KEY == "DOING_225"'
+      when: delayed
+      start_in: 225 minutes
+    - if: '$AGENDA_KEY == "DOING_230"'
+      when: delayed
+      start_in: 230 minutes
+    - if: '$AGENDA_KEY == "DOING_235"'
+      when: delayed
+      start_in: 235 minutes
+    - if: '$AGENDA_KEY == "DOING_240"'
+      when: delayed
+      start_in: 240 minutes
+    - if: '$AGENDA_KEY == "DOING_245"'
+      when: delayed
+      start_in: 245 minutes
+    - if: '$AGENDA_KEY == "DOING_250"'
+      when: delayed
+      start_in: 250 minutes
+    - if: '$AGENDA_KEY == "DOING_255"'
+      when: delayed
+      start_in: 255 minutes
+    - if: '$AGENDA_KEY == "DOING_260"'
+      when: delayed
+      start_in: 260 minutes
+    - if: '$AGENDA_KEY == "DOING_265"'
+      when: delayed
+      start_in: 265 minutes
+    - if: '$AGENDA_KEY == "DOING_270"'
+      when: delayed
+      start_in: 270 minutes
+    - if: '$AGENDA_KEY == "DOING_275"'
+      when: delayed
+      start_in: 275 minutes
+    - if: '$AGENDA_KEY == "DOING_280"'
+      when: delayed
+      start_in: 280 minutes
+    - if: '$AGENDA_KEY == "DOING_285"'
+      when: delayed
+      start_in: 285 minutes
+    - if: '$AGENDA_KEY == "DOING_290"'
+      when: delayed
+      start_in: 290 minutes
+    - if: '$AGENDA_KEY == "DOING_295"'
+      when: delayed
+      start_in: 295 minutes
+    - if: '$AGENDA_KEY == "DOING_300"'
+      when: delayed
+      start_in: 300 minutes
+    - if: '$AGENDA_KEY == "DOING_305"'
+      when: delayed
+      start_in: 305 minutes
+    - if: '$AGENDA_KEY == "DOING_310"'
+      when: delayed
+      start_in: 310 minutes
+    - if: '$AGENDA_KEY == "DOING_315"'
+      when: delayed
+      start_in: 315 minutes
+    - if: '$AGENDA_KEY == "DOING_320"'
+      when: delayed
+      start_in: 320 minutes
+    - if: '$AGENDA_KEY == "DOING_325"'
+      when: delayed
+      start_in: 325 minutes
+    - if: '$AGENDA_KEY == "DOING_330"'
+      when: delayed
+      start_in: 330 minutes
+    - if: '$AGENDA_KEY == "DOING_335"'
+      when: delayed
+      start_in: 335 minutes
+    - if: '$AGENDA_KEY == "DOING_340"'
+      when: delayed
+      start_in: 340 minutes
+    - if: '$AGENDA_KEY == "DOING_345"'
+      when: delayed
+      start_in: 345 minutes
+    - if: '$AGENDA_KEY == "DOING_350"'
+      when: delayed
+      start_in: 350 minutes
+    - if: '$AGENDA_KEY == "DOING_355"'
+      when: delayed
+      start_in: 355 minutes
+    - if: '$AGENDA_KEY == "DOING_360"'
+      when: delayed
+      start_in: 360 minutes
+    - if: '$AGENDA_KEY == "DOING_365"'
+      when: delayed
+      start_in: 365 minutes
+    - if: '$AGENDA_KEY == "DOING_370"'
+      when: delayed
+      start_in: 370 minutes
+    - if: '$AGENDA_KEY == "DOING_375"'
+      when: delayed
+      start_in: 375 minutes
+    - if: '$AGENDA_KEY == "DOING_380"'
+      when: delayed
+      start_in: 380 minutes
+    - if: '$AGENDA_KEY == "DOING_385"'
+      when: delayed
+      start_in: 385 minutes
+    - if: '$AGENDA_KEY == "DOING_390"'
+      when: delayed
+      start_in: 390 minutes
+    - if: '$AGENDA_KEY == "DOING_395"'
+      when: delayed
+      start_in: 395 minutes
+    - if: '$AGENDA_KEY == "DOING_400"'
+      when: delayed
+      start_in: 400 minutes
+    - if: '$AGENDA_KEY == "DOING_405"'
+      when: delayed
+      start_in: 405 minutes
+    - if: '$AGENDA_KEY == "DOING_410"'
+      when: delayed
+      start_in: 410 minutes
+    - if: '$AGENDA_KEY == "DOING_415"'
+      when: delayed
+      start_in: 415 minutes
+    - if: '$AGENDA_KEY == "DOING_420"'
+      when: delayed
+      start_in: 420 minutes
+    - if: '$AGENDA_KEY == "DOING_425"'
+      when: delayed
+      start_in: 425 minutes
+    - if: '$AGENDA_KEY == "DOING_430"'
+      when: delayed
+      start_in: 430 minutes
+    - if: '$AGENDA_KEY == "DOING_435"'
+      when: delayed
+      start_in: 435 minutes
+    - if: '$AGENDA_KEY == "DOING_440"'
+      when: delayed
+      start_in: 440 minutes
+    - if: '$AGENDA_KEY == "DOING_445"'
+      when: delayed
+      start_in: 445 minutes
+    - if: '$AGENDA_KEY == "DOING_450"'
+      when: delayed
+      start_in: 450 minutes
+    - if: '$AGENDA_KEY == "DOING_455"'
+      when: delayed
+      start_in: 455 minutes
+    - if: '$AGENDA_KEY == "DOING_460"'
+      when: delayed
+      start_in: 460 minutes
+    - if: '$AGENDA_KEY == "DOING_465"'
+      when: delayed
+      start_in: 465 minutes
+    - if: '$AGENDA_KEY == "DOING_470"'
+      when: delayed
+      start_in: 470 minutes
+    - if: '$AGENDA_KEY == "DOING_475"'
+      when: delayed
+      start_in: 475 minutes
+    - if: '$AGENDA_KEY == "DOING_480"'
+      when: delayed
+      start_in: 480 minutes
+    - if: '$AGENDA_KEY == "DOING_485"'
+      when: delayed
+      start_in: 485 minutes
+    - if: '$AGENDA_KEY == "DOING_490"'
+      when: delayed
+      start_in: 490 minutes
+    - if: '$AGENDA_KEY == "DOING_495"'
+      when: delayed
+      start_in: 495 minutes
+    - if: '$AGENDA_KEY == "DOING_500"'
+      when: delayed
+      start_in: 500 minutes
+    - if: '$AGENDA_KEY == "DOING_505"'
+      when: delayed
+      start_in: 505 minutes
+    - if: '$AGENDA_KEY == "DOING_510"'
+      when: delayed
+      start_in: 510 minutes
+    - if: '$AGENDA_KEY == "DOING_515"'
+      when: delayed
+      start_in: 515 minutes
+    - if: '$AGENDA_KEY == "DOING_520"'
+      when: delayed
+      start_in: 520 minutes
+    - if: '$AGENDA_KEY == "DOING_525"'
+      when: delayed
+      start_in: 525 minutes
+    - if: '$AGENDA_KEY == "DOING_530"'
+      when: delayed
+      start_in: 530 minutes
+    - if: '$AGENDA_KEY == "DOING_535"'
+      when: delayed
+      start_in: 535 minutes
+    - if: '$AGENDA_KEY == "DOING_540"'
+      when: delayed
+      start_in: 540 minutes
+    - if: '$AGENDA_KEY == "DOING_545"'
+      when: delayed
+      start_in: 545 minutes
+    - if: '$AGENDA_KEY == "DOING_550"'
+      when: delayed
+      start_in: 550 minutes
+    - if: '$AGENDA_KEY == "DOING_555"'
+      when: delayed
+      start_in: 555 minutes
+    - if: '$AGENDA_KEY == "DOING_560"'
+      when: delayed
+      start_in: 560 minutes
+    - if: '$AGENDA_KEY == "DOING_565"'
+      when: delayed
+      start_in: 565 minutes
+    - if: '$AGENDA_KEY == "DOING_570"'
+      when: delayed
+      start_in: 570 minutes
+    - if: '$AGENDA_KEY == "DOING_575"'
+      when: delayed
+      start_in: 575 minutes
+    - if: '$AGENDA_KEY == "DOING_580"'
+      when: delayed
+      start_in: 580 minutes
+    - if: '$AGENDA_KEY == "DOING_585"'
+      when: delayed
+      start_in: 585 minutes
+    - if: '$AGENDA_KEY == "DOING_590"'
+      when: delayed
+      start_in: 590 minutes
+    - if: '$AGENDA_KEY == "DOING_595"'
+      when: delayed
+      start_in: 595 minutes
+    - if: '$AGENDA_KEY == "DOING_600"'
+      when: delayed
+      start_in: 600 minutes
+    - if: '$AGENDA_KEY == "DOING_605"'
+      when: delayed
+      start_in: 605 minutes
+    - if: '$AGENDA_KEY == "DOING_610"'
+      when: delayed
+      start_in: 610 minutes
+    - if: '$AGENDA_KEY == "DOING_615"'
+      when: delayed
+      start_in: 615 minutes
+    - if: '$AGENDA_KEY == "DOING_620"'
+      when: delayed
+      start_in: 620 minutes
+    - if: '$AGENDA_KEY == "DOING_625"'
+      when: delayed
+      start_in: 625 minutes
+    - if: '$AGENDA_KEY == "DOING_630"'
+      when: delayed
+      start_in: 630 minutes
+    - if: '$AGENDA_KEY == "DOING_635"'
+      when: delayed
+      start_in: 635 minutes
+    - if: '$AGENDA_KEY == "DOING_640"'
+      when: delayed
+      start_in: 640 minutes
+    - if: '$AGENDA_KEY == "DOING_645"'
+      when: delayed
+      start_in: 645 minutes
+    - if: '$AGENDA_KEY == "DOING_650"'
+      when: delayed
+      start_in: 650 minutes
+    - if: '$AGENDA_KEY == "DOING_655"'
+      when: delayed
+      start_in: 655 minutes
+    - if: '$AGENDA_KEY == "DOING_660"'
+      when: delayed
+      start_in: 660 minutes
+    - if: '$AGENDA_KEY == "DOING_665"'
+      when: delayed
+      start_in: 665 minutes
+    - if: '$AGENDA_KEY == "DOING_670"'
+      when: delayed
+      start_in: 670 minutes
+    - if: '$AGENDA_KEY == "DOING_675"'
+      when: delayed
+      start_in: 675 minutes
+    - if: '$AGENDA_KEY == "DOING_680"'
+      when: delayed
+      start_in: 680 minutes
+    - if: '$AGENDA_KEY == "DOING_685"'
+      when: delayed
+      start_in: 685 minutes
+    - if: '$AGENDA_KEY == "DOING_690"'
+      when: delayed
+      start_in: 690 minutes
+    - if: '$AGENDA_KEY == "DOING_695"'
+      when: delayed
+      start_in: 695 minutes
+    - if: '$AGENDA_KEY == "DOING_700"'
+      when: delayed
+      start_in: 700 minutes
+    - if: '$AGENDA_KEY == "DOING_705"'
+      when: delayed
+      start_in: 705 minutes
+    - if: '$AGENDA_KEY == "DOING_710"'
+      when: delayed
+      start_in: 710 minutes
+    - if: '$AGENDA_KEY == "DOING_715"'
+      when: delayed
+      start_in: 715 minutes
+    - if: '$AGENDA_KEY == "DOING_720"'
+      when: delayed
+      start_in: 720 minutes
+    - when: never
+
+
+# Doing -> Waiting Review
+mover-para-review:
+  extends: .mover
+  script:
+    - 'test -n "$ISSUE"'
+    - 'curl --fail --silent --show-error --request PUT --header "PRIVATE-TOKEN: $AGENDA_TOKEN" --data-urlencode "add_labels=Waiting Review" --data-urlencode "remove_labels=Doing" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues/$ISSUE" > /dev/null'
+    - 'echo "issue #$ISSUE: Doing -> Waiting Review"'
+  rules:
+    - if: '$AGENDA_KEY == "REVIEW_5"'
+      when: delayed
+      start_in: 5 minutes
+    - if: '$AGENDA_KEY == "REVIEW_10"'
+      when: delayed
+      start_in: 10 minutes
+    - if: '$AGENDA_KEY == "REVIEW_15"'
+      when: delayed
+      start_in: 15 minutes
+    - if: '$AGENDA_KEY == "REVIEW_20"'
+      when: delayed
+      start_in: 20 minutes
+    - if: '$AGENDA_KEY == "REVIEW_25"'
+      when: delayed
+      start_in: 25 minutes
+    - if: '$AGENDA_KEY == "REVIEW_30"'
+      when: delayed
+      start_in: 30 minutes
+    - if: '$AGENDA_KEY == "REVIEW_35"'
+      when: delayed
+      start_in: 35 minutes
+    - if: '$AGENDA_KEY == "REVIEW_40"'
+      when: delayed
+      start_in: 40 minutes
+    - if: '$AGENDA_KEY == "REVIEW_45"'
+      when: delayed
+      start_in: 45 minutes
+    - if: '$AGENDA_KEY == "REVIEW_50"'
+      when: delayed
+      start_in: 50 minutes
+    - if: '$AGENDA_KEY == "REVIEW_55"'
+      when: delayed
+      start_in: 55 minutes
+    - if: '$AGENDA_KEY == "REVIEW_60"'
+      when: delayed
+      start_in: 60 minutes
+    - if: '$AGENDA_KEY == "REVIEW_65"'
+      when: delayed
+      start_in: 65 minutes
+    - if: '$AGENDA_KEY == "REVIEW_70"'
+      when: delayed
+      start_in: 70 minutes
+    - if: '$AGENDA_KEY == "REVIEW_75"'
+      when: delayed
+      start_in: 75 minutes
+    - if: '$AGENDA_KEY == "REVIEW_80"'
+      when: delayed
+      start_in: 80 minutes
+    - if: '$AGENDA_KEY == "REVIEW_85"'
+      when: delayed
+      start_in: 85 minutes
+    - if: '$AGENDA_KEY == "REVIEW_90"'
+      when: delayed
+      start_in: 90 minutes
+    - if: '$AGENDA_KEY == "REVIEW_95"'
+      when: delayed
+      start_in: 95 minutes
+    - if: '$AGENDA_KEY == "REVIEW_100"'
+      when: delayed
+      start_in: 100 minutes
+    - if: '$AGENDA_KEY == "REVIEW_105"'
+      when: delayed
+      start_in: 105 minutes
+    - if: '$AGENDA_KEY == "REVIEW_110"'
+      when: delayed
+      start_in: 110 minutes
+    - if: '$AGENDA_KEY == "REVIEW_115"'
+      when: delayed
+      start_in: 115 minutes
+    - if: '$AGENDA_KEY == "REVIEW_120"'
+      when: delayed
+      start_in: 120 minutes
+    - if: '$AGENDA_KEY == "REVIEW_125"'
+      when: delayed
+      start_in: 125 minutes
+    - if: '$AGENDA_KEY == "REVIEW_130"'
+      when: delayed
+      start_in: 130 minutes
+    - if: '$AGENDA_KEY == "REVIEW_135"'
+      when: delayed
+      start_in: 135 minutes
+    - if: '$AGENDA_KEY == "REVIEW_140"'
+      when: delayed
+      start_in: 140 minutes
+    - if: '$AGENDA_KEY == "REVIEW_145"'
+      when: delayed
+      start_in: 145 minutes
+    - if: '$AGENDA_KEY == "REVIEW_150"'
+      when: delayed
+      start_in: 150 minutes
+    - if: '$AGENDA_KEY == "REVIEW_155"'
+      when: delayed
+      start_in: 155 minutes
+    - if: '$AGENDA_KEY == "REVIEW_160"'
+      when: delayed
+      start_in: 160 minutes
+    - if: '$AGENDA_KEY == "REVIEW_165"'
+      when: delayed
+      start_in: 165 minutes
+    - if: '$AGENDA_KEY == "REVIEW_170"'
+      when: delayed
+      start_in: 170 minutes
+    - if: '$AGENDA_KEY == "REVIEW_175"'
+      when: delayed
+      start_in: 175 minutes
+    - if: '$AGENDA_KEY == "REVIEW_180"'
+      when: delayed
+      start_in: 180 minutes
+    - if: '$AGENDA_KEY == "REVIEW_185"'
+      when: delayed
+      start_in: 185 minutes
+    - if: '$AGENDA_KEY == "REVIEW_190"'
+      when: delayed
+      start_in: 190 minutes
+    - if: '$AGENDA_KEY == "REVIEW_195"'
+      when: delayed
+      start_in: 195 minutes
+    - if: '$AGENDA_KEY == "REVIEW_200"'
+      when: delayed
+      start_in: 200 minutes
+    - if: '$AGENDA_KEY == "REVIEW_205"'
+      when: delayed
+      start_in: 205 minutes
+    - if: '$AGENDA_KEY == "REVIEW_210"'
+      when: delayed
+      start_in: 210 minutes
+    - if: '$AGENDA_KEY == "REVIEW_215"'
+      when: delayed
+      start_in: 215 minutes
+    - if: '$AGENDA_KEY == "REVIEW_220"'
+      when: delayed
+      start_in: 220 minutes
+    - if: '$AGENDA_KEY == "REVIEW_225"'
+      when: delayed
+      start_in: 225 minutes
+    - if: '$AGENDA_KEY == "REVIEW_230"'
+      when: delayed
+      start_in: 230 minutes
+    - if: '$AGENDA_KEY == "REVIEW_235"'
+      when: delayed
+      start_in: 235 minutes
+    - if: '$AGENDA_KEY == "REVIEW_240"'
+      when: delayed
+      start_in: 240 minutes
+    - if: '$AGENDA_KEY == "REVIEW_245"'
+      when: delayed
+      start_in: 245 minutes
+    - if: '$AGENDA_KEY == "REVIEW_250"'
+      when: delayed
+      start_in: 250 minutes
+    - if: '$AGENDA_KEY == "REVIEW_255"'
+      when: delayed
+      start_in: 255 minutes
+    - if: '$AGENDA_KEY == "REVIEW_260"'
+      when: delayed
+      start_in: 260 minutes
+    - if: '$AGENDA_KEY == "REVIEW_265"'
+      when: delayed
+      start_in: 265 minutes
+    - if: '$AGENDA_KEY == "REVIEW_270"'
+      when: delayed
+      start_in: 270 minutes
+    - if: '$AGENDA_KEY == "REVIEW_275"'
+      when: delayed
+      start_in: 275 minutes
+    - if: '$AGENDA_KEY == "REVIEW_280"'
+      when: delayed
+      start_in: 280 minutes
+    - if: '$AGENDA_KEY == "REVIEW_285"'
+      when: delayed
+      start_in: 285 minutes
+    - if: '$AGENDA_KEY == "REVIEW_290"'
+      when: delayed
+      start_in: 290 minutes
+    - if: '$AGENDA_KEY == "REVIEW_295"'
+      when: delayed
+      start_in: 295 minutes
+    - if: '$AGENDA_KEY == "REVIEW_300"'
+      when: delayed
+      start_in: 300 minutes
+    - if: '$AGENDA_KEY == "REVIEW_305"'
+      when: delayed
+      start_in: 305 minutes
+    - if: '$AGENDA_KEY == "REVIEW_310"'
+      when: delayed
+      start_in: 310 minutes
+    - if: '$AGENDA_KEY == "REVIEW_315"'
+      when: delayed
+      start_in: 315 minutes
+    - if: '$AGENDA_KEY == "REVIEW_320"'
+      when: delayed
+      start_in: 320 minutes
+    - if: '$AGENDA_KEY == "REVIEW_325"'
+      when: delayed
+      start_in: 325 minutes
+    - if: '$AGENDA_KEY == "REVIEW_330"'
+      when: delayed
+      start_in: 330 minutes
+    - if: '$AGENDA_KEY == "REVIEW_335"'
+      when: delayed
+      start_in: 335 minutes
+    - if: '$AGENDA_KEY == "REVIEW_340"'
+      when: delayed
+      start_in: 340 minutes
+    - if: '$AGENDA_KEY == "REVIEW_345"'
+      when: delayed
+      start_in: 345 minutes
+    - if: '$AGENDA_KEY == "REVIEW_350"'
+      when: delayed
+      start_in: 350 minutes
+    - if: '$AGENDA_KEY == "REVIEW_355"'
+      when: delayed
+      start_in: 355 minutes
+    - if: '$AGENDA_KEY == "REVIEW_360"'
+      when: delayed
+      start_in: 360 minutes
+    - if: '$AGENDA_KEY == "REVIEW_365"'
+      when: delayed
+      start_in: 365 minutes
+    - if: '$AGENDA_KEY == "REVIEW_370"'
+      when: delayed
+      start_in: 370 minutes
+    - if: '$AGENDA_KEY == "REVIEW_375"'
+      when: delayed
+      start_in: 375 minutes
+    - if: '$AGENDA_KEY == "REVIEW_380"'
+      when: delayed
+      start_in: 380 minutes
+    - if: '$AGENDA_KEY == "REVIEW_385"'
+      when: delayed
+      start_in: 385 minutes
+    - if: '$AGENDA_KEY == "REVIEW_390"'
+      when: delayed
+      start_in: 390 minutes
+    - if: '$AGENDA_KEY == "REVIEW_395"'
+      when: delayed
+      start_in: 395 minutes
+    - if: '$AGENDA_KEY == "REVIEW_400"'
+      when: delayed
+      start_in: 400 minutes
+    - if: '$AGENDA_KEY == "REVIEW_405"'
+      when: delayed
+      start_in: 405 minutes
+    - if: '$AGENDA_KEY == "REVIEW_410"'
+      when: delayed
+      start_in: 410 minutes
+    - if: '$AGENDA_KEY == "REVIEW_415"'
+      when: delayed
+      start_in: 415 minutes
+    - if: '$AGENDA_KEY == "REVIEW_420"'
+      when: delayed
+      start_in: 420 minutes
+    - if: '$AGENDA_KEY == "REVIEW_425"'
+      when: delayed
+      start_in: 425 minutes
+    - if: '$AGENDA_KEY == "REVIEW_430"'
+      when: delayed
+      start_in: 430 minutes
+    - if: '$AGENDA_KEY == "REVIEW_435"'
+      when: delayed
+      start_in: 435 minutes
+    - if: '$AGENDA_KEY == "REVIEW_440"'
+      when: delayed
+      start_in: 440 minutes
+    - if: '$AGENDA_KEY == "REVIEW_445"'
+      when: delayed
+      start_in: 445 minutes
+    - if: '$AGENDA_KEY == "REVIEW_450"'
+      when: delayed
+      start_in: 450 minutes
+    - if: '$AGENDA_KEY == "REVIEW_455"'
+      when: delayed
+      start_in: 455 minutes
+    - if: '$AGENDA_KEY == "REVIEW_460"'
+      when: delayed
+      start_in: 460 minutes
+    - if: '$AGENDA_KEY == "REVIEW_465"'
+      when: delayed
+      start_in: 465 minutes
+    - if: '$AGENDA_KEY == "REVIEW_470"'
+      when: delayed
+      start_in: 470 minutes
+    - if: '$AGENDA_KEY == "REVIEW_475"'
+      when: delayed
+      start_in: 475 minutes
+    - if: '$AGENDA_KEY == "REVIEW_480"'
+      when: delayed
+      start_in: 480 minutes
+    - if: '$AGENDA_KEY == "REVIEW_485"'
+      when: delayed
+      start_in: 485 minutes
+    - if: '$AGENDA_KEY == "REVIEW_490"'
+      when: delayed
+      start_in: 490 minutes
+    - if: '$AGENDA_KEY == "REVIEW_495"'
+      when: delayed
+      start_in: 495 minutes
+    - if: '$AGENDA_KEY == "REVIEW_500"'
+      when: delayed
+      start_in: 500 minutes
+    - if: '$AGENDA_KEY == "REVIEW_505"'
+      when: delayed
+      start_in: 505 minutes
+    - if: '$AGENDA_KEY == "REVIEW_510"'
+      when: delayed
+      start_in: 510 minutes
+    - if: '$AGENDA_KEY == "REVIEW_515"'
+      when: delayed
+      start_in: 515 minutes
+    - if: '$AGENDA_KEY == "REVIEW_520"'
+      when: delayed
+      start_in: 520 minutes
+    - if: '$AGENDA_KEY == "REVIEW_525"'
+      when: delayed
+      start_in: 525 minutes
+    - if: '$AGENDA_KEY == "REVIEW_530"'
+      when: delayed
+      start_in: 530 minutes
+    - if: '$AGENDA_KEY == "REVIEW_535"'
+      when: delayed
+      start_in: 535 minutes
+    - if: '$AGENDA_KEY == "REVIEW_540"'
+      when: delayed
+      start_in: 540 minutes
+    - if: '$AGENDA_KEY == "REVIEW_545"'
+      when: delayed
+      start_in: 545 minutes
+    - if: '$AGENDA_KEY == "REVIEW_550"'
+      when: delayed
+      start_in: 550 minutes
+    - if: '$AGENDA_KEY == "REVIEW_555"'
+      when: delayed
+      start_in: 555 minutes
+    - if: '$AGENDA_KEY == "REVIEW_560"'
+      when: delayed
+      start_in: 560 minutes
+    - if: '$AGENDA_KEY == "REVIEW_565"'
+      when: delayed
+      start_in: 565 minutes
+    - if: '$AGENDA_KEY == "REVIEW_570"'
+      when: delayed
+      start_in: 570 minutes
+    - if: '$AGENDA_KEY == "REVIEW_575"'
+      when: delayed
+      start_in: 575 minutes
+    - if: '$AGENDA_KEY == "REVIEW_580"'
+      when: delayed
+      start_in: 580 minutes
+    - if: '$AGENDA_KEY == "REVIEW_585"'
+      when: delayed
+      start_in: 585 minutes
+    - if: '$AGENDA_KEY == "REVIEW_590"'
+      when: delayed
+      start_in: 590 minutes
+    - if: '$AGENDA_KEY == "REVIEW_595"'
+      when: delayed
+      start_in: 595 minutes
+    - if: '$AGENDA_KEY == "REVIEW_600"'
+      when: delayed
+      start_in: 600 minutes
+    - if: '$AGENDA_KEY == "REVIEW_605"'
+      when: delayed
+      start_in: 605 minutes
+    - if: '$AGENDA_KEY == "REVIEW_610"'
+      when: delayed
+      start_in: 610 minutes
+    - if: '$AGENDA_KEY == "REVIEW_615"'
+      when: delayed
+      start_in: 615 minutes
+    - if: '$AGENDA_KEY == "REVIEW_620"'
+      when: delayed
+      start_in: 620 minutes
+    - if: '$AGENDA_KEY == "REVIEW_625"'
+      when: delayed
+      start_in: 625 minutes
+    - if: '$AGENDA_KEY == "REVIEW_630"'
+      when: delayed
+      start_in: 630 minutes
+    - if: '$AGENDA_KEY == "REVIEW_635"'
+      when: delayed
+      start_in: 635 minutes
+    - if: '$AGENDA_KEY == "REVIEW_640"'
+      when: delayed
+      start_in: 640 minutes
+    - if: '$AGENDA_KEY == "REVIEW_645"'
+      when: delayed
+      start_in: 645 minutes
+    - if: '$AGENDA_KEY == "REVIEW_650"'
+      when: delayed
+      start_in: 650 minutes
+    - if: '$AGENDA_KEY == "REVIEW_655"'
+      when: delayed
+      start_in: 655 minutes
+    - if: '$AGENDA_KEY == "REVIEW_660"'
+      when: delayed
+      start_in: 660 minutes
+    - if: '$AGENDA_KEY == "REVIEW_665"'
+      when: delayed
+      start_in: 665 minutes
+    - if: '$AGENDA_KEY == "REVIEW_670"'
+      when: delayed
+      start_in: 670 minutes
+    - if: '$AGENDA_KEY == "REVIEW_675"'
+      when: delayed
+      start_in: 675 minutes
+    - if: '$AGENDA_KEY == "REVIEW_680"'
+      when: delayed
+      start_in: 680 minutes
+    - if: '$AGENDA_KEY == "REVIEW_685"'
+      when: delayed
+      start_in: 685 minutes
+    - if: '$AGENDA_KEY == "REVIEW_690"'
+      when: delayed
+      start_in: 690 minutes
+    - if: '$AGENDA_KEY == "REVIEW_695"'
+      when: delayed
+      start_in: 695 minutes
+    - if: '$AGENDA_KEY == "REVIEW_700"'
+      when: delayed
+      start_in: 700 minutes
+    - if: '$AGENDA_KEY == "REVIEW_705"'
+      when: delayed
+      start_in: 705 minutes
+    - if: '$AGENDA_KEY == "REVIEW_710"'
+      when: delayed
+      start_in: 710 minutes
+    - if: '$AGENDA_KEY == "REVIEW_715"'
+      when: delayed
+      start_in: 715 minutes
+    - if: '$AGENDA_KEY == "REVIEW_720"'
+      when: delayed
+      start_in: 720 minutes
+    - when: never
+
+
+# sai da coluna e fecha a issue
+fechar-card:
+  extends: .mover
+  script:
+    - 'test -n "$ISSUE"'
+    - 'curl --fail --silent --show-error --request PUT --header "PRIVATE-TOKEN: $AGENDA_TOKEN" --data-urlencode "remove_labels=Review,Waiting Review,Doing" --data-urlencode "state_event=close" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues/$ISSUE" > /dev/null'
+    - 'echo "issue #$ISSUE: sai da coluna e fecha a issue"'
+  rules:
+    - if: '$AGENDA_KEY == "CLOSE_5"'
+      when: delayed
+      start_in: 5 minutes
+    - if: '$AGENDA_KEY == "CLOSE_10"'
+      when: delayed
+      start_in: 10 minutes
+    - if: '$AGENDA_KEY == "CLOSE_15"'
+      when: delayed
+      start_in: 15 minutes
+    - if: '$AGENDA_KEY == "CLOSE_20"'
+      when: delayed
+      start_in: 20 minutes
+    - if: '$AGENDA_KEY == "CLOSE_25"'
+      when: delayed
+      start_in: 25 minutes
+    - if: '$AGENDA_KEY == "CLOSE_30"'
+      when: delayed
+      start_in: 30 minutes
+    - if: '$AGENDA_KEY == "CLOSE_35"'
+      when: delayed
+      start_in: 35 minutes
+    - if: '$AGENDA_KEY == "CLOSE_40"'
+      when: delayed
+      start_in: 40 minutes
+    - if: '$AGENDA_KEY == "CLOSE_45"'
+      when: delayed
+      start_in: 45 minutes
+    - if: '$AGENDA_KEY == "CLOSE_50"'
+      when: delayed
+      start_in: 50 minutes
+    - if: '$AGENDA_KEY == "CLOSE_55"'
+      when: delayed
+      start_in: 55 minutes
+    - if: '$AGENDA_KEY == "CLOSE_60"'
+      when: delayed
+      start_in: 60 minutes
+    - if: '$AGENDA_KEY == "CLOSE_65"'
+      when: delayed
+      start_in: 65 minutes
+    - if: '$AGENDA_KEY == "CLOSE_70"'
+      when: delayed
+      start_in: 70 minutes
+    - if: '$AGENDA_KEY == "CLOSE_75"'
+      when: delayed
+      start_in: 75 minutes
+    - if: '$AGENDA_KEY == "CLOSE_80"'
+      when: delayed
+      start_in: 80 minutes
+    - if: '$AGENDA_KEY == "CLOSE_85"'
+      when: delayed
+      start_in: 85 minutes
+    - if: '$AGENDA_KEY == "CLOSE_90"'
+      when: delayed
+      start_in: 90 minutes
+    - if: '$AGENDA_KEY == "CLOSE_95"'
+      when: delayed
+      start_in: 95 minutes
+    - if: '$AGENDA_KEY == "CLOSE_100"'
+      when: delayed
+      start_in: 100 minutes
+    - if: '$AGENDA_KEY == "CLOSE_105"'
+      when: delayed
+      start_in: 105 minutes
+    - if: '$AGENDA_KEY == "CLOSE_110"'
+      when: delayed
+      start_in: 110 minutes
+    - if: '$AGENDA_KEY == "CLOSE_115"'
+      when: delayed
+      start_in: 115 minutes
+    - if: '$AGENDA_KEY == "CLOSE_120"'
+      when: delayed
+      start_in: 120 minutes
+    - if: '$AGENDA_KEY == "CLOSE_125"'
+      when: delayed
+      start_in: 125 minutes
+    - if: '$AGENDA_KEY == "CLOSE_130"'
+      when: delayed
+      start_in: 130 minutes
+    - if: '$AGENDA_KEY == "CLOSE_135"'
+      when: delayed
+      start_in: 135 minutes
+    - if: '$AGENDA_KEY == "CLOSE_140"'
+      when: delayed
+      start_in: 140 minutes
+    - if: '$AGENDA_KEY == "CLOSE_145"'
+      when: delayed
+      start_in: 145 minutes
+    - if: '$AGENDA_KEY == "CLOSE_150"'
+      when: delayed
+      start_in: 150 minutes
+    - if: '$AGENDA_KEY == "CLOSE_155"'
+      when: delayed
+      start_in: 155 minutes
+    - if: '$AGENDA_KEY == "CLOSE_160"'
+      when: delayed
+      start_in: 160 minutes
+    - if: '$AGENDA_KEY == "CLOSE_165"'
+      when: delayed
+      start_in: 165 minutes
+    - if: '$AGENDA_KEY == "CLOSE_170"'
+      when: delayed
+      start_in: 170 minutes
+    - if: '$AGENDA_KEY == "CLOSE_175"'
+      when: delayed
+      start_in: 175 minutes
+    - if: '$AGENDA_KEY == "CLOSE_180"'
+      when: delayed
+      start_in: 180 minutes
+    - if: '$AGENDA_KEY == "CLOSE_185"'
+      when: delayed
+      start_in: 185 minutes
+    - if: '$AGENDA_KEY == "CLOSE_190"'
+      when: delayed
+      start_in: 190 minutes
+    - if: '$AGENDA_KEY == "CLOSE_195"'
+      when: delayed
+      start_in: 195 minutes
+    - if: '$AGENDA_KEY == "CLOSE_200"'
+      when: delayed
+      start_in: 200 minutes
+    - if: '$AGENDA_KEY == "CLOSE_205"'
+      when: delayed
+      start_in: 205 minutes
+    - if: '$AGENDA_KEY == "CLOSE_210"'
+      when: delayed
+      start_in: 210 minutes
+    - if: '$AGENDA_KEY == "CLOSE_215"'
+      when: delayed
+      start_in: 215 minutes
+    - if: '$AGENDA_KEY == "CLOSE_220"'
+      when: delayed
+      start_in: 220 minutes
+    - if: '$AGENDA_KEY == "CLOSE_225"'
+      when: delayed
+      start_in: 225 minutes
+    - if: '$AGENDA_KEY == "CLOSE_230"'
+      when: delayed
+      start_in: 230 minutes
+    - if: '$AGENDA_KEY == "CLOSE_235"'
+      when: delayed
+      start_in: 235 minutes
+    - if: '$AGENDA_KEY == "CLOSE_240"'
+      when: delayed
+      start_in: 240 minutes
+    - if: '$AGENDA_KEY == "CLOSE_245"'
+      when: delayed
+      start_in: 245 minutes
+    - if: '$AGENDA_KEY == "CLOSE_250"'
+      when: delayed
+      start_in: 250 minutes
+    - if: '$AGENDA_KEY == "CLOSE_255"'
+      when: delayed
+      start_in: 255 minutes
+    - if: '$AGENDA_KEY == "CLOSE_260"'
+      when: delayed
+      start_in: 260 minutes
+    - if: '$AGENDA_KEY == "CLOSE_265"'
+      when: delayed
+      start_in: 265 minutes
+    - if: '$AGENDA_KEY == "CLOSE_270"'
+      when: delayed
+      start_in: 270 minutes
+    - if: '$AGENDA_KEY == "CLOSE_275"'
+      when: delayed
+      start_in: 275 minutes
+    - if: '$AGENDA_KEY == "CLOSE_280"'
+      when: delayed
+      start_in: 280 minutes
+    - if: '$AGENDA_KEY == "CLOSE_285"'
+      when: delayed
+      start_in: 285 minutes
+    - if: '$AGENDA_KEY == "CLOSE_290"'
+      when: delayed
+      start_in: 290 minutes
+    - if: '$AGENDA_KEY == "CLOSE_295"'
+      when: delayed
+      start_in: 295 minutes
+    - if: '$AGENDA_KEY == "CLOSE_300"'
+      when: delayed
+      start_in: 300 minutes
+    - if: '$AGENDA_KEY == "CLOSE_305"'
+      when: delayed
+      start_in: 305 minutes
+    - if: '$AGENDA_KEY == "CLOSE_310"'
+      when: delayed
+      start_in: 310 minutes
+    - if: '$AGENDA_KEY == "CLOSE_315"'
+      when: delayed
+      start_in: 315 minutes
+    - if: '$AGENDA_KEY == "CLOSE_320"'
+      when: delayed
+      start_in: 320 minutes
+    - if: '$AGENDA_KEY == "CLOSE_325"'
+      when: delayed
+      start_in: 325 minutes
+    - if: '$AGENDA_KEY == "CLOSE_330"'
+      when: delayed
+      start_in: 330 minutes
+    - if: '$AGENDA_KEY == "CLOSE_335"'
+      when: delayed
+      start_in: 335 minutes
+    - if: '$AGENDA_KEY == "CLOSE_340"'
+      when: delayed
+      start_in: 340 minutes
+    - if: '$AGENDA_KEY == "CLOSE_345"'
+      when: delayed
+      start_in: 345 minutes
+    - if: '$AGENDA_KEY == "CLOSE_350"'
+      when: delayed
+      start_in: 350 minutes
+    - if: '$AGENDA_KEY == "CLOSE_355"'
+      when: delayed
+      start_in: 355 minutes
+    - if: '$AGENDA_KEY == "CLOSE_360"'
+      when: delayed
+      start_in: 360 minutes
+    - if: '$AGENDA_KEY == "CLOSE_365"'
+      when: delayed
+      start_in: 365 minutes
+    - if: '$AGENDA_KEY == "CLOSE_370"'
+      when: delayed
+      start_in: 370 minutes
+    - if: '$AGENDA_KEY == "CLOSE_375"'
+      when: delayed
+      start_in: 375 minutes
+    - if: '$AGENDA_KEY == "CLOSE_380"'
+      when: delayed
+      start_in: 380 minutes
+    - if: '$AGENDA_KEY == "CLOSE_385"'
+      when: delayed
+      start_in: 385 minutes
+    - if: '$AGENDA_KEY == "CLOSE_390"'
+      when: delayed
+      start_in: 390 minutes
+    - if: '$AGENDA_KEY == "CLOSE_395"'
+      when: delayed
+      start_in: 395 minutes
+    - if: '$AGENDA_KEY == "CLOSE_400"'
+      when: delayed
+      start_in: 400 minutes
+    - if: '$AGENDA_KEY == "CLOSE_405"'
+      when: delayed
+      start_in: 405 minutes
+    - if: '$AGENDA_KEY == "CLOSE_410"'
+      when: delayed
+      start_in: 410 minutes
+    - if: '$AGENDA_KEY == "CLOSE_415"'
+      when: delayed
+      start_in: 415 minutes
+    - if: '$AGENDA_KEY == "CLOSE_420"'
+      when: delayed
+      start_in: 420 minutes
+    - if: '$AGENDA_KEY == "CLOSE_425"'
+      when: delayed
+      start_in: 425 minutes
+    - if: '$AGENDA_KEY == "CLOSE_430"'
+      when: delayed
+      start_in: 430 minutes
+    - if: '$AGENDA_KEY == "CLOSE_435"'
+      when: delayed
+      start_in: 435 minutes
+    - if: '$AGENDA_KEY == "CLOSE_440"'
+      when: delayed
+      start_in: 440 minutes
+    - if: '$AGENDA_KEY == "CLOSE_445"'
+      when: delayed
+      start_in: 445 minutes
+    - if: '$AGENDA_KEY == "CLOSE_450"'
+      when: delayed
+      start_in: 450 minutes
+    - if: '$AGENDA_KEY == "CLOSE_455"'
+      when: delayed
+      start_in: 455 minutes
+    - if: '$AGENDA_KEY == "CLOSE_460"'
+      when: delayed
+      start_in: 460 minutes
+    - if: '$AGENDA_KEY == "CLOSE_465"'
+      when: delayed
+      start_in: 465 minutes
+    - if: '$AGENDA_KEY == "CLOSE_470"'
+      when: delayed
+      start_in: 470 minutes
+    - if: '$AGENDA_KEY == "CLOSE_475"'
+      when: delayed
+      start_in: 475 minutes
+    - if: '$AGENDA_KEY == "CLOSE_480"'
+      when: delayed
+      start_in: 480 minutes
+    - if: '$AGENDA_KEY == "CLOSE_485"'
+      when: delayed
+      start_in: 485 minutes
+    - if: '$AGENDA_KEY == "CLOSE_490"'
+      when: delayed
+      start_in: 490 minutes
+    - if: '$AGENDA_KEY == "CLOSE_495"'
+      when: delayed
+      start_in: 495 minutes
+    - if: '$AGENDA_KEY == "CLOSE_500"'
+      when: delayed
+      start_in: 500 minutes
+    - if: '$AGENDA_KEY == "CLOSE_505"'
+      when: delayed
+      start_in: 505 minutes
+    - if: '$AGENDA_KEY == "CLOSE_510"'
+      when: delayed
+      start_in: 510 minutes
+    - if: '$AGENDA_KEY == "CLOSE_515"'
+      when: delayed
+      start_in: 515 minutes
+    - if: '$AGENDA_KEY == "CLOSE_520"'
+      when: delayed
+      start_in: 520 minutes
+    - if: '$AGENDA_KEY == "CLOSE_525"'
+      when: delayed
+      start_in: 525 minutes
+    - if: '$AGENDA_KEY == "CLOSE_530"'
+      when: delayed
+      start_in: 530 minutes
+    - if: '$AGENDA_KEY == "CLOSE_535"'
+      when: delayed
+      start_in: 535 minutes
+    - if: '$AGENDA_KEY == "CLOSE_540"'
+      when: delayed
+      start_in: 540 minutes
+    - if: '$AGENDA_KEY == "CLOSE_545"'
+      when: delayed
+      start_in: 545 minutes
+    - if: '$AGENDA_KEY == "CLOSE_550"'
+      when: delayed
+      start_in: 550 minutes
+    - if: '$AGENDA_KEY == "CLOSE_555"'
+      when: delayed
+      start_in: 555 minutes
+    - if: '$AGENDA_KEY == "CLOSE_560"'
+      when: delayed
+      start_in: 560 minutes
+    - if: '$AGENDA_KEY == "CLOSE_565"'
+      when: delayed
+      start_in: 565 minutes
+    - if: '$AGENDA_KEY == "CLOSE_570"'
+      when: delayed
+      start_in: 570 minutes
+    - if: '$AGENDA_KEY == "CLOSE_575"'
+      when: delayed
+      start_in: 575 minutes
+    - if: '$AGENDA_KEY == "CLOSE_580"'
+      when: delayed
+      start_in: 580 minutes
+    - if: '$AGENDA_KEY == "CLOSE_585"'
+      when: delayed
+      start_in: 585 minutes
+    - if: '$AGENDA_KEY == "CLOSE_590"'
+      when: delayed
+      start_in: 590 minutes
+    - if: '$AGENDA_KEY == "CLOSE_595"'
+      when: delayed
+      start_in: 595 minutes
+    - if: '$AGENDA_KEY == "CLOSE_600"'
+      when: delayed
+      start_in: 600 minutes
+    - if: '$AGENDA_KEY == "CLOSE_605"'
+      when: delayed
+      start_in: 605 minutes
+    - if: '$AGENDA_KEY == "CLOSE_610"'
+      when: delayed
+      start_in: 610 minutes
+    - if: '$AGENDA_KEY == "CLOSE_615"'
+      when: delayed
+      start_in: 615 minutes
+    - if: '$AGENDA_KEY == "CLOSE_620"'
+      when: delayed
+      start_in: 620 minutes
+    - if: '$AGENDA_KEY == "CLOSE_625"'
+      when: delayed
+      start_in: 625 minutes
+    - if: '$AGENDA_KEY == "CLOSE_630"'
+      when: delayed
+      start_in: 630 minutes
+    - if: '$AGENDA_KEY == "CLOSE_635"'
+      when: delayed
+      start_in: 635 minutes
+    - if: '$AGENDA_KEY == "CLOSE_640"'
+      when: delayed
+      start_in: 640 minutes
+    - if: '$AGENDA_KEY == "CLOSE_645"'
+      when: delayed
+      start_in: 645 minutes
+    - if: '$AGENDA_KEY == "CLOSE_650"'
+      when: delayed
+      start_in: 650 minutes
+    - if: '$AGENDA_KEY == "CLOSE_655"'
+      when: delayed
+      start_in: 655 minutes
+    - if: '$AGENDA_KEY == "CLOSE_660"'
+      when: delayed
+      start_in: 660 minutes
+    - if: '$AGENDA_KEY == "CLOSE_665"'
+      when: delayed
+      start_in: 665 minutes
+    - if: '$AGENDA_KEY == "CLOSE_670"'
+      when: delayed
+      start_in: 670 minutes
+    - if: '$AGENDA_KEY == "CLOSE_675"'
+      when: delayed
+      start_in: 675 minutes
+    - if: '$AGENDA_KEY == "CLOSE_680"'
+      when: delayed
+      start_in: 680 minutes
+    - if: '$AGENDA_KEY == "CLOSE_685"'
+      when: delayed
+      start_in: 685 minutes
+    - if: '$AGENDA_KEY == "CLOSE_690"'
+      when: delayed
+      start_in: 690 minutes
+    - if: '$AGENDA_KEY == "CLOSE_695"'
+      when: delayed
+      start_in: 695 minutes
+    - if: '$AGENDA_KEY == "CLOSE_700"'
+      when: delayed
+      start_in: 700 minutes
+    - if: '$AGENDA_KEY == "CLOSE_705"'
+      when: delayed
+      start_in: 705 minutes
+    - if: '$AGENDA_KEY == "CLOSE_710"'
+      when: delayed
+      start_in: 710 minutes
+    - if: '$AGENDA_KEY == "CLOSE_715"'
+      when: delayed
+      start_in: 715 minutes
+    - if: '$AGENDA_KEY == "CLOSE_720"'
+      when: delayed
+      start_in: 720 minutes
+    - when: never
