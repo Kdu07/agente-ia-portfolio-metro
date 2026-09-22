@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics import consultas
 from app.pipeline.desfechos import Desfecho
+from app.pipeline.orquestrador import ETAPAS
 from app.schemas.usuario import Perfil
 
 
@@ -133,4 +134,63 @@ async def resumo_de_catalogo(
         ),
         enunciados_fora_de_escopo=desfechos[Desfecho.RECUSADA_FORA_ESCOPO.value],
         enunciados_baixa_confianca=desfechos[Desfecho.RECUSADA_BAIXA_CONFIANCA.value],
+    )
+
+
+@dataclass(frozen=True)
+class LatenciaEtapa:
+    """Percentis de uma etapa do pipeline, em milissegundos."""
+
+    etapa: str
+    p50: float
+    p95: float
+    amostras: int  # mensagens que chegaram a percorrer a etapa
+
+
+@dataclass(frozen=True)
+class LatenciaPipeline:
+    """Latência total e decomposta por etapa."""
+
+    p50: float
+    p95: float
+    etapas: list[LatenciaEtapa]
+
+
+async def latencia_do_pipeline(
+    sessao: AsyncSession,
+    janela: Janela,
+    *,
+    agora: datetime | None = None,
+    perfil: Perfil | None = None,
+) -> LatenciaPipeline:
+    """Percentis do pipeline inteiro e de cada etapa.
+
+    É o indicador computacional que a seção 3.1.5 do Projeto.md declara
+    como métrica do pipeline de PLN: o total diz quanto custa o pedágio,
+    e a decomposição diz qual barreira o cobra.
+
+    Todas as etapas do orquestrador aparecem, na ordem em que rodam,
+    mesmo sem amostra. `amostras` distingue "rápida" de "não percorrida":
+    uma etapa com p95 zero e nenhuma amostra não foi exercitada na
+    janela, e não é gratuita. Os percentis de cada etapa são calculados
+    só sobre as mensagens que chegaram a ela, e por isso não se somam
+    para dar o total — o executor de uma mensagem encaminhada não se
+    soma à injeção de outra que foi barrada.
+    """
+    inicio, fim = janela.intervalo(agora)
+    total = await consultas.latencia(sessao, inicio, fim, perfil=perfil)
+    amostras = await consultas.amostras_de_latencia_por_etapa(sessao, inicio, fim, perfil=perfil)
+    etapas = list(ETAPAS) + sorted(etapa for etapa in amostras if etapa not in ETAPAS)
+    return LatenciaPipeline(
+        p50=total["p50"],
+        p95=total["p95"],
+        etapas=[
+            LatenciaEtapa(
+                etapa=etapa,
+                p50=consultas.percentil(amostras.get(etapa, []), 0.5),
+                p95=consultas.percentil(amostras.get(etapa, []), 0.95),
+                amostras=len(amostras.get(etapa, [])),
+            )
+            for etapa in etapas
+        ],
     )

@@ -67,6 +67,7 @@ def registrar(banco_analitico: AsyncSession) -> Registrar:
         canal: Canal = Canal.CHAT,
         prompt: str = "Qual o status do projeto da Linha 15-Prata?",
         latencia_ms: int = 1200,
+        latencia_etapas: dict[str, int] | None = None,
     ) -> Interacao:
         interacao = Interacao(
             id=str(uuid.uuid4()),
@@ -81,6 +82,7 @@ def registrar(banco_analitico: AsyncSession) -> Registrar:
             desfecho=desfecho,
             latencia_ms=latencia_ms,
             criada_em=criada_em.astimezone(UTC),
+            latencia_etapas=latencia_etapas,
         )
         banco_analitico.add(InteracaoTabela.de_dominio(interacao))
         await banco_analitico.flush()

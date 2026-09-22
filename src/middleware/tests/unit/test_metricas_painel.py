@@ -6,6 +6,7 @@ import pytest
 
 from app.analytics import consultas, metricas
 from app.analytics.metricas import Janela
+from app.pipeline import orquestrador as orq
 from app.pipeline.desfechos import Desfecho
 from app.pipeline.intencao import catalogo
 from app.schemas.usuario import Perfil
@@ -122,3 +123,65 @@ async def test_resumo_de_catalogo_nao_cobra_uso_de_intencao_removida(banco_anali
 
     assert resumo.intencoes_acionadas == 1
     assert resumo.intencoes_sem_uso == len(consultas.intencoes_acionaveis())
+
+
+# --- Latência por etapa -------------------------------------------------------
+
+
+async def test_latencia_por_etapa_calcula_percentis_de_cada_etapa(banco_analitico, registrar):
+    for executor in (1000, 2000, 3000):
+        await registrar(
+            criada_em=ONTEM,
+            latencia_ms=executor + 100,
+            latencia_etapas={"injecao": 40, "abuso": 20, "intencao": 30, "executor": executor},
+        )
+
+    resultado = await metricas.latencia_do_pipeline(
+        banco_analitico, Janela.ULTIMOS_7_DIAS, agora=AGORA
+    )
+
+    por_etapa = {item.etapa: item for item in resultado.etapas}
+    assert por_etapa["executor"].p50 == pytest.approx(2000)
+    assert por_etapa["executor"].p95 == pytest.approx(2900)
+    assert por_etapa["injecao"].p50 == pytest.approx(40)
+    assert por_etapa["executor"].amostras == 3
+    assert resultado.p50 == pytest.approx(2100)
+
+
+async def test_latencia_por_etapa_lista_todas_as_etapas_na_ordem(banco_analitico):
+    resultado = await metricas.latencia_do_pipeline(
+        banco_analitico, Janela.ULTIMOS_7_DIAS, agora=AGORA
+    )
+
+    assert [item.etapa for item in resultado.etapas] == list(orq.ETAPAS)
+    assert all(item.amostras == 0 for item in resultado.etapas)
+
+
+async def test_latencia_por_etapa_so_conta_quem_percorreu_a_etapa(banco_analitico, registrar):
+    await registrar(criada_em=ONTEM, latencia_etapas={"injecao": 15})
+    await registrar(
+        criada_em=ONTEM,
+        latencia_etapas={"injecao": 25, "abuso": 10, "intencao": 5, "executor": 900, "saida": 50},
+    )
+
+    resultado = await metricas.latencia_do_pipeline(
+        banco_analitico, Janela.ULTIMOS_7_DIAS, agora=AGORA
+    )
+
+    por_etapa = {item.etapa: item for item in resultado.etapas}
+    assert por_etapa["injecao"].amostras == 2
+    assert por_etapa["executor"].amostras == 1
+    assert por_etapa["executor"].p50 == pytest.approx(900)
+
+
+async def test_latencia_por_etapa_ignora_interacoes_anteriores_a_medicao(
+    banco_analitico, registrar
+):
+    await registrar(criada_em=ONTEM, latencia_ms=5000)
+
+    resultado = await metricas.latencia_do_pipeline(
+        banco_analitico, Janela.ULTIMOS_7_DIAS, agora=AGORA
+    )
+
+    assert resultado.p50 == pytest.approx(5000)
+    assert all(item.amostras == 0 for item in resultado.etapas)

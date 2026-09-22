@@ -435,3 +435,28 @@ async def latencia(
     linhas = await sessao.execute(_na_janela(consulta, inicio, fim, perfil))
     valores = [float(valor) for valor in linhas.scalars().all()]
     return {"p50": percentil(valores, 0.5), "p95": percentil(valores, 0.95)}
+
+
+async def amostras_de_latencia_por_etapa(
+    sessao: AsyncSession,
+    inicio: datetime,
+    fim: datetime,
+    *,
+    perfil: Perfil | None = None,
+) -> dict[str, list[int]]:
+    """Tempos registrados de cada etapa do pipeline na janela.
+
+    Devolve as amostras cruas, e não os percentis, porque o conjunto de
+    etapas é do orquestrador e o recorte que o painel mostra é de
+    `metricas.py`. As interações gravadas antes da medição por etapa têm
+    a coluna nula e ficam de fora, em vez de entrarem como zero.
+    """
+    consulta = select(_I.latencia_etapas).where(_I.latencia_etapas.is_not(None))
+    linhas = await sessao.execute(_na_janela(consulta, inicio, fim, perfil))
+    amostras: dict[str, list[int]] = {}
+    for tempos in linhas.scalars().all():
+        if not tempos:
+            continue
+        for etapa, valor in tempos.items():
+            amostras.setdefault(etapa, []).append(int(valor))
+    return amostras
