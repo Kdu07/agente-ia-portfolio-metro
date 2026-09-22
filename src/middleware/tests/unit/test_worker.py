@@ -20,8 +20,15 @@ class AgendadorEspiao:
         self.eventos.append(("start", paused))
         self.running = True
 
+    def add_listener(self, callback, mask: int) -> None:
+        self.listener = callback
+        self.mask = mask
+
     def resume(self) -> None:
         self.eventos.append("resume")
+
+    def pause(self) -> None:
+        self.eventos.append("pause")
 
     def shutdown(self, *, wait: bool) -> None:
         self.eventos.append(("shutdown", wait))
@@ -54,7 +61,8 @@ async def test_worker_reconcilia_antes_de_liberar_e_encerra_ordenado(monkeypatch
         ("start", True),
         "carregar",
         "resume",
-        ("shutdown", True),
+        "pause",
+        ("shutdown", False),
         "banco-encerrar",
     ]
 
@@ -93,3 +101,92 @@ async def test_rotina_agendada_dispara_dentro_do_worker(monkeypatch):
     )
 
     assert disparou.is_set()
+
+
+@pytest.mark.asyncio
+async def test_worker_aguarda_rotina_em_curso_antes_de_fechar_pool(monkeypatch):
+    agendador = AsyncIOScheduler(
+        jobstores={"default": MemoryJobStore()},
+        timezone=UTC,
+    )
+    eventos: list[str] = []
+    encerrar = asyncio.Event()
+    iniciou = asyncio.Event()
+    liberar = asyncio.Event()
+
+    monkeypatch.setattr(worker.sessao, "iniciar", lambda: None)
+
+    async def fechar_banco() -> None:
+        eventos.append("pool-fechado")
+
+    async def disparar() -> None:
+        eventos.append("rotina-inicio")
+        iniciou.set()
+        await liberar.wait()
+        eventos.append("rotina-concluida")
+
+    async def carregar() -> None:
+        agendador.add_job(
+            disparar,
+            trigger=DateTrigger(run_date=datetime.now(UTC) + timedelta(milliseconds=20)),
+        )
+
+    monkeypatch.setattr(worker.sessao, "encerrar", fechar_banco)
+    monkeypatch.setattr(worker, "criar_agendador", lambda: agendador)
+    monkeypatch.setattr(worker, "carregar_agenda", carregar)
+
+    processo = asyncio.create_task(worker.principal(evento_encerramento=encerrar))
+    await asyncio.wait_for(iniciou.wait(), timeout=1)
+    encerrar.set()
+    await asyncio.sleep(0.05)
+
+    assert "pool-fechado" not in eventos
+
+    liberar.set()
+    await asyncio.wait_for(processo, timeout=1)
+
+    assert eventos == ["rotina-inicio", "rotina-concluida", "pool-fechado"]
+
+
+@pytest.mark.asyncio
+async def test_worker_cancela_rotina_apos_prazo_antes_de_fechar_pool(monkeypatch):
+    agendador = AsyncIOScheduler(
+        jobstores={"default": MemoryJobStore()},
+        timezone=UTC,
+    )
+    eventos: list[str] = []
+    encerrar = asyncio.Event()
+    iniciou = asyncio.Event()
+
+    monkeypatch.setattr(worker, "PRAZO_ENCERRAMENTO_SEGUNDOS", 0.01)
+    monkeypatch.setattr(worker, "PRAZO_CANCELAMENTO_SEGUNDOS", 0.5)
+    monkeypatch.setattr(worker.sessao, "iniciar", lambda: None)
+
+    async def fechar_banco() -> None:
+        eventos.append("pool-fechado")
+
+    async def disparar() -> None:
+        eventos.append("rotina-inicio")
+        iniciou.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            eventos.append("rotina-cancelada")
+            raise
+
+    async def carregar() -> None:
+        agendador.add_job(
+            disparar,
+            trigger=DateTrigger(run_date=datetime.now(UTC) + timedelta(milliseconds=20)),
+        )
+
+    monkeypatch.setattr(worker.sessao, "encerrar", fechar_banco)
+    monkeypatch.setattr(worker, "criar_agendador", lambda: agendador)
+    monkeypatch.setattr(worker, "carregar_agenda", carregar)
+
+    processo = asyncio.create_task(worker.principal(evento_encerramento=encerrar))
+    await asyncio.wait_for(iniciou.wait(), timeout=1)
+    encerrar.set()
+    await asyncio.wait_for(processo, timeout=1)
+
+    assert eventos == ["rotina-inicio", "rotina-cancelada", "pool-fechado"]
