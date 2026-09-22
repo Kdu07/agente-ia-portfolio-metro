@@ -262,18 +262,82 @@ async def serie_de_bloqueios(
     }
 
 
-async def enunciados_fora_de_escopo(
-    inicio: datetime, fim: datetime, *, limite: int = 50
+async def _enunciados_agrupados(
+    sessao: AsyncSession,
+    desfecho: Desfecho,
+    inicio: datetime,
+    fim: datetime,
+    limite: int,
+    perfil: Perfil | None,
 ) -> list[EnunciadoAgrupado]:
-    """O que os usuários pedem e o agente não faz — backlog do catálogo."""
-    raise NotImplementedError("Agregações a implementar na onda 4")
+    """Agrupa os prompts de um desfecho de recusa por repetição.
+
+    O agrupamento ignora caixa e espaços nas pontas: "Qual o saldo?" e
+    "qual o saldo? " são o mesmo pedido, e contá-los separados dividiria
+    a evidência de que ele se repete. O texto exibido é uma das grafias
+    do grupo, escolhida de forma determinística pelo `MAX`.
+
+    Os mais repetidos vêm primeiro; entre empates, o mais recente. É a
+    ordem de prioridade do backlog: o pedido que mais volta é o que mais
+    custa não atender.
+    """
+    if limite < 1:
+        raise ValueError(f"Limite deve ser positivo, recebido {limite}")
+
+    normalizado = func.lower(func.trim(_I.prompt))
+    ocorrencias = func.count()
+    ultima_em = func.max(_I.criada_em)
+    consulta = (
+        select(func.max(_I.prompt), ocorrencias, ultima_em, func.avg(_I.confianca_intencao))
+        .where(_I.desfecho == desfecho.value)
+        .group_by(normalizado)
+        .order_by(ocorrencias.desc(), ultima_em.desc())
+        .limit(limite)
+    )
+    linhas = await sessao.execute(_na_janela(consulta, inicio, fim, perfil))
+    return [
+        EnunciadoAgrupado(
+            prompt=prompt.strip(),
+            ocorrencias=total,
+            ultima_em=_em_utc(ultima),
+            confianca_media=round(float(media), 4),
+        )
+        for prompt, total, ultima, media in linhas.all()
+    ]
+
+
+async def enunciados_fora_de_escopo(
+    sessao: AsyncSession,
+    inicio: datetime,
+    fim: datetime,
+    *,
+    limite: int = 50,
+    perfil: Perfil | None = None,
+) -> list[EnunciadoAgrupado]:
+    """O que os usuários pedem e o agente não faz — backlog do catálogo.
+
+    Parte do desfecho, e não do `intencao_id`: a recusa por escopo chega
+    ao banco tanto com o rótulo `fora_de_escopo` quanto sem rótulo, quando
+    o classificador devolveu algo que o catálogo não reconhece. Os dois
+    casos são o mesmo pedido não atendido.
+    """
+    return await _enunciados_agrupados(
+        sessao, Desfecho.RECUSADA_FORA_ESCOPO, inicio, fim, limite, perfil
+    )
 
 
 async def enunciados_baixa_confianca(
-    inicio: datetime, fim: datetime, *, limite: int = 50
+    sessao: AsyncSession,
+    inicio: datetime,
+    fim: datetime,
+    *,
+    limite: int = 50,
+    perfil: Perfil | None = None,
 ) -> list[EnunciadoAgrupado]:
     """Onde o classificador hesita — candidatos a mais exemplos de treino."""
-    raise NotImplementedError("Agregações a implementar na onda 4")
+    return await _enunciados_agrupados(
+        sessao, Desfecho.RECUSADA_BAIXA_CONFIANCA, inicio, fim, limite, perfil
+    )
 
 
 async def confianca_media_por_intencao(inicio: datetime, fim: datetime) -> dict[str, float]:

@@ -260,3 +260,95 @@ async def test_serie_por_hora(banco_analitico, registrar):
 async def test_serie_recusa_granularidade_desconhecida(banco_analitico):
     with pytest.raises(ValueError, match="Granularidade"):
         await consultas.serie_de_bloqueios(banco_analitico, INICIO, FIM, granularidade="semana")
+
+
+# --- Enunciados agrupados -----------------------------------------------------
+
+
+async def test_fora_de_escopo_agrupa_pedidos_repetidos(banco_analitico, registrar):
+    for prompt in ("Qual o saldo do contrato?", "qual o saldo do contrato? ", "Abrir chamado"):
+        await registrar(
+            criada_em=DENTRO,
+            intencao_id=catalogo.FORA_DE_ESCOPO,
+            desfecho=Desfecho.RECUSADA_FORA_ESCOPO,
+            prompt=prompt,
+            confianca=0.3,
+        )
+
+    enunciados = await consultas.enunciados_fora_de_escopo(banco_analitico, INICIO, FIM)
+
+    assert [e.ocorrencias for e in enunciados] == [2, 1]
+    assert enunciados[0].prompt.lower() == "qual o saldo do contrato?"
+    assert enunciados[0].confianca_media == pytest.approx(0.3)
+
+
+async def test_fora_de_escopo_inclui_recusas_sem_rotulo(banco_analitico, registrar):
+    await registrar(
+        criada_em=DENTRO,
+        intencao_id=None,
+        desfecho=Desfecho.RECUSADA_FORA_ESCOPO,
+        prompt="Qual a previsão do tempo?",
+    )
+
+    enunciados = await consultas.enunciados_fora_de_escopo(banco_analitico, INICIO, FIM)
+
+    assert [e.prompt for e in enunciados] == ["Qual a previsão do tempo?"]
+
+
+async def test_fora_de_escopo_nao_mistura_outros_desfechos(banco_analitico, registrar):
+    await registrar(criada_em=DENTRO, desfecho=Desfecho.RECUSADA_BAIXA_CONFIANCA)
+    await registrar(criada_em=DENTRO, desfecho=Desfecho.ENCAMINHADA)
+
+    assert await consultas.enunciados_fora_de_escopo(banco_analitico, INICIO, FIM) == []
+
+
+async def test_enunciados_desempatam_pelo_mais_recente(banco_analitico, registrar):
+    await registrar(
+        criada_em=DENTRO - timedelta(days=2),
+        desfecho=Desfecho.RECUSADA_BAIXA_CONFIANCA,
+        prompt="Como está tudo por lá?",
+    )
+    await registrar(
+        criada_em=DENTRO,
+        desfecho=Desfecho.RECUSADA_BAIXA_CONFIANCA,
+        prompt="E o andamento daquele projeto?",
+    )
+
+    enunciados = await consultas.enunciados_baixa_confianca(banco_analitico, INICIO, FIM)
+
+    assert enunciados[0].prompt == "E o andamento daquele projeto?"
+    assert enunciados[0].ultima_em == DENTRO
+    assert enunciados[0].ultima_em.tzinfo is not None
+
+
+async def test_baixa_confianca_calcula_a_media_do_grupo(banco_analitico, registrar):
+    for confianca in (0.4, 0.5):
+        await registrar(
+            criada_em=DENTRO,
+            desfecho=Desfecho.RECUSADA_BAIXA_CONFIANCA,
+            prompt="Como está tudo por lá?",
+            confianca=confianca,
+        )
+
+    [enunciado] = await consultas.enunciados_baixa_confianca(banco_analitico, INICIO, FIM)
+
+    assert enunciado.ocorrencias == 2
+    assert enunciado.confianca_media == pytest.approx(0.45)
+
+
+async def test_enunciados_respeitam_o_limite(banco_analitico, registrar):
+    for indice in range(5):
+        await registrar(
+            criada_em=DENTRO,
+            desfecho=Desfecho.RECUSADA_FORA_ESCOPO,
+            prompt=f"Pedido número {indice}",
+        )
+
+    enunciados = await consultas.enunciados_fora_de_escopo(banco_analitico, INICIO, FIM, limite=3)
+
+    assert len(enunciados) == 3
+
+
+async def test_enunciados_recusam_limite_nao_positivo(banco_analitico):
+    with pytest.raises(ValueError, match="Limite"):
+        await consultas.enunciados_baixa_confianca(banco_analitico, INICIO, FIM, limite=0)
