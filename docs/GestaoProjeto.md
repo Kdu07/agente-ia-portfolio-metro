@@ -130,6 +130,7 @@
     - [3.5.3 Indicadores quantitativos da Sprint 4](#353-indicadores-quantitativos-da-sprint-4)
     - [3.5.4 Reconciliação com o fechamento da Sprint 3](#354-reconciliação-com-o-fechamento-da-sprint-3)
     - [3.5.5 Análise dos pontos identificados na Sprint 4](#355-análise-dos-pontos-identificados-na-sprint-4)
+    - [3.5.6 Melhorias para a Sprint 5](#356-melhorias-para-a-sprint-5)
   - [3.6 Sprint 5](#36-sprint-5)
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
   - [4.1 Metodologia de avaliação](#41-metodologia-de-avaliação)
@@ -1239,6 +1240,19 @@ Os pontos de atenção descrevem o processo, e não o desempenho individual. A c
 | AM17 | Razão máxima de 2:1, ou justificativa e plano B em card | 2,25:1, sem justificativa registrada | **Ineficaz**, com melhora sobre os 2,50:1 do fechamento da Sprint 3 |
 | AM18 | Projeção na daily de quarta; nada declarado não entregável depois de quinta às 23h59 | O prazo de quinta, 24/09, ainda não chegou no corte | **Em execução** — avaliada no fechamento |
 | AM19 | Repositório fora de pasta sincronizada com nuvem | Nenhum incidente de ambiente local com o Git no ciclo, contra quatro na Sprint 3 | **Efetiva** |
+
+#### 3.5.6 Melhorias para a Sprint 5
+
+| ID | Problema endereçado | Ação de melhoria | Responsável | Prazo | Critério de sucesso (verificável) |
+|---|---|---|---|---|---|
+| AM20 | Sprint planejada acima da capacidade | Planejar a Sprint 5 dentro de 16 h por integrante. O que exceder entra como decisão explícita no card de planejamento, com a indicação do item de menor prioridade que sai caso o excedente não caiba | Scrum Master da Sprint 5 | Planejamento da Sprint 5 | Carga atribuída na milestone de até 96 h, ou excedente justificado item a item no card de planejamento |
+| AM21 | Razão de carga acima de 2:1 por dois ciclos seguidos | Levar a verificação de carga da daily para o planejamento: redistribuir antes de o ciclo começar, e não durante | Scrum Master da Sprint 5 | Planejamento da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento |
+| AM22 | Integração concentrada em duas pessoas | Quem revisa não é sempre quem mescla: nenhum integrante executa mais de 40% dos merges do ciclo | Tech Lead da Sprint 5 | Ao longo da Sprint 5 | Maior participação individual nos merges de até 40% no fechamento |
+| AM23 | SLA de primeira revisão sem medição desde a Sprint 2 | Medir, pela API do GitLab, o tempo entre a abertura de cada MR e o primeiro comentário ou aprovação do revisor, e publicar a mediana no fechamento | Responsável pela gestão de configuração | Fechamento da Sprint 5 | Mediana e maior espera publicadas no relatório; nenhum MR acima de 24 h úteis sem justificativa |
+| AM24 | Conclusões tiradas de corte parcial | Refazer as métricas da retrospectiva depois do último merge do ciclo, com a mesma extração, e declarar o commit de fechamento na nota metodológica | Responsável pela retrospectiva da sprint | Fechamento de cada sprint | Nota metodológica cita o commit do último merge; nenhuma avaliação de ação sustentada só em corte intermediário |
+| AM25 | Conclusão acumulada no fim da semana, pelo segundo ciclo | Retomar `AM13` com checkpoint na daily de quarta: cada card em `Backlog` recebe data de conclusão prevista dentro da própria sprint | Scrum Master da Sprint 5 | Daily de quarta da Sprint 5 | No máximo 25% das issues concluídas no último dia do ciclo |
+
+`AM14`, não executada na Sprint 4, permanece em vigor na Sprint 5 com o mesmo critério. A última sprint do módulo não tem ciclo seguinte para absorver uma ausência sem cobertura.
 
 ### 3.6 Sprint 5
 
