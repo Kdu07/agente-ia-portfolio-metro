@@ -8895,6 +8895,46 @@ python -m pytest tests/desempenho/test_micro_latencia.py --benchmark-only
 python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
 ```
 
+#### 10.2.2.1 Resultado da execução — 22/09/2026
+
+O instrumento foi instalado com `pip install -e ".[dev]"` e os cinco
+benchmarks de `TNF-DES-02` foram executados em Windows 11, Python 3.11,
+com o Content Safety substituído por `httpx.MockTransport`. Os valores abaixo
+são a média e a mediana observadas após o aquecimento; não incluem rede nem
+serviços externos reais.
+
+| Etapa | Média | Mediana | Referência | Situação |
+|---|---:|---:|---|---|
+| Regra determinística de injeção | 1,89 µs | 1,70 µs | sub-100 ms arquitetural | Dentro |
+| Pré-processamento textual | 9,78 µs | 9,10 µs | sub-100 ms arquitetural | Dentro |
+| Classificador de injeção + dublê HTTP | 1,51 ms | 3,15 ms | 150–300 ms do orçamento | Dentro |
+| Classificador de abuso + dublê HTTP | 1,23 ms | 2,48 ms | 150–300 ms do orçamento | Dentro |
+| Guarda de saída + dublê HTTP | 1,10 ms | 1,54 ms | 100–200 ms do orçamento | Dentro |
+
+As medições isoladas não podem ser somadas diretamente ao p95 ponta a ponta:
+o benchmark mede uma chamada por vez, enquanto o orçamento inclui persistência,
+executor e serialização HTTP. Ainda assim, elas indicam que o código local não
+é o provável gargalo; a diferença entre o orçamento de 5.1.7.3 e o resultado
+final deve ser procurada na persistência, no executor ou na rede.
+
+Os cenários `TNF-DES-01`, `TNF-DES-03`, `TNF-DES-04`, `TNF-DES-06` e
+`TNF-DES-07` não puderam ser executados contra o ambiente representativo nesta
+data. `docker compose -f infra/docker-compose.yml ps` falhou porque o Docker
+Desktop não estava disponível (`dockerDesktopLinuxEngine` ausente); sem o
+PostgreSQL populado e a API, uma carga Locust contra `/chat` não produziria
+uma medição válida. Portanto, não há p50/p95/p99 de carga registrados nem
+afirmação de aprovação para esses cenários. A causa provável da pendência é
+ambiental, não um desvio de latência observado no código.
+
+Com o ambiente ativo, a execução pendente deve usar a sessão de teste e o
+executor dublado, por exemplo:
+
+```powershell
+$env:PERF_TARGET = "http://localhost:8000"
+$env:PERF_SESSION_COOKIE = "<cookie-da-sessao-de-teste>"
+python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
+```
+
 ### 10.2.3 Testes dos requisitos não funcionais
 
 **Nota de escopo.** O card que originou esta entrega foi escrito sobre RNF01 a RNF05. O RNF06 e o RNF07 entraram na mesma revisão de escopo que acrescentou RF09 a RF12, conforme as notas de 3.3.1 e 3.4, e não possuem card próprio. Cobri-los aqui é o que evita que a eficácia das barreiras e a proteção do registro — os dois requisitos que sustentam, respectivamente, o RF09 e o par RF10 e RF12 — fiquem sem procedimento de medição. A extensão fica registrada neste parágrafo e na descrição do *merge request*.
