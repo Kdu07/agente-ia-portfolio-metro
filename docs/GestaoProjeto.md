@@ -128,6 +128,7 @@
   - [3.5 Sprint 4](#35-sprint-4)
     - [3.5.2 Retrospectiva da Sprint 4](#352-retrospectiva-da-sprint-4)
     - [3.5.3 Indicadores quantitativos da Sprint 4](#353-indicadores-quantitativos-da-sprint-4)
+    - [3.5.4 Reconciliação com o fechamento da Sprint 3](#354-reconciliação-com-o-fechamento-da-sprint-3)
   - [3.6 Sprint 5](#36-sprint-5)
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
   - [4.1 Metodologia de avaliação](#41-metodologia-de-avaliação)
@@ -1175,6 +1176,33 @@ Pela primeira vez no módulo o código supera a documentação na composição d
 As colunas medem coisas distintas e não se somam entre si. A leitura que a Sprint 3 ensinou está na diferença entre as duas colunas de commits: *commits na `develop`* é o trabalho já integrado; *commits em todas as branches* inclui o que está em merge request aguardando revisão. No corte, 34 commits de Celso Rocha estão nas MRs `!127` e `!128`, do painel de intenções, e por isso ele aparece com zero na `develop`. Ler só a primeira coluna repetiria o erro apontado na avaliação anterior, em que um integrante com o segundo maior volume do ciclo aparecia sem nenhum commit integrado. Alexsander Barbosa responde por cards `OFFSITE` — sessões de usabilidade e a apresentação da Sprint Review —, trabalho que acontece fora do repositório e não deixa commit.
 
 A razão entre a maior e a menor carga atribuída é de **2,25:1** (29,75 h contra 13,25 h). A integração segue concentrada: 14 dos 17 merges, ou 82%, foram executados por duas integrantes.
+
+#### 3.5.4 Reconciliação com o fechamento da Sprint 3
+
+A seção [3.4.3](#343-indicadores-quantitativos-da-sprint-3) foi escrita sobre o corte de 09/09, às 14h20, e declarou que era parcial. Mesmo assim, uma conclusão foi tirada dele: `AM07` foi dada como ineficaz pela razão de 13:1 em commits autorais. A tabela abaixo refaz a conta no fechamento real do ciclo — o merge `7255196`, de 12/09 às 01h12 — e completa, com o board extraído pela API, os indicadores que tinham ficado sem evidência.
+
+| Métrica | Corte de 09/09 (seção 3.4.3) | Fechamento em `7255196` |
+|---|---|---|
+| Issues concluídas na milestone `Sprint 03` | 23 fechadas de 55 atribuídas | **51 de 51** |
+| Commits autorais integrados na `develop` | 35 | **98** |
+| Distribuição dos commits na `develop` | 13, 10, 7, 4, 1 e 0 | **24, 23, 19, 18, 12 e 2** |
+| Razão de carga em horas atribuídas | não medida | **2,50:1** (12,5 h contra 5,0 h) |
+| Issues concluídas sem responsável | não reextraído | **0** |
+| Issues em `Backlog` no fechamento | não reextraído | **0** |
+| Concluídas no último dia do ciclo | não reextraído | **23 de 51 (45%)**, em 11/09 |
+
+O corte e o fechamento contam histórias diferentes. No corte, Eduardo Casarini aparecia sem nenhum commit na `develop`; no fechamento, tem 23, o segundo maior volume do ciclo. O trabalho existia e estava em branch — exatamente o efeito que a coluna *commits em todas as branches* da seção 3.5.3 passa a tornar visível. Os números da seção 3.4.3 são preservados como registro do que foi observado naquele corte; para comparar ciclos, vale a régua do fechamento.
+
+Com os dados completos, as ações da Sprint 2 que estavam sem evidência recebem avaliação:
+
+| ID | Critério | Resultado no fechamento da Sprint 3 | Avaliação |
+|---|---|---|---|
+| AM07 | Razão máxima de 2:1 nas horas atribuídas | 2,50:1 | **Ineficaz**, pela régua que a própria ação define — e não pelos 13:1 em commits do corte, que mediam outra coisa |
+| AM08 | Tech Lead registrado na matriz da Sprint 3 | A matriz da seção 3.4.1 não nomeia Tech Lead | **Não executada** na Sprint 3; atendida na Sprint 4, com Carlos Eduardo Serrano Quaglia como Tech Lead |
+| AM09 | Issue de propagação a cada mudança de escopo ou arquitetura | Nenhuma issue de propagação na milestone | **Não executada** |
+| AM11 | Nenhuma issue em `Backlog` na milestone no fechamento | 0 | **Efetiva** |
+| AM12 | Nenhuma issue concluída sem responsável | 0 de 51 | **Efetiva** — contra 24,7% na Sprint 2 |
+| AM13 | No máximo 25% das issues concluídas no último dia | 45% em 11/09 | **Ineficaz** |
 
 ### 3.6 Sprint 5
 
