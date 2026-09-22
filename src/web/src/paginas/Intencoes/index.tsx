@@ -114,9 +114,12 @@ export function Intencoes() {
 
       <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-6 sm:py-9">
         <section aria-label="Filtros do painel" className="flex flex-wrap gap-4">
-          <label className="flex flex-col text-xs font-medium text-slate-700">
-            Período
+          <div className="flex flex-col">
+            <label htmlFor="filtro-periodo" className="text-xs font-medium text-slate-700">
+              Período
+            </label>
             <select
+              id="filtro-periodo"
               className={CAMPO}
               value={janela}
               onChange={(evento) => setJanela(evento.target.value as Janela)}
@@ -127,10 +130,13 @@ export function Intencoes() {
                 </option>
               ))}
             </select>
-          </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
-            Perfil
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="filtro-perfil" className="text-xs font-medium text-slate-700">
+              Perfil
+            </label>
             <select
+              id="filtro-perfil"
               className={CAMPO}
               value={perfil}
               onChange={(evento) => setPerfil(evento.target.value as FiltroPerfil)}
@@ -141,7 +147,7 @@ export function Intencoes() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
         </section>
 
         <div className="mt-6">{conteudo}</div>
