@@ -1247,6 +1247,17 @@ O canal de voz é um incremento no MVP, mas precisa ser medido: conforme o risco
 | **Inteligibilidade da síntese** | *Round-trip WER*: sintetizar a resposta, transcrevê-la de volta e comparar com o texto original | Qualidade da conversão texto → áudio. Proxy objetivo, que dispensa avaliação humana. |
 | **Latência** | Tempo de transcrição e tempo até o início da resposta falada | Tempo percebido no canal de voz. Uma transcrição correta e lenta anula o ganho de usar voz. |
 
+#### 3.1.5.3 Indicadores de desempenho do pipeline
+
+A arquitetura assume, na seção 1.3 da Arquitetura, uma latência extra em troca da proteção: toda mensagem atravessa as duas guardas de entrada e o classificador antes de chegar ao executor, e a resposta passa pela guarda de saída antes de voltar. Esse pedágio precisa ser medido, e não apenas declarado.
+
+| Indicador | Fórmula / método | O que mede e por que importa |
+|---|---|---|
+| **Latência do pipeline (p50 e p95)** | Percentis de `interacao.latencia_ms` na janela, por interpolação linear | Tempo total entre a entrada da mensagem e o registro do desfecho. O p50 descreve a experiência típica; o p95, a espera que uma em cada vinte mensagens ultrapassa, que é a que o usuário lembra. |
+| **Latência por etapa (p50 e p95)** | Percentis de cada chave de `interacao.latencia_etapas` — `injecao`, `abuso`, `intencao`, `executor` e `saida` —, calculados só sobre as mensagens que percorreram a etapa | Qual barreira cobra o pedágio. Separa o custo das guardas, que é da solução, do custo do executor, que é do ecossistema do parceiro. |
+
+Os dois indicadores são expostos pela rota `GET /intencoes/latencia`, restrita à permissão `ver_intencoes`, e calculados sobre as janelas de 7, 30 e 90 dias do painel de intenções. Os percentis por etapa não se somam para compor o total: cada um é calculado sobre um conjunto diferente de mensagens, porque uma mensagem barrada na guarda de injeção não chega ao executor. Por isso a resposta informa também o número de amostras de cada etapa, que distingue uma etapa rápida de uma etapa não percorrida na janela.
+
 **Metas iniciais.** Além da acurácia ≥ 85% (O5): macro-F1 ≥ 0,80, recall ≥ 0,90 na classe fora do escopo e precisão ≥ 0,90 nas transações. Para o canal de voz, as metas são preliminares — WER ≤ 15%, acurácia de termos de domínio ≥ 90% e degradação ponta a ponta ≤ 10 pontos percentuais — e serão revisadas quando o serviço de fala for definido.
 
 ## 3.2 Requisitos Funcionais (RFs)
