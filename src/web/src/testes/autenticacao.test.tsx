@@ -24,6 +24,7 @@ describe("Tela de entrada", () => {
 
 describe("Saída", () => {
   it("encerra a sessão e volta à tela de entrada", async () => {
+    sessionStorage.setItem("prata.conversa.ativa", "conversa-anterior");
     renderizar(
       <Routes>
         <Route element={<Layout />}>
@@ -38,6 +39,7 @@ describe("Saída", () => {
     expect(
       await screen.findByRole("button", { name: /Entrar com Microsoft/ }),
     ).toBeInTheDocument();
+    expect(sessionStorage.getItem("prata.conversa.ativa")).toBeNull();
   });
 });
 

@@ -50,6 +50,7 @@ export function Layout() {
   // sabia do usuario, senao a moldura continuaria mostrando o nome dele.
   async function sair() {
     await api.post("/auth/logout");
+    sessionStorage.removeItem(CHAVE_CONVERSA_ATIVA);
     consultas.clear();
     navegar("/entrar", { replace: true });
   }

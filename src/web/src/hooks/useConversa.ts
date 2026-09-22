@@ -53,6 +53,7 @@ export function useConversa(conversaId?: string) {
   const clienteQuery = useQueryClient();
   const [linhasLocais, setLinhasLocais] = useState<Linha[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [sincronizandoPersistencia, setSincronizandoPersistencia] = useState(false);
   // Numa conversa nova nao ha id na rota: quem cria a conversa e o
   // backend, no primeiro turno. Sem guardar o id devolvido, cada mensagem
   // seguinte iria com `conversa_id: null` e abriria outra conversa, e o
@@ -81,6 +82,7 @@ export function useConversa(conversaId?: string) {
         canal: dados.canal,
       }),
     onSuccess: (resposta) => {
+      setSincronizandoPersistencia(true);
       setConversaCriada(resposta.conversa_id);
       sessionStorage.setItem(CHAVE_CONVERSA_ATIVA, resposta.conversa_id);
       setLinhasLocais((atuais) => [
@@ -134,9 +136,29 @@ export function useConversa(conversaId?: string) {
   }
 
   const linhasGravadas = (conversa?.turnos ?? []).flatMap(turnoParaLinhas);
+  const locaisJaPersistidos =
+    linhasLocais.length > 0 &&
+    linhasLocais.every((local) =>
+      linhasGravadas.some(
+        (gravada) => gravada.autor === local.autor && gravada.texto === local.texto,
+      ),
+    );
+
+  // Enquanto a consulta ainda nao refletiu o POST, os baloes otimistas
+  // continuam visiveis. Quando os mesmos textos aparecem persistidos, a
+  // versao do servidor vira a fonte unica e evita turnos duplicados.
+  useEffect(() => {
+    if (sincronizandoPersistencia && locaisJaPersistidos) {
+      setLinhasLocais([]);
+      setSincronizandoPersistencia(false);
+    }
+  }, [locaisJaPersistidos, sincronizandoPersistencia]);
 
   return {
-    linhas: [...linhasGravadas, ...linhasLocais],
+    linhas:
+      sincronizandoPersistencia && locaisJaPersistidos
+        ? linhasGravadas
+        : [...linhasGravadas, ...linhasLocais],
     conversaIdAtual: conversaAtual,
     carregando,
     enviando: envio.isPending,
