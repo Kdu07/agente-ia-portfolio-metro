@@ -7,6 +7,7 @@ from app.auth.webhooks import WebhookRecusado
 from app.auth.webhooks_drive import CanalDrive, verificar_drive
 
 ID = "546d4256-6804-41bc-887a-238ac5cce921"
+ID_ALTERNATIVO = "546d4256-6804-41bc-887a-238ac5cce922"
 TOKEN = "a" * 64
 CANAL = CanalDrive(
     "corpus", hashlib.sha256(TOKEN.encode()).digest(), 3000,
@@ -103,3 +104,45 @@ def test_expiracao_do_cabecalho_nao_estende_cadastro():
         verificar(headers(**{"channel-expiration": "future"}),
                   canal=replace(CANAL, expira_em=1999))
     assert erro.value.status == 401
+
+
+@pytest.mark.parametrize("campo,valor", [
+    ("resource-id", "recurso\tmalformado"),
+    ("resource-uri", "https://example.org/linha\nnova"),
+    ("resource-state", "mudanca\x7f"),
+])
+def test_recusa_controles_em_cabecalhos(campo, valor):
+    with pytest.raises(WebhookRecusado) as erro:
+        verificar(headers(**{campo: valor}))
+    assert erro.value.status == 400
+
+
+@pytest.mark.parametrize("extras", [
+    [(b"X-Extra", b"x" * 2049)],
+    [(f"X-Extra-{indice}".encode(), b"x" * 2048) for indice in range(9)],
+])
+def test_recusa_limites_de_cabecalhos(extras):
+    with pytest.raises(WebhookRecusado) as erro:
+        verificar(headers() + extras)
+    assert erro.value.status == 431
+
+
+def test_canal_nao_aceita_token_de_outro_cadastro():
+    token_alternativo = "b" * 64
+    canal_alternativo = replace(
+        CANAL,
+        token_sha256=hashlib.sha256(token_alternativo.encode()).digest(),
+        recurso_id="recurso-alternativo",
+    )
+    canais = {ID: CANAL, ID_ALTERNATIVO: canal_alternativo}
+    cabecalhos = headers(**{
+        "channel-id": ID_ALTERNATIVO,
+        "resource-id": "recurso-alternativo",
+    })
+    with pytest.raises(WebhookRecusado) as erro:
+        verificar_drive(cabecalhos, b"", canais, fonte="corpus", agora=2000)
+    assert erro.value.status == 401
+
+
+def test_hash_do_token_nao_aparece_na_representacao():
+    assert "token_sha256=" not in repr(CANAL)
