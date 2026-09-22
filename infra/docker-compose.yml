@@ -1,7 +1,7 @@
-# Ambiente de desenvolvimento local: interface, API, agendador e banco.
-# Uso: docker compose -f infra/docker-compose.yml up --build
+# Ambiente de desenvolvimento local: interface, API, agendador, banco e mensageria.
+# Uso: docker compose --env-file src/middleware/.env -f infra/docker-compose.yml up --build
 #
-# Quatro serviços. O `worker` é separado da `middleware` de propósito:
+# Cinco serviços. O `worker` é separado da `middleware` de propósito:
 # mantém a API sem estado e evita que duas réplicas disparem a mesma
 # rotina duas vezes.
 services:
@@ -21,8 +21,16 @@ services:
       - ../src/middleware/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://middleware:middleware@db:5432/middleware
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-prata}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-prata-local}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-prata}
+      RABBITMQ_URL: ${RABBITMQ_URL:-}
     depends_on:
       db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     # Aplica as migrações antes de subir a API: um esquema desatualizado
     # falharia na primeira consulta, e não na subida, onde é visível.
@@ -40,8 +48,16 @@ services:
       - ../src/middleware/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://middleware:middleware@db:5432/middleware
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-prata}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-prata-local}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-prata}
+      RABBITMQ_URL: ${RABBITMQ_URL:-}
     depends_on:
       db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       middleware:
         condition: service_started
@@ -68,5 +84,30 @@ services:
       timeout: 3s
       retries: 10
 
+  rabbitmq:
+    image: rabbitmq:4.3.6-management-alpine
+    # A identidade fixa permite reutilizar os dados ao recriar o conteiner.
+    hostname: rabbitmq
+    environment:
+      # Credenciais padrao apenas para desenvolvimento local.
+      # Para sobrescrever: variaveis do shell ou --env-file do Compose.
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-prata}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-prata-local}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-prata}
+    ports:
+      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+
 volumes:
   dbdata:
+  rabbitmqdata:
