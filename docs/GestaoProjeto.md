@@ -1366,33 +1366,39 @@ A matriz mantém o histórico de avaliação desde a identificação de cada ite
 
 ### 4.3 Histórico de acompanhamento
 
-O histórico registra, por item, a evolução desde a identificação inicial, de modo que seja possível verificar o que mudou em cada ciclo e por quê.
+O histórico registra, por item, a evolução desde a identificação, de modo que seja possível verificar o que mudou em cada ciclo e por quê. As justificativas da Sprint 3 são mantidas ao lado das da Sprint 4.
 
-| Item | Sprint 1 | Sprint 2 | Sprint 3 | Justificativa da reavaliação (S3) |
-|---|---|---|---|---|
-| R01 | Sev. 16 — Em Monitoramento | Sev. 20 — Em Monitoramento | Sev. 20 — Em Monitoramento | Sem evidência de validação com o parceiro no ciclo; notas preservadas |
-| R02 | Sev. 12 — Aberto | Sev. 20 — **Materializado** | Sev. 20 — **Materializado** | Acesso ao ambiente do parceiro permanece indisponível; contingência de desacoplamento segue em uso (voz e mensageria na stack própria) |
-| R03 | Sev. 9 — Aberto | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Pipeline de upload/transcrição implementado e testado (`#192`–`#206`); acurácia no jargão do Metrô ainda sem medição formal — notas mantidas |
-| R04 | Sev. 8 — Aberto | Sev. 4 — **Mitigado** | Sev. 4 — **Mitigado** | Sem nova bancada que altere as métricas de 5.4.11; status preservado, com a ressalva de dependência do R01 |
-| R05 | Sev. 9 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Feriado e mal-estar reduziram capacity (R18), mas o adiantamento de S4/S5 (O05) evitou nova elevação de notas; Onda 1 ainda incompleta no código |
-| R06 | Sev. 8 — Em Monitoramento | Sev. 16 — Em Monitoramento | Sev. 20 — **Materializado** | Segundo ciclo consecutivo sem retorno do parceiro para premissas em aberto; probabilidade sobe de 4 para 5 |
-| R07 | Sev. 9 — Aberto | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Razão 13:1 em commits autorais entre os integrantes com registro; concentração persiste sem mudança de nota |
-| R08 | Sev. 9 — Aberto | Sev. 15 — **Materializado** | Sev. 9 — Em Monitoramento | Sem nova ruptura de escopo rastreável nos commits do período; probabilidade cai de 5 para 3 e o status deixa Materializado |
-| R09 | Sev. 10 — Aberto | Sev. 10 — Em Monitoramento | Sev. 10 — Em Monitoramento | Nenhum incidente; uso de dados sintéticos mantido |
-| R10 | Sev. 4 — Aberto | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Sem evidência nova de estouro; permanece acoplado a R11 e R17 |
-| R11 | — | Sev. 15 — **Materializado** | Sev. 15 — **Materializado** | Credenciais institucionais não restabelecidas no repositório/documentação do ciclo |
-| R12 | — | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Speech em uso no tenant da equipe (`#203`–`#206`) confirma a exposição estrutural já descrita |
-| R13 | — | Sev. 12 — Aberto | Sev. 12 — Aberto | RNF07 (retenção/cifra) permanece sem implementação verificável neste corte |
-| R14 | — | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Canal de voz integrado ao NLP (`#206`); latência ainda sem campanha de medição P95 registrada |
-| R15 | — | Sev. 8 — Aberto | Sev. 8 — Aberto | Sem evidência de mudança de plataforma no parceiro |
-| R16 | — | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Persistência da Onda 1 ainda incompleta; risco permanece prospectivo |
-| R17 | — | Sev. 4 — Aberto | Sev. 6 — Em Monitoramento | Consumo real de Azure Speech iniciado no ciclo; probabilidade sobe de 2 para 3 |
-| **R18** | — | — | **Sev. 12 — Materializado** | **Item novo.** Feriado de 07/09 sem desenvolvimento e redução de capacidade por indisposição, sem plano B prévio |
-| O01 | Sev. 12 — Aberto | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sem evidência para reavaliar |
-| O02 | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Reuso permanece relevante |
-| O03 | Sev. 8 — Aberto | Sev. 10 — Em Monitoramento | Sev. 10 — Em Monitoramento | Frentes técnicas distintas no ciclo (voz, RF/RNF, PLN, mensageria) mantêm a captura |
-| O04 | — | Sev. 12 — Em Monitoramento | Sev. 15 — Em Monitoramento | Mensageria (`#198`) e pipeline de voz autônomo reforçam o MVP desacoplado; prioridade de captura sobe |
-| **O05** | — | — | **Sev. 12 — Em Monitoramento** | **Item novo.** Adiantamento deliberado de mensageria (S5), vetorização e integração voz–NLP |
+| Item | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Justificativa da reavaliação (S3) | Justificativa da reavaliação (S4) |
+|---|---|---|---|---|---|---|
+| R01 | 16 — Em Monitoramento | 20 — Em Monitoramento | 20 — Em Monitoramento | **16 — Em Monitoramento** | Sem validação com o parceiro no ciclo; notas preservadas | Dados de exemplo do parceiro disponíveis no SharePoint de teste desde 04/09; probabilidade cai de 5 para 4. A validação da base contra eles ainda não foi feita |
+| R02 | 12 — Aberto | 20 — **Materializado** | 20 — **Materializado** | **8 — Em Monitoramento** | Acesso ao ambiente do parceiro permanece indisponível; contingência de desacoplamento segue em uso | Acesso liberado em 04/09. A causa do item deixou de existir; restam as restrições de licença, Direct Line e conectores, ainda não exercitadas (`#374` em `Backlog`). Probabilidade cai de 5 para 2 |
+| R03 | 9 — Aberto | 9 — Em Monitoramento | 9 — Em Monitoramento | **9 — Em Monitoramento** | Acurácia no jargão do Metrô sem medição formal | A transcrição real (`#397`) segue em `Backlog`; sem campanha de medição, notas mantidas |
+| R04 | 8 — Aberto | 4 — **Mitigado** | 4 — **Mitigado** | **4 — Mitigado** | Sem nova bancada que altere as métricas | Sem nova bancada; status preservado |
+| R05 | 9 — Em Monitoramento | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Feriado e mal-estar reduziram capacity, compensados pelo adiantamento | A Onda 1 saiu do esqueleto (`NotImplementedError` de 45 para 23); o efeito da compressão de escopo é registrado à parte em `R21`, para não pesar duas vezes |
+| R06 | 8 — Em Monitoramento | 16 — Em Monitoramento | 20 — **Materializado** | **12 — Em Monitoramento** | Segundo ciclo sem retorno do parceiro | O parceiro respondeu em 04/09 pela via de escalada. Probabilidade cai de 5 para 3, e não mais: a validação das premissas documentadas ainda depende de nova interação |
+| R07 | 9 — Aberto | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Razão de 13:1 no corte parcial (reapurada em 2,50:1 no fechamento, seção 3.5.4) | Razão de 2,25:1 em horas atribuídas e 82% dos merges em duas pessoas; a concentração persiste |
+| R08 | 9 — Aberto | 15 — **Materializado** | 9 — Em Monitoramento | **9 — Em Monitoramento** | Sem nova ruptura de escopo | A antecipação do escopo da Sprint 5 foi decisão de calendário comunicada, e não ruptura de expectativa; nota mantida |
+| R09 | 10 — Aberto | 10 — Em Monitoramento | 10 — Em Monitoramento | **10 — Em Monitoramento** | Nenhum incidente | Nenhum incidente; a restrição de 04/09 reforça o controle e originou `R23` |
+| R10 | 4 — Aberto | 9 — Em Monitoramento | 9 — Em Monitoramento | **9 — Em Monitoramento** | Sem evidência de estouro | Sem evidência de estouro; nota mantida |
+| R11 | — | 15 — **Materializado** | 15 — **Materializado** | **15 — Materializado** | Credenciais institucionais não restabelecidas | As credenciais recebidas em 04/09 são do ambiente do parceiro, e não da nuvem da equipe; o item não muda |
+| R12 | — | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Speech em uso no tenant da equipe confirma a exposição | Content Safety e Speech seguem no tenant da equipe; nota mantida |
+| R13 | — | 12 — Aberto | 12 — Aberto | **12 — Aberto** | RNF07 sem implementação verificável | O painel de intenções passou a exibir os prompts a quem tem `ver_intencoes`, com a permissão verificada no servidor; a retenção de RNF07 segue sem teste (`#442` em `Backlog`) |
+| R14 | — | 9 — Em Monitoramento | 9 — Em Monitoramento | **9 — Em Monitoramento** | Latência sem campanha de medição | A latência passou a ser medida por etapa do pipeline e exposta no painel (MR `!127`); a mitigação de medição está implementada, falta a campanha em voz |
+| R15 | — | 8 — Aberto | 8 — Aberto | **8 — Aberto** | Sem mudança de plataforma no parceiro | O ambiente liberado é SharePoint; sem sinal de troca de plataforma |
+| R16 | — | 9 — Em Monitoramento | 9 — Em Monitoramento | **6 — Em Monitoramento** | Persistência ainda incompleta | Índices da tabela `interacao` integrados (`#417`) e agregações do painel limitadas por janela; probabilidade cai de 3 para 2 |
+| R17 | — | 4 — Aberto | 6 — Em Monitoramento | **6 — Em Monitoramento** | Consumo real de Speech iniciado | A transcrição real (`#397`) ainda não entrou; consumo sem mudança |
+| R18 | — | — | 12 — **Materializado** | **12 — Em Monitoramento** | Item novo: feriado sem plano B | Sem feriado nem ausência que exigisse cobertura no período; o plano B formal de `AM14` não foi combinado, e o item segue em monitoramento, e não mitigado |
+| R19 | — | — | — | **12 — Em Monitoramento** | — | Item novo, registrado na abertura da sprint |
+| R20 | — | — | — | **8 — Em Monitoramento** | — | Item novo, registrado na abertura da sprint |
+| **R21** | — | — | — | **20 — Materializado** | — | **Item novo.** Antecipação do escopo da Sprint 5; 141% da capacidade declarada |
+| **R22** | — | — | — | **12 — Em Monitoramento** | — | **Item novo.** Seis MRs em revisão no corte; 82% dos merges em duas pessoas |
+| **R23** | — | — | — | **15 — Aberto** | — | **Item novo.** Procedimento de versionar o export do Copilot Studio contraria a restrição do parceiro de 04/09 |
+| O01 | 12 — Aberto | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Sem evidência para reavaliar | Sem evidência para reavaliar; `O06` torna a captura mais viável |
+| O02 | 12 — Em Monitoramento | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Reuso permanece relevante | Reuso permanece relevante |
+| O03 | 8 — Aberto | 10 — Em Monitoramento | 10 — Em Monitoramento | **10 — Em Monitoramento** | Frentes técnicas distintas no ciclo | Novas frentes no ciclo: implantação em nuvem, webhooks e mensageria, testes de carga |
+| O04 | — | 12 — Em Monitoramento | 15 — Em Monitoramento | **12 — Em Monitoramento** | Mensageria e voz autônomos reforçam o MVP desacoplado | Com o ambiente liberado, o desacoplamento deixa de ser forçado; o valor da demonstração autônoma permanece |
+| O05 | — | — | 12 — Em Monitoramento | **12 — Encerrado** | Item novo: adiantamento deliberado | Capturada: vetorização, RAG e voz–NLP integrados. O adiantamento virou a antecipação de escopo de `R21`; o produtor da mensageria (`#393`) segue em `Backlog` |
+| **O06** | — | — | — | **16 — Aberto** | — | **Item novo.** Ambiente do parceiro disponível para demonstração de RF04 a RF08 |
 
 ### 4.4 Riscos materializados e efetividade das respostas
 
