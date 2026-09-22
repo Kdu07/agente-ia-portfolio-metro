@@ -6470,18 +6470,18 @@ Esta entrega documenta o desenho e os critérios de aceite. A implementação po
 
 #### 9.1.2.7 Definição dos webhooks (S4)
 
-**Situação da definição:** em elaboração na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini. O contrato do webhook documental está definido em 9.1.2.7.1; a definição do segundo webhook permanece pendente. A base de inspeção do código é a `develop` no commit `6999f9d`, consultada em 21/09/2026. Os comportamentos novos abaixo são requisitos de implementação, não evidência de webhooks em execução.
+**Situação da definição:** contratos documentados na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini, para revisão da equipe. O contrato documental está em 9.1.2.7.1 e o de eventos estruturados em 9.1.2.7.2. A base de inspeção do código é a `develop` no commit `6999f9d`, consultada em 21/09/2026 e conferida em 22/09/2026. Os comportamentos novos abaixo são requisitos de implementação, não evidência de webhooks em execução.
 
 O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint e descreveu a interação de voz desejada: gravar, concluir a gravação, obter a transcrição, revisar ou editar o texto e só então enviá-lo ao agente. Não há emissor de callback de áudio definido pela equipe.
 
 A recomendação técnica é preservar essa revisão explícita do texto e concentrar os webhooks na atualização das fontes do portfólio. Um webhook é uma chamada entre sistemas, sem implicar notificação visual ao usuário, mas a interação de microfone descrita não depende dele.
 
-| Candidato | Evento de negócio | Objetivo e justificativa | Situação e rastreabilidade |
+| Webhook definido | Evento de negócio | Objetivo e justificativa | Situação e rastreabilidade |
 |---|---|---|---|
 | WH-01: atualização documental | Mudança em arquivo do corpus acompanhado no Google Drive | Solicitar atualização do índice usado pelo RAG, preservando origem e permissões e reduzindo a defasagem das respostas. | Contrato definido em 9.1.2.7.1; RF04/US04 e RF01/US01; seção 9.4.3; revisar o provedor de #390. |
-| Atualização de dados estruturados | Edição humana de status, marco ou indicador em uma planilha Google Sheets controlada, com envio por Apps Script | Sincronizar os registros estruturados consultados pela aplicação, com identificação do projeto e da alteração. Esse efeito é distinto da reindexação documental. | Alternativa em avaliação; RF04/US04; depende de confirmar a necessidade da sincronização, a fonte autorizada e o esforço. Substituiria o escopo de #389 somente após decisão da equipe. |
+| WH-02: eventos do portfólio | Alteração de status de projeto, marco ou risco em planilha Google Sheets controlada, com envio por Apps Script | Sincronizar registros estruturados e permitir avisos internos por adesão do usuário. Esse efeito é distinto da reindexação documental. | Contrato definido em 9.1.2.7.2; RF04/US04 e RF01/US01; substituir o escopo de #389 depende de alinhamento do backlog com a equipe. |
 
-A segunda alternativa exige uma planilha nativa do Google Sheets, configuração de gatilho e implementação do emissor; os arquivos `.xlsx` existentes no Drive não demonstram essa capacidade. As duas propostas usam dados sintéticos, não autorizam escrita nos documentos do parceiro nem concedem acesso adicional ao conteúdo. A notificação por Teams ou correio eletrônico da feature F57 continua fora desse recorte.
+O segundo webhook exige uma planilha nativa do Google Sheets, configuração de gatilho e implementação do emissor; os arquivos `.xlsx` existentes no Drive não demonstram essa capacidade. Os dois contratos usam dados sintéticos, não autorizam escrita nos documentos do parceiro nem concedem acesso adicional ao conteúdo. A notificação por Teams ou correio eletrônico da feature F57 continua fora desse recorte.
 
 **Estado atual e impacto nos contratos**
 
@@ -6492,13 +6492,13 @@ A segunda alternativa exige uma planilha nativa do Google Sheets, configuração
 | Serviço de transcrição | [`transcricao.py`](../src/middleware/app/voz/transcricao.py) chama `transcriptions:transcribe` e extrai o resultado da resposta HTTP. | A integração atual usa Fast Transcription. A revisão do texto pelo usuário pode ser atendida sem callback de conclusão. |
 | Armazenamento do resultado | [`audio_service.py`](../src/middleware/app/servicos/audio_service.py) mantém `_transcricoes` em memória de processo. | A necessidade de persistência permanece. Ao revisar #389, manter responsável e tarefa para vincular resultado, áudio e proprietário em armazenamento durável. |
 | Fonte documental | A seção 9.4.3.1 e [`drive.py`](../src/middleware/app/rag/ingestao/drive.py) identificam o Google Drive como fonte do corpus sintético. | Implementar e demonstrar o contrato do Drive; a equivalência de negócio com SharePoint não significa equivalência de protocolo nem homologação no ambiente Microsoft. |
-| Dados estruturados | [`portfolio.py`](../src/middleware/app/api/routes/portfolio.py) consulta projetos, riscos, marcos e indicadores persistidos. | Há um destino possível para a segunda proposta, mas ainda é necessário definir mapeamento, autoridade da fonte e autorização de cada atualização. |
+| Dados estruturados | [`portfolio.py`](../src/middleware/app/api/routes/portfolio.py) consulta projetos, riscos, marcos e indicadores persistidos. | WH-02 define campos, autoridade e autorização; o mapeamento concreto da planilha e das entidades deve ser cadastrado antes da ativação. |
 
 A documentação da Microsoft confirma que a [Fast Transcription devolve o resultado de forma síncrona](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/fast-transcription-create). Já os [webhooks de Speech são associados a Batch Transcription e Custom Speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text). Acrescentar Batch Transcription apenas para criar um segundo webhook introduziria outro trajeto de áudio sem necessidade demonstrada para a experiência descrita.
 
 Para a fonte documental, a referência é a [notificação de mudanças do Google Drive](https://developers.google.com/workspace/drive/api/guides/push). O provedor envia `POST` com cabeçalhos `X-Goog-*` e corpo vazio; os detalhes precisam ser consultados pela API. O contrato deverá prever registro e renovação de canais, validação do token de canal, consulta incremental, filtragem para o corpus autorizado e processamento de exclusões. Não se deve exigir um JSON ou HMAC de corpo que o provedor não envia.
 
-Para a segunda alternativa, [gatilhos instaláveis do Apps Script](https://developers.google.com/apps-script/guides/triggers/installable) podem reagir a edições humanas em planilhas, e [`UrlFetchApp`](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) permite emitir o POST. O payload e sua assinatura seriam um contrato desenvolvido pela equipe. Alterações feitas por API ou por scripts não disparam automaticamente o gatilho de edição; retentativa, registro durável do evento e prevenção de duplicatas também precisam ser implementados.
+Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com/apps-script/guides/triggers/installable) podem reagir a edições humanas em planilhas, e [`UrlFetchApp`](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) permite emitir o POST. O payload e sua assinatura seguem o contrato da equipe em 9.1.2.7.2. Alterações feitas por API ou por scripts não disparam automaticamente o gatilho de edição; retentativa, registro durável do evento e prevenção de duplicatas também precisam ser implementados.
 
 **Limites comuns da implementação planejada**
 
@@ -6509,17 +6509,17 @@ Para a segunda alternativa, [gatilhos instaláveis do Apps Script](https://devel
 5. Manter as guardas, as permissões documentais e a autorização de atualização dos registros nos serviços consumidores. Autenticar o emissor não substitui a autorização de acesso aos dados.
 6. Distinguir testes com payload sintético de homologação no provedor real. #391 registrará contratos observados e exemplos sanitizados após a implementação; #413 verificará sucesso, rejeição, repetição e falha de consumo.
 
-**Decisões necessárias para concluir a #386**
+**Dependências para implementação e alinhamento do backlog**
 
 | Decisão | Alternativas e impacto | Responsável e momento de resolução |
 |---|---|---|
-| Escopo do segundo webhook | Avaliar a sincronização estruturada proposta e identificar planilha, campos e destino. Se esse fluxo não for necessário, selecionar outro evento de negócio antes de fechar os contratos. | Eduardo, com a equipe, antes de substituir o escopo de #389. |
+| Ambiente do segundo webhook | Provisionar a planilha nativa, o emissor e o mapeamento autorizado de entidades conforme 9.1.2.7.2. Registrar o novo escopo e dimensionar a interface de preferências. | Eduardo, com a equipe, antes de substituir o escopo de #389. |
 | Ambiente do webhook documental | Validar em ambiente de teste as permissões da conta de serviço, o cadastro de canal e a URL HTTPS exigidos pelo contrato 9.1.2.7.1. Registrar Drive como provedor da PoC no card. | Eduardo, antes de homologar #390; a definição do contrato não comprova acesso ao provedor. |
 | Autenticidade e proteção contra repetição | A premissa de #388 de uma assinatura e um timestamp comuns aos dois provedores precisa ser revista. O token de canal do Drive não equivale a uma assinatura HMAC do corpo; a proteção contra repetição precisa considerar o identificador e o cursor efetivamente disponíveis. | Eduardo, ao concluir os contratos da #386, antes de implementar #388. |
 | Persistência do áudio | Preservar a demanda de persistência e pertencimento hoje incluída em #389, mesmo que o webhook de transcrição seja substituído por outro evento. | Eduardo, na revisão do backlog, antes de retirar essa responsabilidade de #389. |
 | Consistência do escopo | A seção 2.7.4 ainda declara webhooks e mensageria fora da solução, enquanto 9.1.2.6 os planeja. #387 deve reconciliar essas afirmações com a decisão final. | Eduardo, em #387, após fechar a definição da #386. |
 
-A conclusão da #386 requer, para ambos os webhooks, provedor e evento definidos, rota e método HTTP, campos e tipos, autenticação, respostas de aceitação e erro, regra de idempotência e exemplos consistentes. O levantamento acima não substitui esses contratos nem permite considerar concluídas #388, #389 ou #390.
+As duas subseções seguintes definem provedor, evento, rota, método, campos, autenticação, respostas, idempotência e exemplos. A conclusão da #386 ainda exige revisão, vínculo do PR e alinhamento dos cards afetados; esta definição não permite considerar implementadas #388, #389 ou #390.
 
 ##### 9.1.2.7.1 WH-01: atualização documental do Google Drive
 
@@ -6687,6 +6687,146 @@ Se a consulta posterior identificar a atualização do arquivo sintético `PRJ-2
 | Ciclo do canal | Renovação com sobreposição, expiração e retomada após ausência de callback; reconciliação sem duplicar documentos |
 
 Os testes existentes de [`test_ingestao_indexacao.py`](../src/middleware/tests/unit/test_ingestao_indexacao.py) já descrevem ingestão inalterada, atualização, remoção e reclassificação. Eles não homologam o receptor HTTP, o cadastro de canais ou a fila; a inspeção desses testes não é registro de execução nesta entrega. #388 deve incorporar token de canal; #390 deve refletir o provedor Drive e cobrir cadastro, receptor e integração documental; #392 a #394 devem prover broker, publicação e consumo; #391 deve acrescentar exemplos reais sanitizados. Eduardo acompanha esses ajustes e as evidências antes do fechamento da #386 e da homologação de WH-01.
+
+##### 9.1.2.7.2 WH-02: eventos do portfólio e notificações
+
+**Decisão e limites.** Adotar um emissor desenvolvido pela equipe em Google Apps Script, associado a uma planilha nativa Google Sheets com dados sintéticos. O emissor comunica mudanças de status de projeto, marcos e riscos para os registros existentes do portfólio. A assinatura abaixo é do contrato da equipe, não um recurso de webhook nativo do Sheets. Planilha, script, receptor, persistência de eventos e interface de avisos **ainda precisam ser implementados e homologados**.
+
+A fonte será autoridade somente para os campos enumerados neste contrato. Seu cadastro no servidor deve vincular `source_id` ao ID da planilha, abas, projetos, entidades e campos permitidos. Cada entidade terá uma única fonte escritora desses campos na PoC; escritas concorrentes por importadores ou outras interfaces devem ser bloqueadas ou reconciliadas antes da ativação. Não permitir criação/exclusão de projetos, alteração de vínculos de usuários, permissões, orçamento ou execução de comandos. O backend não escreve de volta na planilha.
+
+A planilha controlada ficará fora da pasta do corpus de WH-01. Atualizar estes registros não gera embeddings e não modifica documentos: consultas estruturadas passam a refletir o novo estado, enquanto o RAG documental mantém suas próprias fontes e datas. Não afirmar que uma atualização no PostgreSQL corrige automaticamente um documento divergente. Indicadores e avisos sobre documentos ficam fora de WH-02 nesta versão.
+
+**Entrada e autenticidade**
+
+| Item | Contrato do projeto |
+|---|---|
+| Método e rota | `POST /webhooks/portfolio` no middleware; `https://<host-do-ambiente>/api/webhooks/portfolio` externamente |
+| Corpo | Um objeto JSON UTF-8 por evento; `Content-Type: application/json`; máximo de 32 KiB, sem compressão |
+| Cabeçalhos obrigatórios | `X-Prata-Source`, `X-Prata-Key-Id`, `X-Prata-Timestamp`, `X-Prata-Signature`; recusar repetidos ou vazios |
+| Fonte e chave | Identificadores ASCII de 1 a 64 caracteres, somente letras, números, `_` e `-`; buscar chave no cadastro local, nunca em URL recebida |
+| Timestamp | Segundos Unix em string decimal canônica, sem sinal ou zeros à esquerda; diferença absoluta de até 300 segundos do relógio do receptor |
+| Assinatura | Base64 padrão de HMAC-SHA256, calculado sobre os bytes descritos abaixo; comparar os 32 bytes decodificados em tempo constante |
+| Limite de resposta | Orçamento interno de 3 segundos para recebimento durável e publicação roteada, como em WH-01; não executar atualização do portfólio na requisição |
+
+Gerar chave aleatória de 32 bytes, armazenada codificada em Base64 no segredo do emissor e no cadastro seguro do receptor; decodificar antes do HMAC. A entrada assinada é a concatenação UTF-8 de `source_id + "\n" + key_id + "\n" + timestamp + "\n"`, seguida dos **bytes exatos do corpo HTTP**, sem normalizar espaços, ordem das propriedades ou quebras de linha. Não acrescentar quebra ao final. `X-Prata-Source` deve coincidir com `source_id` no JSON. Permitir rotação por identificador de chave e prazo de validade; uma chave revogada deixa de autenticar novas entregas.
+
+O script deve ser independente, com acesso de edição restrito aos administradores do emissor. Não guardar segredo em célula, aba oculta, repositório ou navegador; acesso de edição à planilha de negócio não deve conceder edição do script ou de seu armazenamento de eventos. A API de [Utilities](https://developers.google.com/apps-script/reference/utilities/utilities) oferece HMAC-SHA256 e Base64, e [UrlFetchApp](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) permite enviar corpo e cabeçalhos. A implementação deve testar equivalência byte a byte entre assinatura no emissor e verificação no backend.
+
+Validar limites antes de ler todo o corpo, autenticar antes de consultar duplicatas e então validar o schema. Rejeitar JSON com chaves duplicadas, campos desconhecidos, tipos coercíveis mas incorretos e datas inválidas. Não aceitar cookie ou token de usuário como substituto da assinatura. Aplicar também o limite de 16 KiB ao conjunto de cabeçalhos e de 2 KiB por valor. Nunca registrar assinatura, segredo ou corpo integral nos logs operacionais.
+
+**Payload versão 1**
+
+Todos os campos abaixo são obrigatórios; somente `data_real` admite `null`. Identificadores de negócio são strings de 1 a 128 caracteres, sem caracteres de controle, validadas contra o cadastro permitido.
+
+| Campo | Tipo e significado |
+|---|---|
+| `schema_version` | Inteiro, exatamente `1` |
+| `event_id` | String UUID v4; criada uma vez e preservada em todas as tentativas |
+| `source_id` | String identificadora da fonte cadastrada, com formato igual ao cabeçalho |
+| `event_type` | String: `projeto.status_alterado`, `marco.alterado` ou `risco.alterado` |
+| `occurred_at` | String RFC 3339 UTC, no formato `YYYY-MM-DDTHH:mm:ssZ`; momento da captura do estado, não prova do instante de cada edição |
+| `projeto_codigo` | String; projeto existente e autorizado para a fonte |
+| `entity_id` | String; código do projeto no primeiro tipo, ID persistido do marco ou risco nos demais; entidade deve pertencer ao projeto informado |
+| `version` | Inteiro positivo, até `9007199254740991`; sequência crescente por `(source_id, event_type, entity_id)`, nunca reiniciada ao reinstalar o script |
+| `data` | Objeto contendo o snapshot completo dos campos permitidos para o tipo, conforme a tabela seguinte |
+
+Os nomes e enums correspondem aos [modelos de persistência existentes](../src/middleware/app/persistence/models.py); não aceitar nomes de coluna arbitrários como instruções de atualização.
+
+| `event_type` | Campos exatos de `data` e destino |
+|---|---|
+| `projeto.status_alterado` | `status` string em `planejado`, `em_andamento`, `suspenso`, `concluido`, `cancelado`; atualizar `Projeto.status` |
+| `marco.alterado` | `status` string em `nao_iniciado`, `em_andamento`, `concluido`, `atrasado`, `cancelado`; `data_prevista` string `YYYY-MM-DD`; `data_real` string no mesmo formato ou `null`; atualizar esses três campos de `Marco` |
+| `risco.alterado` | `status` string em `identificado`, `monitorado`, `mitigado`, `materializado`; `probabilidade` e `impacto` inteiros de 1 a 5; atualizar esses três campos de `Risco` |
+
+O snapshot é completo para esse conjunto de campos, não para toda a entidade. Campos não relacionados permanecem intactos. A fonte não envia destinatários, identidade suposta do editor, valores anteriores, texto livre de aviso nem permissões. O consumidor deriva as diferenças a partir do estado persistido.
+
+**Captura, retentativas e recuperação do emissor**
+
+1. Configurar gatilho instalável de edição e reconciliação periódica a cada 15 minutos. Segundo os [gatilhos instaláveis do Apps Script](https://developers.google.com/apps-script/guides/triggers/installable), execuções usam a conta criadora; alterações por scripts ou API não acionam o gatilho de edição. Não atribuir uma mudança à pessoa que criou o gatilho. A reconciliação deve capturar também alterações não observadas pelo gatilho.
+2. Ler o estado completo da linha mapeada e comparar com o último snapshot registrado. Edições múltiplas devem produzir eventos por entidade afetada. Capturar o estado mais recente não garante auditoria de cada tecla ou estado intermediário. Linhas inválidas ou IDs alterados ficam em erro para revisão, sem inventar entidades.
+3. Serializar a captura com [LockService](https://developers.google.com/apps-script/reference/lock/lock-service). Registrar em armazenamento durável restrito um item de saída contendo chave da entidade, versão, UUID, snapshot, hash e corpo JSON imutável antes do primeiro envio. Derivar a próxima versão desse diário, sem contador independente que possa avançar sem evento. O bloqueio evita concorrência entre execuções cooperantes; não transforma várias escritas em transação. Registro incompleto deve ser detectado e recuperado antes de gerar nova versão.
+4. Liberar o bloqueio antes da rede. Entregas de um mesmo evento reutilizam exatamente o corpo salvo, mas recalculam timestamp e assinatura. Resposta `202` ou `204` marca a entrega aceita; se a resposta se perder, repetir o mesmo evento. Não confundir aceitação HTTP com conclusão do processamento.
+5. Para timeout, `429` ou `5xx`, programar novas tentativas após 1, 5, 15 e 60 minutos, respeitando `Retry-After` quando maior. Após cinco tentativas totais, manter o evento para intervenção, sem descartar. Outros `4xx` exigem correção operacional; não criar outro UUID para contornar erro de autenticação ou conflito. Cotas, falha do gatilho e eventos pendentes precisam de monitoramento; o agendador não é garantia de entrega em horário exato.
+6. Na primeira ativação, comparar e aprovar uma linha de base entre planilha e banco antes de habilitar os avisos. Reinício não recria linha de base nem zera versões. Preservar versões por entidade enquanto a fonte existir e os eventos não resolvidos até recuperação; alterações ainda não capturadas são recuperadas pela reconciliação.
+
+**Respostas, duplicatas e publicação**
+
+Sucessos têm corpo vazio. Erros da aplicação usam `{"detail":{"codigo":"...","mensagem":"..."}}`, sem valores sensíveis. Respostas produzidas pelo proxy/framework podem não ter esse envelope.
+
+| HTTP | Condição e efeito |
+|---|---|
+| `202 Accepted` | Evento válido, recebimento durável e publicação roteada confirmada; processamento ainda assíncrono |
+| `204 No Content` | Mesmo `(apps_script, source_id, event_id)` e hash SHA-256 dos bytes do corpo, com publicação já confirmada; não republicar |
+| `400 Bad Request` | JSON malformado ou cabeçalho estrutural inválido; `WEBHOOK_INVALIDO` |
+| `401 Unauthorized` | Cabeçalho de autenticação ausente, assinatura inválida, chave/fonte desconhecida ou timestamp fora da janela; `WEBHOOK_NAO_AUTORIZADO` |
+| `403 Forbidden` | Fonte autenticada sem autorização para projeto, entidade ou tipo; `WEBHOOK_FORA_DO_ESCOPO` |
+| `409 Conflict` | Mesmo identificador de evento com corpo diferente; `WEBHOOK_EVENTO_CONFLITANTE`; preservar o original |
+| `422 Unprocessable Content` | Schema, enum, data, versão ou vínculo de entidade inválido; `WEBHOOK_PAYLOAD_INVALIDO` |
+| `405` / `413` / `415` / `431` | Método, tamanho do corpo, tipo/codificação de conteúdo ou tamanho dos cabeçalhos inválidos; `405` inclui `Allow: POST` |
+| `503 Service Unavailable` | Banco indisponível, prazo esgotado ou publicação não confirmada; `WEBHOOK_INDISPONIVEL`, `Retry-After: 5` |
+| `500 Internal Server Error` | Falha inesperada; `WEBHOOK_ERRO_INTERNO`, com correlação nos logs |
+
+Validar a existência e o vínculo somente depois de autorizar o projeto; não revelar entidades fora do escopo. Repetição de recebimento ainda pendente retoma a publicação com os mesmos UUIDs internos e recebe `503` se não houver confirmação, como em WH-01. Hash considera o corpo, não os cabeçalhos renovados de assinatura.
+
+Reutilizar recebimento e evento pendente em uma transação, publicação persistente, `publisher confirms`, detecção de ausência de rota e recuperação de pendências de 9.1.2.7.1. O envelope de 9.1.2.6 terá UUIDs internos estáveis, `event_type=webhook.received`, `schema_version=1`, `producer=middleware` e `occurred_at` igual ao recebimento UTC. Seu `payload` conterá `provider=apps_script` e `event` com o objeto validado acima. Publicar na exchange `prata.events`, routing key `webhook.received`, fila `prata.webhooks.incoming`; nunca incluir segredo ou assinatura. Manter recibos concluídos por pelo menos 30 dias após a última entrega e não expurgar pendências.
+
+**Consumo, ordenação e persistência**
+
+Em uma transação PostgreSQL, bloquear o controle de versão da entidade, revalidar fonte ativa, escopo e pertencimento e verificar a versão. A chave é `(source_id, event_type, entity_id)`. Versão menor termina como `ignorado_antigo`; mesma versão e mesmos campos normalizados termina sem efeito; mesma versão com campos diferentes é conflito permanente, com quarentena para intervenção, nunca sobrescrita silenciosa. Versão maior aplica o snapshot completo permitido, mesmo com lacuna: perder um estado intermediário não impede convergir ao mais recente.
+
+Na mesma transação, gravar entidade, última versão e snapshot, auditoria técnica da alteração, notificações elegíveis e `processado_em`; só então emitir `ack`. Se não houver diferença material, avançar a versão sem gerar aviso. A unicidade de `(source_id, event_id, usuario_id)` impede avisos duplicados. Reentrega após commit não repete efeitos. Conservar o controle de versão mesmo após expurgar recibos, para que uma repetição antiga não reaplique estado. Falhas transitórias seguem três tentativas e dead letter de 9.1.2.6; conflitos e revogação de autorização vão para falha controlada sem alteração de dados.
+
+Esses controles, a auditoria técnica e as notificações são registros novos, não tabelas já existentes. A auditoria guarda fonte, evento, projeto, entidade, versão, campos anteriores/novos autorizados, horário e resultado; não criar uma `Interacao` de chat fictícia para representar o sistema. Receber `202` não garante que a entidade ainda estará autorizada quando o consumidor executar.
+
+**Preferências de aviso e autorização**
+
+O usuário poderá escolher projetos aos quais tem acesso e, para cada um, ativar separadamente avisos de status, marcos e riscos. O padrão é **desativado**, sem inscrição automática nem envio retroativo ao ativar. Para riscos, oferecer todos os níveis ou um mínimo de severidade `probabilidade × impacto`, inteiro de 1 a 25. Com mínimo configurado, avisar sobre qualquer mudança material cujo estado anterior **ou** novo alcance o mínimo, incluindo redução de risco; não confundir o filtro de aviso com mudança da classificação armazenada.
+
+Persistir preferência única por `(usuario_id, projeto_codigo, event_type)`, com `ativa`, `severidade_minima` opcional somente para riscos e horário de atualização. Derivar `usuario_id` da sessão autenticada ao editar preferências. O payload externo nunca escolhe destinatários. A atualização dos dados acontece independentemente de haver inscritos. Desativar impede novos avisos; antigos continuam sujeitos às permissões atuais e à retenção. Uma alteração com versão antiga ou sem diferença não notifica.
+
+O consumidor seleciona adesões ativas como candidatas e persiste avisos privados para consulta interna, sem disparo externo. Toda listagem, contagem, detalhe e marcação de leitura deve validar proprietário e acesso atual ao projeto, usando as regras da sessão autenticada; se não puder resolver autorização, negar acesso. O `Usuario.perfil` persistido é uma projeção para exibição, não fonte de verdade de autorização. Perder acesso deve ocultar também títulos, trechos e contagens desses avisos, ainda que tenham sido criados antes da revogação. Eventual entrega ativa futura exigirá revalidação no envio.
+
+Cada aviso terá UUID, proprietário, projeto, referência ao evento/entidade, diferenças permitidas, horário de criação e `lido_em` opcional. A interface deverá permitir consultar avisos, marcar como lido e abrir o registro autorizado. Retenção inicial de avisos: 30 dias desde a criação, independente da retenção de eventos pendentes. Nesta versão, somente avisos dentro da aplicação; Teams/e-mail (F57), push externo e resumo agendado continuam fora do escopo. O card de implementação deve contemplar banco, API e interface de preferências, não apenas o receptor.
+
+**Exemplo sintético e resultados esperados**
+
+Com a fonte `portfolio_sintetico` previamente cadastrada para o projeto e risco abaixo, o emissor envia este corpo para `/api/webhooks/portfolio`, acompanhado dos quatro cabeçalhos de autenticação. `X-Prata-Source` vale `portfolio_sintetico`; identificador de chave, timestamp atual e assinatura devem ser calculados com a chave de teste conforme a fórmula, não copiados como credenciais reais.
+
+```json
+{
+  "schema_version": 1,
+  "event_id": "d14a8d53-4f74-4aac-a37b-521273a082ec",
+  "source_id": "portfolio_sintetico",
+  "event_type": "risco.alterado",
+  "occurred_at": "2026-09-22T12:00:00Z",
+  "projeto_codigo": "PRJ-2024-018",
+  "entity_id": "risco-sintetico-01",
+  "version": 8,
+  "data": {
+    "status": "monitorado",
+    "probabilidade": 4,
+    "impacto": 5
+  }
+}
+```
+
+Após persistência e publicação, a resposta é `202` sem corpo. Supondo versão anterior 7, probabilidade 2 e impacto 5, o consumidor grava severidade derivada de 20 para seleção dos avisos (sem exigir nova coluna em `Risco`). Um inscrito com mínimo 15 recebe um aviso privado; outro sem adesão não recebe. A mesma entrega assinada com timestamp novo recebe `204` se já publicada. Versão 7 chegando depois não reverte o risco nem notifica; o mesmo UUID com probabilidade diferente recebe `409`. Esses são resultados esperados, não testes executados.
+
+**Aceite e rastreabilidade**
+
+| Caso planejado | Evidência exigida na implementação e em #413 |
+|---|---|
+| Captura e convergência | Edição de status/marco/risco, edição múltipla, mudança por API capturada na reconciliação e primeira carga sem avalanche de avisos |
+| Autenticidade | HMAC conhecido reproduzido nas duas linguagens, corpo alterado, chave revogada, timestamp expirado/futuro e cabeçalhos duplicados recusados |
+| Escopo e schema | Projeto não autorizado, entidade de outro projeto, campos extras, datas/enums inválidos, limites e conteúdo comprimido sem efeito no banco |
+| Durabilidade | Reinício do script após registrar/entregar; reinício do receptor antes/depois de publicar; mesmos IDs e recuperação de pendências |
+| Ordenação | Duplicatas concorrentes, versões 8 antes de 7, lacuna de versão e conflito de mesmo UUID/versão; sem regressão ou avisos repetidos |
+| Atomicidade | Falha entre atualização e aviso provoca rollback; queda após commit e antes de `ack` não duplica efeitos |
+| Preferências | Avisos desativados por padrão, escolha por projeto/tipo, entrada/saída do limiar de risco e estado sem alteração não notificado |
+| Autorização | Revogação de acesso oculta conteúdo e contagens; usuário não altera preferências nem lê avisos de outra pessoa |
+| Falha permanente | Evento preservado para intervenção, erro rastreável e recuperação controlada, sem falso sucesso de processamento |
+
+#388 deve contemplar HMAC e janela temporal deste emissor, além do token específico do Drive. O escopo substituto de #389 precisa incluir emissor, receptor, consumo e dimensionamento dos avisos, preservando em tarefa explícita a persistência de áudio ainda necessária. #392 a #394 fornecem a mensageria compartilhada; #391 registrará implementação e evidências reais. A definição encerra a terceira unidade documental da #386; revisão, PR e alinhamento do backlog continuam necessários antes de fechar o card.
 
 ### 9.1.3 Integração com Voz
 
