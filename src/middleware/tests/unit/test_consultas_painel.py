@@ -11,6 +11,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from app.analytics import consultas
+from app.persistence.models import Canal
 from app.pipeline.desfechos import Desfecho
 from app.pipeline.intencao import catalogo
 from app.schemas.usuario import Perfil
@@ -352,3 +353,38 @@ async def test_enunciados_respeitam_o_limite(banco_analitico, registrar):
 async def test_enunciados_recusam_limite_nao_positivo(banco_analitico):
     with pytest.raises(ValueError, match="Limite"):
         await consultas.enunciados_baixa_confianca(banco_analitico, INICIO, FIM, limite=0)
+
+
+# --- Confiança média e uso por perfil e canal ------------------------------------
+
+
+async def test_confianca_media_por_intencao(banco_analitico, registrar):
+    await registrar(criada_em=DENTRO, intencao_id="consultar_status_projeto", confianca=0.8)
+    await registrar(criada_em=DENTRO, intencao_id="consultar_status_projeto", confianca=0.6)
+    await registrar(criada_em=DENTRO, intencao_id="consultar_riscos_projeto", confianca=0.9)
+
+    medias = await consultas.confianca_media_por_intencao(banco_analitico, INICIO, FIM)
+
+    assert medias == {
+        "consultar_status_projeto": pytest.approx(0.7),
+        "consultar_riscos_projeto": pytest.approx(0.9),
+    }
+
+
+async def test_confianca_media_omite_intencoes_sem_mensagem(banco_analitico, registrar):
+    await registrar(criada_em=DENTRO, intencao_id=None, desfecho=Desfecho.BLOQUEADA_ABUSO)
+
+    assert await consultas.confianca_media_por_intencao(banco_analitico, INICIO, FIM) == {}
+
+
+async def test_volume_por_perfil_e_canal_cruza_todas_as_combinacoes(banco_analitico, registrar):
+    await registrar(criada_em=DENTRO, perfil=Perfil.DIRETORIA, canal=Canal.VOZ)
+    await registrar(criada_em=DENTRO, perfil=Perfil.DIRETORIA, canal=Canal.VOZ)
+    await registrar(criada_em=DENTRO, perfil=Perfil.MEMBRO_EQUIPE, canal=Canal.ROTINA)
+
+    volume = _por_chave(await consultas.volume_por_perfil_e_canal(banco_analitico, INICIO, FIM))
+
+    assert len(volume) == len(Perfil) * len(Canal)
+    assert volume["diretoria/voz"] == 2
+    assert volume["membro_equipe/rotina"] == 1
+    assert volume["lider_projeto/chat"] == 0

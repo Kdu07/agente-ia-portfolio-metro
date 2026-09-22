@@ -37,6 +37,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.persistence.models import Canal
 from app.persistence.tabelas import InteracaoTabela
 from app.pipeline.desfechos import Desfecho
 from app.pipeline.intencao import catalogo
@@ -340,18 +341,56 @@ async def enunciados_baixa_confianca(
     )
 
 
-async def confianca_media_por_intencao(inicio: datetime, fim: datetime) -> dict[str, float]:
+async def confianca_media_por_intencao(
+    sessao: AsyncSession,
+    inicio: datetime,
+    fim: datetime,
+    *,
+    perfil: Perfil | None = None,
+) -> dict[str, float]:
     """Confiança média por intenção; aponta classes confundidas entre si.
 
     Complementa a matriz de confusão exigida pelo RNF03 com dados de uso
     real, e não apenas do conjunto de teste.
+
+    Só aparecem as intenções acionadas na janela. Aqui, diferentemente
+    do volume, a ausência não é zero: uma média sobre nenhuma mensagem
+    não existe, e preenchê-la com 0.0 leria como "o classificador nunca
+    acerta esta classe".
     """
-    raise NotImplementedError("Agregações a implementar na onda 4")
+    consulta = (
+        select(_I.intencao_id, func.avg(_I.confianca_intencao))
+        .where(_I.intencao_id.is_not(None))
+        .group_by(_I.intencao_id)
+    )
+    linhas = await sessao.execute(_na_janela(consulta, inicio, fim, perfil))
+    return {chave: round(float(media), 4) for chave, media in linhas.all()}
 
 
-async def volume_por_perfil_e_canal(inicio: datetime, fim: datetime) -> list[ContagemPorChave]:
-    """Como cada perfil usa o agente, e quanto entra por voz ou rotina."""
-    raise NotImplementedError("Agregações a implementar na onda 4")
+def chave_perfil_canal(perfil: str, canal: str) -> str:
+    """Chave composta do cruzamento perfil x canal, como `diretoria/voz`."""
+    return f"{perfil}/{canal}"
+
+
+async def volume_por_perfil_e_canal(
+    sessao: AsyncSession,
+    inicio: datetime,
+    fim: datetime,
+) -> list[ContagemPorChave]:
+    """Como cada perfil usa o agente, e quanto entra por voz ou rotina.
+
+    Uma linha por combinação de perfil e canal, inclusive as zeradas: um
+    perfil que nunca usa a voz é o tipo de achado que orienta onde
+    divulgar o canal. Sem filtro de perfil, porque o perfil já é uma das
+    dimensões do resultado.
+    """
+    consulta = select(_I.perfil, _I.canal, func.count()).group_by(_I.perfil, _I.canal)
+    linhas = await sessao.execute(_na_janela(consulta, inicio, fim, None))
+    contagens = {chave_perfil_canal(p, c): total for p, c, total in linhas.all()}
+    return [
+        ContagemPorChave(chave, contagens.get(chave, 0))
+        for chave in (chave_perfil_canal(p.value, c.value) for p in Perfil for c in Canal)
+    ]
 
 
 async def latencia(inicio: datetime, fim: datetime) -> dict[str, float]:
