@@ -10,13 +10,14 @@ CHAVE = ChavePortfolio(bytes(range(32)), 1000, 3000)
 CORPO = b'{"source_id":"portfolio"}'
 
 
-def cabecalhos(timestamp="2000"):
+def cabecalhos(timestamp="2000", *, corpo=CORPO, fonte="portfolio", chave_id="k1",
+               segredo=CHAVE.segredo):
     assinatura = hmac.digest(
-        CHAVE.segredo, f"portfolio\nk1\n{timestamp}\n".encode() + CORPO, "sha256"
+        segredo, f"{fonte}\n{chave_id}\n{timestamp}\n".encode() + corpo, "sha256"
     )
     return [
-        (b"X-Prata-Source", b"portfolio"),
-        (b"X-Prata-Key-Id", b"k1"),
+        (b"X-Prata-Source", fonte.encode()),
+        (b"X-Prata-Key-Id", chave_id.encode()),
         (b"X-Prata-Timestamp", timestamp.encode()),
         (b"X-Prata-Signature", base64.b64encode(assinatura)),
     ]
@@ -44,6 +45,24 @@ def test_recusa_fora_da_janela(agora):
 def test_nao_normaliza_corpo():
     with pytest.raises(WebhookRecusado):
         verificar(corpo=b'{ "source_id": "portfolio" }')
+
+
+@pytest.mark.parametrize("indice,valor", [
+    (0, b"portfolio_alternativo"),
+    (1, b"k2"),
+    (2, b"2001"),
+])
+def test_assinatura_vincula_metadados(indice, valor):
+    headers = cabecalhos()
+    headers[indice] = (headers[indice][0], valor)
+    chaves = {
+        ("portfolio", "k1"): CHAVE,
+        ("portfolio_alternativo", "k1"): CHAVE,
+        ("portfolio", "k2"): CHAVE,
+    }
+    with pytest.raises(WebhookRecusado) as erro:
+        verificar_portfolio(headers, CORPO, chaves, agora=2000)
+    assert erro.value.status == 401
 
 
 @pytest.mark.parametrize("chave", [
@@ -93,3 +112,21 @@ def test_timestamp_enorme_e_recusado_sem_overflow():
     with pytest.raises(WebhookRecusado) as erro:
         verificar(cabecalhos("9" * 2000), agora=2000.0)
     assert erro.value.status == 401
+
+
+def test_aceita_corpo_no_limite_e_recusa_acima_antes_da_assinatura():
+    corpo_limite = b"x" * (32 * 1024)
+    assert verificar(cabecalhos(corpo=corpo_limite), corpo=corpo_limite) == "portfolio"
+    with pytest.raises(WebhookRecusado) as erro:
+        verificar(cabecalhos(), corpo=b"x" * (32 * 1024 + 1))
+    assert erro.value.status == 413
+
+
+@pytest.mark.parametrize("extras", [
+    [(b"X-Extra", b"x" * 2049)],
+    [(f"X-Extra-{indice}".encode(), b"x" * 2048) for indice in range(9)],
+])
+def test_recusa_limites_de_cabecalhos(extras):
+    with pytest.raises(WebhookRecusado) as erro:
+        verificar(cabecalhos() + extras)
+    assert erro.value.status == 431
