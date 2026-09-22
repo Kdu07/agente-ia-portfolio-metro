@@ -24,12 +24,12 @@ import { useMicrofone } from "@/hooks/useMicrofone";
 
 export function Principal() {
   const { conversaId } = useParams<{ conversaId: string }>();
-  const { linhas, carregando, enviando, erro, enviar, reenviarUltima } = useConversa(conversaId);
+  const { linhas, carregando, enviando, erro, enviar, reenviarUltima, conversaIdAtual } = useConversa(conversaId);
 
   // O alerta proativo so faz sentido numa conversa nova: ele fala do
   // agora, e reaparecer ao abrir uma conversa de tres dias atras daria a
   // impressao de que o marco acabou de atrasar.
-  const [notificacao, setNotificacao] = useState(!conversaId);
+  const [notificacao, setNotificacao] = useState(!conversaIdAtual);
   const [texto, setTexto] = useState("");
 
   // A transcricao final chega ao campo em vez de ser enviada direto: a

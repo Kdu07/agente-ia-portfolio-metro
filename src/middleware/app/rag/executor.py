@@ -20,8 +20,9 @@ carregar a alocação: líder e membro de equipe alcançam só documentos
 transversais, que é o resultado conservador (ver `Escopo`).
 
 **Sem sessão externa.** O estado da conversa é do middleware (D6), e
-`conversa_externa_id` volta `None`. Os turnos anteriores ainda não
-entram no contexto: cada pergunta é respondida sozinha.
+`conversa_externa_id` volta `None`. Os turnos anteriores enriquecem a
+geração, mas não a consulta vetorial: a busca usa somente a mensagem
+atual para não diluir sua semântica com assuntos passados.
 
 **Fontes no texto.** A resposta leva ao fim um bloco com o arquivo e o
 local de cada citação, na ordem dos números entre colchetes. É o que a
@@ -36,7 +37,7 @@ orquestrador a registra como falha do executor.
 from collections.abc import Sequence
 from typing import Any
 
-from app.executor.base import Fonte, RespostaExecutor
+from app.executor.base import Fonte, RespostaExecutor, TurnoContexto
 from app.rag.fluxo import FluxoRag, montar_fluxo
 from app.rag.vetorial.base import Escopo
 from app.schemas.usuario import UsuarioAutenticado
@@ -55,9 +56,17 @@ class ExecutorRag:
         intencao_id: str,
         exige_confirmacao: bool,
         conversa_externa_id: str | None = None,
+        historico: tuple[TurnoContexto, ...] = (),
     ) -> RespostaExecutor:
         """Responde pelo RAG, no escopo de quem pergunta."""
-        resultado = await self._fluxo.responder(texto, self._escopo)
+        if historico:
+            resultado = await self._fluxo.responder(
+                texto,
+                self._escopo,
+                pergunta_para_geracao=compor_prompt(texto, historico),
+            )
+        else:
+            resultado = await self._fluxo.responder(texto, self._escopo)
         fontes = tuple(
             Fonte(
                 documento=fonte.documento,
@@ -69,6 +78,18 @@ class ExecutorRag:
             for fonte in resultado.resposta.fontes
         )
         return RespostaExecutor(texto=com_fontes(resultado.resposta.texto, fontes), fontes=fontes)
+
+
+def compor_prompt(texto: str, historico: tuple[TurnoContexto, ...]) -> str:
+    """Delimita o historico como dado antes da mensagem atual."""
+    if not historico:
+        return texto
+    turnos = "\n".join(
+        f"<turno>\n<mensagem_usuario>{turno.mensagem_usuario}</mensagem_usuario>\n"
+        f"<resposta_agente>{turno.resposta_agente}</resposta_agente>\n</turno>"
+        for turno in historico
+    )
+    return f"<historico_nao_confiavel>\n{turnos}\n</historico_nao_confiavel>\n<mensagem_atual>{texto}</mensagem_atual>"
 
 
 def com_fontes(texto: str, fontes: Sequence[Fonte]) -> str:

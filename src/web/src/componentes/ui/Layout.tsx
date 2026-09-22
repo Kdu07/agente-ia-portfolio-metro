@@ -15,7 +15,12 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useUsuario } from "@/hooks/useUsuario";
+import { useConversas } from "@/hooks/useConversas";
+import { CHAVE_CONVERSA_ATIVA } from "@/hooks/useConversa";
 import { api } from "@/servicos/api";
+import { quandoFoi } from "@/utilitarios/formato";
+
+const LIMITE_CONVERSAS_RECENTES = 3;
 
 type NomeIcone = "menu" | "chat" | "rotinas" | "historico" | "intencoes" | "plus" | "login";
 
@@ -35,6 +40,7 @@ function Icone({ nome }: { nome: NomeIcone }) {
 export function Layout() {
   const [aberto, setAberto] = useState(false);
   const { usuario } = useUsuario();
+  const { conversas, carregando: carregandoConversas, erro: erroConversas } = useConversas();
   const navegar = useNavigate();
   const consultas = useQueryClient();
 
@@ -44,6 +50,7 @@ export function Layout() {
   // sabia do usuario, senao a moldura continuaria mostrando o nome dele.
   async function sair() {
     await api.post("/auth/logout");
+    sessionStorage.removeItem(CHAVE_CONVERSA_ATIVA);
     consultas.clear();
     navegar("/entrar", { replace: true });
   }
@@ -58,7 +65,17 @@ export function Layout() {
           <img className="brand-logo" src="/logo-prata.png" alt="Prata Agent" />
         </div>
 
-        <NavLink className="new-chat" to="/" onClick={fechar}><Icone nome="plus" /> Nova conversa</NavLink>
+        <NavLink
+          className="new-chat"
+          to="/"
+          state={{ novaConversa: true }}
+          onClick={() => {
+            sessionStorage.removeItem(CHAVE_CONVERSA_ATIVA);
+            fechar();
+          }}
+        >
+          <Icone nome="plus" /> Nova conversa
+        </NavLink>
 
         <p className="nav-label">Navegação</p>
         <nav aria-label="Navegação principal" className="nav-list">
@@ -77,15 +94,23 @@ export function Layout() {
             <p className="nav-label" id="historico-titulo">Recentes</p>
             <NavLink className="text-button" to="/historico" onClick={fechar}>ver todas</NavLink>
           </div>
-          {/* TODO (bloco de historico): substituir por GET /conversas. */}
-          <NavLink to="/conversas/projeto-x" onClick={fechar}>
-            <span className="history-icon">↺</span>
-            <span><strong>Status do Projeto X</strong><small>Hoje</small></span>
-          </NavLink>
-          <NavLink to="/conversas/riscos-linha-6" onClick={fechar}>
-            <span className="history-icon">↺</span>
-            <span><strong>Riscos da Linha 6</strong><small>Ontem</small></span>
-          </NavLink>
+          {carregandoConversas ? (
+            <p className="history-status" role="status">Carregando conversas...</p>
+          ) : erroConversas ? (
+            <p className="history-status" role="alert">{erroConversas}</p>
+          ) : conversas.length === 0 ? (
+            <p className="history-status">Nenhuma conversa recente</p>
+          ) : (
+            conversas.slice(0, LIMITE_CONVERSAS_RECENTES).map((conversa) => (
+              <NavLink key={conversa.id} to={`/conversas/${conversa.id}`} onClick={fechar}>
+                <span className="history-icon">↺</span>
+                <span>
+                  <strong>{conversa.titulo ?? "Conversa sem título"}</strong>
+                  <small>{quandoFoi(conversa.atualizada_em)}</small>
+                </span>
+              </NavLink>
+            ))
+          )}
         </section>
 
         <div className="sidebar-spacer" />

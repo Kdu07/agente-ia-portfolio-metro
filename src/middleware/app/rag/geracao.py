@@ -253,7 +253,9 @@ class Gerador:
     def __init__(self, modelo: ModeloLinguagem) -> None:
         self._modelo = modelo
 
-    async def responder(self, recuperacao: Recuperacao) -> RespostaRag:
+    async def responder(
+        self, recuperacao: Recuperacao, *, pergunta: str | None = None
+    ) -> RespostaRag:
         """Gera a resposta para a pergunta da recuperação.
 
         `ErroGeracao` do modelo propaga: indisponibilidade não é
@@ -262,6 +264,6 @@ class Gerador:
         if recuperacao.vazia:
             return abstencao(Situacao.SEM_CONTEXTO)
 
-        conteudo = montar_conteudo(recuperacao.consulta, recuperacao.trechos)
+        conteudo = montar_conteudo(pergunta or recuperacao.consulta, recuperacao.trechos)
         bruta = await self._modelo.gerar(instrucoes=INSTRUCOES, conteudo=conteudo)
         return interpretar(bruta, recuperacao.trechos, modelo=self._modelo.nome)

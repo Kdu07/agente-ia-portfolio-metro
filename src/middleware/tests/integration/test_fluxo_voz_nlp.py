@@ -35,6 +35,7 @@ class CopilotFalso:
         intencao_id: str,
         exige_confirmacao: bool,
         conversa_externa_id: str | None = None,
+        historico=(),
     ) -> RespostaCopilot:
         self.recebidas.append(texto)
         return RespostaCopilot(
@@ -62,6 +63,14 @@ class RepositorioMemoria:
 
     async def vincular_externa(self, conversa_id: str, conversa_externa_id: str) -> None:
         self.conversas[conversa_id].conversa_externa_id = conversa_externa_id
+
+    async def listar_por_conversa(self, conversa_id: str, usuario_id: str, *, limite=None):
+        interacoes = [
+            interacao
+            for interacao in self.interacoes
+            if interacao.conversa_id == conversa_id and interacao.usuario_id == usuario_id
+        ]
+        return interacoes[-limite:] if limite is not None else interacoes
 
 
 def test_texto_transcrito_percorre_pipeline_como_canal_de_voz(tmp_path, monkeypatch) -> None:

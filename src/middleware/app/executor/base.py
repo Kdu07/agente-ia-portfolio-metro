@@ -31,6 +31,14 @@ class Fonte:
     localizador: str  # seção, aba ou slide
 
 
+@dataclass(frozen=True)
+class TurnoContexto:
+    """Um turno persistido, tratado como dado não confiável no prompt."""
+
+    mensagem_usuario: str
+    resposta_agente: str
+
+
 @dataclass
 class RespostaExecutor:
     """Resposta devolvida por qualquer executor."""
@@ -61,11 +69,13 @@ class Executor(Protocol):
         intencao_id: str,
         exige_confirmacao: bool,
         conversa_externa_id: str | None = None,
+        historico: tuple[TurnoContexto, ...] = (),
     ) -> RespostaExecutor:
         """Executa a mensagem já aprovada pelas guardas e devolve a resposta.
 
         `intencao_id` e `exige_confirmacao` são metadados, nunca texto
         concatenado à mensagem. Qualquer exceção é tratada pelo
-        orquestrador como falha do executor.
+        orquestrador como falha do executor. `historico` é opcional para
+        manter compatibilidade com chamadores existentes.
         """
         ...

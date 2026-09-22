@@ -59,6 +59,7 @@ button { cursor: pointer; }
 .history-section > a > span:last-child { display: grid; min-width: 0; flex: 1; }
 .history-section strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .history-section small { color: var(--texto-suave); font-size: 10px; }
+.history-status { margin: 0; padding: 10px 9px; color: var(--texto-suave); font-size: 12px; }
 .history-icon { color: #627085; font-size: 18px; }
 .sidebar-spacer { flex: 1; }
 .profile-card, .microsoft-login { display: flex; align-items: center; gap: 10px; padding-top: 15px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; }

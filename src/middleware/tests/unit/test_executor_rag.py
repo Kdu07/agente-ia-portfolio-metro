@@ -12,7 +12,7 @@ import pytest
 from app.api import deps
 from app.config import Settings, settings
 from app.copilot.client import CopilotClient
-from app.executor.base import Executor
+from app.executor.base import Executor, TurnoContexto
 from app.executor.base import Fonte as FonteExecutor
 from app.rag import executor as rag_executor
 from app.rag.executor import ExecutorRag, com_fontes
@@ -48,11 +48,19 @@ class FluxoFalso:
 
     def __init__(self, resposta: RespostaRag = RESPONDIDA, erro: Exception | None = None) -> None:
         self.perguntas: list[tuple[str, Escopo]] = []
+        self.perguntas_para_geracao: list[str | None] = []
         self._resposta = resposta
         self._erro = erro
 
-    async def responder(self, pergunta: str, escopo: Escopo) -> ResultadoRag:
+    async def responder(
+        self,
+        pergunta: str,
+        escopo: Escopo,
+        *,
+        pergunta_para_geracao: str | None = None,
+    ) -> ResultadoRag:
         self.perguntas.append((pergunta, escopo))
+        self.perguntas_para_geracao.append(pergunta_para_geracao)
         if self._erro:
             raise self._erro
         return ResultadoRag(
@@ -88,6 +96,26 @@ async def test_resposta_leva_fontes_no_texto_e_estruturadas() -> None:
         ),
     )
     assert fluxo.perguntas == [(PERGUNTA, ESCOPO)]
+
+
+async def test_historico_enriquece_geracao_sem_alterar_busca_vetorial() -> None:
+    fluxo = FluxoFalso()
+    historico = (
+        TurnoContexto(
+            mensagem_usuario="Qual o status do Trecho Sul?",
+            resposta_agente="O projeto esta em andamento.",
+        ),
+    )
+
+    await ExecutorRag(fluxo, ESCOPO).enviar(
+        PERGUNTA,
+        "consultar_documento_projeto",
+        False,
+        historico=historico,
+    )
+
+    assert fluxo.perguntas == [(PERGUNTA, ESCOPO)]
+    assert fluxo.perguntas_para_geracao == [rag_executor.compor_prompt(PERGUNTA, historico)]
 
 
 async def test_sem_sessao_externa() -> None:

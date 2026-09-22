@@ -235,20 +235,25 @@ class InteracaoRepository(_RepositorioBase):
         )
         await self._sessao.flush()
 
-    async def listar_por_conversa(self, conversa_id: str, usuario_id: str) -> list[Interacao]:
+    async def listar_por_conversa(
+        self, conversa_id: str, usuario_id: str, *, limite: int | None = None
+    ) -> list[Interacao]:
         """Turnos de uma conversa, em ordem cronológica.
 
         Filtra por `usuario_id` pela mesma razão que `ConversaRepository.obter`.
         """
+        if limite == 0:
+            return []
         resultado = await self._sessao.execute(
             select(InteracaoTabela)
             .where(
                 InteracaoTabela.conversa_id == conversa_id,
                 InteracaoTabela.usuario_id == usuario_id,
             )
-            .order_by(InteracaoTabela.criada_em)
+            .order_by(InteracaoTabela.criada_em.desc())
+            .limit(limite)
         )
-        return [linha.to_dominio() for linha in resultado.scalars()]
+        return list(reversed([linha.to_dominio() for linha in resultado.scalars()]))
 
     async def listar_por_usuario(self, usuario_id: str, *, limite: int = 50) -> list[Interacao]:
         """Interações recentes de um usuário.
