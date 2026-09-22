@@ -157,6 +157,12 @@ class Interacao:
     latencia_ms: int
     criada_em: datetime
     rotina_id: str | None = None  # preenchido quando canal is Canal.ROTINA
+    # Milissegundos gastos em cada etapa percorrida, na ordem do
+    # orquestrador. Só as etapas efetivamente executadas aparecem: uma
+    # mensagem barrada na injeção não tem tempo de executor, e registrar
+    # zero ali puxaria para baixo o percentil de quem chegou ao executor.
+    # Nulo nas interações gravadas antes da medição por etapa existir.
+    latencia_etapas: dict[str, int] | None = None
 
     @property
     def bloqueada(self) -> bool:

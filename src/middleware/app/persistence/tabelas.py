@@ -34,6 +34,7 @@ from enum import Enum as EnumPython
 
 from sqlalchemy import (
     ARRAY,
+    JSON,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -45,6 +46,7 @@ from sqlalchemy import (
     Text,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.persistence.models import (
@@ -349,6 +351,14 @@ class InteracaoTabela(Base):
     confianca_intencao: Mapped[float] = mapped_column(Float, nullable=False)
     desfecho: Mapped[str] = mapped_column(Text, nullable=False)
     latencia_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Tempo por etapa do pipeline, `{"injecao": 12, "executor": 1830}`.
+    # Documento, e não uma coluna por etapa, porque o conjunto de etapas
+    # acompanha o orquestrador: uma guarda nova não deve exigir migração
+    # para passar a ser medida. JSONB no PostgreSQL; JSON genérico no
+    # SQLite dos testes unitários.
+    latencia_etapas: Mapped[dict[str, int] | None] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), nullable=True
+    )
     criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     # Preenchido quando `canal` é `rotina`. Responde "de qual rotina esta
     # mensagem nasceu"; a navegação oposta — "que interação este disparo
@@ -401,6 +411,7 @@ class InteracaoTabela(Base):
             latencia_ms=interacao.latencia_ms,
             criada_em=interacao.criada_em,
             rotina_id=interacao.rotina_id,
+            latencia_etapas=interacao.latencia_etapas,
         )
 
     def to_dominio(self) -> Interacao:
@@ -418,6 +429,7 @@ class InteracaoTabela(Base):
             latencia_ms=self.latencia_ms,
             criada_em=self.criada_em,
             rotina_id=self.rotina_id,
+            latencia_etapas=self.latencia_etapas,
         )
 
 
