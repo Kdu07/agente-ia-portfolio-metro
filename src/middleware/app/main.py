@@ -17,19 +17,27 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.routes import auth, chat, conversas, health, intencoes, portfolio, rotinas, voz
+from app.config import settings
+from app.mensageria.produtor import ProdutorEventos
 from app.persistence import sessao as db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Cria o pool de conexões na subida e o fecha no encerramento.
+    """Cria o pool de conexões e o produtor de eventos na subida e os fecha no encerramento.
 
     O engine vive pelo processo inteiro. Criá-lo por requisição
     descartaria o pool e transformaria cada mensagem num handshake novo
     com o PostgreSQL.
+
+    O produtor só conecta ao RabbitMQ na primeira publicação: a API sobe
+    com o broker fora do ar, e só as rotas que publicam respondem erro
+    transitório até ele voltar.
     """
     db.iniciar()
+    app.state.produtor_eventos = ProdutorEventos.a_partir_de(settings)
     yield
+    await app.state.produtor_eventos.encerrar()
     await db.encerrar()
 
 

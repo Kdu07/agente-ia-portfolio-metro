@@ -47,6 +47,10 @@ dependencies = [
     # Reconhecimento de fala no backend. A integração isolada aceita WAV;
     # formatos comprimidos entram na etapa de processamento de áudio.
     "azure-cognitiveservices-speech>=1.51,<2",
+    # Cliente AMQP assíncrono da mensageria (Projeto.md 9.1.2.6): publisher
+    # confirms, reconexão e mandatory. Major fixada porque o produtor
+    # depende das exceções de entrega da biblioteca.
+    "aio-pika>=9.4,<10",
 ]
 
 [project.optional-dependencies]

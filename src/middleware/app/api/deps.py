@@ -1,6 +1,6 @@
 """Dependências compartilhadas pelas rotas (FastAPI Depends).
 
-Três responsabilidades:
+Quatro responsabilidades:
 
 1. Resolver a sessão e devolver o usuário autenticado ANTES de qualquer
    processamento. É a porta única de entrada de identidade: nenhuma rota
@@ -13,12 +13,15 @@ Três responsabilidades:
    escolhido por `settings.executor`. Concentrar a montagem aqui é o que
    permite aos testes trocarem o executor por um dublê via
    `app.dependency_overrides`, sem monkeypatch.
+4. Entregar o produtor de eventos criado no lifespan (app/main.py), que
+   as rotas usam para publicar no RabbitMQ; os testes o trocam por um
+   dublê pelo mesmo `dependency_overrides`.
 """
 
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import sessao as auth_sessao
@@ -26,6 +29,7 @@ from app.config import settings
 from app.executor.base import Executor
 from app.executor.desempenho import ExecutorDesempenho
 from app.executor.fabrica import montar_executor
+from app.mensageria.produtor import ProdutorEventos
 from app.persistence.repository import (
     ConversaRepository,
     ExecucaoRepository,
@@ -45,6 +49,7 @@ from app.pipeline.orquestrador import Orquestrador
 from app.schemas.usuario import Permissao, UsuarioAutenticado
 
 __all__ = [
+    "Produtor",
     "SessaoBanco",
     "UsuarioAtual",
     "UsuarioAutenticado",
@@ -56,6 +61,7 @@ __all__ = [
     "obter_interacoes",
     "obter_marcos",
     "obter_orquestrador",
+    "obter_produtor",
     "obter_projetos",
     "obter_riscos",
     "obter_rotinas",
@@ -206,3 +212,15 @@ def obter_orquestrador(
         interacoes=interacoes,
         conversas=conversas,
     )
+
+
+def obter_produtor(request: Request) -> ProdutorEventos:
+    """Devolve o produtor único do processo, criado no lifespan.
+
+    Um produtor por requisição abriria uma conexão AMQP a cada chamada;
+    o do lifespan mantém uma só, com reconexão.
+    """
+    return request.app.state.produtor_eventos
+
+
+Produtor = Annotated[ProdutorEventos, Depends(obter_produtor)]
