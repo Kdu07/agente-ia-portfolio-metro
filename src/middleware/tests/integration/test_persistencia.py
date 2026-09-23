@@ -48,7 +48,9 @@ from app.persistence.repository import (
 from app.persistence.sessao import criar_engine
 from app.persistence.tabelas import Base, InteracaoTabela
 from app.pipeline.desfechos import Desfecho
-from app.schemas.usuario import Perfil
+from app.rotinas import execucao as execucao_rotina
+from app.schemas.chat import ChatResponse
+from app.schemas.usuario import Perfil, UsuarioAutenticado
 
 AGORA = datetime.now(UTC)
 
@@ -436,6 +438,26 @@ async def _rotina(sessao: AsyncSession, dono_id: str, *, ativa: bool = True) -> 
     return rotina
 
 
+def _usar_sessao_real_da_transacao(
+    monkeypatch: pytest.MonkeyPatch,
+    sessao: AsyncSession,
+) -> None:
+    """Faz o executor abrir a sessão real do teste sem encerrar a fixture."""
+
+    class Contexto:
+        async def __aenter__(self) -> AsyncSession:
+            return sessao
+
+        async def __aexit__(self, *args: object) -> None:
+            return None
+
+    monkeypatch.setattr(
+        execucao_rotina,
+        "fabrica_de_sessoes",
+        lambda: lambda: Contexto(),
+    )
+
+
 async def test_listar_ativas_ignora_desativadas(sessao: AsyncSession) -> None:
     dono = await _usuario(sessao)
     ativa = await _rotina(sessao, dono, ativa=True)
@@ -522,6 +544,75 @@ async def test_registrar_fim_liga_a_execucao_a_interacao(
     assert [(item.id, turno.id if turno else None) for item, turno in historico] == [
         (execucao_id, interacao.id)
     ]
+
+
+async def test_execucao_com_permissao_vigente_persiste_resultado(
+    sessao: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dono_id = await _usuario(sessao)
+    rotina = await _rotina(sessao, dono_id)
+    usuario = UsuarioAutenticado(
+        id=dono_id,
+        nome="Fernanda Medina",
+        perfil=Perfil.LIDER_PROJETO,
+    )
+    _usar_sessao_real_da_transacao(monkeypatch, sessao)
+
+    async def resolver(recebido: str) -> UsuarioAutenticado:
+        assert recebido == dono_id
+        return usuario
+
+    async def processar(
+        recebida: Rotina,
+        autenticado: UsuarioAutenticado,
+    ) -> ChatResponse:
+        assert (recebida.id, autenticado.id) == (rotina.id, dono_id)
+        return ChatResponse(
+            resposta="Foram encontrados dois riscos críticos.",
+            conversa_id=_id("conversa"),
+            desfecho=Desfecho.ENCAMINHADA.value,
+        )
+
+    monkeypatch.setattr(execucao_rotina, "_resolver_dono", resolver)
+    monkeypatch.setattr(execucao_rotina, "_processar", processar)
+
+    resposta = await execucao_rotina.executar(rotina)
+
+    registradas = await ExecucaoRepository(sessao).listar_por_rotina(rotina.id)
+    assert len(registradas) == 1
+    assert registradas[0].id == resposta.execucao_id
+    assert registradas[0].status is StatusExecucao.SUCESSO
+    assert registradas[0].concluida_em is not None
+    assert registradas[0].erro is None
+
+
+async def test_permissao_revogada_persiste_falha_e_desativa_rotina(
+    sessao: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dono_id = await _usuario(sessao)
+    rotina = await _rotina(sessao, dono_id)
+    _usar_sessao_real_da_transacao(monkeypatch, sessao)
+
+    async def recusar(_: str) -> UsuarioAutenticado:
+        raise execucao_rotina.PermissaoRotinaRevogada(
+            "Dono sem permissão atual para executar rotinas"
+        )
+
+    monkeypatch.setattr(execucao_rotina, "_resolver_dono", recusar)
+
+    with pytest.raises(execucao_rotina.PermissaoRotinaRevogada):
+        await execucao_rotina.executar(rotina)
+
+    registradas = await ExecucaoRepository(sessao).listar_por_rotina(rotina.id)
+    atualizada = await RotinaRepository(sessao).obter(rotina.id)
+    assert len(registradas) == 1
+    assert registradas[0].status is StatusExecucao.FALHA
+    assert registradas[0].concluida_em is not None
+    assert registradas[0].erro == "Dono sem permissão atual para executar rotinas"
+    assert atualizada is not None
+    assert atualizada.ativa is False
 
 
 async def test_remover_rotina_com_execucao_e_recusado(sessao: AsyncSession) -> None:
@@ -625,6 +716,7 @@ async def test_orquestrador_grava_no_banco_real(
             intencao_id: str,
             exige_confirmacao: bool,
             conversa_externa_id: str | None = None,
+            historico: tuple = (),
         ) -> RespostaCopilot:
             return RespostaCopilot(
                 texto="Projeto 123XXX em andamento.", conversa_externa_id="dl-real-1"
