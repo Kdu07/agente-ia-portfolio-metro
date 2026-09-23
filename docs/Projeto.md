@@ -9111,7 +9111,17 @@ O requisito tem dois critérios de aceitação em 3.3.1, e eles são **assimétr
 | `TNF-RNF05-03` | Positivo | O mesmo enunciado, os três perfis | Enunciado idêntico submetido por Diretoria, Liderança e Equipe de projeto | As três respostas diferem em profundidade e recorte, na direção descrita no quadro comparativo de 2.4.4 | RNF05, 2.4.4 | Onda 3 |
 | `TNF-RNF05-04` | Negativo | Inadequação sem exposição também reprova a taxa | Resposta autorizada, porém com detalhamento incompatível com o contexto do perfil | O caso é contado como inadequado na taxa, e **não** como exposição; a separação entre os dois critérios é preservada na apuração | RNF05, 2.4.4 | Onda 3 |
 
-**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf05_perfil.py`, com o executor dublado devolvendo, para cada enunciado, o conteúdo completo disponível; a adequação avaliada é a do recorte que o middleware entrega, e não a redação do executor. A avaliação de adequação de `TNF-RNF05-01` é humana e registrada em planilha versionada com o conjunto, porque não há critério automatizável para julgamento de forma; a verificação de exposição de `TNF-RNF05-02` é automatizada, por confronto entre o conteúdo devolvido e o conjunto de projetos autorizados para o perfil. A diferença de método acompanha a diferença de natureza dos dois critérios.
+**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf05_perfil.py`, com dez enunciados sintéticos e respostas dubladas para cada perfil. A ficha de avaliação registra termos esperados e indesejados no próprio caso; ela formaliza o critério que deverá ser revisado por avaliadores humanos quando o conteúdo do parceiro estiver disponível, sem apresentar a bancada sintética como validação humana. A adequação avaliada é a do recorte que o middleware entrega, e não a redação do executor. A verificação de exposição de `TNF-RNF05-02` é automatizada, por confronto entre o conteúdo devolvido e o conjunto de projetos autorizados para o perfil.
+
+**Resultado da execução local de 23/09/2026.** O comando
+`python -m pytest tests/rnf/test_rnf05_perfil.py -q` resultou em **6 passed**:
+`TNF-RNF05-01` passou para Diretoria, Liderança e Equipe, com **100% de
+adequação** em cada perfil; `TNF-RNF05-02` não encontrou exposição do projeto
+restrito; `TNF-RNF05-03` confirmou o mesmo enunciado com recortes de 3, 2 e 2
+trechos visíveis; e `TNF-RNF05-04` separou inadequação de exposição. A tentativa
+de executar toda a pasta `tests/rnf` ficou inconclusiva por `ModuleNotFoundError:
+aio_pika` ao coletar o teste preexistente do RNF04; esse bloqueio de ambiente
+não altera o resultado isolado do RNF05.
 
 #### 10.2.3.6 RNF06 — Eficácia das barreiras de segurança
 
