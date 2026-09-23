@@ -10519,20 +10519,36 @@ python -m ruff check app tests
 **O que roda hoje, e com que resultado.** Os comandos abaixo foram executados
 nesta ordem, no Windows, sobre o ambiente de 10.5.3.4:
 
+> A execução sistêmica de 23/09/2026 está registrada em
+> [evidencias-testes-integracao-2026-09-23.md](evidencias-testes-integracao-2026-09-23.md).
+> Ela inclui os comandos, a versão da branch, os componentes que realmente se
+> comunicaram e os logs dos fluxos que ficaram limitados.
+
 ```powershell
 cd src\middleware
-.\.venv\Scripts\Activate.ps1
-
-python -m pytest tests/unit                  # 367 passed, 5 skipped, 1 failed (ver abaixo)
-python -m pytest -m externo                  # 12 passed  -- o VHS, com rede liberada
-python -m pytest -m externo --block-network --allowed-hosts=127.0.0.1
-                                             # 11 passed, 1 skipped
+.\.venv\Scripts\python.exe -m pytest tests/integration/externos -q
+                                             # 16 passed, 4 skipped
+.\.venv\Scripts\python.exe -m pytest -m integracao --block-network -q
+                                             # 11 passed, 1 skipped, 38 errors
+cd ..\web
+npm test -- --run                            # 57 passed
+npm run build                                # passou
+docker compose -f infra/docker-compose.yml up -d --build
+                                             # cinco serviços em execução
+Invoke-WebRequest http://localhost:5173/api/health
+                                             # 200, {"status":"ok"}
 ```
 
-A leitura da terceira linha é a que interessa: sob rede bloqueada, os onze casos
-que dependem da fita **passam sem alcançar socket algum** — é a prova de que a
-reprodução funciona. O caso pulado é o de gravação, que pertence ao modo
-Gravação e se exclui sozinho quando detecta o bloqueio (10.5.4.7).
+O grupo externo passou com as fitas sob rede bloqueada, comprovando a
+reprodução sem acesso aos serviços Microsoft. O frontend passou e o smoke pelo
+proxy confirmou a comunicação `web → middleware`; as migrações chegaram a
+`20260922_latencia_por_etapa (head)` e o PostgreSQL ficou saudável. A suíte de
+integração completa não pode ser declarada verde: a `.venv` local não possui
+`aiosqlite`, e o bloqueador de rede intercepta sockets locais do
+`ProactorEventLoop` no Windows. Além disso, os logs do worker registraram
+tentativas repetidas de inserir `rotina:demo-rotina-diretoria` na tabela do
+APScheduler, com violação de chave única. Esses três pontos estão discriminados
+no registro de evidências e devem gerar issues próprias.
 
 Duas restrições conhecidas, ambas herdadas e nenhuma delas no VHS:
 
