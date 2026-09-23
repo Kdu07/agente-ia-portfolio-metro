@@ -25,6 +25,7 @@ from dataclasses import dataclass
 
 import httpx
 
+from app.config import settings
 from app.pipeline.guardas import content_safety
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,9 @@ async def classificar(
         # corpo — o que, falhando fechado, viraria um bloqueio absurdo.
         # O orquestrador já trata a vazia como fora de escopo na etapa 3.
         return ResultadoInjection(suspeita=False, confianca=0.0, motivo="vazio")
+
+    if settings.performance_mode:
+        return ResultadoInjection(suspeita=False, confianca=0.0, motivo="duble_desempenho")
 
     if not content_safety.configurado():
         logger.warning("Guarda de injeção sem Content Safety configurado; só as regras valem")

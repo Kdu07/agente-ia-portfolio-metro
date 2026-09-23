@@ -1,6 +1,7 @@
 """Testes do registro persistente das rotinas no APScheduler."""
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 from apscheduler.jobstores.memory import MemoryJobStore
@@ -17,7 +18,7 @@ def _rotina(*, rotina_id: str = "rotina-1", ativa: bool = True) -> Rotina:
         id=rotina_id,
         nome="Resumo diário",
         prompt="Liste os riscos críticos dos projetos ativos",
-        agenda_cron="0 8 * * 1-5",
+        agenda_cron="0 8 * * mon-fri",
         timezone="America/Sao_Paulo",
         dono_id="usuario-1",
         ativa=ativa,
@@ -52,6 +53,11 @@ async def test_registra_lista_substitui_e_remove_job():
         jobs = modulo.listar_agendadas()
         assert [job.id for job in jobs] == ["rotina:rotina-1"]
         assert str(jobs[0].trigger.timezone) == "America/Sao_Paulo"
+        sexta = datetime(2026, 9, 18, 12, tzinfo=ZoneInfo("America/Sao_Paulo"))
+        proximo_disparo = jobs[0].trigger.get_next_fire_time(None, sexta)
+        assert proximo_disparo is not None
+        assert proximo_disparo.weekday() == 0
+        assert (proximo_disparo.hour, proximo_disparo.minute) == (8, 0)
 
         rotina.nome = "Resumo atualizado"
         modulo.agendar(rotina)

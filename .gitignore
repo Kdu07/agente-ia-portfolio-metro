@@ -16,10 +16,14 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
+.coverage
+coverage.xml
+htmlcov/
 
 # Node / frontend
 node_modules/
 dist/
+coverage/
 *.tsbuildinfo
 *.local
 .eslintcache
@@ -31,3 +35,6 @@ dbdata/
 .claude
 
 claude-gitlab/
+
+# Codex
+.codex

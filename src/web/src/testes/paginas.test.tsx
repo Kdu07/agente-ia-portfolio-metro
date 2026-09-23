@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Principal } from "@/paginas/Principal";
@@ -125,10 +125,22 @@ describe("Página de rotinas", () => {
   });
 
   it("valida e cria uma rotina", async () => {
+    let agendaRecebida = "";
+    servidor.use(
+      http.post("/api/rotinas/validar", async ({ request }) => {
+        const pedido = (await request.json()) as { agenda_cron: string };
+        agendaRecebida = pedido.agenda_cron;
+        return HttpResponse.json({ valida: true, intencao_prevista: "consultar_status_portfolio", erro: null });
+      }),
+    );
     renderizar(<Rotinas />);
     await screen.findByText("Riscos da Linha 6");
 
     fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+    expect(screen.getByRole("combobox", { name: /Repetir/ })).toHaveValue("dias_uteis");
+    expect(screen.getByLabelText(/Horário/)).toHaveValue("08:00");
+    expect(screen.getByRole("combobox", { name: /Fuso/ })).toHaveValue("America/Sao_Paulo");
+    expect(screen.getByText("Esta rotina será executada de segunda a sexta, às 08:00.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Criar rotina" }));
     expect(screen.getByText("Informe um nome com pelo menos 3 caracteres.")).toBeInTheDocument();
 
@@ -136,18 +148,106 @@ describe("Página de rotinas", () => {
     fireEvent.change(screen.getByPlaceholderText("Descreva o que o Prata deve consultar ou acompanhar"), { target: { value: "Listar pendências críticas dos projetos ativos." } });
     fireEvent.click(screen.getByRole("button", { name: "Criar rotina" }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Rotina criada com sucesso.");
-    expect(screen.getByText("Pendências diárias")).toBeInTheDocument();
+    expect(await screen.findByRole("status", {}, { timeout: 3000 })).toHaveTextContent("Rotina criada com sucesso.");
+    expect(await screen.findByText("Pendências diárias")).toBeInTheDocument();
+    expect(agendaRecebida).toBe("0 8 * * mon-fri");
+  });
+
+  it("mostra apenas o complemento necessário para agendas semanais e mensais", async () => {
+    renderizar(<Rotinas />);
+    await screen.findByText("Riscos da Linha 6");
+    fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "semanal" } });
+    expect(screen.getByRole("combobox", { name: /Dia da semana/ })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Dia do mês/)).not.toBeInTheDocument();
+    expect(screen.getByText("Esta rotina será executada toda segunda-feira, às 08:00.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "mensal" } });
+    expect(screen.getByLabelText(/Dia do mês/)).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: /Dia da semana/ })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "dias_personalizados" } });
+    expect(screen.getByRole("checkbox", { name: "Seg" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Qua" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Sex" })).toBeChecked();
+    expect(screen.getByText("Esta rotina será executada às segundas-feiras, quartas-feiras e sextas-feiras, às 08:00.")).toBeInTheDocument();
+  });
+
+  it("gera cron com nomes para os dias personalizados", async () => {
+    let agendaRecebida = "";
+    servidor.use(
+      http.post("/api/rotinas/validar", async ({ request }) => {
+        const pedido = (await request.json()) as { agenda_cron: string };
+        agendaRecebida = pedido.agenda_cron;
+        return HttpResponse.json({ valida: true, intencao_prevista: "consultar_status_portfolio", erro: null });
+      }),
+    );
+    renderizar(<Rotinas />);
+    await screen.findByText("Riscos da Linha 6");
+    fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+    fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "dias_personalizados" } });
+    fireEvent.change(screen.getByPlaceholderText("Ex.: Resumo semanal do portfólio"), { target: { value: "Acompanhamento alternado" } });
+    fireEvent.change(screen.getByPlaceholderText("Descreva o que o Prata deve consultar ou acompanhar"), { target: { value: "Listar riscos críticos dos projetos ativos." } });
+    fireEvent.click(screen.getByRole("button", { name: "Criar rotina" }));
+
+    expect(await screen.findByText("Acompanhamento alternado")).toBeInTheDocument();
+    expect(agendaRecebida).toBe("0 8 * * mon,wed,fri");
   });
 
   it("solicita confirmação antes de excluir", async () => {
     renderizar(<Rotinas />);
     await screen.findByText("Riscos da Linha 6");
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    const cartao = screen.getByText("Riscos da Linha 6").closest("article");
+    expect(cartao).not.toBeNull();
+    fireEvent.click(within(cartao!).getByRole("button", { name: "Excluir" }));
     expect(screen.getByRole("alertdialog", { name: "Excluir rotina?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(screen.queryByRole("alertdialog", { name: "Excluir rotina?" })).not.toBeInTheDocument();
+  });
+
+  it("edita e exclui uma rotina pelas rotas reais", async () => {
+    renderizar(<Rotinas />);
+    const titulo = await screen.findByText("Riscos da Linha 6");
+    const cartao = titulo.closest("article");
+    expect(cartao).not.toBeNull();
+
+    fireEvent.click(within(cartao!).getByRole("button", { name: "Editar" }));
+    fireEvent.change(screen.getByPlaceholderText("Ex.: Resumo semanal do portfólio"), {
+      target: { value: "Riscos críticos atualizados" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    expect(await screen.findByText("Riscos críticos atualizados")).toBeInTheDocument();
+
+    const cartaoAtualizado = screen.getByText("Riscos críticos atualizados").closest("article");
+    fireEvent.click(within(cartaoAtualizado!).getByRole("button", { name: "Excluir" }));
+    fireEvent.click(screen.getByRole("button", { name: "Excluir rotina" }));
+    await waitFor(() => expect(screen.queryByText("Riscos críticos atualizados")).not.toBeInTheDocument());
+  });
+
+  it("consulta e apresenta o histórico de execuções", async () => {
+    renderizar(<Rotinas />);
+    const titulo = await screen.findByText("Resumo semanal do portfólio");
+    const cartao = titulo.closest("article");
+    expect(cartao).not.toBeNull();
+
+    fireEvent.click(within(cartao!).getByRole("button", { name: "Resultados" }));
+
+    expect(await screen.findByText(/Resumo consolidado de 12 projetos ativos/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Executar agora" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Rotina executada");
+  });
+
+  it("distingue falha de carregamento de uma lista vazia", async () => {
+    servidor.use(
+      http.get("/api/rotinas", () => HttpResponse.json({ detail: "Banco temporariamente indisponível" }, { status: 503 })),
+    );
+    renderizar(<Rotinas />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Banco temporariamente indisponível");
+    expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeInTheDocument();
+    expect(screen.queryByText("Crie sua primeira rotina")).not.toBeInTheDocument();
   });
 });
 

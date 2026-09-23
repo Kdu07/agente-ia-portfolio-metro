@@ -6,8 +6,10 @@ middleware documenta as variáveis esperadas.
 """
 
 from pathlib import Path
+from typing import Self
+from urllib.parse import quote
 
-from pydantic import Field
+from pydantic import AmqpDsn, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,6 +33,21 @@ class Settings(BaseSettings):
     # jobstore. A API e o worker são processos distintos; essa leitura
     # periódica faz uma edição chegar ao agendador sem reiniciar o worker.
     rotinas_reconciliacao_segundos: int = 30
+
+    # --- Mensageria ------------------------------------------------------
+    # Componentes usados quando RABBITMQ_URL nao foi fornecida.
+    # Os valores de acesso padrao sao exclusivos do ambiente local.
+    rabbitmq_host: str = "localhost"
+    rabbitmq_port: int = Field(default=5672, ge=1, le=65535)
+    rabbitmq_vhost: str = Field(default="prata", min_length=1)
+    rabbitmq_user: str = Field(default="prata", min_length=1)
+    rabbitmq_password: SecretStr = Field(default="prata-local", min_length=1, repr=False)
+    rabbitmq_url: SecretStr = Field(default="", repr=False)
+    rabbitmq_exchange: str = Field(default="prata.events", min_length=1)
+    rabbitmq_dead_letter_exchange: str = Field(default="prata.dead-letter", min_length=1)
+    rabbitmq_prefetch_count: int = Field(default=10, ge=1, le=65535)
+    # Tentativa inicial + duas retentativas = tres execucoes no maximo.
+    rabbitmq_max_retries: int = Field(default=2, ge=0)
 
     # --- Identidade (Microsoft Entra ID) --------------------------------
     # O tenant é o GUID (Directory/tenant ID), não o domínio: o Entra
@@ -97,6 +114,9 @@ class Settings(BaseSettings):
     # Drive. Lida só em api/deps.py — o orquestrador conhece a porta, não a
     # escolha.
     executor: str = "copilot"
+    performance_mode: bool = False
+    performance_executor_delay_ms: int = 50
+    performance_executor_timeout_ms: int = 8000
 
     # --- Banco vetorial (executor próprio) ------------------------------
     # Caminho alternativo, seção 3.7 de docs/plano-executor-proprio.md. O
@@ -135,6 +155,10 @@ class Settings(BaseSettings):
     # recuperação previstos na seção 3.7 do plano.
     chunk_tokens: int = 350
     chunk_overlap: int = 40
+
+    # --- Autenticidade dos webhooks -------------------------------------
+    # Cadastro de chaves HMAC fora do repositorio, relido a cada recebimento.
+    webhook_portfolio_chaves_arquivo: str = ""
 
     # --- Recuperação (executor próprio) ---------------------------------
     # Seção 3.7 do plano. Trechos entregues ao modelo de geração por
@@ -180,7 +204,26 @@ class Settings(BaseSettings):
     # de errar uma consulta. Uma variável global não expressa essa
     # diferença.
 
-    model_config = SettingsConfigDict(env_file=".env")
+    @model_validator(mode="after")
+    def configurar_conexao_rabbitmq(self) -> Self:
+        try:
+            explicita = self.rabbitmq_url.get_secret_value()
+            url = AmqpDsn(explicita) if explicita else AmqpDsn.build(
+                scheme="amqp",
+                username=quote(self.rabbitmq_user, safe=""),
+                password=quote(self.rabbitmq_password.get_secret_value(), safe=""),
+                host=self.rabbitmq_host,
+                port=self.rabbitmq_port,
+                path=quote(self.rabbitmq_vhost, safe=""),
+            )
+            if not url.host:
+                raise ValueError("Host AMQP ausente")
+        except ValueError:
+            raise ValueError("Configuracao RabbitMQ invalida: usar amqp ou amqps com host") from None
+        self.rabbitmq_url = SecretStr(str(url))
+        return self
+
+    model_config = SettingsConfigDict(env_file=".env", hide_input_in_errors=True)
 
 
 settings = Settings()
