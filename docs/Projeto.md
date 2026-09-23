@@ -9002,6 +9002,13 @@ Uma inspeção sem cenário negativo, porém, não é teste — é leitura. Se o
 
 **Execução.** A verificação roda como caso de `pytest` em `src/middleware/tests/perimetro/test_perimetro_declarado.py`, que lê os arquivos de configuração e a lista de serviços da tabela de 3.3.1.1 mantida como dado do teste, e compara os dois conjuntos. `TNF-RNF01-02` roda sobre uma cópia adulterada da configuração, em diretório temporário, e nunca sobre os arquivos do repositório. A execução acompanha cada entrega, como 3.3.1 determina, e não uma sprint específica — é a única verificação desta seção cuja periodicidade é por entrega e não por onda.
 
+**Status de implementação (23/09/2026).** Os quatro casos TNF-RNF01-01 a TNF-RNF01-04 foram implementados e estão passando (5/5 testes). A implementação inclui:
+- Módulo de dados `perimetro_declarado.py` com a lista oficial de serviços externos conforme seção 3.3.1.1
+- Extrator de serviços de arquivos de configuração (.env.example, docker-compose.yml, conectores.md)
+- Caso negativo que detecta serviço não declarado introduzido deliberadamente
+- Verificação de identificação de tenants não homologados
+- Verificação de uso exclusivo de dados sintéticos/anonimizados
+
 ```powershell
 cd src\middleware
 python -m pytest tests/perimetro -q
