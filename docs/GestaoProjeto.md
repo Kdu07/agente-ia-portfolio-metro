@@ -1169,7 +1169,7 @@ A retrospectiva também corrige o método da anterior. Os indicadores da Sprint 
 > **Nota metodológica.** Corte de **22/09/2026 às 19h24 (UTC−03:00)**, a três dias úteis do encerramento. As fontes são as mesmas dos ciclos anteriores, agora extraídas diretamente da API do GitLab em vez do export manual:
 >
 > 1. **Board**, milestone `Sprint 04`: issues, responsáveis, *sizes*, prioridades, colunas e datas de fechamento. A conversão de esforço é a de sempre — `SIZE_PP` = 0,25 h, `SIZE_P` = 0,5 h, `SIZE_M` = 1 h e `SIZE_G` = 2 h.
-> 2. **Branch `develop`**, de `7255196` (último merge da Sprint 3, 12/09 às 01h12) até `61a67b8` (22/09 às 16h37), com autoria reconciliada pelo `.mailmap`, conforme `AM10`.
+> 2. **Branch `develop`**, de 7255196 (último merge da Sprint 3, 11/09 às 22h12) até 61a67b8 (22/09 às 16h37), com autoria reconciliada pelo `.mailmap`, conforme `AM10`.
 >
 > **Corte e reapuração.** O corte é intermediário e declarado como tal. Carga atribuída, capacidade e composição do escopo não dependem do fechamento: são o plano da sprint, e valem como estão. Taxa de conclusão, perfil de fechamento e a efetividade de `AM18` dependem, e são refeitas depois do último merge do ciclo, com a mesma extração — é a ação `AM24`.
 
@@ -1206,14 +1206,17 @@ A diferença de 39,5 h não é erro de estimativa. É a antecipação do escopo 
 | `SIZE_PP` | 2 | 0,50 h |
 | **Total** | **97** | **135,50 h** |
 
-| Tipo | Issues | | Prioridade | Issues |
+| Label de entrega | Issues | | Prioridade | Issues |
 |---|---:|---|---|---:|
-| `CODE` | 37 | | `P_ALTA` | 69 (71%) |
-| `DOCS` | 25 | | `P_MEDIA` | 25 (26%) |
-| `TEST` | 23 | | `P_BAIXA` | 3 (3%) |
-| `DEPLOY` | 12 | | | |
-| `OFFSITE` | 6 | | | |
-| `BUG` | 3 | | | |
+| `CODE` | 37 (38%) | | `P_ALTA` | 69 (71%) |
+| `TEST` | 23 (24%) | | `P_MEDIA` | 25 (26%) |
+| `DEPLOY` | 12 (12%) | | `P_BAIXA` | 3 (3%) |
+| Sem label de entrega | 25 (26%) | | | |
+| **Total** | **97** | | **Total** | **97** |
+
+A contagem por entrega soma as 97 issues porque a seção 2.5.3 admite uma única label de entrega por issue. As labels de forma, natureza e atividade fora do GitLab acompanham a de entrega e são contadas à parte, sem somar ao total: `DOCS` em 25 issues, `OFFSITE` em 6 e `BUG` em 3. Somá-las às de entrega, como numa lista única de tipos, dá 106 rótulos para 97 issues.
+
+As 25 issues sem label de entrega descumprem a seção 2.5.3: 23 levam só `DOCS`, que é label de forma e nunca vem isolada, e 2 não levam label de tipo nenhuma. São cards de documentação, de viabilidade financeira e de processo, que pela taxonomia recebem `ARCHITECTURE`, `BUSINESS` ou `PROCESS`. A correção é feita no próprio board, antes do fechamento, para que a composição do escopo no fechamento já saia sem essa lacuna.
 
 Pela primeira vez no módulo o código supera a documentação na composição do escopo, o que é coerente com a Onda 1 saindo do papel. A concentração em `P_ALTA` — sete em cada dez cards — é o outro sinal da compressão: com dois ciclos de escopo em um, quase tudo passou a ser prioritário, e a priorização perdeu parte da sua função de ordenar.
 
@@ -1228,6 +1231,18 @@ Pela primeira vez no módulo o código supera a documentação na composição d
 | Merge requests com revisor nomeado | 23 de 24 |
 | Ocorrências de `NotImplementedError` em `src/middleware/app` | **45 → 23** |
 | Dias com commit no período | 7 — incluindo sábado e domingo, 19 e 20/09; nenhum em 14/09 e 18/09 |
+| Commits integrados aderentes à política de commits | **0 de 58 (0%)** |
+
+A aderência à política de commits confere, em cada um dos 58 commits autorais integrados, as quatro regras verificáveis da seção 3 do `GestaoConfiguracao.md`: tipo do Conventional Commits no início, verbo no infinitivo, referência ao card entre parênteses no fim e título de até 72 caracteres. Nenhum commit integrado até o corte atende às quatro ao mesmo tempo. As falhas se sobrepõem, e por isso não se somam:
+
+| Regra descumprida | Commits |
+|---|---:|
+| Verbo fora do infinitivo, como `implementa` e `adiciona` | 44 |
+| Card referenciado sem parênteses, como #408 no fim do título | 34 |
+| Tipo fora do padrão, como `FIX \|` e `FEAT \|`, ou comando colado no lugar da mensagem | 5 |
+| Título acima de 72 caracteres | 2 |
+
+Todos os 58 commits referenciam um card, então a rastreabilidade entre commit e issue se mantém. O que falha é o formato, e de modo sistemático, com um padrão próprio em cada integrante. É o sinal de que a regra existe no documento mas não é conferida em nenhum ponto do fluxo. A resposta está na `AM26`.
 
 ##### Distribuição por integrante
 
@@ -1241,15 +1256,15 @@ Pela primeira vez no módulo o código supera a documentação na composição d
 | Alexsander Barbosa | 10 | 13,25 h | 0 | 0,00 h | 0 | 0 | 0 | 0 | 0 |
 | **Total** | **97** | **135,50 h** | **28** | **38,25 h** | **58** | **123** | **24** | **23** | **17** |
 
-As colunas medem coisas distintas e não se somam entre si. A leitura que a Sprint 3 ensinou está na diferença entre as duas colunas de commits: *commits na `develop`* é o trabalho já integrado; *commits em todas as branches* inclui o que está em merge request aguardando revisão. No corte, 34 commits de Celso Rocha estão nas MRs `!127` e `!128`, do painel de intenções, e por isso ele aparece com zero na `develop`. Ler só a primeira coluna repetiria o erro apontado na avaliação anterior, em que um integrante com o segundo maior volume do ciclo aparecia sem nenhum commit integrado. Alexsander Barbosa responde por cards `OFFSITE` — sessões de usabilidade e a apresentação da Sprint Review —, trabalho que acontece fora do repositório e não deixa commit.
+As colunas medem coisas distintas e não se somam entre si. A leitura que a Sprint 3 ensinou está na diferença entre as duas colunas de commits: *commits na `develop`* é o trabalho já integrado; *commits em todas as branches* inclui o que está em merge request aguardando revisão. No corte, 34 commits de Celso Rocha estão nas MRs !127 e !128, do painel de intenções, e por isso ele aparece com zero na `develop`. Ler só a primeira coluna repetiria o erro apontado na avaliação anterior, em que um integrante com o segundo maior volume do ciclo aparecia sem nenhum commit integrado. Alexsander Barbosa responde por cards `OFFSITE` — sessões de usabilidade e a apresentação da Sprint Review —, trabalho que acontece fora do repositório e não deixa commit.
 
 A razão entre a maior e a menor carga atribuída é de **2,25:1** (29,75 h contra 13,25 h). A integração segue concentrada: 14 dos 17 merges, ou 82%, foram executados por duas integrantes.
 
 #### 3.5.4 Reconciliação com o fechamento da Sprint 3
 
-A seção [3.4.3](#343-indicadores-quantitativos-da-sprint-3) foi escrita sobre o corte de 09/09, às 14h20, e declarou que era parcial. Mesmo assim, uma conclusão foi tirada dele: `AM07` foi dada como ineficaz pela razão de 13:1 em commits autorais. A tabela abaixo refaz a conta no fechamento real do ciclo — o merge `7255196`, de 12/09 às 01h12 — e completa, com o board extraído pela API, os indicadores que tinham ficado sem evidência.
+A seção [3.4.3](#343-indicadores-quantitativos-da-sprint-3) foi escrita sobre o corte de 09/09, às 14h20, e declarou que era parcial. Mesmo assim, uma conclusão foi tirada dele: `AM07` foi dada como ineficaz pela razão de 13:1 em commits autorais. A tabela abaixo refaz a conta no fechamento real do ciclo — o merge 7255196, de 11/09 às 22h12 — e completa, com o board extraído pela API, os indicadores que tinham ficado sem evidência.
 
-| Métrica | Corte de 09/09 (seção 3.4.3) | Fechamento em `7255196` |
+| Métrica | Corte de 09/09 (seção 3.4.3) | Fechamento em 7255196 |
 |---|---|---|
 | Issues concluídas na milestone `Sprint 03` | 23 fechadas de 55 atribuídas | **51 de 51** |
 | Commits autorais integrados na `develop` | 35 | **98** |
@@ -1278,7 +1293,7 @@ Com os dados completos, as ações da Sprint 2 que estavam sem evidência recebe
 
 | Ponto forte | Evidência observada | Impacto no processo |
 |---|---|---|
-| A Onda 1 saiu do esqueleto | `NotImplementedError` em `src/middleware/app` caiu de 45 para 23. Dos 23 restantes, 19 estão no painel de intenções, cuja implementação já está na MR `!127`; integrada, restam 4, em voz, no cliente do Copilot e no worker | Os critérios de aceite que a `AM16` pedia para priorizar viraram código, e as funcionalidades deixam de ser demonstráveis só como contrato |
+| A Onda 1 saiu do esqueleto | `NotImplementedError` em `src/middleware/app` caiu de 45 para 23. Dos 23 restantes, 19 estão no painel de intenções, cuja implementação já está na MR !127; integrada, restam 4, em voz, no cliente do Copilot e no worker | Os critérios de aceite que a `AM16` pedia para priorizar viraram código, e as funcionalidades deixam de ser demonstráveis só como contrato |
 | Revisor nomeado desde a abertura do MR | 23 dos 24 merge requests do período têm revisor nomeado | A fila de revisão tem dono desde o primeiro minuto, que é a condição para medir o SLA de `AM06` |
 | Board íntegro sem regularização | 97 de 97 issues com responsável, *size* e prioridade; nenhuma concluída sem responsável | Os indicadores individuais desta seção são confiáveis sem ajuste, e a regularização em bloco da Sprint 2 não se repetiu |
 | Integração ao longo do ciclo | Commits em sete dias do período e 17 merges na `develop` antes do corte | A `develop` acompanhou o trabalho em vez de recebê-lo de uma vez no encerramento |
@@ -1292,6 +1307,7 @@ Com os dados completos, as ações da Sprint 2 que estavam sem evidência recebe
 | Razão de carga acima do limite | 2,25:1 em horas atribuídas, acima do teto de 2:1 de `AM17`, sem justificativa registrada em card | A melhora em relação aos 2,50:1 da Sprint 3 é real, mas o critério da ação não foi cumprido |
 | Conclusão atrasada em relação ao tempo decorrido | No corte, a três dias úteis do fim, 28 de 97 issues (29%) e 38,25 de 135,50 h (28%) concluídas | Repete o padrão que levou 45% das issues da Sprint 3 ao último dia (`AM13`) |
 | Integração concentrada | 14 dos 17 merges (82%) executados por duas integrantes; um integrante com revisões nomeadas não executou nenhum merge | Quem integra concentra o conhecimento do que entra na `develop` e vira gargalo nos dias de maior volume |
+| Política de commits sem conferência | 0 dos 58 commits integrados atendem às quatro regras verificáveis da seção 3 do `GestaoConfiguracao.md`; 44 com verbo fora do infinitivo e 34 com o card sem parênteses | A rastreabilidade se mantém, mas o histórico deixa de seguir um padrão único e a regra perde força a cada ciclo em que não é cobrada |
 | Trabalho pronto aguardando integração | 6 merge requests em revisão no corte; 65 dos 123 commits autorais do período ainda estão fora da `develop` | Até a revisão, esse trabalho não é demonstrável na linha principal e não aparece nas métricas integradas |
 
 Os pontos de atenção descrevem o processo, e não o desempenho individual. A compressão de escopo explica boa parte deles: com um ciclo e meio de trabalho em uma semana, é esperado que a conclusão se acumule e que a revisão vire gargalo. O que o registro permite é separar o que decorre da compressão do que decorre do processo — e é esse o critério das ações da seção [3.5.6](#356-melhorias-para-a-sprint-5).
@@ -1302,7 +1318,7 @@ Os pontos de atenção descrevem o processo, e não o desempenho individual. A c
 |---|---|---|---|
 | AM14 | Plano B para ausência, mal-estar ou feriado | Nenhuma frente crítica teve substituto ou pareamento combinado. Não houve ausência no ciclo que exigisse cobertura | **Não executada** — e sem efeito observável, porque não foi posta à prova. Permanece em vigor na Sprint 5 |
 | AM15 | Feriados e recessos no cálculo de capacity | Capacidade declarada de 16 h por integrante; o período de 14/09 a 25/09 não tem feriado. A declaração não está registrada na milestone, cuja descrição segue vazia | **Parcialmente efetiva** — a capacity foi declarada e usada, mas não no lugar que a ação definia |
-| AM16 | Priorizar os critérios de aceite remanescentes da Onda 1 | `NotImplementedError` caiu de 45 para 23; os 19 do painel estão na MR `!127` | **Efetiva em execução** — a verificação final é a contagem depois do último merge |
+| AM16 | Priorizar os critérios de aceite remanescentes da Onda 1 | `NotImplementedError` caiu de 45 para 23; os 19 do painel estão na MR !127 | **Efetiva em execução** — a verificação final é a contagem depois do último merge |
 | AM17 | Razão máxima de 2:1, ou justificativa e plano B em card | 2,25:1, sem justificativa registrada | **Ineficaz**, com melhora sobre os 2,50:1 do fechamento da Sprint 3 |
 | AM18 | Projeção na daily de quarta; nada declarado não entregável depois de quinta às 23h59 | O prazo de quinta, 24/09, ainda não chegou no corte | **Em execução** — avaliada no fechamento |
 | AM19 | Repositório fora de pasta sincronizada com nuvem | Nenhum incidente de ambiente local com o Git no ciclo, contra quatro na Sprint 3 | **Efetiva** |
@@ -1317,6 +1333,7 @@ Os pontos de atenção descrevem o processo, e não o desempenho individual. A c
 | AM23 | SLA de primeira revisão sem medição desde a Sprint 2 | Medir, pela API do GitLab, o tempo entre a abertura de cada MR e o primeiro comentário ou aprovação do revisor, e publicar a mediana no fechamento | Responsável pela gestão de configuração | Fechamento da Sprint 5 | Mediana e maior espera publicadas no relatório; nenhum MR acima de 24 h úteis sem justificativa |
 | AM24 | Conclusões tiradas de corte parcial | Refazer as métricas da retrospectiva depois do último merge do ciclo, com a mesma extração, e declarar o commit de fechamento na nota metodológica | Responsável pela retrospectiva da sprint | Fechamento de cada sprint | Nota metodológica cita o commit do último merge; nenhuma avaliação de ação sustentada só em corte intermediário |
 | AM25 | Conclusão acumulada no fim da semana, pelo segundo ciclo | Retomar `AM13` com checkpoint na daily de quarta: cada card em `Backlog` recebe data de conclusão prevista dentro da própria sprint | Scrum Master da Sprint 5 | Daily de quarta da Sprint 5 | No máximo 25% das issues concluídas no último dia do ciclo |
+| AM26 | Nenhum commit integrado aderente à política de commits | Conferir as mensagens de commit na revisão de cada merge request, com as quatro regras da seção 3 do `GestaoConfiguracao.md`, e pedir a correção antes do merge quando alguma falhar | Revisor de cada merge request | Ao longo da Sprint 5 | Pelo menos 90% dos commits autorais integrados na Sprint 5 aderentes às quatro regras, medidos com a mesma extração |
 
 `AM14`, não executada na Sprint 4, permanece em vigor na Sprint 5 com o mesmo critério. A última sprint do módulo não tem ciclo seguinte para absorver uma ausência sem cobertura.
 
@@ -1705,7 +1722,7 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 |---|---|---|---|---|
 | AM14 | Plano B para ausência, mal-estar ou feriado (substituto/pareamento por frente crítica) | Scrum Master da Sprint 4 | Toda frente crítica com substituto no card; nenhum dia útil sem responsável ativo em issue `Doing` de caminho crítico | **Não executada** — nenhum substituto ou pareamento combinado; mantida para a Sprint 5 |
 | AM15 | Incluir feriados/recessos no cálculo de capacity da milestone | Scrum Master da Sprint 4 | Capacity declara dias úteis efetivos; feriados listados na issue de planejamento | **Parcialmente efetiva** — capacity de 16 h por integrante declarada e usada; período sem feriado; a declaração não está na milestone |
-| AM16 | Priorizar critérios de aceite remanescentes da Onda 1 antes de novas antecipações de S5 | Tech Lead da Sprint 4 | Issues da Onda 1 em `NotImplementedError` fechadas ou repriorizadas com destino na milestone | **Efetiva em execução** — `NotImplementedError` de 45 para 23; os 19 do painel de intenções na MR `!127` |
+| AM16 | Priorizar critérios de aceite remanescentes da Onda 1 antes de novas antecipações de S5 | Tech Lead da Sprint 4 | Issues da Onda 1 em `NotImplementedError` fechadas ou repriorizadas com destino na milestone | **Efetiva em execução** — `NotImplementedError` de 45 para 23; os 19 do painel de intenções na MR !127 |
 | AM17 | Combinar verificação de carga (`AM07`) com plano B (`AM14`) | Scrum Master da Sprint 4 | Razão máxima de 2:1 nas horas atribuídas, ou justificativa + plano B em card | **Ineficaz**, com melhora — 2,25:1, sem justificativa em card, contra 2,50:1 na Sprint 3 |
 | AM18 | Projetar na daily de quarta o que resta para quinta e declarar ainda na quarta o que não for entregável | Scrum Master da Sprint 4 | Projeção registrada na daily de quarta; nenhum item declarado não entregável depois de quinta às 23h59 | **Em execução** — avaliada no fechamento |
 | AM19 | Repositório fora de pasta sincronizada com nuvem, ou sincronização pausada durante o trabalho com Git | Cada integrante | Nenhum incidente de sincronização registrado na sprint | **Efetiva** — nenhum incidente, contra quatro na Sprint 3 |
@@ -1720,10 +1737,11 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 | AM23 | Medir pela API o tempo até a primeira revisão de cada merge request | Responsável pela gestão de configuração | Mediana e maior espera publicadas no fechamento | Planejada |
 | AM24 | Refazer as métricas da retrospectiva depois do último merge | Responsável pela retrospectiva | Nota metodológica com o commit do último merge | Planejada |
 | AM25 | Checkpoint na daily de quarta, com data prevista para cada card em `Backlog` | Scrum Master da Sprint 5 | No máximo 25% das issues concluídas no último dia | Planejada |
+| AM26 | Conferir a mensagem de cada commit na revisão do merge request | Revisor de cada merge request | Pelo menos 90% dos commits integrados aderentes à política | Planejada |
 
 ### 5.2 Indicadores de processo
 
-| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (fechamento, 12/09, `7255196`) | Sprint 4 (corte 22/09, `61a67b8`) | Uso no acompanhamento |
+| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (fechamento, 11/09, 7255196) | Sprint 4 (corte 22/09, 61a67b8) | Uso no acompanhamento |
 |---|---:|---:|---:|---:|---|
 | Issues concluídas | 48/48 — 100% | 81/81 — 100% | 51/51 — 100% | 28/97 — 29% no corte | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
 | Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | 55,5 h, todas concluídas | 135,5 h atribuídas; 38,25 h concluídas no corte | Comparar carga planejada e concluída |
@@ -1733,6 +1751,7 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 | Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | 0 no fechamento | 7 em `Waiting Review` no corte | Detectar acúmulo (`AM06`) |
 | SLA de primeira revisão | até 24 h úteis | não instrumentado | não instrumentado | não instrumentado | Identificar espera no fluxo de integração (`AM23`) |
 | Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues e 2,92:1 em horas | 2,50:1 em horas | 2,25:1 em horas | Apoiar redistribuição (`AM17` / `AM21`) |
+| Aderência à política de commits | não medido | não medido | não medido | 0 de 58 commits integrados | Verificar se a regra da seção 2.7 é cumprida (`AM26`) |
 | Escopo fechado sem responsável | não medido | 20 issues — 24,7% | 0 | 0 | Confiabilidade da atribuição (`AM12`) |
 | Concentração do fechamento | não medido | 51% nos dois últimos dias | 45% no último dia | refeita no fechamento (`AM24`) | Fluxo contínuo vs. encerramento (`AM13` / `AM25`) |
 | Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | 14/09 e 18/09; commits no fim de semana de 19 e 20/09 | Capacity e plano B (`AM14` / `AM15` / R18) |
