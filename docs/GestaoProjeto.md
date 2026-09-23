@@ -155,6 +155,7 @@
   - [6.1 Sucessos do projeto](#61-sucessos-do-projeto)
   - [6.2 Oportunidades de melhoria](#62-oportunidades-de-melhoria)
   - [6.3 Lições aprendidas](#63-lições-aprendidas)
+- [7. Análise de viabilidade financeira](#7-análise-de-viabilidade-financeira)
 
 ## 1. Introdução
 
@@ -1799,3 +1800,21 @@ Esta seção será preenchida após a conclusão do projeto.
 
 [Preencher ao final do projeto, contemplando lições técnicas, organizacionais e comportamentais.]
 
+## 7. Análise de Viabilidade Financeira
+
+### 7.1 Esforço e Rotação de Papéis
+
+A tabela abaixo consolida as horas efetivamente trabalhadas e registradas nas milestones das Sprints 1 a 4 no GitLab, cruzando-as com as matrizes de responsabilidades de cada ciclo. 
+
+O grupo adota 8 dias de desenvolvimento por sprint, dado que 1 dia é dedicado a Planning e outro a Review. Para demonstrar a coerência entre o orçamento apresentado e os papéis efetivamente exercidos, o esforço foi agrupado por função técnica, e não por integrante. Essa consolidação mostra a aplicação da política de rotação de papéis, onde todas as frentes tiveram a participação de múltiplos integrantes ao longo do módulo.
+
+| Função / Papel Exercido | Principais Entregas na Fase PoC | Horas Consolidadas (S1-S4) |
+| :--- | :--- | :--- |
+| **Desenvolvimento e Integração** (Backend, Frontend, APIs) | Esqueleto React, roteamento FastAPI, API de áudio, integrações assíncronas (webhooks/RabbitMQ) e painel de intenções. | 114,50 h |
+| **Engenharia de Dados e PLN** (IA) | Classificador de intenções, catálogo, vetorização, histórico de conversas e integração do canal de voz. | 78,50 h |
+| **Gestão de Processos, Negócios e Produto** | Rituais Scrum, viabilidade financeira, modelagem de negócios, matriz de riscos e apresentações executivas. | 49,75 h |
+| **Qualidade, Testes e Usabilidade** (QA) | Testes funcionais e de RNF, sessões de usabilidade com usuários externos e validação de rotinas. | 38,00 h |
+| **Arquitetura, Nuvem e DevOps** | Desenho da solução, pipelines de CI/CD, Container Apps, Key Vault e implantação do banco de dados gerenciado. | 37,75 h |
+| **Total de Esforço Atribuído (Sprints 1 a 4)** | - | **318,50 h** |
+
+**Observação:** As horas da Sprint 3 refletem a reapuração do fechamento (55,5 h), e a Sprint 4 reflete a operação a 141% da capacidade declarada devido à antecipação do escopo (135,5 h). O tempo de atividades concluídas sem responsável atribuído na Sprint 2 (17 h) foi distribuído proporcionalmente entre as frentes técnicas.
