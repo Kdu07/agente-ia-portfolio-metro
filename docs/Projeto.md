@@ -7118,12 +7118,19 @@ informação que se perde quando o autor sai do projeto.
 | `chat/ConversaVazia.tsx` | Estado inicial de uma conversa nova, com quatro sugestões correspondentes a intenções reais do catálogo |
 | `chat/IndicadorDigitando.tsx` | Sinaliza que o agente compõe a resposta, com `role="status"` e texto equivalente para leitor de tela |
 | `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo e classes visuais |
+| `graficos/CartaoResumo.tsx` | Números de topo de cada recorte do painel, em lista de definições |
+| `graficos/BarrasPorIntencao.tsx` | Volume de mensagens por intenção, em barras horizontais, com as intenções de contagem zero visíveis |
+| `graficos/DistribuicaoDesfechos.tsx` | Distribuição das mensagens entre os oito desfechos, com a cor semântica de cada um |
+| `graficos/SerieBloqueios.tsx` | Bloqueios ao longo do tempo, uma linha por guarda, sem total agregado |
+| `graficos/TabelaEnunciados.tsx` | Enunciados recusados agrupados por repetição, o backlog de novas intenções |
 
 O arquivo `componentes/graficos/README.md` registra as três regras que valem
-para as visualizações do painel de intenções e a lista de componentes previstos
-para a onda 4: uso obrigatório de contêiner responsivo, séries de bloqueio nunca
-somadas em um total agregado, e exibição de intenções com contagem zero, que
-são achado e não ausência de dado.
+para as visualizações do painel de intenções e como cada componente as cumpre:
+uso obrigatório de contêiner responsivo, séries de bloqueio nunca somadas em um
+total agregado, e exibição de intenções com contagem zero, que são achado e não
+ausência de dado. Os três gráficos marcam o SVG como decorativo e repetem os
+dados em uma tabela fora da tela, que é a forma que o leitor de tela consegue
+navegar.
 
 **Apresentação dos desfechos.** O backend informa o desfecho, não a cor nem o
 rótulo. A tradução acontece em um único arquivo para que a bolha, o histórico e
@@ -7326,7 +7333,18 @@ oferece reenvio da última mensagem, em vez de informar apenas que houve erro.
 | `GET /intencoes/catalogo/resumo` | `Intencoes` | Cobertura do catálogo de intenções |
 | `GET /intencoes/catalogo/fora-de-escopo` | `Intencoes` | Enunciados recusados por escopo |
 | `GET /intencoes/catalogo/baixa-confianca` | `Intencoes` | Enunciados de baixa confiança |
+| `GET /intencoes/latencia` | `Intencoes` | Percentis de latência do pipeline, total e por etapa |
 | `GET /voz/token` | `useMicrofone` | Token efêmero de reconhecimento de fala |
+
+As oito rotas do painel recebem os mesmos dois parâmetros de consulta: `janela`,
+com os valores `7d`, `30d` e `90d`, e `perfil`, opcional, que recorta pelo
+perfil gravado na interação. O hook `usePainelIntencoes` inclui os dois na chave
+de cache, de modo que trocar o filtro cria entradas novas e voltar a um filtro
+anterior reaproveita o que já foi buscado. A página só monta os recortes quando
+as oito respostas chegaram, e distingue três estados: carregamento, erro e
+período sem mensagens. O último não é tratado como falha, porque quem tem acesso
+ao painel e escolhe um período sem uso precisa ler que não houve uso, e não que
+algo quebrou.
 
 **Canal de voz.** A seção 5.7.1.3 define uma topologia híbrida com duas
 trajetórias. A interface web consome a trajetória de transmissão contínua: o
@@ -7552,7 +7570,6 @@ tratados na seção 11.
 | O estado das rotinas é mantido em memória | Alterações se perdem ao recarregar a página | Comportamento esperado de dublê |
 | A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
 | A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
-| Os gráficos do painel de intenções ainda não estão implementados | O painel apresenta a estrutura, sem as visualizações | Componentes previstos para a onda 4, listados em `src/web/src/componentes/graficos/README.md` |
 
 A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
 elas produz duas leituras erradas em direções opostas: a de que a solução já

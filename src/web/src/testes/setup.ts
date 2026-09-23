@@ -23,6 +23,26 @@ import { handlers } from "@/mocks/handlers";
 // ambiente de teste inverte a relacao entre os dois.
 Element.prototype.scrollIntoView = vi.fn();
 
+// Pelo mesmo motivo, o `ResponsiveContainer` do Recharts mede o elemento
+// pai e, sem layout, recebe largura zero e nao desenha nada. Aqui ele e
+// trocado por um conteiner de tamanho fixo que repassa as dimensoes ao
+// grafico. O `data-testid` permite aos testes verificar que cada grafico
+// continua dentro de um conteiner responsivo no codigo da aplicacao.
+vi.mock("recharts", async (importarOriginal) => {
+  const original = await importarOriginal<typeof import("recharts")>();
+  const { cloneElement, createElement } = await import("react");
+  type Filho = import("react").ReactElement<{ width?: number; height?: number }>;
+  return {
+    ...original,
+    ResponsiveContainer: ({ children }: { children: Filho }) =>
+      createElement(
+        "div",
+        { "data-testid": "conteiner-responsivo" },
+        cloneElement(children, { width: 640, height: 320 }),
+      ),
+  };
+});
+
 export const servidor = setupServer(...handlers);
 
 beforeAll(() => servidor.listen({ onUnhandledRequest: "error" }));

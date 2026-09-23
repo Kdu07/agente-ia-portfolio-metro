@@ -22,12 +22,20 @@ export const chaves = {
   rotinas: ["rotinas"] as const,
   execucoesDaRotina: (rotinaId: string) => ["rotinas", rotinaId, "execucoes"] as const,
 
+  // Os recortes do painel levam janela e perfil na chave: trocar o filtro
+  // cria outra entrada de cache, e voltar a ele reaproveita a anterior.
   intencoes: ["intencoes"] as const,
-  intencoesVolume: (janela: string) => ["intencoes", "volume", janela] as const,
-  intencoesDesfechos: (janela: string) => ["intencoes", "desfechos", janela] as const,
-  intencoesSegurancaResumo: (janela: string) => ["intencoes", "seguranca", "resumo", janela] as const,
-  intencoesSegurancaSerie: (janela: string) => ["intencoes", "seguranca", "serie", janela] as const,
-  intencoesCatalogoResumo: (janela: string) => ["intencoes", "catalogo", "resumo", janela] as const,
-  intencoesForaDeEscopo: (janela: string) => ["intencoes", "catalogo", "fora-de-escopo", janela] as const,
-  intencoesBaixaConfianca: (janela: string) => ["intencoes", "catalogo", "baixa-confianca", janela] as const,
+  intencoesVolume: (janela: string, perfil: string) => ["intencoes", "volume", janela, perfil] as const,
+  intencoesDesfechos: (janela: string, perfil: string) => ["intencoes", "desfechos", janela, perfil] as const,
+  intencoesSegurancaResumo: (janela: string, perfil: string) =>
+    ["intencoes", "seguranca", "resumo", janela, perfil] as const,
+  intencoesSegurancaSerie: (janela: string, perfil: string) =>
+    ["intencoes", "seguranca", "serie", janela, perfil] as const,
+  intencoesCatalogoResumo: (janela: string, perfil: string) =>
+    ["intencoes", "catalogo", "resumo", janela, perfil] as const,
+  intencoesForaDeEscopo: (janela: string, perfil: string) =>
+    ["intencoes", "catalogo", "fora-de-escopo", janela, perfil] as const,
+  intencoesBaixaConfianca: (janela: string, perfil: string) =>
+    ["intencoes", "catalogo", "baixa-confianca", janela, perfil] as const,
+  intencoesLatencia: (janela: string, perfil: string) => ["intencoes", "latencia", janela, perfil] as const,
 };
