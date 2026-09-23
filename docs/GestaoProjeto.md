@@ -1804,17 +1804,51 @@ Esta seção será preenchida após a conclusão do projeto.
 
 ### 7.1 Esforço e Rotação de Papéis
 
-A tabela abaixo consolida as horas efetivamente trabalhadas e registradas nas milestones das Sprints 1 a 4 no GitLab, cruzando-as com as matrizes de responsabilidades de cada ciclo. 
+A tabela abaixo consolida as horas efetivamente trabalhadas e registradas nas milestones das Sprints 1 a 4 no GitLab, somadas à projeção de capacidade da Sprint 5, cruzando-as com as matrizes de responsabilidades de cada ciclo. 
 
 O grupo adota 8 dias de desenvolvimento por sprint, dado que 1 dia é dedicado a Planning e outro a Review. Para demonstrar a coerência entre o orçamento apresentado e os papéis efetivamente exercidos, o esforço foi agrupado por função técnica, e não por integrante. Essa consolidação mostra a aplicação da política de rotação de papéis, onde todas as frentes tiveram a participação de múltiplos integrantes ao longo do módulo.
 
-| Função / Papel Exercido | Principais Entregas na Fase PoC | Horas Consolidadas (S1-S4) |
+| Função / Papel Exercido | Principais Entregas na Fase PoC | Horas Consolidadas (S1-S5) |
 | :--- | :--- | :--- |
-| **Desenvolvimento e Integração** (Backend, Frontend, APIs) | Esqueleto React, roteamento FastAPI, API de áudio, integrações assíncronas (webhooks/RabbitMQ) e painel de intenções. | 114,50 h |
-| **Engenharia de Dados e PLN** (IA) | Classificador de intenções, catálogo, vetorização, histórico de conversas e integração do canal de voz. | 78,50 h |
-| **Gestão de Processos, Negócios e Produto** | Rituais Scrum, viabilidade financeira, modelagem de negócios, matriz de riscos e apresentações executivas. | 49,75 h |
-| **Qualidade, Testes e Usabilidade** (QA) | Testes funcionais e de RNF, sessões de usabilidade com usuários externos e validação de rotinas. | 38,00 h |
-| **Arquitetura, Nuvem e DevOps** | Desenho da solução, pipelines de CI/CD, Container Apps, Key Vault e implantação do banco de dados gerenciado. | 37,75 h |
-| **Total de Esforço Atribuído (Sprints 1 a 4)** | - | **318,50 h** |
+| Desenvolvimento e Integração (Backend, Frontend, APIs) | Esqueleto React, roteamento FastAPI, API de áudio, integrações assíncronas (webhooks/RabbitMQ), painel de intenções e correções de usabilidade. | 124,50 h |
+| Engenharia de Dados e PLN (IA) | Classificador de intenções, catálogo, vetorização, histórico de conversas e integração do canal de voz. | 78,50 h |
+| Gestão de Processos, Negócios e Produto | Rituais Scrum, viabilidade financeira, modelagem de negócios, matriz de riscos, apresentações executivas e análise post-mortem. | 83,75 h |
+| Qualidade, Testes e Usabilidade (QA) | Testes funcionais e de RNF, sessões de usabilidade com usuários externos, validação de rotinas e reaplicação de roteiros. | 54,00 h |
+| Arquitetura, Nuvem e DevOps | Desenho da solução, pipelines de CI/CD, Container Apps, Key Vault, implantação do banco de dados gerenciado e manuais de instalação. | 49,75 h |
+| **Total de Esforço Atribuído (Sprints 1 a 5)** | - | **390,50 h** |
 
-**Observação:** As horas da Sprint 3 refletem a reapuração do fechamento (55,5 h), e a Sprint 4 reflete a operação a 141% da capacidade declarada devido à antecipação do escopo (135,5 h). O tempo de atividades concluídas sem responsável atribuído na Sprint 2 (17 h) foi distribuído proporcionalmente entre as frentes técnicas.
+**Observação:** As horas da Sprint 3 refletem a reapuração do fechamento (55,5 h), e a Sprint 4 reflete a operação a 141% da capacidade declarada devido à antecipação do escopo (135,5 h). O tempo de atividades concluídas sem responsável atribuído na Sprint 2 (17 h) foi distribuído proporcionalmente entre as frentes técnicas. Como a Sprint 5 é focada no encerramento, as horas relativas a ela são uma estimativa projetada de 72 horas (12h por integrante), alocadas conforme o planejamento operacional do ciclo final, já que a Review será antecipada.
+
+### 7.2 Custos de Pessoal
+
+Para garantir que o orçamento seja consistente com o que foi efetivamente desenvolvido e demonstre transparência na composição de preços, os custos de pessoal refletem a base de **390,50 horas**, que compreende o esforço total empenhado pelo grupo do início ao fim do projeto.
+
+A modelagem de custos considerou a complexidade do ecossistema construído (microsserviços FastAPI, integração com Azure AI Content Safety e Azure Speech, e modelagem de Machine Learning assíncrona). 
+
+Para suportar essas definições, o custo-hora base (já embutindo encargos trabalhistas padrão de consultorias) foi dimensionado a partir da média salarial praticada em São Paulo para profissionais de nível Pleno/Sênior. A fonte adotada é o **Guia Salarial Robert Half 2024 (Setor de Tecnologia)**.
+
+| Função / Papel Exercido | Horas (S1-S5) | Valor Hora-Base (Guia RH) | Custo Total de Implementação |
+| :--- | :--- | :--- | :--- |
+| **Desenvolvimento e Integração** (Backend, Frontend, APIs) | 124,50 h | R$ 110,00 | R$ 13.695,00 |
+| **Gestão de Processos, Negócios e Produto** | 83,75 h | R$ 130,00 | R$ 10.887,50 |
+| **Engenharia de Dados e PLN** (IA) | 78,50 h | R$ 145,00 | R$ 11.382,50 |
+| **Qualidade, Testes e Usabilidade** (QA) | 54,00 h | R$ 90,00 | R$ 4.860,00 |
+| **Arquitetura, Nuvem e DevOps** | 49,75 h | R$ 150,00 | R$ 7.462,50 |
+| **Total de Pessoal — CapEx (Implantação da PoC)** | **390,50 h** | - | **R$ 48.287,50** |
+
+### 7.2 Custos de Pessoal
+
+Para garantir que o orçamento seja internamente consistente com o escopo efetivamente desenvolvido e demonstre transparência na composição de preços (premissa mandatória para o Metrô SP), os custos de pessoal abandonam estimativas comerciais arbitrárias. O cálculo reflete a base de **390,50 horas**, que compreende o esforço total empenhado pelo grupo do início ao fim do projeto.
+
+A modelagem de custos considerou a complexidade do ecossistema construído (microsserviços FastAPI, integração com Azure AI Content Safety e Azure Speech, e modelagem de Machine Learning assíncrona)[cite: 2]. 
+
+Para suportar essas definições, o custo-hora base (já embutindo encargos trabalhistas padrão de consultorias) foi dimensionado a partir da média salarial praticada em São Paulo para profissionais de nível Pleno/Sênior. A fonte adotada é o **Glassdoor**.
+
+| Função / Papel Exercido | Horas (S1 a S5) | Valor Hora-Base (Glassdoor) | Custo Total de Implementação |
+| :--- | :--- | :--- | :--- |
+| Desenvolvimento e Integração (Backend, Frontend, APIs) | 124,50 h | R$ 110,00 | R$ 13.695,00 |
+| Gestão de Processos, Negócios e Produto | 83,75 h | R$ 130,00 | R$ 10.887,50 |
+| Engenharia de Dados e PLN (IA) | 78,50 h | R$ 145,00 | R$ 11.382,50 |
+| Qualidade, Testes e Usabilidade (QA) | 54,00 h | R$ 90,00 | R$ 4.860,00 |
+| Arquitetura, Nuvem e DevOps | 49,75 h | R$ 150,00 | R$ 7.462,50 |
+| **Total de Pessoal** | **390,50 h** | - | **R$ 48.287,50** |
