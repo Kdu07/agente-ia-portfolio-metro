@@ -65,8 +65,23 @@ class ResumoCatalogoResposta(BaseModel):
     enunciados_baixa_confianca: int
 
 
+class LatenciaEtapaResposta(BaseModel):
+    """Percentis de uma etapa do pipeline, em milissegundos."""
+
+    etapa: str
+    p50: float
+    p95: float
+    amostras: int  # zero indica etapa não percorrida na janela
+
+
 class LatenciaResposta(BaseModel):
-    """Percentis de latência do pipeline, em milissegundos."""
+    """Percentis de latência do pipeline, em milissegundos.
+
+    `p50` e `p95` são do pipeline inteiro; `etapas` os decompõe. A lista
+    tem padrão vazio para que um cliente que só conhece o total continue
+    lendo a resposta sem mudança.
+    """
 
     p50: float
     p95: float
+    etapas: list[LatenciaEtapaResposta] = []

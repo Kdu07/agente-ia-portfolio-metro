@@ -29,6 +29,8 @@ deixaram de ser obrigatórias e a proteção virou opcional.
 import logging
 import time
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -50,6 +52,17 @@ from app.schemas.usuario import UsuarioAutenticado
 logger = logging.getLogger(__name__)
 
 LIMITE_TITULO_CONVERSA = 80
+
+# Nomes das etapas cronometradas, gravados em `Interacao.latencia_etapas`
+# e lidos pelo painel de intenções. O registro, sexta etapa, não entra:
+# o tempo dele só existe depois de a linha que o guardaria ter sido
+# escrita.
+ETAPA_INJECAO = "injecao"
+ETAPA_ABUSO = "abuso"
+ETAPA_INTENCAO = "intencao"
+ETAPA_EXECUTOR = "executor"
+ETAPA_SAIDA = "saida"
+ETAPAS = (ETAPA_INJECAO, ETAPA_ABUSO, ETAPA_INTENCAO, ETAPA_EXECUTOR, ETAPA_SAIDA)
 
 
 def titulo_do_primeiro_turno(prompt: str) -> str:
@@ -83,6 +96,25 @@ class _Contexto:
     rotina_id: str | None = None
     intencao_id: str | None = None
     confianca: float = 0.0
+    etapas: dict[str, int] = field(default_factory=dict)
+
+
+@contextmanager
+def _cronometrar(ctx: _Contexto, etapa: str) -> Iterator[None]:
+    """Soma à etapa o tempo gasto dentro do bloco, em milissegundos.
+
+    Soma, e não sobrescreve, porque a guarda de injeção roda em dois
+    blocos — regra e modelo — que compõem a mesma etapa. A decisão de
+    encerrar fica sempre FORA do bloco: um `return` lá dentro chamaria
+    `_encerrar` antes de o tempo ser anotado, e a etapa que barrou a
+    mensagem sumiria justamente da interação que ela barrou.
+    """
+    inicio = time.perf_counter()
+    try:
+        yield
+    finally:
+        decorrido = round((time.perf_counter() - inicio) * 1000)
+        ctx.etapas[etapa] = ctx.etapas.get(etapa, 0) + decorrido
 
 
 class Orquestrador:
@@ -137,17 +169,21 @@ class Orquestrador:
         # Regra primeiro: é determinística e barata, e evita pagar a
         # inferência do classificador nos ataques triviais. As duas
         # camadas são complementares — nenhuma substitui a outra.
-        if injecao_regras.contem_padrao_suspeito(ctx.prompt):
+        with _cronometrar(ctx, ETAPA_INJECAO):
+            suspeita_por_regra = injecao_regras.contem_padrao_suspeito(ctx.prompt)
+        if suspeita_por_regra:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_REGRA)
 
-        veredito = await injecao_classificador.classificar(ctx.prompt)
+        with _cronometrar(ctx, ETAPA_INJECAO):
+            veredito = await injecao_classificador.classificar(ctx.prompt)
         if veredito.suspeita:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
 
         # --- 2. Guarda de abuso -------------------------------------------
         # Depois da injeção, e não antes: um ataque ao agente é mais grave
         # que um mau uso, e é o que não deve alcançar mais nenhum serviço.
-        abuso = await abuso_classificador.classificar(ctx.prompt)
+        with _cronometrar(ctx, ETAPA_ABUSO):
+            abuso = await abuso_classificador.classificar(ctx.prompt)
         if abuso.abusiva:
             logger.info(
                 "Uso indevido registrado (interacao=%s, usuario=%s, motivo=%s)",
@@ -158,7 +194,8 @@ class Orquestrador:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_ABUSO)
 
         # --- 3. Intenção ---------------------------------------------------
-        resultado = await intencao_classificador.classificar(ctx.prompt)
+        with _cronometrar(ctx, ETAPA_INTENCAO):
+            resultado = await intencao_classificador.classificar(ctx.prompt)
         ctx.confianca = resultado.confianca
         intencao = catalogo.obter(resultado.intencao_id) if resultado.intencao_id else None
 
@@ -211,23 +248,29 @@ class Orquestrador:
         # O historico so e consultado depois que a mensagem atual atravessa
         # todas as guardas. Assim, uma entrada bloqueada nao dispara leituras
         # nem chamadas externas para sanear turnos anteriores.
-        historico = await self._historico_seguro(ctx)
-        try:
-            resposta = await self._executor.enviar(
-                ctx.prompt,
-                intencao.id,
-                intencao.exige_confirmacao,
-                ctx.conversa.conversa_externa_id,
-                historico,
-            )
-        except Exception:  # noqa: BLE001 — qualquer falha do executor vira resposta amigável
-            # Sem exc_info e sem a mensagem: o traço do executor pode
-            # carregar o payload enviado. Correlacionar pelo interacao_id.
-            logger.warning(
-                "Falha ao acionar o executor (interacao=%s, intencao=%s)",
-                ctx.interacao_id,
-                intencao.id,
-            )
+        #
+        # A leitura do historico entra no tempo do executor porque so existe
+        # para compor o que vai a ele.
+        with _cronometrar(ctx, ETAPA_EXECUTOR):
+            historico = await self._historico_seguro(ctx)
+            try:
+                resposta = await self._executor.enviar(
+                    ctx.prompt,
+                    intencao.id,
+                    intencao.exige_confirmacao,
+                    ctx.conversa.conversa_externa_id,
+                    historico,
+                )
+            except Exception:  # noqa: BLE001 — qualquer falha do executor vira resposta amigável
+                # Sem exc_info e sem a mensagem: o traço do executor pode
+                # carregar o payload enviado. Correlacionar pelo interacao_id.
+                logger.warning(
+                    "Falha ao acionar o executor (interacao=%s, intencao=%s)",
+                    ctx.interacao_id,
+                    intencao.id,
+                )
+                resposta = None
+        if resposta is None:
             return await self._encerrar(ctx, Desfecho.FALHA_EXECUTOR)
 
         # Só executor com sessão própria (o Copilot) tem o que vincular. O
@@ -240,7 +283,8 @@ class Orquestrador:
         # resposta traz instrução embutida vinda de um documento que o
         # executor recuperou. É a única barreira que enxerga injeção
         # indireta, e por isso ela existe depois da execução.
-        veredito_saida = await guarda_saida.verificar(resposta.texto, intencao.id)
+        with _cronometrar(ctx, ETAPA_SAIDA):
+            veredito_saida = await guarda_saida.verificar(resposta.texto, intencao.id)
         if veredito_saida.suspeita:
             logger.warning(
                 "Resposta retida pela guarda de saída (interacao=%s, motivo=%s)",
@@ -318,6 +362,7 @@ class Orquestrador:
                 latencia_ms=int((time.perf_counter() - ctx.inicio) * 1000),
                 criada_em=datetime.now(UTC),
                 rotina_id=ctx.rotina_id,
+                latencia_etapas=dict(ctx.etapas),
             )
         )
 
