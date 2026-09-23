@@ -39,6 +39,18 @@ class EstadoSincronizacao(Enum):
 
 
 @dataclass(frozen=True)
+class CanalRegistrado:
+    """Canal do Drive como a operação o enxerga: sem o hash do token."""
+
+    canal_id: str
+    fonte_id: str
+    estado: EstadoCanal
+    recurso_id: str | None
+    expira_em: datetime
+    ativado_em: datetime | None
+
+
+@dataclass(frozen=True)
 class Recebimento:
     """Uma notificação aceita, com os identificadores do evento interno.
 

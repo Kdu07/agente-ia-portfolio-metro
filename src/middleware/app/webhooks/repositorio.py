@@ -15,11 +15,28 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.auth.webhooks_drive import CanalDrive
 from app.persistence.repository import _RepositorioBase
-from app.webhooks.modelos import EstadoCanal, EstadoSincronizacao, Provedor, Recebimento
+from app.webhooks.modelos import (
+    CanalRegistrado,
+    EstadoCanal,
+    EstadoSincronizacao,
+    Provedor,
+    Recebimento,
+)
 from app.webhooks.tabelas import CanalDriveTabela, RecebimentoTabela, SincronizacaoFonteTabela
 
 # Renovar ao atingir 80% da validade concedida (seção 9.1.2.7.1, item 6).
 FRACAO_RENOVACAO = 0.8
+
+
+def _registrado(linha: CanalDriveTabela) -> CanalRegistrado:
+    return CanalRegistrado(
+        canal_id=linha.canal_id,
+        fonte_id=linha.fonte_id,
+        estado=EstadoCanal(linha.estado),
+        recurso_id=linha.recurso_id,
+        expira_em=linha.expira_em,
+        ativado_em=linha.ativado_em,
+    )
 
 
 class CanalDriveRepository(_RepositorioBase):
@@ -86,6 +103,19 @@ class CanalDriveRepository(_RepositorioBase):
             )
             .values(estado=EstadoCanal.ENCERRADO.value, encerrado_em=agora)
         )
+
+    async def obter(self, canal_id: str) -> CanalRegistrado | None:
+        linha = await self._sessao.get(CanalDriveTabela, canal_id)
+        return None if linha is None else _registrado(linha)
+
+    async def listar(self, fonte_id: str) -> list[CanalRegistrado]:
+        """Canais da fonte, os mais recentes primeiro."""
+        linhas = await self._sessao.scalars(
+            select(CanalDriveTabela)
+            .where(CanalDriveTabela.fonte_id == fonte_id)
+            .order_by(CanalDriveTabela.criado_em.desc())
+        )
+        return [_registrado(linha) for linha in linhas]
 
     async def obter_para_verificacao(self, canal_id: str) -> CanalDrive | None:
         """Devolve o canal no formato de `auth/webhooks_drive.verificar_drive`."""
