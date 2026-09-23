@@ -126,16 +126,27 @@
     - [3.4.4 Análise dos pontos identificados na Sprint 3](#344-análise-dos-pontos-identificados-na-sprint-3)
     - [3.4.5 Melhorias para a Sprint 4](#345-melhorias-para-a-sprint-4)
   - [3.5 Sprint 4](#35-sprint-4)
+    - [3.5.1 Planejamento e matriz de responsabilidades](#351-planejamento-e-matriz-de-responsabilidades)
+      - [Matriz de papéis e responsabilidades da Sprint 4](#matriz-de-papéis-e-responsabilidades-da-sprint-4)
+      - [Rotação de papéis em relação às Sprints 2 e 3](#rotação-de-papéis-em-relação-às-sprints-2-e-3)
+      - [Distribuição de carga](#distribuição-de-carga)
+    - [3.5.2 Retrospectiva da Sprint 4](#352-retrospectiva-da-sprint-4)
+    - [3.5.3 Indicadores quantitativos da Sprint 4](#353-indicadores-quantitativos-da-sprint-4)
+    - [3.5.4 Reconciliação com o fechamento da Sprint 3](#354-reconciliação-com-o-fechamento-da-sprint-3)
+    - [3.5.5 Análise dos pontos identificados na Sprint 4](#355-análise-dos-pontos-identificados-na-sprint-4)
+    - [3.5.6 Melhorias para a Sprint 5](#356-melhorias-para-a-sprint-5)
   - [3.6 Sprint 5](#36-sprint-5)
+    - [3.6.1 Planejamento da Sprint 5](#361-planejamento-da-sprint-5)
+    - [3.6.2 Retrospectiva da Sprint 5](#362-retrospectiva-da-sprint-5)
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
   - [4.1 Metodologia de avaliação](#41-metodologia-de-avaliação)
-  - [4.2 Matriz de risco consolidada — revisão da Sprint 3](#42-matriz-de-risco-consolidada--revisão-da-sprint-3)
+  - [4.2 Matriz de risco consolidada — revisão da Sprint 4](#42-matriz-de-risco-consolidada--revisão-da-sprint-4)
     - [4.2.1 Itens acrescentados na Sprint 4](#421-itens-acrescentados-na-sprint-4)
   - [4.3 Histórico de acompanhamento](#43-histórico-de-acompanhamento)
   - [4.4 Riscos materializados e efetividade das respostas](#44-riscos-materializados-e-efetividade-das-respostas)
   - [4.5 Plano de resposta — ameaças](#45-plano-de-resposta--ameaças)
   - [4.6 Estratégia de aproveitamento — oportunidades](#46-estratégia-de-aproveitamento--oportunidades)
-  - [4.7 Matriz probabilidade × impacto — Sprint 3](#47-matriz-probabilidade--impacto--sprint-3)
+  - [4.7 Matriz probabilidade × impacto — Sprint 4](#47-matriz-probabilidade--impacto--sprint-4)
   - [4.8 Análise dos três itens mais críticos](#48-análise-dos-três-itens-mais-críticos)
 - [5. Melhorias de processo](#5-melhorias-de-processo)
   - [5.1 Ações de melhoria](#51-ações-de-melhoria)
@@ -467,6 +478,7 @@ O quadro evolutivo será consolidado progressivamente para evidenciar temas reco
 | Sprint 1 | Entrega integral do escopo no fechamento; rastreabilidade por issues, commits e MRs; equilíbrio global entre criação e revisão de MRs | Distribuição desigual entre frentes; revisões concentradas; atualizações mantidas até a noite de encerramento | Definir corte único das métricas; distribuir revisões desde o início; acompanhar carga e dependências nas dailies |
 | Sprint 2 | Conclusão integral da milestone (81/81 issues) mesmo com redefinição de escopo; granularidade do planejamento em tasks pequenas e verificáveis; participação dos seis integrantes no fluxo de integração; identidades de autoria reconciliadas pelo `.mailmap`; comunicação consistente nas dailies | Desorganização na primeira semana por mudança de escopo; fechamento concentrado no encerramento (51% nos dois últimos dias); 24,7% do escopo fechado sem responsável atribuído; desequilíbrio de carga (2,83:1 em issues e 2,92:1 em horas) e integração concentrada; ausência de Tech Lead designado | Nomear revisor na abertura do MR e medir o SLA; redistribuição obrigatória acima de 2:1; designar Tech Lead; issue de propagação a cada mudança de escopo; responsável obrigatório antes de `Doing`; checkpoint de repriorização no penúltimo dia útil |
 | Sprint 3 | Organização proativa com adiantamento de trabalho de sprints futuras; divisão clara de tarefas desde o início; integração ágil entre componentes (voz, NLP, mensageria) | Perda de dia de desenvolvimento por feriado; queda de produtividade por integrantes resfriados | Criar plano B para casos de ausência e redução de capacidade; considerar feriados no cálculo de capacity |
+| Sprint 4 | Onda 1 fora do esqueleto (`NotImplementedError` de 45 para 23); revisor nomeado em 23 de 24 merge requests; board íntegro sem regularização (97 de 97 cards com responsável, *size* e prioridade); métricas da Sprint 3 refeitas no fechamento | Operação a 141% da capacidade declarada, pela antecipação do escopo da Sprint 5; razão de carga de 2,25:1; conclusão atrasada em relação ao tempo decorrido; 82% dos merges em duas pessoas | Planejar dentro da capacidade; redistribuir carga no planejamento; teto de 40% dos merges por pessoa; medir o SLA de revisão; refazer as métricas depois do último merge; checkpoint de quarta com data prevista por card |
 
 ### 3.2 Sprint 1
 
@@ -1087,17 +1099,386 @@ A leitura abaixo cruza a matriz da seção 4 com o que o ciclo tornou observáve
 
 ### 3.5 Sprint 4
 
-[Preencher após a retrospectiva da Sprint 4.]
+#### 3.5.1 Planejamento e matriz de responsabilidades
+
+O planejamento operacional da Sprint 4 está no [Kanban do GitLab](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/boards), milestone `Sprint 04`: 97 cards, todos com responsável, *size* e prioridade desde a abertura. A matriz abaixo foi derivada desse board — o papel principal de cada integrante é a frente que concentra os seus cards, e não uma atribuição declarada à parte —, o que permite conferir cada linha contra o próprio Kanban.
+
+##### Matriz de papéis e responsabilidades da Sprint 4
+
+| Integrante | Papel principal na Sprint 4 | Artefatos e tasks sob responsabilidade | Principais responsabilidades e entregas |
+|---|---|---|---|
+| Alexsander Barbosa | Viabilidade financeira e comunicação da entrega | #356–#360 (custos de pessoal e de tecnologia, orçamento, viabilidade financeira, horas por papel); #361–#363 (README, tags SemVer, correção documental); #364 (slides da Sprint Review); #431 | Levantar os custos da solução e compor o orçamento e a análise de viabilidade; manter o README e as tags de versão coerentes com o estado do projeto; preparar a apresentação da Sprint Review |
+| Carlos Eduardo Serrano Quaglia | Implantação em nuvem e integração contínua | #375–#385 (Container Registry, Container Apps de desenvolvimento e produção, PostgreSQL gerenciado, Key Vault, migrações, pipelines de CI e CD, monitoramento, capítulo 11 do `Projeto.md`); #350–#353 (executor próprio, guardas com Content Safety, heads do Alembic, validação ponta a ponta); #374, #437, #432 | Colocar a solução em ambientes de nuvem reproduzíveis, com segredos fora do código e implantação automatizada; ligar o executor próprio e as guardas ao `/chat`; integrar o cliente Direct Line |
+| Celso Rocha | Painel de análise de intenções e gestão evolutiva | #365–#369 (consultas agregadas, métricas de latência, oito rotas, componentes de gráfico e página de Intenções); #370–#373 (análise da Sprint 4, matriz de risco, matriz de papéis, planejamento da Sprint 5); #433 | Implementar o painel do RF10 de ponta a ponta, do SQL à interface, incluindo a medição de latência por etapa do pipeline; conduzir a análise do ciclo e o planejamento do seguinte |
+| Eduardo Casarini | Integrações assíncronas e canal de voz real | #386–#395 (contratos e implementação dos webhooks, RabbitMQ, produtor e consumidor AMQP, documentação da mensageria); #396–#400 (token efêmero do Speech, transcrição real, troca dos dublês pelas rotas reais, tratamento de falhas na interface); #401–#403 (dailies, contrato de convivência, GitFlow); #434 | Conectar os eventos externos ao middleware por webhook e fila; substituir a voz simulada pela real; ligar a interface às rotas do backend; atualizar as políticas de processo |
+| Mariana Reis | Rotinas agendadas e testes funcionais e de requisitos não funcionais | #404–#410 e #438 (validação, agendador, execução, rotas, worker e página de Rotinas); #411–#412 (calibração do Content Safety e documentação das guardas); #413–#416, #440, #443, #445 (testes de webhooks, testes funcionais, carga, cobertura, RNF04 e RNF06); #435 | Entregar o RF11 de ponta a ponta; conduzir a verificação funcional e a de desempenho, com as evidências registradas |
+| Mirela Bianchi | Dados, histórico de conversas e testes de integração e desempenho | #296–#298, #303, #417–#420 (população, scripts, índices e documentação do banco); #421–#425 (rotas de conversas, página de Histórico, contexto multi-turno); #426–#430, #441, #442, #446 (desempenho, fitas VHS, Direct Line com VHS, roteiro no Maze, consolidação dos testes, RNF01, RNF02 e RNF07, fluxos ponta a ponta); #436 | Consolidar a camada de dados e o RF12; conduzir os testes de integração, desempenho e usabilidade, e consolidar a cobertura |
+
+**Condução do ciclo.** Eduardo Casarini foi o Scrum Master da Sprint 4, e Carlos Eduardo Serrano Quaglia, o Tech Lead. É a primeira sprint do módulo com Tech Lead designado desde a Sprint 1, o que atende, com um ciclo de atraso, a `AM08`. Os dois papéis também rodaram: o Scrum Master foi Carlos Eduardo na Sprint 2 e Mirela Bianchi na Sprint 3.
+
+Cada integrante conduziu uma sessão de usabilidade com participante externo (#431–#436), e por isso esses cards não entram na definição do papel principal: são trabalho coletivo distribuído por igual.
+
+##### Rotação de papéis em relação às Sprints 2 e 3
+
+| Integrante | Papel principal na Sprint 2 | Papel principal na Sprint 3 | Papel principal na Sprint 4 | Evidência da rotação |
+|---|---|---|---|---|
+| Alexsander Barbosa | Pilha de tecnologias e modelagem de dados | Qualidade, usabilidade e apresentação | Viabilidade financeira e comunicação da entrega | Migrou de testes com usuários para análise econômica. A preparação da Sprint Review (#364) se repete como tarefa secundária |
+| Carlos Eduardo Serrano Quaglia | Scrum Master e camada de PLN | Dados, integração e infraestrutura técnica | Implantação em nuvem e integração contínua | Migrou de dados e testes de integração para implantação, pipelines e ambientes gerenciados |
+| Celso Rocha | Pré-processamento textual e catálogo de intenções | Qualidade e testes de requisitos | Painel de análise de intenções e gestão evolutiva | Migrou da verificação de requisitos para implementação de ponta a ponta e condução da análise do ciclo |
+| Eduardo Casarini | Canal de voz e contratos de API | Frontend e gestão do processo | Integrações assíncronas e canal de voz real | Papel principal novo: webhooks e mensageria. Duas repetições secundárias: as políticas de processo (#401–#403) seguem com ele desde a Sprint 3, e o canal de voz, especificado por ele na Sprint 2, volta como implementação (#396–#397) |
+| Mariana Reis | Projeto visual e implantação em nuvem | PLN e integração do canal de voz | Rotinas agendadas e testes funcionais e de requisitos não funcionais | Migrou de PLN e voz para agendamento e verificação de requisitos |
+| Mirela Bianchi | Prototipação exploratória e modelagem UML | API de áudio, mensageria e Scrum Master | Dados, histórico de conversas e testes de integração e desempenho | Migrou de serviços de áudio e condução do processo para dados e testes |
+
+Os seis integrantes assumiram na Sprint 4 um papel principal diferente dos dois anteriores, e nenhuma frente principal permaneceu com a mesma pessoa em ciclos consecutivos. As duas repetições estão em tarefas secundárias e estão registradas acima em vez de omitidas. A rotação também ampliou o repertório: cinco integrantes implementaram backend e interface no ciclo, e a frente de implantação em nuvem, que na Sprint 2 era especificação, virou execução com um responsável diferente.
+
+##### Distribuição de carga
+
+| Integrante | Cards | Horas atribuídas | Participação | Em relação à capacidade de 16 h |
+|---|---:|---:|---:|---:|
+| Mirela Bianchi | 22 | 29,75 h | 22,0% | 186% |
+| Mariana Reis | 18 | 27,00 h | 19,9% | 169% |
+| Carlos Eduardo Serrano Quaglia | 18 | 25,00 h | 18,5% | 156% |
+| Eduardo Casarini | 19 | 24,50 h | 18,1% | 153% |
+| Celso Rocha | 10 | 16,00 h | 11,8% | 100% |
+| Alexsander Barbosa | 10 | 13,25 h | 9,8% | 83% |
+| **Total** | **97** | **135,50 h** | **100%** | **141%** |
+
+A razão entre a maior e a menor carga atribuída é de **2,25:1** (29,75 h contra 13,25 h), acima do teto de 2:1 que a `AM17` fixou para esta sprint. É uma melhora sobre os **2,50:1** do fechamento da Sprint 3 — e não sobre os 13:1 que a seção 3.4.3 registrou, que mediam commits num corte parcial (ver [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3)). O desequilíbrio desta sprint tem uma causa identificável: a antecipação do escopo da Sprint 5 caiu principalmente sobre as frentes de implementação e de testes, e as frentes de viabilidade e de análise ficaram perto da capacidade declarada. A resposta está em `AM21`, que leva a redistribuição para o planejamento.
+
+A contribuição medida no repositório — commits integrados e em branch, merge requests e merges — está na seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4), ao lado desta tabela. Ler as duas juntas evita a impressão que um corte isolado produz: no corte de 22/09, por exemplo, um integrante com 34 commits no ciclo aparece com zero na `develop`, porque o trabalho está em merge request aguardando revisão. A matriz responde por quem responde pelo quê; a produção, pela seção de indicadores; nenhuma das duas é ranking.
+
+##### Alinhamento aos critérios do Escritório de Projetos
+
+| Critério | Evidência no projeto |
+|---|---|
+| Análise crítica da Sprint 4 | Seções [3.5.2](#352-retrospectiva-da-sprint-4) a [3.5.6](#356-melhorias-para-a-sprint-5): indicadores com corte, fonte e commit-base declarados, operação acima da capacidade registrada, reconciliação com o fechamento da Sprint 3 e ações `AM20` a `AM26` |
+| Revisão e acompanhamento dos riscos | Seção 4: status revisado, reversão de `R02` e `R06` com data e evidência, itens novos da compressão de escopo (`R21`, `R22`) e da restrição do parceiro (`R23`), matriz probabilidade × impacto e três itens mais críticos |
+| Papéis e responsabilidades | Esta seção: matriz derivada do board, rotação em relação às Sprints 2 e 3 e carga com razão calculada |
+| Contrato, SLA e rituais | Seção 2.9 |
+| Planejamento da Sprint 5 | Seção [3.6](#36-sprint-5): tasks estimadas, priorizadas, sequenciadas e detalhadas, com destino explícito para o que não fechar na Sprint 4 |
+| Gestão do processo e de configuração | Seções 2.2 a 2.8 e 5, e `GestaoConfiguracao.md` |
+
+#### 3.5.2 Retrospectiva da Sprint 4
+
+A Sprint 4 foi o ciclo em que a solução deixou de ser contrato e esqueleto e passou a código integrado e testado: autenticação pelo Entra ID, persistência, executor próprio com recuperação aumentada por geração, webhooks, rotinas agendadas e painel de intenções chegaram à `develop` ou a merge requests em revisão. O ciclo teve uma condição que o distingue dos anteriores: o escopo previsto para a Sprint 5 foi antecipado para a Sprint 4, e a equipe operou acima da capacidade declarada de dezesseis horas por integrante. A seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4) quantifica essa diferença, e ela é a chave de leitura dos demais indicadores: volume alto de trabalho iniciado, conclusão que se acumula para o fim da semana e carga desigual entre as frentes.
+
+A retrospectiva também corrige o método da anterior. Os indicadores da Sprint 3 haviam sido tirados de um corte parcial, e uma conclusão foi sustentada sobre ele. A seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3) refaz aquela conta depois do último merge do ciclo, com o board extraído pela API do GitLab, e reavalia as ações que tinham ficado sem evidência.
+
+#### 3.5.3 Indicadores quantitativos da Sprint 4
+
+> **Nota metodológica.** Corte de **22/09/2026 às 19h24 (UTC−03:00)**, a três dias úteis do encerramento. As fontes são as mesmas dos ciclos anteriores, agora extraídas diretamente da API do GitLab em vez do export manual:
+>
+> 1. **Board**, milestone `Sprint 04`: issues, responsáveis, *sizes*, prioridades, colunas e datas de fechamento. A conversão de esforço é a de sempre — `SIZE_PP` = 0,25 h, `SIZE_P` = 0,5 h, `SIZE_M` = 1 h e `SIZE_G` = 2 h.
+> 2. **Branch `develop`**, de 7255196 (último merge da Sprint 3, 11/09 às 22h12) até 61a67b8 (22/09 às 16h37), com autoria reconciliada pelo `.mailmap`, conforme `AM10`.
+>
+> **Corte e reapuração.** O corte é intermediário e declarado como tal. Carga atribuída, capacidade e composição do escopo não dependem do fechamento: são o plano da sprint, e valem como estão. Taxa de conclusão, perfil de fechamento e a efetividade de `AM18` dependem, e são refeitas depois do último merge do ciclo, com a mesma extração — é a ação `AM24`.
+
+##### Situação do board no corte
+
+| Situação | Issues | Horas convertidas |
+|---|---:|---:|
+| Concluídas | 28 | 38,25 h |
+| `Waiting Review` | 7 | — |
+| `Doing` | 2 | — |
+| `Backlog` | 60 | — |
+| **Total na milestone `Sprint 04`** | **97** | **135,50 h** |
+
+Nenhuma das 97 issues está sem responsável, sem *size* ou sem prioridade. É a primeira milestone do projeto com os três campos preenchidos em todos os cards desde a abertura, e não por regularização no fechamento.
+
+##### Capacidade declarada e carga atribuída
+
+| Medida | Valor |
+|---|---:|
+| Capacidade declarada | 6 integrantes × 16 h = **96,00 h** |
+| Carga atribuída na milestone | **135,50 h** |
+| Carga atribuída sobre a capacidade | **141%** |
+| Integrantes com carga acima de 16 h | 4 de 6 |
+
+A diferença de 39,5 h não é erro de estimativa. É a antecipação do escopo da Sprint 5 convertida em horas: as mesmas 97 issues, com os mesmos critérios de *size*, somam 41% a mais do que a capacidade que a equipe declarou ter. O registro explícito importa porque, sem ele, o burndown desta sprint contradiria o texto — mostraria uma equipe que planejou mal, e não uma equipe que absorveu um ciclo e meio de escopo.
+
+##### Composição do escopo
+
+| *Size* | Issues | Horas convertidas |
+|---|---:|---:|
+| `SIZE_G` | 42 | 84,00 h |
+| `SIZE_M` | 49 | 49,00 h |
+| `SIZE_P` | 4 | 2,00 h |
+| `SIZE_PP` | 2 | 0,50 h |
+| **Total** | **97** | **135,50 h** |
+
+| Label de entrega | Issues | | Prioridade | Issues |
+|---|---:|---|---|---:|
+| `CODE` | 37 (38%) | | `P_ALTA` | 69 (71%) |
+| `TEST` | 23 (24%) | | `P_MEDIA` | 25 (26%) |
+| `DEPLOY` | 12 (12%) | | `P_BAIXA` | 3 (3%) |
+| Sem label de entrega | 25 (26%) | | | |
+| **Total** | **97** | | **Total** | **97** |
+
+A contagem por entrega soma as 97 issues porque a seção 2.5.3 admite uma única label de entrega por issue. As labels de forma, natureza e atividade fora do GitLab acompanham a de entrega e são contadas à parte, sem somar ao total: `DOCS` em 25 issues, `OFFSITE` em 6 e `BUG` em 3. Somá-las às de entrega, como numa lista única de tipos, dá 106 rótulos para 97 issues.
+
+As 25 issues sem label de entrega descumprem a seção 2.5.3: 23 levam só `DOCS`, que é label de forma e nunca vem isolada, e 2 não levam label de tipo nenhuma. São cards de documentação, de viabilidade financeira e de processo, que pela taxonomia recebem `ARCHITECTURE`, `BUSINESS` ou `PROCESS`. A correção é feita no próprio board, antes do fechamento, para que a composição do escopo no fechamento já saia sem essa lacuna.
+
+Pela primeira vez no módulo o código supera a documentação na composição do escopo, o que é coerente com a Onda 1 saindo do papel. A concentração em `P_ALTA` — sete em cada dez cards — é o outro sinal da compressão: com dois ciclos de escopo em um, quase tudo passou a ser prioritário, e a priorização perdeu parte da sua função de ordenar.
+
+##### Indicadores verificáveis no repositório
+
+| Métrica | Resultado |
+|---|---:|
+| Commits autorais integrados na `develop` | 58 |
+| Commits autorais em todas as branches, incluindo MRs em revisão | 123 |
+| Merges na `develop` | 17 |
+| Merge requests para a `develop` abertos no período | 24 — 17 integrados, 6 em revisão, 1 fechado sem merge |
+| Merge requests com revisor nomeado | 23 de 24 |
+| Ocorrências de `NotImplementedError` em `src/middleware/app` | **45 → 23** |
+| Dias com commit no período | 7 — incluindo sábado e domingo, 19 e 20/09; nenhum em 14/09 e 18/09 |
+| Commits integrados aderentes à política de commits | **0 de 58 (0%)** |
+
+A aderência à política de commits confere, em cada um dos 58 commits autorais integrados, as quatro regras verificáveis da seção 3 do `GestaoConfiguracao.md`: tipo do Conventional Commits no início, verbo no infinitivo, referência ao card entre parênteses no fim e título de até 72 caracteres. Nenhum commit integrado até o corte atende às quatro ao mesmo tempo. As falhas se sobrepõem, e por isso não se somam:
+
+| Regra descumprida | Commits |
+|---|---:|
+| Verbo fora do infinitivo, como `implementa` e `adiciona` | 44 |
+| Card referenciado sem parênteses, como #408 no fim do título | 34 |
+| Tipo fora do padrão, como `FIX \|` e `FEAT \|`, ou comando colado no lugar da mensagem | 5 |
+| Título acima de 72 caracteres | 2 |
+
+Todos os 58 commits referenciam um card, então a rastreabilidade entre commit e issue se mantém. O que falha é o formato, e de modo sistemático, com um padrão próprio em cada integrante. É o sinal de que a regra existe no documento mas não é conferida em nenhum ponto do fluxo. A resposta está na `AM26`.
+
+##### Distribuição por integrante
+
+| Integrante | Issues | Horas atribuídas | Concluídas | Horas concluídas | Commits na `develop` | Commits em todas as branches | MRs abertos | Revisões nomeadas | Merges executados |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Mirela Bianchi | 22 | 29,75 h | 13 | 15,75 h | 20 | 26 | 4 | 10 | 8 |
+| Mariana Reis | 18 | 27,00 h | 7 | 11,00 h | 24 | 34 | 9 | 8 | 6 |
+| Carlos Eduardo Serrano Quaglia | 18 | 25,00 h | 4 | 5,50 h | 4 | 14 | 5 | 3 | 0 |
+| Eduardo Casarini | 19 | 24,50 h | 1 | 1,00 h | 10 | 15 | 3 | 1 | 2 |
+| Celso Rocha | 10 | 16,00 h | 3 | 5,00 h | 0 | 34 | 3 | 1 | 1 |
+| Alexsander Barbosa | 10 | 13,25 h | 0 | 0,00 h | 0 | 0 | 0 | 0 | 0 |
+| **Total** | **97** | **135,50 h** | **28** | **38,25 h** | **58** | **123** | **24** | **23** | **17** |
+
+As colunas medem coisas distintas e não se somam entre si. A leitura que a Sprint 3 ensinou está na diferença entre as duas colunas de commits: *commits na `develop`* é o trabalho já integrado; *commits em todas as branches* inclui o que está em merge request aguardando revisão. No corte, 34 commits de Celso Rocha estão nas MRs !127 e !128, do painel de intenções, e por isso ele aparece com zero na `develop`. Ler só a primeira coluna repetiria o erro apontado na avaliação anterior, em que um integrante com o segundo maior volume do ciclo aparecia sem nenhum commit integrado. Alexsander Barbosa responde por cards `OFFSITE` — sessões de usabilidade e a apresentação da Sprint Review —, trabalho que acontece fora do repositório e não deixa commit.
+
+A razão entre a maior e a menor carga atribuída é de **2,25:1** (29,75 h contra 13,25 h). A integração segue concentrada: 14 dos 17 merges, ou 82%, foram executados por duas integrantes.
+
+#### 3.5.4 Reconciliação com o fechamento da Sprint 3
+
+A seção [3.4.3](#343-indicadores-quantitativos-da-sprint-3) foi escrita sobre o corte de 09/09, às 14h20, e declarou que era parcial. Mesmo assim, uma conclusão foi tirada dele: `AM07` foi dada como ineficaz pela razão de 13:1 em commits autorais. A tabela abaixo refaz a conta no fechamento real do ciclo — o merge 7255196, de 11/09 às 22h12 — e completa, com o board extraído pela API, os indicadores que tinham ficado sem evidência.
+
+| Métrica | Corte de 09/09 (seção 3.4.3) | Fechamento em 7255196 |
+|---|---|---|
+| Issues concluídas na milestone `Sprint 03` | 23 fechadas de 55 atribuídas | **51 de 51** |
+| Commits autorais integrados na `develop` | 35 | **98** |
+| Distribuição dos commits na `develop` | 13, 10, 7, 4, 1 e 0 | **24, 23, 19, 18, 12 e 2** |
+| Razão de carga em horas atribuídas | não medida | **2,50:1** (12,5 h contra 5,0 h) |
+| Issues concluídas sem responsável | não reextraído | **0** |
+| Issues em `Backlog` no fechamento | não reextraído | **0** |
+| Concluídas no último dia do ciclo | não reextraído | **23 de 51 (45%)**, em 11/09 |
+
+O corte e o fechamento contam histórias diferentes. No corte, Eduardo Casarini aparecia sem nenhum commit na `develop`; no fechamento, tem 23, o segundo maior volume do ciclo. O trabalho existia e estava em branch — exatamente o efeito que a coluna *commits em todas as branches* da seção 3.5.3 passa a tornar visível. Os números da seção 3.4.3 são preservados como registro do que foi observado naquele corte; para comparar ciclos, vale a régua do fechamento.
+
+Com os dados completos, as ações da Sprint 2 que estavam sem evidência recebem avaliação:
+
+| ID | Critério | Resultado no fechamento da Sprint 3 | Avaliação |
+|---|---|---|---|
+| AM07 | Razão máxima de 2:1 nas horas atribuídas | 2,50:1 | **Ineficaz**, pela régua que a própria ação define — e não pelos 13:1 em commits do corte, que mediam outra coisa |
+| AM08 | Tech Lead registrado na matriz da Sprint 3 | A matriz da seção 3.4.1 não nomeia Tech Lead | **Não executada** na Sprint 3; atendida na Sprint 4, com Carlos Eduardo Serrano Quaglia como Tech Lead |
+| AM09 | Issue de propagação a cada mudança de escopo ou arquitetura | Nenhuma issue de propagação na milestone | **Não executada** |
+| AM11 | Nenhuma issue em `Backlog` na milestone no fechamento | 0 | **Efetiva** |
+| AM12 | Nenhuma issue concluída sem responsável | 0 de 51 | **Efetiva** — contra 24,7% na Sprint 2 |
+| AM13 | No máximo 25% das issues concluídas no último dia | 45% em 11/09 | **Ineficaz** |
+
+#### 3.5.5 Análise dos pontos identificados na Sprint 4
+
+##### Pontos fortes
+
+| Ponto forte | Evidência observada | Impacto no processo |
+|---|---|---|
+| A Onda 1 saiu do esqueleto | `NotImplementedError` em `src/middleware/app` caiu de 45 para 23. Dos 23 restantes, 19 estão no painel de intenções, cuja implementação já está na MR !127; integrada, restam 4, em voz, no cliente do Copilot e no worker | Os critérios de aceite que a `AM16` pedia para priorizar viraram código, e as funcionalidades deixam de ser demonstráveis só como contrato |
+| Revisor nomeado desde a abertura do MR | 23 dos 24 merge requests do período têm revisor nomeado | A fila de revisão tem dono desde o primeiro minuto, que é a condição para medir o SLA de `AM06` |
+| Board íntegro sem regularização | 97 de 97 issues com responsável, *size* e prioridade; nenhuma concluída sem responsável | Os indicadores individuais desta seção são confiáveis sem ajuste, e a regularização em bloco da Sprint 2 não se repetiu |
+| Integração ao longo do ciclo | Commits em sete dias do período e 17 merges na `develop` antes do corte | A `develop` acompanhou o trabalho em vez de recebê-lo de uma vez no encerramento |
+| Métrica refeita depois do último merge | Seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3), com a Sprint 3 reapurada no fechamento e cinco ações reavaliadas com evidência | Fecha a lacuna apontada na avaliação anterior e deixa a comparação entre ciclos sobre a mesma régua |
+
+##### Pontos de atenção
+
+| Ponto de atenção | Evidência observada | Consequência para o processo |
+|---|---|---|
+| Operação acima da capacidade declarada | 135,50 h atribuídas contra 96,00 h declaradas (141%); quatro de seis integrantes acima de 16 h; commits no sábado e no domingo, 19 e 20/09 | O ciclo depende de esforço acima do contratado, o que não se sustenta como padrão e empurra a conclusão para o fim da semana |
+| Razão de carga acima do limite | 2,25:1 em horas atribuídas, acima do teto de 2:1 de `AM17`, sem justificativa registrada em card | A melhora em relação aos 2,50:1 da Sprint 3 é real, mas o critério da ação não foi cumprido |
+| Conclusão atrasada em relação ao tempo decorrido | No corte, a três dias úteis do fim, 28 de 97 issues (29%) e 38,25 de 135,50 h (28%) concluídas | Repete o padrão que levou 45% das issues da Sprint 3 ao último dia (`AM13`) |
+| Integração concentrada | 14 dos 17 merges (82%) executados por duas integrantes; um integrante com revisões nomeadas não executou nenhum merge | Quem integra concentra o conhecimento do que entra na `develop` e vira gargalo nos dias de maior volume |
+| Política de commits sem conferência | 0 dos 58 commits integrados atendem às quatro regras verificáveis da seção 3 do `GestaoConfiguracao.md`; 44 com verbo fora do infinitivo e 34 com o card sem parênteses | A rastreabilidade se mantém, mas o histórico deixa de seguir um padrão único e a regra perde força a cada ciclo em que não é cobrada |
+| Trabalho pronto aguardando integração | 6 merge requests em revisão no corte; 65 dos 123 commits autorais do período ainda estão fora da `develop` | Até a revisão, esse trabalho não é demonstrável na linha principal e não aparece nas métricas integradas |
+
+Os pontos de atenção descrevem o processo, e não o desempenho individual. A compressão de escopo explica boa parte deles: com um ciclo e meio de trabalho em uma semana, é esperado que a conclusão se acumule e que a revisão vire gargalo. O que o registro permite é separar o que decorre da compressão do que decorre do processo — e é esse o critério das ações da seção [3.5.6](#356-melhorias-para-a-sprint-5).
+
+##### Efetividade das ações da Sprint 3
+
+| ID | Ação | Situação no corte | Avaliação |
+|---|---|---|---|
+| AM14 | Plano B para ausência, mal-estar ou feriado | Nenhuma frente crítica teve substituto ou pareamento combinado. Não houve ausência no ciclo que exigisse cobertura | **Não executada** — e sem efeito observável, porque não foi posta à prova. Permanece em vigor na Sprint 5 |
+| AM15 | Feriados e recessos no cálculo de capacity | Capacidade declarada de 16 h por integrante; o período de 14/09 a 25/09 não tem feriado. A declaração não está registrada na milestone, cuja descrição segue vazia | **Parcialmente efetiva** — a capacity foi declarada e usada, mas não no lugar que a ação definia |
+| AM16 | Priorizar os critérios de aceite remanescentes da Onda 1 | `NotImplementedError` caiu de 45 para 23; os 19 do painel estão na MR !127 | **Efetiva em execução** — a verificação final é a contagem depois do último merge |
+| AM17 | Razão máxima de 2:1, ou justificativa e plano B em card | 2,25:1, sem justificativa registrada | **Ineficaz**, com melhora sobre os 2,50:1 do fechamento da Sprint 3 |
+| AM18 | Projeção na daily de quarta; nada declarado não entregável depois de quinta às 23h59 | O prazo de quinta, 24/09, ainda não chegou no corte | **Em execução** — avaliada no fechamento |
+| AM19 | Repositório fora de pasta sincronizada com nuvem | Nenhum incidente de ambiente local com o Git no ciclo, contra quatro na Sprint 3 | **Efetiva** |
+
+#### 3.5.6 Melhorias para a Sprint 5
+
+| ID | Problema endereçado | Ação de melhoria | Responsável | Prazo | Critério de sucesso (verificável) |
+|---|---|---|---|---|---|
+| AM20 | Sprint planejada acima da capacidade | Planejar a Sprint 5 dentro de 16 h por integrante. O que exceder entra como decisão explícita no card de planejamento, com a indicação do item de menor prioridade que sai caso o excedente não caiba | Scrum Master da Sprint 5 | Planejamento da Sprint 5 | Carga atribuída na milestone de até 96 h, ou excedente justificado item a item no card de planejamento |
+| AM21 | Razão de carga acima de 2:1 por dois ciclos seguidos | Levar a verificação de carga da daily para o planejamento: redistribuir antes de o ciclo começar, e não durante | Scrum Master da Sprint 5 | Planejamento da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento |
+| AM22 | Integração concentrada em duas pessoas | Quem revisa não é sempre quem mescla: nenhum integrante executa mais de 40% dos merges do ciclo | Tech Lead da Sprint 5 | Ao longo da Sprint 5 | Maior participação individual nos merges de até 40% no fechamento |
+| AM23 | SLA de primeira revisão sem medição desde a Sprint 2 | Medir, pela API do GitLab, o tempo entre a abertura de cada MR e o primeiro comentário ou aprovação do revisor, e publicar a mediana no fechamento | Responsável pela gestão de configuração | Fechamento da Sprint 5 | Mediana e maior espera publicadas no relatório; nenhum MR acima de 24 h úteis sem justificativa |
+| AM24 | Conclusões tiradas de corte parcial | Refazer as métricas da retrospectiva depois do último merge do ciclo, com a mesma extração, e declarar o commit de fechamento na nota metodológica | Responsável pela retrospectiva da sprint | Fechamento de cada sprint | Nota metodológica cita o commit do último merge; nenhuma avaliação de ação sustentada só em corte intermediário |
+| AM25 | Conclusão acumulada no fim da semana, pelo segundo ciclo | Retomar `AM13` com checkpoint na daily de quarta: cada card em `Backlog` recebe data de conclusão prevista dentro da própria sprint | Scrum Master da Sprint 5 | Daily de quarta da Sprint 5 | No máximo 25% das issues concluídas no último dia do ciclo |
+| AM26 | Nenhum commit integrado aderente à política de commits | Conferir as mensagens de commit na revisão de cada merge request, com as quatro regras da seção 3 do `GestaoConfiguracao.md`, e pedir a correção antes do merge quando alguma falhar | Revisor de cada merge request | Ao longo da Sprint 5 | Pelo menos 90% dos commits autorais integrados na Sprint 5 aderentes às quatro regras, medidos com a mesma extração |
+
+`AM14`, não executada na Sprint 4, permanece em vigor na Sprint 5 com o mesmo critério. A última sprint do módulo não tem ciclo seguinte para absorver uma ausência sem cobertura.
 
 ### 3.6 Sprint 5
 
-[Preencher após a retrospectiva da Sprint 5.]
+#### 3.6.1 Planejamento da Sprint 5
+
+Com o escopo previsto para a Sprint 5 antecipado para a Sprint 4, a última sprint do módulo não repete o formato das anteriores. Ela concentra duas coisas: as correções apontadas nos testes de usabilidade e o fechamento do projeto — post-mortem, demonstração final no ambiente do parceiro e versão final. Planejar um ciclo com escopo novo seria planejar um ciclo fictício. O que segue é o que de fato resta.
+
+As tasks abaixo compõem o planejamento e são registradas como cards na milestone `Sprint 05` do [Kanban do GitLab](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/boards); no registro, os identificadores provisórios `S5-01` a `S5-17` dão lugar aos números das issues.
+
+##### Capacidade
+
+| Medida | Valor |
+|---|---:|
+| Capacidade declarada | 6 integrantes × 16 h = **96,00 h** |
+| Tasks planejadas | **20,75 h** (17 tasks) |
+| Folga em relação à capacidade | **75,25 h** |
+| Destino da folga | Resíduo da Sprint 4 e correções de usabilidade |
+
+A Sprint 5 é planejada dentro da capacidade, como pede a `AM20`, e a folga é deliberada. Ela tem dois destinos, nesta ordem: o resíduo da Sprint 4 e as correções de usabilidade, cujo tamanho só é conhecido depois da consolidação das sessões (S5-05). A última sprint do módulo não tem ciclo seguinte para absorver estouro.
+
+##### Reserva para o resíduo da Sprint 4
+
+Os cards da Sprint 4 que não fecharem até o último merge do ciclo continuam na milestone `Sprint 04`, como registra o item seguinte, mas as horas para concluí-los saem da capacidade da Sprint 5. Por isso a folga de 75,25 h é, antes de tudo, reserva para esse resíduo.
+
+| Medida | Valor |
+|---|---:|
+| Cards abertos na milestone `Sprint 04` em 23/09 às 14h24 | 59, com 82,25 h convertidas |
+| Resíduo usado no planejamento | O medido no fechamento da Sprint 4, na reapuração de S5-01 |
+| Reserva disponível | 75,25 h |
+
+Em 23/09, a dois dias úteis do fim, o que está aberto já passa da reserva. O número que vale é o do fechamento, porque boa parte desses cards está em revisão e fecha com o merge. Se o resíduo medido em S5-01 passar de 75,25 h, a regra da `AM20` é aplicada no primeiro dia da Sprint 5: saem primeiro as tasks `P_MEDIA` da Sprint 5, de baixo para cima na tabela abaixo, num total de até 6 h, e o que ainda exceder é registrado item a item no card de planejamento, com o que deixa de ser feito.
+
+##### Cards da Sprint 4
+
+Os cards da milestone `Sprint 04` permanecem nela até a conclusão: a Sprint 5 não herda cards da Sprint 4. É esse o destino explícito de todos eles, inclusive dos dois de prioridade baixa ainda abertos no corte de 22/09 — #383, do pipeline de entrega contínua, e #362, das tags SemVer das Sprints 3 e 4 —, que seguem na Sprint 4 com a mesma prioridade.
+
+##### Lista de tasks, estimativa e prioridade
+
+| ID | Task | Tipo | *Size* | Horas | Prioridade | Depende de |
+|---|---|---|---|---:|---|---|
+| S5-01 | Reapurar os indicadores da Sprint 4 depois do último merge | `PROCESS` `DOCS` | P | 0,50 | `P_ALTA` | Último merge da Sprint 4 |
+| S5-02 | Adequar `copilot/solucao/` à restrição de não exportar agentes | `ARCHITECTURE` `DOCS` | P | 0,50 | `P_ALTA` | — |
+| S5-03 | Comparar a base sintética aos dados de exemplo do SharePoint de teste | `TEST` `DOCS` | G | 2,00 | `P_MEDIA` | — |
+| S5-04 | Preparar a demonstração final no ambiente do parceiro | `DEPLOY` | G | 2,00 | `P_ALTA` | S5-02, #374 |
+| S5-05 | Consolidar os achados das sessões de usabilidade | `TEST` `DOCS` | M | 1,00 | `P_ALTA` | #431–#436 |
+| S5-06 | Priorizar as correções de usabilidade por severidade | `DESIGN` | P | 0,50 | `P_ALTA` | S5-05 |
+| S5-07 | Implementar as correções de usabilidade de severidade alta | `CODE` | G | 2,00 | `P_ALTA` | S5-06 |
+| S5-08 | Reaplicar o roteiro de usabilidade nas telas corrigidas | `TEST` | M | 1,00 | `P_MEDIA` | S5-07 |
+| S5-09 | Medir o SLA de primeira revisão dos merge requests | `PROCESS` `DOCS` | M | 1,00 | `P_MEDIA` | — |
+| S5-10 | Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria | `PROCESS` `DOCS` | G | 2,00 | `P_ALTA` | S5-09, corte de 06/10 |
+| S5-11 | Atualizar a matriz de risco no fechamento do módulo | `PROCESS` `DOCS` | M | 1,00 | `P_ALTA` | S5-10, S5-03 |
+| S5-12 | Atualizar a matriz de papéis e responsabilidades da Sprint 5 | `PROCESS` `DOCS` | M | 1,00 | `P_MEDIA` | Board da Sprint 5 estabilizado |
+| S5-13 | Conduzir a retrospectiva final do módulo com a equipe | `PROCESS` `MEET` | M | 1,00 | `P_ALTA` | S5-10 |
+| S5-14 | Escrever a análise post-mortem do projeto | `PROCESS` `DOCS` | G | 2,00 | `P_ALTA` | S5-13 |
+| S5-15 | Preencher o manual de instalação | `DEPLOY` `DOCS` | M | 1,00 | `P_MEDIA` | #376, #377 |
+| S5-16 | Criar os slides e conduzir a apresentação final | `BUSINESS` `OFFSITE` | G | 2,00 | `P_ALTA` | S5-04 |
+| S5-17 | Criar a tag SemVer da Sprint 5 e publicar a versão final | `DEPLOY` | PP | 0,25 | `P_ALTA` | Todos os merges da Sprint 5 |
+| | **Total** | | | **20,75** | | |
+
+Toda task tem uma label de entrega, como pede a seção 2.5.3; `DOCS`, `MEET` e `OFFSITE` aparecem só ao lado dela. Doze das dezessete tasks são `P_ALTA`, proporção parecida com a da Sprint 4, mas por uma razão própria da última sprint: quase tudo o que sobra é condição para fechar o módulo. As cinco `P_MEDIA` são as que podem ser cortadas primeiro se a folga não bastar para as correções de usabilidade — e a ordem de corte é a da tabela, de baixo para cima dentro de cada prioridade.
+
+##### Sequenciamento
+
+As tasks sem dependência entre si começam em paralelo desde o primeiro dia, e todas as cadeias convergem na tag final:
+
+**Figura — Dependências entre as tasks da Sprint 5**
+
+```mermaid
+flowchart LR
+    classDef critico stroke-width:3px,stroke:#c0392b
+    classDef externo stroke-dasharray:4 3
+    F4["Último merge da Sprint 4"] --> S501["S5-01 Reapurar indicadores"]
+    S502["S5-02 Adequar copilot/solucao"] --> S504["S5-04 Demonstração no ambiente do parceiro"]
+    DL["#374 Cliente Direct Line"] --> S504
+    S504 --> S516["S5-16 Apresentação final"]
+    SU["#431–#436 Sessões de usabilidade"] --> S505["S5-05 Consolidar achados"] --> S506["S5-06 Priorizar correções"] --> S507["S5-07 Implementar correções"] --> S508["S5-08 Reaplicar roteiro"]
+    S509["S5-09 Medir SLA de revisão"] --> S510["S5-10 Analisar a Sprint 5"]
+    S510 -. "reapuração após o último merge" .-> S517
+    S510 --> S511["S5-11 Matriz de risco final"]
+    S510 --> S513["S5-13 Retrospectiva final"] --> S514["S5-14 Post-mortem"]
+    AMB["#376, #377 Ambientes de nuvem"] --> S515["S5-15 Manual de instalação"]
+    S503["S5-03 Comparar base sintética e dados do parceiro"] --> S511
+    S508 & S511 & S512["S5-12 Matriz de papéis"] & S514 & S515 & S516 --> S517["S5-17 Tag e versão final"]
+    class S509,S510,S513,S514,S517 critico
+    class F4,DL,SU,AMB externo
+```
+
+*Legenda:* cada nó `S5-xx` é uma task da Sprint 5; os nós tracejados são marcos ou cards de fora dela, dos quais uma task depende. Seta contínua indica que a task de destino só começa com a de origem concluída. A seta pontilhada indica a reapuração de S5-10 sobre o último merge, que precisa estar pronta antes da tag. As bordas em destaque marcam o caminho crítico.
+
+| Ordem | Momento | Tasks | Por quê |
+|:---:|---|---|---|
+| 1 | Primeiro dia, 28/09 | S5-01, S5-02, S5-05, S5-09, S5-03 | Destravam o resto: a reapuração fecha a leitura da Sprint 4 e dimensiona o resíduo; a medição do SLA abre o caminho crítico; a adequação do `copilot/solucao/` tem de vir antes de qualquer export; a consolidação da usabilidade abre a única cadeia de código; a comparação da base alimenta a matriz de risco final |
+| 2 | De 29/09 a 05/10 | S5-06, S5-07, S5-04, S5-15, S5-12 | A correção de usabilidade é a cadeia de maior incerteza, porque o tamanho de S5-07 só se conhece em S5-06; a demonstração depende do Direct Line e é o que a apresentação mostra |
+| 3 | Véspera do fechamento, 06/10 | S5-08, S5-16, S5-10, S5-11 | Fecha o que a revisão interna precisa ler antes do último dia |
+| 4 | Último dia, 07/10 | S5-13, S5-14, reapuração de S5-10, S5-17 | A retrospectiva e o post-mortem precisam do ciclo encerrado; a análise redigida na véspera é refeita sobre o último merge (`AM24`); a tag vem por último, sobre a `develop` integrada |
+
+O caminho crítico é a cadeia de fechamento — S5-09 → S5-10 → S5-13 → S5-14 → S5-17, 6,25 h em série —, a mais longa do grafo e a única presa ao calendário: S5-10 depende do corte de 06/10, e S5-13 e S5-14 só começam com o ciclo encerrado. Qualquer atraso nela atrasa a tag e a versão final. As cadeias de usabilidade (S5-05 → S5-06 → S5-07 → S5-08 → S5-17) e de demonstração (S5-02 → S5-04 → S5-16 → S5-17) somam 4,75 h cada e têm 1,5 h de folga em relação a ela. A de usabilidade é a de maior incerteza: se as correções de severidade alta passarem de 3,5 h, ela passa a ser o caminho crítico, e a decisão de corte da seção anterior é antecipada para 30/09.
+
+##### Detalhamento das tasks
+
+**S5-01 — Reapurar os indicadores da Sprint 4 depois do último merge.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* refazer, com a mesma extração, os indicadores da seção 3.5.3 sobre o commit de fechamento da Sprint 4, e atualizar as conclusões que dependem do fechamento — taxa de conclusão, perfil de fechamento e efetividade de `AM18`. *DoR:* último merge da Sprint 4 integrado na `develop`; board da Sprint 4 sem movimentação pendente. *DoD:* nota metodológica cita o commit de fechamento; seções 3.5.3 a 3.5.5 sem valor de corte intermediário nas conclusões; `AM24` avaliada.
+
+**S5-02 — Adequar `copilot/solucao/` à restrição de não exportar agentes.** *Tipo:* `ARCHITECTURE`, `DOCS`. *Descrição:* reescrever `copilot/solucao/README.md`, que hoje prevê versionar o export da *solution* do Copilot Studio, para proibir esse versionamento, conforme a restrição do parceiro de 04/09 (`R23`). *DoR:* texto da restrição do parceiro disponível. *DoD:* README reescrito; nenhum `.zip` de *solution* nem link do ambiente no repositório; `R23` passa a Mitigado na matriz.
+
+**S5-03 — Comparar a base sintética aos dados de exemplo do SharePoint de teste.** *Tipo:* `TEST`, `DOCS`. *Descrição:* confrontar vocabulário, estrutura e campos da base sintética com os dados de exemplo do ambiente do parceiro, registrando as divergências e o efeito esperado nas métricas de 5.4.11 (`R01`, `O06`). *DoR:* acesso ao SharePoint de teste. *DoD:* divergências registradas no `Projeto.md`, sem reproduzir dados nem endereços do ambiente; `R01` reavaliado com base na comparação.
+
+**S5-04 — Preparar a demonstração final no ambiente do parceiro.** *Tipo:* `DEPLOY`. *Descrição:* montar o roteiro e o ambiente da demonstração de RF04 a RF08 pelo Copilot Studio do parceiro, com o executor próprio como alternativa (`O06`). *DoR:* S5-02 concluída; cliente Direct Line (#374) integrado. *DoD:* roteiro executado de ponta a ponta ao menos uma vez antes da apresentação; nenhum agente exportado.
+
+**S5-05 — Consolidar os achados das sessões de usabilidade.** *Tipo:* `TEST`, `DOCS`. *Descrição:* reunir os resultados das seis sessões com participantes externos, com as pontuações SUS e os problemas observados por tela. *DoR:* sessões #431 a #436 realizadas e registradas nos cards. *DoD:* achados consolidados no `Projeto.md`, com SUS por participante e médio, e cada problema com tela, frequência e severidade.
+
+**S5-06 — Priorizar as correções de usabilidade por severidade.** *Tipo:* `DESIGN`. *Descrição:* classificar os problemas de S5-05 e decidir quais entram na sprint. *DoR:* S5-05 concluída. *DoD:* lista priorizada com o critério de corte registrado; correções de severidade alta com card próprio ou dentro de S5-07.
+
+**S5-07 — Implementar as correções de usabilidade de severidade alta.** *Tipo:* `CODE`. *Descrição:* corrigir na interface os problemas de severidade alta priorizados em S5-06. *DoR:* S5-06 concluída. *DoD:* correções integradas na `develop`; `npm run test` e `npm run typecheck` passando; cada correção referenciada ao problema que resolve.
+
+**S5-08 — Reaplicar o roteiro de usabilidade nas telas corrigidas.** *Tipo:* `TEST`. *Descrição:* repetir as tarefas do roteiro que falharam, nas telas corrigidas, para verificar se a correção resolveu. *DoR:* S5-07 integrada. *DoD:* resultado da reaplicação registrado ao lado do da primeira rodada.
+
+**S5-09 — Medir o SLA de primeira revisão dos merge requests.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* medir, pela API do GitLab, o tempo entre a abertura de cada merge request e a primeira manifestação do revisor, desde a Sprint 3 (`AM23`). *DoR:* acesso de leitura à API. *DoD:* mediana e maior espera publicadas por sprint na seção 5.2; merge requests acima de 24 h úteis identificados.
+
+**S5-10 — Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* retrospectiva da Sprint 5 no formato da seção 3.5, redigida sobre o corte de 06/10, véspera do fechamento, para a revisão interna, e refeita depois do último merge (`AM24`). *DoR:* S5-09 concluída; corte de 06/10 extraído. *DoD:* indicadores com corte, fonte e commit de fechamento declarados; efetividade de `AM20` a `AM26` avaliada item a item.
+
+**S5-11 — Atualizar a matriz de risco no fechamento do módulo.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* revisão final da seção 4, com o status de encerramento de cada item e o `R01` reavaliado a partir da comparação de S5-03. *DoR:* S5-10 e S5-03 concluídas. *DoD:* todos os itens com status final e justificativa; histórico da seção 4.3 completo da Sprint 1 à Sprint 5.
+
+**S5-12 — Atualizar a matriz de papéis e responsabilidades da Sprint 5.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* matriz e rotação da Sprint 5 no formato da seção 3.5.1. *DoR:* board da Sprint 5 com todos os cards atribuídos. *DoD:* seis integrantes com papel, tasks e entregas; rotação comparada às Sprints 3 e 4; razão de carga calculada.
+
+**S5-13 — Conduzir a retrospectiva final do módulo com a equipe.** *Tipo:* `PROCESS`, `MEET`. *Descrição:* sessão com os seis integrantes sobre o módulo inteiro, para levantar sucessos, oportunidades de melhoria e lições aprendidas. *DoR:* S5-10 concluída; a análise das cinco sprints disponível. *DoD:* registro da sessão com os pontos levantados por integrante.
+
+**S5-14 — Escrever a análise post-mortem do projeto.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* preencher a seção 6 a partir da retrospectiva final e dos indicadores das cinco sprints. *DoR:* S5-13 concluída. *DoD:* seções 6.1 a 6.3 sem marcadores pendentes, cada ponto com evidência de uma das sprints.
+
+**S5-15 — Preencher o manual de instalação.** *Tipo:* `DEPLOY`, `DOCS`. *Descrição:* substituir o template de `Manual-instalacao.md` pelo processo real de instalação local e nos ambientes de nuvem. *DoR:* ambientes de desenvolvimento e produção provisionados (#376, #377). *DoD:* manual executado do zero por um integrante que não o escreveu, sem passo faltante.
+
+**S5-16 — Criar os slides e conduzir a apresentação final.** *Tipo:* `BUSINESS`, `OFFSITE`. *Descrição:* apresentação final do módulo, apoiada na demonstração de S5-04. *DoR:* S5-04 concluída. *DoD:* slides revisados pela equipe; demonstração ensaiada ao menos uma vez.
+
+**S5-17 — Criar a tag SemVer da Sprint 5 e publicar a versão final.** *Tipo:* `DEPLOY`. *Descrição:* tag anotada da versão final sobre a `main`, conforme a seção 2.5 do `GestaoConfiguracao.md`. *DoR:* todos os merges da Sprint 5 integrados. *DoD:* tag da Sprint 5 publicada; tabela de versionamento do `README.md` atualizada.
+
+#### 3.6.2 Retrospectiva da Sprint 5
+
+Seção redigida em duas etapas, pelas tasks S5-10 e S5-13. A Sprint 5 vai de 28/09 a 07/10. A primeira versão sai do corte de 06/10, véspera do fechamento, e serve à revisão interna. A versão final é refeita depois do último merge da Sprint 5, em 07/10, conforme a `AM24`, e acrescenta o que a retrospectiva final com a equipe levantar.
 
 ## 4. Gestão de riscos e oportunidades
 
-Os dois documentos tratam do mesmo conjunto de riscos, com recortes distintos e complementares. A **seção 2.6 de [Projeto.md](Projeto.md)** registra a identificação: metodologia, descrição de cada item, avaliação vigente, planos de resposta e análise dos mais críticos. **Esta seção** registra o acompanhamento ao longo do tempo: a evolução das notas entre sprints e a justificativa de cada reavaliação, os itens materializados e a efetividade das respostas efetivamente acionadas.
+Os dois documentos tratam do mesmo conjunto de riscos, em instantes distintos. A **seção 2.6 de [Projeto.md](Projeto.md)** preserva a identificação feita na Sprint 1 — metodologia, itens originais, planos de resposta e análise dos mais críticos daquele momento — como registro histórico, sem atualização a cada ciclo. **Esta seção** é a matriz vigente: os itens acrescentados depois, as notas reavaliadas sprint a sprint com a justificativa de cada movimento, os itens materializados e a efetividade das respostas efetivamente acionadas.
 
-A divisão evita a duplicação que importa. O que raramente muda — o que é cada risco e como se responde a ele — fica no `Projeto.md`; o que muda a cada ciclo — quanto vale hoje, o que aconteceu e o que a resposta produziu — fica aqui. Os identificadores são compartilhados, e a avaliação vigente da seção 4.2 é a mesma apresentada em 2.6.2: quando uma reavaliação alterar uma nota, os dois pontos devem ser atualizados na mesma passada.
+A divisão preserva as duas coisas que uma matriz de risco precisa mostrar: o que se sabia no começo e como a exposição evoluiu. Os identificadores são compartilhados, de modo que `R01` lá e `R01` aqui são o mesmo item, em dois instantes. Para saber onde o projeto está hoje, vale a seção 4.2.
 
 ### 4.1 Metodologia de avaliação
 
@@ -1144,113 +1525,131 @@ Para **oportunidades** aplica-se a mesma regra: a severidade expressa a **priori
 | Materializado | O evento ocorreu; plano de contingência acionado |
 | Encerrado | Item deixou de ser relevante ou teve seu ciclo concluído |
 
-### 4.2 Matriz de risco consolidada — revisão da Sprint 3
+### 4.2 Matriz de risco consolidada — revisão da Sprint 4
 
-A matriz abaixo mantém o histórico de avaliação desde a identificação inicial (Sprint 1), passando pela revisão da Sprint 2, até a reavaliação da Sprint 3. As pontuações só são alteradas mediante evidência observada no ciclo; itens sem evidência nova preservam a avaliação anterior.
+A matriz mantém o histórico de avaliação desde a identificação de cada item. As pontuações só mudam mediante evidência observada no ciclo; itens sem evidência nova preservam a avaliação anterior. Os itens `R19` e `R20`, registrados na abertura da Sprint 4, passam a compor a tabela consolidada.
 
-| ID | Categoria | Tipo | Descrição (causa → efeito) | P·I (S1) | Sev. S1 | P·I (S2) | Sev. S2 | P·I (S3) | Sev. S3 | Criticidade | Responsável | Status na Sprint 3 |
-|---|---|---|---|:-:|:-:|:-:|:-:|:-:|:-:|---|---|---|
-| R01 | Dados (parceiro) | Ameaça | Dados sintéticos pouco representativos do portfólio real → métricas do pipeline de PLN enganosas e baixa aderência no uso real | 4·4 | 16 | 5·4 | **20** | 5·4 | **20** | 🔴 Crítica | Resp. dados | Em Monitoramento |
-| R02 | Fornecedor / Tecnologia | Ameaça | Restrições do ecossistema Microsoft e ausência de acesso ao ambiente do parceiro (licenças, Direct Line, conectores e permissões) → o executor das ações sobre o portfólio fica indisponível e RF04 a RF08 não podem ser demonstrados | 3·4 | 12 | 5·4 | **20** | 5·4 | **20** | 🔴 Crítica | Resp. integração Microsoft | **Materializado** |
-| R03 | Técnico (voz) | Ameaça | Reconhecimento de fala com baixa acurácia para o jargão do Metrô → intenções mal classificadas no canal de áudio | 3·3 | 9 | 3·3 | **9** | 3·3 | **9** | 🟡 Moderada | Resp. PLN | Em Monitoramento |
-| R04 | Técnico (arquitetura) | Ameaça | Classificador de intenções não atinge acurácia aceitável → perda de confiança na demonstração e invalidação da métrica exigida | 2·4 | 8 | 1·4 | **4** | 1·4 | **4** | 🟢 Baixa | Resp. PLN | **Mitigado** |
-| R05 | Cronograma | Ameaça | Janela curta somada à curva de aprendizado em PLN → atraso em marcos de sprint e MVP incompleto | 3·3 | 9 | 4·3 | **12** | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
-| R06 | Stakeholders | Ameaça | Baixa disponibilidade do PMO/TI do Metrô para validações e insumos → decisões travadas, esperas e retrabalho | 2·4 | 8 | 4·4 | **16** | 5·4 | **20** | 🔴 Crítica | Product Owner | **Materializado** |
-| R07 | Equipe | Ameaça | Desnivelamento técnico e concentração de trabalho entre integrantes → gargalos em componentes críticos do pipeline | 3·3 | 9 | 4·3 | **12** | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
-| R08 | Comunicação | Ameaça | Desalinhamento de expectativas entre equipe, orientadora e parceiro sobre o alcance do MVP → mudanças tardias de escopo e retrabalho | 3·3 | 9 | 5·3 | **15** | 3·3 | **9** | 🟡 Moderada | Product Owner | Em Monitoramento |
-| R09 | Escopo / Compliance | Ameaça | Processamento acidental de dado sensível em serviço não homologado → violação das restrições de confidencialidade | 2·5 | 10 | 2·5 | **10** | 2·5 | **10** | 🟠 Alta | Product Owner | Em Monitoramento |
-| R10 | Custo / Orçamento | Ameaça | Consumo de créditos de nuvem e serviços de IA excede o disponibilizado → interrupção do ambiente e do desenvolvimento | 2·2 | 4 | 3·3 | **9** | 3·3 | **9** | 🟡 Moderada | Product Owner | Em Monitoramento |
-| R11 | Infraestrutura / Acesso | Ameaça | Ausência de credenciais corporativas para o ambiente de nuvem → provisionamento sustentado pela conta pessoal de um integrante, vinculando a infraestrutura do projeto a uma pessoa física | — | — | 5·3 | **15** | 5·3 | **15** | 🟠 Alta | Resp. infraestrutura | **Materializado** |
-| R12 | Escopo / Compliance | Ameaça | Content Safety e Speech provisionados no tenant da equipe, e não no do parceiro: prompt e áudio deixam o perímetro homologado por desenho → objeção de compliance no handover, com reprovisionamento dos dois serviços exigido antes de qualquer uso com dado real | — | — | 4·3 | **12** | 4·3 | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
-| R13 | Segurança (dados) | Ameaça | Remoção da camada de mascaramento de PII na revisão de escopo → a tabela de interações passa a reter o prompt em claro, inclusive o das tentativas de ataque, criando um repositório de conteúdo de usuário que antes não existia | — | — | 3·4 | **12** | 3·4 | **12** | 🟠 Alta | Resp. infraestrutura | Aberto |
-| R14 | Desempenho / Voz | Ameaça | Latência acumulada no Direct Line e serviços de IA na interação por voz → degradação da experiência do usuário no mobile/voz | — | — | 3·3 | **9** | 3·3 | **9** | 🟡 Moderada | Resp. PLN | Em Monitoramento |
-| R15 | Arquitetura / Integração | Ameaça | Substituição da plataforma de portfólio corporativo (SharePoint → Dynamics/Outro) durante a sustentação → quebra de conectores e ações pré-configuradas | — | — | 2·4 | **8** | 2·4 | **8** | 🟡 Moderada | Resp. integração Microsoft | Aberto |
-| R16 | Escalabilidade / Banco | Ameaça | Crescimento acelerado da tabela `interacao` com prompts em claro e execuções de rotinas → degradação nas agregações do dashboard de intenções | — | — | 3·3 | **9** | 3·3 | **9** | 🟡 Moderada | Resp. infraestrutura | Em Monitoramento |
-| R17 | Custo / Voz | Ameaça | Consumo do canal de voz excede o nível gratuito F0 do Azure Speech (5 h de reconhecimento e 500 mil caracteres de síntese por mês) → interrupção da transcrição durante demonstração ou campanha de medição | — | — | 2·2 | **4** | 3·2 | **6** | 🟡 Moderada | Resp. infraestrutura | Em Monitoramento |
-| **R18** | **Equipe / Capacity** | **Ameaça** | **Feriados, mal-estar ou ausência sem plano B de cobertura → perda de dias úteis e concentração de carga nas frentes críticas** | — | — | — | — | **4·3** | **12** | 🟠 Alta | Scrum Master | **Materializado** |
-| O01 | Stakeholders / Negócio | Oportunidade | MVP com valor demonstrado → internalização e evolução da solução pelo parceiro | 3·4 | 12 | 3·4 | **12** | 3·4 | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
-| O02 | Técnica / Reuso | Oportunidade | Reuso dos artefatos do Módulo 8/2025 → decisões de engenharia aceleradas e maior maturidade da solução | 4·3 | 12 | 4·3 | **12** | 4·3 | **12** | 🟠 Alta | Resp. PLN | Em Monitoramento |
-| O03 | Equipe / Capacitação | Oportunidade | Domínio de tecnologias de alta demanda → equipe mais qualificada e portfólio fortalecido | 4·2 | 8 | 5·2 | **10** | 5·2 | **10** | 🟠 Alta | Scrum Master | Em Monitoramento |
-| O04 | Técnica / Arquitetura | Oportunidade | Desacoplamento forçado pela indisponibilidade do ambiente do parceiro → MVP demonstrável de forma autônoma, pela interface web própria, e handover documentado independente do ecossistema corporativo | — | — | 4·3 | **12** | 5·3 | **15** | 🟠 Alta | Resp. integração Microsoft | Em Monitoramento |
-| **O05** | **Cronograma / Inovação** | **Oportunidade** | **Adiantamento deliberado de entregas previstas para S4/S5 (mensageria `#198`, vetorização `#284`, integração voz–NLP) → margem de inovação e menor risco de integração tardia** | — | — | — | — | **4·3** | **12** | 🟠 Alta | Tech Lead | Em Monitoramento |
-
-**Itens novos nesta sprint:** `R18`, decorrente da perda de capacity por feriado (07/09) e por mal-estar de integrantes sem cobertura prévia; `O05`, decorrente da decisão de adiantar mensageria (9.1.2.6) e partes de PLN/voz além do mínimo da Onda 1.
-
-**Movimentos relevantes na Sprint 3:** `R06` sobe de 16 para 20 e passa a **Materializado** — a ausência prolongada de retorno do parceiro deixou de ser hipótese e passou a condição observada ao longo de dois ciclos consecutivos. `R08` desce de 15 para 9 e deixa o status Materializado: não houve nova ruptura de escopo rastreável nos commits do período. `R17` sobe de 4 para 6 e entra em monitoramento porque o canal de voz passou a consumir Azure Speech de fato (`#203`–`#206`). `O04` sobe de 12 para 15 com o reforço da autonomia (mensageria e pipeline de voz na própria stack).
+| ID | Categoria | Tipo | Descrição (causa → efeito) | P·I (S1) | Sev. S1 | P·I (S2) | Sev. S2 | P·I (S3) | Sev. S3 | P·I (S4) | Sev. S4 | Criticidade | Responsável | Status na Sprint 4 |
+|---|---|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|---|---|---|
+| R01 | Dados (parceiro) | Ameaça | Dados sintéticos pouco representativos do portfólio real → métricas do pipeline de PLN enganosas e baixa aderência no uso real | 4·4 | 16 | 5·4 | 20 | 5·4 | 20 | 4·4 | **16** | 🟠 Alta | Resp. dados | Em Monitoramento |
+| R02 | Fornecedor / Tecnologia | Ameaça | Restrições do ecossistema Microsoft e ausência de acesso ao ambiente do parceiro (licenças, Direct Line, conectores e permissões) → o executor das ações sobre o portfólio fica indisponível e RF04 a RF08 não podem ser demonstrados | 3·4 | 12 | 5·4 | 20 | 5·4 | 20 | 2·4 | **8** | 🟡 Moderada | Resp. integração Microsoft | **Em Monitoramento** (deixa Materializado) |
+| R03 | Técnico (voz) | Ameaça | Reconhecimento de fala com baixa acurácia para o jargão do Metrô → intenções mal classificadas no canal de áudio | 3·3 | 9 | 3·3 | 9 | 3·3 | 9 | 3·3 | **9** | 🟡 Moderada | Resp. PLN | Em Monitoramento |
+| R04 | Técnico (arquitetura) | Ameaça | Classificador de intenções não atinge acurácia aceitável → perda de confiança na demonstração e invalidação da métrica exigida | 2·4 | 8 | 1·4 | 4 | 1·4 | 4 | 1·4 | **4** | 🟢 Baixa | Resp. PLN | Mitigado |
+| R05 | Cronograma | Ameaça | Janela curta somada à curva de aprendizado em PLN → atraso em marcos de sprint e MVP incompleto | 3·3 | 9 | 4·3 | 12 | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
+| R06 | Stakeholders | Ameaça | Baixa disponibilidade do PMO/TI do Metrô para validações e insumos → decisões travadas, esperas e retrabalho | 2·4 | 8 | 4·4 | 16 | 5·4 | 20 | 3·4 | **12** | 🟠 Alta | Product Owner | **Em Monitoramento** (deixa Materializado) |
+| R07 | Equipe | Ameaça | Desnivelamento técnico e concentração de trabalho entre integrantes → gargalos em componentes críticos do pipeline | 3·3 | 9 | 4·3 | 12 | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
+| R08 | Comunicação | Ameaça | Desalinhamento de expectativas entre equipe, orientadora e parceiro sobre o alcance do MVP → mudanças tardias de escopo e retrabalho | 3·3 | 9 | 5·3 | 15 | 3·3 | 9 | 3·3 | **9** | 🟡 Moderada | Product Owner | Em Monitoramento |
+| R09 | Escopo / Compliance | Ameaça | Processamento acidental de dado sensível em serviço não homologado → violação das restrições de confidencialidade | 2·5 | 10 | 2·5 | 10 | 2·5 | 10 | 2·5 | **10** | 🟠 Alta | Product Owner | Em Monitoramento |
+| R10 | Custo / Orçamento | Ameaça | Consumo de créditos de nuvem e serviços de IA excede o disponibilizado → interrupção do ambiente e do desenvolvimento | 2·2 | 4 | 3·3 | 9 | 3·3 | 9 | 3·3 | **9** | 🟡 Moderada | Product Owner | Em Monitoramento |
+| R11 | Infraestrutura / Acesso | Ameaça | Ausência de credenciais corporativas para o ambiente de nuvem → provisionamento sustentado pela conta pessoal de um integrante, vinculando a infraestrutura do projeto a uma pessoa física | — | — | 5·3 | 15 | 5·3 | 15 | 5·3 | **15** | 🟠 Alta | Resp. infraestrutura | Materializado |
+| R12 | Escopo / Compliance | Ameaça | Content Safety e Speech provisionados no tenant da equipe, e não no do parceiro: prompt e áudio deixam o perímetro homologado por desenho → objeção de compliance no handover, com reprovisionamento dos dois serviços exigido antes de qualquer uso com dado real | — | — | 4·3 | 12 | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
+| R13 | Segurança (dados) | Ameaça | Remoção da camada de mascaramento de PII na revisão de escopo → a tabela de interações passa a reter o prompt em claro, inclusive o das tentativas de ataque, criando um repositório de conteúdo de usuário que antes não existia | — | — | 3·4 | 12 | 3·4 | 12 | 3·4 | **12** | 🟠 Alta | Resp. infraestrutura | Aberto |
+| R14 | Desempenho / Voz | Ameaça | Latência acumulada no Direct Line e serviços de IA na interação por voz → degradação da experiência do usuário no mobile/voz | — | — | 3·3 | 9 | 3·3 | 9 | 3·3 | **9** | 🟡 Moderada | Resp. PLN | Em Monitoramento |
+| R15 | Arquitetura / Integração | Ameaça | Substituição da plataforma de portfólio corporativo (SharePoint → Dynamics/Outro) durante a sustentação → quebra de conectores e ações pré-configuradas | — | — | 2·4 | 8 | 2·4 | 8 | 2·4 | **8** | 🟡 Moderada | Resp. integração Microsoft | Aberto |
+| R16 | Escalabilidade / Banco | Ameaça | Crescimento acelerado da tabela `interacao` com prompts em claro e execuções de rotinas → degradação nas agregações do dashboard de intenções | — | — | 3·3 | 9 | 3·3 | 9 | 2·3 | **6** | 🟡 Moderada | Resp. infraestrutura | Em Monitoramento |
+| R17 | Custo / Voz | Ameaça | Consumo do canal de voz excede o nível gratuito F0 do Azure Speech (5 h de reconhecimento e 500 mil caracteres de síntese por mês) → interrupção da transcrição durante demonstração ou campanha de medição | — | — | 2·2 | 4 | 3·2 | 6 | 3·2 | **6** | 🟡 Moderada | Resp. infraestrutura | Em Monitoramento |
+| R18 | Equipe / Capacity | Ameaça | Feriados, mal-estar ou ausência sem plano B de cobertura → perda de dias úteis e concentração de carga nas frentes críticas | — | — | — | — | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Scrum Master | Em Monitoramento |
+| R19 | Escopo / Compliance | Ameaça | Executor próprio envia a pergunta do usuário e os trechos recuperados ao Gemini, provedor externo fora dos dois tenants, a cada consulta → conteúdo consultado exposto a terceiro não homologado; objeção de compliance no handover e impedimento de uso com dado real enquanto a geração não migrar para serviço homologado | — | — | — | — | — | — | 4·3 | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
+| R20 | Escopo / Compliance | Ameaça | Índice vetorial do executor próprio no Pinecone, em `us-east-1` → vetores dos trechos e da pergunta, com identificadores e campos de filtro, ficam num provedor externo fora do Brasil; vetor não é anonimização, dada a literatura de inversão de embeddings | — | — | — | — | — | — | 4·2 | **8** | 🟡 Moderada | Resp. infraestrutura | Em Monitoramento |
+| **R21** | **Cronograma / Capacidade** | **Ameaça** | **Antecipação do escopo da Sprint 5 para a Sprint 4 → carga atribuída acima da capacidade declarada, conclusão acumulada no fim do ciclo e itens que não cabem na semana** | — | — | — | — | — | — | **5·4** | **20** | 🔴 Crítica | Scrum Master | **Materializado** |
+| **R22** | **Qualidade** | **Ameaça** | **Volume de merge requests sob prazo comprimido, com integração concentrada em poucas pessoas → revisão superficial, defeito integrado na `develop` e retrabalho no ciclo seguinte** | — | — | — | — | — | — | **4·3** | **12** | 🟠 Alta | Tech Lead | **Em Monitoramento** |
+| **R23** | **Escopo / Compliance** | **Ameaça** | **Procedimento de `copilot/solucao/README.md` manda versionar no repositório o export da *solution* do Copilot Studio, contrariando a restrição expressa do parceiro de 04/09 → links e conexões do ambiente restrito expostos no repositório** | — | — | — | — | — | — | **3·5** | **15** | 🟠 Alta | Resp. integração Microsoft | **Aberto** |
+| O01 | Stakeholders / Negócio | Oportunidade | MVP com valor demonstrado → internalização e evolução da solução pelo parceiro | 3·4 | 12 | 3·4 | 12 | 3·4 | 12 | 3·4 | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
+| O02 | Técnica / Reuso | Oportunidade | Reuso dos artefatos do Módulo 8/2025 → decisões de engenharia aceleradas e maior maturidade da solução | 4·3 | 12 | 4·3 | 12 | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Resp. PLN | Em Monitoramento |
+| O03 | Equipe / Capacitação | Oportunidade | Domínio de tecnologias de alta demanda → equipe mais qualificada e portfólio fortalecido | 4·2 | 8 | 5·2 | 10 | 5·2 | 10 | 5·2 | **10** | 🟠 Alta | Scrum Master | Em Monitoramento |
+| O04 | Técnica / Arquitetura | Oportunidade | Desacoplamento forçado pela indisponibilidade do ambiente do parceiro → MVP demonstrável de forma autônoma, pela interface web própria, e handover documentado independente do ecossistema corporativo | — | — | 4·3 | 12 | 5·3 | 15 | 4·3 | **12** | 🟠 Alta | Resp. integração Microsoft | Em Monitoramento |
+| O05 | Cronograma / Inovação | Oportunidade | Adiantamento deliberado de entregas previstas para S4/S5 (mensageria #198, vetorização #284, integração voz–NLP) → margem de inovação e menor risco de integração tardia | — | — | — | — | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Tech Lead | **Encerrado** |
+| **O06** | **Stakeholders / Técnica** | **Oportunidade** | **Ambiente do parceiro disponível desde 04/09 — SharePoint de teste com dados de exemplo e Copilot Studio habilitado → demonstração de RF04 a RF08 no ambiente real e validação da base sintética contra os dados de exemplo do parceiro** | — | — | — | — | — | — | **4·4** | **16** | 🟠 Alta | Resp. integração Microsoft | **Aberto** |
 
 #### 4.2.1 Itens acrescentados na Sprint 4
 
-Os dois itens abaixo decorrem do executor próprio ([plano-executor-proprio.md](plano-executor-proprio.md), seção 4.5): com o índice vetorial provisionado e a geração integrada à recuperação, as duas exposições de perímetro deixaram de ser hipótese de desenho e passaram a existir no código. Entram com a avaliação da Sprint 4 e passam a compor a tabela consolidada na revisão desta sprint.
+`R19` e `R20` decorrem do executor próprio ([plano-executor-proprio.md](plano-executor-proprio.md), seção 4.5): com o índice vetorial provisionado e a geração integrada à recuperação, as duas exposições de perímetro deixaram de ser hipótese de desenho e passaram a existir no código. Os dois têm probabilidade 4 porque a exposição é estrutural — acontece em toda consulta sob o executor próprio, e não por acidente. O impacto fica abaixo do de `R09` pela mesma razão que contém `R12`: o conteúdo é exclusivamente sintético. O de `R20` é menor que o de `R19` porque o texto dos trechos não vai para o índice, só vetor, identificador e os campos usados no filtro.
 
-| ID | Categoria | Tipo | Descrição (causa → efeito) | P·I (S4) | Sev. S4 | Criticidade | Responsável | Status na Sprint 4 |
-|---|---|---|---|:-:|:-:|---|---|---|
-| **R19** | **Escopo / Compliance** | **Ameaça** | **Executor próprio envia a pergunta do usuário e os trechos recuperados ao Gemini, provedor externo fora dos dois tenants, a cada consulta → conteúdo consultado exposto a terceiro não homologado; objeção de compliance no handover e impedimento de uso com dado real enquanto a geração não migrar para serviço homologado** | **4·3** | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
-| **R20** | **Escopo / Compliance** | **Ameaça** | **Índice vetorial do executor próprio no Pinecone, em `us-east-1` → vetores dos trechos e da pergunta, com identificadores e campos de filtro, ficam num provedor externo fora do Brasil; vetor não é anonimização, dada a literatura de inversão de embeddings** | **4·2** | **8** | 🟡 Moderada | Resp. infraestrutura | Em Monitoramento |
+`R21` registra o efeito da antecipação do escopo da Sprint 5. Entra com probabilidade 5 e já materializado porque não é hipótese: a carga atribuída na milestone é de 135,50 h contra 96,00 h de capacidade declarada, 141%, conforme a seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4). O impacto é 4 porque compromete o marco da sprint: os cards precisam ser concluídos dentro da própria Sprint 4, que não transfere escopo para a seguinte.
 
-Os dois têm probabilidade 4 porque a exposição é estrutural: acontece em toda consulta sob o executor próprio, e não por acidente. O impacto fica abaixo do de `R09` pela mesma razão que contém `R12` — o conteúdo é exclusivamente sintético —, e o de `R20` é menor que o de `R19` porque o texto dos trechos não vai para o índice, só vetor, identificador e os campos usados no filtro.
+`R22` é a face de qualidade da mesma compressão. Com seis merge requests em revisão no corte e 82% dos merges executados por duas integrantes, a pressão de prazo recai sobre poucos revisores, e o risco é a revisão virar carimbo. Probabilidade 4, pelo volume em fila; impacto 3, porque um defeito integrado é corrigível dentro do módulo.
+
+`R23` nasce da liberação do ambiente do parceiro. Na mensagem de 04/09, o parceiro determinou que os agentes criados **não sejam exportados nem publicados em repositórios**, porque os arquivos exportados contêm links para o SharePoint e conexões com outros serviços do ambiente restrito. O `copilot/solucao/README.md` do repositório prevê o oposto: versionar ali o `.zip` exportado da *solution*. A pasta está vazia — nenhum export foi versionado, e nenhuma branch contém link do ambiente —, por isso o item entra como **Aberto**, e não materializado. A probabilidade é 3 porque o procedimento está escrito e a integração com o Copilot Studio está na fila. O impacto é 5 porque a materialização viola uma restrição de confidencialidade expressa pelo parceiro, o mesmo nível de `R09`.
+
+`O06` é o lado positivo da mesma liberação: pela primeira vez no módulo, RF04 a RF08 podem ser demonstrados no ambiente real, e a base sintética pode ser comparada aos dados de exemplo do parceiro. Entra como **Aberto** porque ainda não foi capturada — o cliente Direct Line (#374) segue em `Backlog`.
+
+**Movimentos relevantes na Sprint 4:** `R02` desce de 20 para 8 e deixa o status Materializado — o acesso ao ambiente do parceiro foi liberado em 04/09; a exposição residual é a das restrições de licença e conectores, ainda não exercitadas. `R06` desce de 20 para 12 e também deixa o status Materializado: o parceiro respondeu, pela via de escalada prevista na contingência. `R01` desce de 20 para 16 porque o SharePoint de teste traz dados de exemplo produzidos pelo parceiro, mais próximos da estrutura real do que a base só da equipe. `R16` desce de 9 para 6 com os índices da tabela `interacao` integrados (#417) e as agregações do painel limitadas por janela. `O04` desce de 15 para 12: o desacoplamento deixou de ser forçado e passou a ser opção. `O05` é encerrada — o adiantamento se realizou e virou a antecipação de escopo registrada em `R21`.
+
+> **Registro de correção.** A liberação do ambiente ocorreu em **04/09/2026**, durante a Sprint 3. A revisão daquela sprint, escrita depois dessa data, manteve `R02` e `R06` como materializados. As notas da Sprint 3 são preservadas como estavam, porque foram as registradas naquele momento; a reversão entra nesta revisão, com a data real do evento e a evidência abaixo.
+
+**Evidência da reversão de `R02` e `R06`:** mensagem da orientadora Vanessa Nunes no canal da turma no Slack, em 04/09/2026, repassando o comunicado do parceiro com o link do SharePoint de teste com dados de exemplo, o acesso ao Copilot Studio e a distribuição das credenciais aos alunos responsáveis. Os endereços e as credenciais não são reproduzidos neste documento, pela restrição de confidencialidade que acompanha a mesma mensagem (ver `R23`).
 
 ### 4.3 Histórico de acompanhamento
 
-O histórico registra, por item, a evolução desde a identificação inicial, de modo que seja possível verificar o que mudou em cada ciclo e por quê.
+O histórico registra, por item, a evolução desde a identificação, de modo que seja possível verificar o que mudou em cada ciclo e por quê. As justificativas da Sprint 3 são reproduzidas com a redação do fechamento daquele ciclo, sem alteração, ao lado das da Sprint 4. Onde a Sprint 4 corrigiu uma leitura da Sprint 3, a correção está na coluna da Sprint 4.
 
-| Item | Sprint 1 | Sprint 2 | Sprint 3 | Justificativa da reavaliação (S3) |
-|---|---|---|---|---|
-| R01 | Sev. 16 — Em Monitoramento | Sev. 20 — Em Monitoramento | Sev. 20 — Em Monitoramento | Sem evidência de validação com o parceiro no ciclo; notas preservadas |
-| R02 | Sev. 12 — Aberto | Sev. 20 — **Materializado** | Sev. 20 — **Materializado** | Acesso ao ambiente do parceiro permanece indisponível; contingência de desacoplamento segue em uso (voz e mensageria na stack própria) |
-| R03 | Sev. 9 — Aberto | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Pipeline de upload/transcrição implementado e testado (`#192`–`#206`); acurácia no jargão do Metrô ainda sem medição formal — notas mantidas |
-| R04 | Sev. 8 — Aberto | Sev. 4 — **Mitigado** | Sev. 4 — **Mitigado** | Sem nova bancada que altere as métricas de 5.4.11; status preservado, com a ressalva de dependência do R01 |
-| R05 | Sev. 9 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Feriado e mal-estar reduziram capacity (R18), mas o adiantamento de S4/S5 (O05) evitou nova elevação de notas; Onda 1 ainda incompleta no código |
-| R06 | Sev. 8 — Em Monitoramento | Sev. 16 — Em Monitoramento | Sev. 20 — **Materializado** | Segundo ciclo consecutivo sem retorno do parceiro para premissas em aberto; probabilidade sobe de 4 para 5 |
-| R07 | Sev. 9 — Aberto | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Razão 13:1 em commits autorais entre os integrantes com registro; concentração persiste sem mudança de nota |
-| R08 | Sev. 9 — Aberto | Sev. 15 — **Materializado** | Sev. 9 — Em Monitoramento | Sem nova ruptura de escopo rastreável nos commits do período; probabilidade cai de 5 para 3 e o status deixa Materializado |
-| R09 | Sev. 10 — Aberto | Sev. 10 — Em Monitoramento | Sev. 10 — Em Monitoramento | Nenhum incidente; uso de dados sintéticos mantido |
-| R10 | Sev. 4 — Aberto | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Sem evidência nova de estouro; permanece acoplado a R11 e R17 |
-| R11 | — | Sev. 15 — **Materializado** | Sev. 15 — **Materializado** | Credenciais institucionais não restabelecidas no repositório/documentação do ciclo |
-| R12 | — | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Speech em uso no tenant da equipe (`#203`–`#206`) confirma a exposição estrutural já descrita |
-| R13 | — | Sev. 12 — Aberto | Sev. 12 — Aberto | RNF07 (retenção/cifra) permanece sem implementação verificável neste corte |
-| R14 | — | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Canal de voz integrado ao NLP (`#206`); latência ainda sem campanha de medição P95 registrada |
-| R15 | — | Sev. 8 — Aberto | Sev. 8 — Aberto | Sem evidência de mudança de plataforma no parceiro |
-| R16 | — | Sev. 9 — Em Monitoramento | Sev. 9 — Em Monitoramento | Persistência da Onda 1 ainda incompleta; risco permanece prospectivo |
-| R17 | — | Sev. 4 — Aberto | Sev. 6 — Em Monitoramento | Consumo real de Azure Speech iniciado no ciclo; probabilidade sobe de 2 para 3 |
-| **R18** | — | — | **Sev. 12 — Materializado** | **Item novo.** Feriado de 07/09 sem desenvolvimento e redução de capacidade por indisposição, sem plano B prévio |
-| O01 | Sev. 12 — Aberto | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sem evidência para reavaliar |
-| O02 | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Sev. 12 — Em Monitoramento | Reuso permanece relevante |
-| O03 | Sev. 8 — Aberto | Sev. 10 — Em Monitoramento | Sev. 10 — Em Monitoramento | Frentes técnicas distintas no ciclo (voz, RF/RNF, PLN, mensageria) mantêm a captura |
-| O04 | — | Sev. 12 — Em Monitoramento | Sev. 15 — Em Monitoramento | Mensageria (`#198`) e pipeline de voz autônomo reforçam o MVP desacoplado; prioridade de captura sobe |
-| **O05** | — | — | **Sev. 12 — Em Monitoramento** | **Item novo.** Adiantamento deliberado de mensageria (S5), vetorização e integração voz–NLP |
+| Item | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Justificativa da reavaliação (S3) | Justificativa da reavaliação (S4) |
+|---|---|---|---|---|---|---|
+| R01 | 16 — Em Monitoramento | 20 — Em Monitoramento | 20 — Em Monitoramento | **16 — Em Monitoramento** | Sem evidência de validação com o parceiro no ciclo; notas preservadas | Dados de exemplo do parceiro disponíveis no SharePoint de teste desde 04/09; probabilidade cai de 5 para 4. A validação da base contra eles ainda não foi feita |
+| R02 | 12 — Aberto | 20 — **Materializado** | 20 — **Materializado** | **8 — Em Monitoramento** | Acesso ao ambiente do parceiro permanece indisponível; contingência de desacoplamento segue em uso (voz e mensageria na stack própria) | Acesso liberado em 04/09. A causa do item deixou de existir; restam as restrições de licença, Direct Line e conectores, ainda não exercitadas (#374 em `Backlog`). Probabilidade cai de 5 para 2 |
+| R03 | 9 — Aberto | 9 — Em Monitoramento | 9 — Em Monitoramento | **9 — Em Monitoramento** | Pipeline de upload/transcrição implementado e testado (#192–#206); acurácia no jargão do Metrô ainda sem medição formal — notas mantidas | A transcrição real (#397) segue em `Backlog`; sem campanha de medição, notas mantidas |
+| R04 | 8 — Aberto | 4 — **Mitigado** | 4 — **Mitigado** | **4 — Mitigado** | Sem nova bancada que altere as métricas de 5.4.11; status preservado, com a ressalva de dependência do R01 | Sem nova bancada; status preservado |
+| R05 | 9 — Em Monitoramento | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Feriado e mal-estar reduziram capacity (R18), mas o adiantamento de S4/S5 (O05) evitou nova elevação de notas; Onda 1 ainda incompleta no código | A Onda 1 saiu do esqueleto (`NotImplementedError` de 45 para 23); o efeito da compressão de escopo é registrado à parte em `R21`, para não pesar duas vezes |
+| R06 | 8 — Em Monitoramento | 16 — Em Monitoramento | 20 — **Materializado** | **12 — Em Monitoramento** | Segundo ciclo consecutivo sem retorno do parceiro para premissas em aberto; probabilidade sobe de 4 para 5 | O parceiro respondeu em 04/09 pela via de escalada. Probabilidade cai de 5 para 3, e não mais: a validação das premissas documentadas ainda depende de nova interação |
+| R07 | 9 — Aberto | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Razão 13:1 em commits autorais entre os integrantes com registro; concentração persiste sem mudança de nota | A razão de 13:1 da Sprint 3 media commits num corte parcial; reapurada em horas atribuídas no fechamento, foi de 2,50:1 (seção 3.5.4). Na Sprint 4, 2,25:1 em horas atribuídas e 82% dos merges em duas pessoas; a concentração persiste |
+| R08 | 9 — Aberto | 15 — **Materializado** | 9 — Em Monitoramento | **9 — Em Monitoramento** | Sem nova ruptura de escopo rastreável nos commits do período; probabilidade cai de 5 para 3 e o status deixa Materializado | A antecipação do escopo da Sprint 5 foi decisão de calendário comunicada, e não ruptura de expectativa; nota mantida |
+| R09 | 10 — Aberto | 10 — Em Monitoramento | 10 — Em Monitoramento | **10 — Em Monitoramento** | Nenhum incidente; uso de dados sintéticos mantido | Nenhum incidente; a restrição de 04/09 reforça o controle e originou `R23` |
+| R10 | 4 — Aberto | 9 — Em Monitoramento | 9 — Em Monitoramento | **9 — Em Monitoramento** | Sem evidência nova de estouro; permanece acoplado a R11 e R17 | Sem evidência de estouro; nota mantida |
+| R11 | — | 15 — **Materializado** | 15 — **Materializado** | **15 — Materializado** | Credenciais institucionais não restabelecidas no repositório/documentação do ciclo | As credenciais recebidas em 04/09 são do ambiente do parceiro, e não da nuvem da equipe; o item não muda |
+| R12 | — | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Speech em uso no tenant da equipe (#203–#206) confirma a exposição estrutural já descrita | Content Safety e Speech seguem no tenant da equipe; nota mantida |
+| R13 | — | 12 — Aberto | 12 — Aberto | **12 — Aberto** | RNF07 (retenção/cifra) permanece sem implementação verificável neste corte | O painel de intenções passou a exibir os prompts a quem tem `ver_intencoes`, com a permissão verificada no servidor; a retenção de RNF07 segue sem teste (#442 em `Backlog`) |
+| R14 | — | 9 — Em Monitoramento | 9 — Em Monitoramento | **9 — Em Monitoramento** | Canal de voz integrado ao NLP (#206); latência ainda sem campanha de medição P95 registrada | A latência passou a ser medida por etapa do pipeline e exposta no painel (MR !127); a mitigação de medição está implementada, falta a campanha em voz |
+| R15 | — | 8 — Aberto | 8 — Aberto | **8 — Aberto** | Sem evidência de mudança de plataforma no parceiro | O ambiente liberado é SharePoint; sem sinal de troca de plataforma |
+| R16 | — | 9 — Em Monitoramento | 9 — Em Monitoramento | **6 — Em Monitoramento** | Persistência da Onda 1 ainda incompleta; risco permanece prospectivo | Índices da tabela `interacao` integrados (#417) e agregações do painel limitadas por janela; probabilidade cai de 3 para 2 |
+| R17 | — | 4 — Aberto | 6 — Em Monitoramento | **6 — Em Monitoramento** | Consumo real de Azure Speech iniciado no ciclo; probabilidade sobe de 2 para 3 | A transcrição real (#397) ainda não entrou; consumo sem mudança |
+| R18 | — | — | 12 — **Materializado** | **12 — Em Monitoramento** | **Item novo.** Feriado de 07/09 sem desenvolvimento e redução de capacidade por indisposição, sem plano B prévio | Sem feriado nem ausência que exigisse cobertura no período; o plano B formal de `AM14` não foi combinado, e o item segue em monitoramento, e não mitigado |
+| R19 | — | — | — | **12 — Em Monitoramento** | — | Item novo, registrado na abertura da sprint |
+| R20 | — | — | — | **8 — Em Monitoramento** | — | Item novo, registrado na abertura da sprint |
+| **R21** | — | — | — | **20 — Materializado** | — | **Item novo.** Antecipação do escopo da Sprint 5; 141% da capacidade declarada |
+| **R22** | — | — | — | **12 — Em Monitoramento** | — | **Item novo.** Seis MRs em revisão no corte; 82% dos merges em duas pessoas |
+| **R23** | — | — | — | **15 — Aberto** | — | **Item novo.** Procedimento de versionar o export do Copilot Studio contraria a restrição do parceiro de 04/09 |
+| O01 | 12 — Aberto | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Sem evidência para reavaliar | Sem evidência para reavaliar; `O06` torna a captura mais viável |
+| O02 | 12 — Em Monitoramento | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Reuso permanece relevante | Reuso permanece relevante |
+| O03 | 8 — Aberto | 10 — Em Monitoramento | 10 — Em Monitoramento | **10 — Em Monitoramento** | Frentes técnicas distintas no ciclo (voz, RF/RNF, PLN, mensageria) mantêm a captura | Novas frentes no ciclo: implantação em nuvem, webhooks e mensageria, testes de carga |
+| O04 | — | 12 — Em Monitoramento | 15 — Em Monitoramento | **12 — Em Monitoramento** | Mensageria (#198) e pipeline de voz autônomo reforçam o MVP desacoplado; prioridade de captura sobe | Com o ambiente liberado, o desacoplamento deixa de ser forçado; o valor da demonstração autônoma permanece |
+| O05 | — | — | 12 — Em Monitoramento | **12 — Encerrado** | **Item novo.** Adiantamento deliberado de mensageria (S5), vetorização e integração voz–NLP | Capturada: vetorização, RAG e voz–NLP integrados. O adiantamento virou a antecipação de escopo de `R21`; o produtor da mensageria (#393) segue em `Backlog` |
+| **O06** | — | — | — | **16 — Aberto** | — | **Item novo.** Ambiente do parceiro disponível para demonstração de RF04 a RF08 |
 
 ### 4.4 Riscos materializados e efetividade das respostas
 
 | Item | O que ocorreu | Contingência acionada | Efetividade observada | Encaminhamento |
 |---|---|---|---|---|
-| **R02** — Restrições do ecossistema Microsoft | Acesso ao ambiente do parceiro indisponível desde a Sprint 2; permanece assim na Sprint 3 | Demonstração pela stack própria (middleware, interface, voz, mensageria) com executor dublado; guia de implantação do Copilot | **Efetiva e sustentada.** O ciclo avançou voz (`#192`–`#206`) e contrato de mensageria (`#198`) sem depender do tenant do parceiro | Manter O04/O05; não reintroduzir dependência dura de Direct Line no caminho crítico da Sprint 4 |
-| **R06** — Disponibilidade do parceiro | Premissas e validações seguem sem retorno ao longo de S2 e S3 | Premissas documentadas; decisões reversíveis; redução de dependência externa | **Parcialmente efetiva.** O trabalho técnico avançou, mas R01 permanece sem validação externa e RF04–RF08 seguem não demonstráveis de ponta a ponta no ambiente real | Escalar via orientadora; lista única de dúvidas; registrar premissas assumidas na Sprint 4 |
-| **R08** — Desalinhamento de expectativas | Materializado na Sprint 2 (redefinição de escopo) | Realinhamento e reorganização do `Projeto.md`; `AM09` | **Efetiva residual na Sprint 3.** Não houve nova ruptura rastreável nos commits do período; severidade reduzida para 9 | Manter issue de propagação (`AM09`) se houver mudança de arquitetura |
-| **R11** — Credenciais de nuvem | Infraestrutura ainda vinculada a conta pessoal (sem evidência de credencial institucional no ciclo) | Provisionamento pessoal + documentação reproduzível | **Efetiva quanto à continuidade; exposição residual mantida** | Retomar solicitação institucional; scripts de reprovisionamento |
-| **R18** — Perda de capacity sem plano B | Feriado de 07/09 sem desenvolvimento; redução de capacidade por indisposição | Redistribuição informal e adiantamento de outras frentes | **Parcialmente efetiva.** O ciclo registrou 50 commits autorais, 35 integrados na `develop` e 16 MRs integrados; a concentração entre volumes autorais permanece um ponto de acompanhamento | Formalizar plano B (`AM14`) e capacity com feriados (`AM15`) na Sprint 4 |
+| **R02** — Restrições do ecossistema Microsoft | Acesso indisponível da Sprint 2 até 04/09, quando o parceiro liberou o SharePoint de teste e o Copilot Studio | Demonstração pela stack própria com executor dublado, depois pelo executor próprio; guia de implantação do Copilot | **Efetiva e encerrada.** Sustentou três ciclos de desenvolvimento sem o ambiente do parceiro; com a liberação, deixa de ser necessária como condição | Integrar o cliente Direct Line (#374) e capturar `O06`; manter o executor próprio como caminho alternativo |
+| **R06** — Disponibilidade do parceiro | Premissas sem retorno ao longo das Sprints 2 e 3 | Escalada via orientadora; premissas documentadas e decisões reversíveis | **Efetiva.** A liberação de 04/09 chegou pela via de escalada prevista, a mensagem da orientadora repassando o comunicado do parceiro | Validar as premissas documentadas no ambiente liberado; manter a lista única de dúvidas |
+| **R11** — Credenciais de nuvem | Infraestrutura ainda vinculada a conta pessoal | Provisionamento pessoal com documentação reproduzível | **Efetiva quanto à continuidade; exposição residual mantida** | Retomar a solicitação institucional; o provisionamento no Azure (#375–#384) é a oportunidade de fazê-lo sob credencial do projeto |
+| **R18** — Perda de capacity sem plano B | Nenhum feriado no período e nenhuma ausência registrada que exigisse cobertura | Plano B formal previsto em `AM14` | **Não testada** — não houve ausência que exigisse cobertura, e o plano B formal não chegou a ser combinado (`AM14`) | Manter `AM14` na Sprint 5, última do módulo, sem folga para absorver ausência |
+| **R21** — Compressão de escopo | Escopo da Sprint 5 antecipado para a Sprint 4; 141% da capacidade declarada | Priorização por label, com `P_ALTA` em 71% dos cards; redistribuição ao longo da semana | **Parcialmente efetiva.** O código da Onda 1 avançou, mas a conclusão estava em 29% a três dias úteis do fim | Concluir os cards na própria Sprint 4, priorizando `P_ALTA`; `AM20` e `AM25` no ciclo seguinte |
 
 As ações de mitigação em curso são classificadas como `Não iniciada`, `Em execução`, `Efetiva`, `Ineficaz` ou `Encerrada`:
 
-| Ação acompanhada | Evidência na Sprint 3 | Estado | Próxima verificação |
+| Ação acompanhada | Evidência na Sprint 4 | Estado | Próxima verificação |
 |---|---|---|---|
-| Uso exclusivo de dados sintéticos ou anonimizados | Nenhum incidente registrado; canal de voz operando sobre áudios de teste | Efetiva | Revisar datasets e serviços externos na Sprint 4 |
-| Contingência de desacoplamento (R02 / O04) | Mensageria e voz avançaram na stack própria | Efetiva | Critérios de aceite da Onda 1 + integração do classificador (Onda 3) |
-| Acompanhamento do cronograma | 50 commits autorais, 35 integrados na `develop` e 16 MRs integrados; Onda 1 ainda com `NotImplementedError`; feriado e indisposição consumiram capacity | Em execução | `AM15` e `AM16` na Sprint 4 |
-| Validação com o parceiro | Sem retorno rastreável; R06 materializado | **Ineficaz por impedimento externo** | Escala via orientadora; premissas documentadas |
-| Plano B para ausências (R18) | Não havia plano formal; resposta foi redistribuição reativa | **Ineficaz / não iniciada formalmente** | `AM14` na abertura da Sprint 4 |
-| Monitoramento do consumo Speech (R17) | Azure Speech em uso (`#203`–`#206`); token streaming ainda pendente | Em execução | Alerta de orçamento e medição de minutos na Sprint 4 |
-| Verificação de carga (`AM07`) | Razão 13:1 em commits autorais | Ineficaz no indicador de volume | Combinar com `AM14`/`AM17` |
+| Uso exclusivo de dados sintéticos ou anonimizados | Nenhum incidente; os dados do parceiro também são de exemplo | Efetiva | Manter na demonstração no ambiente do parceiro |
+| Contingência de desacoplamento (`R02` / `O04`) | Sustentou o desenvolvimento até a liberação de 04/09 | **Encerrada** como condição; mantida como alternativa | Não se aplica |
+| Acompanhamento do cronograma | 141% da capacidade; 29% de conclusão no corte de 22/09 | Em execução | Reapuração no fechamento (`AM24`) |
+| Validação com o parceiro | Ambiente e dados de exemplo liberados em 04/09 | **Efetiva** quanto ao acesso; validação das premissas pendente | Sprint 5, no ambiente liberado |
+| Plano B para ausências (`R18`) | Não foi combinado; não houve ausência que exigisse cobertura | Não iniciada | `AM14` na Sprint 5 |
+| Monitoramento do consumo Speech (`R17`) | Transcrição real ainda não integrada | Em execução | Ao integrar #397 |
+| Verificação de carga (`AM07` / `AM17`) | 2,25:1 em horas atribuídas | Ineficaz, com melhora sobre 2,50:1 | `AM21`, no planejamento |
+| Medição de latência (`R14`) | Latência por etapa gravada e exposta no painel (MR !127) | **Efetiva** como instrumentação | Campanha em voz na Sprint 5 |
+| Índices e agregação por janela (`R16`) | Índices integrados (#417); consultas do painel limitadas por janela | **Efetiva** | Volume de demonstração |
+| Proibição de exportar agentes para o repositório (`R23`) | Pasta `copilot/solucao/` vazia; procedimento ainda contradiz a restrição | Não iniciada | Card de adequação na Sprint 5 |
 
 ### 4.5 Plano de resposta — ameaças
 
 | ID | Mitigação (preventiva) | Contingência (se materializar) |
 |---|---|---|
-| R01 | Ampliar a base sintética com vocabulário, estrutura e ruído típicos dos documentos do PMO; incluir casos de falha; validar amostras com o parceiro assim que o acesso for restabelecido | Recalibração emergencial do dataset com o feedback disponível, reexecução da avaliação de desempenho e registro explícito dos desvios e das limitações de validação |
-| R02 | Manter a arquitetura desacoplada e a API própria como caminho principal; documentar os pré-requisitos de licenciamento e acesso | **Acionada.** Demonstração sustentada pela interface web própria e pelo middleware, com o Copilot substituído por um duplo de teste; RF04 a RF08 documentados como dependentes de ambiente |
+| R01 | Ampliar a base sintética com vocabulário, estrutura e ruído típicos dos documentos do PMO; incluir casos de falha; comparar a base com os dados de exemplo do SharePoint de teste do parceiro | Recalibração emergencial do dataset com o feedback disponível, reexecução da avaliação de desempenho e registro explícito dos desvios e das limitações de validação |
+| R02 | Manter a arquitetura desacoplada e a API própria como caminho alternativo; exercitar cedo o Direct Line e os conectores no ambiente liberado | **Acionada da Sprint 2 a 04/09 e encerrada.** Demonstração sustentada pela interface web própria e pelo middleware, com o executor dublado e depois o executor próprio |
 | R03 | Tratar voz como incremento, com fallback em texto; consolidar glossário de domínio e corpus de áudio de referência; testar com diferentes falantes e ambientes | Priorizar o canal de texto no MVP, documentar as limitações medidas do áudio e propor plano de evolução |
 | R04 | Definir métrica e limiar de aceite; ampliar a base com ruído e erros de digitação; analisar a matriz de confusão por intenção | Implementar fallback explícito para intenção não reconhecida |
 | R05 | Estudo dirigido em paralelo às entregas; margem de segurança nas sprints finais; acompanhamento de dependências na daily | Renegociar o escopo com a orientadora e o parceiro, preservando o essencial e cortando itens `could` e `should` |
-| R06 | Lista única de dúvidas priorizadas por sprint; registro de decisões compartilhado; premissas assumidas e documentadas quando não houver retorno | Escalar via professora orientadora; seguir com premissas documentadas e revalidá-las no encontro seguinte |
+| R06 | Lista única de dúvidas priorizadas por sprint; registro de decisões compartilhado; premissas assumidas e documentadas quando não houver retorno | **Acionada e efetiva.** Escalada via professora orientadora; premissas documentadas revalidadas no encontro seguinte |
 | R07 | Verificação de carga, dependências e fila de revisão em toda daily, com redistribuição obrigatória acima de 2:1; pair programming e documentação contínua | Redistribuir tarefas, acionar monitoria e professores e simplificar componentes não essenciais ao MVP |
 | R08 | Usar o TAPI como contrato de escopo; registrar decisões em canal formal; abrir issue de propagação a cada mudança de escopo ou arquitetura | **Acionada.** Reunião de realinhamento com registro formal do escopo acordado e do impacto da mudança |
 | R09 | Uso exclusivo de dados sintéticos ou anonimizados; revisão por pares antes do uso de qualquer serviço externo; proteções no catálogo de intenções | Comunicação imediata à orientadora e ao parceiro; remoção dos dados expostos; registro do incidente e reforço dos controles |
@@ -1265,6 +1664,9 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | **R18** | Na abertura da sprint, nomear substituto ou pareamento para cada frente crítica; incluir feriados no cálculo de capacity; verificar cobertura na daily | **Acionada parcialmente na Sprint 3** (redistribuição reativa). Formalizar na Sprint 4 via `AM14`/`AM15`: redistribuir issues do integrante indisponível no mesmo dia; reduzir escopo não crítico; registrar o plano B no card |
 | **R19** | Somente dado sintético no corpus e nas perguntas de teste; embeddings calculados localmente, de modo que o corpus não sai para ser indexado e só os trechos recuperados chegam ao modelo, e só no momento da consulta; no máximo `RAG_TOP_K` trechos por consulta, e nenhuma chamada ao modelo quando nada visível ao perfil é recuperado; modelo atrás da porta `rag/linguagem/`, para que a troca por um serviço homologado seja adaptador e configuração, não reescrita | Voltar ao caminho oficial ou suspender o executor próprio até a geração migrar para serviço homologado; havendo indício de dado real enviado ao provedor, tratar como incidente de `R09` |
 | **R20** | Texto dos trechos fora do metadado do índice (só vetor, identificador e campos de filtro); namespaces separados por ambiente; somente dado sintético; banco vetorial atrás da porta `rag/vetorial/`, com o adaptador pgvector como reserva | Acionar o pgvector sobre o PostgreSQL da equipe — o que exige trocar a imagem do banco por uma com a extensão `vector` — e apagar os namespaces do Pinecone |
+| **R21** | Planejar dentro da capacidade declarada, com excedente justificado item a item (`AM20`); checkpoint de quarta com data prevista por card (`AM25`) | **Acionada.** Priorizar a conclusão dos cards `P_ALTA` na própria Sprint 4, com redistribuição entre integrantes, sem transferir cards para a Sprint 5 |
+| **R22** | Teto de 40% dos merges por integrante (`AM22`); revisor nomeado na abertura; SLA de revisão medido (`AM23`) | Congelar novas integrações na véspera da entrega e revisar em par os merge requests pendentes; defeito encontrado vira card com prioridade alta na Sprint 5 |
+| **R23** | Reescrever `copilot/solucao/README.md` para proibir o versionamento de exports; guardar a configuração do agente só como descrição (`copilot/topicos.md`, `copilot/conectores.md`), sem links nem conexões do ambiente; revisão de MR recusa qualquer `.zip` de *solution* | Remover o arquivo, reescrever o histórico da branch afetada antes do merge, comunicar à orientadora e ao parceiro e pedir a rotação dos links e credenciais expostos |
 
 ### 4.6 Estratégia de aproveitamento — oportunidades
 
@@ -1274,19 +1676,22 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | O02 | Converter os artefatos herdados em implementações verificáveis; registrar o que foi reaproveitado, adaptado ou descartado |
 | O03 | Manter a rotação de papéis entre sprints, com sessões de compartilhamento por trilha e registro dos aprendizados como guias reutilizáveis |
 | O04 | Consolidar a interface web própria e o middleware como o produto estável do MVP; documentar o guia de implantação de modo que a solução possa ser executada tanto de forma autônoma quanto integrada ao ecossistema do parceiro |
-| **O05** | Converter o adiantamento (mensageria `#198`, vetorização `#284`, voz–NLP `#206`) em integração demonstrável na Sprint 4, sem abandonar os critérios de aceite remanescentes da Onda 1; usar a folga para experimentação controlada, não para inflar escopo sem DoD |
+| O05 | **Encerrada.** O adiantamento foi capturado e seu custo está registrado em `R21` |
+| **O06** | Integrar o cliente Direct Line (#374) e exercitar RF04 a RF08 no ambiente liberado; comparar a base sintética aos dados de exemplo do SharePoint de teste; conduzir a demonstração final no ambiente do parceiro, sem exportar agentes nem versionar dados do ambiente (`R23`) |
 
-### 4.7 Matriz probabilidade × impacto — Sprint 3
+### 4.7 Matriz probabilidade × impacto — Sprint 4
 
 | P \ I | 1 | 2 | 3 | 4 | 5 |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **5** | | O03 | R11, O04 | R01, R02, R06 | |
-| **4** | | | R05, R07, R12, R18, O02, O05 | | |
-| **3** | | R17 | R03, R08, R10, R14, R16 | R13, O01 | |
-| **2** | | | | R15 | R09 |
+| **5** | | O03 | R11 | **R21** | |
+| **4** | | R20 | R05, R07, R12, R18, R19, R22, O02, O04 | R01, **O06** | |
+| **3** | | R17 | R03, R08, R10, R14 | R06, R13, O01 | **R23** |
+| **2** | | | R16 | R02, R15 | R09 |
 | **1** | | | | R04 | |
 
-Em relação à Sprint 2, a faixa crítica passa a ter **três** ameaças (R01, R02 e R06). R06 entra na célula (P5, I4) pela materialização da ausência prolongada do parceiro. R08 deixa a linha P5 e volta a (P3, I3). R18 e O05 ocupam a linha P4 junto às ameaças de cronograma e equipe. R17 sobe de (P2, I2) para (P3, I2) com o consumo real de Speech.
+`O05`, encerrada, deixa a matriz.
+
+Em relação à Sprint 3, a faixa crítica troca de composição. Saem `R01`, `R02` e `R06`, que caem com a liberação do ambiente do parceiro, e entra `R21`, na célula (P5, I4), pela compressão de escopo. `R02` desce da linha P5 para (P2, I4), e `R06` para (P3, I4). `R23` inaugura a célula (P3, I5), ao lado de `R09` na coluna de impacto máximo. `O06` entra em (P4, I4), junto a `R01`: a mesma liberação que reduz o risco dos dados é a oportunidade de validá-los.
 
 A figura da matriz produzida no artefato de entendimento de negócio permanece como registro da avaliação inicial:
 
@@ -1296,13 +1701,13 @@ A figura da matriz produzida no artefato de entendimento de negócio permanece c
 
 ### 4.8 Análise dos três itens mais críticos
 
-**1º — R01 · Representatividade dos dados sintéticos (Sev. 20, 🔴 crítica).** Permanece no topo. A Sprint 3 avançou o pipeline de voz e a documentação de testes de RF/RNF, mas nenhuma dessas entregas substitui a validação externa da base sintética. Enquanto R06 estiver materializado, a mitigação original de R01 (amostras com o PMO) continua bloqueada. A resposta para a Sprint 4 é enriquecer a base com o material já disponível, declarar o limite de validação nos entregáveis e não tratar as métricas de 5.4.11 como prova de aderência ao portfólio real.
+**1º — R21 · Compressão de escopo (Sev. 20, 🔴 crítica, materializado).** É o único item na faixa crítica. A antecipação do escopo da Sprint 5 levou a carga atribuída a 141% da capacidade declarada, e o efeito é visível no ritmo: a três dias úteis do fim, 29% das issues estavam concluídas. O risco está no fechamento: a Sprint 5 fica reservada às correções de usabilidade e ao encerramento do módulo, então os cards da Sprint 4 precisam fechar dentro da própria sprint. A resposta combina a priorização dos cards `P_ALTA` até o encerramento, a redistribuição entre integrantes e, para o ciclo seguinte, o planejamento dentro da capacidade (`AM20`) com checkpoint na daily de quarta (`AM25`).
 
-**2º — R02 · Restrições do ecossistema Microsoft e acesso ao ambiente (Sev. 20, 🔴 crítica, materializado).** Continua materializado. A contingência (stack própria + executor dublado) mostrou-se efetiva de novo: o ciclo integrou voz (`#192`–`#206`) e o contrato de mensageria (`#198`) sem Direct Line. O efeito residual segue no handover e em RF04–RF08. A oportunidade O04 sobe para severidade 15 justamente porque essa autonomia deixou de ser remendo e passou a ser trilha principal de demonstração.
+**2º — R01 · Representatividade dos dados sintéticos (Sev. 16, 🟠 alta).** Sai da faixa crítica pela primeira vez desde a Sprint 2, mas continua o item de maior severidade entre os que não se materializaram. O SharePoint de teste traz dados de exemplo produzidos pelo parceiro, e é por isso que a probabilidade cai. A queda, porém, é de potencial, e não de fato: enquanto a base sintética não for comparada a esses dados, as métricas de 5.4.11 continuam sem prova de aderência ao portfólio real. A captura de `O06` é a mitigação de `R01`.
 
-**3º — R06 · Disponibilidade do parceiro (Sev. 20, 🔴 crítica, materializado).** Era 16 na Sprint 2 e sobe para 20: dois ciclos consecutivos sem retorno transformam a espera em condição do módulo. É a causa-raiz compartilhada de R01 e R02. A postura iniciada na Sprint 3 — premissas documentadas e decisões reversíveis — deve ser explicitada na Sprint 4, com escala via orientadora e sem recolocar o ambiente do parceiro no caminho crítico das ondas sob controle da equipe.
+**3º — R23 · Export do Copilot Studio no repositório (Sev. 15, 🟠 alta, aberto).** Empata em severidade com `R11` e fica à frente pelo impacto: 5 contra 3. `R11` compromete a continuidade da infraestrutura; `R23`, se materializar, viola uma restrição de confidencialidade expressa pelo parceiro, e o dano não se desfaz removendo o arquivo — o link e as conexões já estariam no histórico. É também o item de mitigação mais barata da matriz: basta reescrever um README antes do primeiro export, e o momento de fazer isso é antes de o cliente Direct Line (#374) sair do `Backlog`.
 
-> **Nota de processo (fora do pódio de severidade).** `R18` (Sev. 12, materializado) não integra os três mais críticos por nota, mas é o principal aprendizado interno do ciclo: feriado e mal-estar sem plano B. Suas respostas são `AM14` e `AM15`.
+> **Nota de processo (fora do pódio de severidade).** `R02` e `R06`, que ocupavam o pódio desde a Sprint 2, deixam a faixa crítica juntos, e pela mesma razão. A resposta que os tirou de lá — escalar via orientadora e seguir com premissas documentadas — foi a contingência prevista desde a Sprint 1. O aprendizado registrável é que a contingência funcionou, mas a revisão da Sprint 3 não percebeu a mudança: a correção acima existe para isso.
 
 ## 5. Melhorias de processo
 
@@ -1325,40 +1730,56 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 | ID | Ação | Responsável | Indicador de sucesso | Status |
 |---|---|---|---|---|
 | AM06 | Nomear revisor na abertura do MR, verificar a fila em toda daily e registrar as datas de abertura e de primeira revisão | Scrum Master da Sprint 3 | Nenhum MR sem revisor por mais de 24 h úteis; máximo de 5 itens em `Waiting Review` ao fim do dia; SLA verificável no fechamento | **Parcialmente verificável** — 16 MRs integrados por quatro autores; SLA ainda sem instrumentação |
-| AM07 | Redistribuição obrigatória quando a razão de carga exceder 2:1 | Scrum Master da Sprint 3 | Razão máxima de 2:1 nas horas atribuídas, ou justificativa registrada em card | **Ineficaz no indicador de volume** — razão 13:1 em commits autorais no corte de 09/09 |
-| AM08 | Designar Tech Lead na abertura do ciclo | Equipe | Papel registrado na matriz de papéis da Sprint 3 | **Sem evidência no corte** (board não reextraído) |
-| AM09 | Abrir issue de propagação a cada mudança de escopo ou arquitetura e registrar o destino de toda issue removida da milestone | Tech Lead da Sprint 3 | Toda mudança com issue listando artefatos afetados e status; nenhuma issue sai da milestone sem destino registrado | **Sem evidência no corte** |
+| AM07 | Redistribuição obrigatória quando a razão de carga exceder 2:1 | Scrum Master da Sprint 3 | Razão máxima de 2:1 nas horas atribuídas, ou justificativa registrada em card | **Ineficaz** — 2,50:1 em horas atribuídas no fechamento da Sprint 3 (seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3)); os 13:1 do corte de 09/09 mediam commits |
+| AM08 | Designar Tech Lead na abertura do ciclo | Equipe | Papel registrado na matriz de papéis da Sprint 3 | **Não executada** na Sprint 3 — a matriz não nomeia Tech Lead; atendida na Sprint 4, com Carlos Eduardo Serrano Quaglia |
+| AM09 | Abrir issue de propagação a cada mudança de escopo ou arquitetura e registrar o destino de toda issue removida da milestone | Tech Lead da Sprint 3 | Toda mudança com issue listando artefatos afetados e status; nenhuma issue sai da milestone sem destino registrado | **Não executada** — nenhuma issue de propagação na milestone da Sprint 3 |
 | AM10 | Padronizar identidade Git e manter o `.mailmap` | Responsável pela gestão de configuração | Relatório sem identidades duplicadas nem commits de `Administrator` | **Efetiva** — cinco identidades institucionais no período; nenhum `Administrator` |
-| AM11 | Manter na milestone apenas o escopo do ciclo corrente | Scrum Master da Sprint 3 | Nenhuma issue em `Backlog` na milestone corrente no fechamento | **Sem evidência no corte** (depende do export da milestone) |
-| AM12 | Exigir responsável atribuído antes de a issue entrar em `Doing`, inclusive nas de trabalho coletivo | Scrum Master da Sprint 3 | Nenhuma issue fechada sem responsável no relatório de fechamento | **Sem evidência no corte** |
-| AM13 | Checkpoint de repriorização no penúltimo dia útil da sprint | Scrum Master da Sprint 3 | No máximo 25% das issues do ciclo fechadas no último dia | **Sem evidência no corte** |
+| AM11 | Manter na milestone apenas o escopo do ciclo corrente | Scrum Master da Sprint 3 | Nenhuma issue em `Backlog` na milestone corrente no fechamento | **Efetiva** — nenhuma issue em `Backlog` na milestone no fechamento |
+| AM12 | Exigir responsável atribuído antes de a issue entrar em `Doing`, inclusive nas de trabalho coletivo | Scrum Master da Sprint 3 | Nenhuma issue fechada sem responsável no relatório de fechamento | **Efetiva** — 0 de 51 issues concluídas sem responsável, contra 24,7% na Sprint 2 |
+| AM13 | Checkpoint de repriorização no penúltimo dia útil da sprint | Scrum Master da Sprint 3 | No máximo 25% das issues do ciclo fechadas no último dia | **Ineficaz** — 45% das issues concluídas em 11/09, último dia do ciclo |
 
 **Ações da Sprint 3 para a Sprint 4**
 
 | ID | Ação | Responsável | Indicador de sucesso | Status |
 |---|---|---|---|---|
-| AM14 | Plano B para ausência, mal-estar ou feriado (substituto/pareamento por frente crítica) | Scrum Master da Sprint 4 | Toda frente crítica com substituto no card; nenhum dia útil sem responsável ativo em issue `Doing` de caminho crítico | Planejada |
-| AM15 | Incluir feriados/recessos no cálculo de capacity da milestone | Scrum Master da Sprint 4 | Capacity declara dias úteis efetivos; feriados listados na issue de planejamento | Planejada |
-| AM16 | Priorizar critérios de aceite remanescentes da Onda 1 antes de novas antecipações de S5 | Tech Lead da Sprint 4 | Issues da Onda 1 em `NotImplementedError` fechadas ou repriorizadas com destino na milestone | Planejada |
-| AM17 | Combinar verificação de carga (`AM07`) com plano B (`AM14`) | Scrum Master da Sprint 4 | Razão máxima de 2:1 nas horas atribuídas, ou justificativa + plano B em card | Planejada |
+| AM14 | Plano B para ausência, mal-estar ou feriado (substituto/pareamento por frente crítica) | Scrum Master da Sprint 4 | Toda frente crítica com substituto no card; nenhum dia útil sem responsável ativo em issue `Doing` de caminho crítico | **Não executada** — nenhum substituto ou pareamento combinado; mantida para a Sprint 5 |
+| AM15 | Incluir feriados/recessos no cálculo de capacity da milestone | Scrum Master da Sprint 4 | Capacity declara dias úteis efetivos; feriados listados na issue de planejamento | **Parcialmente efetiva** — capacity de 16 h por integrante declarada e usada; período sem feriado; a declaração não está na milestone |
+| AM16 | Priorizar critérios de aceite remanescentes da Onda 1 antes de novas antecipações de S5 | Tech Lead da Sprint 4 | Issues da Onda 1 em `NotImplementedError` fechadas ou repriorizadas com destino na milestone | **Efetiva em execução** — `NotImplementedError` de 45 para 23; os 19 do painel de intenções na MR !127 |
+| AM17 | Combinar verificação de carga (`AM07`) com plano B (`AM14`) | Scrum Master da Sprint 4 | Razão máxima de 2:1 nas horas atribuídas, ou justificativa + plano B em card | **Ineficaz**, com melhora — 2,25:1, sem justificativa em card, contra 2,50:1 na Sprint 3 |
+| AM18 | Projetar na daily de quarta o que resta para quinta e declarar ainda na quarta o que não for entregável | Scrum Master da Sprint 4 | Projeção registrada na daily de quarta; nenhum item declarado não entregável depois de quinta às 23h59 | **Em execução** — avaliada no fechamento |
+| AM19 | Repositório fora de pasta sincronizada com nuvem, ou sincronização pausada durante o trabalho com Git | Cada integrante | Nenhum incidente de sincronização registrado na sprint | **Efetiva** — nenhum incidente, contra quatro na Sprint 3 |
+
+**Ações da Sprint 4 para a Sprint 5**
+
+| ID | Ação | Responsável | Indicador de sucesso | Status |
+|---|---|---|---|---|
+| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | Planejada — o planejamento da seção 3.6 soma 20,75 h |
+| AM21 | Redistribuir carga no planejamento, e não durante a sprint | Scrum Master da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento | Planejada |
+| AM22 | Limitar a 40% a participação de cada integrante nos merges do ciclo | Tech Lead da Sprint 5 | Maior participação individual nos merges de até 40% | Planejada |
+| AM23 | Medir pela API o tempo até a primeira revisão de cada merge request | Responsável pela gestão de configuração | Mediana e maior espera publicadas no fechamento | Planejada |
+| AM24 | Refazer as métricas da retrospectiva depois do último merge | Responsável pela retrospectiva | Nota metodológica com o commit do último merge | Planejada |
+| AM25 | Checkpoint na daily de quarta, com data prevista para cada card em `Backlog` | Scrum Master da Sprint 5 | No máximo 25% das issues concluídas no último dia | Planejada |
+| AM26 | Conferir a mensagem de cada commit na revisão do merge request | Revisor de cada merge request | Pelo menos 90% dos commits integrados aderentes à política | Planejada |
 
 ### 5.2 Indicadores de processo
 
-| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (corte 09/09, `c00d712`) | Uso no acompanhamento |
-|---|---:|---:|---:|---|
-| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 23 fechadas de 55 atribuídas | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
-| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | 47,50 h atribuídas; 19,50 h fechadas | Comparar carga planejada e concluída |
-| Commits na `develop` | 65 | 129, sendo 91 autorais | 35 autorais integrados; 50 autorais únicos no total | Evidenciar integração e rastreabilidade |
-| Merge requests | 33 criados / 33 revisados | 35 integrados na `develop` | 16 integrados (`!75`–`!93`) | Acompanhar equilíbrio entre produção e integração |
-| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | não reextraído (board) | Detectar acúmulo (`AM06`) |
-| SLA de primeira revisão | até 24 h úteis | não instrumentado | não instrumentado | Identificar espera no fluxo de integração |
-| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues e 2,92:1 em horas | 13:1 em commits autorais (entre quem registrou) | Apoiar redistribuição (`AM07` / `AM17`) |
-| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | não reextraído (board) | Confiabilidade da atribuição (`AM12`) |
-| Concentração do fechamento | não medido | 51% nos dois últimos dias | não reextraído (board) | Fluxo contínuo vs. encerramento (`AM13`) |
-| Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | Capacity e plano B (`AM14` / `AM15` / R18) |
-| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | não auditado neste corte | Verificar se o board representa a execução |
+| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (fechamento, 11/09, 7255196) | Sprint 4 (corte 22/09, 61a67b8) | Uso no acompanhamento |
+|---|---:|---:|---:|---:|---|
+| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 51/51 — 100% | 28/97 — 29% no corte | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
+| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | 55,5 h, todas concluídas | 135,5 h atribuídas; 38,25 h concluídas no corte | Comparar carga planejada e concluída |
+| Capacidade declarada | não medida | não medida | não medida | 96 h — carga a 141% | Verificar se o plano cabe na equipe (`AM20`) |
+| Commits na `develop` | 65 | 129, sendo 91 autorais | 98 autorais | 58 autorais integrados; 123 em todas as branches | Evidenciar integração e rastreabilidade |
+| Merge requests | 33 criados / 33 revisados | 35 integrados na `develop` | 33 integrados na `develop` | 17 integrados de 24 abertos; 23 com revisor nomeado | Acompanhar equilíbrio entre produção e integração |
+| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | 0 no fechamento | 7 em `Waiting Review` no corte | Detectar acúmulo (`AM06`) |
+| SLA de primeira revisão | até 24 h úteis | não instrumentado | não instrumentado | não instrumentado | Identificar espera no fluxo de integração (`AM23`) |
+| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues e 2,92:1 em horas | 2,50:1 em horas | 2,25:1 em horas | Apoiar redistribuição (`AM17` / `AM21`) |
+| Aderência à política de commits | não medido | não medido | não medido | 0 de 58 commits integrados | Verificar se a regra da seção 2.7 é cumprida (`AM26`) |
+| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | 0 | 0 | Confiabilidade da atribuição (`AM12`) |
+| Concentração do fechamento | não medido | 51% nos dois últimos dias | 45% no último dia | refeita no fechamento (`AM24`) | Fluxo contínuo vs. encerramento (`AM13` / `AM25`) |
+| Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | 14/09 e 18/09; commits no fim de semana de 19 e 20/09 | Capacity e plano B (`AM14` / `AM15` / R18) |
+| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | todas as issues com responsável no fechamento | 97 de 97 cards com responsável, *size* e prioridade | Verificar se o board representa a execução |
 
-As colunas não são diretamente comparáveis em valor absoluto entre sprints: a Sprint 3, neste corte, usa apenas métricas verificáveis no repositório. O que se compara entre ciclos são razões, padrões e a presença/ausência de instrumentação — não os totais de issues sem export do GitLab.
+A coluna da Sprint 3 passa a trazer os valores do fechamento, reapurados na seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3); os do corte de 09/09 ficam registrados na seção 3.4.3. A da Sprint 4 é o corte intermediário de 22/09 e é substituída pelos valores de fechamento depois do último merge do ciclo, conforme `AM24`.
 
 Os dados são extraídos com data, horário, branch-base e regra de atribuição registrados. A análise não converte contagens em ranking individual: qualidade, complexidade, dependências, papel exercido e revisão cruzada permanecem parte da interpretação.
 
