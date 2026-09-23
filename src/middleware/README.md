@@ -91,6 +91,43 @@ duas vezes é seguro: ele remove a carga anterior antes de semear.
 
 Para mexer no esquema, ver [migrations/README.md](migrations/README.md).
 
+## Mensageria (RabbitMQ)
+
+O broker AMQP dos eventos assíncronos é um serviço do Compose, com volume
+persistente (`rabbitmqdata`) e verificação de saúde. Exchanges, filas e contrato
+das mensagens estão na seção 9.1.2.6 de [Projeto.md](../../docs/Projeto.md).
+
+```powershell
+# 1. subir o broker com as mesmas credenciais do .env
+docker compose --env-file .env -f ../../infra/docker-compose.yml up -d rabbitmq
+
+# 2. aguardar o estado "healthy"
+docker compose -f ../../infra/docker-compose.yml ps rabbitmq
+```
+
+O `--env-file` faz o broker nascer com o usuário, a senha e o vhost do `.env`;
+sem ele, valem os padrões de desenvolvimento (`prata` / `prata-local`, vhost
+`prata`). O painel de gerenciamento fica em <http://127.0.0.1:15672>, e as
+portas são publicadas só em `127.0.0.1`.
+
+| Variável | Uso |
+|---|---|
+| `RABBITMQ_HOST`, `RABBITMQ_PORT` | `localhost:5672` fora do Compose; dentro dele, `middleware` e `worker` recebem `rabbitmq:5672` |
+| `RABBITMQ_VHOST`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | Acesso ao broker; a senha é `SecretStr` e não aparece em logs nem em erros |
+| `RABBITMQ_URL` | Opcional. URL `amqp://` ou `amqps://` completa, com prioridade sobre as cinco acima; vazia, é montada a partir delas |
+| `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_LETTER_EXCHANGE` | Exchange de eventos e de mensagens rejeitadas |
+| `RABBITMQ_PREFETCH_COUNT` | Mensagens sem confirmação por consumidor (mínimo 1) |
+| `RABBITMQ_MAX_RETRIES` | Retentativas depois da primeira execução (2 = até três execuções) |
+
+Numa `RABBITMQ_URL` escrita à mão, codifique os caracteres especiais do usuário,
+da senha e do vhost (`@` vira `%40`); montada pelos componentes, a codificação é
+automática. Uma URL com `localhost` no `.env` também vale dentro do Compose, onde
+o broker não é `localhost` — para rodar em contêiner, deixe-a vazia.
+
+Usuário, senha e vhost só inicializam um volume novo: mudar o `.env` depois não
+troca as credenciais de um broker já provisionado. Para recriá-lo, remova o
+volume `rabbitmqdata`, o que apaga as mensagens retidas.
+
 ## Testes
 
 ```powershell
