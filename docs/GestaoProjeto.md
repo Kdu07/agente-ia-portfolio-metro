@@ -1852,3 +1852,68 @@ Para suportar essas definições, o custo-hora base (já embutindo encargos trab
 | Qualidade, Testes e Usabilidade (QA) | 54,00 h | R$ 90,00 | R$ 4.860,00 |
 | Arquitetura, Nuvem e DevOps | 49,75 h | R$ 150,00 | R$ 7.462,50 |
 | **Total de Pessoal** | **390,50 h** | - | **R$ 48.287,50** |
+
+### 7.3 Custos de Tecnologia, Infraestrutura e Licenciamento
+
+Esta seção detalha os custos com serviços de nuvem na Microsoft Azure e licenças do ecossistema Microsoft 365, alinhados à arquitetura implantada na Sprint 4 e estendida na Sprint 5. A memória de cálculo distingue os custos de **Investimento no MVP** da **Operação em (no 1º Ano)** para atendimento à escala real do portfólio do Metrô SP.
+
+*Data da consulta de preços:* Setembro de 2026. *Região de referência no Azure:* `brazilsouth` (Brazil South) para todos os serviços.
+
+### 7.3 Custos de Tecnologia, Infraestrutura e Licenciamento
+
+Esta seção detalha os custos com serviços de nuvem na Microsoft Azure e licenças do ecossistema Microsoft 365, alinhados à arquitetura implantada na Sprint 4 e estendida na Sprint 5. A memória de cálculo distingue os custos de **Investimento/Testes na fase PoC** da **Operação em Regime Continuado (1º Ano)** para atendimento à escala real do portfólio de projetos do Metrô SP.
+
+*Data da consulta de preços:* Setembro de 2026.  
+*Região de referência no Azure:* `brazilsouth` (Brazil South) para todos os serviços.
+
+#### 7.3.1 Memória de Cálculo da Infraestrutura Azure
+
+1. **Azure Container Apps (Frontend, Middleware FastAPI e Worker):**
+   * **MVP:** Operado no perfil de consumo. Utiliza a cota gratuita mensal (180.000 vCPU-segundos e 360.000 GB-segundos). Custo nulo de computação durante o desenvolvimento.
+   * **Produção:** 3 contêineres rodando em alta disponibilidade (Nginx, FastAPI e APScheduler Worker) operando 24/7 (730h/mês) com alocação média de 0,5 vCPU e 1,0 GB RAM por instância.
+   * *Cálculo Produção:* (3 instâncias × 0,5 vCPU × 730h × R$ 0,18/h) + (3 instâncias × 1,0 GB × 730h × R$ 0,02/h) ≈ **R$ 240,90 / mês**.
+
+2. **Azure Database for PostgreSQL:**
+   * **MVP:** Instância *Burstable* `B1ms` (1 vCPU, 2 GB RAM, 32 GB SSD Storage) para desenvolvimento e testes funcionais da persistência relacional.
+   * *Cálculo MVP:* Instância `B1ms` (R$ 95,00) + 32 GB Storage (R$ 20,00) = **R$ 115,00 / mês**.
+   * **Produção:** Camada *General Purpose* `D2ds_v4` (2 vCPU, 8 GB RAM, 128 GB SSD Storage) para suportar o volume do banco relacional, os registros de interações e as consultas vetoriais com a extensão `pgvector` (RAG) com isolamento, redundância e backup automático.
+   * *Cálculo Produção:* Instância `D2ds_v4` (R$ 680,00) + 128 GB Storage (R$ 80,00) = **R$ 760,00 / mês**.
+
+3. **Azure AI Content Safety (Guardas de Injeção, Abuso e Saída):**
+   * Operando na região `brazilsouth` para moderação de mensagens, análise de abuso e checagem de Prompt Shields (injeção direta e indireta).
+   * **MVP:** Nível F0 (Até 5.000 transações de texto/mês gratuitas no tenant de testes). Custo nulo.
+   * **Produção:** Nível Standard S0. Estimativa de 100.000 requisições/mês (considerando turnos de chat, varreduras de rotinas agendadas e verificação de respostas na guarda de saída) a R$ 6,00 por bloco de 1.000 transações.
+   * *Cálculo Produção:* (100.000 / 1.000) × R$ 6,00 = **R$ 600,00 / mês**.
+
+4. **Azure AI Speech:**
+   * Operando com emissão de token efêmero na região `brazilsouth` para streaming no cliente web.
+   * **MVP:** Nível Gratuito F0 (até 5 horas de áudio por mês e 1 requisição concorrente). Custo nulo.
+   * **Produção:** Nível Standard S0 (Transcrição em tempo real sem limite de concorrência simultânea). Estimativa de 50 horas de áudio transcrito/mês a R$ 5,20 por hora de áudio.
+   * *Cálculo Produção:* 50h × R$ 5,20 = **R$ 260,00 / mês**.
+
+#### 7.3.2 Memória de Cálculo de Licenciamento Microsoft
+
+1. **Microsoft Copilot Studio:**
+   * **MVP:** Avaliação coberta pelos créditos/licença de desenvolvedor no tenant de testes da equipe. Custo nulo.
+   * **Produção:** Assinatura base de locatário (*Tenant Capacity*) para autorizar o processamento de 25.000 mensagens/mês pelos tópicos e conectores do Copilot Studio.
+   * *Cálculo Produção:* Plano base corporativo = **R$ 1.200,00 / mês**.
+
+2. **Microsoft 365 (E3 / E5) — Usuários do Portfólio:**
+   * **MVP:** Requer apenas as contas dos membros da equipe em tenant de teste acadêmico. Custo nulo.
+   * **Produção:** Não computado como custo direto do projeto de IA, pois o Metrô SP já possui o licenciamento M365 corporativo ativo para os seus colaboradores (Diretoria, Líderes de Projeto e Membros de Equipe). Registrado como pré-requisito de infraestrutura corporativa existente.
+
+#### 7.3.3 Consolidação dos Custos Tecnológicos e Operacionais
+
+A tabela abaixo consolida e compara os custos mensais e anuais de tecnologia entre a fase de validação (MVP) e a operação em produção.
+
+| Componente / Licença | SKU / Camada (MVP) | SKU / Camada (Regime) | Custo Mensal (MVP) | Custo Mensal (Regime) | Custo Anual (Regime) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Azure Container Apps | Consumption (Gratuito) | Dedicated 3x Contêineres (24/7) | R$ 0,00 | R$ 240,90 | R$ 2.890,80 |
+| Azure DB for PostgreSQL | Flexible Server `B1ms` | Flexible Server `D2ds_v4` | R$ 115,00 | R$ 760,00 | R$ 9.120,00 |
+| Azure AI Content Safety | Standard F0 (Gratuito) | Standard S0 (100k req/mês) | R$ 0,00 | R$ 600,00 | R$ 7.200,00 |
+| Azure AI Speech | Standard F0 (Gratuito) | Standard S0 (50h áudio/mês) | R$ 0,00 | R$ 260,00 | R$ 3.120,00 |
+| Microsoft Copilot Studio | Dev Tenant (Gratuito) | Tenant Base (25k msg/mês) | R$ 0,00 | R$ 1.200,00 | R$ 14.400,00 |
+| **Total Tecnológico Mensal** | - | - | **R$ 115,00** | **R$ 3.060,90** | - |
+| **Total Tecnológico Anual** | - | - | **R$ 1.380,00** | **-** | **R$ 36.730,80** |
+
+*Observação:* Durante a fase de implantação e validação do MVP, a sustentação de infraestrutura em nuvem consumiria R$ 115,00/mês, focados exclusivamente na camada de banco de dados gerenciado `B1ms`. Na operação em regime continuado, o custo mensal recorrente (OpEx) direto de nuvem e licenças para o Metrô SP consolida-se em **R$ 3.060,90 / mês** (ou **R$ 36.730,80 / ano**).
