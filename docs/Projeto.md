@@ -10517,12 +10517,8 @@ python -m ruff check app tests
 ```
 
 **O que roda hoje, e com que resultado.** Os comandos abaixo foram executados
-nesta ordem, no Windows, sobre o ambiente de 10.5.3.4:
-
-> A execução sistêmica de 23/09/2026 está registrada em
-> [evidencias-testes-integracao-2026-09-23.md](evidencias-testes-integracao-2026-09-23.md).
-> Ela inclui os comandos, a versão da branch, os componentes que realmente se
-> comunicaram e os logs dos fluxos que ficaram limitados.
+nesta ordem, no Windows, sobre o ambiente de 10.5.3.4. A execução detalhada
+está consolidada na subseção 10.5.7.3.
 
 ```powershell
 cd src\middleware
@@ -10542,13 +10538,54 @@ Invoke-WebRequest http://localhost:5173/api/health
 O grupo externo passou com as fitas sob rede bloqueada, comprovando a
 reprodução sem acesso aos serviços Microsoft. O frontend passou e o smoke pelo
 proxy confirmou a comunicação `web → middleware`; as migrações chegaram a
-`20260922_latencia_por_etapa (head)` e o PostgreSQL ficou saudável. A suíte de
-integração completa não pode ser declarada verde: a `.venv` local não possui
-`aiosqlite`, e o bloqueador de rede intercepta sockets locais do
-`ProactorEventLoop` no Windows. Além disso, os logs do worker registraram
-tentativas repetidas de inserir `rotina:demo-rotina-diretoria` na tabela do
-APScheduler, com violação de chave única. Esses três pontos estão discriminados
-no registro de evidências e devem gerar issues próprias.
+`20260922_latencia_por_etapa (head)` e o PostgreSQL ficou saudável.
+
+#### 10.5.7.3 Execução realizada e evidências
+
+**Data:** 23/09/2026. **Branch:** `feat/testes-fluxos`. **Base:** `3cffe12`.
+O ambiente utilizou Windows, PowerShell, Docker Desktop 29.8.0, Docker Compose
+v5.5.1, Python 3.11 e Node/npm do projeto.
+
+| Fluxo | Comando | Resultado |
+|---|---|---|
+| Frontend | `cd src/web; npm test -- --run` | **57 passed** em 7 arquivos |
+| Build frontend | `cd src/web; npm run build` | **Passou** |
+| Integrações externas reproduzidas | `cd src/middleware; .\\.venv\\Scripts\\python.exe -m pytest tests/integration/externos -q` | **16 passed, 4 skipped** |
+| Integração com rede bloqueada | `cd src/middleware; .\\.venv\\Scripts\\python.exe -m pytest -m integracao --block-network -q` | **11 passed, 1 skipped, 38 errors** |
+| Configuração e subida do Compose | `docker compose -f infra/docker-compose.yml config --quiet` e `up -d --build` | **Passou**; cinco serviços em execução |
+| Smoke pelo proxy | `Invoke-WebRequest http://localhost:5173/api/health` | **200**, `{"status":"ok"}` |
+| Contrato exposto | `Invoke-WebRequest http://localhost:5173/api/openapi.json` | **200**, 52.736 bytes |
+| Banco e migrações | `docker compose ... exec middleware alembic current` | **Passou**, `20260922_latencia_por_etapa (head)` |
+
+**Componentes comprovadamente comunicando:** o Nginx encaminhou `/api/health`
+e `/api/openapi.json` ao middleware; o middleware iniciou após aplicar as
+migrações e comunicou-se com o PostgreSQL; o worker iniciou o APScheduler e
+acessou o PostgreSQL; o RabbitMQ iniciou saudável; o frontend compilou e sua
+suíte validou chamadas com MSW; as integrações externas foram reproduzidas por
+fitas VHS sem alcançar serviços externos.
+
+**Limitações e defeitos encontrados:**
+
+1. A `.venv` local não possui `aiosqlite`, bloqueando os testes de integração
+  que semeiam SQLite, embora a imagem Docker instale essa dependência.
+2. No Windows, `pytest-recording --block-network` intercepta sockets locais do
+  `ProactorEventLoop`; por isso, os erros dessa execução não representam falha
+  do pipeline. Os testes externos passaram sob bloqueio.
+3. O worker repetiu `duplicate key value violates unique constraint
+  "apscheduler_jobs_pkey"` para `rotina:demo-rotina-diretoria`, indicando
+  falha de idempotência na reconciliação.
+4. O caminho real de STT não foi comprovado; Speech, Entra, Direct Line e
+  Content Safety foram exercitados somente por fitas, sem credenciais reais.
+5. O fluxo completo de chat autenticado pelo navegador não foi declarado
+  aprovado: o smoke comprovou o proxy e a saúde, enquanto frontend e backend
+  usam MSW, dublês e fitas.
+
+Esses pontos devem gerar issues próprias: corrigir a idempotência do worker,
+incluir `aiosqlite` no ambiente local e ajustar o bloqueio de rede no Windows
+para permitir sockets locais sem liberar destinos externos. Nenhuma credencial
+ou dado real do Metrô foi usado.
+
+#### 10.5.7.4 Restrições conhecidas
 
 Duas restrições conhecidas, ambas herdadas e nenhuma delas no VHS:
 
