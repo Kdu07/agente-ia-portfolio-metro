@@ -9027,7 +9027,47 @@ O instrumento é uma sonda sintética periódica que exercita um caminho real �
 | `TNF-RNF04-03` | Negativo | Falha do observador não conta como indisponibilidade | Sonda impedida de alcançar o agente por falha da própria sonda ou da rede que a executa | A amostra é descartada e registrada como inconclusiva, e não contabilizada como indisponibilidade do agente | RNF04 | Onda 1 |
 | `TNF-RNF04-04` | Positivo | A sonda exerce um caminho real | Sonda configurada para atravessar sessão, rota de conversação e persistência | Um estado em que o processo responde mas o banco está inacessível é contabilizado como indisponibilidade | RNF04, 5.1.7.1 | Onda 1 |
 
-**Execução.** A sonda roda como *job* do próprio APScheduler, no `worker`, em `src/middleware/app/rotinas/sonda.py`, gravando cada amostra com seu resultado e seu momento. O cálculo e o relatório saem de `src/middleware/tests/rnf/test_rnf04_disponibilidade.py`, que consulta as amostras da janela declarada. O relatório precisa declarar, junto do percentual, a janela medida, o intervalo entre amostras e a quantidade de amostras inconclusivas — sem os três, o número não é interpretável, e apresentar 99% sem eles seria dar a uma hipótese a aparência de um resultado.
+**Execução.** A sonda está em `src/middleware/app/rotinas/sonda.py` e os
+quatro cenários do planejamento, em
+`src/middleware/tests/rnf/test_rnf04_disponibilidade.py`. Uma amostra só é
+considerada disponível quando uma sessão assinada consegue executar
+`POST /chat` e o turno resultante é reencontrado por
+`GET /conversas/{id}`. Assim, processo HTTP ativo com falha no banco conta
+como indisponibilidade. Parada previamente programada e falha comprovada do
+observador são registradas separadamente e ficam fora do denominador.
+
+A execução integrada é reproduzida, com o PostgreSQL do Compose e as
+migrações aplicadas, por:
+
+```powershell
+cd src\middleware
+python -m pytest tests\rnf\test_rnf04_disponibilidade.py -v -s -p no:cacheprovider
+```
+
+O módulo também pode observar uma instância HTTP já iniciada. O cookie deve
+pertencer exclusivamente ao usuário sintético da bancada e é lido do
+ambiente, para não aparecer no comando nem no repositório:
+
+```powershell
+$env:RNF04_SESSION_COOKIE = "<cookie-sintetico>"
+python -m app.rotinas.sonda --url http://localhost:8000 --amostras 12 --intervalo 5
+```
+
+**Resultado da execução local de 22/09/2026.** A janela iniciou em
+`2026-09-23T01:50:46.054699Z` e terminou em
+`2026-09-23T01:50:56.413449Z`, com dez amostras e intervalo de um segundo.
+As dez amostras foram válidas e disponíveis: zero indisponíveis, zero
+inconclusivas e zero paradas programadas, resultando em **100,0% na janela
+observada**. As latências ficaram entre 103 ms e 167 ms, com média de 128
+ms. O log reproduzível é a linha `RNF04_RESULTADO` emitida pelo teste e
+contém o instante, o estado e a latência de cada amostra.
+
+Esse resultado comprova o funcionamento do instrumento e do caminho local
+FastAPI → sessão → chat → PostgreSQL. Ele **não comprova 99% em
+produção**: a janela tem aproximadamente dez segundos, usa transporte ASGI
+no mesmo processo e substitui as dependências externas por respostas
+determinísticas. Rede, Azure, Copilot/RAG e operação continuada precisam de
+uma janela posterior no ambiente implantado.
 
 #### 10.2.3.5 RNF05 — Adequação da resposta ao perfil do usuário
 
@@ -9120,7 +9160,7 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
 | RNF02 | 10.2.3.2 | 1 | 3 | Consulta agregada sobre as alterações efetivadas no PostgreSQL de teste | Disponível |
 | RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
-| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética periódica no *worker*, sobre janela declarada | A construir |
+| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Disponível e executado em janela local; medição implantada ainda pendente |
 | RNF05 | 10.2.3.5 | 2 | 2 | Conjunto de enunciados por perfil, com avaliação humana da adequação e verificação automatizada da exposição | A construir |
 | RNF06 | 10.2.3.6 | 3 | 3 | Conjunto adversarial em cinco vetores mais contraparte legítima, contra o Content Safety real | Parcial: bancada de calibração da guarda de abuso executada; conjunto sistêmico completo ainda a construir |
 | RNF07 | 10.2.3.7 | 2 | 2 | Inspeção do estado da base e execução dirigida do expurgo | A construir |
@@ -9151,7 +9191,14 @@ A **ausência de um RNF de desempenho** permanece. Os sete casos `TNF-DES` medem
 
 **O que a seção 10.2 estabelece, e sob que condição.** A seção estabelece quatro coisas. Como cada um dos sete requisitos não funcionais é medido, com instrumento nomeado e cenário negativo que exercite a medição. Que o RNF03 já foi medido e atende à meta, com a evidência reproduzível de 5.4.11. Onde os testes de desempenho se ancoram na ausência de requisito que os sustente, e qual dos dois conjuntos de parâmetros decide aprovação. E a especificação do conjunto adversarial do RNF06, com composição, tamanho mínimo e a justificativa de ambos.
 
-Estabelece essas quatro coisas sob uma condição que prefere declarar a omitir: **de todos os números desta seção, apenas os do RNF03 existem hoje.** Os demais são procedimentos escritos para instrumentos que ainda serão construídos, e três das metas contra as quais eles reportarão são hipóteses da própria equipe, que os primeiros resultados deverão recalibrar. A seção não afirma que o sistema atende aos requisitos não funcionais; afirma como se saberá, e admite que, para seis dos sete, ainda não se sabe.
+Estabelece essas quatro coisas sob uma condição que prefere declarar a
+omitir: o RNF03 possui medição sobre sua bancada completa, e o RNF04 possui
+somente o indicativo da janela local curta registrado em 10.2.3.4. Os demais
+procedimentos ainda dependem da construção ou execução de seus instrumentos,
+e três das metas contra as quais eles reportarão são hipóteses da própria
+equipe, que os primeiros resultados deverão recalibrar. A seção não afirma
+que o sistema atende a todos os requisitos não funcionais; registra o que já
+foi medido e como se medirá o restante.
 
 ## 10.3 Testes de Usabilidade
 
