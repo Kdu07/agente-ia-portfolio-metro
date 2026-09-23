@@ -10546,6 +10546,17 @@ proxy confirmou a comunicação `web → middleware`; as migrações chegaram a
 O ambiente utilizou Windows, PowerShell, Docker Desktop 29.8.0, Docker Compose
 v5.5.1, Python 3.11 e Node/npm do projeto.
 
+Os registros brutos das execuções, preservando comandos, saídas e códigos de
+retorno, estão versionados em [docs/evidencias/](evidencias/):
+
+| Artefato | Evidência |
+|---|---|
+| [2026-09-23-frontend.txt](evidencias/2026-09-23-frontend.txt) | Vitest do frontend: 57 testes aprovados |
+| [2026-09-23-vhs-externos.txt](evidencias/2026-09-23-vhs-externos.txt) | Integrações externas reproduzidas por VHS, sem rede externa |
+| [2026-09-23-compose-smoke.txt](evidencias/2026-09-23-compose-smoke.txt) | Estado dos cinco serviços e smoke HTTP pelo proxy |
+| [2026-09-23-worker.log](evidencias/2026-09-23-worker.log) | Logs do worker e do PostgreSQL, incluindo a violação de chave única |
+| [2026-09-23-integracao-limitada.txt](evidencias/2026-09-23-integracao-limitada.txt) | Saída integral da integração backend com rede bloqueada |
+
 | Fluxo | Comando | Resultado |
 |---|---|---|
 | Frontend | `cd src/web; npm test -- --run` | **57 passed** em 7 arquivos |
