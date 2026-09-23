@@ -1352,44 +1352,61 @@ As tasks abaixo compõem o planejamento e são registradas como cards na milesto
 | Capacidade declarada | 6 integrantes × 16 h = **96,00 h** |
 | Tasks planejadas | **20,75 h** (17 tasks) |
 | Folga em relação à capacidade | **75,25 h** |
+| Destino da folga | Resíduo da Sprint 4 e correções de usabilidade |
 
-A Sprint 5 é planejada dentro da capacidade, como pede a `AM20`, e a folga é deliberada. O tamanho das correções de usabilidade só é conhecido depois da consolidação das sessões (`S5-04`), e a última sprint do módulo não tem ciclo seguinte para absorver estouro.
+A Sprint 5 é planejada dentro da capacidade, como pede a `AM20`, e a folga é deliberada. Ela tem dois destinos, nesta ordem: o resíduo da Sprint 4 e as correções de usabilidade, cujo tamanho só é conhecido depois da consolidação das sessões (S5-05). A última sprint do módulo não tem ciclo seguinte para absorver estouro.
+
+##### Reserva para o resíduo da Sprint 4
+
+Os cards da Sprint 4 que não fecharem até o último merge do ciclo continuam na milestone `Sprint 04`, como registra o item seguinte, mas as horas para concluí-los saem da capacidade da Sprint 5. Por isso a folga de 75,25 h é, antes de tudo, reserva para esse resíduo.
+
+| Medida | Valor |
+|---|---:|
+| Cards abertos na milestone `Sprint 04` em 23/09 às 14h24 | 59, com 82,25 h convertidas |
+| Resíduo usado no planejamento | O medido no fechamento da Sprint 4, na reapuração de S5-01 |
+| Reserva disponível | 75,25 h |
+
+Em 23/09, a dois dias úteis do fim, o que está aberto já passa da reserva. O número que vale é o do fechamento, porque boa parte desses cards está em revisão e fecha com o merge. Se o resíduo medido em S5-01 passar de 75,25 h, a regra da `AM20` é aplicada no primeiro dia da Sprint 5: saem primeiro as tasks `P_MEDIA` da Sprint 5, de baixo para cima na tabela abaixo, num total de até 6 h, e o que ainda exceder é registrado item a item no card de planejamento, com o que deixa de ser feito.
 
 ##### Cards da Sprint 4
 
-Os cards da milestone `Sprint 04` permanecem nela até a conclusão: a Sprint 5 não herda cards da Sprint 4. É esse o destino explícito de todos eles, inclusive dos dois de prioridade baixa ainda abertos no corte de 22/09 — `#383`, do pipeline de entrega contínua, e `#362`, das tags SemVer das Sprints 3 e 4 —, que seguem na Sprint 4 com a mesma prioridade.
+Os cards da milestone `Sprint 04` permanecem nela até a conclusão: a Sprint 5 não herda cards da Sprint 4. É esse o destino explícito de todos eles, inclusive dos dois de prioridade baixa ainda abertos no corte de 22/09 — #383, do pipeline de entrega contínua, e #362, das tags SemVer das Sprints 3 e 4 —, que seguem na Sprint 4 com a mesma prioridade.
 
 ##### Lista de tasks, estimativa e prioridade
 
 | ID | Task | Tipo | *Size* | Horas | Prioridade | Depende de |
 |---|---|---|---|---:|---|---|
-| S5-01 | Reapurar os indicadores da Sprint 4 depois do último merge | `DOCS` | P | 0,50 | `P_ALTA` | Último merge da Sprint 4 |
-| S5-02 | Adequar `copilot/solucao/` à restrição de não exportar agentes | `DOCS` | P | 0,50 | `P_ALTA` | — |
+| S5-01 | Reapurar os indicadores da Sprint 4 depois do último merge | `PROCESS` `DOCS` | P | 0,50 | `P_ALTA` | Último merge da Sprint 4 |
+| S5-02 | Adequar `copilot/solucao/` à restrição de não exportar agentes | `ARCHITECTURE` `DOCS` | P | 0,50 | `P_ALTA` | — |
 | S5-03 | Comparar a base sintética aos dados de exemplo do SharePoint de teste | `TEST` `DOCS` | G | 2,00 | `P_MEDIA` | — |
-| S5-04 | Preparar a demonstração final no ambiente do parceiro | `DEPLOY` | G | 2,00 | `P_ALTA` | S5-02, `#374` |
-| S5-05 | Consolidar os achados das sessões de usabilidade | `TEST` `DOCS` | M | 1,00 | `P_ALTA` | `#431`–`#436` |
+| S5-04 | Preparar a demonstração final no ambiente do parceiro | `DEPLOY` | G | 2,00 | `P_ALTA` | S5-02, #374 |
+| S5-05 | Consolidar os achados das sessões de usabilidade | `TEST` `DOCS` | M | 1,00 | `P_ALTA` | #431–#436 |
 | S5-06 | Priorizar as correções de usabilidade por severidade | `DESIGN` | P | 0,50 | `P_ALTA` | S5-05 |
 | S5-07 | Implementar as correções de usabilidade de severidade alta | `CODE` | G | 2,00 | `P_ALTA` | S5-06 |
 | S5-08 | Reaplicar o roteiro de usabilidade nas telas corrigidas | `TEST` | M | 1,00 | `P_MEDIA` | S5-07 |
-| S5-09 | Medir o SLA de primeira revisão dos merge requests | `DOCS` | M | 1,00 | `P_MEDIA` | — |
-| S5-10 | Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria | `DOCS` | G | 2,00 | `P_ALTA` | S5-09, corte de quinta |
-| S5-11 | Atualizar a matriz de risco no fechamento do módulo | `DOCS` | M | 1,00 | `P_ALTA` | S5-10 |
-| S5-12 | Atualizar a matriz de papéis e responsabilidades da Sprint 5 | `DOCS` | M | 1,00 | `P_MEDIA` | Board da Sprint 5 estabilizado |
-| S5-13 | Conduzir a retrospectiva final do módulo com a equipe | `MEET` | M | 1,00 | `P_ALTA` | S5-10 |
-| S5-14 | Escrever a análise post-mortem do projeto | `DOCS` | G | 2,00 | `P_ALTA` | S5-13 |
-| S5-15 | Preencher o manual de instalação | `DOCS` | M | 1,00 | `P_MEDIA` | `#376`, `#377` |
-| S5-16 | Criar os slides e conduzir a apresentação final | `DOCS` | G | 2,00 | `P_ALTA` | S5-04 |
+| S5-09 | Medir o SLA de primeira revisão dos merge requests | `PROCESS` `DOCS` | M | 1,00 | `P_MEDIA` | — |
+| S5-10 | Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria | `PROCESS` `DOCS` | G | 2,00 | `P_ALTA` | S5-09, corte de 06/10 |
+| S5-11 | Atualizar a matriz de risco no fechamento do módulo | `PROCESS` `DOCS` | M | 1,00 | `P_ALTA` | S5-10, S5-03 |
+| S5-12 | Atualizar a matriz de papéis e responsabilidades da Sprint 5 | `PROCESS` `DOCS` | M | 1,00 | `P_MEDIA` | Board da Sprint 5 estabilizado |
+| S5-13 | Conduzir a retrospectiva final do módulo com a equipe | `PROCESS` `MEET` | M | 1,00 | `P_ALTA` | S5-10 |
+| S5-14 | Escrever a análise post-mortem do projeto | `PROCESS` `DOCS` | G | 2,00 | `P_ALTA` | S5-13 |
+| S5-15 | Preencher o manual de instalação | `DEPLOY` `DOCS` | M | 1,00 | `P_MEDIA` | #376, #377 |
+| S5-16 | Criar os slides e conduzir a apresentação final | `BUSINESS` `OFFSITE` | G | 2,00 | `P_ALTA` | S5-04 |
 | S5-17 | Criar a tag SemVer da Sprint 5 e publicar a versão final | `DEPLOY` | PP | 0,25 | `P_ALTA` | Todos os merges da Sprint 5 |
 | | **Total** | | | **20,75** | | |
 
-Doze das dezessete tasks são `P_ALTA`, proporção parecida com a da Sprint 4, mas por uma razão própria da última sprint: quase tudo o que sobra é condição para fechar o módulo. As cinco `P_MEDIA` são as que podem ser cortadas primeiro se a folga não bastar para as correções de usabilidade — e a ordem de corte é a da tabela, de baixo para cima dentro de cada prioridade.
+Toda task tem uma label de entrega, como pede a seção 2.5.3; `DOCS`, `MEET` e `OFFSITE` aparecem só ao lado dela. Doze das dezessete tasks são `P_ALTA`, proporção parecida com a da Sprint 4, mas por uma razão própria da última sprint: quase tudo o que sobra é condição para fechar o módulo. As cinco `P_MEDIA` são as que podem ser cortadas primeiro se a folga não bastar para as correções de usabilidade — e a ordem de corte é a da tabela, de baixo para cima dentro de cada prioridade.
 
 ##### Sequenciamento
 
-As dependências formam quatro cadeias independentes, que podem correr em paralelo desde o primeiro dia, e uma convergência final:
+As tasks sem dependência entre si começam em paralelo desde o primeiro dia, e todas as cadeias convergem na tag final:
+
+**Figura — Dependências entre as tasks da Sprint 5**
 
 ```mermaid
 flowchart LR
+    classDef critico stroke-width:3px,stroke:#c0392b
+    classDef externo stroke-dasharray:4 3
     F4["Último merge da Sprint 4"] --> S501["S5-01 Reapurar indicadores"]
     S502["S5-02 Adequar copilot/solucao"] --> S504["S5-04 Demonstração no ambiente do parceiro"]
     DL["#374 Cliente Direct Line"] --> S504
@@ -1400,29 +1417,34 @@ flowchart LR
     S510 --> S511["S5-11 Matriz de risco final"]
     S510 --> S513["S5-13 Retrospectiva final"] --> S514["S5-14 Post-mortem"]
     AMB["#376, #377 Ambientes de nuvem"] --> S515["S5-15 Manual de instalação"]
+    S503["S5-03 Comparar base sintética e dados do parceiro"] --> S511
     S508 & S511 & S512["S5-12 Matriz de papéis"] & S514 & S515 & S516 --> S517["S5-17 Tag e versão final"]
+    class S509,S510,S513,S514,S517 critico
+    class F4,DL,SU,AMB externo
 ```
+
+*Legenda:* cada nó `S5-xx` é uma task da Sprint 5; os nós tracejados são marcos ou cards de fora dela, dos quais uma task depende. Seta contínua indica que a task de destino só começa com a de origem concluída. A seta pontilhada indica a reapuração de S5-10 sobre o último merge, que precisa estar pronta antes da tag. As bordas em destaque marcam o caminho crítico.
 
 | Ordem | Momento | Tasks | Por quê |
 |:---:|---|---|---|
-| 1 | Primeiro dia | S5-01, S5-02, S5-05, S5-09, S5-03 | Destravam o resto: a reapuração fecha a leitura da Sprint 4; a adequação do `copilot/solucao/` tem de vir antes de qualquer export; a consolidação da usabilidade abre a única cadeia de código |
-| 2 | Segundo e terceiro dias | S5-06, S5-07, S5-04, S5-15, S5-12 | A correção de usabilidade é a task mais longa do caminho crítico; a demonstração depende do Direct Line e é o que a apresentação mostra |
-| 3 | Quarto dia, até o prazo interno de quinta às 23h59 | S5-08, S5-16, S5-10, S5-11 | Fecha o que a revisão interna precisa ler, dentro do SLA da seção 2.4 |
-| 4 | Último dia | S5-13, S5-14, reapuração de S5-10, S5-17 | A retrospectiva e o post-mortem precisam do ciclo encerrado; a análise redigida na quinta é refeita sobre o último merge (`AM24`); a tag vem por último, sobre a `develop` integrada |
+| 1 | Primeiro dia, 28/09 | S5-01, S5-02, S5-05, S5-09, S5-03 | Destravam o resto: a reapuração fecha a leitura da Sprint 4 e dimensiona o resíduo; a medição do SLA abre o caminho crítico; a adequação do `copilot/solucao/` tem de vir antes de qualquer export; a consolidação da usabilidade abre a única cadeia de código; a comparação da base alimenta a matriz de risco final |
+| 2 | De 29/09 a 05/10 | S5-06, S5-07, S5-04, S5-15, S5-12 | A correção de usabilidade é a cadeia de maior incerteza, porque o tamanho de S5-07 só se conhece em S5-06; a demonstração depende do Direct Line e é o que a apresentação mostra |
+| 3 | Véspera do fechamento, 06/10 | S5-08, S5-16, S5-10, S5-11 | Fecha o que a revisão interna precisa ler antes do último dia |
+| 4 | Último dia, 07/10 | S5-13, S5-14, reapuração de S5-10, S5-17 | A retrospectiva e o post-mortem precisam do ciclo encerrado; a análise redigida na véspera é refeita sobre o último merge (`AM24`); a tag vem por último, sobre a `develop` integrada |
 
-O caminho crítico é a cadeia de usabilidade — S5-05 → S5-06 → S5-07 → S5-08, 4,5 h em série — porque é a única que termina em código e precisa de nova rodada de teste. É ela que decide se a Sprint 5 fecha na quinta.
+O caminho crítico é a cadeia de fechamento — S5-09 → S5-10 → S5-13 → S5-14 → S5-17, 6,25 h em série —, a mais longa do grafo e a única presa ao calendário: S5-10 depende do corte de 06/10, e S5-13 e S5-14 só começam com o ciclo encerrado. Qualquer atraso nela atrasa a tag e a versão final. As cadeias de usabilidade (S5-05 → S5-06 → S5-07 → S5-08 → S5-17) e de demonstração (S5-02 → S5-04 → S5-16 → S5-17) somam 4,75 h cada e têm 1,5 h de folga em relação a ela. A de usabilidade é a de maior incerteza: se as correções de severidade alta passarem de 3,5 h, ela passa a ser o caminho crítico, e a decisão de corte da seção anterior é antecipada para 30/09.
 
 ##### Detalhamento das tasks
 
-**S5-01 — Reapurar os indicadores da Sprint 4 depois do último merge.** *Tipo:* `DOCS`. *Descrição:* refazer, com a mesma extração, os indicadores da seção 3.5.3 sobre o commit de fechamento da Sprint 4, e atualizar as conclusões que dependem do fechamento — taxa de conclusão, perfil de fechamento e efetividade de `AM18`. *DoR:* último merge da Sprint 4 integrado na `develop`; board da Sprint 4 sem movimentação pendente. *DoD:* nota metodológica cita o commit de fechamento; seções 3.5.3 a 3.5.5 sem valor de corte intermediário nas conclusões; `AM24` avaliada.
+**S5-01 — Reapurar os indicadores da Sprint 4 depois do último merge.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* refazer, com a mesma extração, os indicadores da seção 3.5.3 sobre o commit de fechamento da Sprint 4, e atualizar as conclusões que dependem do fechamento — taxa de conclusão, perfil de fechamento e efetividade de `AM18`. *DoR:* último merge da Sprint 4 integrado na `develop`; board da Sprint 4 sem movimentação pendente. *DoD:* nota metodológica cita o commit de fechamento; seções 3.5.3 a 3.5.5 sem valor de corte intermediário nas conclusões; `AM24` avaliada.
 
-**S5-02 — Adequar `copilot/solucao/` à restrição de não exportar agentes.** *Tipo:* `DOCS`. *Descrição:* reescrever `copilot/solucao/README.md`, que hoje prevê versionar o export da *solution* do Copilot Studio, para proibir esse versionamento, conforme a restrição do parceiro de 04/09 (`R23`). *DoR:* texto da restrição do parceiro disponível. *DoD:* README reescrito; nenhum `.zip` de *solution* nem link do ambiente no repositório; `R23` passa a Mitigado na matriz.
+**S5-02 — Adequar `copilot/solucao/` à restrição de não exportar agentes.** *Tipo:* `ARCHITECTURE`, `DOCS`. *Descrição:* reescrever `copilot/solucao/README.md`, que hoje prevê versionar o export da *solution* do Copilot Studio, para proibir esse versionamento, conforme a restrição do parceiro de 04/09 (`R23`). *DoR:* texto da restrição do parceiro disponível. *DoD:* README reescrito; nenhum `.zip` de *solution* nem link do ambiente no repositório; `R23` passa a Mitigado na matriz.
 
 **S5-03 — Comparar a base sintética aos dados de exemplo do SharePoint de teste.** *Tipo:* `TEST`, `DOCS`. *Descrição:* confrontar vocabulário, estrutura e campos da base sintética com os dados de exemplo do ambiente do parceiro, registrando as divergências e o efeito esperado nas métricas de 5.4.11 (`R01`, `O06`). *DoR:* acesso ao SharePoint de teste. *DoD:* divergências registradas no `Projeto.md`, sem reproduzir dados nem endereços do ambiente; `R01` reavaliado com base na comparação.
 
-**S5-04 — Preparar a demonstração final no ambiente do parceiro.** *Tipo:* `DEPLOY`. *Descrição:* montar o roteiro e o ambiente da demonstração de RF04 a RF08 pelo Copilot Studio do parceiro, com o executor próprio como alternativa (`O06`). *DoR:* S5-02 concluída; cliente Direct Line (`#374`) integrado. *DoD:* roteiro executado de ponta a ponta ao menos uma vez antes da apresentação; nenhum agente exportado.
+**S5-04 — Preparar a demonstração final no ambiente do parceiro.** *Tipo:* `DEPLOY`. *Descrição:* montar o roteiro e o ambiente da demonstração de RF04 a RF08 pelo Copilot Studio do parceiro, com o executor próprio como alternativa (`O06`). *DoR:* S5-02 concluída; cliente Direct Line (#374) integrado. *DoD:* roteiro executado de ponta a ponta ao menos uma vez antes da apresentação; nenhum agente exportado.
 
-**S5-05 — Consolidar os achados das sessões de usabilidade.** *Tipo:* `TEST`, `DOCS`. *Descrição:* reunir os resultados das seis sessões com participantes externos, com as pontuações SUS e os problemas observados por tela. *DoR:* sessões `#431` a `#436` realizadas e registradas nos cards. *DoD:* achados consolidados no `Projeto.md`, com SUS por participante e médio, e cada problema com tela, frequência e severidade.
+**S5-05 — Consolidar os achados das sessões de usabilidade.** *Tipo:* `TEST`, `DOCS`. *Descrição:* reunir os resultados das seis sessões com participantes externos, com as pontuações SUS e os problemas observados por tela. *DoR:* sessões #431 a #436 realizadas e registradas nos cards. *DoD:* achados consolidados no `Projeto.md`, com SUS por participante e médio, e cada problema com tela, frequência e severidade.
 
 **S5-06 — Priorizar as correções de usabilidade por severidade.** *Tipo:* `DESIGN`. *Descrição:* classificar os problemas de S5-05 e decidir quais entram na sprint. *DoR:* S5-05 concluída. *DoD:* lista priorizada com o critério de corte registrado; correções de severidade alta com card próprio ou dentro de S5-07.
 
@@ -1430,27 +1452,27 @@ O caminho crítico é a cadeia de usabilidade — S5-05 → S5-06 → S5-07 → 
 
 **S5-08 — Reaplicar o roteiro de usabilidade nas telas corrigidas.** *Tipo:* `TEST`. *Descrição:* repetir as tarefas do roteiro que falharam, nas telas corrigidas, para verificar se a correção resolveu. *DoR:* S5-07 integrada. *DoD:* resultado da reaplicação registrado ao lado do da primeira rodada.
 
-**S5-09 — Medir o SLA de primeira revisão dos merge requests.** *Tipo:* `DOCS`. *Descrição:* medir, pela API do GitLab, o tempo entre a abertura de cada merge request e a primeira manifestação do revisor, desde a Sprint 3 (`AM23`). *DoR:* acesso de leitura à API. *DoD:* mediana e maior espera publicadas por sprint na seção 5.2; merge requests acima de 24 h úteis identificados.
+**S5-09 — Medir o SLA de primeira revisão dos merge requests.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* medir, pela API do GitLab, o tempo entre a abertura de cada merge request e a primeira manifestação do revisor, desde a Sprint 3 (`AM23`). *DoR:* acesso de leitura à API. *DoD:* mediana e maior espera publicadas por sprint na seção 5.2; merge requests acima de 24 h úteis identificados.
 
-**S5-10 — Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria.** *Tipo:* `DOCS`. *Descrição:* retrospectiva da Sprint 5 no formato da seção 3.5, redigida sobre o corte de quinta, para a revisão interna, e refeita depois do último merge (`AM24`). *DoR:* S5-09 concluída; corte de quinta extraído. *DoD:* indicadores com corte, fonte e commit de fechamento declarados; efetividade de `AM20` a `AM25` avaliada item a item.
+**S5-10 — Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* retrospectiva da Sprint 5 no formato da seção 3.5, redigida sobre o corte de 06/10, véspera do fechamento, para a revisão interna, e refeita depois do último merge (`AM24`). *DoR:* S5-09 concluída; corte de 06/10 extraído. *DoD:* indicadores com corte, fonte e commit de fechamento declarados; efetividade de `AM20` a `AM26` avaliada item a item.
 
-**S5-11 — Atualizar a matriz de risco no fechamento do módulo.** *Tipo:* `DOCS`. *Descrição:* revisão final da seção 4, com o status de encerramento de cada item. *DoR:* S5-10 concluída. *DoD:* todos os itens com status final e justificativa; histórico da seção 4.3 completo da Sprint 1 à Sprint 5.
+**S5-11 — Atualizar a matriz de risco no fechamento do módulo.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* revisão final da seção 4, com o status de encerramento de cada item e o `R01` reavaliado a partir da comparação de S5-03. *DoR:* S5-10 e S5-03 concluídas. *DoD:* todos os itens com status final e justificativa; histórico da seção 4.3 completo da Sprint 1 à Sprint 5.
 
-**S5-12 — Atualizar a matriz de papéis e responsabilidades da Sprint 5.** *Tipo:* `DOCS`. *Descrição:* matriz e rotação da Sprint 5 no formato da seção 3.5.1. *DoR:* board da Sprint 5 com todos os cards atribuídos. *DoD:* seis integrantes com papel, tasks e entregas; rotação comparada às Sprints 3 e 4; razão de carga calculada.
+**S5-12 — Atualizar a matriz de papéis e responsabilidades da Sprint 5.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* matriz e rotação da Sprint 5 no formato da seção 3.5.1. *DoR:* board da Sprint 5 com todos os cards atribuídos. *DoD:* seis integrantes com papel, tasks e entregas; rotação comparada às Sprints 3 e 4; razão de carga calculada.
 
-**S5-13 — Conduzir a retrospectiva final do módulo com a equipe.** *Tipo:* `MEET`. *Descrição:* sessão com os seis integrantes sobre o módulo inteiro, para levantar sucessos, oportunidades de melhoria e lições aprendidas. *DoR:* S5-10 concluída; a análise das cinco sprints disponível. *DoD:* registro da sessão com os pontos levantados por integrante.
+**S5-13 — Conduzir a retrospectiva final do módulo com a equipe.** *Tipo:* `PROCESS`, `MEET`. *Descrição:* sessão com os seis integrantes sobre o módulo inteiro, para levantar sucessos, oportunidades de melhoria e lições aprendidas. *DoR:* S5-10 concluída; a análise das cinco sprints disponível. *DoD:* registro da sessão com os pontos levantados por integrante.
 
-**S5-14 — Escrever a análise post-mortem do projeto.** *Tipo:* `DOCS`. *Descrição:* preencher a seção 6 a partir da retrospectiva final e dos indicadores das cinco sprints. *DoR:* S5-13 concluída. *DoD:* seções 6.1 a 6.3 sem marcadores pendentes, cada ponto com evidência de uma das sprints.
+**S5-14 — Escrever a análise post-mortem do projeto.** *Tipo:* `PROCESS`, `DOCS`. *Descrição:* preencher a seção 6 a partir da retrospectiva final e dos indicadores das cinco sprints. *DoR:* S5-13 concluída. *DoD:* seções 6.1 a 6.3 sem marcadores pendentes, cada ponto com evidência de uma das sprints.
 
-**S5-15 — Preencher o manual de instalação.** *Tipo:* `DOCS`. *Descrição:* substituir o template de `Manual-instalacao.md` pelo processo real de instalação local e nos ambientes de nuvem. *DoR:* ambientes de desenvolvimento e produção provisionados (`#376`, `#377`). *DoD:* manual executado do zero por um integrante que não o escreveu, sem passo faltante.
+**S5-15 — Preencher o manual de instalação.** *Tipo:* `DEPLOY`, `DOCS`. *Descrição:* substituir o template de `Manual-instalacao.md` pelo processo real de instalação local e nos ambientes de nuvem. *DoR:* ambientes de desenvolvimento e produção provisionados (#376, #377). *DoD:* manual executado do zero por um integrante que não o escreveu, sem passo faltante.
 
-**S5-16 — Criar os slides e conduzir a apresentação final.** *Tipo:* `DOCS`. *Descrição:* apresentação final do módulo, apoiada na demonstração de S5-04. *DoR:* S5-04 concluída. *DoD:* slides revisados pela equipe; demonstração ensaiada ao menos uma vez.
+**S5-16 — Criar os slides e conduzir a apresentação final.** *Tipo:* `BUSINESS`, `OFFSITE`. *Descrição:* apresentação final do módulo, apoiada na demonstração de S5-04. *DoR:* S5-04 concluída. *DoD:* slides revisados pela equipe; demonstração ensaiada ao menos uma vez.
 
 **S5-17 — Criar a tag SemVer da Sprint 5 e publicar a versão final.** *Tipo:* `DEPLOY`. *Descrição:* tag anotada da versão final sobre a `main`, conforme a seção 2.5 do `GestaoConfiguracao.md`. *DoR:* todos os merges da Sprint 5 integrados. *DoD:* tag da Sprint 5 publicada; tabela de versionamento do `README.md` atualizada.
 
 #### 3.6.2 Retrospectiva da Sprint 5
 
-[Preencher após a retrospectiva da Sprint 5.]
+Seção redigida em duas etapas, pelas tasks S5-10 e S5-13. A Sprint 5 vai de 28/09 a 07/10. A primeira versão sai do corte de 06/10, véspera do fechamento, e serve à revisão interna. A versão final é refeita depois do último merge da Sprint 5, em 07/10, conforme a `AM24`, e acrescenta o que a retrospectiva final com a equipe levantar.
 
 ## 4. Gestão de riscos e oportunidades
 
