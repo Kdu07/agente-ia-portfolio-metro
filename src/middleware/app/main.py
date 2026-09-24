@@ -11,6 +11,7 @@ Execução local:
     uvicorn app.main:app --reload
 """
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -20,6 +21,7 @@ from app.api.routes import auth, chat, conversas, health, intencoes, portfolio, 
 from app.config import settings
 from app.mensageria.produtor import ProdutorEventos
 from app.persistence import sessao as db
+from app.pipeline.intencao import classificador
 
 
 @asynccontextmanager
@@ -30,12 +32,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     descartaria o pool e transformaria cada mensagem num handshake novo
     com o PostgreSQL.
 
+    Com `aquecer_modelos`, o classificador carrega numa thread enquanto a
+    API já responde: `/health` fica verde na hora e `/health/pronto` só
+    depois da carga. Esperar aqui, antes do `yield`, deixaria a porta
+    fechada por minutos, e a sonda de início reiniciaria a réplica.
+
     O produtor só conecta ao RabbitMQ na primeira publicação: a API sobe
     com o broker fora do ar, e só as rotas que publicam respondem erro
     transitório até ele voltar.
     """
     db.iniciar()
     app.state.produtor_eventos = ProdutorEventos.a_partir_de(settings)
+    app.state.aquecimento = (
+        asyncio.create_task(asyncio.to_thread(classificador.aquecer))
+        if settings.aquecer_modelos
+        else None
+    )
     yield
     await app.state.produtor_eventos.encerrar()
     await db.encerrar()

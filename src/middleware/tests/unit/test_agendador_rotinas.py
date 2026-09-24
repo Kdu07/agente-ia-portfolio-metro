@@ -41,6 +41,18 @@ def test_url_do_jobstore_preserva_dados_e_troca_driver():
     assert resultado == "postgresql+psycopg://usuario:senha@db:5432/middleware"
 
 
+def test_url_do_jobstore_traduz_ssl_do_asyncpg_para_sslmode():
+    resultado = modulo._url_sincrona_jobstore(
+        "postgresql+asyncpg://usuario:senha@psql.postgres.database.azure.com:5432/prata_dev"
+        "?ssl=require"
+    )
+
+    assert resultado == (
+        "postgresql+psycopg://usuario:senha@psql.postgres.database.azure.com:5432/prata_dev"
+        "?sslmode=require"
+    )
+
+
 @pytest.mark.asyncio
 async def test_registra_lista_substitui_e_remove_job():
     scheduler = AsyncIOScheduler(jobstores={"default": MemoryJobStore()}, timezone=UTC)

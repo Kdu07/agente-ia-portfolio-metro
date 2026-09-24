@@ -1,0 +1,14 @@
+# O Dockerfile copia pastas específicas, mas o contexto inteiro vai ao
+# daemon a cada build. Sem esta lista, a .venv (vários GB) e os segredos
+# locais (.env, credenciais/) viajam junto em todo build.
+.venv
+.env
+.env.*
+credenciais
+uploads
+MagicMock
+tests
+**/__pycache__
+.pytest_cache
+.ruff_cache
+*.egg-info
