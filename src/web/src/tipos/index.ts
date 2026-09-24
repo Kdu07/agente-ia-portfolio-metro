@@ -179,3 +179,28 @@ export interface TokenVoz {
   expira_em_segundos: number;
   idioma: string;
 }
+
+/** Eventos do portfólio que geram aviso, como `TipoEventoPortfolio` em app/webhooks/modelos.py. */
+export type TipoEventoPortfolio = "projeto.status_alterado" | "marco.alterado" | "risco.alterado";
+
+/** O que a tela usa de `Projeto` (app/persistence/models.py) via GET /portfolio/projetos. */
+export interface ProjetoResumo {
+  codigo: string;
+  nome: string;
+}
+
+/** `PreferenciaResposta` em app/schemas/aviso.py. */
+export interface PreferenciaAviso {
+  projeto_codigo: string;
+  event_type: TipoEventoPortfolio;
+  ativa: boolean;
+  /** Só para riscos: probabilidade × impacto mínimo, de 1 a 25. */
+  severidade_minima: number | null;
+  atualizada_em: string;
+}
+
+/** `PreferenciaPedido` em app/schemas/aviso.py. O dono é sempre a sessão. */
+export interface PreferenciaPedido {
+  ativa: boolean;
+  severidade_minima: number | null;
+}

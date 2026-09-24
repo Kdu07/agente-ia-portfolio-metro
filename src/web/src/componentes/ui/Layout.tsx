@@ -22,7 +22,7 @@ import { quandoFoi } from "@/utilitarios/formato";
 
 const LIMITE_CONVERSAS_RECENTES = 3;
 
-type NomeIcone = "menu" | "chat" | "rotinas" | "historico" | "intencoes" | "plus" | "login";
+type NomeIcone = "menu" | "chat" | "rotinas" | "historico" | "avisos" | "intencoes" | "plus" | "login";
 
 function Icone({ nome }: { nome: NomeIcone }) {
   const caminhos: Record<NomeIcone, JSX.Element> = {
@@ -30,6 +30,7 @@ function Icone({ nome }: { nome: NomeIcone }) {
     chat: <path d="M20 11.5a7.5 7.5 0 0 1-8 7.48 8.6 8.6 0 0 1-3.5-.92L4 20l1.42-4A7.5 7.5 0 1 1 20 11.5Z" />,
     rotinas: <><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /><path d="m9 14 2 2 4-4" /></>,
     historico: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    avisos: <><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2Z" /><path d="M10 20a2 2 0 0 0 4 0" /></>,
     intencoes: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
     plus: <path d="M12 5v14M5 12h14" />,
     login: <><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" /></>,
@@ -81,6 +82,7 @@ export function Layout() {
         <nav aria-label="Navegação principal" className="nav-list">
           <NavLink to="/" end onClick={fechar}><Icone nome="chat" /><span>Página principal</span></NavLink>
           <NavLink to="/historico" onClick={fechar}><Icone nome="historico" /><span>Histórico</span></NavLink>
+          <NavLink to="/avisos" onClick={fechar}><Icone nome="avisos" /><span>Avisos</span></NavLink>
           {podeVerIntencoes ? (
             <NavLink to="/intencoes" onClick={fechar}><Icone nome="intencoes" /><span>Intenções</span></NavLink>
           ) : null}

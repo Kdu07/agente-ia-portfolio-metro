@@ -21,13 +21,17 @@ import type {
   ChatResponse,
   Desfecho,
   Execucao,
+  PreferenciaAviso,
+  PreferenciaPedido,
   Rotina,
+  TipoEventoPortfolio,
   TokenVoz,
   ValidacaoRotina,
 } from "@/tipos";
 import { USUARIO } from "./dados/usuario";
 import { CONVERSAS, detalharConversa } from "./dados/conversas";
 import { EXECUCOES, ROTINAS } from "./dados/rotinas";
+import { PREFERENCIAS, PROJETOS } from "./dados/avisos";
 import {
   BAIXA_CONFIANCA,
   DISTRIBUICAO_DESFECHOS,
@@ -124,6 +128,7 @@ function responderChat(mensagem: string): { desfecho: Desfecho; resposta: string
 // efeito visivel enquanto a pagina estiver aberta. Reinicia a cada
 // recarregamento, como convem a um duble.
 let rotinas: Rotina[] = [...ROTINAS];
+let preferencias: PreferenciaAviso[] = [...PREFERENCIAS];
 
 export const handlers = [
   // Autenticacao
@@ -284,5 +289,38 @@ export const handlers = [
       idioma: "pt-BR",
     };
     return HttpResponse.json(corpo);
+  }),
+
+  // Portfolio e avisos
+  http.get(`${BASE}/portfolio/projetos`, () => HttpResponse.json(PROJETOS)),
+  http.get(`${BASE}/avisos/preferencias`, () => HttpResponse.json(preferencias)),
+  http.put(`${BASE}/avisos/preferencias/:projeto/:tipo`, async ({ params, request }) => {
+    const projeto = String(params.projeto);
+    const tipo = String(params.tipo) as TipoEventoPortfolio;
+    const pedido = (await request.json()) as PreferenciaPedido;
+    // As mesmas recusas da rota real: 403 sem acesso, 422 com severidade
+    // fora de risco.
+    if (!PROJETOS.some((p) => p.codigo === projeto)) {
+      return HttpResponse.json({ detail: "Acesso negado ao projeto" }, { status: 403 });
+    }
+    if (pedido.severidade_minima !== null && tipo !== "risco.alterado") {
+      return HttpResponse.json(
+        { detail: "severidade_minima só se aplica a risco.alterado" },
+        { status: 422 },
+      );
+    }
+    const salva: PreferenciaAviso = {
+      projeto_codigo: projeto,
+      event_type: tipo,
+      ativa: pedido.ativa,
+      severidade_minima: pedido.severidade_minima,
+      atualizada_em: new Date().toISOString(),
+    };
+    preferencias = [
+      ...preferencias.filter((p) => !(p.projeto_codigo === projeto && p.event_type === tipo)),
+      salva,
+    ];
+    await delay(150);
+    return HttpResponse.json(salva);
   }),
 ];

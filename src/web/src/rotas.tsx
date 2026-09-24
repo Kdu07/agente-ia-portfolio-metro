@@ -1,9 +1,9 @@
 /**
  * Rotas do app.
  *
- * Seis telas compoem a solucao: entrada (login), a pagina principal do
- * agente, o historico de conversas, o dashboard de intencoes, a gestao de
- * rotinas e o destino de rota inexistente.
+ * Sete telas compoem a solucao: entrada (login), a pagina principal do
+ * agente, o historico de conversas, os avisos do portfolio, o dashboard de
+ * intencoes, a gestao de rotinas e o destino de rota inexistente.
  *
  * A tela de entrada fica FORA do Layout, porque quem ainda nao tem sessao
  * nao deve ver a navegacao de uma aplicacao a que nao tem acesso. As
@@ -26,6 +26,7 @@ import { Layout } from "@/componentes/ui/Layout";
 import { Principal } from "@/paginas/Principal";
 import { Rotinas } from "@/paginas/Rotinas";
 import { Historico } from "@/paginas/Historico";
+import { Avisos } from "@/paginas/Avisos";
 import { Intencoes } from "@/paginas/Intencoes";
 import { Login } from "@/paginas/Login";
 import { NaoEncontrada } from "@/paginas/NaoEncontrada";
@@ -77,6 +78,7 @@ export function Rotas() {
         <Route path="/" element={<Conversa />} />
         <Route path="/conversas/:conversaId" element={<Conversa />} />
         <Route path="/historico" element={<Historico />} />
+        <Route path="/avisos" element={<Avisos />} />
         <Route
           path="/intencoes"
           element={

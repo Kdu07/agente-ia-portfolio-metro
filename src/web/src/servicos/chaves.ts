@@ -38,4 +38,11 @@ export const chaves = {
   intencoesBaixaConfianca: (janela: string, perfil: string) =>
     ["intencoes", "catalogo", "baixa-confianca", janela, perfil] as const,
   intencoesLatencia: (janela: string, perfil: string) => ["intencoes", "latencia", janela, perfil] as const,
+
+  projetos: ["portfolio", "projetos"] as const,
+
+  // Fora do prefixo `avisos` de proposito: salvar uma preferencia nao
+  // muda a lista de avisos, e invalidar os dois juntos seria refazer a
+  // lista sem motivo.
+  preferenciasAviso: ["avisos-preferencias"] as const,
 };
