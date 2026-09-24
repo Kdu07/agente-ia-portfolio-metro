@@ -8872,6 +8872,37 @@ A última linha merece detalhe, porque é a que mais facilmente passaria por omi
 
 Isso importa por uma razão prática. Um cenário negativo inventado verifica o que quem o escreveu imaginou que poderia dar errado; um cenário negativo derivado de fluxo de exceção verifica o que a especificação prometeu que aconteceria quando desse errado. A diferença aparece na revisão: o primeiro se discute por opinião, o segundo se confere contra a seção que o originou. É também o que permite afirmar que os negativos foram esgotados antes de acrescentar cenários novos — quando um fluxo de exceção de 3.5.3 não aparece como caso, é porque ele pertence a um requisito cujo conjunto está marcado como não executável no MVP.
 
+### 10.1.7 Resultado da execução funcional em 24/09/2026
+
+A suíte funcional foi executada sobre o commit `e9839df`, após a integração dos scripts de RF04 a RF12. O comando abaixo concluiu com código de saída zero em **241,89 segundos**:
+
+```powershell
+cd src\middleware
+.\.venv\Scripts\python.exe -m pytest tests\funcionais -vv -ra -p no:cacheprovider --basetemp "C:\Users\MarianaReis\AppData\Local\Temp\g02-pytest-416"
+```
+
+Foram coletadas **68 execuções** para os 65 identificadores planejados; a diferença decorre de casos parametrizados. O resultado foi **41 aprovações, 24 falhas esperadas (`xfail`) e 3 casos ignorados (`skip`)**. Portanto, o código de saída zero comprova que a suíte é reproduzível e que os comportamentos já implementados não regrediram, mas não significa que todos os requisitos estejam concluídos. Os `xfail` registram, de maneira executável, diferenças ainda existentes entre a especificação e o sistema.
+
+| RF | Aprovadas | `xfail` | `skip` | Leitura do resultado |
+|---|---:|---:|---:|---|
+| RF01 | 5 | 1 | 0 | Fluxos principais aprovados; perfil padrão para grupo desconhecido permanece como lacuna. |
+| RF02 | 5 | 2 | 0 | Upload e consulta funcionam nos cenários cobertos; faltam aferição da duração e catálogo estruturado de erros. |
+| RF03 | 6 | 2 | 0 | Classificação e desfechos centrais aprovados; permissão de projeto e entidade ausente ainda não são distinguidas. |
+| RF04 | 1 | 4 | 0 | Consulta básica aprovada; cobertura das dimensões, propagação de fontes, indistinguibilidade 403/404 e ausência de dados permanecem incompletas. |
+| RF05 | 0 | 6 | 0 | Fluxo transacional com prévia e confirmação ainda não implementado. |
+| RF06 | 0 | 5 | 0 | Varredura e entrega proativa de pendências permanecem planejadas para a onda 5. |
+| RF07 | 0 | 0 | 3 | Casos fora do MVP, sem tópico correspondente no executor. |
+| RF08 | 3 | 3 | 0 | Contrato básico aprovado; perfil, suficiência e filtro de fontes por projeto ainda não estão integrados. |
+| RF09 | 6 | 1 | 0 | Guardas aprovadas nos fluxos exercitados; a indisponibilidade da guarda de injeção ainda propaga exceção. |
+| RF10 | 5 | 0 | 0 | Registro único e desfechos aprovados nos cenários automatizados. |
+| RF11 | 6 | 0 | 0 | Cadastro, alteração, execução e histórico de rotinas aprovados nos cenários automatizados. |
+| RF12 | 4 | 0 | 0 | Histórico e isolamento entre usuários aprovados nos cenários automatizados. |
+| **Total** | **41** | **24** | **3** | **Execução concluída, com cobertura funcional ainda parcial.** |
+
+Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente utilizado estão preservados em [`docs/evidencias/2026-09-24-testes-funcionais.txt`](evidencias/2026-09-24-testes-funcionais.txt). A execução utilizou `ASGITransport` e dublês nas fronteiras previstas pelos scripts; por isso, esta evidência não deve ser interpretada como comprovação de integração real com PostgreSQL, Entra ID, Copilot Studio, Azure Speech ou Content Safety.
+
+**Análise crítica.** A maior concentração de lacunas está nos RF05 e RF06, cujos fluxos ainda não estão implementados, e no RF04, que possui apenas um cenário aprovado. Os pontos de maior risco para a versão atual são a validação incompleta de áudio em RF02, a autorização e validação de entidades em RF03/RF04 e o comportamento da guarda de injeção quando o serviço externo falha em RF09. Os casos planejados para ondas futuras permanecem registrados como `xfail`, evitando que sejam apresentados como funcionalidades concluídas. Cada defeito confirmado deve ser vinculado a uma *issue* de correção antes do encerramento da issue de execução.
+
 ## 10.2 Testes de RNFs
 
 Os requisitos não funcionais já chegam a esta seção especificados. Cada um dos sete tem, em 3.3.1, uma descrição mensurável, uma fórmula, uma meta e uma referência normativa. Isso delimita o que a seção faz: ela descreve **como medir**, e não redefine o que medir. Onde a meta é hipótese da equipe, e 3.3.1 diz quais são, o teste é escrito para produzir o número que permitirá recalibrá-la, e não para confirmá-la.
