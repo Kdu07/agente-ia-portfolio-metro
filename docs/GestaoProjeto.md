@@ -1917,3 +1917,32 @@ A tabela abaixo consolida e compara os custos mensais e anuais de tecnologia ent
 | **Total Tecnológico Anual** | - | - | **R$ 1.380,00** | **-** | **R$ 36.730,80** |
 
 *Observação:* Durante a fase de implantação e validação do MVP, a sustentação de infraestrutura em nuvem consumiria R$ 115,00/mês, focados exclusivamente na camada de banco de dados gerenciado `B1ms`. Na operação em regime continuado, o custo mensal recorrente (OpEx) direto de nuvem e licenças para o Metrô SP consolida-se em **R$ 3.060,90 / mês** (ou **R$ 36.730,80 / ano**).
+
+### 7.4 Orçamento de Implementação da Solução
+
+Esta seção consolida os custos de pessoal (CapEx e esforço de desenvolvimento) e os custos de infraestrutura e licenças em um orçamento único. Para atender às exigências de transparência do Metrô SP, os valores são apresentados em duas perspectivas. A primeira é o desenvolvimento do MVP: Investimento de implementação e testes de validação. A segunda é a Solução Final em Produção (1º Ano): Custo de sustentação continuada em ambiente de produção.
+
+#### 7.4.1 Divisão entre Investimento Inicial (Capex) e Operação (Opex)
+
+* **Capex:** Abrange as 390,50 horas de desenvolvimento, arquitetura, engenharia de IA e gestão executadas pelas Sprints 1 a 5.
+* **Opex:** Abrange os custos recorrentes com os serviços da nuvem Azure e capacidade de tenant do Microsoft Copilot Studio para suportar o volume de produção.
+
+#### 7.4.2 Orçamento Consolidado de Implementação
+
+A tabela abaixo cruza os totais obtidos nas seções 7.2 e 7.3, demonstrando a formação do investimento sem divergências matemáticas.
+
+| Componente do Orçamento | Natureza Financeira | Fase MVP (Sprints 1-5) | Regime Anual (1º Ano) |
+| :--- | :--- | :--- | :--- |
+| Equipe de Desenvolvimento e Gestão | Capex (Pessoal) | R$ 48.287,50 | R$ 0,00 * |
+| Azure Container Apps | Opex (Nuvem) | R$ 0,00 | R$ 2.890,80 |
+| Azure Database for PostgreSQL | Opex (Nuvem) | R$ 115,00 ** | R$ 9.120,00 |
+| Azure AI Content Safety | Opex (Nuvem/IA) | R$ 0,00 | R$ 7.200,00 |
+| Azure AI Speech | Opex (Nuvem/IA) | R$ 0,00 | R$ 3.120,00 |
+| Microsoft Copilot Studio | Opex (Licenciamento) | R$ 0,00 | R$ 14.400,00 |
+| **Subtotal por Fase** | - | **R$ 48.402,50** | **R$ 36.730,80** |
+| **INVESTIMENTO TOTAL (Capex + Opex)** | **Consolidado** | - | **R$ 85.133,30** |
+
+#### 7.4.3 Resumo das Premissas Orçamentárias
+
+* **Consistência Interna:** A soma do investimento inicial de R$ 48.402,50 bate exatamente com as 390,50 horas de pessoal (R$ 48.287,50) somadas aos R$ 115,00 da instância de banco de dados utilizada na validação do MVP.
+* **Previsibilidade:** Os custos do 1º ano de operação em regime (R$ 36.730,80) garantem capacidade para 25.000 mensagens/mês no Copilot Studio, 100.000 requisições de guardas de segurança no Content Safety e 50 horas mensais de transcrição de voz no Azure Speech.
