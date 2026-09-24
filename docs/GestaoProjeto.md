@@ -1946,3 +1946,65 @@ A tabela abaixo cruza os totais obtidos nas seções 7.2 e 7.3, demonstrando a f
 
 * **Consistência Interna:** A soma do investimento inicial de R$ 48.402,50 bate exatamente com as 390,50 horas de pessoal (R$ 48.287,50) somadas aos R$ 115,00 da instância de banco de dados utilizada na validação do MVP.
 * **Previsibilidade:** Os custos do 1º ano de operação em regime (R$ 36.730,80) garantem capacidade para 25.000 mensagens/mês no Copilot Studio, 100.000 requisições de guardas de segurança no Content Safety e 50 horas mensais de transcrição de voz no Azure Speech.
+
+### 7.5 Análise de Viabilidade Financeira e Formação do Preço Final
+
+Para aproximar o projeto das condições reais de comercialização e atender às exigências formais de contratação pública pelo Metrô SP (que requer demonstração detalhada da composição de preços), esta seção formaliza o enquadramento tributário, a margem de lucro desejada e o demonstrativo de formação do preço final do projeto.
+
+#### 7.5.1 Regime Tributário e Despesas Operacionais Indiretas
+
+1. Enquadramento Tributário Simulado:
+   * Regime de Referência: Simples Nacional (Anexo III — Serviços de Tecnologia da Informação) ou Lucro Presumido.
+   * Alíquota Média Considerada: **15,5%** sobre o faturamento bruto (cobrindo impostos federais e municipais como ISS, PIS, COFINS, IRPJ e CSLL).
+   * Justificativa: Como o cliente final é uma empresa de economia mista do setor público, a tributação precisa ser incidente sobre a nota fiscal cheia emitida pelo fornecedor.
+
+2. Despesas Indiretas e Operacionais:
+   * Alíquota / Taxa: **5,0%** sobre a soma dos custos diretos.
+   * Escopo: Cobre custos administrativos de gestão de contrato, assessoria jurídica/contábil, infraestrutura de comunicação e ferramentas de apoio durante o desenvolvimento da PoC.
+
+#### 7.5.2 Margem de Lucro e Estratégia de Mercado
+
+* **Margem de Lucro Líquida Desejada:** **15,0%** sobre o custo total acumulado.
+* **Justificativa Estratégica:** A margem de 15% alinha-se ao padrão praticado por consultorias especializadas de TI no setor público para projetos de inovação e Inteligência Artificial. Ela garante a sustentabilidade financeira da empresa desenvolvedora, cobrindo o risco tecnológico e fornecendo caixa para suporte e garantias do MVP.
+
+#### 7.5.3 Demonstrativo de Formação do Preço
+
+A tabela abaixo demonstra o passo a passo matemático para a composição do preço final de venda da Prova de Conceito (Sprints 1 a 5) a ser transmitido ao Metrô SP:
+
+| Componente da Composição de Preço | Base de Cálculo / Racional | Valor (R$) |
+| :--- | :--- | :--- |
+| Custos Diretos de Pessoal (390,50 h) | Tabela 7.2 (Referência Glassdoor) | R$ 48.287,50 |
+| Custos Diretos de Infraestrutura (DB PoC) | Tabela 7.3.3 (PostgreSQL `B1ms`) | R$ 115,00 |
+| **(=) Subtotal de Custos Diretos** | **Soma dos Custos Brutos** | **R$ 48.402,50** |
+| Despesas Indiretas e Administrativas | 5,0% sobre os Custos Diretos | R$ 2.420,13 |
+| **(=) Custo Total Operacional (Base de Lucro)** | **Custos Diretos + Despesas Indiretas** | **R$ 50.822,63** |
+| Margem de Lucro Líquida | 15% sobre o Custo Total Operacional | R$ 7.623,39 |
+| **(=) Valor Bruto antes dos Impostos** | **Custo Total + Margem de Lucro** | **R$ 58.446,02** |
+| Impostos e Tributos (15,5%) | Aplicado sobre a NF: `Valor Bruto / (1 - 0,155)` | R$ 10.718,85 |
+| **(=) PREÇO FINAL DO MVP (VALOR AO CLIENTE)** | **Valor Transmitido ao Metrô SP** | **R$ 69.164,87** |
+
+#### 7.5.4 Projeção de Custos e Receitas para o Primeiro Ano de Operação
+
+Para a operação continuada do Agente de IA em regime corporativo após a entrega do MVP, a estrutura financeira prevê a sustentação continuada do ambiente de nuvem e um contrato mensal de manutenção evolutiva e suporte de Nível 3 (15 horas mensais de engenharia).
+
+1. **Custos Recorrentes do 1º Ano (OpEx Bruto):**
+   * Infraestrutura Azure e Copilot Studio (12 meses): R$ 36.730,80 / ano (Tabela 7.3.3)[cite: 2]
+   * Manutenção e Suporte N3 (180 h/ano x R$ 120,00/h): R$ 21.600,00 / ano
+   * *Subtotal Opex Direto Recorrente:* **R$ 58.330,80 / ano** (R$ 4.860,90 / mês)
+
+2. **Formação da Anuidade Recorrente do Contrato de Sustentação (12 meses):**
+   * Opex Direto: R$ 58.330,80[cite: 2]
+   * Despesas Indiretas (5%): R$ 2.916,54
+   * Margem de Lucro Líquida (15%): R$ 9.187,10
+   * Impostos e Tributos (15,5% sobre faturamento): R$ 12.894,76
+   * PREÇO ANUAL DO CONTRATO DE SUSTENTAÇÃO: **R$ 83.329,20 / ano** (ou **R$ 6.944,10 / mês**)
+
+#### 7.5.5 Resumo do Valor Total do Contrato para o Metrô SP
+
+Caso o Metrô SP adquira a entrega do projeto em lote único contemplando a **Construção do MVP + 1 Ano de Operação e Sustentação Continuada**:
+
+| Fase do Contrato | Modalidade Financeira | Preço Final ao Cliente |
+| :--- | :--- | :--- |
+| Fase 1: Construção e Implantação do MVP (S1-S5) | Capex | R$ 69.164,87 |
+| Fase 2: Licenciamento, Nuvem e Suporte (1º Ano) | Opex / Assinatura Anual | R$ 83.329,20 |
+| **VALOR TOTAL DO CONTRATO** | **Contratação Integrada** | **R$ 152.494,07** |
