@@ -65,8 +65,9 @@ class _Requisicao:
 class DriveFalso:
     """Drive API v3 dublada: guarda o que a inscrição enviou ao Google."""
 
-    def __init__(self, *, falhar: bool = False) -> None:
+    def __init__(self, *, falhar: bool = False, falhar_parada: bool = False) -> None:
         self.falhar = falhar
+        self.falhar_parada = falhar_parada
         self.corpos: list[dict] = []
         self.parametros: list[dict] = []
         self.parados: list[dict] = []
@@ -101,7 +102,12 @@ class DriveFalso:
 
     def stop(self, body):
         self.parados.append(body)
-        return _Requisicao(lambda: None)
+
+        def responder():
+            if self.falhar_parada:
+                raise RuntimeError("503 do Google")
+
+        return _Requisicao(responder)
 
 
 @pytest.fixture
@@ -289,6 +295,26 @@ async def test_encerrar_para_o_canal_no_google_sem_exigir_url(canal, fabrica, dr
     assert drive.parados == [{"id": canal_id, "resourceId": "recurso-do-google"}]
     async with fabrica() as sessao:
         assert (await CanalDriveRepository(sessao).obter(canal_id)).estado == EstadoCanal.ENCERRADO
+
+
+async def test_falha_ao_parar_canal_nao_permite_renovacao_repetida(canal, fabrica, drive):
+    canal_id, _ = canal
+    drive.falhar_parada = True
+    com_falha = InscricaoDrive(
+        drive,
+        fabrica,
+        fonte_id=fabrica.fonte,
+        url=URL_PUBLICA,
+        validade=timedelta(hours=1),
+    )
+
+    with pytest.raises(RuntimeError, match="503 do Google"):
+        await com_falha.encerrar(canal_id)
+
+    async with fabrica() as sessao:
+        registrado = await CanalDriveRepository(sessao).obter(canal_id)
+    assert registrado.estado == EstadoCanal.ENCERRADO
+    assert await renovar_canais(com_falha, fabrica) == 0
 
 
 # --- Rota até a fila ---------------------------------------------------------

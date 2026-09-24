@@ -131,15 +131,23 @@ class InscricaoDrive:
         """Pede ao Google que pare o canal e o marca como encerrado.
 
         Um canal que o Google já não conhece (expirado ou parado antes) é
-        encerrado localmente do mesmo jeito.
+        encerrado localmente do mesmo jeito. Se a chamada remota falhar, o
+        registro local também é encerrado: durante a renovação já existe um
+        canal substituto ativo, e manter o anterior elegível criaria outro
+        canal novo a cada ciclo de manutenção.
         """
         async with self._fabrica() as sessao:
             canal = await CanalDriveRepository(sessao).obter(canal_id)
         if canal is None:
             raise ErroInscricao(f"Canal {canal_id} não cadastrado")
-        if canal.estado == EstadoCanal.ATIVO and canal.recurso_id:
-            await asyncio.to_thread(self._parar, canal_id, canal.recurso_id)
-        await self._encerrar_registro(canal_id)
+        try:
+            if canal.estado == EstadoCanal.ATIVO and canal.recurso_id:
+                await asyncio.to_thread(self._parar, canal_id, canal.recurso_id)
+        finally:
+            # O canal remoto expira sozinho. Encerrá-lo localmente mesmo
+            # diante de uma falha transitória impede renovações sucessivas
+            # e faz callbacks residuais serem recusados.
+            await self._encerrar_registro(canal_id)
         logger.info("Canal %s do Drive encerrado", canal_id)
 
     async def _encerrar_registro(self, canal_id: str) -> None:
