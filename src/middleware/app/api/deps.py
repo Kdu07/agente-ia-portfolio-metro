@@ -22,7 +22,7 @@ from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, Request, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.auth import sessao as auth_sessao
 from app.config import settings
@@ -44,11 +44,12 @@ from app.persistence.repository_portfolio import (
     RiscoRepository,
     UsuarioProjetoRepository,
 )
-from app.persistence.sessao import obter_sessao
+from app.persistence.sessao import fabrica_de_sessoes, obter_sessao
 from app.pipeline.orquestrador import Orquestrador
 from app.schemas.usuario import Permissao, UsuarioAutenticado
 
 __all__ = [
+    "FabricaSessoes",
     "Produtor",
     "SessaoBanco",
     "UsuarioAtual",
@@ -57,6 +58,7 @@ __all__ = [
     "obter_conversas",
     "obter_execucoes",
     "obter_executor",
+    "obter_fabrica_sessoes",
     "obter_indicadores",
     "obter_interacoes",
     "obter_marcos",
@@ -224,3 +226,16 @@ def obter_produtor(request: Request) -> ProdutorEventos:
 
 
 Produtor = Annotated[ProdutorEventos, Depends(obter_produtor)]
+
+
+def obter_fabrica_sessoes() -> async_sessionmaker[AsyncSession]:
+    """Fábrica de sessões para quem precisa de mais de uma transação.
+
+    O recebimento de webhook confirma o registro antes de publicar e
+    marca a publicação depois, em transações separadas; a sessão única
+    de `obter_sessao`, confirmada só no fim da requisição, não serve.
+    """
+    return fabrica_de_sessoes()
+
+
+FabricaSessoes = Annotated[async_sessionmaker[AsyncSession], Depends(obter_fabrica_sessoes)]

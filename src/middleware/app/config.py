@@ -160,6 +160,23 @@ class Settings(BaseSettings):
     # Cadastro de chaves HMAC fora do repositorio, relido a cada recebimento.
     webhook_portfolio_chaves_arquivo: str = ""
 
+    # --- Webhook do Google Drive (WH-01) --------------------------------
+    # Seção 9.1.2.7.1 do Projeto.md. URL HTTPS pública pela qual o Google
+    # chama `POST /webhooks/google-drive`: no Azure,
+    # https://<app-web>/api/webhooks/google-drive, porque o nginx remove
+    # `/api`; num túnel de teste apontado para o middleware, a URL do
+    # túnel seguida de /webhooks/google-drive.
+    drive_webhook_url: str = ""
+    # Identificador interno da fonte acompanhada; não é o ID da pasta.
+    drive_webhook_fonte: str = Field(default="corpus_metro_sintetico", min_length=1)
+    # Validade pedida ao Google. Ele pode conceder menos, e a renovação
+    # usa a validade efetivamente concedida. O teto de `changes.watch` é
+    # de uma semana.
+    drive_webhook_validade_horas: int = Field(default=24, ge=1, le=168)
+    # Intervalo do ciclo do worker que republica recebimentos sem
+    # confirmação e renova canais perto de expirar.
+    webhook_manutencao_segundos: int = Field(default=60, ge=5)
+
     # --- Recuperação (executor próprio) ---------------------------------
     # Seção 3.7 do plano. Trechos entregues ao modelo de geração por
     # consulta, e o corte de similaridade abaixo do qual um trecho não

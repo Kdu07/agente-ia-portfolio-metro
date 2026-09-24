@@ -17,7 +17,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.routes import auth, chat, conversas, health, intencoes, portfolio, rotinas, voz
+from app.api.routes import (
+    auth,
+    chat,
+    conversas,
+    health,
+    intencoes,
+    portfolio,
+    rotinas,
+    voz,
+    webhooks,
+)
 from app.config import settings
 from app.mensageria.produtor import ProdutorEventos
 from app.persistence import sessao as db
@@ -73,3 +83,5 @@ app.include_router(voz.router, tags=["voz"])
 app.include_router(intencoes.router, tags=["intencoes"])
 app.include_router(rotinas.router, tags=["rotinas"])
 app.include_router(portfolio.router, tags=["portfolio"])
+# Sem sessão de usuário: autenticidade do emissor (app/auth/webhooks*.py).
+app.include_router(webhooks.router, tags=["webhooks"])
