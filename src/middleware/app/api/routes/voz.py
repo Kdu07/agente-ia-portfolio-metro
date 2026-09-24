@@ -15,6 +15,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Response,
     UploadFile,
     status,
 )
@@ -28,6 +29,7 @@ from app.utils.validadores import (
     validar_formato_audio,
     validar_tamanho_arquivo,
 )
+from app.voz.speech import ErroConfiguracaoSpeech, ErroTokenSpeech, emitir_token
 from app.voz.transcricao import ErroTranscricao, transcrever_arquivo
 
 router = APIRouter(prefix="/voz")
@@ -97,14 +99,41 @@ class TokenResposta(BaseModel):
     idioma: str
 
 
-@router.get("/token", response_model=TokenResposta)
-async def token(usuario: UsuarioAtual) -> TokenResposta:
+@router.get(
+    "/token",
+    response_model=TokenResposta,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"description": "Sessão ausente ou expirada"},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "description": "Serviço de fala não configurado ou indisponível"
+        },
+    },
+)
+async def token(usuario: UsuarioAtual, response: Response) -> TokenResposta:
     """Devolve um token de curta duração do Azure Speech.
 
     O frontend renova antes de expirar, e não ao receber erro: uma
     renovação reativa interromperia a fala do usuário no meio.
+
+    `no-store` impede que um proxy ou o cache do navegador guarde a
+    credencial. Configuração ausente e falha do serviço respondem 503 com a
+    mesma mensagem: o detalhe fica no log, não no navegador.
     """
-    raise NotImplementedError("Emissão de token a implementar junto com a voz")
+    try:
+        emitido = await emitir_token()
+    except (ErroConfiguracaoSpeech, ErroTokenSpeech) as erro:
+        logger.warning("Token de voz não emitido para %s: %s", usuario.id, erro)
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "Entrada por voz indisponível no momento. Digite a mensagem.",
+        ) from None
+    response.headers["Cache-Control"] = "no-store"
+    return TokenResposta(
+        token=emitido.token,
+        regiao=emitido.regiao,
+        expira_em_segundos=emitido.expira_em_segundos,
+        idioma=emitido.idioma,
+    )
 
 
 @router.post(
