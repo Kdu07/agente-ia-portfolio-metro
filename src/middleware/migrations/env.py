@@ -15,8 +15,9 @@ from alembic import context
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.pool import NullPool
 
-# Registram no metadata as tabelas dos schemas `rag` e `webhook`
-# (app/rag/tabelas.py e app/webhooks/tabelas.py).
+# Registram no metadata as tabelas dos avisos (schema padrão) e dos schemas
+# `rag` e `webhook` (app/avisos, app/rag e app/webhooks, tabelas.py).
+import app.avisos.tabelas
 import app.rag.tabelas
 import app.webhooks.tabelas  # noqa: F401
 from app.config import settings
