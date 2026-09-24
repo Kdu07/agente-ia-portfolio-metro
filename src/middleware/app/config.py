@@ -173,6 +173,9 @@ class Settings(BaseSettings):
     # usa a validade efetivamente concedida. O teto de `changes.watch` é
     # de uma semana.
     drive_webhook_validade_horas: int = Field(default=24, ge=1, le=168)
+    # Intervalo do ciclo do worker que republica recebimentos sem
+    # confirmação e renova canais perto de expirar.
+    webhook_manutencao_segundos: int = Field(default=60, ge=5)
 
     # --- Recuperação (executor próprio) ---------------------------------
     # Seção 3.7 do plano. Trechos entregues ao modelo de geração por

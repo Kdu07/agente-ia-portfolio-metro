@@ -70,10 +70,6 @@ class InscricaoDrive:
         relogio: Callable[[], datetime] = _agora,
     ) -> None:
         """Recebe o serviço da Drive API já autenticado — os testes o dublam."""
-        if not url.startswith("https://"):
-            # O Google só entrega em HTTPS com certificado válido; recusar
-            # aqui evita um canal pendente que nunca seria confirmado.
-            raise ErroInscricao("DRIVE_WEBHOOK_URL precisa ser uma URL https://")
         self._servico = servico
         self._fabrica = fabrica_sessoes
         self._fonte = fonte_id
@@ -83,6 +79,11 @@ class InscricaoDrive:
 
     async def inscrever(self) -> CanalInscrito:
         """Inscreve um canal novo e o ativa com o recurso confirmado."""
+        if not self._url.startswith("https://"):
+            # O Google só entrega em HTTPS com certificado válido; recusar
+            # aqui evita um canal pendente que nunca seria confirmado. Só a
+            # inscrição precisa da URL: encerrar um canal não depende dela.
+            raise ErroInscricao("DRIVE_WEBHOOK_URL precisa ser uma URL https://")
         agora = self._relogio()
         canal_id = str(uuid4())
         token = secrets.token_hex(32)
