@@ -18,6 +18,7 @@ from fastapi import FastAPI
 
 from app.api.routes import (
     auth,
+    avisos,
     chat,
     conversas,
     health,
@@ -71,5 +72,6 @@ app.include_router(voz.router, tags=["voz"])
 app.include_router(intencoes.router, tags=["intencoes"])
 app.include_router(rotinas.router, tags=["rotinas"])
 app.include_router(portfolio.router, tags=["portfolio"])
+app.include_router(avisos.router, tags=["avisos"])
 # Sem sessão de usuário: autenticidade do emissor (app/auth/webhooks*.py).
 app.include_router(webhooks.router, tags=["webhooks"])
