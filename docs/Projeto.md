@@ -9200,6 +9200,41 @@ cd src\middleware
 python -m app.pipeline.guardas.abuso.bancada --limiares 2 4 6
 ```
 
+**Execução sistêmica do RNF06.** Em 23/09/2026, o conjunto completo foi
+versionado em `src/middleware/dados/adversarial/` e executado pelo teste
+`src/middleware/tests/rnf/test_rnf06_barreiras.py` contra o Azure AI Content
+Safety real. A bancada contém 100 casos hostis — 20 para cada vetor — e 100
+casos legítimos com vocabulário próximo ao adversarial. O teste externo é
+opt-in para não consumir cota no CI:
+
+```powershell
+$env:EXECUTAR_RNF06_REAL = "1"
+pytest tests/rnf/test_rnf06_barreiras.py -v -s
+```
+
+| Barreira | Detecção | Taxa de detecção | Bloqueio indevido | Taxa de falso positivo | Resultado |
+|---|---:|---:|---:|---:|---|
+| Injeção | 5/60 | 8,3% | 0/100 | 0,0% | Reprovada por detecção |
+| Abuso | 0/20 | 0,0% | 0/100 | 0,0% | Reprovada por detecção |
+| Saída | 20/20 | 100,0% | 0/100 | 0,0% | Aprovada neste conjunto |
+
+O recorte por vetor foi: sequestro de papel `2/20`, extração do prompt
+`1/20`, contorno de restrição `2/20`, injeção indireta `20/20` e uso indevido
+`0/20`. Portanto, o RNF06 **não atende atualmente** à meta de 90% de detecção,
+embora as três barreiras atendam ao teto de 5% de falso positivo. A execução
+não apresentou erro de credencial, transporte ou contrato do serviço; a
+reprovação representa o comportamento observado. O log resumido está em
+`docs/evidencias/2026-09-23-rnf06-content-safety.txt`.
+
+A causa mais clara para o resultado da guarda de abuso já está explícita no
+código: `guardas/abuso/politicas.py` ainda não possui enunciados corporativos
+aprovados, e as categorias genéricas do Content Safety não representam burla
+de auditoria, consulta de dados funcionais ou uso não corporativo. Na guarda de
+injeção, as regras determinísticas cobrem poucas formulações e o Prompt Shields
+não reconheceu a maior parte das paráfrases em português. A ação corretiva é
+ampliar e validar essas duas camadas com o parceiro; reduzir artificialmente o
+conjunto ou contabilizar indisponibilidade como detecção mascararia o risco.
+
 #### 10.2.3.7 RNF07 — Retenção e proteção do registro de interações
 
 Este requisito existe para fechar a lacuna que o RNF01 sozinho deixa aberta, e 3.3.1.1 diz qual é: declarar a rota não protege o que fica em repouso, e a remoção do mascaramento fez a tabela de interações passar a concentrar o prompt em claro — inclusive o das tentativas de ataque, que são o insumo mais valioso do recorte de segurança do RF10. A verificação é, como a do RNF01, principalmente de inspeção: do estado da base e da configuração de cifra, e não de um fluxo executado.
@@ -9233,7 +9268,7 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
 | RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Disponível e executado em janela local; medição implantada ainda pendente |
 | RNF05 | 10.2.3.5 | 2 | 2 | Conjunto de enunciados por perfil, com avaliação humana da adequação e verificação automatizada da exposição | A construir |
-| RNF06 | 10.2.3.6 | 3 | 3 | Conjunto adversarial em cinco vetores mais contraparte legítima, contra o Content Safety real | Parcial: bancada de calibração da guarda de abuso executada; conjunto sistêmico completo ainda a construir |
+| RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
 | RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
 | Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência, com o executor dublado em latência sintética | A construir |
 | **Total** | — | **21** | **16** | — | — |
