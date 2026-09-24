@@ -11,20 +11,32 @@ do recurso e não foram gravados nesta sessão. As fitas atuais cobrem
 apenas a análise de categorias de conteúdo.
 """
 
+import os
+
 import pytest
 
 from app.config import settings
-from app.pipeline.guardas.content_safety import Sessao, configurado, Indisponivel, sessao
+from app.pipeline.guardas.content_safety import Sessao, configurado, sessao
 
-pytestmark = pytest.mark.skipif(
-    not configurado(),
-    reason="exige CONTENT_SAFETY_ENDPOINT e CONTENT_SAFETY_KEY configurados",
-)
+pytestmark = [pytest.mark.integracao, pytest.mark.externo]
+
+ENDPOINT_GRAVADO = "https://content-safety-metrosp-g02.cognitiveservices.azure.com"
 
 
 @pytest.fixture
-async def sessao_content_safety():
-    """Sessão HTTP para chamadas ao Content Safety."""
+async def sessao_content_safety(monkeypatch: pytest.MonkeyPatch):
+    """Usa credencial real ao gravar e valores fictícios ao reproduzir.
+
+    O VCR intercepta a requisição na reprodução. Os valores fictícios
+    permitem que a fita rode sem `.env`, sem rede e sem segredo real.
+    """
+    if os.getenv("VHS_GRAVANDO"):
+        if not configurado():
+            pytest.skip("gravação exige CONTENT_SAFETY_ENDPOINT e CONTENT_SAFETY_KEY")
+    else:
+        monkeypatch.setattr(settings, "content_safety_endpoint", ENDPOINT_GRAVADO)
+        monkeypatch.setattr(settings, "content_safety_key", "CHAVE-FICTICIA-PARA-VHS")
+
     async with sessao() as s:
         yield s
 
