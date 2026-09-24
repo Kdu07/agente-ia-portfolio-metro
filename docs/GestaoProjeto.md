@@ -319,6 +319,20 @@ A partir da Sprint 4, o board adota a taxonomia oficial definida pelo Escritóri
 
 Toda issue da sprint corrente deve possuir a milestone no formato `Sprint 0X`. Sem ela, o cartão não é contabilizado.
 
+**Conferência da Sprint 4 (24/09/2026).** As labels acima foram conferidas contra o projeto no GitLab e contra as 99 issues da milestone `Sprint 04` (58 abertas):
+
+| Categoria | Situação no projeto | Uso na milestone `Sprint 04` |
+|---|---|---|
+| Entrega | Existem `CODE`, `DESIGN`, `TEST` e `DEPLOY`. **Não existem** `BUSINESS`, `ARCHITECTURE`, `PROCESS` e `CHORE` | `CODE` 39, `TEST` 23, `DEPLOY` 12; nenhuma com `DESIGN` |
+| Forma | `DOCS` existe | 25 issues; em 23 delas `DOCS` aparece sem label de entrega, porque as de gestão e arquitetura não existem no projeto |
+| Natureza | `BUG` existe | 3 issues |
+| Esforço | `SIZE_PP`, `SIZE_P`, `SIZE_M` e `SIZE_G` existem | Todas as 99 issues têm uma |
+| Prioridade | `P_ALTA`, `P_MEDIA` e `P_BAIXA` existem | Todas as 99 issues têm uma |
+| Fora do GitLab | `MEET` e `OFFSITE` existem | `OFFSITE` em 6 issues |
+| Situação | As colunas do quadro são as labels `Backlog`, `Doing`, `Waiting Review` e `Review`, com inicial maiúscula. `open` e `closed` são os estados da issue no GitLab, e não labels. A label de impedimento existente é `BLOCKED`, da nomenclatura anterior; `BLOCK` não existe | Todas as issues abertas estão em uma coluna |
+
+Enquanto as labels ausentes não forem criadas no projeto, vale a prática registrada na tabela: documentação de gestão, processo e arquitetura recebe `DOCS` com a prioridade e o esforço, e impedimento é marcado com `BLOCKED`. Criar as quatro labels de entrega e `BLOCK` alinha o quadro à taxonomia oficial e é decisão da equipe.
+
 **Correspondência com a nomenclatura anterior**
 
 Os cards criados até a Sprint 3 permanecem com as labels originais. O histórico não é reescrito, pela mesma razão que preservou o nome das branches anteriores à troca de prefixo descrita em [GestaoConfiguracao.md](GestaoConfiguracao.md). A tabela abaixo registra a correspondência para leitura do quadro anterior.
@@ -364,12 +378,12 @@ As dependências entre artefatos devem ser respeitadas. Um exemplo de sequência
 
 | Coluna | Quando o card entra |
 |---|---|
-| `open` | Card criado, ainda não comprometido para a sprint |
-| `backlog` | Card comprometido para a sprint corrente, com milestone, labels e estimativa |
-| `doing` | Trabalho iniciado, com o DoR atendido |
-| `waiting review` | Merge request aberto, ainda sem revisor designado |
-| `review` | Revisor designado e revisão em andamento |
-| `closed` | Merge realizado e DoD integralmente atendido |
+| Issue aberta, sem coluna | Card criado, ainda não comprometido para a sprint |
+| `Backlog` | Card comprometido para a sprint corrente, com milestone, labels e estimativa |
+| `Doing` | Trabalho iniciado, com o DoR atendido |
+| `Waiting Review` | Merge request aberto, ainda sem revisor designado |
+| `Review` | Revisor designado e revisão em andamento |
+| Issue fechada | Merge realizado e DoD integralmente atendido |
 
 Regras de uso:
 
