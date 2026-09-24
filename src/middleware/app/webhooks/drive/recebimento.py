@@ -35,7 +35,11 @@ from app.mensageria.produtor import FalhaPublicacao, ProdutorEventos
 from app.mensageria.topologia import WEBHOOK_RECEBIDO
 from app.schemas.mensagem import MensagemEvento
 from app.webhooks.modelos import Provedor, Recebimento
-from app.webhooks.repositorio import CanalDriveRepository, RecebimentoRepository
+from app.webhooks.repositorio import (
+    ERRO_PUBLICACAO,
+    CanalDriveRepository,
+    RecebimentoRepository,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +92,7 @@ async def publicar_recebimento(
     except FalhaPublicacao:
         async with fabrica() as sessao:
             await RecebimentoRepository(sessao).registrar_falha(
-                recebimento.message_id, codigo="PUBLICACAO_NAO_CONFIRMADA"
+                recebimento.message_id, codigo=ERRO_PUBLICACAO
             )
             await sessao.commit()
         raise

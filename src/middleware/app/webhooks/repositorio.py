@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import select, update
+from sqlalchemy import case, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.auth.webhooks_drive import CanalDrive
@@ -33,6 +33,8 @@ from app.webhooks.tabelas import (
 
 # Renovar ao atingir 80% da validade concedida (seção 9.1.2.7.1, item 6).
 FRACAO_RENOVACAO = 0.8
+# Código gravado quando o broker não confirma a publicação.
+ERRO_PUBLICACAO = "PUBLICACAO_NAO_CONFIRMADA"
 
 
 def _registrado(linha: CanalDriveTabela) -> CanalRegistrado:
@@ -203,13 +205,25 @@ class RecebimentoRepository(_RepositorioBase):
         return existente.to_dominio(), False
 
     async def marcar_publicado(self, message_id: str, *, agora: datetime) -> None:
+        """Marca a publicação e limpa só o erro de publicação.
+
+        O consumidor pode processar a mensagem e registrar a própria falha
+        antes desta marca chegar ao banco; apagar qualquer código aqui
+        perderia esse diagnóstico.
+        """
         await self._sessao.execute(
             update(RecebimentoTabela)
             .where(
                 RecebimentoTabela.message_id == message_id,
                 RecebimentoTabela.publicado_em.is_(None),
             )
-            .values(publicado_em=agora, erro_codigo=None)
+            .values(
+                publicado_em=agora,
+                erro_codigo=case(
+                    (RecebimentoTabela.erro_codigo == ERRO_PUBLICACAO, None),
+                    else_=RecebimentoTabela.erro_codigo,
+                ),
+            )
         )
 
     async def registrar_falha(self, message_id: str, *, codigo: str) -> None:
