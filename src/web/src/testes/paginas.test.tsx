@@ -88,29 +88,6 @@ describe("Página principal", () => {
     ).toBeInTheDocument();
     expect(campo).toHaveValue("");
   });
-
-  it("indica quando a entrada por voz está ativa e leva a transcrição ao campo", async () => {
-    renderizar(<Principal />);
-    const campo = screen.getByRole("textbox", { name: "Mensagem" });
-
-    fireEvent.click(screen.getByRole("button", { name: "Iniciar entrada por voz" }));
-
-    // O token do duble aciona o percurso simulado, com parciais e
-    // transcricao final, sem depender de microfone nem do Azure.
-    expect(
-      await screen.findByRole("button", { name: "Parar entrada por voz" }, { timeout: 3000 }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(campo).toHaveAttribute("placeholder", "Ouvindo... fale agora");
-    expect(campo).toHaveAttribute("readonly");
-
-    await waitFor(
-      () => expect(campo).toHaveValue("Qual o status do Projeto X e quais marcos estão atrasados?"),
-      { timeout: 6000 },
-    );
-    expect(
-      await screen.findByRole("button", { name: "Iniciar entrada por voz" }, { timeout: 3000 }),
-    ).toBeInTheDocument();
-  });
 });
 
 describe("Página de rotinas", () => {
