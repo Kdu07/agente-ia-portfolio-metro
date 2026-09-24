@@ -20,6 +20,7 @@ import type {
   ChatRequest,
   ChatResponse,
   Desfecho,
+  Aviso,
   Execucao,
   PreferenciaAviso,
   PreferenciaPedido,
@@ -31,7 +32,7 @@ import type {
 import { USUARIO } from "./dados/usuario";
 import { CONVERSAS, detalharConversa } from "./dados/conversas";
 import { EXECUCOES, ROTINAS } from "./dados/rotinas";
-import { PREFERENCIAS, PROJETOS } from "./dados/avisos";
+import { AVISOS, PREFERENCIAS, PROJETOS } from "./dados/avisos";
 import {
   BAIXA_CONFIANCA,
   DISTRIBUICAO_DESFECHOS,
@@ -129,6 +130,7 @@ function responderChat(mensagem: string): { desfecho: Desfecho; resposta: string
 // recarregamento, como convem a um duble.
 let rotinas: Rotina[] = [...ROTINAS];
 let preferencias: PreferenciaAviso[] = [...PREFERENCIAS];
+let avisos: Aviso[] = AVISOS.map((aviso) => ({ ...aviso }));
 
 export const handlers = [
   // Autenticacao
@@ -322,5 +324,20 @@ export const handlers = [
     ];
     await delay(150);
     return HttpResponse.json(salva);
+  }),
+  http.get(`${BASE}/avisos`, async ({ request }) => {
+    const apenasNaoLidos = new URL(request.url).searchParams.get("nao_lidos") === "true";
+    await delay(150);
+    return HttpResponse.json(apenasNaoLidos ? avisos.filter((a) => !a.lido_em) : avisos);
+  }),
+  http.get(`${BASE}/avisos/contagem`, () =>
+    HttpResponse.json({ nao_lidos: avisos.filter((a) => !a.lido_em).length }),
+  ),
+  http.post(`${BASE}/avisos/:id/lido`, ({ params }) => {
+    const aviso = avisos.find((a) => a.id === params.id);
+    if (!aviso) return HttpResponse.json({ detail: "Aviso não encontrado" }, { status: 404 });
+    // Marcar de novo mantem a primeira leitura, como na rota real.
+    avisos = avisos.map((a) => (a.id === aviso.id ? { ...a, lido_em: a.lido_em ?? new Date().toISOString() } : a));
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

@@ -17,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useUsuario } from "@/hooks/useUsuario";
 import { useConversas } from "@/hooks/useConversas";
 import { CHAVE_CONVERSA_ATIVA } from "@/hooks/useConversa";
+import { useContagemAvisos } from "@/hooks/useAvisos";
 import { api } from "@/servicos/api";
 import { quandoFoi } from "@/utilitarios/formato";
 
@@ -42,6 +43,7 @@ export function Layout() {
   const [aberto, setAberto] = useState(false);
   const { usuario } = useUsuario();
   const { conversas, carregando: carregandoConversas, erro: erroConversas } = useConversas();
+  const avisosNaoLidos = useContagemAvisos();
   const navegar = useNavigate();
   const consultas = useQueryClient();
 
@@ -82,7 +84,17 @@ export function Layout() {
         <nav aria-label="Navegação principal" className="nav-list">
           <NavLink to="/" end onClick={fechar}><Icone nome="chat" /><span>Página principal</span></NavLink>
           <NavLink to="/historico" onClick={fechar}><Icone nome="historico" /><span>Histórico</span></NavLink>
-          <NavLink to="/avisos" onClick={fechar}><Icone nome="avisos" /><span>Avisos</span></NavLink>
+          <NavLink to="/avisos" onClick={fechar}>
+            <Icone nome="avisos" /><span>Avisos</span>
+            {avisosNaoLidos > 0 ? (
+              <>
+                <span className="ml-auto rounded-full bg-sky-700 px-2 text-xs font-bold text-white" aria-hidden="true">
+                  {avisosNaoLidos > 99 ? "99+" : avisosNaoLidos}
+                </span>
+                <span className="sr-only">, {avisosNaoLidos} não lidos</span>
+              </>
+            ) : null}
+          </NavLink>
           {podeVerIntencoes ? (
             <NavLink to="/intencoes" onClick={fechar}><Icone nome="intencoes" /><span>Intenções</span></NavLink>
           ) : null}

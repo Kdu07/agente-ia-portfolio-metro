@@ -204,3 +204,25 @@ export interface PreferenciaPedido {
   ativa: boolean;
   severidade_minima: number | null;
 }
+
+/** Um campo alterado: valor antes e depois da alteração aplicada. */
+export interface DiferencaAviso {
+  de: string | number | null;
+  para: string | number | null;
+}
+
+/** `AvisoResposta` em app/schemas/aviso.py. */
+export interface Aviso {
+  id: string;
+  projeto_codigo: string;
+  event_type: TipoEventoPortfolio;
+  entity_id: string;
+  versao: number;
+  diferencas: Record<string, DiferencaAviso>;
+  criado_em: string;
+  lido_em: string | null;
+}
+
+export interface ContagemAvisos {
+  nao_lidos: number;
+}

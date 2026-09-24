@@ -45,4 +45,10 @@ export const chaves = {
   // muda a lista de avisos, e invalidar os dois juntos seria refazer a
   // lista sem motivo.
   preferenciasAviso: ["avisos-preferencias"] as const,
+
+  // Marcar como lido invalida `avisos`, prefixo da lista e da contagem: a
+  // insignia do menu e a lista precisam concordar.
+  avisos: ["avisos"] as const,
+  listaAvisos: (naoLidos: boolean) => ["avisos", "lista", naoLidos] as const,
+  contagemAvisos: ["avisos", "contagem"] as const,
 };

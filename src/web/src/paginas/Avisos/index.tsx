@@ -6,6 +6,7 @@
  * e ativar um tipo nao gera aviso retroativo (Projeto.md 9.1.2.7.2).
  */
 
+import { ListaAvisos } from "@/componentes/avisos/ListaAvisos";
 import { PreferenciasAviso } from "@/componentes/avisos/PreferenciasAviso";
 
 export function Avisos() {
@@ -15,12 +16,24 @@ export function Avisos() {
         <div className="assistant-title">
           <span>
             <strong>Avisos do portfólio</strong>
-            <small>Escolha quais alterações dos seus projetos quer acompanhar</small>
+            <small>Acompanhe as alterações que escolheu nos seus projetos</small>
           </span>
         </div>
       </header>
 
-      <div className="mx-auto grid w-[min(1180px,calc(100%-48px))] gap-4 py-9">
+      <div className="mx-auto grid w-[min(1180px,calc(100%-48px))] gap-10 py-9">
+        <section aria-labelledby="avisos-titulo" className="grid gap-3">
+          <div>
+            <h2 id="avisos-titulo" className="text-lg font-semibold text-slate-900">
+              Avisos recebidos
+            </h2>
+            <p className="text-sm text-slate-600">
+              Só aparecem avisos dos projetos a que você tem acesso agora, retidos por 30 dias.
+            </p>
+          </div>
+          <ListaAvisos />
+        </section>
+
         <section aria-labelledby="preferencias-titulo" className="grid gap-3">
           <div>
             <h2 id="preferencias-titulo" className="text-lg font-semibold text-slate-900">
