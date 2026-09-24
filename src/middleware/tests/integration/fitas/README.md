@@ -96,6 +96,23 @@ Gatilhos de regravação, de §10.5.4.4: fechamento de sprint, antes de uma
 suíte não reproduziu. **O diff da fita é o alerta** — quando ele muda, a
 notícia é sobre o fornecedor, e vale mais que o teste ter passado.
 
+## Regravação por serviço
+
+### Content Safety
+
+Fitas em `content_safety/` cobrem as operações de análise de categorias de conteúdo.
+Para regravar:
+
+```powershell
+cd src\middleware
+$env:VHS_GRAVANDO = "1"
+python -m pytest tests/integration/externos/test_content_safety_real.py --record-mode=all
+Remove-Item Env:\VHS_GRAVANDO
+```
+
+**Nota:** Prompt Shields (injeção direta e indireta) requerem configuração adicional
+e ainda não foram gravados. As fitas atuais cobrem apenas a análise de categorias.
+
 ## Onde a fita não serve
 
 Áudio do Speech (WebSocket), timeout, 429/503 e expiração de token não
