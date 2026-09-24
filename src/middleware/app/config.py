@@ -198,6 +198,13 @@ class Settings(BaseSettings):
     speech_api_version: str = "2025-10-15"
     speech_timeout_seconds: float = 30.0
 
+    # --- Implantação ----------------------------------------------------
+    # Carrega o classificador e o e5-large na subida da API, numa thread,
+    # em vez de na primeira mensagem. Ligado pela imagem (Dockerfile) e
+    # desligado por padrão, para que os testes e o uvicorn local não
+    # carreguem ~2 GB de pesos a cada subida.
+    aquecer_modelos: bool = False
+
     # NOTA: o limiar de confiança da classificação de intenção NÃO fica
     # aqui. Ele é definido por intenção em pipeline/intencao/catalogo.py,
     # porque o custo de errar uma transação (altera dado) é diferente do

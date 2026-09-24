@@ -667,6 +667,8 @@ Registram-se aqui apenas os nomes e as finalidades. Nenhum valor real deve const
 | Barreiras de segurança | `CONTENT_SAFETY_ENDPOINT`, `CONTENT_SAFETY_KEY`, `CONTENT_SAFETY_LIMIAR_SEVERIDADE` | Serviço e limiar de severidade das guardas de conteúdo |
 | Busca vetorial | `VETORIAL_BACKEND`, `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_NAMESPACE` | Provedor e credenciais do índice vetorial da camada de recuperação |
 | Conversão de fala | `SPEECH_KEY`, `SPEECH_ENDPOINT`, `SPEECH_REGION`, `SPEECH_IDIOMA`, `SPEECH_API_VERSION`, `SPEECH_TIMEOUT_SECONDS` | Credencial, região, idioma e tempo limite do serviço de reconhecimento de fala |
+| Implantação | `AQUECER_MODELOS` | Carrega o classificador na subida da API; ligada na imagem do middleware |
+| Interface (nginx) | `API_UPSTREAM` | Destino do proxy `/api`; definida na imagem do web, fora do `.env.example` |
 
 Ao acrescentar uma variável, a pessoa responsável deve incluí-la no `.env.example` com valor vazio ou fictício e registrar o nome e a finalidade nesta tabela, na mesma alteração. Variável presente no código e ausente desta seção é divergência a ser corrigida na revisão do merge request.
 
