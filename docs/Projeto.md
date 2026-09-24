@@ -7525,19 +7525,25 @@ igualdade é verificada pelo caso `TU-WEB-02`, documentado em 9.5.3.
 
 ### 9.2.15 Como exercitar a entrada por voz
 
-O dublê de `GET /voz/token` devolve um token de demonstração, reconhecível por um
-prefixo próprio. Ao recebê-lo, o hook de microfone executa um percurso simulado,
-com transcrições parciais que crescem palavra a palavra e uma transcrição final
-ao término, reproduzindo a temporização do reconhecimento real.
+A entrada por voz usa o Azure AI Speech de verdade: o navegador pede um token de
+curta duração ao middleware (`GET /voz/token`, que exige sessão) e envia o áudio
+do microfone diretamente ao serviço de fala, com transcrições parciais enquanto
+a pessoa fala. A chave do recurso fica só no servidor. Não há percurso simulado.
 
-A consequência prática é que **a avaliação da entrada por voz não consome crédito
-do recurso Azure AI Speech**, cujo nível gratuito F0 possui limites descritos em
-5.7.4. Basta acionar o botão de microfone e observar o estado ativo, a
-transcrição parcial no campo e a entrega do texto final.
+Para exercitar o fluxo completo, a interface precisa falar com o middleware real,
+e o middleware precisa de `SPEECH_KEY` e `SPEECH_REGION` válidos (ou
+`SPEECH_ENDPOINT`, para recurso com domínio próprio). O nível gratuito F0 tem os
+limites descritos em 5.7.4. Com os dublês ativos, `GET /voz/token` responde `503`,
+como a rota real sem configuração, e a tela mostra que a entrada por voz está
+indisponível e que a mensagem deve ser digitada.
 
-A simulação desaparece por si quando o recurso estiver provisionado no ambiente
-do parceiro, porque um token real nunca apresenta aquele prefixo. Nenhuma
-remoção de código é necessária para a transição.
+O botão do microfone indica cada estado: vermelho enquanto grava, pulsando
+enquanto a última frase é transcrita e com contorno de alerta após uma falha.
+Permissão negada, ausência de microfone, conexão sem HTTPS, credencial recusada,
+falha de conexão e limite do serviço têm mensagens próprias. O token é renovado
+aos 80% da validade sem interromper a gravação; se a renovação falhar, a
+gravação para com aviso. Os testes da interface dublam o Speech SDK e o
+microfone (`microfone.test.tsx`).
 
 ### 9.2.16 Execução em contêiner
 
@@ -7568,7 +7574,7 @@ tratados na seção 11.
 | --- | --- | --- |
 | As respostas provêm da camada de dublês | O conteúdo apresentado é massa de teste, e não dado do portfólio | Depende da resolução de sessão no middleware |
 | O estado das rotinas é mantido em memória | Alterações se perdem ao recarregar a página | Comportamento esperado de dublê |
-| A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
+| A entrada por voz depende do recurso Azure AI Speech | Sem `SPEECH_KEY` válida no middleware, o microfone informa indisponibilidade e a mensagem é digitada | Depende do provisionamento do recurso no ambiente do parceiro |
 | A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
 
 A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
