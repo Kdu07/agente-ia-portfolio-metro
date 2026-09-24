@@ -9649,6 +9649,8 @@ O processo de criação seguiu as seguintes etapas:
    - Senha: prata123##
    - Nível de confiança da tarefa: 8 (em escala de 1-10)
 
+   ![Bem-vindo ao Prata Agent](./imagens/bemvindo-maze.png)
+
 3. **Configuração de permissões:** A tela de boas-vindas do Maze incluiu:
    - Texto explicativo: "Bem-vindo. Você foi convidado para participar de uma atividade de pesquisa. Não existem respostas certas ou erradas, apenas responda de uma maneira que pareça natural para você. Sua contribuição ajuda a criar melhores experiências."
    - Checkbox de consentimento: "Entendo que todos os dados pessoais exibidos na tela e os dados informados por mim poderão ser visualizados pelo criador do teste. Saiba mais sobre a privacidade de dados."
@@ -9661,6 +9663,9 @@ O processo de criação seguiu as seguintes etapas:
    - Wireframes ou referências visuais para orientação
 
 #### 10.3.12.3 Tarefas configuradas
+
+![Tarefas do Prata Agent](./imagens/maze.png)
+
 
 As tarefas foram configuradas da seguinte forma:
 
@@ -9685,6 +9690,8 @@ As tarefas foram configuradas da seguinte forma:
 - Tipo: Website Test
 - Dispositivo: Desktop
 - Referência visual: Wireframe da interface de rotinas
+
+![Tarefas do Prata Agent](./imagens/exemplomaze.png)
 
 **Tarefa 5: Crie uma nova conversa**
 - Descrição: "Inicie uma nova conversa com o agente para testar o contexto e a persistência do histórico."
