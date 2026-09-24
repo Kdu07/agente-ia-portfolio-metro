@@ -112,6 +112,10 @@ button { cursor: pointer; }
 .voice-button { color: #405269; background: #eef2f6; }
 .voice-button:hover { color: #0567b5; background: #e1f1ff; }
 .voice-button--active { color: white; background: #d63838; box-shadow: 0 0 0 4px #fbe3e3; }
+.voice-button--processing { color: #0567b5; background: #e1f1ff; animation: voice-pulse 1s ease-in-out infinite; }
+.voice-button--error { color: #9a1c1c; background: #fdecec; box-shadow: inset 0 0 0 1px #d63838; }
+@keyframes voice-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .voice-button--processing { animation: none; } }
 .send-button { color: white; background: var(--blue); font-size: 23px; }
 .send-button:disabled { color: var(--texto-desabilitado); background: #f0f2f5; cursor: default; }
 .disclaimer { flex: none; margin: 10px 0 0; color: var(--texto-suave); text-align: center; font-size: 11px; }
