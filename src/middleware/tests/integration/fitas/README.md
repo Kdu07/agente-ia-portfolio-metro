@@ -113,6 +113,27 @@ Remove-Item Env:\VHS_GRAVANDO
 **Nota:** Prompt Shields (injeção direta e indireta) requerem configuração adicional
 e ainda não foram gravados. As fitas atuais cobrem apenas a análise de categorias.
 
+### Direct Line
+
+Fitas em `directline/` cobrem as operações do Copilot Studio via Direct Line.
+
+**Status de implementação:** O cliente Direct Line ainda não está implementado
+(`app/copilot/client.py` levanta `NotImplementedError`). Os testes estão marcados
+com `@pytest.mark.skip` e serão ativados quando:
+
+1. O cliente Direct Line for implementado com chamadas reais à API
+2. O `DIRECTLINE_SECRET` estiver configurado no `.env`
+3. As credenciais do canal do Copilot Studio estiverem disponíveis
+
+Para gravar quando o cliente estiver implementado:
+
+```powershell
+cd src\middleware
+$env:VHS_GRAVANDO = "1"
+python -m pytest tests/integration/externos/test_directline_real.py --record-mode=all
+Remove-Item Env:\VHS_GRAVANDO
+```
+
 ## Onde a fita não serve
 
 Áudio do Speech (WebSocket), timeout, 429/503 e expiração de token não
