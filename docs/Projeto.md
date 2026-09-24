@@ -9029,6 +9029,29 @@ A fórmula de 3.3.1 é uma razão entre alterações com os três elementos e o 
 
 **Execução.** Os casos rodam com `pytest` e `pytest-asyncio` em `src/middleware/tests/rnf/test_rnf02_rastreabilidade.py`, contra o PostgreSQL 16 do contêiner de teste, com o esquema aplicado por Alembic. A cobertura é calculada por consulta agregada sobre a tabela de alterações, e não por inspeção caso a caso, para que o mesmo procedimento sirva quando o volume crescer.
 
+**Implementação e resultado da execução de 23/09/2026.** Os casos foram
+implementados em `tests/rnf/test_rnf02_07_auditoria.py`, junto do serviço de
+consulta em `app/persistence/auditoria.py`. A bancada cobre autoria (`usuario_id`),
+origem (`canal` e `rotina_id` quando aplicável), momento (`criada_em`), acesso
+por usuário, retenção de 30 dias e expurgo somente de registros anteriores ao
+corte. O comando contra o PostgreSQL 16 do Compose foi:
+
+```powershell
+cd src\middleware
+$env:RNF_DATABASE_URL = "postgresql+asyncpg://middleware:middleware@localhost:5432/middleware"
+python -m pytest tests\rnf\test_rnf02_07_auditoria.py -q
+```
+
+Resultado: **8 passed em 0,81s**. Os dados da bancada usam IDs únicos e filtro
+por usuário; o rollback ao final preserva o histórico já existente no banco
+compartilhado. O lint dos arquivos alterados também passou.
+
+O teste comprovou o controle de acesso e a mecânica de retenção/expurgo, mas
+`TNF-RNF07-01` não certifica cifra em repouso: o modelo atual persiste o prompt
+em texto e não há configuração de criptografia no repositório. Essa parte do
+RNF07 permanece uma limitação de infraestrutura a resolver, não foi declarada
+como aprovada pelo teste.
+
 #### 10.2.3.3 RNF03 — Precisão na classificação de intenções
 
 Esta subseção **documenta um procedimento já executado**. A bancada correspondente é a *feature* F21, implementada em `src/middleware/app/pipeline/intencao/avaliacao.py`, e os resultados estão em 5.4.11. O que segue descreve o instrumento e as condições de reprodução; os números são os daquela seção e não são repetidos aqui, com uma exceção deliberada — a acurácia de 0,856 contra a meta de 0,85 do RNF03 e do objetivo O5, que é o confronto direto que este requisito exige.
@@ -9206,12 +9229,12 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | Conjunto | Subseção | Positivos | Negativos | Instrumento | Situação do instrumento |
 |---|---|:-:|:-:|---|---|
 | RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
-| RNF02 | 10.2.3.2 | 1 | 3 | Consulta agregada sobre as alterações efetivadas no PostgreSQL de teste | Disponível |
+| RNF02 | 10.2.3.2 | 1 | 3 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Disponível e executado em PostgreSQL |
 | RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
 | RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Disponível e executado em janela local; medição implantada ainda pendente |
 | RNF05 | 10.2.3.5 | 2 | 2 | Conjunto de enunciados por perfil, com avaliação humana da adequação e verificação automatizada da exposição | A construir |
 | RNF06 | 10.2.3.6 | 3 | 3 | Conjunto adversarial em cinco vetores mais contraparte legítima, contra o Content Safety real | Parcial: bancada de calibração da guarda de abuso executada; conjunto sistêmico completo ainda a construir |
-| RNF07 | 10.2.3.7 | 2 | 2 | Inspeção do estado da base e execução dirigida do expurgo | A construir |
+| RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
 | Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência, com o executor dublado em latência sintética | A construir |
 | **Total** | — | **21** | **16** | — | — |
 
