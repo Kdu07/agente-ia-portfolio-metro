@@ -42,6 +42,7 @@ async def banco() -> AsyncSession:
                 tables=[
                     UsuarioTabela.__table__,
                     ConversaTabela.__table__,
+                    RotinaTabela.__table__,
                     InteracaoTabela.__table__,
                 ],
             )
