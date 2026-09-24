@@ -109,6 +109,7 @@
 - [6. Gestão de arquivos sensíveis](#6-gestão-de-arquivos-sensíveis)
 - [7. Política de rollback](#7-política-de-rollback)
 - [8. Registro de variáveis de ambiente](#8-registro-de-variáveis-de-ambiente)
+  - [8.1 Segredos na nuvem](#81-segredos-na-nuvem)
 - [Referências](#referências)
 
 ## 1. Introdução
@@ -631,6 +632,18 @@ Os arquivos que carregam essas informações passaram a existir durante a Sprint
 
 Uma credencial exposta acidentalmente não é resolvida apagando o arquivo em um commit seguinte, porque o valor permanece recuperável no histórico. O procedimento correto é revogar a credencial no serviço de origem, emitir uma nova e registrar o incidente, tratando o valor comprometido como perdido.
 
+**Segredos em nuvem.** Nos ambientes da Azure, os segredos não existem em arquivo nem na configuração dos serviços. Cada estágio, `dev` e `prd`, tem um Key Vault próprio (`kv-prata-<estágio>-g02t17`) com autorização por RBAC. Os Container Apps e o job de migração não recebem o valor: cada segredo é declarado como referência ao cofre e lido pela identidade gerenciada `id-prata-<estágio>`, que tem apenas o papel *Key Vault Secrets User*, de leitura. Quem provisiona recebe *Key Vault Secrets Officer* para gravar. A fase `segredos` do `infra/azure/provisionar.sh` copia os valores do `.env` local para o cofre sem exibi-los e lê as chaves do Content Safety e do Speech diretamente dos recursos na Azure. As senhas do banco são geradas pelo próprio script e existem apenas no cofre. A fase `conferir` verifica, sem alterar nada, que nenhum segredo aparece em texto claro na configuração dos serviços, que os segredos obrigatórios estão no cofre e que o middleware referencia todos eles. A correspondência entre variáveis e segredos está na seção 8.1.
+
+**Rede do banco de dados.** O servidor PostgreSQL gerenciado exige TLS 1.2 ou superior em toda conexão (`require_secure_transport` ligado) e aceita tráfego apenas pela regra de serviços da Azure. Essa regra admite conexões de qualquer recurso hospedado na Azure, inclusive de outros clientes, e é a única possível no desenho atual: os Container Apps no perfil Consumption não têm IP de saída fixo que possa ser liberado individualmente. Um IP fixo exigiria um NAT gateway, e isolar o banco em rede privada exigiria recriar o ambiente dentro de uma VNet com private endpoint. Os dois caminhos têm custo mensal incompatível com o teto de R$ 300 por ano do projeto. A exposição restante é compensada por cinco controles:
+
+- transporte cifrado obrigatório, recusado abaixo de TLS 1.2;
+- usuário de aplicação próprio de cada estágio, sem privilégio de administrador;
+- cada banco aceita conexão apenas do usuário do seu estágio, com o `CONNECT` revogado do `PUBLIC`, porque os dois estágios dividem o mesmo servidor;
+- senhas geradas aleatoriamente e guardadas apenas no cofre;
+- acesso temporário da máquina de quem provisiona removido pela fase `fechar`, com a fase `conferir` acusando qualquer regra além da de serviços da Azure.
+
+A rede privada é a evolução prevista para um ambiente de produção com orçamento próprio.
+
 ## 7. Política de rollback
 
 O projeto passou a possuir versões executáveis e imagens de contêiner, o que permite estabelecer o procedimento antes previsto como pendente. O princípio permanece o mesmo: o histórico compartilhado não é reescrito, e o retorno a um estado anterior ocorre por avanço, e não por apagamento.
@@ -664,13 +677,47 @@ Registram-se aqui apenas os nomes e as finalidades. Nenhum valor real deve const
 | Identidade | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, `ENTRA_REDIRECT_URI` | Parâmetros do fluxo de autenticação corporativa |
 | Perfis e permissões | `ENTRA_GRUPO_DIRETORIA`, `ENTRA_GRUPO_LIDER_PROJETO`, `ENTRA_GRUPO_MEMBRO_EQUIPE`, `ENTRA_GRUPO_VER_INTENCOES`, `ENTRA_GRUPO_GERIR_ROTINAS` | Identificadores dos grupos que determinam perfil e permissões do usuário |
 | Sessão | `SESSION_SECRET`, `SESSION_MAX_AGE_SECONDS`, `SESSION_COOKIE_SECURE` | Assinatura, validade e política de transporte do cookie de sessão |
-| Barreiras de segurança | `CONTENT_SAFETY_ENDPOINT`, `CONTENT_SAFETY_KEY`, `CONTENT_SAFETY_LIMIAR_SEVERIDADE` | Serviço e limiar de severidade das guardas de conteúdo |
+| Barreiras de segurança | `CONTENT_SAFETY_ENDPOINT`, `CONTENT_SAFETY_KEY`, `CONTENT_SAFETY_LIMIAR_SEVERIDADE`, `SAIDA_DOMINIOS_PERMITIDOS` | Serviço e limiar de severidade das guardas de conteúdo, e domínios que a resposta pode citar em link; fora deles, a guarda de saída trata a URL como possível exfiltração |
+| Conversa | `HISTORICO_MAX_TURNOS` | Quantos turnos anteriores entram no prompt; zero desliga o histórico sem desligar a persistência |
+| Executor | `EXECUTOR` | Caminho que responde ao chat: `copilot`, o Copilot Studio via Direct Line, ou `proprio`, o RAG sobre o corpus |
 | Busca vetorial | `VETORIAL_BACKEND`, `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_NAMESPACE` | Provedor e credenciais do índice vetorial da camada de recuperação |
+| Recuperação e ingestão | `RAG_TOP_K`, `RAG_SCORE_MINIMO`, `CHUNK_TOKENS`, `CHUNK_OVERLAP`, `DRIVE_SERVICE_ACCOUNT_JSON`, `DRIVE_PASTA_ID` | Quantidade e corte de similaridade dos trechos recuperados, tamanho e sobreposição dos trechos na ingestão, e caminho da chave da conta de serviço e pasta do Drive lidas pela ingestão |
+| Geração | `LLM_BACKEND`, `GEMINI_API_KEY`, `GEMINI_MODELO`, `GEMINI_TIMEOUT_SECONDS`, `OPENROUTER_API_KEY`, `OPENROUTER_MODELO`, `OPENROUTER_TIMEOUT_SECONDS` | Provedor, credencial, modelo e tempo limite do modelo de geração do executor próprio |
 | Conversão de fala | `SPEECH_KEY`, `SPEECH_ENDPOINT`, `SPEECH_REGION`, `SPEECH_IDIOMA`, `SPEECH_API_VERSION`, `SPEECH_TIMEOUT_SECONDS` | Credencial, região, idioma e tempo limite do serviço de reconhecimento de fala |
-| Implantação | `AQUECER_MODELOS` | Carrega o classificador na subida da API; ligada na imagem do middleware |
+| Rotinas | `ROTINAS_RECONCILIACAO_SEGUNDOS` | Intervalo em que o worker relê a tabela de rotinas, para que uma edição chegue ao agendador sem reiniciá-lo |
+| Mensageria | `RABBITMQ_URL`, `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_VHOST`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_LETTER_EXCHANGE`, `RABBITMQ_PREFETCH_COUNT`, `RABBITMQ_MAX_RETRIES` | Conexão com o RabbitMQ, pela URL completa ou pelas partes, e exchanges, prefetch e retentativas dos eventos |
+| Webhooks | `WEBHOOK_PORTFOLIO_CHAVES_ARQUIVO`, `WEBHOOK_MANUTENCAO_SEGUNDOS`, `DRIVE_WEBHOOK_URL`, `DRIVE_WEBHOOK_FONTE`, `DRIVE_WEBHOOK_VALIDADE_HORAS` | Caminho do cadastro de chaves HMAC do portfólio, URL pública, fonte e validade do canal do Drive, e intervalo da manutenção dos canais |
+| Testes de desempenho | `PERFORMANCE_MODE`, `PERFORMANCE_EXECUTOR_DELAY_MS`, `PERFORMANCE_EXECUTOR_TIMEOUT_MS` | Troca o executor por um sintético de atraso controlado nos testes de carga; desligado fora deles |
+| Implantação | `AQUECER_MODELOS`, `BASE_DIR` | Carrega o classificador na subida da API, ligada na imagem do middleware, e define o diretório onde os áudios recebidos esperam a transcrição |
 | Interface (nginx) | `API_UPSTREAM` | Destino do proxy `/api`; definida na imagem do web, fora do `.env.example` |
 
 Ao acrescentar uma variável, a pessoa responsável deve incluí-la no `.env.example` com valor vazio ou fictício e registrar o nome e a finalidade nesta tabela, na mesma alteração. Variável presente no código e ausente desta seção é divergência a ser corrigida na revisão do merge request.
+
+### 8.1 Segredos na nuvem
+
+Nos ambientes da Azure, as variáveis sigilosas chegam aos contêineres como referência ao Key Vault do estágio, e nunca como valor, conforme a seção 6. As demais variáveis da tabela anterior não são sigilosas e são definidas diretamente na configuração do Container App.
+
+| Variável | Segredo no cofre | Consumidor |
+|---|---|---|
+| `DATABASE_URL` | `database-url` | Middleware e job de migração |
+| `SESSION_SECRET` | `session-secret` | Middleware |
+| `ENTRA_CLIENT_SECRET` | `entra-client-secret` | Middleware |
+| `SPEECH_KEY` | `speech-key` | Middleware |
+| `PINECONE_API_KEY` | `pinecone-api-key` | Middleware |
+| `OPENROUTER_API_KEY` | `openrouter-api-key` | Middleware |
+| `CONTENT_SAFETY_KEY` | `content-safety-key` | Middleware |
+| `GEMINI_API_KEY` | `gemini-api-key` | Middleware, com `LLM_BACKEND=gemini` |
+| `DIRECTLINE_SECRET` | `directline-secret` | Middleware, com `EXECUTOR=copilot` |
+
+A fase `segredos` grava no cofre apenas o que está preenchido no `.env` de quem provisiona. O segredo ausente fica de fora do cofre e do contêiner. Há três exceções, que não vêm do `.env`. O `SESSION_SECRET` é gerado pelo próprio script. O `CONTENT_SAFETY_KEY` e o `SPEECH_KEY` são lidos dos recursos `cs-prata-g02t17` e `speech-prata-g02t17`, criados pela fase `cognitivos` no nível gratuito, na região `brazilsouth` e no mesmo tenant dos demais recursos, e compartilhados pelos dois estágios. O `CONTENT_SAFETY_ENDPOINT`, que não é sigiloso, também vem do recurso. O worker de rotinas, quando existe, recebe os mesmos segredos do middleware, e o frontend não recebe nenhum.
+
+Para a máquina de quem desenvolve usar os mesmos recursos, a fase `local` grava no `src/middleware/.env` o endpoint e a chave do Content Safety e a chave e a região do Speech, sem exibi-los. Ela exige acesso à assinatura. Quem não tem acesso recebe as chaves de quem administra os recursos, por canal privado e nunca pelo repositório.
+
+Três grupos de variáveis sigilosas da seção 8 não têm segredo no cofre, porque o componente que as usa não roda na nuvem. O `RABBITMQ_PASSWORD` e o `RABBITMQ_URL` pertencem ao RabbitMQ, que existe apenas no Compose. O `DRIVE_SERVICE_ACCOUNT_JSON` e o `WEBHOOK_PORTFOLIO_CHAVES_ARQUIVO` apontam para arquivos de chave usados pela ingestão e pelos webhooks locais. Quando um desses componentes for implantado, o segredo correspondente entra nesta tabela e no cofre na mesma alteração.
+
+Dois segredos existem apenas no cofre, sem variável correspondente. O `db-senha` é a senha do usuário de aplicação do estágio, embutida na `database-url`. O `pg-admin-senha` é a senha do administrador do servidor PostgreSQL e fica só no cofre do `dev`, que é quem cria o servidor compartilhado pelos dois estágios.
+
+A conferência de que nenhum segredo está em texto claro é feita pela fase `conferir` do `infra/azure/provisionar.sh`, que lista apenas nomes.
 
 ## Referências
 

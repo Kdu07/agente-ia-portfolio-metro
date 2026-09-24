@@ -4,9 +4,10 @@
 # Carregado pelos outros scripts desta pasta:
 #   source infra/azure/variaveis.sh dev
 #
-# Os dois estágios (dev e prd) dividem o grupo, o registro, os logs e o
-# servidor PostgreSQL; cada um tem ambiente, identidade, cofre e banco
-# próprios. Ver docs/Projeto.md, capítulo 11.
+# Os dois estágios (dev e prd) dividem o grupo, o registro, os logs, o
+# servidor PostgreSQL, o Container Apps Environment, o Content Safety e o
+# Speech; cada um tem identidade, cofre, banco e apps próprios. Ver
+# docs/Projeto.md, capítulo 11.
 
 ESTAGIO="${1:-dev}"
 case "$ESTAGIO" in
@@ -41,9 +42,17 @@ PG=psql-prata-$SUF
 PG_ADMIN=pgadmin
 # A senha do administrador mora no cofre do dev, que é quem cria o servidor.
 KV_DEV=kv-prata-dev-$SUF
+# A assinatura FreeTrial admite um único Container Apps Environment por
+# região (MaxNumberOfRegionalEnvironmentsInSubExceeded), e o do dev já
+# existia com este nome: o prd entra nele.
+CAE=cae-prata-dev
+# A assinatura admite um único recurso gratuito (F0) de cada tipo: os dois
+# estágios usam o mesmo Content Safety e o mesmo Speech. O nome vira o
+# subdomínio do endpoint e precisa ser único em toda a Azure.
+CS=cs-prata-$SUF
+SPEECH=speech-prata-$SUF
 
 # Próprios do estágio.
-CAE=cae-prata-$ESTAGIO
 ID=id-prata-$ESTAGIO
 KV=kv-prata-$ESTAGIO-$SUF
 DB=prata_$ESTAGIO
