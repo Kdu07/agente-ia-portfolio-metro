@@ -13,6 +13,9 @@ várias réplicas, e duas renovando o mesmo canal criariam canais demais.
   inscrito e ativado **antes** de o antigo ser encerrado; durante a
   transição os dois autenticam. O cursor salvo da fonte é preservado.
 
+- **Avisos.** Avisos do portfólio com mais de 30 dias são expurgados
+  (#447), independentemente da retenção dos recebimentos.
+
 Cada ciclo registra a falha e segue: um broker fora do ar não pode
 derrubar o worker, que também executa as rotinas.
 """
@@ -24,6 +27,8 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.avisos.modelos import RETENCAO_AVISOS
+from app.avisos.repositorio import AvisoRepository
 from app.mensageria.produtor import FalhaPublicacao, ProdutorEventos
 from app.webhooks.drive.inscricao import InscricaoDrive
 from app.webhooks.drive.recebimento import publicar_recebimento
@@ -91,6 +96,16 @@ async def renovar_canais(
     return renovados
 
 
+async def expurgar_avisos(
+    fabrica: async_sessionmaker[AsyncSession], *, relogio: Callable[[], datetime] = _agora
+) -> int:
+    """Remove avisos fora da retenção de 30 dias; devolve quantos."""
+    async with fabrica() as sessao:
+        removidos = await AvisoRepository(sessao).expurgar(antes_de=relogio() - RETENCAO_AVISOS)
+        await sessao.commit()
+    return removidos
+
+
 async def executar_manutencao(
     encerramento: asyncio.Event,
     *,
@@ -116,6 +131,7 @@ async def executar_manutencao(
             await republicar_pendentes(sessoes, produtor)
             if drive is not None:
                 await renovar_canais(drive, sessoes)
+            await expurgar_avisos(sessoes)
         except Exception:
             logger.exception("Ciclo de manutenção dos webhooks falhou")
         try:
