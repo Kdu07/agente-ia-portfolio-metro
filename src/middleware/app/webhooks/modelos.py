@@ -30,6 +30,14 @@ class EstadoCanal(Enum):
     ENCERRADO = "encerrado"
 
 
+class TipoEventoPortfolio(Enum):
+    """Eventos que o emissor do WH-02 pode enviar (seção 9.1.2.7.2)."""
+
+    PROJETO_STATUS = "projeto.status_alterado"
+    MARCO = "marco.alterado"
+    RISCO = "risco.alterado"
+
+
 class EstadoSincronizacao(Enum):
     """Estado operacional da reconciliação de uma fonte documental."""
 
@@ -71,3 +79,24 @@ class Recebimento:
     processado_em: datetime | None
     tentativas: int
     erro_codigo: str | None
+    # Hash dos bytes exatos do corpo, só no WH-02: distingue a repetição
+    # idêntica (204) de outro corpo com o mesmo `event_id` (409).
+    corpo_sha256: bytes | None = None
+
+
+@dataclass(frozen=True)
+class FontePortfolio:
+    """Cadastro de um emissor do WH-02 e do que ele pode alterar.
+
+    Autenticar a assinatura prova quem enviou; este cadastro decide o que
+    esse emissor está autorizado a alterar. Fora dele, a resposta é 403.
+    """
+
+    source_id: str
+    planilha_id: str
+    projetos: frozenset[str]
+    tipos: frozenset[TipoEventoPortfolio]
+    ativa: bool
+
+    def autoriza(self, projeto_codigo: str, tipo: TipoEventoPortfolio) -> bool:
+        return self.ativa and projeto_codigo in self.projetos and tipo in self.tipos
