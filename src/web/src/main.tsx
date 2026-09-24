@@ -5,13 +5,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { Rotas } from "@/rotas";
 import { iniciarDubles } from "@/mocks/navegador";
+import { ErroApi } from "@/servicos/api";
 import "@/estilos/global.css";
 
-// retry: 1 e nao o padrao 3. Um 403 ou 422 nao melhora com repeticao, e
-// o usuario espera tres vezes mais para ver o mesmo erro.
+// Uma nova tentativa automatica, e so para falha de rede ou servidor fora
+// do ar. Um 403 ou 422 nao melhora com repeticao, e um tempo limite
+// esgotado repetido dobraria a espera antes de a tela mostrar o erro.
 const cliente = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false },
+    queries: {
+      retry: (tentativas, erro) =>
+        tentativas < 1 && erro instanceof ErroApi && erro.repetivel && erro.tipo !== "tempo",
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
   },
 });
 
