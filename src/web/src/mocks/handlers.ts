@@ -22,7 +22,6 @@ import type {
   Desfecho,
   Execucao,
   Rotina,
-  TokenVoz,
   ValidacaoRotina,
 } from "@/tipos";
 import { USUARIO } from "./dados/usuario";
@@ -275,14 +274,15 @@ export const handlers = [
     return HttpResponse.json(LATENCIA);
   }),
 
-  // Voz
-  http.get(`${BASE}/voz/token`, () => {
-    const corpo: TokenVoz = {
-      token: "token-de-demonstracao-nao-funcional",
-      regiao: "brazilsouth",
-      expira_em_segundos: 540,
-      idioma: "pt-BR",
-    };
-    return HttpResponse.json(corpo);
-  }),
+  // Voz: sem recurso do Azure por tras do duble, a resposta honesta e a
+  // mesma da rota real sem SPEECH_KEY. Um token falso levaria o SDK a
+  // tentar o Azure e falhar la, e uma transcricao fabricada demonstraria
+  // uma funcionalidade que nao existe. Os testes do microfone trocam este
+  // handler por um token e dublam o SDK.
+  http.get(`${BASE}/voz/token`, () =>
+    HttpResponse.json(
+      { detail: "Entrada por voz indisponível no momento. Digite a mensagem." },
+      { status: 503 },
+    ),
+  ),
 ];
