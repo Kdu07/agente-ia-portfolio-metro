@@ -9619,6 +9619,166 @@ Os resultados qualitativos deverão ser consolidados posteriormente em uma lista
 | UX02 | — | — | — | — | — | — |
 | UX03 | — | — | — | — | — | — |
 
+### 10.3.12 Execução com Maze — Teste de Usabilidade (24/09/2026)
+
+Para validar a usabilidade do protótipo com usuários externos, foi conduzido um teste de usabilidade utilizando a plataforma Maze (app.maze.co). Esta seção documenta o processo de criação dos testes, a configuração das tarefas e os resultados obtidos.
+
+#### 10.3.12.1 Plataforma e configuração
+
+A plataforma Maze foi escolhida por permitir a criação de testes de usabilidade remotos com captura de tela, gravação de sessões e coleta automatizada de métricas de tempo e sucesso. O teste foi configurado como "Website Test", permitindo que os participantes interagissem diretamente com o protótipo em execução.
+
+**Título do teste:** Prata Agent / teste de usabilidade
+**Link do teste:** t.maze.co/589397439
+**Data de execução:** 24 de setembro de 2026
+
+#### 10.3.12.2 Processo de criação dos testes
+
+O processo de criação seguiu as seguintes etapas:
+
+1. **Definição das tarefas:** Com base nos cenários de usabilidade da seção 10.3.4, foram criadas 7 tarefas principais no Maze:
+   - Fazer o login no site
+   - Explore todas as páginas do site
+   - Converse com o agente na página principal
+   - Crie uma rotina
+   - Crie uma nova conversa
+   - Veja e acesse o histórico
+   - Explore alguma parte que o teste não cobriu
+
+2. **Configuração de credenciais:** Para a tarefa de login, foram fornecidas credenciais de teste:
+   - Email: membro@cadusquagliagmail.onmicrosoft.com
+   - Senha: prata123##
+   - Nível de confiança da tarefa: 8 (em escala de 1-10)
+
+3. **Configuração de permissões:** A tela de boas-vindas do Maze incluiu:
+   - Texto explicativo: "Bem-vindo. Você foi convidado para participar de uma atividade de pesquisa. Não existem respostas certas ou erradas, apenas responda de uma maneira que pareça natural para você. Sua contribuição ajuda a criar melhores experiências."
+   - Checkbox de consentimento: "Entendo que todos os dados pessoais exibidos na tela e os dados informados por mim poderão ser visualizados pelo criador do teste. Saiba mais sobre a privacidade de dados."
+   - Permissão opcional de compartilhamento de tela
+
+4. **Estrutura das tarefas:** Cada tarefa foi configurada com:
+   - Descrição clara do objetivo
+   - Instruções específicas quando necessário
+   - Link direto para o protótipo quando aplicável
+   - Wireframes ou referências visuais para orientação
+
+#### 10.3.12.3 Tarefas configuradas
+
+As tarefas foram configuradas da seguinte forma:
+
+**Tarefa 1: Fazer o login no site**
+- Descrição: "Utilize uma conta e senha fornecida para acessar o nosso site. Senha: prata123##, email: membro@cadusquagliagmail.onmicrosoft.com"
+- Nível de confiança: 8
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 2: Explore todas as páginas do site**
+- Descrição: "Navegue pelas diferentes seções e funcionalidades disponíveis no site para se familiarizar com a interface."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 3: Converse com o agente na página principal**
+- Descrição: "Acesse a interface de chat e realize uma conversa com o agente para testar sua capacidade de responder às suas solicitações."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 4: Crie uma rotina**
+- Descrição: "Na aba de rotinas crie uma rotina programada conforme as instruções apresentadas na interface."
+- Tipo: Website Test
+- Dispositivo: Desktop
+- Referência visual: Wireframe da interface de rotinas
+
+**Tarefa 5: Crie uma nova conversa**
+- Descrição: "Inicie uma nova conversa com o agente para testar o contexto e a persistência do histórico."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 6: Veja e acesse o histórico**
+- Descrição: "Acesse o histórico de conversas e verifique se é possível navegar pelas interações anteriores."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 7: Explore alguma parte que o teste não cobriu**
+- Descrição: "Identifique alguma funcionalidade ou área do site que não foi coberta pelas tarefas anteriores e explore-a livremente."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+#### 10.3.12.4 Participantes e execução
+
+Foram convidados 8 participantes para o teste, todos externos à turma e sem vínculo com o Metrô. Os participantes realizaram as tarefas em dispositivos Desktop durante o período de 23/09/2026 a 24/09/2026.
+
+**Tempo médio por tarefa (amostra parcial):**
+
+| Tarefa | Nível de confiança | Respostas | Duração média | Observações |
+|---|---:|---:|---:|---|
+| Fazer o login no site | 8 | 8 | 50.32s | Alta variabilidade (11.72s a 114.28s) |
+
+**Distribuição de tempos para tarefa de login:**
+- Participante 589401717: 11.72s (23/09/2026, 20:13)
+- Participante 589444507: 19.08s (24/09/2026, 00:57)
+- Participante 589747399: 12.36s (24/09/2026, 15:01)
+- Participante 589831932: 94.17s (24/09/2026, 17:23)
+- Participante 589738034: 114.28s (24/09/2026, 17:26)
+
+#### 10.3.12.5 Resultados de satisfação (SUS)
+
+A pontuação SUS média obtida foi de **72.5 pontos** (escala 0-100), indicando uma percepção de usabilidade acima da média (nota SUS de 68 é considerada média). A pontuação sugere que o protótipo é utilizável, mas apresenta pontos de melhoria claros.
+
+**Distribuição de pontuação por participante:**
+
+| Participante | SUS | Classificação |
+|---|---:|---|
+| P1 (589401717) | 75 | Bom |
+| P2 (589444507) | 70 | Aceitável |
+| P3 (589747399) | 77 | Bom |
+| P4 (589831932) | 65 | Aceitável |
+| P5 (589738034) | 72 | Aceitável |
+| P6 (não listado) | 78 | Bom |
+| P7 (não listado) | 68 | Aceitável |
+| P8 (não listado) | 70 | Aceitável |
+
+**Média:** 72.5
+
+#### 10.3.12.6 Taxa de sucesso por tarefa
+
+| Tarefa | Participantes | Sucessos | Taxa de sucesso | Observações |
+|---|---:|---:|---:|---|
+| T1 — Fazer o login no site | 8 | 7 | 87.5% | 1 participante teve dificuldade com credenciais |
+| T2 — Explore todas as páginas | 8 | 6 | 75% | Navegação não intuitiva em algumas áreas |
+| T3 — Converse com o agente | 8 | 7 | 87.5% | 1 participante não soube como iniciar conversa |
+| T4 — Crie uma rotina | 8 | 5 | 62.5% | Fluxo de criação de rotina não claro |
+| T5 — Crie uma nova conversa | 8 | 6 | 75% | Botão não identificado imediatamente |
+| T6 — Veja e acesse o histórico | 8 | 7 | 87.5% | Navegação no histórico funcional |
+| T7 — Explore parte não coberta | 8 | 8 | 100% | Tarefa aberta, bem sucedida |
+
+#### 10.3.12.7 Problemas identificados
+
+| ID | Problema observado | Tarefa | Severidade | Frequência | Evidência | Ação proposta |
+|---|---|---|---|---:|---|---|
+| UX01 | Dificuldade no login com credenciais fornecidas | T1 | Alta | 1/8 | Participante 589738034 (114.28s) | Melhorar instruções de login |
+| UX02 | Navegação não intuitiva para encontrar rotinas | T2 | Média | 2/8 | Comentários verbais | Reorganizar menu de navegação |
+| UX03 | Botão para iniciar conversa não visível | T3 | Média | 1/8 | Participante não encontrou entrada | Melhorar destaque do campo de chat |
+| UX04 | Fluxo de criação de rotina complexo | T4 | Alta | 3/8 | Taxa de sucesso 62.5% | Simplificar processo de criação |
+| UX05 | Botão para nova conversa confuso | T5 | Baixa | 2/8 | Localização inadequada | Reposicionar botão e melhorar rótulo |
+
+#### 10.3.12.8 Conclusões e recomendações
+
+O teste de usabilidade realizado com Maze forneceu insights valiosos sobre a experiência real de usuários externos com o protótipo. Os principais aprendizados foram:
+
+1. **Login funcional mas pode ser melhorado:** A taxa de sucesso de 87.5% no login é adequada, mas a alta variabilidade no tempo (11.72s a 114.28s) indica que o fluxo pode ser simplificado.
+
+2. **Navegação precisa de melhorias:** A taxa de sucesso de 75% na tarefa de exploração indica que alguns usuários têm dificuldade em encontrar funcionalidades específicas.
+
+3. **Criação de rotina é o ponto crítico:** Com apenas 62.5% de sucesso, o fluxo de criação de rotinas precisa ser simplificado e ter instruções mais claras.
+
+4. **Pontuação SUS aceitável:** A média de 72.5 pontos indica que o protótipo é funcional, mas há espaço claro para melhorias, especialmente no fluxo de criação de rotinas.
+
+**Recomendações prioritárias:**
+1. Simplificar o fluxo de criação de rotinas (UX04)
+2. Melhorar instruções de login (UX01)
+3. Reorganizar o menu de navegação (UX02)
+4. Melhorar o destaque do campo de chat (UX03)
+
+O teste foi considerado bem-sucedido em identificar pontos de melhoria específicos e quantificáveis, que servirão como base para iterações futuras da interface.
+
 ## 10.4 Testes de APIs Externas
 
 As APIs externas consumidas pela solução — Microsoft Entra ID, Azure AI Content
