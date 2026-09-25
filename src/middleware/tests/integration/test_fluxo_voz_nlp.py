@@ -7,16 +7,19 @@ from app.api.routes import voz
 from app.config import settings
 from app.copilot.client import RespostaCopilot
 from app.main import app
-from app.persistence.models import Canal, Conversa
+from app.persistence.models import Canal, Conversa, EstadoTranscricao
 from app.pipeline import orquestrador as orq
 from app.pipeline.guardas.abuso.classificador import ResultadoAbuso
 from app.pipeline.guardas.injecao.classificador import ResultadoInjection
 from app.pipeline.guardas.saida import ResultadoSaida
 from app.pipeline.intencao.classificador import ResultadoIntencao
 from app.pipeline.orquestrador import Orquestrador
+from app.schemas.chat import ChatRequest
 from app.schemas.usuario import Perfil, UsuarioAutenticado
 from app.servicos.audio_service import AudioService
+from app.voz.midia import MidiaAudio
 from app.voz.transcricao import ResultadoTranscricao
+from tests.apoio_audio import BancoFalso, RepositorioAudioMemoria
 
 USUARIO = UsuarioAutenticado(
     id="u-voz-nlp",
@@ -104,7 +107,11 @@ def test_texto_transcrito_percorre_pipeline_como_canal_de_voz(tmp_path, monkeypa
 
     monkeypatch.setattr(settings, "base_dir", tmp_path)
     monkeypatch.setattr(voz, "audio_service", AudioService())
-    monkeypatch.setattr(voz, "transcrever_arquivo", transcrever)
+    monkeypatch.setattr(
+        voz,
+        "inspecionar_audio",
+        lambda _caminho: MidiaAudio(duracao_segundos=1.4),
+    )
     monkeypatch.setattr(orq.injecao_regras, "contem_padrao_suspeito", lambda texto: False)
     monkeypatch.setattr(orq.injecao_classificador, "classificar", sem_injecao)
     monkeypatch.setattr(orq.abuso_classificador, "classificar", sem_abuso)
@@ -114,12 +121,41 @@ def test_texto_transcrito_percorre_pipeline_como_canal_de_voz(tmp_path, monkeypa
 
     copilot = CopilotFalso()
     repositorio = RepositorioMemoria()
+    audios = RepositorioAudioMemoria()
+
+    class ProcessadorCompleto:
+        async def processar(self, audio_id, caminho, idioma, usuario, conversa_id) -> None:
+            resultado = await transcrever(caminho, idioma=idioma)
+            resposta = await Orquestrador(
+                executor=copilot,
+                interacoes=repositorio,
+                conversas=repositorio,
+            ).processar(
+                ChatRequest(
+                    mensagem=resultado.texto,
+                    conversa_id=conversa_id,
+                    canal=Canal.VOZ,
+                ),
+                usuario,
+                canal=Canal.VOZ,
+            )
+            await audios.atualizar(
+                audio_id,
+                estado=EstadoTranscricao.CONCLUIDA,
+                texto=resultado.texto,
+                idioma=resultado.idioma,
+                confianca=resultado.confianca,
+                duracao_segundos=resultado.duracao_segundos,
+                latencia_ms=resultado.latencia_ms,
+                conversa_id=resposta.conversa_id,
+                interacao_id=resposta.interacao_id,
+            )
+            caminho.unlink(missing_ok=True)
+
     app.dependency_overrides[deps.obter_usuario_atual] = lambda: USUARIO
-    app.dependency_overrides[deps.obter_orquestrador] = lambda: Orquestrador(
-        executor=copilot,
-        interacoes=repositorio,
-        conversas=repositorio,
-    )
+    app.dependency_overrides[deps.obter_sessao] = lambda: BancoFalso()
+    app.dependency_overrides[deps.obter_audios] = lambda: audios
+    app.dependency_overrides[deps.obter_processador_audio] = lambda: ProcessadorCompleto()
 
     try:
         with TestClient(app) as cliente:
@@ -129,22 +165,14 @@ def test_texto_transcrito_percorre_pipeline_como_canal_de_voz(tmp_path, monkeypa
                 data={"idioma": "pt-BR"},
             )
             transcricao = cliente.get(upload.json()["consultar_em"])
-            resposta = cliente.post(
-                "/chat",
-                json={
-                    "mensagem": transcricao.json()["texto"],
-                    "canal": "voz",
-                },
-            )
     finally:
         app.dependency_overrides.clear()
 
     assert upload.status_code == 202
     assert transcricao.status_code == 200
     assert transcricao.json()["estado"] == "concluida"
-    assert resposta.status_code == 200
-    assert resposta.json()["intencao_id"] == "consultar_status_projeto"
-    assert resposta.json()["resposta"] == "O Projeto Verde está com 60% de avanço."
+    assert transcricao.json()["interacao_id"] == repositorio.interacoes[0].id
+    assert transcricao.json()["conversa_id"] == repositorio.interacoes[0].conversa_id
     assert textos_classificados == [texto_transcrito]
     assert copilot.recebidas == [texto_transcrito]
     assert len(repositorio.interacoes) == 1

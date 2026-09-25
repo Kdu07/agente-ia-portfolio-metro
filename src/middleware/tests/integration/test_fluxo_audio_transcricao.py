@@ -9,7 +9,9 @@ from app.config import settings
 from app.main import app
 from app.schemas.usuario import Perfil, UsuarioAutenticado
 from app.servicos.audio_service import AudioService
+from app.voz.midia import MidiaAudio
 from app.voz.transcricao import ErroTranscricao, ResultadoTranscricao
+from tests.apoio_audio import BancoFalso, ProcessadorAudioFalso, RepositorioAudioMemoria
 
 USUARIO = UsuarioAutenticado(
     id="u-audio",
@@ -21,8 +23,17 @@ USUARIO = UsuarioAutenticado(
 def _cliente_isolado(tmp_path, monkeypatch, transcrever):
     monkeypatch.setattr(settings, "base_dir", tmp_path)
     monkeypatch.setattr(voz, "audio_service", AudioService())
-    monkeypatch.setattr(voz, "transcrever_arquivo", transcrever)
+    monkeypatch.setattr(
+        voz,
+        "inspecionar_audio",
+        lambda _caminho: MidiaAudio(duracao_segundos=1.25),
+    )
+    repositorio = RepositorioAudioMemoria()
+    processador = ProcessadorAudioFalso(repositorio, transcrever)
     app.dependency_overrides[deps.obter_usuario_atual] = lambda: USUARIO
+    app.dependency_overrides[deps.obter_sessao] = lambda: BancoFalso()
+    app.dependency_overrides[deps.obter_audios] = lambda: repositorio
+    app.dependency_overrides[deps.obter_processador_audio] = lambda: processador
     return TestClient(app)
 
 
@@ -68,6 +79,8 @@ def test_fluxo_completo_do_upload_ate_transcricao(
         "duracao_segundos": 1.25,
         "latencia_ms": 180,
         "mensagem_erro": None,
+        "conversa_id": None,
+        "interacao_id": None,
     }
     assert chamadas[0][1] == "pt-BR"
     assert chamadas[0][0].suffix == "." + nome.rsplit(".", 1)[1]
