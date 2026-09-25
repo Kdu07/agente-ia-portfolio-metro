@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { CONVERSAS } from "@/mocks/dados/conversas";
 import { Principal } from "@/paginas/Principal";
 import { Rotinas } from "@/paginas/Rotinas";
 import { Historico } from "@/paginas/Historico";
@@ -59,12 +61,12 @@ describe("Página principal", () => {
   it("dispensa a notificação de pendência ao pedir detalhes", async () => {
     renderizar(<Principal />);
 
-    expect(screen.getByRole("dialog", { name: "Notificação do assistente" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Alerta de marco" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Ver detalhes" }));
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("dialog", { name: "Notificação do assistente" }),
+        screen.queryByRole("region", { name: "Alerta de marco" }),
       ).not.toBeInTheDocument(),
     );
     expect(screen.getByText(/Entrega da Fase 2.*está atrasado/)).toBeInTheDocument();
@@ -89,27 +91,23 @@ describe("Página principal", () => {
     expect(campo).toHaveValue("");
   });
 
-  it("indica quando a entrada por voz está ativa e leva a transcrição ao campo", async () => {
+  it("informa quando o token de voz não pode ser obtido", async () => {
+    servidor.use(
+      http.get("/api/voz/token", () =>
+        HttpResponse.json({ codigo: "SPEECH_INDISPONIVEL" }, { status: 503 }),
+      ),
+    );
     renderizar(<Principal />);
-    const campo = screen.getByRole("textbox", { name: "Mensagem" });
 
     fireEvent.click(screen.getByRole("button", { name: "Iniciar entrada por voz" }));
 
-    // O token do duble aciona o percurso simulado, com parciais e
-    // transcricao final, sem depender de microfone nem do Azure.
     expect(
-      await screen.findByRole("button", { name: "Parar entrada por voz" }, { timeout: 3000 }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(campo).toHaveAttribute("placeholder", "Ouvindo... fale agora");
-    expect(campo).toHaveAttribute("readonly");
-
-    await waitFor(
-      () => expect(campo).toHaveValue("Qual o status do Projeto X e quais marcos estão atrasados?"),
-      { timeout: 6000 },
-    );
-    expect(
-      await screen.findByRole("button", { name: "Iniciar entrada por voz" }, { timeout: 3000 }),
+      await screen.findByText("Não foi possível iniciar a entrada por voz. Tente novamente."),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Iniciar entrada por voz" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 });
 
@@ -136,7 +134,7 @@ describe("Página de rotinas", () => {
     renderizar(<Rotinas />);
     await screen.findByText("Riscos da Linha 6");
 
-    fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nova rotina" }));
     expect(screen.getByRole("combobox", { name: /Repetir/ })).toHaveValue("dias_uteis");
     expect(screen.getByLabelText(/Horário/)).toHaveValue("08:00");
     expect(screen.getByRole("combobox", { name: /Fuso/ })).toHaveValue("America/Sao_Paulo");
@@ -148,7 +146,7 @@ describe("Página de rotinas", () => {
     fireEvent.change(screen.getByPlaceholderText("Descreva o que o Prata deve consultar ou acompanhar"), { target: { value: "Listar pendências críticas dos projetos ativos." } });
     fireEvent.click(screen.getByRole("button", { name: "Criar rotina" }));
 
-    expect(await screen.findByRole("status", {}, { timeout: 3000 })).toHaveTextContent("Rotina criada com sucesso.");
+    expect(await screen.findByText("Rotina criada com sucesso.", {}, { timeout: 3000 })).toBeInTheDocument();
     expect(await screen.findByText("Pendências diárias")).toBeInTheDocument();
     expect(agendaRecebida).toBe("0 8 * * mon-fri");
   });
@@ -156,7 +154,7 @@ describe("Página de rotinas", () => {
   it("mostra apenas o complemento necessário para agendas semanais e mensais", async () => {
     renderizar(<Rotinas />);
     await screen.findByText("Riscos da Linha 6");
-    fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nova rotina" }));
 
     fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "semanal" } });
     expect(screen.getByRole("combobox", { name: /Dia da semana/ })).toBeInTheDocument();
@@ -185,7 +183,7 @@ describe("Página de rotinas", () => {
     );
     renderizar(<Rotinas />);
     await screen.findByText("Riscos da Linha 6");
-    fireEvent.click(screen.getByRole("button", { name: "+ Nova rotina" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nova rotina" }));
     fireEvent.change(screen.getByRole("combobox", { name: /Repetir/ }), { target: { value: "dias_personalizados" } });
     fireEvent.change(screen.getByPlaceholderText("Ex.: Resumo semanal do portfólio"), { target: { value: "Acompanhamento alternado" } });
     fireEvent.change(screen.getByPlaceholderText("Descreva o que o Prata deve consultar ou acompanhar"), { target: { value: "Listar riscos críticos dos projetos ativos." } });
@@ -236,7 +234,42 @@ describe("Página de rotinas", () => {
 
     expect(await screen.findByText(/Resumo consolidado de 12 projetos ativos/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Executar agora" }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Rotina executada");
+    expect(await screen.findByText(/Rotina executada/)).toBeInTheDocument();
+  });
+
+  it("fecha o formulário com Esc e devolve o foco ao botão que o abriu", async () => {
+    const usuario = userEvent.setup();
+    renderizar(<Rotinas />);
+    await screen.findByText("Revisão mensal de marcos");
+
+    const botao = screen.getByRole("button", { name: "Nova rotina" });
+    await usuario.click(botao);
+    expect(screen.getByRole("dialog", { name: "Criar rotina" })).toBeInTheDocument();
+
+    await usuario.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Criar rotina" })).not.toBeInTheDocument());
+    expect(botao).toHaveFocus();
+  });
+
+  it("mostra a intenção prevista pelo rótulo, e não pelo identificador", async () => {
+    renderizar(<Rotinas />);
+
+    // "Riscos da Linha 6" e editada e excluida num caso anterior, sobre o
+    // duble compartilhado; a revisao mensal nenhum caso altera.
+    expect(await screen.findByText("Consultar marcos atrasados")).toBeInTheDocument();
+    expect(screen.queryByText("consultar_marcos_atrasados")).not.toBeInTheDocument();
+  });
+
+  it("apresenta o status e o desfecho das execuções em frase", async () => {
+    renderizar(<Rotinas />);
+    const cartao = (await screen.findByText("Resumo semanal do portfólio")).closest("article");
+    fireEvent.click(within(cartao!).getByRole("button", { name: "Resultados" }));
+
+    const dialogo = await screen.findByRole("dialog", { name: "Resumo semanal do portfólio" });
+    expect(await within(dialogo).findByText("Concluída")).toBeInTheDocument();
+    expect(within(dialogo).getByText("Falhou")).toBeInTheDocument();
+    expect(within(dialogo).getByText("Indisponível")).toBeInTheDocument();
+    expect(within(dialogo).queryByText(/falha_executor|Desfecho:|SUCESSO|FALHA/)).not.toBeInTheDocument();
   });
 
   it("distingue falha de carregamento de uma lista vazia", async () => {
@@ -278,9 +311,45 @@ describe("Página de histórico", () => {
     expect(screen.queryByText("Nenhuma conversa registrada")).not.toBeInTheDocument();
   });
 
+  it("filtra as conversas pelo título", async () => {
+    renderizar(<Historico />);
+    await screen.findByRole("link", { name: /Status do Projeto X/ });
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Buscar conversas" }), { target: { value: "linha" } });
+
+    expect(screen.getByRole("link", { name: /Riscos da Linha 6/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Status do Projeto X/ })).not.toBeInTheDocument();
+  });
+
+  it("arquiva a conversa depois de confirmar", async () => {
+    // Lista propria do caso: arquivar nao pode sumir com a conversa dos
+    // casos seguintes, que usam o duble compartilhado.
+    let lista = [...CONVERSAS];
+    servidor.use(
+      http.get("/api/conversas", () => HttpResponse.json(lista)),
+      http.delete("/api/conversas/:id", ({ params }) => {
+        lista = lista.filter((conversa) => conversa.id !== params.id);
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    renderizar(<Historico />);
+    await screen.findByRole("link", { name: /Status do Projeto X/ });
+
+    fireEvent.click(screen.getByRole("button", { name: "Arquivar Status do Projeto X" }));
+    const confirmacao = screen.getByRole("alertdialog", { name: "Arquivar conversa?" });
+    expect(confirmacao).toHaveTextContent("O registro das interações continua guardado.");
+    fireEvent.click(within(confirmacao).getByRole("button", { name: "Arquivar" }));
+
+    await waitFor(() => expect(screen.queryByRole("link", { name: /Status do Projeto X/ })).not.toBeInTheDocument());
+    expect(await screen.findByText("Conversa arquivada.")).toBeInTheDocument();
+  });
+
   it("abre a conversa selecionada na rota correspondente", async () => {
     renderizar(<Rotas />, "/historico");
-    const conversa = await screen.findByRole("link", { name: /Status do Projeto X/ });
+    // A mesma conversa aparece tambem nas Recentes da barra lateral; o
+    // caso e sobre a lista do Historico.
+    const lista = await screen.findByRole("list", { name: "Conversas anteriores" });
+    const conversa = within(lista).getByRole("link", { name: /Status do Projeto X/ });
 
     expect(conversa).toHaveAttribute("href", "/conversas/projeto-x");
     fireEvent.click(conversa);

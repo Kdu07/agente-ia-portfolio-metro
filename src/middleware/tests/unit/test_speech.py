@@ -2,11 +2,13 @@
 
 from types import SimpleNamespace
 
+import httpx
 import pytest
 
 from app.voz.speech import (
     ErroConfiguracaoSpeech,
     ErroReconhecimentoSpeech,
+    emitir_token,
     reconhecer_arquivo_wav,
 )
 
@@ -97,3 +99,26 @@ def test_informa_quando_nenhuma_fala_e_reconhecida(tmp_path) -> None:
             regiao="brazilsouth",
             _speechsdk=sdk,
         )
+
+
+@pytest.mark.asyncio
+async def test_emite_token_sem_expor_chave(monkeypatch) -> None:
+    requisicao = None
+
+    def responder(request: httpx.Request) -> httpx.Response:
+        nonlocal requisicao
+        requisicao = request
+        return httpx.Response(200, text="token-efemero")
+
+    transporte = httpx.MockTransport(responder)
+    async with httpx.AsyncClient(transport=transporte) as cliente:
+        monkeypatch.setattr("app.voz.speech.settings.speech_key", "segredo")
+        monkeypatch.setattr("app.voz.speech.settings.speech_region", "brazilsouth")
+        monkeypatch.setattr("app.voz.speech.settings.speech_endpoint", "")
+        resultado = await emitir_token(cliente=cliente)
+
+    assert resultado.token == "token-efemero"
+    assert resultado.regiao == "brazilsouth"
+    assert requisicao is not None
+    assert requisicao.headers["Ocp-Apim-Subscription-Key"] == "segredo"
+    assert "segredo" not in resultado.token

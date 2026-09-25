@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.analytics.metricas import rotulo_de_intencao
 from app.api.deps import UsuarioAtual, exige_permissao, obter_execucoes, obter_rotinas
 from app.auth.entra import FalhaConsultaDiretorio, UsuarioEntraInativo
 from app.persistence.models import ExecucaoRotina, Interacao, Rotina
@@ -245,6 +246,9 @@ def _resposta_rotina(rotina: Rotina) -> RotinaResposta:
         timezone=rotina.timezone,
         ativa=rotina.ativa,
         intencao_prevista=rotina.intencao_prevista,
+        intencao_prevista_rotulo=(
+            rotulo_de_intencao(rotina.intencao_prevista) if rotina.intencao_prevista else None
+        ),
         proximo_disparo=proximo,
         criada_em=rotina.criada_em,
         atualizada_em=rotina.atualizada_em,

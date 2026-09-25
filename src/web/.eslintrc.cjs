@@ -28,5 +28,33 @@ module.exports = {
   rules: {
     "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+    // Um modulo so de icones, com nome pelo papel: import direto do pacote
+    // traria de volta o desenho escolhido em cada tela. Vale tambem para os
+    // componentes do shadcn, porque o indice do pacote pesa 6 MB no
+    // servidor de desenvolvimento (ver icones.ts).
+    "no-restricted-imports": [
+      "error",
+      {
+        paths: [
+          { name: "@phosphor-icons/react", message: "Importe de @/componentes/ui/icones." },
+        ],
+        patterns: [
+          { group: ["@phosphor-icons/react/*"], message: "Importe de @/componentes/ui/icones." },
+        ],
+      },
+    ],
   },
+  overrides: [
+    {
+      // `icones.ts` e justamente quem reexporta o pacote.
+      files: ["src/componentes/ui/icones.ts"],
+      rules: { "no-restricted-imports": "off" },
+    },
+    {
+      // Os componentes do shadcn (nomes minusculos) exportam variantes e
+      // hooks junto com os componentes, como o CLI os escreve.
+      files: ["src/componentes/ui/[a-z]*.tsx"],
+      rules: { "react-refresh/only-export-components": "off" },
+    },
+  ],
 };

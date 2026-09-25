@@ -1,133 +1,69 @@
 /**
- * Moldura da aplicacao: barra lateral, navegacao e identidade da sessao.
+ * Moldura da aplicacao: barra lateral e area das paginas.
  *
  * Renderiza `Outlet` em vez de `children` porque e rota-pai em
  * `rotas.tsx`. Isso permite que a tela de entrada exista fora da moldura.
  *
- * O item de Intencoes so aparece para quem tem `ver_intencoes`, e o de
- * Rotinas para quem tem `gerir_rotinas`. Esconder o item e conveniencia:
- * quem digitar a rota na barra de endereco chega na `RotaProtegida`, e
- * quem chamar a API direto encontra a verificacao do servidor.
+ * A barra lateral mora em `componentes/moldura/`. Aqui fica so o estado
+ * aberto ou recolhido no desktop, guardado no `localStorage` para que a
+ * escolha sobreviva a recarga. No celular a barra abre e fecha por conta
+ * propria, como um painel sobreposto.
  */
 
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { Outlet, useLocation } from "react-router-dom";
+import { m } from "motion/react";
 
-import { useUsuario } from "@/hooks/useUsuario";
-import { useConversas } from "@/hooks/useConversas";
-import { CHAVE_CONVERSA_ATIVA } from "@/hooks/useConversa";
-import { api } from "@/servicos/api";
-import { quandoFoi } from "@/utilitarios/formato";
+import { BarraLateral } from "@/componentes/moldura/BarraLateral";
+import { TROCA_DE_TELA } from "@/componentes/movimento/transicoes";
+import { SidebarProvider } from "@/componentes/ui/sidebar";
 
-const LIMITE_CONVERSAS_RECENTES = 3;
+const CHAVE_BARRA = "prata:barra-lateral";
 
-type NomeIcone = "menu" | "chat" | "rotinas" | "historico" | "intencoes" | "plus" | "login";
-
-function Icone({ nome }: { nome: NomeIcone }) {
-  const caminhos: Record<NomeIcone, JSX.Element> = {
-    menu: <path d="M4 7h16M4 12h16M4 17h16" />,
-    chat: <path d="M20 11.5a7.5 7.5 0 0 1-8 7.48 8.6 8.6 0 0 1-3.5-.92L4 20l1.42-4A7.5 7.5 0 1 1 20 11.5Z" />,
-    rotinas: <><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /><path d="m9 14 2 2 4-4" /></>,
-    historico: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
-    intencoes: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
-    plus: <path d="M12 5v14M5 12h14" />,
-    login: <><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" /></>,
-  };
-  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{caminhos[nome]}</svg>;
+function lerBarraAberta(): boolean {
+  try {
+    return localStorage.getItem(CHAVE_BARRA) !== "recolhida";
+  } catch {
+    return true;
+  }
 }
 
 export function Layout() {
-  const [aberto, setAberto] = useState(false);
-  const { usuario } = useUsuario();
-  const { conversas, carregando: carregandoConversas, erro: erroConversas } = useConversas();
-  const navegar = useNavigate();
-  const consultas = useQueryClient();
+  const [aberta, setAberta] = useState(lerBarraAberta);
+  const localizacao = useLocation();
 
-  const fechar = () => setAberto(false);
-
-  // O servidor invalida a sessao; aqui so falta esquecer o que o cache
-  // sabia do usuario, senao a moldura continuaria mostrando o nome dele.
-  async function sair() {
-    await api.post("/auth/logout");
-    sessionStorage.removeItem(CHAVE_CONVERSA_ATIVA);
-    consultas.clear();
-    navegar("/entrar", { replace: true });
+  function alternar(valor: boolean) {
+    setAberta(valor);
+    try {
+      localStorage.setItem(CHAVE_BARRA, valor ? "aberta" : "recolhida");
+    } catch {
+      // Sem armazenamento, a escolha vale ate recarregar.
+    }
   }
-  const podeVerIntencoes = usuario?.permissoes.includes("ver_intencoes") ?? false;
-  const podeGerirRotinas = usuario?.permissoes.includes("gerir_rotinas") ?? false;
+
+  // A tela nova entra com um deslize curto. A chave e o caminho, e nao a
+  // `location.key`: trocar a chave a cada navegacao remontaria a conversa
+  // e perderia a fila otimista de `useConversa` no meio de um envio. Uma
+  // conversa nova pedida pelo botao ganha chave propria, como em rotas.tsx.
+  //
+  // So ha entrada, sem animacao de saida: a tela que sai continuaria
+  // desenhada com a localizacao nova durante a saida, e a conversa que
+  // estava aberta seria remontada por um instante antes de sumir.
+  const chave = localizacao.pathname + (localizacao.state?.novaConversa ? `#${localizacao.key}` : "");
 
   return (
-    <div className="app-shell">
-      <aside className={aberto ? "sidebar sidebar--open" : "sidebar"}>
-        <div className="brand-row">
-          <button className="icon-button mobile-only" aria-label="Fechar menu" onClick={fechar}><Icone nome="menu" /></button>
-          <img className="brand-logo" src="/logo-prata.png" alt="Prata Agent" />
-        </div>
-
-        <NavLink
-          className="new-chat"
-          to="/"
-          state={{ novaConversa: true }}
-          onClick={() => {
-            sessionStorage.removeItem(CHAVE_CONVERSA_ATIVA);
-            fechar();
-          }}
+    <SidebarProvider open={aberta} onOpenChange={alternar} className="h-svh min-h-0 overflow-hidden">
+      <BarraLateral />
+      <div className="relative flex h-svh min-w-0 flex-1 flex-col overflow-hidden bg-background">
+        <m.div
+          key={chave}
+          initial={TROCA_DE_TELA.initial}
+          animate={TROCA_DE_TELA.animate}
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <Icone nome="plus" /> Nova conversa
-        </NavLink>
-
-        <p className="nav-label">Navegação</p>
-        <nav aria-label="Navegação principal" className="nav-list">
-          <NavLink to="/" end onClick={fechar}><Icone nome="chat" /><span>Página principal</span></NavLink>
-          <NavLink to="/historico" onClick={fechar}><Icone nome="historico" /><span>Histórico</span></NavLink>
-          {podeVerIntencoes ? (
-            <NavLink to="/intencoes" onClick={fechar}><Icone nome="intencoes" /><span>Intenções</span></NavLink>
-          ) : null}
-          {podeGerirRotinas ? (
-            <NavLink to="/rotinas" onClick={fechar}><Icone nome="rotinas" /><span>Rotinas</span></NavLink>
-          ) : null}
-        </nav>
-
-        <section className="history-section" aria-labelledby="historico-titulo">
-          <div className="history-heading">
-            <p className="nav-label" id="historico-titulo">Recentes</p>
-            <NavLink className="text-button" to="/historico" onClick={fechar}>ver todas</NavLink>
-          </div>
-          {carregandoConversas ? (
-            <p className="history-status" role="status">Carregando conversas...</p>
-          ) : erroConversas ? (
-            <p className="history-status" role="alert">{erroConversas}</p>
-          ) : conversas.length === 0 ? (
-            <p className="history-status">Nenhuma conversa recente</p>
-          ) : (
-            conversas.slice(0, LIMITE_CONVERSAS_RECENTES).map((conversa) => (
-              <NavLink key={conversa.id} to={`/conversas/${conversa.id}`} onClick={fechar}>
-                <span className="history-icon">↺</span>
-                <span>
-                  <strong>{conversa.titulo ?? "Conversa sem título"}</strong>
-                  <small>{quandoFoi(conversa.atualizada_em)}</small>
-                </span>
-              </NavLink>
-            ))
-          )}
-        </section>
-
-        <div className="sidebar-spacer" />
-
-        {usuario ? (
-          <div className="profile-card"><span className="avatar">{usuario.nome.slice(0, 2).toUpperCase()}</span><span><strong>{usuario.nome}</strong><small>{usuario.email ?? usuario.perfil}</small></span><button type="button" className="text-button" onClick={sair}>Sair</button></div>
-        ) : (
-          <NavLink className="microsoft-login" to="/entrar" onClick={fechar}><span className="ms-grid"><i /><i /><i /><i /></span><span><strong>Entrar com Microsoft</strong><small>Acessar com conta corporativa</small></span><Icone nome="login" /></NavLink>
-        )}
-      </aside>
-
-      {aberto ? <button className="sidebar-backdrop" aria-label="Fechar menu" onClick={fechar} /> : null}
-
-      <section className="app-content">
-        <button className="floating-menu mobile-only" aria-label="Abrir menu" onClick={() => setAberto(true)}><Icone nome="menu" /></button>
-        <Outlet />
-      </section>
-    </div>
+          <Outlet />
+        </m.div>
+      </div>
+    </SidebarProvider>
   );
 }

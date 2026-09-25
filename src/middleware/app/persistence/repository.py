@@ -29,9 +29,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.persistence.models import (
     Conversa,
+    EstadoTranscricao,
     ExecucaoRotina,
     Interacao,
     Rotina,
+    TranscricaoAudio,
     Usuario,
 )
 from app.persistence.tabelas import (
@@ -39,6 +41,7 @@ from app.persistence.tabelas import (
     ExecucaoRotinaTabela,
     InteracaoTabela,
     RotinaTabela,
+    TranscricaoAudioTabela,
     UsuarioTabela,
 )
 
@@ -268,6 +271,58 @@ class InteracaoRepository(_RepositorioBase):
             .limit(limite)
         )
         return [linha.to_dominio() for linha in resultado.scalars()]
+
+
+class AudioRepository(_RepositorioBase):
+    """Persistencia e controle de propriedade das submissoes de voz."""
+
+    async def criar(self, audio: TranscricaoAudio) -> None:
+        self._sessao.add(TranscricaoAudioTabela.de_dominio(audio))
+        await self._sessao.flush()
+
+    async def obter(self, audio_id: str, usuario_id: str) -> TranscricaoAudio | None:
+        """Busca somente audio vigente pertencente ao usuario autenticado."""
+        resultado = await self._sessao.execute(
+            select(TranscricaoAudioTabela).where(
+                TranscricaoAudioTabela.id == audio_id,
+                TranscricaoAudioTabela.usuario_id == usuario_id,
+                TranscricaoAudioTabela.expira_em > datetime.now(UTC),
+            )
+        )
+        linha = resultado.scalar_one_or_none()
+        return linha.to_dominio() if linha else None
+
+    async def atualizar(
+        self,
+        audio_id: str,
+        *,
+        estado: EstadoTranscricao,
+        conversa_id: str | None = None,
+        interacao_id: str | None = None,
+        texto: str | None = None,
+        idioma: str | None = None,
+        confianca: float | None = None,
+        duracao_segundos: float | None = None,
+        latencia_ms: int | None = None,
+        mensagem_erro: str | None = None,
+    ) -> None:
+        valores = {
+            "estado": estado.value,
+            "conversa_id": conversa_id,
+            "interacao_id": interacao_id,
+            "texto": texto,
+            "idioma": idioma,
+            "confianca": confianca,
+            "latencia_ms": latencia_ms,
+            "mensagem_erro": mensagem_erro,
+        }
+        if duracao_segundos is not None:
+            valores["duracao_segundos"] = duracao_segundos
+        await self._sessao.execute(
+            update(TranscricaoAudioTabela)
+            .where(TranscricaoAudioTabela.id == audio_id)
+            .values(**valores)
+        )
 
 
 class RotinaRepository(_RepositorioBase):

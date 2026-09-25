@@ -52,10 +52,12 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from app.persistence.models import (
     Canal,
     Conversa,
+    EstadoTranscricao,
     ExecucaoRotina,
     Interacao,
     Rotina,
     StatusExecucao,
+    TranscricaoAudio,
     Usuario,
 )
 from app.pipeline.desfechos import Desfecho
@@ -433,6 +435,86 @@ class InteracaoTabela(Base):
             criada_em=self.criada_em,
             rotina_id=self.rotina_id,
             latencia_etapas=self.latencia_etapas,
+        )
+
+
+class TranscricaoAudioTabela(Base):
+    """Estado duravel do audio, separado do arquivo temporario."""
+
+    __tablename__ = "transcricao_audio"
+
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    usuario_id: Mapped[str] = mapped_column(
+        Text,
+        ForeignKey("usuario.id", onupdate="CASCADE", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    estado: Mapped[str] = mapped_column(Text, nullable=False)
+    formato: Mapped[str] = mapped_column(Text, nullable=False)
+    duracao_segundos: Mapped[float] = mapped_column(Float, nullable=False)
+    criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    conversa_id: Mapped[str | None] = mapped_column(
+        Text,
+        ForeignKey("conversa.id", onupdate="CASCADE", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    interacao_id: Mapped[str | None] = mapped_column(
+        Text,
+        ForeignKey("interacao.id", onupdate="CASCADE", ondelete="RESTRICT"),
+        nullable=True,
+        unique=True,
+    )
+    texto: Mapped[str | None] = mapped_column(Text, nullable=True)
+    idioma: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confianca: Mapped[float | None] = mapped_column(Float, nullable=True)
+    latencia_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    mensagem_erro: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            f"estado IN ({_valores(EstadoTranscricao)})",
+            name="estado",
+        ),
+        Index("ix_transcricao_audio_usuario_criada", "usuario_id", text("criada_em DESC")),
+        Index("ix_transcricao_audio_expira_em", "expira_em"),
+    )
+
+    @classmethod
+    def de_dominio(cls, audio: TranscricaoAudio) -> "TranscricaoAudioTabela":
+        return cls(
+            id=audio.id,
+            usuario_id=audio.usuario_id,
+            estado=audio.estado.value,
+            formato=audio.formato,
+            duracao_segundos=audio.duracao_segundos,
+            criada_em=audio.criada_em,
+            expira_em=audio.expira_em,
+            conversa_id=audio.conversa_id,
+            interacao_id=audio.interacao_id,
+            texto=audio.texto,
+            idioma=audio.idioma,
+            confianca=audio.confianca,
+            latencia_ms=audio.latencia_ms,
+            mensagem_erro=audio.mensagem_erro,
+        )
+
+    def to_dominio(self) -> TranscricaoAudio:
+        return TranscricaoAudio(
+            id=self.id,
+            usuario_id=self.usuario_id,
+            estado=EstadoTranscricao(self.estado),
+            formato=self.formato,
+            duracao_segundos=self.duracao_segundos,
+            criada_em=self.criada_em,
+            expira_em=self.expira_em,
+            conversa_id=self.conversa_id,
+            interacao_id=self.interacao_id,
+            texto=self.texto,
+            idioma=self.idioma,
+            confianca=self.confianca,
+            latencia_ms=self.latencia_ms,
+            mensagem_erro=self.mensagem_erro,
         )
 
 

@@ -2499,7 +2499,7 @@ C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio —
 
 ### 5.2.3 Diagrama atual da Sprint 2
 
-Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o Copilot é o executor previsto. O diagrama inclui componentes planejados: emissão de token de voz, parte das guardas, cliente Copilot e execução de rotinas ainda possuem etapas não implementadas; não representam funcionalidades integralmente entregues na S3.
+Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o executor é escolhido por configuração. Em relação ao estado da S3, a emissão de token de voz, as três guardas, o cliente do executor e a execução de rotinas receberam implementação nas ondas seguintes; o estado verificável de cada integração é registrado nas respectivas seções, sem transformar o diagrama em evidência de deploy.
 
 O diagrama adota três agrupamentos principais. O `src/web` concentra a
 experiência do usuário; o `src/middleware` recebe as requisições e aplica o
@@ -4679,9 +4679,9 @@ Quanto às metas registradas ao final da seção 3.1.5, a definição do serviç
 
 ### 5.7.3 API de recebimento de áudios do usuário
 
-> **Estado da implementação na S3.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. Sem autenticação, a resposta é 401; sem o campo obrigatório, o FastAPI retorna 422. As subseções seguintes especificam o contrato-alvo: duração e seu limite, expiração efetiva, idempotência e catálogo padronizado de erros ainda não estão integralmente implementados. WebM é identificado pela assinatura EBML e pelo campo `DocType=webm`, com inspeção limitada aos primeiros 4 KiB; isso não valida a presença de trilha de áudio, os codecs ou a decodificação. A consulta também ainda não verifica a propriedade do áudio pelo usuário — pendência de proteção de acesso antes de uso com dados reais.
+> **Estado vigente após a correção #450.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. Ausência do arquivo responde 400 no envelope `codigo`, `mensagem` e `detalhe`. Depois dos magic bytes, o `ffprobe` confirma decodificação, presença exclusiva de trilha de áudio e duração; arquivos acima de 300 segundos são recusados antes do Azure Speech. A idempotência por cabeçalho continua prevista, mas ainda não implementada.
 
-> A transcrição REST é executada em segundo plano e mantida em memória no processo. Seu texto precisa ser enviado posteriormente a `/chat` com `canal=voz`; não há encaminhamento automático ao NLP no upload. O microfone da interface usa outro trajeto, dependente de `/voz/token`, ainda não implementado. Esses limites não alteram a decisão tecnológica nem antecipam a integração final da S5.
+> A submissão e seus estados agora vivem em `transcricao_audio`, vinculados ao proprietário. A consulta filtra `id_audio`, `usuario_id` e expiração na própria consulta SQL, devolvendo o mesmo 404 para identificador alheio, vencido ou inexistente. Depois do STT, `ProcessadorAudio` envia automaticamente o texto ao mesmo `Orquestrador` de `/chat` com `canal=voz`; a interação e o vínculo com a submissão são confirmados na mesma transação. O trajeto contínuo do navegador recebe token efêmero real por `GET /voz/token`, sem expor `SPEECH_KEY`.
 
 Esta subseção especifica o contrato da API que recebe os áudios enviados pelo usuário — o trajeto de ingestão adotado em 5.7.1.3 como caminho canônico do canal de voz. É o contrato entre a interface de voz e o pipeline de PLN: o que a interface pode enviar, o que o servidor garante devolver e o que acontece quando algo dá errado.
 
@@ -4697,7 +4697,7 @@ Os caminhos declarados abaixo são os da aplicação. O navegador os alcança so
 
 **A submissão aceita não é a transcrição concluída.** São dois estados, com códigos de resposta distintos. Confundi-los obrigaria o cliente a distinguir pelo corpo da resposta se a operação terminou, e tornaria impossível representar o intervalo em que o áudio já é responsabilidade do servidor mas ainda não produziu texto — exatamente o intervalo em que a interface precisa exibir progresso.
 
-**O registro da interação independe do trajeto.** Conforme fixado em 5.7.1.3, tanto a ingestão quanto o modo de transmissão contínua gravam uma única interação, com o canal marcado como voz. Esta API não cria um segundo registro: ela produz o texto que, submetido ao endpoint de conversação, origina a interação. O que a ingestão acrescenta ao registro é a existência do áudio de origem durante o intervalo previsto na política de retenção de 5.7.1.5.
+**O registro da interação independe do trajeto.** Conforme fixado em 5.7.1.3, tanto a ingestão quanto o modo de transmissão contínua gravam uma única interação, com o canal marcado como voz. Na ingestão, o processamento em segundo plano chama diretamente o orquestrador e grava o `interacao_id` na submissão; o cliente não repete o texto em `/chat`. No modo contínuo, o SDK entrega o texto ao mesmo envio usado pelo campo digitado. Os dois caminhos convergem antes das guardas e do classificador.
 
 #### 5.7.3.2 Endpoints
 
@@ -4836,13 +4836,11 @@ Decorrido o prazo devolvido em `expira_em`, o resultado deixa de estar disponív
 
 #### 5.7.3.5 Encaminhamento ao pipeline de conversação
 
-Esta API **não aciona o pipeline**. Ela produz texto; o texto é submetido ao endpoint de conversação pelo cliente, como qualquer outra mensagem, com o canal marcado como voz.
+Após concluir a transcrição, o processamento assíncrono encaminha automaticamente o texto ao mesmo `Orquestrador` utilizado pelo endpoint de conversação, com o canal marcado como voz. Portanto, áudio e texto percorrem a mesma ordem de guardas, classificação de intenção, execução e registro da interação. Os identificadores `conversa_id` e `interacao_id` ficam associados ao registro persistente da transcrição e são devolvidos na consulta do resultado.
 
-A escolha preserva um invariante da arquitetura descrita em 5.2: o orquestrador é o único ponto de entrada do pipeline, e é essa unicidade que garante que as guardas, a classificação e o registro sejam obrigatórios para toda solicitação. Uma API de áudio que chamasse o pipeline por conta própria criaria um segundo caminho de entrada — e um segundo caminho é, por construção, um caminho que alguém pode esquecer de proteger quando o primeiro mudar.
+Essa integração mantém o orquestrador como ponto único da lógica do pipeline: a rota de áudio não replica classificação nem execução, apenas entrega o texto transcrito ao serviço existente. Assim, mudanças nas guardas ou nas regras de intenção continuam valendo para os dois canais.
 
-Há uma consequência de interface que decorre disso, e que atende ao risco R03. Entre a transcrição e o envio existe um momento em que o texto está visível e ainda não foi processado. A interface apresenta a transcrição no campo de mensagem antes do envio, de modo que a pessoa veja o que foi entendido e possa corrigir. Uma sigla transcrita errada deixa de se propagar como intenção mal classificada, que é precisamente o encadeamento que o R03 descreve. Para as intenções que alteram dados, soma-se a esta verificação a confirmação já exigida pelo RF05, resultando em duas oportunidades de interceptar um erro de transcrição antes que ele produza efeito.
-
-O texto encaminhado é indistinguível, para o pipeline, de um texto digitado. É o que sustenta a afirmação de 5.3.2 de que a classificação é a mesma para os dois canais, e o que permite que a medição de degradação ponta a ponta de 3.1.5.2 compare os dois caminhos sobre o mesmo classificador.
+O principal risco restante é semântico: uma transcrição plausível, porém incorreta, pode seguir normalmente para a classificação sem produzir exceção. Por isso, ações com efeito de escrita continuam sujeitas à confirmação prevista no RF05, e os testes ponta a ponta devem incluir vocabulário real do Metrô e casos como números de linhas, siglas e nomes de projetos.
 
 #### 5.7.3.6 Formatos, limites e sua justificativa
 
@@ -6582,7 +6580,7 @@ python -m pytest -m integracao
 
 **Situação:** contratos definidos na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini, e implementados em #388 (autenticidade), #390 (WH-01), #389 (WH-02), #394 (consumo) e #447/#448 (preferências e avisos). O contrato documental está em 9.1.2.7.1 e o de eventos estruturados em 9.1.2.7.2; as rotas implementadas, os payloads observados em teste e as limitações conhecidas estão em 9.1.2.7.3.
 
-O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint e descreveu a interação de voz desejada: gravar, concluir a gravação, obter a transcrição, revisar ou editar o texto e só então enviá-lo ao agente. Não há emissor de callback de áudio definido pela equipe.
+O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint. O navegador mantém a interação revisável: conclui a fala, coloca o texto no campo e só o envia quando a pessoa confirma. A ingestão assíncrona de arquivo, por sua vez, é um contrato servidor-servidor e encaminha o texto ao pipeline depois da validação e do STT. Nenhum dos dois trajetos possui emissor de callback de áudio; portanto, ele não foi escolhido como webhook do grupo.
 
 A recomendação técnica é preservar essa revisão explícita do texto e concentrar os webhooks na atualização das fontes do portfólio. Um webhook é uma chamada entre sistemas, sem implicar notificação visual ao usuário, mas a interação de microfone descrita não depende dele.
 
@@ -6597,10 +6595,10 @@ O segundo webhook exige uma planilha nativa do Google Sheets e a configuração 
 
 | Frente | Evidência no repositório | Consequência para a definição |
 |---|---|---|
-| Microfone da interface | [`useMicrofone.ts`](../src/web/src/hooks/useMicrofone.ts) prevê Speech SDK e mantém uma simulação; [`Composer.tsx`](../src/web/src/componentes/chat/Composer.tsx) separa o campo de texto da ação de enviar. | O microfone e a API de upload são trajetos distintos hoje. Consolidar a experiência solicitada pertence à frente de voz; esta definição não muda o SDK nem implementa envio de gravação pelo navegador. |
-| Recebimento de áudio | [`voz.py`](../src/middleware/app/api/routes/voz.py) retorna `202`, executa `_processar_transcricao` em `BackgroundTasks` e disponibiliza consulta por `id_audio`. | O processamento é assíncrono para o cliente da aplicação, mas isso não demonstra a existência de um callback do provedor. |
+| Microfone da interface | [`useMicrofone.ts`](../src/web/src/hooks/useMicrofone.ts) solicita um token efêmero e usa o Speech SDK real; [`Composer.tsx`](../src/web/src/componentes/chat/Composer.tsx) separa o campo de texto da ação de enviar. | O áudio contínuo vai diretamente ao Azure, enquanto somente a credencial curta passa pelo middleware. Não existe frase simulada no código de produção. |
+| Recebimento de áudio | [`voz.py`](../src/middleware/app/api/routes/voz.py) valida e retorna `202`; [`processamento_audio.py`](../src/middleware/app/servicos/processamento_audio.py) executa STT e o pipeline em segundo plano. | O processamento é assíncrono para o cliente e produz uma interação rastreável com `canal=voz`. |
 | Serviço de transcrição | [`transcricao.py`](../src/middleware/app/voz/transcricao.py) chama `transcriptions:transcribe` e extrai o resultado da resposta HTTP. | A integração atual usa Fast Transcription. A revisão do texto pelo usuário pode ser atendida sem callback de conclusão. |
-| Armazenamento do resultado | [`audio_service.py`](../src/middleware/app/servicos/audio_service.py) mantém `_transcricoes` em memória de processo. | A necessidade de persistência permanece. Ao revisar #389, manter responsável e tarefa para vincular resultado, áudio e proprietário em armazenamento durável. |
+| Armazenamento do resultado | `TranscricaoAudioTabela` e `AudioRepository` persistem estado, texto, metadados, proprietário, conversa e interação; a migration `20260925_audio_persistente` cria a estrutura. | Reinício de réplica não apaga o resultado e a consulta não revela submissão de outro usuário. |
 | Fonte documental | A seção 9.4.3.1 e [`drive.py`](../src/middleware/app/rag/ingestao/drive.py) identificam o Google Drive como fonte do corpus sintético. | Implementar e demonstrar o contrato do Drive; a equivalência de negócio com SharePoint não significa equivalência de protocolo nem homologação no ambiente Microsoft. |
 | Dados estruturados | [`portfolio.py`](../src/middleware/app/api/routes/portfolio.py) consulta projetos, riscos, marcos e indicadores persistidos. | WH-02 define campos, autoridade e autorização; o mapeamento concreto da planilha e das entidades deve ser cadastrado antes da ativação. |
 
@@ -7782,19 +7780,13 @@ igualdade é verificada pelo caso `TU-WEB-02`, documentado em 9.5.3.
 
 ### 9.2.15 Como exercitar a entrada por voz
 
-O dublê de `GET /voz/token` devolve um token de demonstração, reconhecível por um
-prefixo próprio. Ao recebê-lo, o hook de microfone executa um percurso simulado,
-com transcrições parciais que crescem palavra a palavra e uma transcrição final
-ao término, reproduzindo a temporização do reconhecimento real.
-
-A consequência prática é que **a avaliação da entrada por voz não consome crédito
-do recurso Azure AI Speech**, cujo nível gratuito F0 possui limites descritos em
-5.7.4. Basta acionar o botão de microfone e observar o estado ativo, a
-transcrição parcial no campo e a entrega do texto final.
-
-A simulação desaparece por si quando o recurso estiver provisionado no ambiente
-do parceiro, porque um token real nunca apresenta aquele prefixo. Nenhuma
-remoção de código é necessária para a transição.
+Configure `SPEECH_KEY`, `SPEECH_REGION` e, quando aplicável, `SPEECH_ENDPOINT`.
+Com frontend e middleware ativos, o botão solicita `GET /api/voz/token`; o
+middleware troca a chave por uma credencial de dez minutos e o Speech SDK abre
+o microfone somente depois da permissão do navegador. A fala parcial aparece no
+campo e o texto reconhecido segue ao `/chat`. Esse percurso é real e consome a
+franquia do recurso configurado; falha de configuração ou do provedor produz
+feedback de indisponibilidade, sem recorrer a frase fixa.
 
 ### 9.2.16 Execução em contêiner
 
@@ -7823,8 +7815,6 @@ tratados na seção 11.
 
 | Limitação | Consequência para quem avalia | Situação |
 | --- | --- | --- |
-| A emissão do token de voz ainda é dublada no navegador | Sem a issue #396 integrada, `GET /voz/token` responde pelo dublê | Resolvida quando a rota real entrar e o dublê sair de `ROTAS_PENDENTES` |
-| A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
 | A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
 
 A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
@@ -8839,9 +8829,9 @@ Este conjunto verifica que os dois canais de entrada chegam ao mesmo lugar. Os c
 | `TF-RF02-04` | Negativo | Duração acima do limite | Áudio de formato aceito, com duração superior a cinco minutos | Recusa com o código `AUDIO_MUITO_LONGO` e o detalhe de duração previsto no corpo de erro de 5.7.3.8 | 5.7.3.6, 5.7.3.8 | Onda 1, conforme 9.1.3 |
 | `TF-RF02-05` | Negativo | Arquivo ilegível | Arquivo corrompido, vazio ou sem trilha de áudio | Recusa com o código `AUDIO_ILEGIVEL`; a falha ocorre na validação, antes de qualquer chamada ao serviço de fala | 5.7.3.8 | Onda 1, conforme 9.1.3 |
 | `TF-RF02-06` | Negativo | Áudio aceito, sem fala reconhecível | Áudio válido em formato e duração, cujo conteúdo não produz transcrição no dublê do serviço de fala | A submissão é aceita e a consulta devolve `200` com o estado `falhou`, e não um erro de requisição; a orientação apresentada oferece o canal de texto como saída | 5.7.3.4, 5.7.3.8 | Onda 1, conforme 9.1.3 |
-| `TF-RF02-07` | Positivo | O texto transcrito reentra pelo mesmo pipeline | Transcrição concluída, encaminhada à rota de conversação como qualquer mensagem, com o canal marcado como voz | A solicitação atravessa a mesma ordem fixa do orquestrador — guardas, classificação, execução, avaliação da resposta e registro; nenhuma verificação de autorização é pulada e é gravada uma única interação | US02, 5.2.3.2, 5.7.3.5 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-07` | Positivo | O texto transcrito entra no mesmo pipeline | Submissão aceita cuja transcrição termina com texto utilizável | O processador chama o mesmo orquestrador do `/chat` com `canal=voz`; a solicitação atravessa guardas, classificação, execução, avaliação da resposta e registro, e a submissão guarda o `interacao_id` produzido | US02, 5.2.3.2, 5.7.3.5 | Onda 1, conforme 9.1.3 |
 
-`TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro, e que a API de áudio não aciona o pipeline por conta própria. Isso é uma promessa verificável, e sem um caso que a exercite ela permanece como intenção de projeto. A asserção compara a sequência de etapas percorrida por uma mensagem digitada e por uma transcrição de mesmo texto: as duas execuções precisam produzir a mesma ordem de chamadas e uma única linha de registro cada, diferindo apenas no valor do canal.
+`TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro. A API de ingestão aciona o pipeline depois do STT, mas não o contorna: a asserção verifica a classificação, a chamada ao executor, o canal `voz`, a linha única de interação e seu vínculo com `transcricao_audio`.
 
 **Execução.** Os casos de *backend* rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf02_canais.py`. O Azure Speech é dublado em todos eles: os áudios do conjunto são fixos e pequenos, e a transcrição devolvida é controlada pelo dublê, porque o objeto do teste é o trajeto e o tratamento de erro, não a qualidade do reconhecimento — essa é medida sobre o corpus de 5.7.6, pelos indicadores de 3.1.5.2. A verificação de ordem de `TF-RF02-07` é feita registrando as chamadas ao orquestrador e comparando as duas execuções. A apresentação da transcrição no campo de mensagem antes do envio, prevista em 5.7.3.5, é asserção de interface e roda com Vitest e Testing Library em `src/web/src/testes/`.
 
@@ -9156,6 +9146,13 @@ Foram coletadas **68 execuções** para os 65 identificadores planejados; a dife
 | **Total** | **41** | **24** | **3** | **Execução concluída, com cobertura funcional ainda parcial.** |
 
 Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente utilizado estão preservados em [`docs/evidencias/2026-09-24-testes-funcionais.txt`](evidencias/2026-09-24-testes-funcionais.txt). A execução utilizou `ASGITransport` e dublês nas fronteiras previstas pelos scripts; por isso, esta evidência não deve ser interpretada como comprovação de integração real com PostgreSQL, Entra ID, Copilot Studio, Azure Speech ou Content Safety.
+
+> **Reexecução focal da correção #450 (25/09/2026).** Os sete casos de
+> `test_rf02_canais.py` passaram. Os dois `xfail` de RF02 foram removidos depois
+> da implementação da aferição de duração e do envelope estruturado. Essa
+> execução atualiza apenas a linha de RF02; os totais acima continuam sendo a
+> evidência histórica integral de 24/09 e não foram recalculados sem executar e
+> registrar novamente toda a bateria funcional.
 
 **Análise crítica.** A maior concentração de lacunas está nos RF05 e RF06, cujos fluxos ainda não estão implementados, e no RF04, que possui apenas um cenário aprovado. Os pontos de maior risco para a versão atual são a validação incompleta de áudio em RF02, a autorização e validação de entidades em RF03/RF04 e o comportamento da guarda de injeção quando o serviço externo falha em RF09. Os casos planejados para ondas futuras permanecem registrados como `xfail`, evitando que sejam apresentados como funcionalidades concluídas. Cada defeito confirmado deve ser vinculado a uma *issue* de correção antes do encerramento da issue de execução.
 
@@ -10840,7 +10837,7 @@ OpenAPI do FastAPI declara (ver IT-CTR-03).
 | IT-WEB-09 | Dashboard renderiza a partir dos endpoints | Recharts recebe as séries de `/intencoes/*` | 4 |
 | IT-WEB-10 | Rotinas: criar, listar, excluir | Fluxo completo contra o MSW, com confirmação de exclusão | 5 |
 | IT-WEB-11 | Estado de carregamento e de erro | TanStack Query exibe *loading* e *retry* | 4 |
-| IT-WEB-12 | Microfone com SDK dublado | `useMicrofone` produz parcial e final; token pedido a `/api/voz/token` | Livre |
+| IT-WEB-12 | Microfone com Azure Speech | `useMicrofone` produz parcial e final; token real pedido a `/api/voz/token` | Credencial e franquia do ambiente de teste |
 
 #### 10.5.5.9 IT-CTR — contratos
 

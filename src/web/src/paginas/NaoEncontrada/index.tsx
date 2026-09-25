@@ -9,30 +9,28 @@
 
 import { Link } from "react-router-dom";
 
+import { Button } from "@/componentes/ui/button";
+import { CabecalhoPagina } from "@/componentes/ui/CabecalhoPagina";
 import { EstadoVazio } from "@/componentes/ui/EstadoVazio";
+import { IconeCaminho } from "@/componentes/ui/icones";
 
 export function NaoEncontrada() {
   return (
-    <div className="page">
-      <header className="topbar">
-        <div className="assistant-title">
-          <span>
-            <strong>Página não encontrada</strong>
-            <small>O endereço acessado não corresponde a nenhuma tela</small>
-          </span>
+    <div className="flex h-full min-h-0 flex-col">
+      <CabecalhoPagina titulo="Página não encontrada" subtitulo="O endereço acessado não corresponde a nenhuma tela" />
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-245 px-3.5 pt-8 pb-10 md:px-6">
+          <EstadoVazio
+            icone={IconeCaminho}
+            titulo="Este endereço não existe"
+            descricao="Verifique o endereço digitado ou volte para a página principal do agente."
+            acao={
+              <Button asChild>
+                <Link to="/">Voltar para a página principal</Link>
+              </Button>
+            }
+          />
         </div>
-      </header>
-
-      <div className="mx-auto w-[min(720px,calc(100%-48px))] py-9">
-        <EstadoVazio
-          titulo="Este endereço não existe"
-          descricao="Verifique o endereço digitado ou volte para a página principal do agente."
-          acao={
-            <Link className="primary-button" to="/">
-              Voltar para a página principal
-            </Link>
-          }
-        />
       </div>
     </div>
   );
