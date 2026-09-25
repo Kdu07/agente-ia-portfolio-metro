@@ -190,7 +190,7 @@ A equipe utiliza o **WhatsApp para comunicações informais**, como avisos rápi
 
 As dailies acontecem **presencialmente, às 14h, em todos os dias nos quais a equipe possui instrução**, com duração máxima de **15 minutos**. Quando a equipe não estiver reunida presencialmente, o acompanhamento poderá ocorrer de forma assíncrona no Slack. Cada integrante apresenta de forma objetiva as atividades concluídas, as próximas atividades e os impedimentos identificados. Quando um integrante não puder participar, sua atualização deve ser enviada pelo canal formal antes do encontro.
 
-**Condução.** A daily é conduzida pelo Scrum Master da sprint, a quem cabe abrir o encontro no horário, manter a ordem de fala, encerrá-lo dentro dos 15 minutos e realizar as três verificações descritas adiante. Quando o Scrum Master não puder conduzir, a condução passa a outro integrante indicado na véspera, de modo que o ritual não dependa da presença de uma única pessoa.
+**Condução.** A daily é conduzida pelo Scrum Master da sprint, a quem cabe abrir o encontro no horário, manter a ordem de fala, encerrá-lo dentro dos 15 minutos e realizar as três verificações descritas adiante. Quando o Scrum Master não puder conduzir, a condução passa a outro integrante indicado na véspera, de modo que o ritual não dependa da presença de uma única pessoa. Na Sprint 4, o Scrum Master e condutor das dailies é **Eduardo Casarini**.
 
 **Roteiro.** Cada integrante responde a três perguntas, nesta ordem: o que concluiu desde a daily anterior, o que pretende concluir até a próxima e o que o impede de avançar. A resposta deve referenciar o card correspondente, e não apenas descrever a atividade, para que o acompanhamento seja verificável no quadro por quem não participou do encontro.
 
@@ -372,7 +372,21 @@ As dependências entre artefatos devem ser respeitadas. Um exemplo de sequência
 
 ### 2.7 Política de commits e uso do GitLab
 
-**Commits.** Os commits devem seguir o padrão *Conventional Commits*, no formato `<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> (#<card>)`. Cada commit deve representar uma unidade lógica de alteração, iniciar por verbo no infinitivo em letra minúscula, descrever objetivamente o que mudou e referenciar a issue correspondente. Mensagens vagas e commits que misturem atividades sem relação devem ser evitados. O envio direto de alterações para `main` ou `develop` não faz parte do fluxo do grupo: toda alteração chega à `develop` por merge request. Os tipos aceitos, os exemplos válidos e inválidos, o padrão de título e descrição de merge request e as demais regras técnicas estão detalhados no [GestaoConfiguracao.md](GestaoConfiguracao.md).
+**Commits.** Os commits devem seguir o padrão *Conventional Commits*, no formato `<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> (#<card>)` ou `<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> #<card>`. As duas formas da referência, com e sem parênteses, são aceitas; o que é obrigatório é a referência ao card, separada da descrição por um espaço. Cada commit deve representar uma unidade lógica de alteração, iniciar por verbo no infinitivo em letra minúscula, descrever objetivamente o que mudou e referenciar a issue correspondente. Mensagens vagas e commits que misturem atividades sem relação devem ser evitados. O envio direto de alterações para `main` ou `develop` não faz parte do fluxo do grupo: toda alteração chega à `develop` por merge request. Os tipos aceitos, os exemplos válidos e inválidos, o padrão de título e descrição de merge request e as demais regras técnicas estão detalhados no [GestaoConfiguracao.md](GestaoConfiguracao.md).
+
+Exemplos do ciclo da Sprint 4, retirados do histórico da `develop`:
+
+| Mensagem | Situação |
+|---|---|
+| `feat: implementar produtor AMQP com confirmacao de publicacao #393` | Válida, referência sem parênteses |
+| `test: corrigir fixture dos testes de auditoria (#442)` | Válida, referência entre parênteses |
+| `feat: guardar os segredos no key vault e proteger o banco (#378, #379)` | Válida, mais de um card |
+| `feat: adiciona evidencias executaveis (#446)` | Inválida: verbo na terceira pessoa (`adicionar`) |
+| `docs: registra resultado da implementação dos testes do RNF01(#441)` | Inválida: terceira pessoa e referência colada à descrição, sem espaço |
+| `fix: resolve conflitos(#426)` | Inválida: terceira pessoa, descrição vaga e referência sem espaço |
+| `feat: atualiza secao de testes de integracao (#446)` | Inválida: terceira pessoa e tipo errado; alteração de documentação usa `docs` |
+
+**Integração contínua e merge request.** Na Sprint 4 o repositório não possui pipeline de integração contínua (não há `.gitlab-ci.yml` na `develop`), e nada bloqueia o merge automaticamente. O que barra um merge request é a revisão: ele só é integrado depois da aprovação de outro integrante, e quem o abre deve executar antes as suítes da parte alterada (`python -m pytest` no middleware e `npm run test` na interface) e registrar o resultado em *Como testar* ou no DoD. Quando houver pipeline, a regra passa a ser não integrar merge request com pipeline falhando.
 
 **Movimentação do quadro.** O quadro é a fonte oficial do estado das atividades. Movimentar o card é responsabilidade da pessoa designada nele, e não do revisor ou do Scrum Master. A correspondência entre coluna e etapa do fluxo é a seguinte.
 

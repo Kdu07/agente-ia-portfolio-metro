@@ -456,7 +456,10 @@ Formato:
 
 ```text
 <tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> (#<card>)
+<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> #<card>
 ```
+
+As duas formas da referência ao card, com e sem parênteses, são aceitas.
 
 Tipos adotados:
 
@@ -476,7 +479,7 @@ Tipos adotados:
 
 - O verbo vem no infinitivo: adicionar, criar, corrigir, atualizar, remover, revisar, ajustar, definir, mapear.
 - A descrição começa em letra minúscula logo após o prefixo e não termina em ponto final.
-- A referência ao card é obrigatória, entre parênteses, ao final da linha de título.
+- A referência ao card é obrigatória ao final da linha de título, separada da descrição por um espaço, entre parênteses (`(#22)`) ou sem eles (`#22`).
 - A linha de título deve caber em 72 caracteres. Explicações que não couberem vão no corpo da mensagem.
 - A descrição informa o que mudou, não como a mudança foi feita.
 - Cada commit representa uma unidade lógica de alteração. Commits que misturam mudanças sem relação entre si dificultam a revisão e inviabilizam o rollback seletivo descrito na seção 7.
@@ -488,6 +491,7 @@ docs: adicionar user stories e critérios de aceitação (#22)
 feat(pln): implementar classificação de intenção (#40)
 fix(audio): corrigir conversão de áudio para texto (#41)
 test: adicionar casos de rejeição fora de domínio (#52)
+feat: implementar produtor AMQP com confirmacao de publicacao #393
 ```
 
 Exemplos inválidos:
@@ -499,6 +503,7 @@ Exemplos inválidos:
 | `adicionar user stories (#22)` | Ausência do tipo |
 | `docs: ajustes` | Descrição vaga, sem objeto identificável e sem card |
 | `docs: adiciona user stories (#22)` | Verbo em terceira pessoa |
+| `docs: adicionar user stories(#22)` | Referência colada à descrição, sem espaço |
 
 **Nota sobre o histórico.** Os commits anteriores à Sprint 3 utilizam a terceira pessoa, como em `docs: adiciona requisitos funcionais`. O histórico não é reescrito, pela mesma razão registrada na seção 2.3 quanto aos nomes de branch já integrados: reescrever mensagens de commits já integrados invalidaria as referências usadas nas métricas das sprints anteriores. A regra do infinitivo vale para os commits criados a partir da Sprint 3.
 
@@ -542,10 +547,11 @@ Todo MR deve receber uma primeira revisão em até **24 horas úteis** após a s
 
 ### 4.1 Padrão de Merge Requests
 
-**Título.** O título do merge request segue o mesmo formato da mensagem de commit. Quando o merge request encerra mais de um card, todos são listados entre parênteses, separados por vírgula.
+**Título.** O título do merge request segue o mesmo formato da mensagem de commit, com a referência ao card entre parênteses ou sem eles. Quando o merge request encerra mais de um card, todos são listados ao final, separados por vírgula.
 
 ```text
 <tipo>: <verbo no infinitivo> <complemento> (#<card>)
+<tipo>: <verbo no infinitivo> <complemento> #<card>
 ```
 
 Exemplos:
