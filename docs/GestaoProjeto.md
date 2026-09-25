@@ -1839,264 +1839,138 @@ Esta seção será preenchida após a conclusão do projeto.
 
 [Preencher ao final do projeto, contemplando lições técnicas, organizacionais e comportamentais.]
 
-## 7. Análise de Viabilidade Financeira e Orçamento
+## 7. Análise de viabilidade financeira
+
+Esta seção responde à pergunta do artefato: quanto o grupo cobraria para entregar o Prata Agent se a solução fosse vendida ao Metrô de São Paulo como contrato real. O orçamento parte do escopo efetivamente construído, converte as horas registradas no Kanban em custo por função, acrescenta insumos, despesas operacionais, imposto e margem, e chega a um preço final verificável. Em seguida, mostra o que o Metrô paga para operar a solução no primeiro ano e em que condições o investimento se paga.
+
+Três convenções valem para toda a seção:
+
+* **Data-base:** 25/09/2026. Preços públicos, câmbio e dados do board foram consultados nessa data; as fontes estão na seção [7.15](#715-referências).
+* **Arredondamento:** cada valor é calculado com a precisão da fonte e arredondado a duas casas decimais só no resultado. Quando uma distribuição por mês ou por parcela gera diferença de R$ 0,01, ela é absorvida na última linha e sinalizada.
+* **Separação de pagadores:** o preço do contrato (seções 7.1 a 7.9) é faturado pelo fornecedor. A infraestrutura de produção (seção 7.5) fica no tenant do Metrô e é paga por ele diretamente à Microsoft, sem margem nem imposto do fornecedor.
 
-A presente análise de viabilidade financeira estipula o orçamento completo para o desenvolvimento, implantação, infraestrutura de nuvem e sustentação da solução **Prata Agent** — assistente virtual inteligente para gestão de portfólio de projetos do Metrô de São Paulo.
+### 7.1 Escopo orçado e premissas
 
-O orçamento simula as condições comerciais reais de contratação da consultoria, contemplando custos diretos de pessoal e insumos, despesas operacionais da estrutura empresarial, tributação pelo Simples Nacional, margem de lucro estratégica, além do detalhamento da infraestrutura na nuvem Microsoft Azure e análise de viabilidade econômica para o cliente.
+#### 7.1.1 Descrição do projeto
 
----
+O Prata Agent é um agente de IA para a gestão do portfólio de projetos do Metrô. O usuário conversa por texto ou voz em uma interface web própria; um middleware em Python autentica o usuário no Microsoft Entra ID, aplica as guardas de entrada, classifica a intenção com um classificador próprio de PLN, repassa ao Copilot Studio do Metrô, pelo canal Direct Line, apenas as solicitações dentro do catálogo, avalia a resposta antes de entregá-la e registra cada interação. A solução inclui rotinas agendadas, histórico de conversas e um painel de análise de intenções para administradores.
 
-### 7.1 Descrição do Escopo e Premissas Orçamentárias (Item 5.1 do Artefato)
+#### 7.1.2 Escopo incluído no preço
 
-O escopo considerado no orçamento contempla o ciclo completo de engenharia da solução, distribuído ao longo de 5 sprints de desenvolvimento de duas semanas cada (totalizando 10 semanas de projeto), composto pelas seguintes entregas:
+| Bloco | O que é entregue | Requisitos |
+|---|---|---|
+| Descoberta e especificação | Entendimento do negócio, requisitos, arquitetura, modelagem e prototipação (Sprints 1 e 2) | Base de todos os RFs |
+| Acesso e interação | Autenticação corporativa, perfis, chat por texto e voz com transcrição | RF01, RF02 |
+| Núcleo de PLN e segurança | Classificador de intenções, catálogo de intenções, guardas de entrada e de saída | RF03, RF09 |
+| Execução no ecossistema Microsoft | Integração Direct Line com o Copilot Studio para consulta, atualização e alertas do portfólio | RF04, RF05, RF06 |
+| Recursos próprios da aplicação | Registro e painel de intenções, rotinas agendadas, histórico e retomada de conversas | RF10, RF11, RF12 |
+| Integrações assíncronas e dados | Webhooks, mensageria RabbitMQ, banco PostgreSQL com migrações | Suporte a RF06, RF10 e RF11 |
+| Qualidade e implantação | Testes funcionais, de integração, de desempenho e de usabilidade, pipeline de CI, ambientes em Azure Container Apps e manual de instalação | RNF01 a RNF07 |
+| Transferência | Treinamento da equipe do Metrô e operação assistida no primeiro mês | Autonomia prevista no TAPI |
 
-1. **Camada de Middleware em Python (FastAPI):** Arquitetura BFF (*Backend-for-Frontend*) responsável pela autenticação corporativa via Microsoft Entra ID (OAuth 2.0 + PKCE), gestão de sessões em cookies seguros, orquestração do pipeline de PLN e integração com conectores do ecossistema Microsoft via Direct Line API.
-2. **Camada de Segurança e Guardas de Prompt:**
-   - *Guarda de Injeção:* Combinação de filtro determinístico por Expressões Regulares (Regex) e classificador baseado em IA via Azure AI Content Safety (Prompt Shields) para bloqueio de injeções diretas e indiretas.
-   - *Guarda de Abuso:* Classificador de políticas corporativas e filtragem de conteúdo inadequado.
-   - *Guarda de Saída:* Validação das respostas geradas pelo executor antes da entrega ao usuário final.
-3. **Módulo de Classificação de Intenções e RAG:**
-   - Classificador próprio de intenções baseado em ensemble TF-IDF + *embeddings* (`multilingual-e5-large`) com Regressão Logística cobrindo 28 classes.
-   - Pipeline RAG (*Retrieval-Augmented Generation*) integrado a banco de dados vetorial PostgreSQL (`pgvector`) para consulta a documentos do portfólio.
-4. **Módulo de Rotinas Agendadas e Mensageria:**
-   - Agendador assíncrono (APScheduler) para consultas recorrentes do portfólio e execução em segundo plano via worker 24/7.
-   - Integração com mensageria (RabbitMQ) para desacoplamento de tarefas assíncronas.
-5. **Interface Web Responsiva (React + TypeScript + Tailwind CSS):**
-   - Aplicação web com suporte a chat interativo, modo de voz (*speech-to-text* via Azure Speech SDK), gestão e histórico de rotinas agendadas e painel analítico de intenções e bloqueios de segurança para administradores.
-6. **Ambiente de Infraestrutura, Testes e Documentação:**
-   - Conteinerização com Docker e Docker Compose, migrações de banco com Alembic, suíte de testes unitários e de integração com pytest/Vitest, e documentação técnica completa.
+**Fora do escopo:** os requisitos desejáveis RF07 (análise comparativa do portfólio) e RF08 (relatórios gerenciais), classificados como desejáveis na seção 2.7.5 do [Projeto.md](Projeto.md); expansão para outros processos do Metrô; sustentação contínua por equipe externa, oferecida à parte como Nível 3 opcional (seção [7.11](#711-custo-total-de-propriedade-e-sustentação-opcional)); e o executor próprio com Gemini e Pinecone, que existe no código como alternativa técnica, mas não compõe o cenário comercial porque envia conteúdo a provedores fora do perímetro homologado (riscos `R19` e `R20` da seção 4.2).
 
----
+#### 7.1.3 Premissas
 
-### 7.2 Custos Diretos do Projeto: Horas de Pessoal e Insumos de Desenvolvimento (Item 5.2 do Artefato)
+| Premissa | Valor adotado | Justificativa |
+|---|---|---|
+| Calendário do contrato | Construção de 05/08 a 07/10/2026 (cinco sprints); implantação, treinamento e operação assistida até 31/10/2026 | Cronograma do TAPI, seção 2.8.9 do `Projeto.md` |
+| Equipe | Seis profissionais contratados como pessoa jurídica | Modelo usual de consultoria de software de pequeno porte |
+| Custo-hora | R$ 81,25/h, único para todas as funções | Seção 7.3 |
+| Base de horas | Horas estimadas dos cards, convertidas pela régua de *size* da seção 2.5.2 | Mesma régua dos indicadores da seção 5.2 |
+| Executor em produção | Copilot Studio no tenant do Metrô | Preferência do parceiro registrada no TAPI |
+| Infraestrutura de produção | Tenant do Metrô, região `brazilsouth` | Seção 6.5 do `Projeto.md` e `infra/azure/provisionar.sh` |
+| Regime tributário do fornecedor | Simples Nacional, Anexo V, primeira faixa | Seção 7.7 |
+| Câmbio para serviços cotados em dólar | PTAX de venda de 25/09/2026, R$ 5,1991, acrescida de IOF de 3,5% | Serviços de software pagos com cartão internacional |
 
-Os custos diretos englobam a remuneração das horas de trabalho dedicadas pela equipe multidisciplinar e os insumos/ferramentas diretamente ligados ao desenvolvimento da solução.
+### 7.2 Horas estimadas por função e por integrante
 
-### 7.2.1 Custo de Pessoal por Função e Distribuição de Horas
+#### 7.2.1 Origem das horas
 
-A equipe é composta por 4 papéis essenciais, cujas taxas horárias foram derivadas com base no custo-hora médio de mercado para consultoria especializada em engenharia de software, IA e dados (taxa média ponderada de **R$ 81,25/h**):
+As horas são as estimadas nos cards do Kanban, convertidas pela régua da seção 2.5.2 (`SIZE_PP` = 0,25 h, `SIZE_P` = 0,5 h, `SIZE_M` = 1 h, `SIZE_G` = 2 h). Elas medem o esforço planejado por card, e não o ponto eletrônico de cada pessoa. A fonte de cada sprint é esta:
 
-- **Gerente de Projeto / Scrum Master (PMO & Agile):** R$ 81,25/h
-- **Engenheiro de Software Backend & IA:** R$ 81,25/h
-- **Engenheiro de Dados & Cloud:** R$ 81,25/h
-- **Designer UX/UI & Frontend Developer:** R$ 81,25/h
+| Sprint | Horas | Fonte |
+|---|---:|---|
+| Sprint 1 | 55,00 h | Fechamento registrado na seção 3.2.3: 54,00 h individualizadas e 1,00 h sem responsável |
+| Sprint 2 | 90,50 h | Fechamento registrado na seção 3.3.4: 73,50 h com responsável e 17,00 h de cards coletivos sem responsável |
+| Sprint 3 | 55,50 h | Milestone `Sprint 03` extraída pela API do GitLab em 25/09/2026; o total e a razão de 2,50:1 conferem com a seção 3.5.4 |
+| Sprint 4 | 143,75 h | Milestone `Sprint 04` extraída pela API do GitLab em 25/09/2026, às 20h: 107,00 h em cards fechados e 36,75 h em cards abertos |
+| Sprint 5 | 20,75 h | Tasks S5-01 a S5-17 planejadas na seção 3.6.1 |
+| **Construção do MVP** | **365,50 h** | |
+| Treinamento e operação assistida | 16,00 h | Premissa de orçamento: 8 h de treinamento e 8 h de operação assistida |
+| **Total orçado** | **381,50 h** | |
 
-As 94,25 horas previamente classifiedas de forma agregada foram integralmente distribuídas pelas funções da equipe com base nas entregas mapeadas na Matriz de Papéis e nos *work items* registrados no repositório. Em especial, a Sprint 3 foi reapurada pro-rata conforme o esforço efetivo da equipe, e a Sprint 5 teve 20,75 horas alocadas especificamente para a frente de *Encerramento, Gestão do Processo, Reconciliação Financeira, Post-Mortem e Comunicação da Entrega*.
+Duas diferenças em relação a outras seções ficam registradas para que os números possam ser conferidos. A Sprint 4 aparece com 135,50 h na seção 5.2 porque aquele é o corte de 22/09; entre 22 e 25/09 entraram cards que somam 8,25 h, e o orçamento usa o valor mais recente. Nas Sprints 1 e 2, o board hoje soma 60,75 h e 93,50 h porque recebeu cards depois do fechamento; o orçamento mantém os valores de fechamento das seções 3.2.3 e 3.3.4, que são os usados em toda a análise das sprints. As 36,75 h ainda abertas na Sprint 4 não são somadas de novo na Sprint 5: pela regra da seção 3.6.1, elas consomem a folga de capacidade da Sprint 5 e continuam contadas uma única vez, na Sprint 4.
 
-A Tabela 1 detalha a alocação de horas e custos por integrante/função ao longo das 5 sprints do MVP.
+#### 7.2.2 Regra de atribuição de função
 
-#### Tabela 1 — Apuração de Horas e Custos de Pessoal por Sprint e Função
-| Sprint | Período / Foco Principal | Função / Integrante | Horas Estimadas (h) | Custo-Hora (R$) | Subtotal (R$) |
-| :--- | :--- | :--- | :---: | :---: | :---: |
-| **Sprint 1** | Arquitetura, Setup e Auth Entra ID | PMO / Backend / Data / UX | 55,00 | R$ 81,25 | R$ 4.468,75 |
-| **Sprint 2** | Pipeline PLN, Guardas e Classificador | PMO / Backend / Data / UX | 73,00 | R$ 81,25 | R$ 5.935,00 |
-| **Sprint 3** | Integração Copilot, RAG e Middleware | PMO / Backend / Data / UX | 55,50 | R$ 81,25 | R$ 4.509,38 |
-| **Sprint 4** | Rotinas, Voz, Interface Web e Painel | PMO / Backend / Data / UX | 87,63 | R$ 81,25 | R$ 7.120,00 |
-| **Sprint 5** | Testes, Encerramento e Documentação | PMO / Backend / Data / UX | 86,07 | R$ 81,25 | R$ 6.993,43 |
-| **Total Pessoal** | **Ciclo Completo do MVP (10 Semanas)** | **Equipe Multidisciplinar** | **357,20 h** | **R$ 81,25** | **R$ 29.026,56** |
-
-### 7.2.2 Insumos, Licenças e Plataformas de Desenvolvimento
-
-Além das horas de trabalho, o desenvolvimento consumiu insumos de infraestrutura temporária e licenças de ferramentas de apoio. A Tabela 2 precifica esses insumos com base em seus custos comerciais de mercado para composição do orçamento do projeto real.
+Cada integrante assume uma função por sprint, derivada do papel principal na matriz de papéis daquela sprint (seções 3.2.1, 3.3.3, 3.4.1 e 3.5.1). Quando o papel junta a condução do processo, como Scrum Master, a uma frente técnica ou de negócio, prevalece a frente que concentra as entregas listadas na própria matriz, o mesmo critério que a seção 3.5.1 usa para definir o papel principal: é o caso de Mariana Reis na Sprint 1, de Carlos Eduardo na Sprint 2 e de Mirela Bianchi na Sprint 3. Na Sprint 4, os papéis de Mariana Reis e de Mirela Bianchi declaram duas frentes técnicas, e as horas foram separadas pelo label de entrega dos cards, com os cards `TEST` em Qualidade e os demais na primeira frente do papel. As horas de cards coletivos sem responsável, como cerimônias, planejamento e revisão do contrato, vão para Gestão de projeto e processos. Na Sprint 5, ainda sem responsável atribuído, cada task foi associada à função pela natureza da entrega.
 
-#### Tabela 2 — Insumos e Licenças Diretamente Ligados à Entrega
-| Insumo / Plataforma | Categoria | Finalidade | Custo Comercial / Pro-Rata (R$) |
-| :--- | :--- | :--- | :---: |
-| **Azure Database for PostgreSQL (Dev/MVP)** | Cloud / Banco | Instância B1ms para homologação e carga do RAG | R$ 159,50 |
-| **GitLab SaaS (Professional/Enterprise Pro-Rata)** | Repositório & CI/CD | Versionamento, pipelines de teste e gestão de bordboards | R$ 380,00 |
-| **Figma Professional (Pro-Rata 2.5 meses)** | Design UI/UX | Prototipação, wireframes e design system do webapp | R$ 260,00 |
-| **Maze Testing Platform (Plano Pro-Rata)** | Pesquisa / Usabilidade | Testes de usabilidade e validação com usuários | R$ 300,00 |
-| **Ferramentas de IDE & Monitoramento Dev** | Software Dev | Licenças de desenvolvimento e bancada de testes de IA | R$ 200,00 |
-| **Total Insumos de Desenvolvimento** | — | — | **R$ 1.299,50** |
+As seis funções usadas no orçamento são:
 
-**Total de Custos Diretos ($C$):** $\text{R\$ } 29.026,56 + \text{R\$ } 1.299,50 = \mathbf{R\$ 30.326,06}$ (arredondado comercialmente para **R$ 30.326,56**).
+| Código | Função | Papéis do módulo que a compõem |
+|---|---|---|
+| F1 | Gestão de projeto e processos | Scrum Master, gestão de configuração, gestão evolutiva |
+| F2 | Negócio, requisitos e viabilidade | Negócio e BPMN, requisitos, features e Canvas, viabilidade financeira, apresentação |
+| F3 | Arquitetura, dados e nuvem | Arquitetura e riscos, pilha de tecnologias e dados, implantação em nuvem e integração contínua |
+| F4 | Desenvolvimento de software e PLN | Camada de PLN, canal de voz, integrações assíncronas, rotinas, painel e APIs |
+| F5 | UX/UI e frontend | Prototipação, projeto visual e interface web |
+| F6 | Qualidade e testes | Testes funcionais, de requisitos não funcionais, de integração, de desempenho e de usabilidade |
 
----
+#### 7.2.3 Horas por integrante
 
-### 7.3 Despesas Operacionais Estimadas (Item 5.3 do Artefato)
+| Integrante | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Total |
+|---|---:|---:|---:|---:|---:|
+| Mirela Bianchi | 12,50 h (F2) | 13,50 h (F5) | 11,75 h (F4) | 30,00 h (15,00 F3 + 15,00 F6) | 67,75 h |
+| Eduardo Casarini | 9,00 h (F2) | 16,50 h (F4) | 12,50 h (F5) | 27,50 h (F4) | 65,50 h |
+| Carlos Eduardo Serrano Quaglia | 8,50 h (F3) | 19,00 h (F4) | 8,50 h (F3) | 27,00 h (F3) | 63,00 h |
+| Mariana Reis | 10,00 h (F2) | 10,00 h (F5) | 10,50 h (F4) | 31,00 h (15,00 F4 + 16,00 F6) | 61,50 h |
+| Celso Rocha | 7,00 h (F1) | 8,00 h (F4) | 7,25 h (F6) | 17,00 h (F4) | 39,25 h |
+| Alexsander Barbosa | 7,00 h (F2) | 6,50 h (F3) | 5,00 h (F6) | 11,25 h (F2) | 29,75 h |
+| Cards coletivos sem responsável | 1,00 h (F1) | 17,00 h (F1) | 0,00 h | 0,00 h | 18,00 h |
+| **Total** | **55,00 h** | **90,50 h** | **55,50 h** | **143,75 h** | **344,75 h** |
 
-As despesas operacionais correspondem aos custos indiretos indispensáveis para manter a estrutura administrativa, jurídica, contábil e operacional da consultoria durante os 5 meses de duração total do contrato (2,5 meses de desenvolvimento do MVP e 2,5 meses de implantação, homologação e suporte inicial).
+Somadas as 20,75 h da Sprint 5, ainda por atribuir, chega-se às 365,50 h de construção. A tabela mostra a rotação que a seção 3 documenta. Há duas permanências na mesma função em sprints consecutivas, ambas com papéis diferentes dentro dela: Carlos Eduardo fica em F3 nas Sprints 3 e 4, passando de dados e testes de integração para implantação em nuvem, e Mariana tem parte das horas em F4 nas duas sprints, passando de PLN e voz para rotinas agendadas. A diferença de carga entre integrantes, de 2,28:1 entre o maior e o menor total, é a mesma que as seções 3.3.4, 3.5.3 e 3.5.4 registram sprint a sprint.
 
-A Tabela 3 detalha as despesas operacionais estimadas com base em taxas médias praticadas no mercado de serviços de tecnologia no Brasil.
+#### 7.2.4 Horas por função e por sprint
 
-#### Tabela 3 — Despesas Operacionais Indiretas do Projeto
-| Item | Descrição / Especificação | Quantidade | Unidade | Período | Custo Unitário (R$) | Custo Total (R$) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Rateio de Espaço de Trabalho** | Estações de coworking / infraestrutura de escritório | 1 | Lote | 5 meses | R$ 480,00 / mês | R$ 2.400,00 |
-| **Serviços Contábeis e Fiscais** | Escrituração contábil, emissão de NFe e apuração de impostos | 1 | Contrato | 5 meses | R$ 350,00 / mês | R$ 1.750,00 |
-| **Ferramentas Administrativas** | Google Workspace, Notion, Zoom e gestão jurídica/financeira | 1 | Licença Lote | 5 meses | R$ 250,00 / mês | R$ 1.250,00 |
-| **Domínio Corporativo e SSL** | Registro de domínio `.com.br`, DNS corporativo e gestão SSL | 1 | Registro | 2 anos | R$ 178,29 / evento | R$ 178,29 |
-| **Apoio Jurídico e Adm. Geral** | Elaboração contratual, adequação LGPD e despesas cartorárias | 1 | Serviço | Único | R$ 1.000,00 / evento | R$ 1.000,00 |
-| **Total Despesas Operacionais ($D$)** | — | — | — | — | — | **R$ 6.578,29** |
+| Função | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Sprint 5 | Total |
+|---|---:|---:|---:|---:|---:|---:|
+| F1 Gestão de projeto e processos | 8,00 | 17,00 | 0,00 | 0,00 | 8,50 | 33,50 |
+| F2 Negócio, requisitos e viabilidade | 38,50 | 0,00 | 0,00 | 11,25 | 2,00 | 51,75 |
+| F3 Arquitetura, dados e nuvem | 8,50 | 6,50 | 8,50 | 42,00 | 3,75 | 69,25 |
+| F4 Desenvolvimento de software e PLN | 0,00 | 43,50 | 22,25 | 59,50 | 0,00 | 125,25 |
+| F5 UX/UI e frontend | 0,00 | 23,50 | 12,50 | 0,00 | 2,50 | 38,50 |
+| F6 Qualidade e testes | 0,00 | 0,00 | 12,25 | 31,00 | 4,00 | 47,25 |
+| **Total** | **55,00** | **90,50** | **55,50** | **143,75** | **20,75** | **365,50** |
 
----
+Valores em horas. Na Sprint 5, F1 reúne as tasks de apuração, análise, matriz de risco, matriz de papéis, retrospectiva e post-mortem (S5-01 e S5-09 a S5-14); F2, a apresentação final (S5-16); F3, a adequação do `copilot/solucao/`, a demonstração no ambiente do parceiro, o manual de instalação e a tag final (S5-02, S5-04, S5-15 e S5-17); F5, a priorização e a correção de usabilidade (S5-06 e S5-07); e F6, a comparação da base sintética, a consolidação e a reaplicação dos testes de usabilidade (S5-03, S5-05 e S5-08).
 
-### 7.4 Orçamento de Infraestrutura, Nuvem e Serviços Recorrentes
+A distribuição acompanha a evolução do projeto: F2 concentra a Sprint 1, de negócio e requisitos; F4 e F5 dominam as Sprints 2 e 3, de especificação e construção; F3 e F6 crescem na Sprint 4, de implantação e testes; e F1 volta a pesar na Sprint 5, de fechamento.
 
-A infraestrutura de nuvem foi dimensionada para operar no tenant do parceiro (Metrô de SP) na região `brazilsouth` do Microsoft Azure, estimando um volume operacional padrão de **25.000 interações mensais** (cerca de 1.136 interações por dia útil).
+### 7.3 Custo de pessoal
 
-#### 7.4.1 Visão Geral do Consumo de Nuvem
-A arquitetura desloca a inteligência de execução para o **Copilot Studio**, mantendo o middleware em Azure Container Apps para garantia de segurança e auditoria.
+#### 7.3.1 Custo-hora
 
-#### 7.4.2 Banco de Dados Relacional (Azure Database for PostgreSQL)
-Para persistência das conversas, interações, agendamentos de rotinas e vetores do RAG (`pgvector`), utiliza-se uma instância *Flexible Server* no nível *Burstable* (B1ms: 1 vCPU, 2 GiB RAM, 32 GB de armazenamento).
-- **Custo Mensal:** R$ 159,50 / mês
-- **Custo Anual:** R$ 1.914,00 / ano
-
-#### 7.4.3 Serviços de IA e Segurança (Azure AI Content Safety e Speech)
-- **Azure AI Content Safety (Prompt Shields e Abuse Detection):** Avaliação de entrada e saída contra injeções de prompt e conteúdo nocivo.
-  - *Custo Mensal:* R$ 136,76 / mês
-  - *Custo Anual:* R$ 1.641,13 / ano
-- **Azure Speech Services (Transcrição de Voz):** Transcrição de enunciados de áudio via Azure Speech SDK.
-  - *Custo Mensal:* R$ 85,00 / mês
-  - *Custo Anual:* R$ 1.020,00 / ano
-
-#### 7.4.4 Execução da Aplicação (Azure Container Apps e Worker 24/7)
-Hospedagem conteinerizada da API FastAPI e do Worker assíncrono do APScheduler.
-- **API Backend:** Dimensionada com escalonamento automático (0 a 2 réplicas).
-- **Worker 24/7:** Exige réplica ativa contínua (0,25 vCPU, 0,5 GiB RAM) para garantir o disparo de rotinas agendadas no fuso horário correto.
-- **Custo Combinado Mensal:** R$ 112,50 / mês
-- **Custo Combinado Anual:** R$ 1.350,00 / ano
-
-#### 7.4.5 Registro de Containers (Azure Container Registry - ACR)
-Registro privado de imagens Docker na camada Basic.
-- **Cálculo de Preço:** $365 \text{ dias} \times 0,167 \text{ USD/dia} \times 5,1414 \text{ BRL/USD} = \mathbf{R\$ 313,39 / ano}$ (R$ 26,12 / mês).
-
-#### 7.4.6 Filas e Mensageria (RabbitMQ / Mensageria em Produção)
-Para desacoplamento dos eventos de auditoria e disparo de tarefas pesadas de RAG, prevê-se uma instância gerenciada de mensageria.
-- **Custo Mensal:** R$ 80,00 / mês
-- **Custo Anual:** R$ 960,00 / ano
-
-#### 7.4.7 Armazenamento, Logs e Retenção de Backup
-Armazenamento redundante do banco PostgreSQL, retenção de backups por 7 dias e coleta de métricas no Azure Log Analytics.
-- **Custo Mensal:** R$ 25,00 / mês
-- **Custo Anual:** R$ 300,00 / ano
-
-#### 7.4.8 Sustentação Opcional Nível 3 (N3)
-Serviço opcional de manutenção evolutiva e suporte especializado N3 prestado pela consultoria (15 horas mensais dedicadas de engenharia).
-- **Fórmula de Precificação:** 
-  $$\text{Preço N3} = \frac{\text{Custo Base} \times 1,15}{1 - 0,17825} = \frac{14.625,00 \times 1,15}{0,82175} = \mathbf{R\$ 20.466,99 / ano}$$
-
-#### 7.4.9 Consolidação Anual da Infraestrutura Recorrente de Nuvem
-A Tabela 4 consolida todos os custos recorrentes de nuvem e serviços necessários para manter a solução operando por 12 meses.
-
-#### Tabela 4 — Custos Recorrentes de Infraestrutura de Nuvem (12 Meses)
-| Componente Azure / Serviço | Recurso / Dimensionamento | Custo Mensal (R$) | Custo Anual (R$) | % do Total Nuvem |
-| :--- | :--- | :---: | :---: | :---: |
-| **Copilot Studio (Direct Line)** | 25.000 interações/mês ($25 \text{k} \times \text{R\$ } 0,0916$) | R$ 2.290,20 | R$ 27.482,40 | 83,33% |
-| **Azure Database for PostgreSQL** | Flexible Server B1ms (1 vCPU, 2 GB RAM) | R$ 159,50 | R$ 1.914,00 | 5,80% |
-| **Azure AI Content Safety** | Prompt Shields & Content Filtering | R$ 136,76 | R$ 1.641,13 | 4,98% |
-| **Azure Container Apps** | API + Worker 24/7 (0,25 vCPU, 0,5 GB) | R$ 112,50 | R$ 1.350,00 | 4,09% |
-| **Azure Speech Services** | Speech-to-Text em tempo real | R$ 85,00 | R$ 1.020,00 | 3,09% |
-| **RabbitMQ / Mensageria** | Instância Gerenciada / Service Bus | R$ 80,00 | R$ 960,00 | 2,91% |
-| **Azure Container Registry (ACR)** | Camada Basic ($365 \times 0,167 \text{ USD} \times 5,1414$) | R$ 26,12 | R$ 313,39 | 0,95% |
-| **Armazenamento & Backups** | Storage 32 GB + Backup 7 dias + Logs | R$ 25,00 | R$ 300,00 | 0,91% |
-| **Total Infraestrutura Recorrente** | **Operação Continuada (25k interações/mês)** | **R$ 2.748,39** | **R$ 32.980,69** | **100,00%** |
-
----
-
-### 7.5 Enquadramento Tributário e Carga Fiscal (Item 5.4 do Artefato)
-
-Para simulação tributária, considera-se que a consultoria contratada está enquadrada no **Simples Nacional**, no **Anexo V** (Serviços de Tecnologia da Informação, Licenciamento e Desenvolvimento de Software — Art. 18, § 5º-I da Lei Complementar nº 123/2006).
-
-- **Razão Fator R:** Por premissa orçamentária, a folha de pagamento representa menos de 28% do faturamento bruto acumulado da empresa no período, mantendo o enquadramento no Anexo V.
-- **Alíquota Única Efetiva (DAS):** Adota-se a alíquota efetiva simplificada de **15,50%** cobrada diretamente sobre o faturamento bruto emitido na Nota Fiscal de Serviços Eletrônica (NFS-e).
-- **Fórmula de Aplicação dos Impostos:** Os impostos são calculados pelo método *por dentro*, garantindo que a alíquota tributária incida sobre a receita bruta total da nota fiscal.
-
----
-
-### 7.6 Margem de Lucro e Estratégia de Mercado (Item 5.5 do Artefato)
-
-A margem de lucro operacional adotada para o projeto é de **15,00%**.
-
-#### 7.6.1 Justificativa Estratégica de Mercado
-A definição de uma margem de 15,00% fundamenta-se na estratégia de penetração e consolidação no mercado corporativo de consultoria de tecnologia para o setor público e transporte metroviário:
-- **Competitividade em Licitações e Propostas:** O benchmark de margens para consultorias de TI no Brasil varia entre 10% e 20%. A margem de 15% posiciona a proposta no ponto médio ótimo, oferecendo um preço atraente para o contratante sem comprometer a saúde financeira e a reserva de segurança da contratada.
-- **Retorno Sobre o Capital Investido:** Garante atratividade comercial para a empresa cobrir riscos operacionais não previstos e reinvestir em P&D de novas soluções de IA.
-
-#### 7.6.2 Fórmula e Aplicação da Margem de Lucro
-A margem de lucro de 15,00% incide sobre a base combinada de custos diretos ($C$) e despesas operacionais ($D$).
-- **Base de Custo Operacional Total ($C + D$):** $\text{R\$ } 30.326,56 + \text{R\$ } 6.578,29 = \mathbf{R\$ 36.904,85}$
-- **Valor Absoluto do Lucro Líquido ($L$):**
-  $$L = 15,00\% \times (C + D) = 0,15 \times \text{R\$ } 36.904,85 = \mathbf{R\$ 5.535,73}$$
-
----
-
-### 7.7 Preço Final do Projeto e Composição Financeira (Item 5.6 do Artefato)
-
-O preço final faturado ao cliente é obtido somando-se os Custos Diretos ($C$), Despesas Operacionais ($D$) e Lucro Líquido ($L$), dividindo o resultado por $(1 - \text{Alíquota DAS})$ para incorporar os impostos por dentro.
-
-#### 7.7.1 Cálculo do Preço do Projeto (Consultoria MVP)
-1. **Subtotal Líquido (Custos + Despesas + Lucro):**
-   $$\text{Subtotal Líquido} = \text{R\$ } 30.326,56 + \text{R\$ } 6.578,29 + \text{R\$ } 5.535,73 = \mathbf{R\$ 42.440,58}$$
-2. **Preço Bruto Base (com DAS 15,5% por dentro):**
-   $$\text{Preço Base Faturado} = \frac{\text{R\$ } 42.440,58}{1 - 0,1550} = \frac{\text{R\$ } 42.440,58}{0,8450} = \mathbf{R\$ 50.225,54}$$
-3. **Preço Bruto com Contingência de Projeto (10% de Reserva Técnica):**
-   Caso o cliente opte por incluir uma reserva de contingência de 10% para mudanças de escopo:
-   $$\text{Preço com Contingência} = \frac{\text{R\$ } 42.440,58 \times 1,10}{0,8450} = \frac{\text{R\$ } 46.684,64}{0,8450} = \mathbf{R\$ 55.248,10}$$
-
-A Tabela 5 consolida a composição do preço final do projeto ofertado ao Metrô de SP.
-
-#### Tabela 5 — Consolidação do Preço Final do Projeto de Consultoria
-| Componente da Formação de Preço | Métrico / Premissa | Valor Absoluto (R$) | % da Receita Bruta |
-| :--- | :--- | :---: | :---: |
-| **Custos Diretos de Pessoal** | 357,20 horas de engenharia/design | R$ 29.026,56 | 57,79% |
-| **Insumos e Licenças de Dev** | Banco PostgreSQL MVP e ferramentas | R$ 1.299,50 | 2,59% |
-| **Despesas Operacionais Indiretas** | Espaço, contabilidade, adm., domínio | R$ 6.578,29 | 13,10% |
-| **Lucro Operacional Desejado** | 15% sobre (Custos + Despesas) | R$ 5.535,73 | 11,02% |
-| **Preço Subtotal Líquido** | **Investimento Sem Tributos** | **R$ 42.440,58** | **84,50%** |
-| **Impostos Simples Nacional (DAS)** | Alíquota de 15,50% aplicada por dentro | R$ 7.784,96 | 15,50% |
-| **Preço Final Faturado ao Cliente** | **Valor Total da Nota Fiscal (NFS-e)** | **R$ 50.225,54** | **100,00%** |
-| **Opção com Contingência (+10%)** | **Preço Faturado com Contingência** | **R$ 55.248,10** | **—** |
-
----
-
-### 7.8 Análise de Viabilidade Econômica para o Metrô (Payback, ROI e Indicadores)
-
-Para avaliar o retorno econômico para o Metrô de SP, contrapõe-se o custo de aquisição da solução contra a economia de horas de trabalho de profissionais da **Gerência de Informações Operacionais / PMO do Metrô**.
-
-#### 7.8.1 Premissas para o Cálculo do Benefício
-
-1. **Driver Unificado de Volume e Tempo:**
-   - Adota-se o mesmo volume de **25.000 interações/mês** utilizado no dimensionamento da infraestrutura de nuvem.
-   - O tempo economizado por interação varia entre 3 e 30 segundos por consulta em relação à busca manual de informações em documentos no SharePoint e relatórios em PDF.
-2. **Custo do Homem-Hora do PMO do Metrô:**
-   - Salário-base mensal estimado para Analista/Gerente de PMO: R$ 8.000,00 para 160 horas de trabalho (R$ 50,00/hora sem encargos).
-   - Aplicando **100% de encargos sociais e trabalhistas** (padrão de custo total de funcionalismo/CLT público):
-     $$\text{Custo Real Hora PMO} = \text{R\$ } 50,00 \times 2,0 = \mathbf{R\$ 100,00 / hora}$$
-3. **Tratamento do Custo Recorrente de Nuvem (OPEX):**
-   - A infraestrutura de nuvem (**R$ 2.748,39 / mês**) é tratada estritamente como **custo recorrente mensal**, sendo deduzida da economia bruta de horas para apurar o benefício líquido mensal gerado.
-4. **Oportunidade de Capacidade Pré-Existente no Copilot Studio:**
-   - Como o Copilot Studio responde por **83,3% do custo de nuvem** (R$ 2.290,20/mês), caso o Metrô absorva esse consumo dentro do contrato corporativo existente com a Microsoft, o custo residual mensal de nuvem para o Metrô cai para apenas **R$ 458,19 / mês**.
-
-#### 7.8.2 Cenários de Retorno Financeiro e Payback
-
-A Tabela 6 apresenta a análise de viabilidade económica nos cenários Pessimista, Base e Otimista ($I = \text{R\$ } 42.440,58$).
-
-#### Tabela 6 — Análise de Payback e Retorno Financeiro do Metrô
-| Parâmetro / Indicador | Cenário Pessimista | Cenário Base | Cenário Otimista (Com Copilot Absorvido) |
-| :--- | :---: | :---: | :---: |
-| **Tempo Poupado por Interação** | 5 segundos | 15 segundos | 30 segundos |
-| **Horas Mensais Poupadas (PMO)** | 34,72 h / mês | 104,17 h / mês | 208,33 h / mês |
-| **Economia Bruta Mensal (R$ 100/h)** | R$ 3.472,00 | R$ 10.417,00 | R$ 20.833,00 |
-| **(-) OPEX Nuvem Recorrente** | (R$ 2.748,39) | (R$ 2.748,39) | (R$ 458,19) *(Copilot Isento)* |
-| **Benefício Líquido Mensal** | **R$ 723,61 / mês** | **R$ 7.668,61 / mês** | **R$ 20.374,81 / mês** |
-| **Payback Simples (Investimento R$ 42.440,58)** | **58,6 meses** | **5,5 meses** | **2,1 meses** |
-| **ROI Acumulado em 24 Meses** | **-59,1%** | **333,7%** | **1.052,2%** |
-
----
-
-### 7.9 Fluxo de Caixa do Projeto (Projeção Financeira e Mapeamento Sprint-Mês)
-
-O fluxo de caixa projeta as entradas e saídas de recursos durante os 5 meses de execução do contrato, mapeando o faturamento em 4 marcos trimestrais/mensais e o recolhimento do tributo DAS a cada recebimento.
-
-#### Tabela 7 — Fluxo de Caixa Projetado da Consultoria (Valores em R$)
-| Etapa / Mês | Receita Bruta Faturada | (-) Impostos DAS (15,5%) | Receita Líquida Entradas | Saídas Custos Diretos | Saídas Despesas Operacionais | Saldo Líquido do Mês | Saldo Acumulado em Caixa |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Mês 1** | R$ 12.556,39 | (R$ 1.946,24) | R$ 10.610,15 | (R$ 10.403,75) | (R$ 1.315,66) | (R$ 1.109,26) | **(R$ 1.109,26)** |
-| **Mês 2** | R$ 12.556,39 | (R$ 1.946,24) | R$ 10.610,15 | (R$ 11.629,38) | (R$ 1.315,66) | (R$ 2.334,89) | **(R$ 3.444,15)** |
-| **Mês 3** | R$ 12.556,39 | (R$ 1.946,24) | R$ 10.610,15 | (R$ 8.292,93) | (R$ 1.315,66) | R$ 1.001,56 | **(R$ 2.442,59)** |
-| **Mês 4** | R$ 12.556,37 | (R$ 1.946,24) | R$ 10.610,13 | R$ 0,00 | (R$ 1.315,66) | R$ 9.294,47 | **R$ 6.851,88** |
-| **Mês 5** | R$ 0,00 | R$ 0,00 | R$ 0,00 | R$ 0,00 | (R$ 1.316,15) | (R$ 1.316,15) | **R$ 5.535,73** |
-| **Total** | **R$ 50.225,54** | **(R$ 7.784,96)** | **R$ 42.440,58** | **(R$ 30.326,06)** | **(R$ 6.578,29)** | **R$ 5.535,73** | **R$ 5.535,73** |
+O custo-hora parte do salário mensal de referência de R$ 13.000,00 para Desenvolvedor Pleno contratado como PJ em São Paulo, consultado no Glassdoor, dividido por 160 horas mensais:
+
+**Custo-hora = R$ 13.000,00 / 160 h = R$ 81,25/h**
+
+Uma taxa única para as seis funções é coerente com a forma como a equipe trabalhou: a rotação obrigatória fez cada integrante atuar em três ou quatro funções ao longo do módulo, e o nível de senioridade é o mesmo em todas. Diferenciar a taxa por função exigiria atribuir senioridades que a equipe não tem. Como o valor é contratação PJ, ele já inclui os encargos do próprio prestador; não há encargos trabalhistas adicionais sobre o fornecedor.
+
+#### 7.3.2 Custo por função
+
+| Função | Horas | Custo-hora | Custo |
+|---|---:|---:|---:|
+| F1 Gestão de projeto e processos | 33,50 h | R$ 81,25 | R$ 2.721,88 |
+| F2 Negócio, requisitos e viabilidade | 51,75 h | R$ 81,25 | R$ 4.204,69 |
+| F3 Arquitetura, dados e nuvem | 69,25 h | R$ 81,25 | R$ 5.626,56 |
+| F4 Desenvolvimento de software e PLN | 125,25 h | R$ 81,25 | R$ 10.176,56 |
+| F5 UX/UI e frontend | 38,50 h | R$ 81,25 | R$ 3.128,13 |
+| F6 Qualidade e testes | 47,25 h | R$ 81,25 | R$ 3.839,06 |
+| **Construção do MVP** | **365,50 h** | | **R$ 29.696,88** |
+| Treinamento da equipe do Metrô | 8,00 h | R$ 81,25 | R$ 650,00 |
+| Operação assistida e repasse de conhecimento | 8,00 h | R$ 81,25 | R$ 650,00 |
+| **Total de pessoal** | **381,50 h** | | **R$ 30.996,88** |
+
+**Custo de pessoal = 381,50 h × R$ 81,25 = R$ 30.996,88**
