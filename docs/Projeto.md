@@ -8752,7 +8752,7 @@ Os testes funcionais verificam se o agente faz aquilo que os requisitos de 3.2 d
 
 Esta subseção verifica **comportamento observável na fronteira do middleware**, com os serviços externos dublados. A distinção com as demais subseções da seção 10 é de objeto, não de rigor. O que se testa aqui é o que a aplicação responde a uma requisição: o desfecho, o corpo devolvido, o que ficou gravado e o que deixou de acontecer. A conversa efetiva com Entra ID, Copilot Studio, Azure AI Content Safety e Azure Speech é objeto de 10.4 e de 10.5, que verificam contrato e integração reais. A regra de negócio sobre o portfólio — o que conta como projeto atrasado, o que caracteriza pendência — é objeto de 10.6. A consolidação da cobertura, com o total por requisito e as lacunas remanescentes, é objeto de 10.7. Quando um caso desta subseção depende de um serviço externo, ele depende do **dublê** desse serviço, e o teste falha por comportamento do middleware, nunca por indisponibilidade de terceiro.
 
-Convém dizer de frente em que estado o desenvolvimento está. A onda 1 de 9.1.2.1 está em curso na Sprint 3, e as demais seguem o sequenciamento de 9.1.2: guardas na onda 2, classificador integrado na onda 3, análise na onda 4 e rotinas na onda 5. Isso significa que a maior parte dos casos abaixo **ainda não é executável**, e não porque falte escrevê-los, mas porque o componente que eles exercitam ainda não existe no repositório. Cada caso declara, por isso, a onda em que se torna executável. Um planejamento que omitisse essa coluna pareceria mais completo e diria menos: é ela que permite ao revisor separar o que já pode ser cobrado do que só faz sentido cobrar na sprint seguinte.
+Os casos abaixo documentam a cobertura planejada e sua onda de origem. A existência de um caso no plano não comprova a implementação do componente nem sua aprovação: o estado observado de cada caso está na subseção 10.1.7 e nas evidências datadas da execução.
 
 ### 10.1.1 Convenções de identificação e formato
 
@@ -9002,7 +9002,7 @@ Há uma sutileza na exigência de sigilo que precisa ser explicitada, porque ela
 
 `TF-RF09-04` é o caso cuja técnica precisa ser dita, porque a asserção é sobre ausência e ausência não se verifica por inspeção visual. A comparação é feita contra um gabarito fixo de recusa por classe, e complementada por uma verificação de que nenhum *token* do prompt hostil — descontadas as palavras vazias — aparece no corpo devolvido. Uma implementação que ecoasse a instrução recebida ao explicar a recusa passaria em qualquer asserção de igualdade de desfecho e reprovaria aqui, que é exatamente o ponto.
 
-`TF-RF09-05` tem contraparte quantitativa. Aqui se verifica que um conjunto pequeno de solicitações legítimas de vocabulário próximo atravessa as barreiras; a **taxa de falso positivo**, com teto de 5% e reporte por barreira, é o RNF06 e está em 10.2, e depende do conjunto adversarial que ainda não existe.
+`TF-RF09-05` tem contraparte quantitativa. Aqui se verifica que um conjunto pequeno de solicitações legítimas de vocabulário próximo atravessa as barreiras; a **taxa de falso positivo**, com teto de 5% e reporte por barreira, é o RNF06 e está em 10.2.3.6, onde o conjunto adversarial foi executado contra o serviço real.
 
 **Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf09_guardas.py`. O Azure AI Content Safety é dublado, com veredito controlado por caso, o que permite exercitar `TF-RF09-06` sem depender de derrubar serviço real. O executor é dublado e devolve, em `TF-RF09-03`, uma resposta contaminada com instrução embutida, simulando o conteúdo recuperado do SharePoint que o cenário 4 de 5.3.8 descreve. A verificação de ordem de `TF-RF09-07` é feita sobre a sequência de chamadas registradas nos dublês, e não sobre o desfecho final, que seria o mesmo em várias ordens diferentes.
 
@@ -9096,7 +9096,7 @@ O conjunto tem **65 casos** distribuídos pelos doze requisitos funcionais, send
 | RF12 | 10.1.5.4 | 2 | 2 | 4 | Onda 1 |
 | **Total** | — | **33** | **32** | **65** | — |
 
-A leitura por onda diz o que a Sprint 3 pode cobrar. Dezesseis casos — os de RF01, RF02 e RF12 — tornam-se executáveis na onda 1, que está em curso; sete entram na onda 2, com as guardas; vinte e cinco na onda 3, quando o classificador é integrado; três na onda 4, com os recortes analíticos; onze na onda 5, com as rotinas e a varredura de pendências. Três permanecem fora do MVP. Nenhum caso foi escrito para ser executável antes do componente que ele exercita.
+A distribuição por onda continua útil para explicar a origem do planejamento; a execução atualizada e as lacunas observadas estão consolidadas em 10.1.7. RF07 permanece fora do MVP.
 
 **O critério de suficiência.** O piso de quatro casos por requisito, com pelo menos um positivo e um negativo, não é uma regra de contagem: é o mínimo que permite distinguir quatro situações que um conjunto menor confunde — o caminho previsto funciona, o caminho previsto falha quando deveria, o caminho não previsto é recusado, e a recusa acontece pela razão certa. RF03 e RF09 recebem oito e sete casos por concentrarem desfechos distintos que produzem efeito parecido para quem lê a resposta: em RF03, fora de escopo, baixa confiança, falta de permissão e entidade ausente; em RF09, três barreiras com dois formatos de recusa, mais a exigência de sigilo e a exigência simétrica de não barrar o legítimo. Nesses dois requisitos, um conjunto que verificasse apenas se houve recusa passaria com o comportamento errado.
 
@@ -9118,21 +9118,21 @@ A última linha merece detalhe, porque é a que mais facilmente passaria por omi
 
 Isso importa por uma razão prática. Um cenário negativo inventado verifica o que quem o escreveu imaginou que poderia dar errado; um cenário negativo derivado de fluxo de exceção verifica o que a especificação prometeu que aconteceria quando desse errado. A diferença aparece na revisão: o primeiro se discute por opinião, o segundo se confere contra a seção que o originou. É também o que permite afirmar que os negativos foram esgotados antes de acrescentar cenários novos — quando um fluxo de exceção de 3.5.3 não aparece como caso, é porque ele pertence a um requisito cujo conjunto está marcado como não executável no MVP.
 
-### 10.1.7 Resultado da execução funcional em 24/09/2026
+### 10.1.7 Resultado da execução funcional em 25/09/2026
 
-A suíte funcional foi executada sobre o commit `e9839df`, após a integração dos scripts de RF04 a RF12. O comando abaixo concluiu com código de saída zero em **241,89 segundos**:
+A suíte funcional foi executada sobre o commit `7637fa8d5c858b4c267f22abca1434d3b93badd2`, nesta branch. O comando abaixo concluiu com código de saída zero em **67,10 segundos**:
 
 ```powershell
 cd src\middleware
-.\.venv\Scripts\python.exe -m pytest tests\funcionais -vv -ra -p no:cacheprovider --basetemp "C:\Users\MarianaReis\AppData\Local\Temp\g02-pytest-416"
+.\.venv\Scripts\python.exe -m pytest tests\funcionais -vv -ra -p no:cacheprovider --basetemp "$env:TEMP\g02-funcionais-20260925"
 ```
 
-Foram coletadas **68 execuções** para os 65 identificadores planejados; a diferença decorre de casos parametrizados. O resultado foi **41 aprovações, 24 falhas esperadas (`xfail`) e 3 casos ignorados (`skip`)**. Portanto, o código de saída zero comprova que a suíte é reproduzível e que os comportamentos já implementados não regrediram, mas não significa que todos os requisitos estejam concluídos. Os `xfail` registram, de maneira executável, diferenças ainda existentes entre a especificação e o sistema.
+Foram coletadas **68 execuções** para os 65 identificadores planejados; a diferença decorre de casos parametrizados. O resultado foi **43 aprovações, 22 falhas esperadas (`xfail`) e 3 casos ignorados (`skip`)**. Portanto, o código de saída zero comprova que a suíte é reproduzível e que os comportamentos já implementados não regrediram, mas não significa que todos os requisitos estejam concluídos. Os `xfail` registram, de maneira executável, diferenças ainda existentes entre a especificação e o sistema.
 
 | RF | Aprovadas | `xfail` | `skip` | Leitura do resultado |
 |---|---:|---:|---:|---|
 | RF01 | 5 | 1 | 0 | Fluxos principais aprovados; perfil padrão para grupo desconhecido permanece como lacuna. |
-| RF02 | 5 | 2 | 0 | Upload e consulta funcionam nos cenários cobertos; faltam aferição da duração e catálogo estruturado de erros. |
+| RF02 | 7 | 0 | 0 | Os sete casos do canal texto/áudio passaram nesta execução. |
 | RF03 | 6 | 2 | 0 | Classificação e desfechos centrais aprovados; permissão de projeto e entidade ausente ainda não são distinguidas. |
 | RF04 | 1 | 4 | 0 | Consulta básica aprovada; cobertura das dimensões, propagação de fontes, indistinguibilidade 403/404 e ausência de dados permanecem incompletas. |
 | RF05 | 0 | 6 | 0 | Fluxo transacional com prévia e confirmação ainda não implementado. |
@@ -9143,16 +9143,11 @@ Foram coletadas **68 execuções** para os 65 identificadores planejados; a dife
 | RF10 | 5 | 0 | 0 | Registro único e desfechos aprovados nos cenários automatizados. |
 | RF11 | 6 | 0 | 0 | Cadastro, alteração, execução e histórico de rotinas aprovados nos cenários automatizados. |
 | RF12 | 4 | 0 | 0 | Histórico e isolamento entre usuários aprovados nos cenários automatizados. |
-| **Total** | **41** | **24** | **3** | **Execução concluída, com cobertura funcional ainda parcial.** |
+| **Total** | **43** | **22** | **3** | **Execução concluída, com cobertura funcional ainda parcial.** |
 
-Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente utilizado estão preservados em [`docs/evidencias/2026-09-24-testes-funcionais.txt`](evidencias/2026-09-24-testes-funcionais.txt). A execução utilizou `ASGITransport` e dublês nas fronteiras previstas pelos scripts; por isso, esta evidência não deve ser interpretada como comprovação de integração real com PostgreSQL, Entra ID, Copilot Studio, Azure Speech ou Content Safety.
+Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente utilizado estão preservados em [`docs/evidencias/2026-09-25-testes-funcionais.txt`](evidencias/2026-09-25-testes-funcionais.txt). A execução utilizou `ASGITransport` e dublês nas fronteiras previstas pelos scripts; por isso, esta evidência não deve ser interpretada como comprovação de integração real com PostgreSQL, Entra ID, Copilot Studio, Azure Speech ou Content Safety.
 
-> **Reexecução focal da correção #450 (25/09/2026).** Os sete casos de
-> `test_rf02_canais.py` passaram. Os dois `xfail` de RF02 foram removidos depois
-> da implementação da aferição de duração e do envelope estruturado. Essa
-> execução atualiza apenas a linha de RF02; os totais acima continuam sendo a
-> evidência histórica integral de 24/09 e não foram recalculados sem executar e
-> registrar novamente toda a bateria funcional.
+> **Comparação com a execução anterior.** Os sete casos de `test_rf02_canais.py` passaram nesta execução integral. Os dois casos antes marcados `xfail` foram resolvidos; os totais acima foram recalculados com toda a suíte.
 
 **Análise crítica.** A maior concentração de lacunas está nos RF05 e RF06, cujos fluxos ainda não estão implementados, e no RF04, que possui apenas um cenário aprovado. Os pontos de maior risco para a versão atual são a validação incompleta de áudio em RF02, a autorização e validação de entidades em RF03/RF04 e o comportamento da guarda de injeção quando o serviço externo falha em RF09. Os casos planejados para ondas futuras permanecem registrados como `xfail`, evitando que sejam apresentados como funcionalidades concluídas. Cada defeito confirmado deve ser vinculado a uma *issue* de correção antes do encerramento da issue de execução.
 
@@ -9210,61 +9205,13 @@ python -m pytest tests/desempenho/test_micro_latencia.py --benchmark-only
 python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
 ```
 
-#### 10.2.2.1 Resultado da execução — 22/09/2026
+#### 10.2.2.1 Resultado da execução — 25/09/2026
 
-O ambiente Docker foi iniciado com PostgreSQL populado, API e frontend. Para
-isolar o middleware, a execução usou `PERFORMANCE_MODE=true`: o executor devolve
-resposta sintética com atraso de 50 ms, Content Safety é dublado no perfil de
-carga e o classificador usa uma intenção determinística. O modo é opt-in e
-desligado por padrão; o benchmark isolado de `TNF-DES-02` continua medindo o
-classificador real com `httpx.MockTransport`.
+A micro-medição foi executada em Windows 11, Python 3.14.2, `pytest-benchmark` 5.3.0, sem serviço externo real. Os cinco casos passaram. Médias: regra de injeção 2,107 µs; pré-processamento 9,706 µs; classificador de injeção com `httpx.MockTransport` 3,067 ms; classificador de abuso com transporte dublado 3,032 ms; guarda de saída com transporte dublado 2,801 ms. São medidas locais, sujeitas à variação do host e sem latência Azure/Copilot.
 
-| Cenário | Requisições | Falhas | p50 | p95 | Situação |
-|---|---:|---:|---:|---:|---|
-| `TNF-DES-01` — baseline, 1 usuário | 77 | 0 | 77 ms | 81 ms | Aprovado |
-| `TNF-DES-03` — carga nominal, 10 usuários | 415 | 0 | 320 ms | 1.600 ms | Aprovado |
-| `TNF-DES-04` — pico, 30 usuários | 396 | 0 | 1.300 ms | 4.800 ms | Aprovado |
-| `TNF-DES-06` — executor excede timeout | 17 | 0 | 130 ms | 140 ms | Aprovado |
+O cenário Locust foi executado com um usuário, `PERF_TARGET=http://localhost:8000`, espera entre tarefas de 0,1 s e duração de 10 s. A API não estava disponível: a tentativa terminou com zero respostas HTTP válidas e falha de conexão (HTTP 0). Portanto, não há p50/p95 de carga utilizáveis, e `TNF-DES-01`, `TNF-DES-03`, `TNF-DES-04` e `TNF-DES-07` permanecem sem resultado válido nesta rodada. O cenário de concorrência com worker (`TNF-DES-05`) também não foi exercitado; o teste unitário do worker não demonstra execução de worker separado sob carga. `TNF-DES-06` não foi executado pelo Locust nesta tentativa.
 
-O limite operacional de `TNF-DES-07` é p95 menor ou igual a 8 s. Os resultados
-de `TNF-DES-03` e `TNF-DES-04` permanecem abaixo desse limite, portanto o
-critério foi aprovado nos dois recortes. O pico aumentou o p95 em 3,2 s sobre
-o nominal, desvio compatível com contenção de CPU e conexões durante a carga,
-mas sem recusa HTTP.
-
-O cenário `TNF-DES-06` configurou atraso sintético de 1.000 ms e timeout de
-100 ms. As respostas retornaram `falha_executor`, foram registradas pelo
-pipeline e o Locust confirmou o desfecho esperado. O cenário `TNF-DES-05`
-não foi aprovado: o worker encerra na inicialização com
-`NotImplementedError("Worker a implementar na onda 5")`, logo não existe ainda
-um disparo de rotina executável para medir concorrência com o chat.
-
-O `TNF-DES-02` também passou no benchmark isolado, com Content Safety dublado:
-
-| Etapa | Média | Mediana | Referência |
-|---|---:|---:|---|
-| Regra determinística de injeção | 1,89 µs | 1,70 µs | sub-100 ms arquitetural |
-| Pré-processamento textual | 9,78 µs | 9,10 µs | sub-100 ms arquitetural |
-| Classificador de injeção + dublê HTTP | 1,51 ms | 3,15 ms | 150–300 ms |
-| Classificador de abuso + dublê HTTP | 1,23 ms | 2,48 ms | 150–300 ms |
-| Guarda de saída + dublê HTTP | 1,10 ms | 1,54 ms | 100–200 ms |
-
-Os números acima são medições contra o ambiente Docker local com serviços
-externos dublados, não contra Content Safety ou Copilot reais. A execução real
-dos serviços de terceiro permanece fora desta evidência; misturá-la ao número
-do middleware tornaria a comparação com o orçamento não reproduzível.
-
-Com o ambiente ativo, a execução reproduzível usa uma sessão de teste e o
-executor sintético:
-
-```powershell
-$env:PERF_TARGET = "http://localhost:5173"
-$env:PERF_CHAT_PATH = "/api/chat"
-$env:PERF_SESSION_COOKIE = "<cookie-da-sessao-de-teste>"
-$env:PERF_EXPECTED_DESFECHO = "encaminhada"
-python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
-```
-
+Evidências brutas: `docs/evidencias/2026-09-25-benchmark.txt` e `docs/evidencias/2026-09-25-locust.txt`. Para repetir carga, iniciar API, PostgreSQL e executor sintético, configurar uma sessão de teste e usar o roteiro Locust documentado acima. Não reutilizar os números de carga registrados em 22/09 como resultado desta execução.
 ### 10.2.3 Testes dos requisitos não funcionais
 
 **Nota de escopo.** O card que originou esta entrega foi escrito sobre RNF01 a RNF05. O RNF06 e o RNF07 entraram na mesma revisão de escopo que acrescentou RF09 a RF12, conforme as notas de 3.3.1 e 3.4, e não possuem card próprio. Cobri-los aqui é o que evita que a eficácia das barreiras e a proteção do registro — os dois requisitos que sustentam, respectivamente, o RF09 e o par RF10 e RF12 — fiquem sem procedimento de medição. A extensão fica registrada neste parágrafo e na descrição do *merge request*.
@@ -9427,19 +9374,10 @@ O requisito tem dois critérios de aceitação em 3.3.1, e eles são **assimétr
 
 **Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf05_perfil.py`, com dez enunciados sintéticos e respostas dubladas para cada perfil. A ficha de avaliação registra termos esperados e indesejados no próprio caso; ela formaliza o critério que deverá ser revisado por avaliadores humanos quando o conteúdo do parceiro estiver disponível, sem apresentar a bancada sintética como validação humana. A adequação avaliada é a do recorte que o middleware entrega, e não a redação do executor. A verificação de exposição de `TNF-RNF05-02` é automatizada, por confronto entre o conteúdo devolvido e o conjunto de projetos autorizados para o perfil.
 
-**Resultado da execução local de 23/09/2026.** O comando
-`python -m pytest tests/rnf/test_rnf05_perfil.py -q` resultou em **6 passed**:
-`TNF-RNF05-01` passou para Diretoria, Liderança e Equipe, com **100% de
-adequação** em cada perfil; `TNF-RNF05-02` não encontrou exposição do projeto
-restrito; `TNF-RNF05-03` confirmou o mesmo enunciado com recortes de 3, 2 e 2
-trechos visíveis; e `TNF-RNF05-04` separou inadequação de exposição. A tentativa
-de executar toda a pasta `tests/rnf` ficou inconclusiva por `ModuleNotFoundError:
-aio_pika` ao coletar o teste preexistente do RNF04; esse bloqueio de ambiente
-não altera o resultado isolado do RNF05.
-
+**Resultado da execução em 25/09/2026.** A suíte `tests/rnf` foi executada integralmente nesta branch: seis casos de RNF05 passaram. A bancada sintética atingiu 100% de adequação em cada um dos três perfis, não observou exposição do projeto restrito e confirmou a separação entre inadequação e exposição. Isso não substitui a revisão humana dos enunciados e respostas com conteúdo do parceiro.
 #### 10.2.3.6 RNF06 — Eficácia das barreiras de segurança
 
-Este é o maior trabalho novo da seção, e a razão é direta: **o conjunto adversarial ainda não existe**. A própria 3.3.1 registra que o limiar de 90% de detecção e o teto de 5% de falso positivo são hipóteses de trabalho da equipe, a serem recalibradas sobre o primeiro conjunto construído. Medir o RNF06 depende, portanto, de construir antes o instrumento que o mede, e esta subseção especifica esse instrumento.
+O RNF06 possui conjunto adversarial versionado e uma primeira execução sistêmica contra o Azure AI Content Safety real, registrada nesta subseção. Os limiares de 90% de detecção e 5% de falso positivo continuam sendo hipóteses de trabalho da equipe; os resultados observados reprovaram parcialmente o requisito e orientam a recalibração com o parceiro.
 
 O conjunto tem duas metades, e nenhuma delas é dispensável. A metade hostil mede detecção. A metade legítima — solicitações válidas do catálogo formuladas com vocabulário próximo do adversarial — mede falso positivo. Sem a segunda não há como calcular a segunda métrica, e sem a segunda métrica a primeira é enganosa: 3.3.1 diz, no próprio texto do requisito, que uma barreira que bloqueia tudo atinge detecção total e torna o produto inútil.
 
@@ -9467,7 +9405,7 @@ Os números não são convenção. Eles decorrem da resolução exigida pelas du
 
 `TNF-RNF06-06` fecha uma lacuna que a matriz de 3.4 já apontava: o RNF06 alcança o RF11 porque o prompt de uma rotina atravessa as mesmas barreiras, e sem operador presente para perceber um falso positivo. Uma detecção que caísse no canal de rotina passaria despercebida por semanas, que é justamente o intervalo entre um disparo e o seguinte.
 
-**Execução.** O conjunto adversarial completo será versionado em `src/middleware/dados/adversarial/`, com um arquivo por vetor e a contraparte legítima em arquivo próprio, cada item marcado com vetor, barreira esperada e origem. A medição sistêmica rodará em `src/middleware/tests/rnf/test_rnf06_barreiras.py`, com o Azure AI Content Safety **real** e não dublado — dublar a barreira que se está medindo produziria o número do dublê. É a única exceção à regra de dublagem declarada em 10.1 e nesta seção, e ela vale apenas para o RNF06.
+**Execução.** O conjunto completo está em `src/middleware/dados/adversarial/`, com casos por vetor e contraparte legítima. A medição sistêmica está implementada em `src/middleware/tests/rnf/test_rnf06_barreiras.py` e foi executada contra o Azure AI Content Safety **real**, sem dublê. A rodada de 25/09 deixou esse teste externo ignorado porque requer ativação e credenciais; a conclusão sistêmica anterior continua explicitamente parcial e reprovada abaixo.
 
 Uma primeira bancada binária, de escopo menor, foi implementada em `app/pipeline/guardas/abuso/bancada.py` para calibrar especificamente o limiar das categorias de conteúdo. O conjunto `dados/bancada-content-safety.csv` contém 32 enunciados definidos antes da medição: 16 solicitações legítimas de portfólio e 16 casos sintéticos distribuídos igualmente entre `Hate`, `SelfHarm`, `Sexual` e `Violence`. A execução de 19/09/2026 contra o recurso real produziu:
 
@@ -9534,7 +9472,7 @@ O prazo de retenção contra o qual os casos rodam é **provisório**. Ele depen
 
 `TNF-RNF07-04` é a contraparte necessária de `TNF-RNF07-02`. Um expurgo que apagasse tudo satisfaria a meta de zero registro vencido e destruiria a trilha de auditoria que o RF10 e o RNF02 exigem — a mesma armadilha que o RNF06 evita ao exigir detecção e falso positivo juntos. Requisito com meta de zero em uma direção precisa, quase sempre, de um caso que verifique a direção oposta.
 
-**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf07_retencao.py`, contra o PostgreSQL 16 do contêiner de teste, com registros de data controlada inseridos por *fixture* para exercitar as duas bordas do prazo. O expurgo é acionado diretamente pelo teste, e não pela passagem do tempo, pela mesma razão registrada nos casos de rotina do RF11. A verificação de cifra é feita sobre o conteúdo armazenado, e não sobre a resposta da aplicação, que devolveria o dado decifrado em qualquer configuração.
+**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf02_07_auditoria.py`; a execução desta rodada não usou PostgreSQL real, com registros de data controlada inseridos por *fixture* para exercitar as duas bordas do prazo. O expurgo é acionado diretamente pelo teste, e não pela passagem do tempo, pela mesma razão registrada nos casos de rotina do RF11. A verificação de cifra é feita sobre o conteúdo armazenado, e não sobre a resposta da aplicação, que devolveria o dado decifrado em qualquer configuração.
 
 ```powershell
 cd src\middleware
@@ -9548,13 +9486,13 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | Conjunto | Subseção | Positivos | Negativos | Instrumento | Situação do instrumento |
 |---|---|:-:|:-:|---|---|
 | RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
-| RNF02 | 10.2.3.2 | 1 | 3 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Disponível e executado em PostgreSQL |
+| RNF02 | 10.2.3.2 | 1 | 3 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Executado localmente; conferência PostgreSQL real permanece fora desta execução |
 | RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
 | RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Disponível e executado em janela local; medição implantada ainda pendente |
-| RNF05 | 10.2.3.5 | 2 | 2 | Conjunto de enunciados por perfil, com avaliação humana da adequação e verificação automatizada da exposição | A construir |
+| RNF05 | 10.2.3.5 | 2 | 2 | `tests/rnf/test_rnf05_perfil.py` | Executado: 6 aprovados na bancada sintética; validação humana ainda pendente |
 | RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
 | RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
-| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência, com o executor dublado em latência sintética | A construir |
+| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Microbenchmarks executados; Locust sem API disponível, sem resultado válido de carga |
 | **Total** | — | **21** | **16** | — | — |
 
 A linha de desempenho é a única sem requisito de origem, e o identificador `TNF-DES` registra isso em vez de escondê-lo. A ancoragem está em 10.2.1: os parâmetros vêm do orçamento arquitetural de 5.1.7.3 e do limite operacional de 9.1.8, que divergem entre si, e a reconciliação adotada reporta contra os dois e declara falha apenas no segundo. Enquanto um RNF de desempenho não for formalizado, essa linha permanece sustentada por uma decisão desta seção, e não pela especificação de requisitos.
@@ -11236,13 +11174,67 @@ substituição.
 
 ## 10.6 Testes de Regras de Negócio
 
-[Preencher]
+Esta seção relaciona regras já implementadas e verificadas por testes existentes;
+não acrescenta cenários artificiais. As evidências detalhadas e a execução funcional
+integral estão em 10.1.7; os testes de retenção e disponibilidade estão em 10.2.3.
+
+| Regra de negócio | Testes reais | Resultado observado nesta revisão | Lacuna ou limite |
+|---|---|---|---|
+| Controle de acesso e autorização antes do pipeline | `tests/funcionais/test_rf01_acesso.py`; `tests/funcionais/test_rf04_consulta.py` | Acesso autorizado, recusa de sessão ausente/expirada e proteção de projeto alheio aprovados; ver totais por RF em 10.1.7 | Claim sem perfil correspondente continua `xfail`; RF04 tem casos ainda pendentes conforme a tabela funcional |
+| Isolamento entre usuários no histórico | `tests/funcionais/test_rf12_historico.py` | Casos de histórico e isolamento aprovados na execução funcional | Exercitado com dependências isoladas; não substitui teste de integração implantado |
+| Registro único por solicitação e registro dos desfechos | `tests/funcionais/test_rf10_registro.py`; `tests/rnf/test_rnf02_07_auditoria.py` | Fluxos funcionais de registro aprovados; TNF-RNF02-01 a 04 aprovados | Execução local; persistência PostgreSQL de produção não é demonstrada por estes testes unitários/funcionais |
+| Confirmação antes de alterações | `tests/funcionais/test_rf05_transacoes.py` | Casos presentes, mas marcados `xfail` | Fluxo de alteração com prévia e confirmação não implementado |
+| Idempotência | `tests/funcionais/test_rf10_registro.py`; `tests/funcionais/test_rf11_rotinas.py`; verificações de integração `tests/integration/test_agendador_persistencia.py` | Os testes funcionais de RF10/RF11 passaram | Os testes de integração com armazenamento/agendador real não fazem parte das suítes executadas nesta rodada |
+| Guardas e invariantes da ordem do pipeline | `tests/funcionais/test_rf09_guardas.py`; `tests/rnf/test_rnf06_barreiras.py` | Ordem/invariantes funcionais aprovadas; TNF-RNF06 manteve reprovação parcial conforme 10.2.3.6 | Falha da guarda de injeção ainda é `xfail`; eficácia real de injeção e abuso abaixo da meta |
+| Agendamento e execução de rotinas | `tests/funcionais/test_rf11_rotinas.py`; `tests/unit/test_agendador_rotinas.py`; `tests/unit/test_worker.py` | Cadastro, agenda/fuso, execução e histórico cobertos e aprovados nas suítes correspondentes | Corrida com PostgreSQL/worker separado e concorrência com chat ainda dependem de integração; TNF-DES-05 sem aprovação |
+| Retenção e expurgo | `tests/rnf/test_rnf02_07_auditoria.py` | Quatro casos de RNF07 aprovados, incluindo acesso e limites de expurgo | Cifra em repouso não comprovada; prazo segue provisório e depende de validação com o parceiro |
 
 ## 10.7 Cobertura Consolidada do Artefato de Testes
 
-O planejamento funcional cobre RF01–RF12 com **65 casos: 33 positivos e 32 negativos**, discriminados por requisito e onda em 10.1.6; RF07 permanece fora do MVP. Os RNF01–RNF07 são rastreados em 10.2.4, com desempenho nos casos TNF-DES01–07. A matriz 10.5.9 relaciona requisitos e testes de integração, incluindo a estratégia VHS; o roteiro de usabilidade está em 10.3, com pelo menos cinco participantes externos à turma e SUS.
+A matriz sintetiza o requisito, o script executável, o resultado desta rodada, a
+evidência textual e a lacuna remanescente. “Parcial” significa que existem
+comportamentos aprovados, mas algum critério ou cenário continua pendente; não é
+uma declaração de conformidade integral.
 
-Essa é **cobertura planejada de requisitos**, não percentual de código executado. A meta de 80% de 9.1.8 permanece pendente de medição consolidada. Resultados de carga, validação dos serviços externos e sessões de usabilidade só devem ser registrados após execução; testes com mocks e fitas provisórias não substituem essas evidências.
+| Requisito | Script / seção | Resultado | Evidência | Lacuna |
+|---|---|---|---|---|
+| RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | Parcial: 4 aprovados, 1 `xfail` | `docs/evidencias/2026-09-25-testes-funcionais.txt` | Claim sem perfil correspondente |
+| RF02 — canais | `tests/funcionais/test_rf02_canais.py` | Aprovado: 7 aprovados | mesma evidência | Limites desta bateria: dublês; integrações reais são cobertas em 10.5 |
+| RF03 — intenções | `tests/funcionais/test_rf03_intencoes.py` | Parcial: ver tabela 10.1.7 | mesma evidência | Casos `xfail` de permissão/entidade |
+| RF04 — consulta | `tests/funcionais/test_rf04_consulta.py` | Parcial: 1 aprovado, 4 `xfail` | mesma evidência | Dimensões, fontes, autorização indistinguível e ausência de dados |
+| RF05 — transações | `tests/funcionais/test_rf05_transacoes.py` | Reprovado/pendente: 6 `xfail` | mesma evidência | Fluxo de alteração com confirmação ainda não existe |
+| RF06 — pendências | `tests/funcionais/test_rf06_pendencias.py` | Fora do MVP nesta entrega: 5 `xfail` | mesma evidência | Varredura e aviso proativo planejados para onda posterior |
+| RF07 — análise documental | `tests/funcionais/test_rf07_analise.py` | Fora do MVP: 3 `skip` | mesma evidência | Escopo explicitamente excluído do MVP |
+| RF08 — relatórios | `tests/funcionais/test_rf08_relatorios.py` | Parcial: ver tabela 10.1.7 | mesma evidência | Perfil, suficiência e filtro de fontes |
+| RF09 — guardas | `tests/funcionais/test_rf09_guardas.py` | Parcial: ver tabela 10.1.7 | mesma evidência; RNF em `2026-09-25-testes-rnf-perimetro.txt` | Falha fechada da guarda de injeção; RNF06 abaixo da meta |
+| RF10 — registro | `tests/funcionais/test_rf10_registro.py` | Aprovado na bateria funcional | evidência funcional | Persistência real verificada separadamente por integração |
+| RF11 — rotinas | `tests/funcionais/test_rf11_rotinas.py` | Aprovado na bateria funcional | evidência funcional | Worker real e corrida concorrente ainda não demonstrados |
+| RF12 — histórico | `tests/funcionais/test_rf12_historico.py` | Aprovado na bateria funcional | evidência funcional | Integração implantada fora desta execução |
+| RNF01 — perímetro | `tests/perimetro/test_perimetro_declarado.py` | Aprovado: 5 casos | `2026-09-25-testes-rnf-perimetro.txt` | Inspeção do perímetro não comprova configuração implantada |
+| RNF02 — rastreabilidade | `tests/rnf/test_rnf02_07_auditoria.py` | Aprovado nos casos executados | mesma evidência | Persistência real requer PostgreSQL |
+| RNF03 — precisão | `app/pipeline/intencao/avaliacao.py` | Resultado já registrado em 5.4.11 | 5.4.11 | Reproduzir na mudança do modelo/conjunto |
+| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py` | Parcial: lógica passou; janela com PostgreSQL ignorada | mesma evidência | Medição contínua em ambiente implantado |
+| RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
+| RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
+| RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
+| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Microbenchmarks aprovados; cenário Locust reprovado por API indisponível | `2026-09-25-benchmark.txt`; `2026-09-25-locust.txt` | Reexecutar carga com API, banco e executor sintético ativos; TNF-DES-05 pendente |
+| Cobertura de código | `python -m pytest --cov=app --cov-report=term-missing` | 73,63% no escopo unitário/funcional/RNF/perímetro; abaixo de 80% | `2026-09-25-cobertura-backend.txt` | Meta de 80% e limitações documentadas abaixo |
+| Integração | matriz 10.5.9 e scripts `tests/integration/` | Consultar resultados e estratégia da seção 10.5 | seção 10.5 | Não confundir bateria funcional dublada com serviço real |
+
+**Cobertura de código.** A execução sobre `tests/unit`, `tests/funcionais`, `tests/rnf` e `tests/perimetro` concluiu com 933 aprovados, 10 ignorados e 22 `xfail`; mediu **73,63%** de cobertura de linhas/branches configurados para `app`, abaixo da meta de 80% de 9.1.8. A tabela completa e linhas ausentes estão em `docs/evidencias/2026-09-25-cobertura-backend.txt`. Entre os módulos com menor cobertura estão `app/webhooks/drive/__main__.py` (0%), `app/webhooks/portfolio/__main__.py` (0%), `app/webhooks/portfolio/aplicacao.py` (31,11%), `app/rag/vetorial/provisionar.py` (39,25%), `app/webhooks/portfolio/recebimento.py` (40,43%) e `app/webhooks/drive/manutencao.py` (41,10%). Os dois `__main__.py` são pontos de entrada; os módulos de processamento/integração indicam lacunas mais relevantes.
+
+`python -m pytest --cov=app --cov-report=term-missing` iniciou a suíte completa de 1.187 itens, mas ficou sem progresso durante teste de integração externa e foi interrompido. A medição concluída excluiu `tests/integration`, portanto não é cobertura integral de integração e serviços. As métricas também são limitadas pelos `xfail`, `skip`, dependências dubladas, funcionalidades fora do MVP e módulos não carregados na execução. Para aproximar a meta sem testes artificiais, priorizar webhooks reais, provisionamento vetorial, persistência/worker e ramos de falha; repetir após validar as integrações externas.
+**Riscos para liberação.** RF05 ainda não efetiva alterações com confirmação;
+RF06 e RF07 estão fora do MVP; RF04/RF08 permanecem parciais; a guarda de injeção
+não falha de modo seguro em uma indisponibilidade; o RNF06 reprova parcialmente;
+a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
+contínua, persistência PostgreSQL e carga Locust implantada seguem pendentes.
+
+**Conclusão crítica.** Os resultados comprovam uma base automatizada executável e
+algumas regras centrais cobertas, mas não sustentam declaração de conformidade
+integral do artefato nem prontidão de liberação. RFs parciais, RNF06, proteção em
+repouso, observabilidade/worker e a carga real exigem resolução ou aceitação
+explícita de risco antes da liberação.
 
 # 11. Procedimentos de Implantação
 
