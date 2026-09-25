@@ -1,0 +1,56 @@
+# origem: Azure AI Content Safety (tenant g02/Inteli)
+# issue: #427
+# Fita gravada contra o serviço real.
+interactions:
+- request:
+    body: '{"text": "Pessoas desse grupo s\u00e3o inferiores e n\u00e3o merecem respeito",
+      "categories": ["Hate", "SelfHarm", "Sexual", "Violence"]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      content-length:
+      - '137'
+      content-type:
+      - application/json
+      host:
+      - content-safety-metrosp-g02.cognitiveservices.azure.com
+      ocp-apim-subscription-key:
+      - REDIGIDO-PELO-VHS
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://content-safety-metrosp-g02.cognitiveservices.azure.com/contentsafety/text:analyze?api-version=2024-09-01
+  response:
+    body:
+      string: '{"blocklistsMatch":[],"categoriesAnalysis":[{"category":"Hate","severity":2},{"category":"SelfHarm","severity":0},{"category":"Sexual","severity":0},{"category":"Violence","severity":0}]}'
+    headers:
+      api-supported-versions:
+      - 2023-04-30-preview,2023-05-30-preview,2023-10-01,2023-10-15-preview,2023-10-30-preview,2024-02-15-preview,2024-03-10-preview,2024-03-30-preview,2024-09-01,2024-09-15-preview,2024-09-30-preview,2025-09-15-preview,2026-07-01-preview
+      apim-request-id:
+      - 91f16988-6dd0-457c-b575-d114758d4571
+      azureml-served-by-cluster:
+      - hyena-brazilsouth-01
+      content-type:
+      - application/json; charset=utf-8
+      csp-billing-usage:
+      - CognitiveServices.ContentSafety.Text:Analyze=1
+      date:
+      - Wed, 23 Sep 2026 22:32:21 GMT
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ms-region:
+      - Brazil South
+    status:
+      code: 200
+      message: OK
+version: 1

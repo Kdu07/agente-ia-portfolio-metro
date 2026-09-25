@@ -96,6 +96,53 @@ Gatilhos de regravação, de §10.5.4.4: fechamento de sprint, antes de uma
 suíte não reproduziu. **O diff da fita é o alerta** — quando ele muda, a
 notícia é sobre o fornecedor, e vale mais que o teste ter passado.
 
+## Regravação por serviço
+
+### Content Safety
+
+Fitas em `content_safety/` cobrem as operações de análise de categorias de conteúdo.
+Na reprodução, os testes usam endpoint e chave fictícios: a fita pode ser
+executada sem `.env`, sem credencial real e sem rede. As credenciais só são
+exigidas quando `VHS_GRAVANDO=1`.
+Para regravar:
+
+```powershell
+cd src\middleware
+$env:VHS_GRAVANDO = "1"
+python -m pytest tests/integration/externos/test_content_safety_real.py --record-mode=all
+Remove-Item Env:\VHS_GRAVANDO
+```
+
+**Nota:** Prompt Shields (injeção direta e indireta) requerem configuração adicional
+e ainda não foram gravados. As fitas atuais cobrem apenas a análise de categorias.
+
+### Direct Line
+
+As futuras fitas em `directline/` cobrirão o início da conversa e o envio do
+turno seguinte pelo Copilot Studio via Direct Line.
+
+**Status de implementação:** O cliente Direct Line ainda não está implementado
+(`app/copilot/client.py` levanta `NotImplementedError`). Os testes estão marcados
+com `@pytest.mark.skip` e serão ativados quando:
+
+1. O cliente Direct Line for implementado com chamadas reais à API
+2. O `DIRECTLINE_SECRET` estiver configurado no `.env`
+3. As credenciais do canal do Copilot Studio estiverem disponíveis
+
+Timeout e respostas 401, 403 e 503 serão cobertos com `MockTransport` ou
+`respx`, e não com VHS: timeout não produz resposta para gravar, e erros
+controlados precisam ser reproduzidos sem provocar falhas deliberadas no
+serviço real.
+
+Para gravar quando o cliente estiver implementado:
+
+```powershell
+cd src\middleware
+$env:VHS_GRAVANDO = "1"
+python -m pytest tests/integration/externos/test_directline_real.py --record-mode=all
+Remove-Item Env:\VHS_GRAVANDO
+```
+
 ## Onde a fita não serve
 
 Áudio do Speech (WebSocket), timeout, 429/503 e expiração de token não
