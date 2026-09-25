@@ -18,9 +18,11 @@
 #   apps       middleware e web; o worker de rotinas só com COM_WORKER=1
 #   entra      redirect URI do login no registro de aplicativo
 #   alertas    grupo de ação, alerta de reinício e orçamento
+#   pipeline   identidade do GitLab CI no estágio, por OIDC e sem segredo
 #   fechar     remove o acesso temporário ao banco
 #   conferir   só leitura: segredos por referência ao cofre, TLS e rede do banco
-# Fora de `tudo`: conta, ligar, desligar, parar, retomar, saude e local
+# Fora de `tudo`: conta, ligar, desligar, parar, retomar, saude, rebaixar
+# (downgrade do alembic antes de voltar a uma imagem anterior) e local
 # (grava as chaves do Content Safety e do Speech no .env da máquina).
 #
 # Cada passo testa se o recurso existe antes de criar: rodar de novo não
@@ -116,16 +118,17 @@ tem_worker() {
   existe az containerapp show -g "$RG" -n "$APP_WORKER"
 }
 
-executar_job() { # nome do job
-  local execucao estado
-  execucao=$(azv containerapp job start -g "$RG" -n "$1" --query name)
+executar_job() { # nome do job [opções do `job start`]
+  local nome=$1 execucao estado
+  shift
+  execucao=$(azv containerapp job start -g "$RG" -n "$nome" "$@" --query name)
   echo "  execução $execucao"
   while :; do
-    estado=$(azv containerapp job execution show -g "$RG" -n "$1" \
+    estado=$(azv containerapp job execution show -g "$RG" -n "$nome" \
       --job-execution-name "$execucao" --query properties.status)
     case "$estado" in
-      Succeeded) echo "  $1: Succeeded"; return 0 ;;
-      Failed | Stopped | Degraded) echo "  $1: $estado (ver logs do job)" >&2; return 1 ;;
+      Succeeded) echo "  $nome: Succeeded"; return 0 ;;
+      Failed | Stopped | Degraded) echo "  $nome: $estado (ver logs do job)" >&2; return 1 ;;
     esac
     sleep 10
   done
@@ -167,9 +170,21 @@ fase_fundacao() {
 }
 
 fase_imagens() {
-  # Local, com Docker: o `az acr build` não roda em assinatura de crédito.
+  # Com Docker, local ou no pipeline: o `az acr build` não roda em
+  # assinatura de crédito.
   az acr login -n "$ACR"
-  docker build -t "$IMG_API" "$(caminho_nativo "$RAIZ/src/middleware")"
+  # No pipeline o Docker começa vazio. Partindo da imagem em uso no
+  # estágio, o torch e o modelo (uns 3 GB) só são refeitos quando o
+  # pyproject muda, e o push só leva as camadas novas.
+  local cache=() anterior
+  if [ -n "${CI:-}" ]; then
+    anterior=$(azv containerapp show -g "$RG" -n "$APP_API" \
+      --query "properties.template.containers[0].image" 2>/dev/null || true)
+    if [ -n "$anterior" ] && docker pull -q "$anterior"; then
+      cache=(--cache-from "$anterior")
+    fi
+  fi
+  docker build "${cache[@]}" -t "$IMG_API" "$(caminho_nativo "$RAIZ/src/middleware")"
   docker build -t "$IMG_WEB" "$(caminho_nativo "$RAIZ/src/web")"
   docker push "$IMG_API"
   docker push "$IMG_WEB"
@@ -382,6 +397,24 @@ fase_migracao() {
       --set-env-vars "DATABASE_URL=secretref:database-url" -o none
   fi
   executar_job "$JOB_MIGRACAO"
+}
+
+# Desfaz migrações antes de voltar a uma imagem anterior: a imagem antiga
+# não conhece as revisões mais novas, e o `upgrade head` dela falharia. O
+# downgrade roda com a imagem que está no job, que conhece as duas pontas.
+# Depois dele, a volta é o deploy normal da tag antiga (capítulo 11.4 do
+# Projeto.md):
+#   REVISAO=<head do alembic na versão de destino> provisionar.sh prd rebaixar
+# O `job start` com --image substitui o contêiner inteiro da execução: o
+# ambiente precisa ir de novo, com o banco por referência ao segredo.
+fase_rebaixar() {
+  local revisao="${REVISAO:?informe REVISAO=<revisão do alembic de destino>}" imagem
+  imagem=$(azv containerapp job show -g "$RG" -n "$JOB_MIGRACAO" \
+    --query "properties.template.containers[0].image")
+  echo "  alembic downgrade $revisao com $imagem"
+  executar_job "$JOB_MIGRACAO" --image "$imagem" --container-name migracao \
+    --cpu 1 --memory 2Gi --command alembic --args downgrade "$revisao" \
+    --env-vars "DATABASE_URL=secretref:database-url" AQUECER_MODELOS=false
 }
 
 fase_dados() {
@@ -638,6 +671,45 @@ JSON
   echo "  orçamento de $ORCAMENTO por ano com alertas em 50, 80 e 100% para $email"
 }
 
+# Identidade do pipeline do GitLab neste estágio. Não há segredo: a Azure
+# troca o token OIDC que o GitLab emite para o job por um token de acesso,
+# desde que o token venha deste projeto e do ramo do estágio (develop → dev,
+# main → prd). Os papéis cobrem só o que `imagens` e `implantar.sh` fazem,
+# e só nos recursos deste estágio. O client id impresso vai para a variável
+# AZURE_CLIENT_ID do GitLab, com escopo de ambiente igual ao estágio.
+#
+# Para testar uma branch no dev antes do merge, RAMO=<branch> cria mais uma
+# credencial federada; ela sai com `az identity federated-credential delete`.
+fase_pipeline() {
+  if [ "$ESTAGIO" = prd ] && [ "$RAMO" != main ]; then
+    echo "  o prd só aceita a main" >&2
+    return 1
+  fi
+  existe az identity show -g "$RG" -n "$ID_CI" ||
+    az identity create -g "$RG" -n "$ID_CI" -l "$LOC" -o none
+  local credencial="gitlab-${RAMO//\//-}"
+  existe az identity federated-credential show -g "$RG" --identity-name "$ID_CI" -n "$credencial" ||
+    az identity federated-credential create -g "$RG" --identity-name "$ID_CI" -n "$credencial" \
+      --issuer "$GITLAB_EMISSOR" --audiences api://AzureADTokenExchange \
+      --subject "project_path:$GITLAB_PROJETO:ref_type:branch:ref:$RAMO" -o none
+  echo "  credencial $credencial: $GITLAB_PROJETO, ramo $RAMO"
+
+  carregar_ids
+  local principal alvo
+  principal=$(azv identity show -g "$RG" -n "$ID_CI" --query principalId)
+  # Leitura do grupo: estado do banco, ambiente, cofre e registro.
+  atribuir "$principal" ServicePrincipal Reader "$(azv group show -n "$RG" --query id)"
+  atribuir "$principal" ServicePrincipal AcrPush "$ACR_ID"
+  for alvo in "containerapp $APP_API" "containerapp $APP_WEB" "containerapp job $JOB_MIGRACAO"; do
+    # shellcheck disable=SC2086 # o tipo tem uma ou duas palavras
+    atribuir "$principal" ServicePrincipal Contributor "$(azv ${alvo% *} show -g "$RG" -n "${alvo##* }" --query id)"
+  done
+  # Atualizar um app com identidade atribuída pelo usuário exige poder
+  # atribuir essa identidade, mesmo quando só a imagem muda.
+  atribuir "$principal" ServicePrincipal "Managed Identity Operator" "$ID_RES"
+  echo "  AZURE_CLIENT_ID ($ESTAGIO): $(azv identity show -g "$RG" -n "$ID_CI" --query clientId)"
+}
+
 fase_fechar() {
   existe az postgres flexible-server firewall-rule show -g "$RG" --server-name "$PG" --name provisionamento &&
     az postgres flexible-server firewall-rule delete -g "$RG" --server-name "$PG" --name provisionamento --yes -o none
@@ -832,7 +904,7 @@ fase_saude() {
 [ $# -gt 0 ] || set -- tudo
 for fase in "$@"; do
   if [ "$fase" = tudo ]; then
-    set -- fundacao imagens cofre banco cognitivos segredos ambiente migracao dados apps entra alertas fechar conferir
+    set -- fundacao imagens cofre banco cognitivos segredos ambiente migracao dados apps entra alertas pipeline fechar conferir
     for f in "$@"; do
       echo "== $f ($ESTAGIO)"
       "fase_$f"

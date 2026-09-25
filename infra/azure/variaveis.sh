@@ -61,6 +61,17 @@ APP_WEB=ca-web-$ESTAGIO
 APP_WORKER=ca-worker-$ESTAGIO
 JOB_MIGRACAO=caj-migracao-$ESTAGIO
 
+# Entrega contínua: o pipeline do GitLab entra na Azure por OIDC, com a
+# identidade do estágio, e só a partir do ramo que implanta nele. RAMO
+# pode ser trocado para testar uma branch no dev (ver fase pipeline).
+GITLAB_EMISSOR=https://git.inteli.edu.br
+GITLAB_PROJETO=graduacao/2026-2a/t17/g02
+ID_CI=id-prata-ci-$ESTAGIO
+case "$ESTAGIO" in
+  dev) RAMO="${RAMO:-develop}" ;;
+  prd) RAMO="${RAMO:-main}" ;;
+esac
+
 TAG="${TAG:-$(git rev-parse --short HEAD)}"
 IMG_API=$ACR.azurecr.io/prata-middleware:$TAG
 IMG_WEB=$ACR.azurecr.io/prata-web:$TAG

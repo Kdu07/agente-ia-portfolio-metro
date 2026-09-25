@@ -1,6 +1,9 @@
-# Pipeline de verificação: análise estática, tipos e testes das duas aplicações
-# a cada merge request. Com "Pipelines must succeed" ligado no projeto, qualquer
-# job vermelho impede o merge. Ver Projeto.md 10.5.8.
+# Verificação e entrega contínua. Em cada merge request: análise estática,
+# tipos e testes das duas aplicações; com "Pipelines must succeed" ligado no
+# projeto, qualquer job vermelho impede o merge (Projeto.md 10.5.8). Na
+# develop, depois dos testes, as imagens vão para o registro e o dev é
+# atualizado; na main, as imagens são publicadas e o prd espera um clique
+# (Projeto.md 11.2).
 #
 # A automação do board não mora aqui: ela vive na branch órfã `ci/agenda-cadu`,
 # que tem o próprio `.gitlab-ci.yml` e nenhum ancestral comum com este.
@@ -8,16 +11,20 @@
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    # Push em branch com MR aberto já dispara a pipeline do MR; sem esta regra
-    # cada push rodaria tudo duas vezes.
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-      when: never
+    # A develop e a main rodam mesmo com MR aberto (a develop → main do fim
+    # da sprint): é a pipeline de branch que implanta. Outras branches só têm
+    # a pipeline do MR, para cada push não rodar tudo duas vezes.
     - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "main"
+    # "Run pipeline" na interface. Com IMPLANTAR=dev, a branch escolhida vai
+    # para o dev, se a identidade do dev aceitar aquele ramo (fase pipeline
+    # do provisionar.sh).
     - if: $CI_PIPELINE_SOURCE == "web"
 
 stages:
   - lint
   - teste
+  - imagens
+  - implantar
 
 default:
   interruptible: true
@@ -130,3 +137,100 @@ web:vitest:
     when: always
     reports:
       junit: src/web/relatorio-vitest.xml
+
+# === Entrega contínua (Azure) ===
+#
+# Sem segredo guardado no GitLab: o job recebe um token OIDC, e a Azure o
+# troca por acesso à identidade id-prata-ci-<estágio>, que só aceita tokens
+# deste projeto vindos do ramo do estágio. AZURE_CLIENT_ID tem escopo de
+# ambiente (dev ou prd); AZURE_TENANT_ID e AZURE_SUBSCRIPTION_ID valem para
+# os dois. Nenhuma das três é sigilosa.
+
+.azure:
+  image: mcr.microsoft.com/azure-cli:2.90.0
+  # Um deploy cancelado no meio deixaria a migração feita e a imagem velha.
+  interruptible: false
+  id_tokens:
+    AZURE_JWT:
+      aud: api://AzureADTokenExchange
+  variables:
+    # A mesma tag no build e no deploy; o variaveis.sh a respeita.
+    TAG: $CI_COMMIT_SHORT_SHA
+  before_script:
+    - command -v curl >/dev/null || tdnf install -y -q curl
+    - az login --service-principal -u "$AZURE_CLIENT_ID" -t "$AZURE_TENANT_ID"
+      --federated-token "$AZURE_JWT" -o none
+    - az account set -s "$AZURE_SUBSCRIPTION_ID"
+
+.dev:
+  variables:
+    ESTAGIO: dev
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "web" && $IMPLANTAR == "dev"
+
+.prd:
+  variables:
+    ESTAGIO: prd
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"
+
+# O mesmo `provisionar.sh imagens` da máquina, contra um Docker do serviço.
+# O CLI entra como binário estático, e o builder clássico dispensa o buildx.
+.imagens:
+  extends: .azure
+  stage: imagens
+  services:
+    - name: docker:27-dind
+      alias: docker
+      command: ["--tls=false"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_BUILDKIT: "0"
+  script:
+    - command -v tar >/dev/null || tdnf install -y -q tar gzip
+    - curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz
+      | tar xz --strip-components=1 -C /usr/local/bin docker/docker
+    - bash infra/azure/provisionar.sh "$ESTAGIO" imagens
+
+imagens:dev:
+  extends: [.imagens, .dev]
+  environment:
+    name: dev
+    action: prepare
+
+imagens:prd:
+  extends: [.imagens, .prd]
+  environment:
+    name: prd
+    action: prepare
+
+# Migração, troca de imagem e verificação de saúde. Código 3 é o banco
+# parado: nada foi implantado, e a pipeline mostra aviso em vez de falha.
+.implantar:
+  extends: .azure
+  stage: implantar
+  allow_failure:
+    exit_codes: [3]
+  script:
+    - bash infra/azure/implantar.sh "$ESTAGIO"
+
+implantar:dev:
+  extends: [.implantar, .dev]
+  resource_group: azure-dev
+  environment:
+    name: dev
+    url: https://ca-web-dev.wittywater-1f84aed4.brazilsouth.azurecontainerapps.io
+
+# Produção só com clique: a semana é curta, e um deploy a cada merge na main
+# arriscaria derrubar o ambiente de demonstração.
+implantar:prd:
+  extends: [.implantar, .prd]
+  resource_group: azure-prd
+  environment:
+    name: prd
+    url: https://ca-web-prd.wittywater-1f84aed4.brazilsouth.azurecontainerapps.io
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"
+      when: manual
