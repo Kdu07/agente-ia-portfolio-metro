@@ -156,6 +156,21 @@
   - [6.2 Oportunidades de melhoria](#62-oportunidades-de-melhoria)
   - [6.3 Lições aprendidas](#63-lições-aprendidas)
 - [7. Análise de viabilidade financeira](#7-análise-de-viabilidade-financeira)
+  - [7.1 Escopo orçado e premissas](#71-escopo-orçado-e-premissas)
+  - [7.2 Horas estimadas por função e por integrante](#72-horas-estimadas-por-função-e-por-integrante)
+  - [7.3 Custo de pessoal](#73-custo-de-pessoal)
+  - [7.4 Insumos, licenças e plataformas da construção](#74-insumos-licenças-e-plataformas-da-construção)
+  - [7.5 Custo de operação da solução em produção](#75-custo-de-operação-da-solução-em-produção)
+  - [7.6 Despesas operacionais](#76-despesas-operacionais)
+  - [7.7 Carga tributária](#77-carga-tributária)
+  - [7.8 Margem de lucro](#78-margem-de-lucro)
+  - [7.9 Preço final do projeto](#79-preço-final-do-projeto)
+  - [7.10 Fluxo de caixa do fornecedor](#710-fluxo-de-caixa-do-fornecedor)
+  - [7.11 Custo total de propriedade e sustentação opcional](#711-custo-total-de-propriedade-e-sustentação-opcional)
+  - [7.12 Viabilidade para o Metrô](#712-viabilidade-para-o-metrô)
+  - [7.13 Sensibilidade e riscos financeiros](#713-sensibilidade-e-riscos-financeiros)
+  - [7.14 Resumo e conformidade](#714-resumo-e-conformidade)
+  - [7.15 Referências](#715-referências)
 
 ## 1. Introdução
 
