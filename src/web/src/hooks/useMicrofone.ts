@@ -25,18 +25,6 @@ import type { TokenVoz } from "@/tipos";
 
 export type EstadoVoz = "ocioso" | "solicitando" | "gravando" | "processando" | "erro";
 
-/**
- * O duble de `/voz/token` devolve um token com este prefixo, porque nao
- * existe recurso do Azure provisionado no tenant do parceiro. Quando o
- * token e de demonstracao, o hook simula a transcricao para que o fluxo
- * de interface possa ser percorrido e testado. Um token real nunca
- * comeca assim, entao a simulacao desaparece sozinha no dia em que o
- * recurso existir, sem ninguem precisar remover codigo.
- */
-const PREFIXO_DEMONSTRACAO = "token-de-demonstracao";
-
-const FRASE_SIMULADA = "Qual o status do Projeto X e quais marcos estão atrasados?";
-
 interface Retorno {
   estado: EstadoVoz;
   /** Transcricao provisoria, atualizada enquanto a pessoa fala. */
@@ -52,7 +40,7 @@ export function useMicrofone(aoTranscrever: (texto: string) => void): Retorno {
   const [erro, setErro] = useState<string | null>(null);
 
   // `reconhecedor` guarda o SpeechRecognizer ativo e `temporizadores`
-  // guarda os timers da simulacao e da renovacao do token. Ambos
+  // guarda o timer de renovacao do token. Ambos
   // precisam ser cancelados ao desmontar, ou o microfone continua aberto
   // depois que a pessoa sai da tela.
   const reconhecedor = useRef<{ stopContinuousRecognitionAsync: () => void; close: () => void } | null>(null);
@@ -87,11 +75,6 @@ export function useMicrofone(aoTranscrever: (texto: string) => void): Retorno {
     } catch {
       setEstado("erro");
       setErro("Não foi possível iniciar a entrada por voz. Tente novamente.");
-      return;
-    }
-
-    if (credencial.token.startsWith(PREFIXO_DEMONSTRACAO)) {
-      simular(aoTranscrever, setEstado, setParcial, temporizadores);
       return;
     }
 
@@ -149,37 +132,4 @@ export function useMicrofone(aoTranscrever: (texto: string) => void): Retorno {
   }, [estado, iniciar, parar]);
 
   return { estado, parcial, erro, gravando: estado === "gravando", alternar };
-}
-
-/**
- * Percurso simulado, usado enquanto o Azure Speech nao esta provisionado
- * no tenant do parceiro. Reproduz a temporizacao real: parciais que
- * crescem palavra a palavra e uma transcricao final ao terminar.
- */
-function simular(
-  aoTranscrever: (texto: string) => void,
-  setEstado: (e: EstadoVoz) => void,
-  setParcial: (t: string) => void,
-  temporizadores: { current: number[] },
-) {
-  setEstado("gravando");
-  const palavras = FRASE_SIMULADA.split(" ");
-
-  palavras.forEach((_, indice) => {
-    const id = window.setTimeout(() => {
-      setParcial(palavras.slice(0, indice + 1).join(" "));
-    }, 220 * (indice + 1));
-    temporizadores.current.push(id);
-  });
-
-  const fim = window.setTimeout(() => {
-    setEstado("processando");
-    const entrega = window.setTimeout(() => {
-      aoTranscrever(FRASE_SIMULADA);
-      setParcial("");
-      setEstado("ocioso");
-    }, 400);
-    temporizadores.current.push(entrega);
-  }, 220 * (palavras.length + 1));
-  temporizadores.current.push(fim);
 }

@@ -89,27 +89,23 @@ describe("Página principal", () => {
     expect(campo).toHaveValue("");
   });
 
-  it("indica quando a entrada por voz está ativa e leva a transcrição ao campo", async () => {
+  it("informa quando o token de voz não pode ser obtido", async () => {
+    servidor.use(
+      http.get("/api/voz/token", () =>
+        HttpResponse.json({ codigo: "SPEECH_INDISPONIVEL" }, { status: 503 }),
+      ),
+    );
     renderizar(<Principal />);
-    const campo = screen.getByRole("textbox", { name: "Mensagem" });
 
     fireEvent.click(screen.getByRole("button", { name: "Iniciar entrada por voz" }));
 
-    // O token do duble aciona o percurso simulado, com parciais e
-    // transcricao final, sem depender de microfone nem do Azure.
     expect(
-      await screen.findByRole("button", { name: "Parar entrada por voz" }, { timeout: 3000 }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(campo).toHaveAttribute("placeholder", "Ouvindo... fale agora");
-    expect(campo).toHaveAttribute("readonly");
-
-    await waitFor(
-      () => expect(campo).toHaveValue("Qual o status do Projeto X e quais marcos estão atrasados?"),
-      { timeout: 6000 },
-    );
-    expect(
-      await screen.findByRole("button", { name: "Iniciar entrada por voz" }, { timeout: 3000 }),
+      await screen.findByText("Não foi possível iniciar a entrada por voz. Tente novamente."),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Iniciar entrada por voz" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 });
 
