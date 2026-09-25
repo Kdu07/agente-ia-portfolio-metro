@@ -1,6 +1,6 @@
 """Contrato comum dos eventos publicados pelo sistema de mensageria."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -26,4 +26,4 @@ class MensagemEvento(BaseModel):
         """Exige data com fuso para evitar eventos sem referência temporal."""
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("occurred_at deve conter fuso horário")
-        return value.astimezone(timezone.utc)
+        return value.astimezone(UTC)

@@ -37,7 +37,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.entra import ConfiguracaoAusente, FluxoPendente
 from app.config import settings
 from app.persistence.repository_portfolio import (
-    ProjetoRepository,
     UsuarioProjetoRepository,
 )
 from app.persistence.tabelas import SessaoUsuarioTabela, UsuarioTabela

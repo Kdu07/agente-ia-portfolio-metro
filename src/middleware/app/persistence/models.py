@@ -11,7 +11,7 @@ gravado em claro. Isso pede política de retenção declarada e cifra em
 repouso no nível do PostgreSQL — ver seção 11 da Arquitetura.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -266,8 +266,8 @@ class Projeto:
     orcamento_atual: Decimal | None = None
     avanco_percentual: int = 0
     lider_id: str | None = None
-    criado_em: datetime = datetime.now()
-    atualizado_em: datetime = datetime.now()
+    criado_em: datetime = field(default_factory=datetime.now)
+    atualizado_em: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
@@ -282,8 +282,8 @@ class Risco:
     impacto: int = 3  # 1-5
     status: str = StatusRisco.IDENTIFICADO.value
     plano_mitigacao: str | None = None
-    criado_em: datetime = datetime.now()
-    atualizado_em: datetime = datetime.now()
+    criado_em: datetime = field(default_factory=datetime.now)
+    atualizado_em: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
@@ -297,8 +297,8 @@ class Marco:
     descricao: str | None = None
     data_real: date | None = None
     status: str = StatusMarco.NAO_INICIADO.value
-    criado_em: datetime = datetime.now()
-    atualizado_em: datetime = datetime.now()
+    criado_em: datetime = field(default_factory=datetime.now)
+    atualizado_em: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
@@ -313,8 +313,8 @@ class Indicador:
     valor_meta: Decimal | None = None
     unidade: str | None = None
     data_medicao: date | None = None
-    criado_em: datetime = datetime.now()
-    atualizado_em: datetime = datetime.now()
+    criado_em: datetime = field(default_factory=datetime.now)
+    atualizado_em: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
@@ -324,4 +324,4 @@ class UsuarioProjeto:
     usuario_id: str
     projeto_codigo: str
     papel: str = PapelProjeto.MEMBRO.value
-    criado_em: datetime = datetime.now()
+    criado_em: datetime = field(default_factory=datetime.now)
