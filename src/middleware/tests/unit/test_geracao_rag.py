@@ -17,12 +17,14 @@ import pytest
 from app.rag.geracao import (
     INSTRUCOES,
     MARCA_NEUTRALIZADA,
+    MARCADOR_ITEM,
     SENTINELA,
     TEXTO_SEM_EVIDENCIA,
     Gerador,
     Situacao,
     interpretar,
     montar_conteudo,
+    texto_simples,
 )
 from app.rag.linguagem.base import ErroGeracao, ModeloLinguagem
 from app.rag.recuperacao import Recuperacao, TrechoRecuperado
@@ -251,3 +253,56 @@ def test_fonte_carrega_o_que_a_interface_precisa() -> None:
 def test_instrucoes_mencionam_o_sentinela() -> None:
     """Se a instrução e o detector divergirem, a abstenção nunca dispara."""
     assert SENTINELA in INSTRUCOES
+
+
+# --- Texto simples ----------------------------------------------------------
+
+
+def test_lista_em_markdown_vira_texto_simples() -> None:
+    """O caso real da bancada: lista com negrito, que a bolha mostrava crua."""
+    bruta = (
+        "As decisões pendentes são:\n"
+        "* **Repactuação do cronograma contratual**: prazo 27/09/2026 [1].\n"
+        "- Ampliação do turno de trabalho [2]."
+    )
+
+    resposta = interpretar(bruta, TRECHOS)
+
+    assert resposta.situacao is Situacao.RESPONDIDA
+    assert resposta.texto == (
+        "As decisões pendentes são:\n"
+        "• Repactuação do cronograma contratual: prazo 27/09/2026 [1].\n"
+        "• Ampliação do turno de trabalho [2]."
+    )
+
+
+@pytest.mark.parametrize(
+    ("bruta", "esperada"),
+    [
+        ("## Resumo\nCusto *estimado* [1].", "Resumo\nCusto estimado [1]."),
+        ("Código `PRJ-2024-018` [1].", "Código PRJ-2024-018 [1]."),
+        ("Valor __total__ [1].", "Valor total [1]."),
+        ("  * item recuado [1].", "• item recuado [1]."),
+    ],
+)
+def test_marcas_de_markdown_sao_removidas(bruta: str, esperada: str) -> None:
+    assert texto_simples(bruta) == esperada
+
+
+@pytest.mark.parametrize(
+    "texto",
+    [
+        "Fator 5 * 3 no cálculo [1].",
+        "Campo data_de_termino no registro [1].",
+        "Desvio de -3,9% no encerramento [1].",
+        "1. Primeiro passo [1].\n2. Segundo passo [2].",
+    ],
+)
+def test_texto_sem_markdown_fica_intacto(texto: str) -> None:
+    assert texto_simples(texto) == texto
+
+
+def test_instrucoes_pedem_texto_simples_com_o_mesmo_marcador() -> None:
+    """A regra 8 e a limpeza precisam concordar no marcador de item."""
+    assert "sem markdown" in INSTRUCOES
+    assert f'"{MARCADOR_ITEM.strip()}"' in INSTRUCOES

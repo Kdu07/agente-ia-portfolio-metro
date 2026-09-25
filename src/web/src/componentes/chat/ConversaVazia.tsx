@@ -9,6 +9,15 @@
  * Cada sugestao corresponde a uma intencao real do catalogo. Sugerir o
  * que o agente nao faz seria pior que nao sugerir nada.
  *
+ * E cada uma precisa ter resposta no corpus. As anteriores ("riscos da
+ * Linha 6", "comparar dois projetos", "registrar um atraso") so rendiam a
+ * abstencao do RAG: a Linha 6 nao existe nos documentos, as outras duas
+ * nao dizem de quais projetos se trata ou pedem uma escrita que o
+ * executor nao faz. Duas das sugestoes vem das normas, que qualquer
+ * perfil le. As de projeto dependem do escopo: diretoria e quem esta
+ * alocado recebem resposta, os demais recebem a abstencao. As perguntas
+ * vem da bancada do RAG (`dados/bancada-rag.csv` no middleware).
+ *
  * Tudo alinhado a esquerda, como o resto da conversa: o bloco centralizado
  * com um titulo solto e a assinatura dos chats genericos.
  */
@@ -17,13 +26,16 @@ import { m } from "motion/react";
 
 import { SimboloPrata } from "@/componentes/marca/SimboloPrata";
 import { CASCATA, SOBE } from "@/componentes/movimento/transicoes";
-import { IconeComparar, IconeMarco, IconeRegistrar, IconeRisco, type Icone } from "@/componentes/ui/icones";
+import { IconeConceito, IconeDecisao, IconeMarco, IconeRisco, type Icone } from "@/componentes/ui/icones";
 
 const SUGESTOES: { texto: string; icone: Icone }[] = [
-  { texto: "Quais marcos estão atrasados no portfólio?", icone: IconeMarco },
-  { texto: "Mostre os riscos críticos da Linha 6", icone: IconeRisco },
-  { texto: "Registrar o motivo de um atraso", icone: IconeRegistrar },
-  { texto: "Comparar o avanço de dois projetos", icone: IconeComparar },
+  { texto: "Quando termina o projeto Estação Morumbi?", icone: IconeMarco },
+  { texto: "Que faixa de exposição classifica um risco como Alto?", icone: IconeRisco },
+  { texto: "Qual a diferença entre risco e problema?", icone: IconeConceito },
+  {
+    texto: "Quais decisões estão pendentes no relatório de agosto do Sistema de Sinalização?",
+    icone: IconeDecisao,
+  },
 ];
 
 export function ConversaVazia({ onEscolher }: { onEscolher: (texto: string) => void }) {

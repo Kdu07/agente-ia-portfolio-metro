@@ -71,6 +71,18 @@ _MARCA_DELIMITADOR = re.compile(
 )
 MARCA_NEUTRALIZADA = "[marcação removida]"
 
+# Marcador de item de lista na resposta. A bolha do chat mostra texto puro
+# (só respeita as quebras de linha), então o markdown que o modelo escreve
+# por hábito apareceria cru: `**Repactuação**`, `* item`.
+MARCADOR_ITEM = "• "
+_ITEM_MARKDOWN = re.compile(r"^[ \t]*[*+-][ \t]+", re.MULTILINE)
+_TITULO_MARKDOWN = re.compile(r"^[ \t]*#{1,6}[ \t]+", re.MULTILINE)
+_NEGRITO = re.compile(r"(\*\*|__)(?=\S)(.+?)(?<=\S)\1")
+# Itálico só com asterisco e colado a não-palavra dos dois lados: "5 * 3"
+# (espaço depois do asterisco) e "snake_case" (sublinhado) ficam intactos.
+_ITALICO = re.compile(r"(?<![\w*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?![\w*])")
+_CODIGO = re.compile(r"`([^`\n]+)`")
+
 INSTRUCOES = f"""\
 Você é o assistente de consulta ao portfólio de projetos do Metrô de São Paulo. \
 Você responde perguntas usando exclusivamente os documentos fornecidos na mensagem, \
@@ -95,6 +107,9 @@ os dois, cada um com a sua citação, e diga que há divergência. Não escolha 
 está nos documentos e você diz o que ficou sem resposta.
 7. Responda em português do Brasil, de forma direta e curta, sem introdução e sem repetir a \
 pergunta.
+8. Escreva em texto simples, sem markdown: nada de asteriscos, cerquilhas, sublinhados ou \
+crases para formatar. Numa lista, ponha cada item em uma linha própria, começando com \
+"{MARCADOR_ITEM.strip()}".
 """
 
 
@@ -191,7 +206,7 @@ def interpretar(
     seguem essa ordem: o modelo pode citar o 4 antes do 2, e a interface
     precisa que `[1]` seja a primeira fonte da lista.
     """
-    texto = bruta.strip()
+    texto = texto_simples(bruta.strip())
 
     if _declarou_sem_evidencia(texto):
         # Mesmo acompanhado de outro texto: o modelo declarou que não tem
@@ -224,6 +239,22 @@ def interpretar(
         fontes=fontes,
         modelo=modelo,
     )
+
+
+def texto_simples(texto: str) -> str:
+    """Tira o markdown que o modelo escreva apesar da regra 8.
+
+    A instrução reduz o markdown, mas não o elimina. Esta é a garantia:
+    item de lista vira `•`, título perde a cerquilha, e negrito, itálico e
+    código perdem os marcadores. A lista vem primeiro porque `* **x**`
+    começa com o marcador de item, que o itálico confundiria. As citações
+    `[n]` não são tocadas.
+    """
+    texto = _ITEM_MARKDOWN.sub(MARCADOR_ITEM, texto)
+    texto = _TITULO_MARKDOWN.sub("", texto)
+    texto = _NEGRITO.sub(r"\2", texto)
+    texto = _ITALICO.sub(r"\1", texto)
+    return _CODIGO.sub(r"\1", texto)
 
 
 def _declarou_sem_evidencia(texto: str) -> bool:
