@@ -903,8 +903,32 @@ fase_retomar() {
   fase_saude
 }
 
+# Com revisão única, a anterior segue com todo o tráfego até a nova ter uma
+# réplica pronta, o que no middleware leva minutos (o classificador aquece
+# primeiro). A revisão nova já aparece "pronta" assim que é provisionada:
+# o sinal de que a versão nova está no ar é o tráfego ter chegado a ela.
+aguardar_trafego() { # nome do app
+  local i ultima com_trafego
+  for i in $(seq 1 60); do
+    ultima=$(azv containerapp show -g "$RG" -n "$1" --query properties.latestRevisionName)
+    com_trafego=$(azv containerapp revision list -g "$RG" -n "$1" \
+      --query "[?properties.trafficWeight==\`100\`].name | [0]")
+    if [ "$ultima" = "$com_trafego" ]; then
+      echo "  $1: tráfego em $ultima"
+      return 0
+    fi
+    sleep 15
+  done
+  echo "  $1: a revisão $ultima não recebeu o tráfego em 15 min; ver 'az containerapp logs show'" >&2
+  return 1
+}
+
+# Sem esperar o tráfego, o `saude` de um deploy responderia pela versão
+# anterior. Num `retomar`, sem revisão nova, a espera passa direto.
 fase_saude() {
   local url resposta
+  aguardar_trafego "$APP_API"
+  aguardar_trafego "$APP_WEB"
   url="https://$(web_fqdn)/api/health/pronto"
   resposta=$(curl --fail-with-body --show-error --silent --max-time 300 "$url")
   echo "  $url -> $resposta"
