@@ -2087,3 +2087,117 @@ Content Safety e Speech são cotados no nível pago S0: o nível gratuito F0, us
 | **Operação em produção** | **R$ 4.448,61** | **R$ 53.383,32** |
 
 O Copilot Studio responde por 77% do custo de operação e é o único item que cresce em degraus de R$ 1.145,10 a cada 25.000 créditos. O classificador de intenções, a operação mais frequente, roda no próprio middleware e não tem custo por requisição, como antecipava a seção 2.8.9 do `Projeto.md`. Depois da implantação, o Azure Cost Management deve comparar o consumo real com esta estimativa, mês a mês.
+
+### 7.6 Despesas operacionais
+
+As despesas mantêm a empresa funcionando durante o contrato, sem estar ligadas a uma entrega específica. O período considerado são os três meses de competência do contrato, agosto, setembro e outubro de 2026. Todos os valores são estimativas, com a fonte indicada.
+
+| Categoria do artefato | Item | Premissa | Cálculo | Valor |
+|---|---|---|---|---:|
+| Infraestrutura: ferramentas administrativas | Contabilidade: escrituração, apuração do DAS, emissão de NFS-e e certificado digital | Plano Padrão da Contabilizei para prestador de serviços no Simples | 3 × R$ 195,00 | R$ 585,00 |
+| Infraestrutura: ferramentas administrativas | E-mail corporativo, agenda e documentos | Google Workspace Business Starter, preço padrão | 6 × R$ 40,90 × 3 | R$ 736,20 |
+| Infraestrutura: domínio | Domínio `.com.br` da empresa | Registro anual no Registro.br | 1 × R$ 40,00 | R$ 40,00 |
+| Marketing e divulgação | Elaboração da proposta técnica e comercial e da apresentação ao Metrô | 8 h de pré-venda, fora das horas de construção | 8 h × R$ 81,25 | R$ 650,00 |
+| Logística | Deslocamentos para reuniões presenciais no Metrô | 6 encontros (abertura, quatro revisões e entrega final), 6 pessoas, ida e volta de metrô | 6 × 6 × 2 × R$ 5,40 | R$ 388,80 |
+| Atendimento | Canal de atendimento ao cliente | Coberto pelo e-mail corporativo e pelas 8 h de operação assistida já orçadas | Sem custo adicional | R$ 0,00 |
+| Infraestrutura: espaço físico | Escritório ou coworking | Equipe em regime remoto, com encontros nas dependências do cliente | Sem aluguel | R$ 0,00 |
+| **Total de despesas (D)** | | | | **R$ 2.400,00** |
+
+Os servidores de desenvolvimento, também citados no item de infraestrutura do artefato, já estão em insumos (seção 7.4), porque existem só para construir esta solução; contá-los de novo aqui duplicaria o custo. Os servidores de produção não são despesa do fornecedor: ficam no tenant do Metrô (seção 7.5).
+
+### 7.7 Carga tributária
+
+O fornecedor é simulado como microempresa optante pelo **Simples Nacional, Anexo V**, que abrange serviços de tecnologia da informação e desenvolvimento de software (Lei Complementar nº 123/2006, com a redação da Lei Complementar nº 155/2016). Na primeira faixa, para receita bruta dos últimos 12 meses de até R$ 180.000,00, a alíquota nominal é de 15,5% e não há parcela a deduzir; a alíquota efetiva é, portanto, a mesma: **a = 15,5%**. O valor do contrato cabe nessa faixa.
+
+O método é o de alíquota única sobre a receita bruta, recolhida em um único documento, o DAS, que já inclui IRPJ, CSLL, PIS, Cofins, CPP e ISS. Como o imposto incide sobre o próprio preço, ele é calculado por dentro: sai do preço faturado, e não é somado sobre ele.
+
+O enquadramento no Anexo V, e não no Anexo III, decorre do Fator R. Atividades de TI vão para o Anexo III, com alíquota inicial de 6%, quando a folha de salários dos últimos 12 meses atinge 28% da receita. Com a equipe contratada como PJ, a folha da empresa se resume ao pró-labore dos sócios, e o Fator R fica abaixo de 28%. A seção 7.13 mostra o efeito no preço se a empresa atingisse o Fator R. A reforma tributária do consumo (Lei Complementar nº 214/2025) não altera o cálculo deste contrato, cuja receita é recebida em 2026, mas deve ser revista na proposta de renovação.
+
+### 7.8 Margem de lucro
+
+#### 7.8.1 Estratégia
+
+A margem desejada é de **m = 15%**, aplicada, como pede o artefato, sobre a soma de custos, despesas e impostos. Três fatores sustentam o valor:
+
+* **Cliente e forma de contratação.** O Metrô é sociedade de economia mista e contrata sob a Lei nº 13.303/2016. Mesmo em contratação direta, o preço precisa ser justificável diante de cotações de mercado, o que desfavorece margens altas.
+* **Contrato de entrada.** É o primeiro contrato com o cliente e a primeira solução de IA do fornecedor em transporte público. O retorno esperado não está só neste contrato, mas no caso de referência e na sustentação opcional (seção 7.11), que usa a mesma margem.
+* **Risco tratado fora da margem.** A incerteza de escopo é tratada pela reserva de contingência da seção 7.9.3, apresentada à parte. Assim, a margem remunera o negócio e não precisa ser inflada para absorver risco.
+
+A seção 7.13 mostra o preço com margens de 10%, 20% e 25%.
+
+#### 7.8.2 Fórmula
+
+Com o imposto por dentro e a margem sobre custos, despesas e impostos, o preço P satisfaz duas condições ao mesmo tempo:
+
+* **P = (C + D + I) × (1 + m)**, a margem sobre a soma dos três componentes;
+* **I = a × P**, o imposto como fração do preço faturado.
+
+Substituindo a segunda na primeira e isolando P:
+
+**P = (C + D) × (1 + m) / [1 − a × (1 + m)]**
+
+Onde C é o custo total da construção, D são as despesas operacionais, m é a margem e a é a alíquota do Simples Nacional.
+
+### 7.9 Preço final do projeto
+
+#### 7.9.1 Cálculo
+
+| Etapa | Cálculo | Valor |
+|---|---|---:|
+| Custo total da construção (C) | Pessoal R$ 30.996,88 + insumos R$ 4.247,51 | R$ 35.244,39 |
+| Despesas operacionais (D) | Seção 7.6 | R$ 2.400,00 |
+| Base (C + D) | R$ 35.244,39 + R$ 2.400,00 | R$ 37.644,39 |
+| Fator de preço | 1,15 / (1 − 0,155 × 1,15) = 1,15 / 0,82175 | 1,399452 |
+| **Preço final (P)** | R$ 37.644,39 × 1,15 / 0,82175 | **R$ 52.681,53** |
+| Imposto (I) | 15,5% × R$ 52.681,53 | R$ 8.165,64 |
+| Lucro (L) | P − C − D − I | R$ 6.871,50 |
+| Prova da margem | 15% × (C + D + I) = 15% × R$ 45.810,03 | R$ 6.871,50 |
+
+A prova confirma que o lucro é exatamente 15% da soma de custos, despesas e impostos, como pede o artefato.
+
+#### 7.9.2 Composição do preço
+
+| Componente | Valor | Participação no preço |
+|---|---:|---:|
+| Pessoal: 381,50 h de construção, treinamento e repasse | R$ 30.996,88 | 58,84% |
+| Insumos, licenças e plataformas da construção | R$ 4.247,51 | 8,06% |
+| Despesas operacionais | R$ 2.400,00 | 4,56% |
+| Imposto, Simples Nacional Anexo V | R$ 8.165,64 | 15,50% |
+| Lucro | R$ 6.871,50 | 13,04% |
+| **Preço final ao Metrô** | **R$ 52.681,53** | **100,00%** |
+
+A margem de 15% sobre custos, despesas e impostos equivale a 13,04% do preço (0,15 / 1,15). O preço corresponde a R$ 138,09 por hora orçada, 1,70 vez o custo-hora de R$ 81,25.
+
+A demonstração de resultado do contrato, por competência, fecha no mesmo lucro:
+
+| Demonstração do resultado | Valor |
+|---|---:|
+| Receita bruta de serviços | R$ 52.681,53 |
+| (−) Simples Nacional | R$ 8.165,64 |
+| **Receita líquida** | **R$ 44.515,89** |
+| (−) Custo dos serviços: pessoal e insumos | R$ 35.244,39 |
+| **Lucro bruto** | **R$ 9.271,50** |
+| (−) Despesas operacionais | R$ 2.400,00 |
+| **Lucro do contrato** | **R$ 6.871,50** |
+
+#### 7.9.3 Reserva de contingência opcional
+
+A seção 3.5.3 registra que a Sprint 4 operou com carga de 141% da capacidade (`R21`) e que parte da Sprint 5 depende do tamanho das correções de usabilidade. Para cobrir esse tipo de desvio sem mexer na margem, oferece-se ao Metrô uma reserva de 10% do custo de pessoal, contratada à parte e consumida só com aprovação formal de mudança de escopo:
+
+| Item | Cálculo | Valor |
+|---|---|---:|
+| Reserva de contingência | 10% × R$ 30.996,88 | R$ 3.099,69 |
+| Preço com reserva | (R$ 37.644,39 + R$ 3.099,69) × 1,399452 | R$ 57.019,40 |
+| Acréscimo ao preço | R$ 57.019,40 − R$ 52.681,53 | R$ 4.337,87 |
+
+A reserva não é lucro: se não for usada, não é faturada.
+
+#### 7.9.4 Condições comerciais propostas
+
+| Condição | Proposta |
+|---|---|
+| Preço fixo | R$ 52.681,53, com NFS-e por marco |
+| Marcos de faturamento | 30% no aceite da Sprint 2 (especificação e protótipos), 30% no aceite da Sprint 4 (MVP funcional implantado) e 40% no aceite final, após treinamento e operação assistida |
+| Prazo de pagamento | 30 dias após o aceite de cada marco |
+| Validade da proposta | 30 dias, pelo risco de câmbio sobre as licenças cotadas em dólar |
+| Não incluído | Infraestrutura de produção (seção 7.5), paga pelo Metrô à Microsoft, e sustentação Nível 3 (seção 7.11) |
