@@ -665,13 +665,29 @@ A infraestrutura do projeto passou a ser descrita em arquivos versionados durant
 | Composição de serviços | `infra/docker-compose.yml` | Levantar o ambiente local completo, com banco de dados e aplicações |
 | Imagem do middleware | `src/middleware/Dockerfile` | Empacotar o serviço FastAPI e suas dependências |
 | Imagem da interface | `src/web/Dockerfile` | Construir os estáticos e empacotá-los no Nginx |
-| Configuração do servidor web | `src/web/nginx.conf` | Servir os estáticos e encaminhar o prefixo `/api` ao middleware |
+| Configuração do servidor web | `src/web/nginx.conf` | Servir os estáticos, encaminhar o prefixo `/api` ao middleware e registrar cada requisição em JSON |
+| Recursos na Azure | `infra/azure/variaveis.sh`, `provisionar.sh` | Nomes dos recursos de cada estágio e criação idempotente, fase por fase |
+| Implantação de uma versão | `infra/azure/implantar.sh` | Migração do banco, troca das imagens e verificação de saúde |
+| Pipeline | `.gitlab-ci.yml` | Verificação em cada merge request; publicação e implantação na `develop` e na `main` |
+| Consultas de monitoramento | `infra/azure/consultas/*.kql` | Disponibilidade, erro e latência no Log Analytics |
 
 A imagem da interface é construída em dois estágios. O Node existe apenas para produzir o pacote, e a imagem final contém somente o Nginx e os estáticos, sem ambiente de execução JavaScript. Essa escolha é o que permite ao projeto manter um único servidor de aplicação, o Python do middleware.
 
 A instalação de dependências dentro das imagens utiliza os arquivos de trava do repositório, e não resolução livre de versões, para que a imagem construída na nuvem corresponda à exercitada localmente.
 
-A validação desses artefatos consiste em construir as duas imagens e levantar a composição em máquina limpa, confirmando que a aplicação responde sem configuração manual adicional. O processo de implantação nos ambientes de nuvem e os pipelines de integração e entrega contínua são escopo da Sprint 4 e serão registrados nesta seção quando existirem.
+A validação desses artefatos consiste em construir as duas imagens e levantar a composição em máquina limpa, confirmando que a aplicação responde sem configuração manual adicional.
+
+**Implantação e entrega contínua.** Desde a Sprint 4, os estágios `dev` e `prd` rodam no Azure Container Apps e são criados pelos scripts de `infra/azure/`, sem passo manual no portal. O `.gitlab-ci.yml` verifica cada merge request. Na `develop`, depois dos testes, ele publica as imagens com a tag do commit e implanta no `dev`. Na `main`, publica as imagens e deixa a implantação no `prd` à espera de um clique. O procedimento completo, com a verificação e o monitoramento, está no capítulo 11 do [Projeto.md](Projeto.md).
+
+O pipeline entra na Azure por OIDC, sem segredo guardado no GitLab. A identidade `id-prata-ci-<estágio>` só aceita tokens deste projeto vindos do ramo do estágio, e as variáveis de CI são apenas identificadores não sigilosos:
+
+| Variável de CI | Escopo de ambiente | Conteúdo |
+|---|---|---|
+| `AZURE_TENANT_ID` | todos | Tenant da assinatura |
+| `AZURE_SUBSCRIPTION_ID` | todos | Assinatura |
+| `AZURE_CLIENT_ID` | `dev` e `prd`, um valor por ambiente | Client id da identidade `id-prata-ci-<estágio>` |
+
+Uma credencial sigilosa que venha a ser necessária no pipeline deve ser criada como variável mascarada e protegida. Como apenas a `main` é branch protegida no GitLab, uma variável protegida não chega às pipelines da `develop`.
 
 ## 6. Gestão de arquivos sensíveis
 
@@ -714,11 +730,11 @@ git revert -m 1 <hash-do-merge>
 git push --set-upstream origin fix/reverter-<assunto>
 ```
 
-**Retorno a uma versão entregue.** Como cada promoção para a `main` recebe uma tag, o retorno a uma entrega anterior consiste em reconstruir e reimplantar a imagem daquela tag. A tag é o ponto de referência, e por isso a sua criação faz parte do procedimento de release descrito na seção 2.5.
+**Retorno a uma versão entregue.** Cada implantação publica no registro de imagens as duas imagens com a tag do commit, e elas continuam lá depois que uma versão nova as substitui. O retorno a uma versão anterior consiste em implantar de novo essa imagem, pelo *Rollback* do ambiente no GitLab ou por `TAG=<tag> bash infra/azure/implantar.sh <estágio>`. A tag de entrega criada na `main` (seção 2.5) identifica qual commit corresponde a cada sprint.
 
-**Reversão de esquema de banco.** As migrações são versionadas e reversíveis por Alembic, de modo que o retorno de esquema utiliza o comando de downgrade para a revisão anterior. A reversão de esquema deve preceder a reimplantação da aplicação quando a versão anterior não reconhecer o esquema novo.
+**Reversão de esquema de banco.** As migrações são versionadas e reversíveis por Alembic, de modo que o retorno de esquema utiliza o comando de downgrade para a revisão anterior. A reversão de esquema deve preceder a reimplantação da aplicação quando a versão anterior não reconhecer o esquema novo. Na nuvem, ela é feita pela fase `rebaixar` do `infra/azure/provisionar.sh`, que executa o downgrade no job de migração do estágio com a imagem atual, a única que conhece as duas pontas.
 
-O gatilho para acionar qualquer um dos três procedimentos e os critérios de decisão associados ao ambiente de produção serão registrados junto ao processo de implantação, na Sprint 4.
+**Gatilho.** O retorno é acionado por quem fez a implantação, sem esperar reunião, quando o job de implantação falha depois de trocar os apps, quando o alerta de indisponibilidade dispara na primeira hora depois do deploy, ou quando as métricas mostram aumento de erro ou de latência em relação à versão anterior. No `prd`, o retorno vem antes do diagnóstico, e a correção segue depois pelo fluxo normal. Os comandos e os critérios detalhados estão na seção 11.4 do [Projeto.md](Projeto.md).
 
 ## 8. Registro de variáveis de ambiente
 

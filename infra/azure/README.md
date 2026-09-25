@@ -9,6 +9,7 @@ passo a passo comentado, as decisões e os custos estão no capítulo 11 do
 | `variaveis.sh` | Nomes dos recursos de cada estágio |
 | `provisionar.sh` | Cria o que falta, fase por fase; rodar de novo não duplica nada |
 | `implantar.sh` | Deploy de uma versão: migração, imagens novas e verificação de saúde |
+| `consultas/*.kql` | Disponibilidade, erro e latência no Log Analytics; rodam pela fase `metricas` ou coladas no portal |
 
 Os dois estágios dividem o grupo, o registro, os logs, o servidor PostgreSQL e
 o Container Apps Environment `cae-prata-dev`. A assinatura FreeTrial não
@@ -128,6 +129,61 @@ executa até o próximo `ligar` ou `retomar`.
 A fase `alertas` cria um orçamento anual de `ORCAMENTO` (padrão 300, na moeda
 de cobrança da assinatura) com avisos por e-mail em 50, 80 e 100%. O
 orçamento avisa, mas não bloqueia gasto.
+
+## Entrega contínua
+
+O `.gitlab-ci.yml` chama estes mesmos scripts. Na `develop`, publica as imagens e
+roda `implantar.sh dev`. Na `main`, publica as imagens, e o `implantar:prd` espera
+um clique. Com o banco parado, o `implantar.sh` sai com código 3, e a pipeline
+mostra aviso em vez de falha.
+
+O pipeline entra na Azure por OIDC, com a identidade `id-prata-ci-<estágio>`
+criada por:
+
+```bash
+bash infra/azure/provisionar.sh dev pipeline
+bash infra/azure/provisionar.sh prd pipeline
+```
+
+A fase imprime o client id, que vai para a variável `AZURE_CLIENT_ID` do GitLab
+com escopo de ambiente igual ao estágio. Nada ali é sigiloso. A credencial
+federada aceita só tokens deste projeto vindos da `develop` (dev) ou da `main`
+(prd). Para testar uma branch no dev antes do merge:
+
+```bash
+RAMO=<branch> bash infra/azure/provisionar.sh dev pipeline
+glab ci run -b <branch> --variables IMPLANTAR:dev
+# depois do teste
+az identity federated-credential delete -g rg-prata-agent \
+  --identity-name id-prata-ci-dev -n gitlab-<branch com / trocado por -> --yes
+```
+
+## Monitoramento
+
+```bash
+JANELA=24h bash infra/azure/provisionar.sh dev metricas
+```
+
+Mostra, por estágio, a disponibilidade, a taxa de 5xx e a latência (p50/p95/p99)
+do `/api`, medidas no log JSON do nginx, e também os erros do middleware e os
+avisos da plataforma. A fase `alertas` cria o `alerta-indisponivel-<middleware>`,
+que dispara quando o web devolve 502, 503 ou 504. Os detalhes estão no capítulo
+11.3 do Projeto.md.
+
+## Voltar a uma versão anterior
+
+```bash
+TAG=<tag anterior> bash infra/azure/implantar.sh prd
+```
+
+Se a versão a abandonar trouxe migração, desfaça o esquema antes, com a imagem
+atual:
+
+```bash
+REVISAO=<alembic heads da versão anterior> bash infra/azure/provisionar.sh prd rebaixar
+```
+
+O passo a passo está no capítulo 11.4 do Projeto.md.
 
 ## O que continua manual
 
