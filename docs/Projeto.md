@@ -9644,9 +9644,7 @@ O processo de criação seguiu as seguintes etapas:
    - Veja e acesse o histórico
    - Explore alguma parte que o teste não cobriu
 
-2. **Configuração de credenciais:** Para a tarefa de login, foram fornecidas credenciais de teste:
-   - Email: membro@cadusquagliagmail.onmicrosoft.com
-   - Senha: prata123##
+2. **Configuração de credenciais:** Para a tarefa de login, foram fornecidas credenciais temporárias de teste. Os valores foram removidos desta documentação e da captura de tela para evitar a exposição de dados de acesso no repositório.
    - Nível de confiança da tarefa: 8 (em escala de 1-10)
 
    ![Bem-vindo ao Prata Agent](./imagens/bemvindo-maze.png)
@@ -9670,7 +9668,7 @@ O processo de criação seguiu as seguintes etapas:
 As tarefas foram configuradas da seguinte forma:
 
 **Tarefa 1: Fazer o login no site**
-- Descrição: "Utilize uma conta e senha fornecida para acessar o nosso site. Senha: prata123##, email: membro@cadusquagliagmail.onmicrosoft.com"
+- Descrição: "Utilize as credenciais de teste fornecidas para acessar o nosso site."
 - Nível de confiança: 8
 - Tipo: Website Test
 - Dispositivo: Desktop
@@ -9712,6 +9710,8 @@ As tarefas foram configuradas da seguinte forma:
 
 Foram convidados 8 participantes para o teste, todos externos à turma e sem vínculo com o Metrô. Os participantes realizaram as tarefas em dispositivos Desktop durante o período de 23/09/2026 a 24/09/2026.
 
+A captura anexada registra o total de 8 respostas no painel do Maze e exibe cinco linhas de participantes no recorte visível. Por isso, os três identificadores que não aparecem na evidência foram omitidos da tabela abaixo, sem alterar os resultados consolidados.
+
 **Tempo médio por tarefa (amostra parcial):**
 
 | Tarefa | Nível de confiança | Respostas | Duração média | Observações |
@@ -9727,7 +9727,7 @@ Foram convidados 8 participantes para o teste, todos externos à turma e sem ví
 
 #### 10.3.12.5 Resultados de satisfação (SUS)
 
-A pontuação SUS média obtida foi de **72.5 pontos** (escala 0-100), indicando uma percepção de usabilidade acima da média (nota SUS de 68 é considerada média). A pontuação sugere que o protótipo é utilizável, mas apresenta pontos de melhoria claros.
+A pontuação SUS média obtida foi de **71,9 pontos** (escala 0-100), indicando uma percepção de usabilidade acima da média (nota SUS de 68 é considerada média). A pontuação sugere que o protótipo é utilizável, mas apresenta pontos de melhoria claros.
 
 **Distribuição de pontuação por participante:**
 
@@ -9738,11 +9738,11 @@ A pontuação SUS média obtida foi de **72.5 pontos** (escala 0-100), indicando
 | P3 (589747399) | 77 | Bom |
 | P4 (589831932) | 65 | Aceitável |
 | P5 (589738034) | 72 | Aceitável |
-| P6 (não listado) | 78 | Bom |
-| P7 (não listado) | 68 | Aceitável |
-| P8 (não listado) | 70 | Aceitável |
+| P6 (identificador não exibido) | 78 | Bom |
+| P7 (identificador não exibido) | 68 | Aceitável |
+| P8 (identificador não exibido) | 70 | Aceitável |
 
-**Média:** 72.5
+**Média:** 71,9 (`575 / 8 = 71,875`, arredondada para uma casa decimal)
 
 #### 10.3.12.6 Taxa de sucesso por tarefa
 
@@ -9776,7 +9776,7 @@ O teste de usabilidade realizado com Maze forneceu insights valiosos sobre a exp
 
 3. **Criação de rotina é o ponto crítico:** Com apenas 62.5% de sucesso, o fluxo de criação de rotinas precisa ser simplificado e ter instruções mais claras.
 
-4. **Pontuação SUS aceitável:** A média de 72.5 pontos indica que o protótipo é funcional, mas há espaço claro para melhorias, especialmente no fluxo de criação de rotinas.
+4. **Pontuação SUS aceitável:** A média de 71,9 pontos indica que o protótipo é funcional, mas há espaço claro para melhorias, especialmente no fluxo de criação de rotinas.
 
 **Recomendações prioritárias:**
 1. Simplificar o fluxo de criação de rotinas (UX04)
