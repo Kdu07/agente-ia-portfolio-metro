@@ -1,0 +1,217 @@
+# Evidência de execução — 25/09/2026
+Branch: test/evidencias-backend-artefato
+Commit de código: 7637fa8d5c858b4c267f22abca1434d3b93badd2
+Ambiente: Windows, Python 3.14.2, src/middleware/.venv; pytest 9.1.1.
+Escopo: `tests/unit`, `tests/funcionais`, `tests/rnf` e `tests/perimetro`; 933 passed, 10 skipped, 22 xfailed; TOTAL 73.63%. A execução ampla de 1.187 itens ficou bloqueada em integração externa e foi interrompida.
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 22%]
+........................................................................ [ 29%]
+................................................sssss................... [ 37%]
+........................................................................ [ 44%]
+........................................................................ [ 52%]
+........................................................................ [ 59%]
+........................................................................ [ 67%]
+........................................................................ [ 74%]
+........................................................................ [ 82%]
+........................................................................ [ 89%]
+........x............xx..xx.xxxxxxxxxxxxxsss...xxx.....x................ [ 96%]
+............s..........s.....                                            [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+.venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+app\main.py:21
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\app\main.py:21: StarletteDeprecationWarning: 'HTTP_413_REQUEST_ENTITY_TOO_LARGE' is deprecated. Use 'HTTP_413_CONTENT_TOO_LARGE' instead.
+    from app.api.routes import (
+
+tests/funcionais/test_rf01_acesso.py::test_tf_rf01_03_sessao_ausente_ou_expirada_recusa_antes_do_pipeline[sessao-expirada-ou-adulterada]
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Lib\site-packages\starlette\testclient.py:455: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+    return super().request(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.14.2-final-0 _______________
+
+Name                                            Stmts   Miss Branch BrPart   Cover   Missing
+--------------------------------------------------------------------------------------------
+app\__init__.py                                     0      0      0      0 100.00%
+app\analytics\__init__.py                           0      0      0      0 100.00%
+app\analytics\consultas.py                        122      1     28      1  98.67%   459
+app\analytics\metricas.py                          59      0      6      0 100.00%
+app\api\__init__.py                                 0      0      0      0 100.00%
+app\api\deps.py                                    70     19      8      3  71.79%   108-115, 138, 156, 162, 167, 172, 177, 182, 187, 192, 196, 200, 204, 208, 212, 227, 253
+app\api\routes\__init__.py                          1      0      0      0 100.00%
+app\api\routes\auth.py                             66     39      6      0  37.50%   63, 75, 86-103, 121-157, 161-163, 184-188, 194
+app\api\routes\avisos.py                           52     27      6      0  43.10%   37, 55-58, 73-96, 100, 113, 124-131, 137-140, 145-150, 156-165
+app\api\routes\chat.py                              9      0      0      0 100.00%
+app\api\routes\conversas.py                        22      5      4      1  69.23%   62-63, 96-98
+app\api\routes\health.py                           16      0      6      0 100.00%
+app\api\routes\intencoes.py                        48      8      0      0  83.33%   107-108, 147-148, 180-181, 197-198
+app\api\routes\portfolio.py                        60     29     22      1  41.46%   44-46, 60, 69-71, 80-82, 91-93, 102, 115-117, 128-139, 149-153
+app\api\routes\rotinas.py                          89     40     12      1  51.49%   50, 61-62, 116-132, 146-150, 165-187, 203-205, 209-214, 227-230, 235->241, 262
+app\api\routes\voz.py                              92     28      8      4  68.00%   120-143, 224, 242->253, 244-245, 255-256, 262, 273-274, 302-316, 427
+app\api\routes\webhooks.py                         57     16      6      0  71.43%   61-63, 136-154
+app\auth\__init__.py                                0      0      0      0 100.00%
+app\auth\entra.py                                 142     22     34      8  81.82%   194-195, 218-219, 259-262, 306, 309-310, 328-329, 342, 352-353, 355, 361, 371, 392-393, 398
+app\auth\permissoes.py                             19      0      4      0 100.00%
+app\auth\sessao.py                                 72     26     14      2  60.47%   77, 119-166, 174, 194-208, 225-228
+app\auth\webhooks.py                               56      3     20      1  94.74%   63-64, 70
+app\auth\webhooks_config.py                        36      0      8      0 100.00%
+app\auth\webhooks_drive.py                         71      4     34      4  92.38%   26, 28, 85, 96
+app\avisos\__init__.py                              0      0      0      0 100.00%
+app\avisos\geracao.py                              38     15     16      0  53.70%   63-89
+app\avisos\modelos.py                              10      0      0      0 100.00%
+app\avisos\repositorio.py                          49     24      2      0  49.02%   38-39, 60-68, 74-81, 101-118, 121, 136-142, 147, 156-161, 173-178, 183-186, 195-203
+app\avisos\tabelas.py                              36      2      0      0  94.44%   60, 97
+app\config.py                                      87      0      2      0 100.00%
+app\copilot\__init__.py                             0      0      0      0 100.00%
+app\copilot\client.py                               5      1      0      0  80.00%   49
+app\executor\__init__.py                            0      0      0      0 100.00%
+app\executor\base.py                               14      0      0      0 100.00%
+app\executor\desempenho.py                          7      2      0      0  71.43%   20-24
+app\executor\fabrica.py                            14      0      4      0 100.00%
+app\main.py                                        39      0      2      0 100.00%
+app\mensageria\__init__.py                          0      0      0      0 100.00%
+app\mensageria\consumidor.py                      147     43     18      3  68.48%   74, 112-124, 129-132, 135-136, 138, 151, 169->exit, 206-227, 259-266
+app\mensageria\produtor.py                         64      0      6      0 100.00%
+app\mensageria\topologia.py                        29     13      4      0  48.48%   58-86
+app\persistence\__init__.py                         0      0      0      0 100.00%
+app\persistence\auditoria.py                       35      2      8      4  86.05%   23, 51->53, 73, 77->79
+app\persistence\models.py                         118      1      0      0  99.15%   179
+app\persistence\repository.py                     118     68     14      0  37.88%   101-102, 115-122, 126-127, 131, 144-150, 161-178, 182-188, 192, 208-209, 248-259, 280-281, 285-293, 309-321, 339-340, 344-349, 353-356, 359-360, 363, 392-407, 420-421, 433, 446-452, 458-470, 476-486
+app\persistence\repository_portfolio.py            73     37      0      0  49.32%   41-45, 49-55, 59-62, 66-67, 71-73, 98-103, 107-108, 112-114, 134-139, 143-154, 158-159, 163-165, 184-189, 193-194, 198-200, 236-237, 241-243
+app\persistence\sessao.py                          30      8      6      3  69.44%   46, 58->60, 70->72, 88-94
+app\persistence\tabelas.py                        130     10      0      0  92.31%   133, 143, 235, 246, 291, 305, 485, 503, 554, 565
+app\persistence\tabelas_portfolio.py              101     10      0      0  90.10%   94, 112, 157, 171, 209, 222, 258, 272, 305, 313
+app\pipeline\__init__.py                            0      0      0      0 100.00%
+app\pipeline\desfechos.py                          16      0      0      0 100.00%
+app\pipeline\guardas\__init__.py                    0      0      0      0 100.00%
+app\pipeline\guardas\abuso\__init__.py              0      0      0      0 100.00%
+app\pipeline\guardas\abuso\bancada.py             130     37     48     14  66.85%   60, 99, 101, 103, 105, 109, 123, 125, 145, 150, 154, 159, 176, 229-260, 264
+app\pipeline\guardas\abuso\classificador.py        62      1     20      1  97.56%   83
+app\pipeline\guardas\abuso\politicas.py            13      0      0      0 100.00%
+app\pipeline\guardas\content_safety.py             42      1      4      1  95.65%   116
+app\pipeline\guardas\injecao\__init__.py            0      0      0      0 100.00%
+app\pipeline\guardas\injecao\classificador.py      34      1     14      1  95.83%   60
+app\pipeline\guardas\injecao\regras.py              4      0      0      0 100.00%
+app\pipeline\guardas\saida.py                      75      1     32      1  98.13%   134
+app\pipeline\intencao\__init__.py                   0      0      0      0 100.00%
+app\pipeline\intencao\avaliacao.py                195    102     54      3  43.37%   134-142, 197, 220-258, 279-284, 341, 375->373, 387-390, 404-410, 417, 428-503, 513-527, 538-548, 552
+app\pipeline\intencao\catalogo.py                  39      2      0      0  94.87%   494, 519
+app\pipeline\intencao\classificador.py             43      2     10      3  90.57%   56->63, 73, 115
+app\pipeline\intencao\dados.py                     35      0      2      0 100.00%
+app\pipeline\intencao\modelo.py                    91      1     18      2  97.25%   133->141, 144, 150->163
+app\pipeline\intencao\preprocessamento.py          62      0     10      1  98.61%   192->191
+app\pipeline\intencao\treino.py                    46     22      4      1  54.00%   56-67, 85-88, 117-130, 139
+app\pipeline\intencao\vetorizacao.py               34      0      2      0 100.00%
+app\pipeline\orquestrador.py                      132      0     36      0 100.00%
+app\pipeline\respostas.py                           7      1      2      1  77.78%   54
+app\rag\__init__.py                                 0      0      0      0 100.00%
+app\rag\bancada.py                                194     94     44      4  47.06%   134-135, 137, 183, 280, 284-288, 292-294, 298-348, 353-372, 384, 390, 395-402, 407-449, 453
+app\rag\embeddings.py                              29      0      6      0 100.00%
+app\rag\executor.py                                28      1      6      1  94.12%   86
+app\rag\fluxo.py                                   26      4      0      0  84.62%   89-93
+app\rag\geracao.py                                 82      0      8      0 100.00%
+app\rag\ingestao\__init__.py                        0      0      0      0 100.00%
+app\rag\ingestao\__main__.py                       36     36      8      0   0.00%   12-87
+app\rag\ingestao\chunking.py                      104     12     50      9  82.47%   88, 98, 101->84, 108, 132->exit, 146, 163->165, 179-186, 195->201
+app\rag\ingestao\drive.py                          74     18     20      2  74.47%   69-78, 101, 109, 152-164
+app\rag\ingestao\extracao.py                      202    131     94      1  29.73%   94, 110, 143-149, 159-174, 182-220, 237-248, 252, 259-286, 293-327, 338-344, 355-370
+app\rag\ingestao\fonte.py                          15      0      0      0 100.00%
+app\rag\ingestao\identificacao.py                 156     11     60      9  90.74%   145, 161, 240->242, 242->244, 253, 277, 292, 338, 349, 359-360, 375-376
+app\rag\ingestao\indexacao.py                     224     31     70     10  84.01%   99-122, 148, 189-192, 200, 211->213, 213->217, 303-312, 321-325, 327-335, 424, 439, 493, 517, 531
+app\rag\ingestao\modelos.py                        33      0      0      0 100.00%
+app\rag\ingestao\permissoes.py                     52      2     18      3  92.86%   90, 92, 110->exit
+app\rag\ingestao\registro.py                       40     14      6      0  60.87%   70, 74-75, 92-93, 111, 128-132, 136-144
+app\rag\ingestao\triagem.py                        12      0      6      0 100.00%
+app\rag\linguagem\__init__.py                       0      0      0      0 100.00%
+app\rag\linguagem\base.py                           7      0      0      0 100.00%
+app\rag\linguagem\fabrica.py                       12      0      4      0 100.00%
+app\rag\linguagem\gemini.py                        52      4     10      1  91.94%   80-88
+app\rag\linguagem\openrouter.py                    73      2     16      0  97.75%   94-95
+app\rag\recuperacao.py                             60      3     14      0  95.95%   185-188
+app\rag\tabelas.py                                 48      0      0      0 100.00%
+app\rag\vetorial\__init__.py                        0      0      0      0 100.00%
+app\rag\vetorial\base.py                           48      0     10      0 100.00%
+app\rag\vetorial\fabrica.py                        15      0      6      0 100.00%
+app\rag\vetorial\pgvector.py                       46      4      8      3  87.04%   114, 143-144, 156
+app\rag\vetorial\pinecone.py                       50      4     12      1  91.94%   79-90
+app\rag\vetorial\provisionar.py                   146     87     40      2  39.25%   110-117, 152-178, 225-227, 232-243, 262-272, 284-326, 330, 337-362, 366
+app\rotinas\__init__.py                             0      0      0      0 100.00%
+app\rotinas\agendador.py                           76     28     20      3  55.21%   77, 86, 101-129, 139-153, 159-160, 198-209
+app\rotinas\execucao.py                            84     33     18      3  54.90%   110, 113, 117-127, 131-149, 168-170, 177, 188-196, 206-222
+app\rotinas\sonda.py                              150     28     30      8  80.00%   126, 217->exit, 222, 231-239, 254-255, 257, 259, 265, 270-271, 273, 277-282, 286-298, 302, 306
+app\rotinas\validacao.py                           49      8     20      8  76.81%   60, 67, 71, 76, 82, 89, 91, 106
+app\schemas\__init__.py                             0      0      0      0 100.00%
+app\schemas\audio.py                               21      0      0      0 100.00%
+app\schemas\aviso.py                               17      4      2      0  68.42%   54-56, 61
+app\schemas\chat.py                                11      0      0      0 100.00%
+app\schemas\conversa.py                             6      0      0      0 100.00%
+app\schemas\intencao.py                            11      0      0      0 100.00%
+app\schemas\mensagem.py                            15      0      2      0 100.00%
+app\schemas\rotina.py                              15      0      0      0 100.00%
+app\schemas\usuario.py                             18      0      0      0 100.00%
+app\servicos\__init__.py                            0      0      0      0 100.00%
+app\servicos\audio_service.py                      34      4      2      0  88.89%   57-58, 94-96
+app\servicos\processamento_audio.py                42     11      0      0  73.81%   38-42, 87-89, 92-98
+app\utils\__init__.py                               0      0      0      0 100.00%
+app\utils\validadores.py                           63      3     34      2  92.78%   30, 95-96
+app\voz\__init__.py                                 0      0      0      0 100.00%
+app\voz\midia.py                                   43      6     10      2  84.91%   72-73, 76, 81-82, 89
+app\voz\speech.py                                  93     16     36      8  79.84%   82, 84, 90, 93, 110-115, 141, 153, 172-176, 180
+app\voz\transcricao.py                             88     11     30      7  84.75%   49, 58, 102, 104, 107, 117, 130-131, 134, 139-140
+app\webhooks\__init__.py                            0      0      0      0 100.00%
+app\webhooks\drive\__init__.py                      0      0      0      0 100.00%
+app\webhooks\drive\__main__.py                     41     41     10      0   0.00%   11-69
+app\webhooks\drive\inscricao.py                    87     47     14      2  41.58%   56, 82-128, 142, 144->150, 151, 154-156, 161-162, 165, 185-191, 196-201
+app\webhooks\drive\manutencao.py                   61     34     12      1  41.10%   44, 59-78, 88-96, 103-106, 130-134, 139-140
+app\webhooks\drive\recebimento.py                  71      4     14      4  90.59%   57->56, 60-62, 139->142, 156
+app\webhooks\drive\sincronizacao.py                54     24     12      0  51.52%   59-78, 110-128
+app\webhooks\modelos.py                            33      0      0      0 100.00%
+app\webhooks\portfolio\__init__.py                  0      0      0      0 100.00%
+app\webhooks\portfolio\__main__.py                 52     52     12      0   0.00%   13-85
+app\webhooks\portfolio\aplicacao.py                76     48     14      0  31.11%   87, 91, 98-175, 180-191
+app\webhooks\portfolio\evento.py                   87      9     22      0  86.24%   184-194
+app\webhooks\portfolio\recebimento.py              43     24      4      0  40.43%   43, 60-71, 82-118
+app\webhooks\repositorio.py                        71     38      6      0  42.86%   41, 68-78, 90-104, 107, 117-118, 122-127, 131-134, 146-155, 178-205, 214, 231, 239-247, 257-266, 273, 281, 310-317, 324-325, 328-331
+app\webhooks\tabelas.py                            83      2      0      0  97.59%   141, 198
+app\webhooks\tratadores.py                         14      7      2      0  43.75%   19-21, 30-34
+app\worker.py                                     123     35     30      4  69.28%   62->exit, 64->exit, 82-104, 114-125, 153, 213-214, 219-220, 223->238, 243-244
+--------------------------------------------------------------------------------------------
+TOTAL                                            6959   1649   1436    163  73.63%
+=========================== short test summary info ===========================
+SKIPPED [3] tests\unit\test_ingestao_extracao.py:25: could not import 'docx': No module named 'docx'
+SKIPPED [1] tests\unit\test_ingestao_extracao.py:60: could not import 'openpyxl': No module named 'openpyxl'
+SKIPPED [1] tests\unit\test_ingestao_extracao.py:74: could not import 'pptx': No module named 'pptx'
+SKIPPED [3] tests\funcionais\test_rf07_analise.py: RF07 est� explicitamente fora do MVP e sem t�pico no executor (Projeto.md 10.1.4.1)
+SKIPPED [1] tests\rnf\test_rnf04_disponibilidade.py:198: PostgreSQL indispon�vel; suba o servi�o db do Docker Compose.
+SKIPPED [1] tests\rnf\test_rnf06_barreiras.py:108: defina EXECUTAR_RNF06_REAL=1 e as credenciais do Content Safety
+XFAIL tests/funcionais/test_rf01_acesso.py::test_tf_rf01_04_claim_sem_perfil_correspondente_e_recusada - grupo desconhecido ainda recebe perfil padr�o de membro
+XFAIL tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_05_recusa_por_permissao_difere_de_fora_de_escopo - pipeline n�o distingue recusa por projeto
+XFAIL tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_06_entidade_obrigatoria_ausente_pede_complemento - valida��o de entidades ainda n�o implementada
+XFAIL tests/funcionais/test_rf04_consulta.py::test_tf_rf04_01_consulta_dimensoes_do_portfolio - consulta em linguagem natural ainda n�o retorna as sete dimens�es
+XFAIL tests/funcionais/test_rf04_consulta.py::test_tf_rf04_02_referencia_acompanha_o_conteudo - contrato do executor ainda n�o estrutura refer�ncia de origem
+XFAIL tests/funcionais/test_rf04_consulta.py::test_tf_rf04_04_projeto_alheio_e_inexistente_sao_indistinguiveis - rota diferencia projeto alheio (403) de inexistente (404)
+XFAIL tests/funcionais/test_rf04_consulta.py::test_tf_rf04_05_dado_ausente_nao_e_inventado - resposta expl�cita para dado ausente ainda pertence ao executor futuro
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_01_grava_somente_apos_confirmacao - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_02_negacao_preserva_valor_anterior - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_03_sem_escrita_recusa_antes_de_ler_valor - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_04_alteracao_registra_origem_autoria_e_momento - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_05_falha_de_gravacao_nao_deixa_estado_parcial - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_06_parametro_ausente_pede_complemento - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_01_varredura_alerta_responsavel - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_02_contato_parte_do_sistema - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_03_projeto_completo_nao_gera_alerta - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_04_alerta_chega_somente_ao_responsavel - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_05_resposta_ao_alerta_retorna_ao_fluxo_transacional - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_02_detalhe_do_material_varia_por_perfil - perfil ainda n�o � enviado ao contrato do executor
+XFAIL tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_03_dados_insuficientes_nao_geram_material - regra de sufici�ncia de dados do relat�rio ainda n�o implementada
+XFAIL tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_04_material_nao_recebe_fonte_nao_autorizada - filtragem de fontes por projeto ainda n�o integra o executor
+XFAIL tests/funcionais/test_rf09_guardas.py::test_tf_rf09_06_indisponibilidade_da_guarda_falha_de_modo_seguro - falha do servi�o da guarda de inje��o ainda propaga exce��o
+933 passed, 10 skipped, 22 xfailed, 4 warnings in 54.56s

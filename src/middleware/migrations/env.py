@@ -15,8 +15,11 @@ from alembic import context
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.pool import NullPool
 
-# Registra no metadata as tabelas do schema `rag` (app/rag/tabelas.py).
-import app.rag.tabelas  # noqa: F401
+# Registram no metadata as tabelas dos avisos (schema padrão) e dos schemas
+# `rag` e `webhook` (app/avisos, app/rag e app/webhooks, tabelas.py).
+import app.avisos.tabelas
+import app.rag.tabelas
+import app.webhooks.tabelas  # noqa: F401
 from app.config import settings
 from app.persistence.tabelas import Base
 from app.persistence.tabelas_portfolio import Base as PortfolioBase
@@ -44,9 +47,10 @@ def incluir_objeto(objeto, nome, tipo, reflexo, objeto_comparado) -> bool:
     return not (tipo == "table" and nome == "apscheduler_jobs")
 
 
-# Schemas deste projeto: o padrão (`None`, o `public`) e o `rag` da
-# ingestão do executor próprio.
-ESQUEMAS = {None, "rag", "portfolio"}
+# Schemas deste projeto: o padrão (`None`, o `public`), o `rag` da
+# ingestão do executor próprio, o `portfolio` e o `webhook` dos
+# recebimentos externos.
+ESQUEMAS = {None, "rag", "portfolio", "webhook"}
 
 
 def incluir_nome(nome, tipo, pais) -> bool:

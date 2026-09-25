@@ -43,11 +43,17 @@ class ErroTranscricao(RuntimeError):
 def _validar_configuracao() -> tuple[str, str, str]:
     chave = settings.speech_key.strip()
     endpoint = settings.speech_endpoint.strip().rstrip("/")
+    regiao = settings.speech_region.strip()
     idioma = settings.speech_idioma.strip()
     if not chave:
         raise ErroTranscricao("CONFIGURACAO_INVALIDA", "SPEECH_KEY nao configurada")
+    # Sem dominio proprio no recurso, o endpoint regional aceita a mesma chave.
+    if not endpoint and regiao:
+        endpoint = f"https://{regiao}.api.cognitive.microsoft.com"
     if not endpoint:
-        raise ErroTranscricao("CONFIGURACAO_INVALIDA", "SPEECH_ENDPOINT nao configurado")
+        raise ErroTranscricao(
+            "CONFIGURACAO_INVALIDA", "SPEECH_ENDPOINT ou SPEECH_REGION nao configurado"
+        )
     if not idioma:
         raise ErroTranscricao("CONFIGURACAO_INVALIDA", "SPEECH_IDIOMA nao configurado")
     return chave, endpoint, idioma

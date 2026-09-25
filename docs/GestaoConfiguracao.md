@@ -100,7 +100,7 @@
   - [2.2 Estrutura de branches](#22-estrutura-de-branches)
   - [2.3 Diretrizes de uso das branches](#23-diretrizes-de-uso-das-branches)
   - [2.4 Exemplo prático](#24-exemplo-prático)
-  - [2.5 Procedimentos de release, hotfix e exclusão](#25-procedimentos-de-release-hotfix-e-exclusão)
+  - [2.5 Procedimentos de integração na main, hotfix e exclusão](#25-procedimentos-de-integração-na-main-hotfix-e-exclusão)
 - [3. Políticas de commit](#3-políticas-de-commit)
   - [3.1 Identidade de autoria](#31-identidade-de-autoria)
 - [4. Política de push e Merge Requests](#4-política-de-push-e-merge-requests)
@@ -109,6 +109,7 @@
 - [6. Gestão de arquivos sensíveis](#6-gestão-de-arquivos-sensíveis)
 - [7. Política de rollback](#7-política-de-rollback)
 - [8. Registro de variáveis de ambiente](#8-registro-de-variáveis-de-ambiente)
+  - [8.1 Segredos na nuvem](#81-segredos-na-nuvem)
 - [Referências](#referências)
 
 ## 1. Introdução
@@ -130,10 +131,10 @@ O projeto adota um fluxo baseado em GitFlow, no qual o trabalho é desenvolvido 
 | Branch | Finalidade | Origem | Destino do merge |
 |---|---|---|---|
 | `main` | Versão estável destinada às entregas do projeto | — | — |
-| `develop` | Integração contínua do trabalho em desenvolvimento | `main` | `main`, nos marcos de entrega |
+| `develop` | Integração contínua do trabalho em desenvolvimento | `main` | `main`, ao fim de cada sprint, por merge request revisado |
 | `feat/<nome>` | Desenvolvimento de funcionalidades | `develop` | `develop` |
 | `fix/<nome>` | Correção de defeitos identificados durante o desenvolvimento | `develop` | `develop` |
-| `release/<versão>` | Preparação e estabilização de uma entrega | `develop` | `main` e `develop` |
+| `release/<versão>` | **Opcional.** Estabilização de uma entrega quando a `develop` não puder ser promovida inteira; não utilizada desde a Sprint 3 | `develop` | `main` e `develop` |
 | `hotfix/<nome>` | Correção urgente de uma versão estável | `main` | `main` e `develop` |
 | `docs/<nome>` | Criação ou atualização de documentação | `develop` | `develop` |
 | `design/<nome>` | Criação ou atualização de artefatos de design e modelagem | `develop` | `develop` |
@@ -143,9 +144,11 @@ Exemplos: `feat/classificacao-intencoes`, `fix/corrige-parser-audio`, `release/v
 
 O papel de cada branch decorre da sua permanência e do seu destino.
 
-**`main` e `develop` são permanentes.** A `main` guarda apenas versões entregues e recebe merge exclusivamente de `release` e de `hotfix`, de modo que seu histórico corresponde à sequência de entregas do módulo. A `develop` é a linha de integração: todo trabalho converge para ela antes de compor uma entrega, e é dela que nasce qualquer branch de trabalho. Nenhuma das duas aceita commit direto.
+**`main` e `develop` são permanentes.** A `main` guarda apenas versões entregues e recebe merge da `develop`, ao fim de cada sprint, e de `hotfix`, de modo que seu histórico corresponde à sequência de entregas do módulo. A `develop` é a linha de integração: todo trabalho converge para ela antes de compor uma entrega, e é dela que nasce qualquer branch de trabalho. Nenhuma das duas aceita commit direto.
 
-**As demais são temporárias e existem enquanto durar o card que as originou.** `feat` e `fix` carregam alteração de comportamento do sistema, a primeira acrescentando e a segunda corrigindo. `docs`, `design` e `test` carregam, respectivamente, documentação, artefatos de modelagem e casos de teste, e não alteram o comportamento da aplicação. `release` estabiliza uma versão candidata e é a única via de promoção para a `main` em condições normais. `hotfix` é a exceção a essa regra, e existe porque uma correção urgente em produção não pode esperar o ciclo de integração; por isso parte da `main` e retorna às duas branches permanentes, para que a correção não desapareça do desenvolvimento.
+**As demais são temporárias e existem enquanto durar o card que as originou.** `feat` e `fix` carregam alteração de comportamento do sistema, a primeira acrescentando e a segunda corrigindo. `docs`, `design` e `test` carregam, respectivamente, documentação, artefatos de modelagem e casos de teste, e não alteram o comportamento da aplicação. A promoção normal para a `main` é o merge request da própria `develop`; `release` fica reservada ao caso em que parte do que está na `develop` não pode acompanhar a entrega e precisa ser estabilizado à parte. `hotfix` é a exceção a esse fluxo, e existe porque uma correção urgente em produção não pode esperar o ciclo de integração; por isso parte da `main` e retorna às duas branches permanentes, para que a correção não desapareça do desenvolvimento.
+
+> **Revisão da Sprint 4: integração da `develop` na `main`.** Até a Sprint 2, a promoção passava por branch de release (`release-sprint-1`, integrada em 14/08/2026, e `release/v0.2.0-Sprint2`, em 28/08/2026). Desde a Sprint 3 o grupo integra a `develop` diretamente na `main` por merge request revisado: !88 em 05/09/2026 (Sprint 3, semana 1) e !110 em 12/09/2026 (Sprint 3). O acordo decorre de a entrega de cada sprint ser o estado integral da `develop`: o controle de qualidade acontece na revisão de cada merge request de trabalho e na execução das suítes de teste antes do merge, de modo que a branch de release repetia a `develop` sem acrescentar estabilização. A branch de release é, portanto, **opcional**: nenhuma regra do projeto exige que a promoção para a `main` passe por ela. O padrão é o merge request da `develop` para a `main` ao fim de cada sprint, e a `release` só é criada quando parte do trabalho integrado na `develop` não puder acompanhar a entrega. Esta tabela e a seção 2.5 passaram a registrar a regra praticada, e não mais a anterior.
 
 > **Revisão da Sprint 2.** Os prefixos de funcionalidade e de correção passaram de `feature/` e `bugfix/` para **`feat/` e `fix/`**, alinhando a nomenclatura de branch aos tipos já utilizados nas mensagens de commit do padrão *Conventional Commits* e à prática efetivamente adotada pela equipe no repositório. Branches criadas antes desta revisão permanecem com o nome original em seu histórico; a convenção vale para as branches criadas a partir da Sprint 3.
 
@@ -193,6 +196,10 @@ Exemplos inválidos e o motivo:
 | `feature/classificador` | Prefixo descontinuado na revisão da Sprint 2; usar `feat/` |
 | `Feat/Novo-Endpoint` | Uso de letras maiúsculas |
 | `feat/ajustes` | Descrição genérica, que não identifica a entrega |
+| `doc/webhooks` | Prefixo no singular; o prefixo de documentação é `docs/` (`docs/webhooks`). Branch da Sprint 3 mantida com o nome original |
+| `ci/agenda-cadu` | `ci/` não consta da tabela da seção 2.2, e o nome descreve a pessoa, não a entrega. Alterações de pipeline usam `feat/` ou `fix/` com o tipo `ci` no commit, como em `feat/agenda-board` |
+
+As branches da Sprint 4 foram conferidas contra esta convenção em 24/09/2026. Seguem o padrão, por exemplo, `feat/produtor-amqp`, `feat/painel-intencoes-backend`, `test/rnf04-disponibilidade`, `docs/gestao-sprint-4` e `docs/escopo-webhooks-resolvido`; as exceções são as duas da tabela acima e `ci/agenda`.
 
 #### Procedimentos de criação por tipo de branch
 
@@ -277,7 +284,7 @@ Para documentar as User Stories do card #22, o fluxo utilizado é:
 
 #### 2.4.1 Exemplos de aplicações práticas no projeto
 
-Os exemplos abaixo reproduzem fluxos ocorridos na Sprint 2 e preservam as convenções vigentes naquele ciclo, tanto nas mensagens de commit em terceira pessoa quanto nos títulos de merge request no formato `TIPO | descrição`. As convenções atuais estão nas seções 3 e 4.1.
+Os exemplos 1 a 3 reproduzem fluxos ocorridos na Sprint 2 e preservam as convenções vigentes naquele ciclo, tanto nas mensagens de commit em terceira pessoa quanto nos títulos de merge request no formato `TIPO | descrição`. As convenções atuais estão nas seções 3 e 4.1. O exemplo 4 é da Sprint 4 e mostra o fluxo atual, com exclusão da branch no merge.
 
 **Exemplo 1: Implementação de página principal do frontend**
 
@@ -399,11 +406,55 @@ git push --set-upstream origin docs/gestao-configuracao
 
 7. Após aprovação e merge, excluir a branch
 
-### 2.5 Procedimentos de release, hotfix e exclusão
+**Exemplo 4: Funcionalidade da Sprint 4, com exclusão da branch no merge**
 
-#### Preparação de release
+Card: #393 - Produtor de eventos AMQP
+Branch: `feat/produtor-amqp`
+Merge Request: !139
+Autor: Eduardo Casarini
+Sprint: Sprint 04
 
-Uma release consolida uma versão candidata a entrega. A branch deve partir da `develop` atualizada:
+Fluxo executado:
+1. Criar a branch a partir da `develop` atualizada, com o prefixo e o nome da seção 2.3;
+2. Registrar um commit por unidade lógica, no padrão da seção 3:
+```text
+feat: declarar topologia de eventos do RabbitMQ #393
+feat: implementar produtor AMQP com confirmacao de publicacao #393
+feat: integrar produtor de eventos ao ciclo de vida da API #393
+test: validar topologia, confirmacao e falhas do produtor #393
+```
+   As mensagens citam o card sem parênteses; o formato da referência ao card está na seção 3.
+3. Enviar a branch e abrir o merge request para a `develop`, com título, descrição, labels e revisão da seção 4.1;
+4. Executar a suíte de testes e aguardar a revisão por outra pessoa;
+5. Integrar com *Delete source branch*: a branch remota deixou de existir no merge de 23/09/2026 (commit `81a25a2`), e restou apenas a limpeza local da seção 2.5.
+
+Ao fim da sprint, o conteúdo integrado na `develop` segue para a `main` pelo merge request de integração descrito na seção 2.5, como nas integrações !88 e !110 da Sprint 3.
+
+### 2.5 Procedimentos de integração na main, hotfix e exclusão
+
+#### Integração da develop na main
+
+Ao fim de cada sprint, depois que os merge requests de trabalho do ciclo foram integrados e as suítes de teste da `develop` passam (`pytest` no middleware e `npm run test` na interface), abre-se um merge request da `develop` para a `main`:
+
+```text
+Origem: develop  →  Destino: main
+Título: Sprint 3: develop → main
+```
+
+O merge request segue a revisão da seção 4, com uma pessoa diferente de quem o abriu, e é integrado com commit de merge, sem squash, para que a `main` preserve a referência a cada merge request de trabalho. A `develop` não é excluída. Foi assim nas integrações !88 (05/09/2026) e !110 (12/09/2026). Após o merge, a entrega pode receber uma tag rastreável:
+
+```bash
+git switch main
+git pull --ff-only origin main
+git tag -a sprint-4 -m "Entrega da Sprint 4"
+git push origin sprint-4
+```
+
+#### Preparação de release (opcional)
+
+A release não é etapa obrigatória do fluxo. Ela só é criada quando o padrão da seção anterior não servir.
+
+Quando parte do trabalho integrado na `develop` não puder acompanhar a entrega, uma branch de release estabiliza o recorte que será promovido. A branch deve partir da `develop` atualizada:
 
 ```bash
 git switch develop
@@ -436,7 +487,7 @@ Depois da correção e da validação, devem ser abertos MRs da hotfix para `mai
 
 #### Exclusão e sincronização após o merge
 
-Após confirmar no GitLab que o MR foi integrado, a pessoa autora deve atualizar a branch-base e remover referências obsoletas:
+Após confirmar no GitLab que o MR foi integrado, a pessoa autora deve atualizar a branch-base e remover referências obsoletas. A opção *Delete source branch* do merge request já remove a branch remota no merge, como ocorreu com `feat/produtor-amqp` (!139) e `docs/escopo-webhooks-resolvido` (!141) na Sprint 4; resta então limpar a cópia local:
 
 ```bash
 git switch develop
@@ -456,7 +507,10 @@ Formato:
 
 ```text
 <tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> (#<card>)
+<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> #<card>
 ```
+
+As duas formas da referência ao card, com e sem parênteses, são aceitas.
 
 Tipos adotados:
 
@@ -476,7 +530,7 @@ Tipos adotados:
 
 - O verbo vem no infinitivo: adicionar, criar, corrigir, atualizar, remover, revisar, ajustar, definir, mapear.
 - A descrição começa em letra minúscula logo após o prefixo e não termina em ponto final.
-- A referência ao card é obrigatória, entre parênteses, ao final da linha de título.
+- A referência ao card é obrigatória ao final da linha de título, separada da descrição por um espaço, entre parênteses (`(#22)`) ou sem eles (`#22`).
 - A linha de título deve caber em 72 caracteres. Explicações que não couberem vão no corpo da mensagem.
 - A descrição informa o que mudou, não como a mudança foi feita.
 - Cada commit representa uma unidade lógica de alteração. Commits que misturam mudanças sem relação entre si dificultam a revisão e inviabilizam o rollback seletivo descrito na seção 7.
@@ -488,6 +542,7 @@ docs: adicionar user stories e critérios de aceitação (#22)
 feat(pln): implementar classificação de intenção (#40)
 fix(audio): corrigir conversão de áudio para texto (#41)
 test: adicionar casos de rejeição fora de domínio (#52)
+feat: implementar produtor AMQP com confirmacao de publicacao #393
 ```
 
 Exemplos inválidos:
@@ -499,6 +554,7 @@ Exemplos inválidos:
 | `adicionar user stories (#22)` | Ausência do tipo |
 | `docs: ajustes` | Descrição vaga, sem objeto identificável e sem card |
 | `docs: adiciona user stories (#22)` | Verbo em terceira pessoa |
+| `docs: adicionar user stories(#22)` | Referência colada à descrição, sem espaço |
 
 **Nota sobre o histórico.** Os commits anteriores à Sprint 3 utilizam a terceira pessoa, como em `docs: adiciona requisitos funcionais`. O histórico não é reescrito, pela mesma razão registrada na seção 2.3 quanto aos nomes de branch já integrados: reescrever mensagens de commits já integrados invalidaria as referências usadas nas métricas das sprints anteriores. A regra do infinitivo vale para os commits criados a partir da Sprint 3.
 
@@ -542,10 +598,11 @@ Todo MR deve receber uma primeira revisão em até **24 horas úteis** após a s
 
 ### 4.1 Padrão de Merge Requests
 
-**Título.** O título do merge request segue o mesmo formato da mensagem de commit. Quando o merge request encerra mais de um card, todos são listados entre parênteses, separados por vírgula.
+**Título.** O título do merge request segue o mesmo formato da mensagem de commit, com a referência ao card entre parênteses ou sem eles. Quando o merge request encerra mais de um card, todos são listados ao final, separados por vírgula.
 
 ```text
 <tipo>: <verbo no infinitivo> <complemento> (#<card>)
+<tipo>: <verbo no infinitivo> <complemento> #<card>
 ```
 
 Exemplos:
@@ -597,7 +654,7 @@ que decisão sustenta, com que outras seções mantém coerência.
 - Nomes de arquivo aparecem entre crases, e seções são referenciadas por número e nome.
 - Quando restar pendência que não impeça o merge, acrescenta-se ao final a seção `## Pendências`, em lista, indicando o item e o que falta para resolvê-lo.
 
-**Vinculação ao card.** Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a atividade e puder fechar a issue automaticamente. Quando o merge apenas contribuir para uma atividade que continuará aberta, deve-se utilizar `Refs #<issue>`.
+**Vinculação ao card.** Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a atividade. Como a branch padrão do projeto é a `main`, o GitLab não fecha a issue no merge para a `develop`: a pessoa responsável fecha a issue manualmente logo após o merge, depois de conferir o DoD. Quando o merge apenas contribuir para uma atividade que continuará aberta, deve-se utilizar `Refs #<issue>`.
 
 ## 5. Infraestrutura como código
 
@@ -630,6 +687,18 @@ Os arquivos que carregam essas informações passaram a existir durante a Sprint
 | `.venv/`, `node_modules/`, `dist/` | Dependências e artefatos de construção, que não pertencem ao controle de versão |
 
 Uma credencial exposta acidentalmente não é resolvida apagando o arquivo em um commit seguinte, porque o valor permanece recuperável no histórico. O procedimento correto é revogar a credencial no serviço de origem, emitir uma nova e registrar o incidente, tratando o valor comprometido como perdido.
+
+**Segredos em nuvem.** Nos ambientes da Azure, os segredos não existem em arquivo nem na configuração dos serviços. Cada estágio, `dev` e `prd`, tem um Key Vault próprio (`kv-prata-<estágio>-g02t17`) com autorização por RBAC. Os Container Apps e o job de migração não recebem o valor: cada segredo é declarado como referência ao cofre e lido pela identidade gerenciada `id-prata-<estágio>`, que tem apenas o papel *Key Vault Secrets User*, de leitura. Quem provisiona recebe *Key Vault Secrets Officer* para gravar. A fase `segredos` do `infra/azure/provisionar.sh` copia os valores do `.env` local para o cofre sem exibi-los e lê as chaves do Content Safety e do Speech diretamente dos recursos na Azure. As senhas do banco são geradas pelo próprio script e existem apenas no cofre. A fase `conferir` verifica, sem alterar nada, que nenhum segredo aparece em texto claro na configuração dos serviços, que os segredos obrigatórios estão no cofre e que o middleware referencia todos eles. A correspondência entre variáveis e segredos está na seção 8.1.
+
+**Rede do banco de dados.** O servidor PostgreSQL gerenciado exige TLS 1.2 ou superior em toda conexão (`require_secure_transport` ligado) e aceita tráfego apenas pela regra de serviços da Azure. Essa regra admite conexões de qualquer recurso hospedado na Azure, inclusive de outros clientes, e é a única possível no desenho atual: os Container Apps no perfil Consumption não têm IP de saída fixo que possa ser liberado individualmente. Um IP fixo exigiria um NAT gateway, e isolar o banco em rede privada exigiria recriar o ambiente dentro de uma VNet com private endpoint. Os dois caminhos têm custo mensal incompatível com o teto de R$ 300 por ano do projeto. A exposição restante é compensada por cinco controles:
+
+- transporte cifrado obrigatório, recusado abaixo de TLS 1.2;
+- usuário de aplicação próprio de cada estágio, sem privilégio de administrador;
+- cada banco aceita conexão apenas do usuário do seu estágio, com o `CONNECT` revogado do `PUBLIC`, porque os dois estágios dividem o mesmo servidor;
+- senhas geradas aleatoriamente e guardadas apenas no cofre;
+- acesso temporário da máquina de quem provisiona removido pela fase `fechar`, com a fase `conferir` acusando qualquer regra além da de serviços da Azure.
+
+A rede privada é a evolução prevista para um ambiente de produção com orçamento próprio.
 
 ## 7. Política de rollback
 
@@ -664,11 +733,47 @@ Registram-se aqui apenas os nomes e as finalidades. Nenhum valor real deve const
 | Identidade | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, `ENTRA_REDIRECT_URI` | Parâmetros do fluxo de autenticação corporativa |
 | Perfis e permissões | `ENTRA_GRUPO_DIRETORIA`, `ENTRA_GRUPO_LIDER_PROJETO`, `ENTRA_GRUPO_MEMBRO_EQUIPE`, `ENTRA_GRUPO_VER_INTENCOES`, `ENTRA_GRUPO_GERIR_ROTINAS` | Identificadores dos grupos que determinam perfil e permissões do usuário |
 | Sessão | `SESSION_SECRET`, `SESSION_MAX_AGE_SECONDS`, `SESSION_COOKIE_SECURE` | Assinatura, validade e política de transporte do cookie de sessão |
-| Barreiras de segurança | `CONTENT_SAFETY_ENDPOINT`, `CONTENT_SAFETY_KEY`, `CONTENT_SAFETY_LIMIAR_SEVERIDADE` | Serviço e limiar de severidade das guardas de conteúdo |
+| Barreiras de segurança | `CONTENT_SAFETY_ENDPOINT`, `CONTENT_SAFETY_KEY`, `CONTENT_SAFETY_LIMIAR_SEVERIDADE`, `SAIDA_DOMINIOS_PERMITIDOS` | Serviço e limiar de severidade das guardas de conteúdo, e domínios que a resposta pode citar em link; fora deles, a guarda de saída trata a URL como possível exfiltração |
+| Conversa | `HISTORICO_MAX_TURNOS` | Quantos turnos anteriores entram no prompt; zero desliga o histórico sem desligar a persistência |
+| Executor | `EXECUTOR` | Caminho que responde ao chat: `copilot`, o Copilot Studio via Direct Line, ou `proprio`, o RAG sobre o corpus |
 | Busca vetorial | `VETORIAL_BACKEND`, `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_NAMESPACE` | Provedor e credenciais do índice vetorial da camada de recuperação |
+| Recuperação e ingestão | `RAG_TOP_K`, `RAG_SCORE_MINIMO`, `CHUNK_TOKENS`, `CHUNK_OVERLAP`, `DRIVE_SERVICE_ACCOUNT_JSON`, `DRIVE_PASTA_ID` | Quantidade e corte de similaridade dos trechos recuperados, tamanho e sobreposição dos trechos na ingestão, e caminho da chave da conta de serviço e pasta do Drive lidas pela ingestão |
+| Geração | `LLM_BACKEND`, `GEMINI_API_KEY`, `GEMINI_MODELO`, `GEMINI_TIMEOUT_SECONDS`, `OPENROUTER_API_KEY`, `OPENROUTER_MODELO`, `OPENROUTER_TIMEOUT_SECONDS` | Provedor, credencial, modelo e tempo limite do modelo de geração do executor próprio |
 | Conversão de fala | `SPEECH_KEY`, `SPEECH_ENDPOINT`, `SPEECH_REGION`, `SPEECH_IDIOMA`, `SPEECH_API_VERSION`, `SPEECH_TIMEOUT_SECONDS` | Credencial, região, idioma e tempo limite do serviço de reconhecimento de fala |
+| Rotinas | `ROTINAS_RECONCILIACAO_SEGUNDOS` | Intervalo em que o worker relê a tabela de rotinas, para que uma edição chegue ao agendador sem reiniciá-lo |
+| Mensageria | `RABBITMQ_URL`, `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_VHOST`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_LETTER_EXCHANGE`, `RABBITMQ_PREFETCH_COUNT`, `RABBITMQ_MAX_RETRIES` | Conexão com o RabbitMQ, pela URL completa ou pelas partes, e exchanges, prefetch e retentativas dos eventos |
+| Webhooks | `WEBHOOK_PORTFOLIO_CHAVES_ARQUIVO`, `WEBHOOK_MANUTENCAO_SEGUNDOS`, `DRIVE_WEBHOOK_URL`, `DRIVE_WEBHOOK_FONTE`, `DRIVE_WEBHOOK_VALIDADE_HORAS` | Caminho do cadastro de chaves HMAC do portfólio, URL pública, fonte e validade do canal do Drive, e intervalo da manutenção dos canais |
+| Testes de desempenho | `PERFORMANCE_MODE`, `PERFORMANCE_EXECUTOR_DELAY_MS`, `PERFORMANCE_EXECUTOR_TIMEOUT_MS` | Troca o executor por um sintético de atraso controlado nos testes de carga; desligado fora deles |
+| Implantação | `AQUECER_MODELOS`, `BASE_DIR` | Carrega o classificador na subida da API, ligada na imagem do middleware, e define o diretório onde os áudios recebidos esperam a transcrição |
+| Interface (nginx) | `API_UPSTREAM` | Destino do proxy `/api`; definida na imagem do web, fora do `.env.example` |
 
 Ao acrescentar uma variável, a pessoa responsável deve incluí-la no `.env.example` com valor vazio ou fictício e registrar o nome e a finalidade nesta tabela, na mesma alteração. Variável presente no código e ausente desta seção é divergência a ser corrigida na revisão do merge request.
+
+### 8.1 Segredos na nuvem
+
+Nos ambientes da Azure, as variáveis sigilosas chegam aos contêineres como referência ao Key Vault do estágio, e nunca como valor, conforme a seção 6. As demais variáveis da tabela anterior não são sigilosas e são definidas diretamente na configuração do Container App.
+
+| Variável | Segredo no cofre | Consumidor |
+|---|---|---|
+| `DATABASE_URL` | `database-url` | Middleware e job de migração |
+| `SESSION_SECRET` | `session-secret` | Middleware |
+| `ENTRA_CLIENT_SECRET` | `entra-client-secret` | Middleware |
+| `SPEECH_KEY` | `speech-key` | Middleware |
+| `PINECONE_API_KEY` | `pinecone-api-key` | Middleware |
+| `OPENROUTER_API_KEY` | `openrouter-api-key` | Middleware |
+| `CONTENT_SAFETY_KEY` | `content-safety-key` | Middleware |
+| `GEMINI_API_KEY` | `gemini-api-key` | Middleware, com `LLM_BACKEND=gemini` |
+| `DIRECTLINE_SECRET` | `directline-secret` | Middleware, com `EXECUTOR=copilot` |
+
+A fase `segredos` grava no cofre apenas o que está preenchido no `.env` de quem provisiona. O segredo ausente fica de fora do cofre e do contêiner. Há três exceções, que não vêm do `.env`. O `SESSION_SECRET` é gerado pelo próprio script. O `CONTENT_SAFETY_KEY` e o `SPEECH_KEY` são lidos dos recursos `cs-prata-g02t17` e `speech-prata-g02t17`, criados pela fase `cognitivos` no nível gratuito, na região `brazilsouth` e no mesmo tenant dos demais recursos, e compartilhados pelos dois estágios. O `CONTENT_SAFETY_ENDPOINT`, que não é sigiloso, também vem do recurso. O worker de rotinas, quando existe, recebe os mesmos segredos do middleware, e o frontend não recebe nenhum.
+
+Para a máquina de quem desenvolve usar os mesmos recursos, a fase `local` grava no `src/middleware/.env` o endpoint e a chave do Content Safety e a chave e a região do Speech, sem exibi-los. Ela exige acesso à assinatura. Quem não tem acesso recebe as chaves de quem administra os recursos, por canal privado e nunca pelo repositório.
+
+Três grupos de variáveis sigilosas da seção 8 não têm segredo no cofre, porque o componente que as usa não roda na nuvem. O `RABBITMQ_PASSWORD` e o `RABBITMQ_URL` pertencem ao RabbitMQ, que existe apenas no Compose. O `DRIVE_SERVICE_ACCOUNT_JSON` e o `WEBHOOK_PORTFOLIO_CHAVES_ARQUIVO` apontam para arquivos de chave usados pela ingestão e pelos webhooks locais. Quando um desses componentes for implantado, o segredo correspondente entra nesta tabela e no cofre na mesma alteração.
+
+Dois segredos existem apenas no cofre, sem variável correspondente. O `db-senha` é a senha do usuário de aplicação do estágio, embutida na `database-url`. O `pg-admin-senha` é a senha do administrador do servidor PostgreSQL e fica só no cofre do `dev`, que é quem cria o servidor compartilhado pelos dois estágios.
+
+A conferência de que nenhum segredo está em texto claro é feita pela fase `conferir` do `infra/azure/provisionar.sh`, que lista apenas nomes.
 
 ## Referências
 

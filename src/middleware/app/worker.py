@@ -18,6 +18,7 @@ import asyncio
 import logging
 import signal
 from collections.abc import Callable
+from datetime import timedelta
 
 from apscheduler.events import (
     EVENT_JOB_ERROR,
@@ -27,8 +28,14 @@ from apscheduler.events import (
     SchedulerEvent,
 )
 
+from app.config import settings
+from app.mensageria.consumidor import ConsumidorWebhooks
+from app.mensageria.produtor import ProdutorEventos
 from app.persistence import sessao
 from app.rotinas.agendador import carregar_agenda, criar_agendador
+from app.webhooks.drive.inscricao import InscricaoDrive
+from app.webhooks.drive.manutencao import executar_manutencao
+from app.webhooks.tratadores import montar_tratadores
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +104,55 @@ def _registrar_sinais(evento_encerramento: asyncio.Event) -> Callable[[], None]:
     return remover
 
 
+def _inscricao_drive() -> InscricaoDrive | None:
+    """Inscrição do WH-01 para a renovação de canais, se configurada aqui.
+
+    Sem `DRIVE_WEBHOOK_URL` ou sem a chave da conta de serviço, o ambiente
+    não recebe notificações do Drive: não há canal a renovar, e o worker
+    segue só com a republicação de pendentes.
+    """
+    if not settings.drive_webhook_url:
+        return None
+    try:
+        # Adiado: o SDK do Google é do extra `rag`, e o worker de rotinas
+        # não pode depender dele para subir.
+        from app.rag.ingestao.drive import criar_servico_drive
+
+        servico = criar_servico_drive()
+    except RuntimeError as erro:
+        logger.warning("Renovação de canais do Drive desligada: %s", erro)
+        return None
+    return InscricaoDrive(
+        servico,
+        sessao.fabrica_de_sessoes(),
+        fonte_id=settings.drive_webhook_fonte,
+        url=settings.drive_webhook_url,
+        validade=timedelta(hours=settings.drive_webhook_validade_horas),
+    )
+
+
+async def _consumir_webhooks(encerramento: asyncio.Event) -> None:
+    """Consome `prata.webhooks.incoming` até o encerramento (#394).
+
+    Montado aqui dentro, e não na subida: sem banco ou sem configuração, o
+    consumidor não sobe, mas o agendador de rotinas segue funcionando.
+    """
+    try:
+        consumidor = ConsumidorWebhooks(
+            settings.rabbitmq_url.get_secret_value(),
+            exchange=settings.rabbitmq_exchange,
+            dead_letter_exchange=settings.rabbitmq_dead_letter_exchange,
+            fabrica=sessao.fabrica_de_sessoes(),
+            tratadores=montar_tratadores(),
+            max_retries=settings.rabbitmq_max_retries,
+            prefetch=settings.rabbitmq_prefetch_count,
+        )
+    except Exception:
+        logger.exception("Consumidor de webhooks não pôde ser montado")
+        return
+    await consumidor.executar(encerramento)
+
+
 async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None:
     """Sobe o agendador e mantém o processo vivo.
 
@@ -116,6 +172,9 @@ async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None
     remover_sinais = _registrar_sinais(evento) if evento_encerramento is None else lambda: None
     agendador = None
     monitor = _MonitorExecucoes()
+    manutencao: asyncio.Task[None] | None = None
+    consumo: asyncio.Task[None] | None = None
+    produtor: ProdutorEventos | None = None
 
     sessao.iniciar()
     try:
@@ -128,9 +187,39 @@ async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None
         agendador.resume()
         logger.info("Worker de rotinas iniciado")
 
+        # Webhooks: republicar pendentes e renovar canais (Projeto.md
+        # 9.1.2.7.1). Com o encerramento já pedido, não há o que manter.
+        if not evento.is_set():
+            produtor = ProdutorEventos.a_partir_de(settings)
+            manutencao = asyncio.create_task(
+                executar_manutencao(
+                    evento,
+                    fabrica=sessao.fabrica_de_sessoes,
+                    produtor=produtor,
+                    inscricao=_inscricao_drive,
+                    intervalo_segundos=settings.webhook_manutencao_segundos,
+                )
+            )
+            consumo = asyncio.create_task(_consumir_webhooks(evento))
+
         await evento.wait()
     finally:
         remover_sinais()
+        if manutencao is not None:
+            # O ciclo termina sozinho ao ver o encerramento; o prazo só
+            # cobre uma chamada de rede presa.
+            try:
+                await asyncio.wait_for(manutencao, timeout=PRAZO_CANCELAMENTO_SEGUNDOS)
+            except TimeoutError:
+                logger.warning("Manutenção dos webhooks cancelada no encerramento")
+        if consumo is not None:
+            # O consumidor espera a mensagem em curso antes de fechar.
+            try:
+                await asyncio.wait_for(consumo, timeout=PRAZO_ENCERRAMENTO_SEGUNDOS)
+            except TimeoutError:
+                logger.warning("Consumidor de webhooks cancelado no encerramento")
+        if produtor is not None:
+            await produtor.encerrar()
         if agendador is not None and agendador.running:
             agendador.pause()
             terminou = await monitor.aguardar(PRAZO_ENCERRAMENTO_SEGUNDOS)

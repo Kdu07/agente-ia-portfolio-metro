@@ -103,6 +103,8 @@ export interface Rotina {
   timezone: string;
   ativa: boolean;
   intencao_prevista: string | null;
+  /** Nome legivel da intencao prevista, do catalogo do backend. */
+  intencao_prevista_rotulo?: string | null;
   proximo_disparo: string | null;
   criada_em: string;
   atualizada_em: string;

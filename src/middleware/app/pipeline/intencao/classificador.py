@@ -25,6 +25,7 @@ recebe o texto como o usuário o escreveu.
 import asyncio
 import logging
 import threading
+import time
 from dataclasses import dataclass
 
 from app.config import settings
@@ -81,6 +82,24 @@ def _classificar_sincrono(texto: str) -> ResultadoIntencao:
         intencao_id=str(artefato.pipeline.classes_[indice]),
         confianca=float(probabilidades[indice]),
     )
+
+
+def aquecer() -> None:
+    """Carrega o artefato e o encoder antes da primeira mensagem.
+
+    Carregar o artefato não basta: o encoder de ~2 GB só sobe na primeira
+    `transform` (ver `EmbeddingsSentenca`). Uma classificação descartável
+    força as duas cargas. Sem isso, a primeira mensagem de cada réplica
+    paga minutos de carga, perto do limite de 240 s do ingress do
+    Container Apps.
+    """
+    inicio = time.perf_counter()
+    try:
+        _classificar_sincrono("aquecimento do classificador")
+    except Exception:
+        logger.exception("Falha ao aquecer o classificador")
+        raise
+    logger.info("Classificador aquecido em %.1f s", time.perf_counter() - inicio)
 
 
 async def classificar(texto: str) -> ResultadoIntencao:

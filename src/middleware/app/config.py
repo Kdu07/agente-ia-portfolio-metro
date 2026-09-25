@@ -160,6 +160,23 @@ class Settings(BaseSettings):
     # Cadastro de chaves HMAC fora do repositorio, relido a cada recebimento.
     webhook_portfolio_chaves_arquivo: str = ""
 
+    # --- Webhook do Google Drive (WH-01) --------------------------------
+    # Seção 9.1.2.7.1 do Projeto.md. URL HTTPS pública pela qual o Google
+    # chama `POST /webhooks/google-drive`: no Azure,
+    # https://<app-web>/api/webhooks/google-drive, porque o nginx remove
+    # `/api`; num túnel de teste apontado para o middleware, a URL do
+    # túnel seguida de /webhooks/google-drive.
+    drive_webhook_url: str = ""
+    # Identificador interno da fonte acompanhada; não é o ID da pasta.
+    drive_webhook_fonte: str = Field(default="corpus_metro_sintetico", min_length=1)
+    # Validade pedida ao Google. Ele pode conceder menos, e a renovação
+    # usa a validade efetivamente concedida. O teto de `changes.watch` é
+    # de uma semana.
+    drive_webhook_validade_horas: int = Field(default=24, ge=1, le=168)
+    # Intervalo do ciclo do worker que republica recebimentos sem
+    # confirmação e renova canais perto de expirar.
+    webhook_manutencao_segundos: int = Field(default=60, ge=5)
+
     # --- Recuperação (executor próprio) ---------------------------------
     # Seção 3.7 do plano. Trechos entregues ao modelo de geração por
     # consulta, e o corte de similaridade abaixo do qual um trecho não
@@ -197,6 +214,17 @@ class Settings(BaseSettings):
     speech_idioma: str = "pt-BR"
     speech_api_version: str = "2025-10-15"
     speech_timeout_seconds: float = 30.0
+    # O ffprobe confirma trilha de audio e duracao antes de chamar o Azure.
+    # O binario faz parte da imagem; o caminho e configuravel para Windows.
+    ffprobe_path: str = "ffprobe"
+    ffprobe_timeout_seconds: float = 10.0
+
+    # --- Implantação ----------------------------------------------------
+    # Carrega o classificador e o e5-large na subida da API, numa thread,
+    # em vez de na primeira mensagem. Ligado pela imagem (Dockerfile) e
+    # desligado por padrão, para que os testes e o uvicorn local não
+    # carreguem ~2 GB de pesos a cada subida.
+    aquecer_modelos: bool = False
 
     # NOTA: o limiar de confiança da classificação de intenção NÃO fica
     # aqui. Ele é definido por intenção em pipeline/intencao/catalogo.py,

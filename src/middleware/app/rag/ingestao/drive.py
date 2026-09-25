@@ -43,6 +43,41 @@ EXTENSOES = {MIME_DOCX: ".docx", MIME_XLSX: ".xlsx", MIME_PPTX: ".pptx"}
 CAMPOS = "nextPageToken, files(id, name, mimeType, md5Checksum, modifiedTime, webViewLink)"
 
 
+def criar_servico_drive() -> Any:
+    """Serviço da Drive API v3 com a conta de serviço do `.env`, só leitura.
+
+    Compartilhado pela ingestão e pela inscrição do webhook (WH-01): as
+    duas precisam da mesma identidade, porque `changes.watch` acompanha as
+    mudanças que ela enxerga.
+
+    As duas falhas prováveis — credencial não configurada e extra `rag`
+    não instalado — são nomeadas aqui, e não num traceback do SDK sem
+    contexto.
+    """
+    if not settings.drive_service_account_json or not settings.drive_pasta_id:
+        raise RuntimeError(
+            "DRIVE_SERVICE_ACCOUNT_JSON e DRIVE_PASTA_ID são obrigatórios para ler o Drive"
+        )
+    chave = Path(settings.drive_service_account_json)
+    if not chave.is_file():
+        # Caminho relativo resolve a partir de onde o comando roda — o
+        # engano comum é rodar de fora de src/middleware.
+        raise RuntimeError(
+            f"chave da conta de serviço não encontrada em {chave.resolve()} "
+            "(DRIVE_SERVICE_ACCOUNT_JSON)"
+        )
+    try:
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+    except ModuleNotFoundError as erro:  # pragma: no cover - depende do ambiente
+        raise RuntimeError("ler o Drive exige o extra `rag`: pip install -e '.[rag]'") from erro
+
+    credenciais = service_account.Credentials.from_service_account_file(
+        settings.drive_service_account_json, scopes=ESCOPOS
+    )
+    return build("drive", "v3", credentials=credenciais, cache_discovery=False)
+
+
 class FonteDrive:
     """Implementa `FonteDocumentos` sobre uma pasta do Drive."""
 
@@ -56,35 +91,8 @@ class FonteDrive:
 
     @classmethod
     def de_configuracao(cls) -> "FonteDrive":
-        """Monta a fonte a partir do `.env`, conferindo a configuração antes.
-
-        As duas falhas prováveis — credencial não configurada e extra
-        `rag` não instalado — são nomeadas aqui, e não num traceback do
-        SDK sem contexto.
-        """
-        if not settings.drive_service_account_json or not settings.drive_pasta_id:
-            raise RuntimeError(
-                "DRIVE_SERVICE_ACCOUNT_JSON e DRIVE_PASTA_ID são obrigatórios para ler o Drive"
-            )
-        chave = Path(settings.drive_service_account_json)
-        if not chave.is_file():
-            # Caminho relativo resolve a partir de onde o comando roda — o
-            # engano comum é rodar de fora de src/middleware.
-            raise RuntimeError(
-                f"chave da conta de serviço não encontrada em {chave.resolve()} "
-                "(DRIVE_SERVICE_ACCOUNT_JSON)"
-            )
-        try:
-            from google.oauth2 import service_account
-            from googleapiclient.discovery import build
-        except ModuleNotFoundError as erro:  # pragma: no cover - depende do ambiente
-            raise RuntimeError("ler o Drive exige o extra `rag`: pip install -e '.[rag]'") from erro
-
-        credenciais = service_account.Credentials.from_service_account_file(
-            settings.drive_service_account_json, scopes=ESCOPOS
-        )
-        servico = build("drive", "v3", credentials=credenciais, cache_discovery=False)
-        return cls(servico, settings.drive_pasta_id)
+        """Monta a fonte a partir do `.env`, conferindo a configuração antes."""
+        return cls(criar_servico_drive(), settings.drive_pasta_id)
 
     async def listar(self) -> list[ArquivoFonte]:
         return await asyncio.to_thread(self._listar)

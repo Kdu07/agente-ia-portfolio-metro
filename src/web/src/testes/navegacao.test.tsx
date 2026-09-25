@@ -41,7 +41,7 @@ describe("Navegação entre conversas", () => {
 
     expect(await screen.findByText("Como posso ajudar?")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Quais marcos estão atrasados no portfólio?" }),
+      screen.getByRole("button", { name: "Quando termina o projeto Estação Morumbi?" }),
     ).toBeInTheDocument();
   });
 
@@ -77,7 +77,7 @@ describe("Navegação entre conversas", () => {
     await screen.findByText(/62% de avanço físico/, {}, { timeout: 3000 });
 
     expect(
-      screen.queryByRole("dialog", { name: "Notificação do assistente" }),
+      screen.queryByRole("region", { name: "Alerta de marco" }),
     ).not.toBeInTheDocument();
   });
 

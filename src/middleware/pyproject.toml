@@ -80,21 +80,26 @@ rag = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
+    # A suíte de integração do webhook do Drive exercita encerramento e
+    # renovação de canais, caminhos que tratam `googleapiclient.errors.HttpError`.
+    # Mantê-lo no extra de desenvolvimento faz `pytest` reproduzível após o
+    # comando de instalação documentado no README, mesmo sem instalar todo o RAG.
+    "google-api-python-client>=2.100",
     # Cobertura e desempenho sistêmico (Projeto.md §10.1 e §10.2).
     # Os cenários de carga e micro-latência chegam no card de desempenho;
     # este extra mantém os instrumentos reproduzíveis no ambiente de dev.
     "pytest-cov>=5.0",
-    "pytest-benchmark>=4.0",
-    "locust>=2.31",
-    "ruff>=0.5",
+    "pytest-benchmark>=5.1",
+    "locust>=2.32",
+    # Faixa travada: o conjunto padrão de regras muda entre minors do ruff, e a
+    # CI instalaria uma versão diferente da local.
+    "ruff>=0.16,<0.17",
     # VHS (Projeto.md 10.5.4): grava uma vez a resposta real do serviço
     # externo e a reproduz nas execuções seguintes. vcrpy é o motor;
     # pytest-recording traz o marcador @pytest.mark.vcr, --record-mode e
     # --block-network.
     "pytest-recording>=0.13",
     "vcrpy>=6.0",
-    "pytest-benchmark>=5.1",
-    "locust>=2.32",
     # Banco em memória dos testes unitários das agregações do painel
     # (tests/unit/conftest.py). As consultas de app/analytics/ usam só
     # SQL portável, e o SQLite as exercita sem exigir um PostgreSQL de pé;

@@ -19,6 +19,11 @@ COPY . .
 RUN npm run build
 
 FROM nginx:1.27-alpine
+# Destino do proxy /api. O padrao atende o compose; no Container Apps o
+# app recebe o nome do middleware (ver nginx.conf).
+ENV API_UPSTREAM=middleware:8000
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Em templates/, e nao em conf.d/: o entrypoint da imagem gera o
+# conf.d/default.conf na subida, com ${API_UPSTREAM} ja substituida.
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 EXPOSE 80

@@ -2499,7 +2499,7 @@ C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio —
 
 ### 5.2.3 Diagrama atual da Sprint 2
 
-Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o Copilot é o executor previsto. O diagrama inclui componentes planejados: emissão de token de voz, parte das guardas, cliente Copilot e execução de rotinas ainda possuem etapas não implementadas; não representam funcionalidades integralmente entregues na S3.
+Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o executor é escolhido por configuração. Em relação ao estado da S3, a emissão de token de voz, as três guardas, o cliente do executor e a execução de rotinas receberam implementação nas ondas seguintes; o estado verificável de cada integração é registrado nas respectivas seções, sem transformar o diagrama em evidência de deploy.
 
 O diagrama adota três agrupamentos principais. O `src/web` concentra a
 experiência do usuário; o `src/middleware` recebe as requisições e aplica o
@@ -4679,9 +4679,9 @@ Quanto às metas registradas ao final da seção 3.1.5, a definição do serviç
 
 ### 5.7.3 API de recebimento de áudios do usuário
 
-> **Estado da implementação na S3.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. Sem autenticação, a resposta é 401; sem o campo obrigatório, o FastAPI retorna 422. As subseções seguintes especificam o contrato-alvo: duração e seu limite, expiração efetiva, idempotência e catálogo padronizado de erros ainda não estão integralmente implementados. WebM é identificado pela assinatura EBML e pelo campo `DocType=webm`, com inspeção limitada aos primeiros 4 KiB; isso não valida a presença de trilha de áudio, os codecs ou a decodificação. A consulta também ainda não verifica a propriedade do áudio pelo usuário — pendência de proteção de acesso antes de uso com dados reais.
+> **Estado vigente após a correção #450.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. Ausência do arquivo responde 400 no envelope `codigo`, `mensagem` e `detalhe`. Depois dos magic bytes, o `ffprobe` confirma decodificação, presença exclusiva de trilha de áudio e duração; arquivos acima de 300 segundos são recusados antes do Azure Speech. A idempotência por cabeçalho continua prevista, mas ainda não implementada.
 
-> A transcrição REST é executada em segundo plano e mantida em memória no processo. Seu texto precisa ser enviado posteriormente a `/chat` com `canal=voz`; não há encaminhamento automático ao NLP no upload. O microfone da interface usa outro trajeto, dependente de `/voz/token`, ainda não implementado. Esses limites não alteram a decisão tecnológica nem antecipam a integração final da S5.
+> A submissão e seus estados agora vivem em `transcricao_audio`, vinculados ao proprietário. A consulta filtra `id_audio`, `usuario_id` e expiração na própria consulta SQL, devolvendo o mesmo 404 para identificador alheio, vencido ou inexistente. Depois do STT, `ProcessadorAudio` envia automaticamente o texto ao mesmo `Orquestrador` de `/chat` com `canal=voz`; a interação e o vínculo com a submissão são confirmados na mesma transação. O trajeto contínuo do navegador recebe token efêmero real por `GET /voz/token`, sem expor `SPEECH_KEY`.
 
 Esta subseção especifica o contrato da API que recebe os áudios enviados pelo usuário — o trajeto de ingestão adotado em 5.7.1.3 como caminho canônico do canal de voz. É o contrato entre a interface de voz e o pipeline de PLN: o que a interface pode enviar, o que o servidor garante devolver e o que acontece quando algo dá errado.
 
@@ -4697,7 +4697,7 @@ Os caminhos declarados abaixo são os da aplicação. O navegador os alcança so
 
 **A submissão aceita não é a transcrição concluída.** São dois estados, com códigos de resposta distintos. Confundi-los obrigaria o cliente a distinguir pelo corpo da resposta se a operação terminou, e tornaria impossível representar o intervalo em que o áudio já é responsabilidade do servidor mas ainda não produziu texto — exatamente o intervalo em que a interface precisa exibir progresso.
 
-**O registro da interação independe do trajeto.** Conforme fixado em 5.7.1.3, tanto a ingestão quanto o modo de transmissão contínua gravam uma única interação, com o canal marcado como voz. Esta API não cria um segundo registro: ela produz o texto que, submetido ao endpoint de conversação, origina a interação. O que a ingestão acrescenta ao registro é a existência do áudio de origem durante o intervalo previsto na política de retenção de 5.7.1.5.
+**O registro da interação independe do trajeto.** Conforme fixado em 5.7.1.3, tanto a ingestão quanto o modo de transmissão contínua gravam uma única interação, com o canal marcado como voz. Na ingestão, o processamento em segundo plano chama diretamente o orquestrador e grava o `interacao_id` na submissão; o cliente não repete o texto em `/chat`. No modo contínuo, o SDK entrega o texto ao mesmo envio usado pelo campo digitado. Os dois caminhos convergem antes das guardas e do classificador.
 
 #### 5.7.3.2 Endpoints
 
@@ -4836,13 +4836,11 @@ Decorrido o prazo devolvido em `expira_em`, o resultado deixa de estar disponív
 
 #### 5.7.3.5 Encaminhamento ao pipeline de conversação
 
-Esta API **não aciona o pipeline**. Ela produz texto; o texto é submetido ao endpoint de conversação pelo cliente, como qualquer outra mensagem, com o canal marcado como voz.
+Após concluir a transcrição, o processamento assíncrono encaminha automaticamente o texto ao mesmo `Orquestrador` utilizado pelo endpoint de conversação, com o canal marcado como voz. Portanto, áudio e texto percorrem a mesma ordem de guardas, classificação de intenção, execução e registro da interação. Os identificadores `conversa_id` e `interacao_id` ficam associados ao registro persistente da transcrição e são devolvidos na consulta do resultado.
 
-A escolha preserva um invariante da arquitetura descrita em 5.2: o orquestrador é o único ponto de entrada do pipeline, e é essa unicidade que garante que as guardas, a classificação e o registro sejam obrigatórios para toda solicitação. Uma API de áudio que chamasse o pipeline por conta própria criaria um segundo caminho de entrada — e um segundo caminho é, por construção, um caminho que alguém pode esquecer de proteger quando o primeiro mudar.
+Essa integração mantém o orquestrador como ponto único da lógica do pipeline: a rota de áudio não replica classificação nem execução, apenas entrega o texto transcrito ao serviço existente. Assim, mudanças nas guardas ou nas regras de intenção continuam valendo para os dois canais.
 
-Há uma consequência de interface que decorre disso, e que atende ao risco R03. Entre a transcrição e o envio existe um momento em que o texto está visível e ainda não foi processado. A interface apresenta a transcrição no campo de mensagem antes do envio, de modo que a pessoa veja o que foi entendido e possa corrigir. Uma sigla transcrita errada deixa de se propagar como intenção mal classificada, que é precisamente o encadeamento que o R03 descreve. Para as intenções que alteram dados, soma-se a esta verificação a confirmação já exigida pelo RF05, resultando em duas oportunidades de interceptar um erro de transcrição antes que ele produza efeito.
-
-O texto encaminhado é indistinguível, para o pipeline, de um texto digitado. É o que sustenta a afirmação de 5.3.2 de que a classificação é a mesma para os dois canais, e o que permite que a medição de degradação ponta a ponta de 3.1.5.2 compare os dois caminhos sobre o mesmo classificador.
+O principal risco restante é semântico: uma transcrição plausível, porém incorreta, pode seguir normalmente para a classificação sem produzir exceção. Por isso, ações com efeito de escrita continuam sujeitas à confirmação prevista no RF05, e os testes ponta a ponta devem incluir vocabulário real do Metrô e casos como números de linhas, siglas e nomes de projetos.
 
 #### 5.7.3.6 Formatos, limites e sua justificativa
 
@@ -6426,99 +6424,189 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 
 #### 9.1.2.6 Sistema de troca de mensagens (S5)
 
-O sistema de troca de mensagens será implementado com **RabbitMQ**, usando AMQP 0-9-1. A escolha mantém a operação no mesmo perímetro do `middleware` e do `worker`, oferece confirmação de publicação, reconhecimento explícito pelo consumidor, retentativas e fila de mensagens rejeitadas sem introduzir um segundo banco para coordenar o trabalho. A primeira entrega deve tratar esta seção como contrato de implementação; o broker ainda não faz parte da infraestrutura atual.
+**Tecnologia e justificativa**
 
-**Topologia inicial:**
+O sistema de troca de mensagens usa **RabbitMQ 4.3** (imagem `rabbitmq:4.3.6-management-alpine`) com o protocolo AMQP 0-9-1. O `middleware` e o `worker` se comunicam com ele pelo cliente assíncrono `aio-pika` 9.6. O broker roda no mesmo perímetro do `middleware` e do `worker`. Ele oferece confirmação de publicação (`publisher confirms`), reconhecimento explícito pelo consumidor, filas de espera para retentativa e uma fila de mensagens rejeitadas, tudo sem um segundo banco para coordenar o trabalho.
 
-| Elemento | Nome | Responsabilidade |
+A agenda de rotinas continua no PostgreSQL. O `APScheduler` do `worker` guarda os disparos no mesmo banco das rotinas, e essa decisão está registrada em [`config.py`](../src/middleware/app/config.py): um único PostgreSQL evita um broker separado só para a agenda. O intermediário dedicado resolve outro problema, o dos webhooks (9.1.2.7):
+
+- Os provedores esperam resposta em poucos segundos e reenviam a notificação quando não a recebem.
+- O trabalho disparado por uma notificação é demorado e pode falhar por motivo transitório: consultar a API do Drive, reindexar o corpus, aplicar alterações do portfólio e gerar avisos.
+- Uma fila durável com confirmação separa as duas etapas. A rota responde `202` somente quando o evento está garantido. Depois o processamento é repetido com atraso crescente, e as falhas definitivas ficam isoladas para inspeção.
+
+Usar uma tabela do banco como fila exigiria reimplementar consulta periódica, trava de consumo, atraso crescente e descarte, que o RabbitMQ já entrega com semântica conhecida.
+
+As filas de transcrição de áudio e de execução de rotinas fazem parte da topologia, mas ainda não têm produtor nem consumidor. A transcrição segue em `BackgroundTasks` (9.1.3), e as rotinas seguem no agendador. As duas ficam reservadas com a mesma estrutura de retentativa e descarte, para que uma migração futura não altere os argumentos das filas.
+
+**Topologia**
+
+A topologia é declarada por `declarar_topologia`, em [`topologia.py`](../src/middleware/app/mensageria/topologia.py). O produtor e o consumidor a declaram ao se conectar, em qualquer ordem, e a declaração repetida é idempotente. Declarar uma fila existente com argumentos diferentes faz o broker recusar a operação (`PRECONDITION_FAILED`). Por isso, os argumentos das filas só mudam com uma migração planejada da topologia.
+
+| Elemento | Nome | Tipo e argumentos | Responsabilidade |
+|---|---|---|---|
+| Exchange | `prata.events` | `topic`, durável | Receber os eventos publicados pelo `middleware` e devolver às filas de trabalho as mensagens que terminaram a espera |
+| Exchange | `prata.dead-letter` | `direct`, durável | Receber as mensagens rejeitadas pelas filas de trabalho |
+| Exchange | `prata.retry` | `direct`, durável | Encaminhar a mensagem à fila de espera da próxima tentativa |
+| Fila de trabalho | `prata.webhooks.incoming` | durável; `x-dead-letter-exchange=prata.dead-letter` | Eventos dos dois webhooks, consumidos pelo `worker` |
+| Fila de trabalho | `prata.audio.transcription` | durável; `x-dead-letter-exchange=prata.dead-letter` | Reservada para solicitações de transcrição |
+| Fila de trabalho | `prata.routines.execution` | durável; `x-dead-letter-exchange=prata.dead-letter` | Reservada para disparos de rotinas |
+| Filas de espera | `<fila>.retry.1` a `<fila>.retry.5` | durável; `x-message-ttl` de 5 s, 20 s, 60 s, 300 s e 900 s; `x-dead-letter-exchange=prata.events` com a chave original | Segurar a mensagem até a próxima tentativa |
+| Fila de falhas | `prata.failed` | durável | Guardar mensagens com falha definitiva ou tentativas esgotadas, para inspeção e reprocessamento controlado |
+
+| Chave de roteamento | Fila de trabalho | Destino de descarte |
 |---|---|---|
-| Exchange | `prata.events` (`topic`, durable) | Receber eventos publicados pelo middleware e pelos webhooks |
-| Fila | `prata.audio.transcription` (durable) | Entregar solicitações de transcrição ao consumidor de áudio |
-| Fila | `prata.routines.execution` (durable) | Entregar disparos de rotinas ao consumidor do worker |
-| Fila | `prata.webhooks.incoming` (durable) | Isolar eventos recebidos de sistemas externos |
-| Exchange | `prata.dead-letter` (`direct`, durable) | Reter mensagens que excederam as tentativas |
-| Fila | `prata.failed` (durable) | Permitir inspeção e reprocessamento controlado de falhas |
+| `webhook.received` | `prata.webhooks.incoming` | `prata.failed`, pela mesma chave em `prata.dead-letter` |
+| `audio.transcription.requested` | `prata.audio.transcription` | `prata.failed`, pela mesma chave em `prata.dead-letter` |
+| `routine.execution.requested` | `prata.routines.execution` | `prata.failed`, pela mesma chave em `prata.dead-letter` |
 
-As chaves de roteamento iniciais são `audio.transcription.requested`, `routine.execution.requested` e `webhook.received`. As filas de trabalho usam `x-dead-letter-exchange=prata.dead-letter`; a publicação deve usar mensagem persistente e `publisher confirms`. A ordem é garantida apenas dentro da fila e não deve ser usada para coordenar conversas diferentes.
+Para chegar ao descarte com a chave original, `prata.failed` é ligada a `prata.dead-letter` pelas mesmas chaves das filas de trabalho. Assim, quem inspeciona uma falha sabe de onde a mensagem veio. Cada fila de trabalho tem cinco filas de espera, ligadas a `prata.retry` pelo próprio nome. O tempo de espera é fixo por fila, e não por mensagem, porque o RabbitMQ só expira a mensagem que está no começo da fila: uma espera longa por mensagem seguraria as esperas curtas que chegassem depois dela. Quando o tempo acaba, a mensagem volta a `prata.events` com a chave original e é entregue de novo à fila de trabalho. A ordem é garantida apenas dentro de uma fila e não coordena eventos de entidades diferentes.
 
-**Contrato da mensagem:**
+**Contrato da mensagem**
 
-Todo evento será um JSON UTF-8 com o envelope abaixo. `message_id` é único para a tentativa lógica, `correlation_id` acompanha a solicitação de ponta a ponta e `occurred_at` é UTC no formato ISO 8601.
+Todo evento é um JSON UTF-8 validado por `MensagemEvento`, em [`mensagem.py`](../src/middleware/app/schemas/mensagem.py). O modelo recusa campos extras, exige `occurred_at` com fuso horário e o converte para UTC. `event_type` tem até 120 caracteres, `producer` tem até 80 e `schema_version` começa em 1.
+
+| Campo | Tipo | Conteúdo |
+|---|---|---|
+| `message_id` | UUID | Identificador da tentativa lógica. No `webhook.received`, é o UUID do recebimento gravado em `webhook.recebimento`, e por isso uma republicação reaproveita o mesmo valor |
+| `event_type` | texto | Uma das chaves de roteamento da topologia |
+| `schema_version` | inteiro ≥ 1 | Versão do envelope; hoje `1` |
+| `occurred_at` | data e hora ISO 8601 com fuso | Momento do recebimento, normalizado para UTC |
+| `correlation_id` | UUID | Acompanha a solicitação de ponta a ponta, também estável por recebimento |
+| `producer` | texto | Componente que publicou; hoje `middleware` |
+| `payload` | objeto | Conteúdo do evento; no `webhook.received`, traz `provider` e os dados já validados do provedor |
+
+Exemplo de `webhook.received` publicado pelo WH-02, com dados sintéticos:
 
 ```json
 {
-  "message_id": "uuid",
-  "event_type": "audio.transcription.requested",
+  "message_id": "3f0c1f5e-8d0a-4b8e-9d64-2a8f1c7b5e10",
+  "event_type": "webhook.received",
   "schema_version": 1,
-  "occurred_at": "2026-01-01T12:00:00Z",
-  "correlation_id": "uuid",
+  "occurred_at": "2026-09-25T02:00:01Z",
+  "correlation_id": "b1a4d2c9-6e3f-4f1a-8c2d-7e5b9a0c3d44",
   "producer": "middleware",
-  "payload": {}
+  "payload": {
+    "provider": "apps_script",
+    "event": {
+      "schema_version": 1,
+      "event_id": "0b6f8e2a-4c1d-4e7f-9a3b-5d2c1e0f8a76",
+      "source_id": "planilha_portfolio",
+      "event_type": "risco.alterado",
+      "occurred_at": "2026-09-25T02:00:00Z",
+      "projeto_codigo": "PRJ-2024-018",
+      "entity_id": "RSK-07",
+      "version": 4,
+      "data": { "status": "monitorado", "probabilidade": 5, "impacto": 4 }
+    }
+  }
 }
 ```
 
-O produtor rejeita eventos sem `message_id`, `event_type`, `schema_version`, `correlation_id` ou `payload`. O consumidor registra `message_id` antes de executar um efeito externo e ignora uma mensagem já processada, tornando a entrega **at-least-once** idempotente. Mensagens inválidas ou que excederem três tentativas vão para `prata.failed`; falhas transitórias devem ser reencaminhadas com atraso crescente.
+No WH-01, o `payload` traz `provider: "google_drive"`, `fonte_id`, `channel_id`, `resource_id`, `resource_state` e `message_number`. O conteúdo dos arquivos não viaja na mensagem: o consumidor consulta as mudanças na API do Drive (9.1.2.7.1).
 
-**Produtores e consumidores:**
+A mensagem AMQP é persistente (`delivery_mode=2`), com `content_type=application/json` e `content_encoding=utf-8`. Ela repete o `message_id`, o `correlation_id`, o tipo (`type`), o produtor (`app_id`) e o instante (`timestamp`) nas propriedades, e leva `schema_version` nos cabeçalhos. A cada nova tentativa, o consumidor acrescenta o cabeçalho `x-tentativa`, com o número da tentativa.
 
-- O endpoint de áudio publica `audio.transcription.requested` e continua respondendo `202` com o identificador da solicitação.
-- O endpoint de webhook valida autenticação, assinatura, tamanho e `event_type`, registra o evento e publica `webhook.received`; ele não executa a regra de negócio dentro da requisição HTTP.
-- O agendador publica `routine.execution.requested` quando uma rotina vence, preservando dono, conversa, permissões a resolver e `correlation_id`.
-- O `worker` consome as filas de áudio e rotinas com `prefetch` limitado, confirma (`ack`) somente após o processamento e rejeita (`nack`) mensagens para retentativa ou dead letter conforme a classe do erro.
-- O consumidor de webhook encaminha o evento validado ao serviço correspondente; não há chamada direta a serviços externos antes da validação e da deduplicação.
+**Produtores**
 
-O webhook deve responder rapidamente com `202` após a publicação confirmada. Sem confirmação do RabbitMQ, responde erro transitório e não declara o evento recebido. A assinatura deve ser validada com segredo configurado fora do código e comparação em tempo constante; o corpo bruto usado na assinatura não pode ser reconstruído a partir de um JSON reserializado.
+- O `ProdutorEventos`, em [`produtor.py`](../src/middleware/app/mensageria/produtor.py), é criado na subida da API sem conectar. A conexão robusta é aberta na primeira publicação, e a API sobe mesmo com o broker fora do ar.
+- O produtor recusa com `ValueError`, antes de conectar, um `event_type` sem fila na topologia, porque isso é erro de programação. Ele publica com `mandatory` e só retorna depois do `publisher confirm`.
+- Sem confirmação, ou com a mensagem devolvida sem rota, o produtor levanta `FalhaPublicacao` com o `message_id` e o `correlation_id`. Os logs registram identificadores e o tipo do erro, nunca o `payload` nem a URL, que contém a senha.
+- As rotas `POST /webhooks/google-drive` (WH-01) e `POST /webhooks/portfolio` (WH-02) autenticam e validam a notificação. Depois gravam o recebimento em `webhook.recebimento`, confirmam a transação e publicam `webhook.received`.
+- Com a publicação confirmada, a rota marca `publicado_em` e responde `202`. Sem confirmação, responde `503` com `Retry-After: 5`, e o recebimento fica pendente com o código `PUBLICACAO_NAO_CONFIRMADA`. Nesse caso a rota não executa a regra de negócio dentro da requisição HTTP.
+- A manutenção do `worker` (`executar_manutencao`) republica os recebimentos pendentes com os mesmos identificadores, cobrindo quedas do broker e do processo entre gravar e publicar.
 
-**Configuração e operação:**
+**Consumidor**
 
-As variáveis mínimas são `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_LETTER_EXCHANGE`, `RABBITMQ_PREFETCH_COUNT` e `RABBITMQ_MAX_RETRIES`. Em desenvolvimento, o RabbitMQ será um serviço do `docker-compose`; em produção, as credenciais serão fornecidas pelo ambiente de implantação. Não devem ser gravados payloads sensíveis nos logs. Métricas mínimas: mensagens publicadas, confirmadas, consumidas, rejeitadas, idade da mensagem, tamanho da fila e mensagens em dead letter.
+O `ConsumidorWebhooks`, em [`consumidor.py`](../src/middleware/app/mensageria/consumidor.py), roda como tarefa do `worker` e consome `prata.webhooks.incoming` com `prefetch` igual a `RABBITMQ_PREFETCH_COUNT`. A entrega é **at-least-once**, e o processamento é idempotente:
 
-**Casos de uso e testes:**
+1. Uma trava de transação do PostgreSQL por `message_id` (`pg_advisory_xact_lock`) serializa duas entregas da mesma mensagem. O recebimento é lido na mesma transação em que o tratador trabalha. Se já foi processado, o consumidor apenas confirma (`ack`), sem repetir o efeito.
+2. O tratador é escolhido pelo `payload.provider`. `google_drive` usa a sincronização do corpus, que lista as mudanças desde o cursor salvo e reindexa os arquivos afetados. Esse tratador só é registrado quando as credenciais do Drive estão configuradas. `apps_script` aplica o evento do portfólio com controle de versão e gera os avisos por adesão (9.1.2.7.2).
+3. Com sucesso, `processado_em` é gravado na mesma transação dos efeitos no banco, e só depois a mensagem é confirmada. Uma queda entre o `commit` e o `ack` gera reentrega, que o passo 1 absorve.
+4. Uma falha definitiva rejeita a mensagem sem repor, e o descarte da fila a leva para `prata.failed`. As falhas definitivas são `PAYLOAD_INVALIDO`, `RECEBIMENTO_DESCONHECIDO`, `PROVEDOR_SEM_TRATADOR`, `CONFLITO_DE_VERSAO`, `ESCOPO_REVOGADO` e `CURSOR_AUSENTE`.
+5. Qualquer outra falha é transitória. A mensagem é republicada em `prata.retry` para a fila de espera da tentativa seguinte, e a original é confirmada. Esgotadas as `RABBITMQ_MAX_RETRIES`, a mensagem é rejeitada e vai para `prata.failed`.
+6. Tentativas e o código da última falha ficam no recebimento, sem conteúdo sensível. No encerramento, o consumidor espera a mensagem em curso antes de fechar a conexão.
 
-| Caso | Comportamento verificável |
-|---|---|
-| Publicação confirmada | O produtor serializa o envelope, publica na exchange correta e só retorna sucesso após `publisher confirm`. |
-| Broker indisponível | A API não perde o evento, retorna erro transitório e registra a correlação para nova tentativa. |
-| Consumo com sucesso | O consumidor executa o handler e confirma a mensagem uma única vez. |
-| Falha transitória | A mensagem é rejeitada para retentativa até o limite, sem perder o `message_id`. |
-| Falha permanente ou payload inválido | A mensagem não é processada e vai para `prata.failed`. |
-| Redelivery | A mesma mensagem não produz efeito externo duas vezes. |
-| Webhook válido | A assinatura é validada, o evento é publicado e a resposta é `202`. |
-| Webhook inválido ou duplicado | A assinatura inválida é recusada; o `message_id` duplicado é tratado de forma idempotente. |
+**Configuração e operação**
 
-Esta entrega documenta o desenho e os critérios de aceite. A implementação posterior deve adicionar o cliente RabbitMQ compartilhado, declarar a topologia na inicialização, integrar o endpoint de webhook e substituir os `NotImplementedError` do `worker` por consumidores testados com um broker efêmero ou dublado.
+| Variável | Padrão | Uso |
+|---|---|---|
+| `RABBITMQ_URL` | vazio | URL `amqp://` ou `amqps://` completa. Quando vazia, é montada a partir das cinco variáveis abaixo |
+| `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_VHOST` | `localhost`, `5672`, `prata` | Endereço e vhost do broker |
+| `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | `prata`, `prata-local` | Credenciais; os valores padrão servem apenas ao ambiente local |
+| `RABBITMQ_EXCHANGE` | `prata.events` | Exchange de eventos |
+| `RABBITMQ_DEAD_LETTER_EXCHANGE` | `prata.dead-letter` | Exchange de descarte |
+| `RABBITMQ_PREFETCH_COUNT` | `10` | Mensagens entregues ao consumidor sem confirmação |
+| `RABBITMQ_MAX_RETRIES` | `2` | Retentativas após a primeira execução, ou seja, até três execuções |
+
+No ambiente local, o RabbitMQ é o serviço `rabbitmq` de [`infra/docker-compose.yml`](../infra/docker-compose.yml), com volume próprio e `healthcheck`. O `middleware` e o `worker` só sobem depois que ele está saudável. As portas `5672` (AMQP) e `15672` (painel de gerenciamento) ficam restritas a `127.0.0.1`. O passo a passo está no [README do middleware](../src/middleware/README.md). Em produção, as credenciais vêm do ambiente de implantação.
+
+A operação é observada de duas formas:
+
+- O painel de gerenciamento mostra o tamanho de cada fila, as taxas de publicação, confirmação e entrega, e as mensagens em `prata.failed`.
+- A tabela `webhook.recebimento` mostra, por evento, quando foi publicado (`publicado_em`), quando foi processado (`processado_em`), quantas tentativas houve e o código da última falha.
+
+**Caso de uso: do webhook ao consumo**
+
+Uma pessoa altera a probabilidade do risco `RSK-07` na planilha do portfólio:
+
+1. O gatilho do Apps Script assina e envia o evento `risco.alterado` para `POST /webhooks/portfolio`.
+2. O `middleware` valida a assinatura, o esquema e o escopo da fonte, grava o recebimento e publica `webhook.received`. Com a confirmação do broker, responde `202`.
+3. O `worker` consome a mensagem e aplica a versão nova do risco. Na mesma transação, gera um aviso para cada pessoa que ativou avisos de risco daquele projeto e ainda tem acesso a ele. Por fim, confirma a mensagem.
+4. Uma reentrega da mesma mensagem não altera nada. Um reenvio do mesmo evento pelo Apps Script é respondido com `204` e não é publicado de novo.
+
+Os testes de integração exercitam esse caminho contra PostgreSQL e RabbitMQ reais. Cada teste cria um vhost temporário e é pulado quando o banco ou o broker não estão disponíveis:
+
+| Caso | Comportamento verificado | Teste |
+|---|---|---|
+| Topologia | A declaração repetida é idempotente, e a mensagem rejeitada chega a `prata.failed` | `test_mensageria_rabbitmq.py`: `test_declaracao_repetida_e_idempotente`, `test_evento_chega_a_fila_e_rejeitado_vai_para_falhas` |
+| Publicação confirmada | O envelope chega confirmado à fila; um tipo sem fila volta ao produtor | `test_mensageria_rabbitmq.py`: `test_produtor_publica_envelope_confirmado`, `test_evento_sem_fila_volta_ao_produtor` |
+| Broker indisponível | A rota responde erro transitório, e a manutenção publica depois com os mesmos identificadores | `test_webhook_portfolio.py`: `test_broker_fora_deixa_pendente_que_o_worker_republica`; `test_webhook_drive.py`: `test_broker_fora_deixa_pendente_que_a_recuperacao_publica` |
+| Webhook válido | O evento validado chega à fila, e a resposta é `202` | `test_webhook_portfolio.py`: `test_evento_valido_chega_a_fila_com_o_evento_validado`; `test_webhook_drive.py`: `test_mudanca_chega_a_fila_com_os_identificadores_do_banco` |
+| Webhook repetido | O mesmo evento não é publicado de novo | `test_webhook_portfolio.py`: `test_mesmo_corpo_reenviado_responde_204`; `test_webhook_drive.py`: `test_repeticao_nao_publica_de_novo` |
+| Consumo com sucesso e reentrega | O tratador executa uma vez, mesmo com a mensagem entregue de novo | `test_consumidor_webhooks.py`: `test_sucesso_processa_uma_vez_mesmo_com_reentrega` |
+| Falha transitória | A mensagem espera, é repetida até o limite e vai para `prata.failed`; ou é concluída numa nova tentativa | `test_consumidor_webhooks.py`: `test_falha_transitoria_espera_e_tenta_de_novo_ate_esgotar`, `test_falha_transitoria_seguida_de_sucesso` |
+| Falha definitiva | A mensagem vai para `prata.failed` sem nova tentativa | `test_consumidor_webhooks.py`: `test_falha_definitiva_vai_para_a_fila_de_falhas`, `test_provedor_sem_tratador_e_descartado` |
+| Portfólio aplicado | As versões seguem o contrato, e o escopo revogado não altera dados | `test_consumidor_webhooks.py`: `test_versoes_do_portfolio_seguem_o_contrato`, `test_escopo_revogado_antes_do_processamento_nao_altera_dados` |
+| Corpus do Drive | As mudanças reindexam e avançam o cursor; uma falha preserva o cursor | `test_consumidor_webhooks.py`: `test_mudancas_do_drive_reindexam_e_avancam_o_cursor`, `test_reindexacao_que_falha_preserva_o_cursor` |
+| Avisos | Só quem aderiu e tem acesso recebe o aviso, e a reentrega não duplica | `test_avisos_portfolio.py`: `test_aviso_so_para_quem_aderiu_e_tem_acesso`, `test_reentrega_nao_duplica_aviso` |
+
+As decisões do consumidor (confirmar, esperar, descartar e reconectar) também têm testes unitários, com broker dublado, em `test_consumidor_decisoes.py`. Com o `docker compose` de `infra/` em execução, os testes de integração rodam em `src/middleware` com:
+
+```bash
+python -m pytest -m integracao
+```
 
 #### 9.1.2.7 Definição dos webhooks (S4)
 
-**Situação da definição:** contratos documentados na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini, para revisão da equipe. O contrato documental está em 9.1.2.7.1 e o de eventos estruturados em 9.1.2.7.2. A base de inspeção do código é a `develop` no commit `6999f9d`, consultada em 21/09/2026 e conferida em 22/09/2026. Os comportamentos novos abaixo são requisitos de implementação, não evidência de webhooks em execução.
+**Situação:** contratos definidos na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini, e implementados em #388 (autenticidade), #390 (WH-01), #389 (WH-02), #394 (consumo) e #447/#448 (preferências e avisos). O contrato documental está em 9.1.2.7.1 e o de eventos estruturados em 9.1.2.7.2; as rotas implementadas, os payloads observados em teste e as limitações conhecidas estão em 9.1.2.7.3.
 
-O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint e descreveu a interação de voz desejada: gravar, concluir a gravação, obter a transcrição, revisar ou editar o texto e só então enviá-lo ao agente. Não há emissor de callback de áudio definido pela equipe.
+O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint. O navegador mantém a interação revisável: conclui a fala, coloca o texto no campo e só o envia quando a pessoa confirma. A ingestão assíncrona de arquivo, por sua vez, é um contrato servidor-servidor e encaminha o texto ao pipeline depois da validação e do STT. Nenhum dos dois trajetos possui emissor de callback de áudio; portanto, ele não foi escolhido como webhook do grupo.
 
 A recomendação técnica é preservar essa revisão explícita do texto e concentrar os webhooks na atualização das fontes do portfólio. Um webhook é uma chamada entre sistemas, sem implicar notificação visual ao usuário, mas a interação de microfone descrita não depende dele.
 
 | Webhook definido | Evento de negócio | Objetivo e justificativa | Situação e rastreabilidade |
 |---|---|---|---|
-| WH-01: atualização documental | Mudança em arquivo do corpus acompanhado no Google Drive | Solicitar atualização do índice usado pelo RAG, preservando origem e permissões e reduzindo a defasagem das respostas. | Contrato definido em 9.1.2.7.1; RF04/US04 e RF01/US01; seção 9.4.3; revisar o provedor de #390. |
-| WH-02: eventos do portfólio | Alteração de status de projeto, marco ou risco em planilha Google Sheets controlada, com envio por Apps Script | Sincronizar registros estruturados e permitir avisos internos por adesão do usuário. Esse efeito é distinto da reindexação documental. | Contrato definido em 9.1.2.7.2; RF04/US04 e RF01/US01; substituir o escopo de #389 depende de alinhamento do backlog com a equipe. |
+| WH-01: atualização documental | Mudança em arquivo do corpus acompanhado no Google Drive | Solicitar atualização do índice usado pelo RAG, preservando origem e permissões e reduzindo a defasagem das respostas. | Contrato em 9.1.2.7.1, implementado em #390 e #394 e exercitado com o Google Drive real (9.1.2.7.3); RF04/US04 e RF01/US01; seção 9.4.3. |
+| WH-02: eventos do portfólio | Alteração de status de projeto, marco ou risco em planilha Google Sheets controlada, com envio por Apps Script | Sincronizar registros estruturados e permitir avisos internos por adesão do usuário. Esse efeito é distinto da reindexação documental. | Contrato em 9.1.2.7.2, implementado em #389, #394, #447 e #448 (9.1.2.7.3); RF04/US04 e RF01/US01. |
 
-O segundo webhook exige uma planilha nativa do Google Sheets, configuração de gatilho e implementação do emissor; os arquivos `.xlsx` existentes no Drive não demonstram essa capacidade. Os dois contratos usam dados sintéticos, não autorizam escrita nos documentos do parceiro nem concedem acesso adicional ao conteúdo. A notificação por Teams ou correio eletrônico da feature F57 continua fora desse recorte.
+O segundo webhook exige uma planilha nativa do Google Sheets e a configuração do gatilho; os arquivos `.xlsx` existentes no Drive não demonstram essa capacidade. O emissor está em [`src/emissor-portfolio`](../src/emissor-portfolio/README.md). Os dois contratos usam dados sintéticos, não autorizam escrita nos documentos do parceiro nem concedem acesso adicional ao conteúdo. A notificação por Teams ou correio eletrônico da feature F57 continua fora desse recorte.
 
 **Estado atual e impacto nos contratos**
 
 | Frente | Evidência no repositório | Consequência para a definição |
 |---|---|---|
-| Microfone da interface | [`useMicrofone.ts`](../src/web/src/hooks/useMicrofone.ts) prevê Speech SDK e mantém uma simulação; [`Composer.tsx`](../src/web/src/componentes/chat/Composer.tsx) separa o campo de texto da ação de enviar. | O microfone e a API de upload são trajetos distintos hoje. Consolidar a experiência solicitada pertence à frente de voz; esta definição não muda o SDK nem implementa envio de gravação pelo navegador. |
-| Recebimento de áudio | [`voz.py`](../src/middleware/app/api/routes/voz.py) retorna `202`, executa `_processar_transcricao` em `BackgroundTasks` e disponibiliza consulta por `id_audio`. | O processamento é assíncrono para o cliente da aplicação, mas isso não demonstra a existência de um callback do provedor. |
+| Microfone da interface | [`useMicrofone.ts`](../src/web/src/hooks/useMicrofone.ts) solicita um token efêmero e usa o Speech SDK real; [`Composer.tsx`](../src/web/src/componentes/chat/Composer.tsx) separa o campo de texto da ação de enviar. | O áudio contínuo vai diretamente ao Azure, enquanto somente a credencial curta passa pelo middleware. Não existe frase simulada no código de produção. |
+| Recebimento de áudio | [`voz.py`](../src/middleware/app/api/routes/voz.py) valida e retorna `202`; [`processamento_audio.py`](../src/middleware/app/servicos/processamento_audio.py) executa STT e o pipeline em segundo plano. | O processamento é assíncrono para o cliente e produz uma interação rastreável com `canal=voz`. |
 | Serviço de transcrição | [`transcricao.py`](../src/middleware/app/voz/transcricao.py) chama `transcriptions:transcribe` e extrai o resultado da resposta HTTP. | A integração atual usa Fast Transcription. A revisão do texto pelo usuário pode ser atendida sem callback de conclusão. |
-| Armazenamento do resultado | [`audio_service.py`](../src/middleware/app/servicos/audio_service.py) mantém `_transcricoes` em memória de processo. | A necessidade de persistência permanece. Ao revisar #389, manter responsável e tarefa para vincular resultado, áudio e proprietário em armazenamento durável. |
+| Armazenamento do resultado | `TranscricaoAudioTabela` e `AudioRepository` persistem estado, texto, metadados, proprietário, conversa e interação; a migration `20260925_audio_persistente` cria a estrutura. | Reinício de réplica não apaga o resultado e a consulta não revela submissão de outro usuário. |
 | Fonte documental | A seção 9.4.3.1 e [`drive.py`](../src/middleware/app/rag/ingestao/drive.py) identificam o Google Drive como fonte do corpus sintético. | Implementar e demonstrar o contrato do Drive; a equivalência de negócio com SharePoint não significa equivalência de protocolo nem homologação no ambiente Microsoft. |
 | Dados estruturados | [`portfolio.py`](../src/middleware/app/api/routes/portfolio.py) consulta projetos, riscos, marcos e indicadores persistidos. | WH-02 define campos, autoridade e autorização; o mapeamento concreto da planilha e das entidades deve ser cadastrado antes da ativação. |
 
 A documentação da Microsoft confirma que a [Fast Transcription devolve o resultado de forma síncrona](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/fast-transcription-create). Já os [webhooks de Speech são associados a Batch Transcription e Custom Speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text). Acrescentar Batch Transcription apenas para criar um segundo webhook introduziria outro trajeto de áudio sem necessidade demonstrada para a experiência descrita.
 
-Para a fonte documental, a referência é a [notificação de mudanças do Google Drive](https://developers.google.com/workspace/drive/api/guides/push). O provedor envia `POST` com cabeçalhos `X-Goog-*` e corpo vazio; os detalhes precisam ser consultados pela API. O contrato deverá prever registro e renovação de canais, validação do token de canal, consulta incremental, filtragem para o corpus autorizado e processamento de exclusões. Não se deve exigir um JSON ou HMAC de corpo que o provedor não envia.
+Para a fonte documental, a referência é a [notificação de mudanças do Google Drive](https://developers.google.com/workspace/drive/api/guides/push). O provedor envia `POST` com cabeçalhos `X-Goog-*` e corpo vazio; os detalhes precisam ser consultados pela API. O contrato prevê registro e renovação de canais, validação do token de canal, consulta incremental, filtragem para o corpus autorizado e processamento de exclusões. Não se deve exigir um JSON ou HMAC de corpo que o provedor não envia.
 
-Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com/apps-script/guides/triggers/installable) podem reagir a edições humanas em planilhas, e [`UrlFetchApp`](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) permite emitir o POST. O payload e sua assinatura seguem o contrato da equipe em 9.1.2.7.2. Alterações feitas por API ou por scripts não disparam automaticamente o gatilho de edição; retentativa, registro durável do evento e prevenção de duplicatas também precisam ser implementados.
+Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com/apps-script/guides/triggers/installable) podem reagir a edições humanas em planilhas, e [`UrlFetchApp`](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) permite emitir o POST. O payload e sua assinatura seguem o contrato da equipe em 9.1.2.7.2. Alterações feitas por API ou por scripts não disparam automaticamente o gatilho de edição; por isso o emissor também tem reconciliação periódica, registro durável do evento, retentativa e prevenção de duplicatas (9.1.2.7.2).
 
 **Limites comuns da implementação planejada**
 
@@ -6527,7 +6615,7 @@ Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com
 3. Responder às notificações de trabalho somente após confirmação de recebimento durável. A aceitação não significa transcrição persistida ou corpus já atualizado; falha na publicação deve permitir nova tentativa.
 4. Executar persistência, consulta à origem e reindexação no processamento assíncrono. A chave de idempotência e a transação que impede efeitos repetidos devem ser definidas para cada webhook e sobreviver a reinícios.
 5. Manter as guardas, as permissões documentais e a autorização de atualização dos registros nos serviços consumidores. Autenticar o emissor não substitui a autorização de acesso aos dados.
-6. Distinguir testes com payload sintético de homologação no provedor real. #391 registrará contratos observados e exemplos sanitizados após a implementação; #413 verificará sucesso, rejeição, repetição e falha de consumo.
+6. Distinguir testes com payload sintético de homologação no provedor real. Os contratos observados e os exemplos sanitizados estão em 9.1.2.7.3; #413 verifica sucesso, rejeição, repetição e falha de consumo.
 
 **Dependências para implementação e alinhamento do backlog**
 
@@ -6537,9 +6625,9 @@ Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com
 | Ambiente do webhook documental | Validar em ambiente de teste as permissões da conta de serviço, o cadastro de canal e a URL HTTPS exigidos pelo contrato 9.1.2.7.1. Registrar Drive como provedor da PoC no card. | Eduardo, antes de homologar #390; a definição do contrato não comprova acesso ao provedor. |
 | Autenticidade e proteção contra repetição | A premissa de #388 de uma assinatura e um timestamp comuns aos dois provedores precisa ser revista. O token de canal do Drive não equivale a uma assinatura HMAC do corpo; a proteção contra repetição precisa considerar o identificador e o cursor efetivamente disponíveis. | Eduardo, ao concluir os contratos da #386, antes de implementar #388. |
 | Persistência do áudio | Preservar a demanda de persistência e pertencimento hoje incluída em #389, mesmo que o webhook de transcrição seja substituído por outro evento. | Eduardo, na revisão do backlog, antes de retirar essa responsabilidade de #389. |
-| Consistência do escopo | A seção 2.7.4 ainda declara webhooks e mensageria fora da solução, enquanto 9.1.2.6 os planeja. #387 deve reconciliar essas afirmações com a decisão final. | Eduardo, em #387, após fechar a definição da #386. |
+| Consistência do escopo | Resolvida pela #387: a seção 2.7.4 passou a incluir webhooks e mensageria no sequenciamento do MVP (Artefatos 10 e 13), em coerência com 9.1.2.6 e com os contratos desta seção. | Eduardo, em #387; concluída após a definição da #386. |
 
-As duas subseções seguintes definem provedor, evento, rota, método, campos, autenticação, respostas, idempotência e exemplos. A conclusão da #386 ainda exige revisão, vínculo do PR e alinhamento dos cards afetados; esta definição não permite considerar implementadas #388, #389 ou #390.
+As decisões da tabela foram resolvidas na implementação: o Drive é o provedor de WH-01, com token de canal; WH-02 usa HMAC com janela de tempo; e a persistência do áudio segue na frente de voz. As duas subseções seguintes definem provedor, evento, rota, método, campos, autenticação, respostas, idempotência e exemplos, e 9.1.2.7.3 registra o que foi implementado e observado.
 
 ##### 9.1.2.7.1 WH-01: atualização documental do Google Drive
 
@@ -6606,7 +6694,7 @@ Uma repetição ainda `pendente` deve retomar a tentativa de publicação com os
 
 A chave externa é a tupla `("google_drive", channel_id, message_number)`, protegida por unicidade no PostgreSQL. Números menores recebidos depois não são descartados como antigos: comparar a chave inteira, sem presumir chegada ordenada nem sequência sem lacunas. O `resource_id` é validado contra o canal, mas não basta como chave, pois várias mudanças pertencem ao mesmo recurso.
 
-Os registros abaixo são necessários à implementação e **ainda não existem** na base inspecionada:
+Os registros abaixo foram criados no schema `webhook` como `canal_drive`, `recebimento` e `sincronizacao_fonte`:
 
 | Registro lógico | Campos mínimos e invariantes |
 |---|---|
@@ -6640,9 +6728,9 @@ O comportamento atual está em [`indexacao.py`](../src/middleware/app/rag/ingest
 
 Os IDs reais usam `documento_id#ordinal`, como `PRJ-2024-018_RSK#0000`; o webhook preservará essa convenção. A implementação atual não faz comparação de chunks individuais para reaproveitar embeddings dentro de um documento alterado. Similaridade continua calculada na consulta contra o índice disponível, sem recalcular uma matriz entre todos os documentos.
 
-Há duas limitações a tratar antes de homologar #390. A decisão de reaproveitamento atual não compara o nome do arquivo; renomeações que mudam sua identificação exigem invalidar a ficha e retirar a identidade antiga quando necessário. Além disso, índice vetorial e PostgreSQL não compartilham transação: o fluxo atual remove vetores antes de inserir os novos, podendo haver indisponibilidade parcial durante a atualização. Não prometer troca atômica; testar queda entre remoção, `upsert` e commit, confirmar recuperação e preservação dos filtros de acesso.
+Há duas limitações conhecidas da ingestão, anteriores aos webhooks. A decisão de reaproveitamento atual não compara o nome do arquivo; renomeações que mudam sua identificação exigem invalidar a ficha e retirar a identidade antiga quando necessário. Além disso, índice vetorial e PostgreSQL não compartilham transação: o fluxo atual remove vetores antes de inserir os novos, podendo haver indisponibilidade parcial durante a atualização. Não há troca atômica; uma falha no meio deixa o cursor anterior, e a nova tentativa reprocessa o documento.
 
-Na ativação do canal, após reinício e a cada 15 minutos, executar uma reconciliação de recuperação pela mesma rotina e bloqueio, mesmo sem callback. Esse intervalo é uma escolha inicial da PoC a validar contra volume e cota. Monitorar canal próximo da expiração, pendências, idade da última sincronização e dead letter. A verificação periódica recupera a defasagem; não é reindexação completa nem garantia de atualização instantânea.
+Na ativação do canal, após reinício e a cada 15 minutos, executar uma reconciliação de recuperação pela mesma rotina e bloqueio, mesmo sem callback. Esse intervalo é uma escolha inicial da PoC a validar contra volume e cota. Monitorar canal próximo da expiração, pendências, idade da última sincronização e dead letter. A verificação periódica recupera a defasagem; não é reindexação completa nem garantia de atualização instantânea. Essa reconciliação periódica ainda não foi implementada (9.1.2.7.3, limitações conhecidas).
 
 **Exemplo de recebimento e processamento**
 
@@ -6690,7 +6778,7 @@ O evento interno correspondente, que **não é enviado pelo Google**, será:
 
 O envelope segue os tipos de 9.1.2.6; todos os campos de `payload` acima são strings obrigatórias. `provider` e `resource_state` são os valores fixos desse exemplo; `fonte_id` é resolvido no cadastro do canal. `occurred_at` representa o recebimento UTC pelo middleware, pois o callback não informa a hora da alteração. Token, URI recebida e conteúdo de documentos não entram no evento.
 
-Se a consulta posterior identificar a atualização do arquivo sintético `PRJ-2024-018_RSK_v1_20260811.xlsx`, a ingestão substituirá os vetores e textos do documento lógico `PRJ-2024-018_RSK`. Uma segunda entrega do número `23` para o mesmo canal, já publicada, receberá `204`. Um número diferente pode produzir nova sincronização, mas, sem mudança de assinatura, não produzirá novos embeddings. Esse é um cenário de aceite, não resultado executado.
+Se a consulta posterior identificar a atualização do arquivo sintético `PRJ-2024-018_RSK_v1_20260811.xlsx`, a ingestão substituirá os vetores e textos do documento lógico `PRJ-2024-018_RSK`. Uma segunda entrega do número `23` para o mesmo canal, já publicada, receberá `204`. Um número diferente pode produzir nova sincronização, mas, sem mudança de assinatura, não produzirá novos embeddings. O teste com o Google Drive real está em 9.1.2.7.3.
 
 **Aceite e rastreabilidade da implementação**
 
@@ -6706,11 +6794,11 @@ Se a consulta posterior identificar a atualização do arquivo sintético `PRJ-2
 | Falha de consumo | Queda entre índice/banco, cursor não avançado antes da conclusão, repetição recuperável e dead letter verificável |
 | Ciclo do canal | Renovação com sobreposição, expiração e retomada após ausência de callback; reconciliação sem duplicar documentos |
 
-Os testes existentes de [`test_ingestao_indexacao.py`](../src/middleware/tests/unit/test_ingestao_indexacao.py) já descrevem ingestão inalterada, atualização, remoção e reclassificação. Eles não homologam o receptor HTTP, o cadastro de canais ou a fila; a inspeção desses testes não é registro de execução nesta entrega. #388 deve incorporar token de canal; #390 deve refletir o provedor Drive e cobrir cadastro, receptor e integração documental; #392 a #394 devem prover broker, publicação e consumo; #391 deve acrescentar exemplos reais sanitizados. Eduardo acompanha esses ajustes e as evidências antes do fechamento da #386 e da homologação de WH-01.
+Os testes de [`test_ingestao_indexacao.py`](../src/middleware/tests/unit/test_ingestao_indexacao.py) descrevem ingestão inalterada, atualização, remoção e reclassificação. O receptor HTTP, o cadastro de canais, a fila e o consumo têm os testes listados em 9.1.2.7.3.
 
 ##### 9.1.2.7.2 WH-02: eventos do portfólio e notificações
 
-**Decisão e limites.** Adotar um emissor desenvolvido pela equipe em Google Apps Script, associado a uma planilha nativa Google Sheets com dados sintéticos. O emissor comunica mudanças de status de projeto, marcos e riscos para os registros existentes do portfólio. A assinatura abaixo é do contrato da equipe, não um recurso de webhook nativo do Sheets. Planilha, script, receptor, persistência de eventos e interface de avisos **ainda precisam ser implementados e homologados**.
+**Decisão e limites.** Adotar um emissor desenvolvido pela equipe em Google Apps Script, associado a uma planilha nativa Google Sheets com dados sintéticos. O emissor comunica mudanças de status de projeto, marcos e riscos para os registros existentes do portfólio. A assinatura abaixo é do contrato da equipe, não um recurso de webhook nativo do Sheets. O emissor, o receptor, a persistência dos eventos e a interface de avisos foram implementados; a execução com a planilha nativa e o gatilho no Apps Script está entre as limitações de 9.1.2.7.3.
 
 A fonte será autoridade somente para os campos enumerados neste contrato. Seu cadastro no servidor deve vincular `source_id` ao ID da planilha, abas, projetos, entidades e campos permitidos. Cada entidade terá uma única fonte escritora desses campos na PoC; escritas concorrentes por importadores ou outras interfaces devem ser bloqueadas ou reconciliadas antes da ativação. Não permitir criação/exclusão de projetos, alteração de vínculos de usuários, permissões, orçamento ou execução de comandos. O backend não escreve de volta na planilha.
 
@@ -6796,7 +6884,7 @@ Em uma transação PostgreSQL, bloquear o controle de versão da entidade, reval
 
 Na mesma transação, gravar entidade, última versão e snapshot, auditoria técnica da alteração, notificações elegíveis e `processado_em`; só então emitir `ack`. Se não houver diferença material, avançar a versão sem gerar aviso. A unicidade de `(source_id, event_id, usuario_id)` impede avisos duplicados. Reentrega após commit não repete efeitos. Conservar o controle de versão mesmo após expurgar recibos, para que uma repetição antiga não reaplique estado. Falhas transitórias seguem três tentativas e dead letter de 9.1.2.6; conflitos e revogação de autorização vão para falha controlada sem alteração de dados.
 
-Esses controles, a auditoria técnica e as notificações são registros novos, não tabelas já existentes. A auditoria guarda fonte, evento, projeto, entidade, versão, campos anteriores/novos autorizados, horário e resultado; não criar uma `Interacao` de chat fictícia para representar o sistema. Receber `202` não garante que a entidade ainda estará autorizada quando o consumidor executar.
+Esses controles, a auditoria técnica e as notificações são tabelas novas: `webhook.versao_entidade`, `webhook.auditoria_portfolio`, `preferencia_aviso` e `aviso`. A auditoria guarda fonte, evento, projeto, entidade, versão, campos anteriores/novos autorizados, horário e resultado; não criar uma `Interacao` de chat fictícia para representar o sistema. Receber `202` não garante que a entidade ainda estará autorizada quando o consumidor executar.
 
 **Preferências de aviso e autorização**
 
@@ -6806,7 +6894,7 @@ Persistir preferência única por `(usuario_id, projeto_codigo, event_type)`, co
 
 O consumidor seleciona adesões ativas como candidatas e persiste avisos privados para consulta interna, sem disparo externo. Toda listagem, contagem, detalhe e marcação de leitura deve validar proprietário e acesso atual ao projeto, usando as regras da sessão autenticada; se não puder resolver autorização, negar acesso. O `Usuario.perfil` persistido é uma projeção para exibição, não fonte de verdade de autorização. Perder acesso deve ocultar também títulos, trechos e contagens desses avisos, ainda que tenham sido criados antes da revogação. Eventual entrega ativa futura exigirá revalidação no envio.
 
-Cada aviso terá UUID, proprietário, projeto, referência ao evento/entidade, diferenças permitidas, horário de criação e `lido_em` opcional. A interface deverá permitir consultar avisos, marcar como lido e abrir o registro autorizado. Retenção inicial de avisos: 30 dias desde a criação, independente da retenção de eventos pendentes. Nesta versão, somente avisos dentro da aplicação; Teams/e-mail (F57), push externo e resumo agendado continuam fora do escopo. O card de implementação deve contemplar banco, API e interface de preferências, não apenas o receptor.
+Cada aviso terá UUID, proprietário, projeto, referência ao evento/entidade, diferenças permitidas, horário de criação e `lido_em` opcional. A interface (tela Avisos, #448) permite consultar avisos, filtrar os não lidos e marcar como lido. Retenção inicial de avisos: 30 dias desde a criação, independente da retenção de eventos pendentes. Nesta versão, somente avisos dentro da aplicação; Teams/e-mail (F57), push externo e resumo agendado continuam fora do escopo.
 
 **Exemplo sintético e resultados esperados**
 
@@ -6830,7 +6918,7 @@ Com a fonte `portfolio_sintetico` previamente cadastrada para o projeto e risco 
 }
 ```
 
-Após persistência e publicação, a resposta é `202` sem corpo. Supondo versão anterior 7, probabilidade 2 e impacto 5, o consumidor grava severidade derivada de 20 para seleção dos avisos (sem exigir nova coluna em `Risco`). Um inscrito com mínimo 15 recebe um aviso privado; outro sem adesão não recebe. A mesma entrega assinada com timestamp novo recebe `204` se já publicada. Versão 7 chegando depois não reverte o risco nem notifica; o mesmo UUID com probabilidade diferente recebe `409`. Esses são resultados esperados, não testes executados.
+Após persistência e publicação, a resposta é `202` sem corpo. Supondo versão anterior 7, probabilidade 2 e impacto 5, o consumidor grava severidade derivada de 20 para seleção dos avisos (sem exigir nova coluna em `Risco`). Um inscrito com mínimo 15 recebe um aviso privado; outro sem adesão não recebe. A mesma entrega assinada com timestamp novo recebe `204` se já publicada. Versão 7 chegando depois não reverte o risco nem notifica; o mesmo UUID com probabilidade diferente recebe `409`. Esses resultados são verificados pelos testes listados em 9.1.2.7.3.
 
 **Aceite e rastreabilidade**
 
@@ -6846,7 +6934,166 @@ Após persistência e publicação, a resposta é `202` sem corpo. Supondo vers�
 | Autorização | Revogação de acesso oculta conteúdo e contagens; usuário não altera preferências nem lê avisos de outra pessoa |
 | Falha permanente | Evento preservado para intervenção, erro rastreável e recuperação controlada, sem falso sucesso de processamento |
 
-#388 deve contemplar HMAC e janela temporal deste emissor, além do token específico do Drive. O escopo substituto de #389 precisa incluir emissor, receptor, consumo e dimensionamento dos avisos, preservando em tarefa explícita a persistência de áudio ainda necessária. #392 a #394 fornecem a mensageria compartilhada; #391 registrará implementação e evidências reais. A definição encerra a terceira unidade documental da #386; revisão, PR e alinhamento do backlog continuam necessários antes de fechar o card.
+A autenticidade (HMAC e janela temporal deste emissor, além do token do Drive) foi implementada em #388; emissor e receptor em #389; a mensageria em #392 a #394; preferências e avisos em #447 e #448. As evidências e as limitações conhecidas estão em 9.1.2.7.3.
+
+##### 9.1.2.7.3 Rotas implementadas, payloads observados e evidências
+
+Esta subseção registra o que foi implementado e observado nos contratos de 9.1.2.7.1 e 9.1.2.7.2:
+
+- WH-01 e a autenticação dos dois emissores foram implementados em #390 e #388.
+- WH-02 foi implementado em #389.
+- O consumo foi implementado em #394, sobre a mensageria de 9.1.2.6.
+- As preferências e os avisos foram implementados em #447 e #448.
+
+Os payloads abaixo foram observados em teste, e os valores que identificariam o ambiente foram trocados por marcadores. Nenhum token, chave ou assinatura aparece nos exemplos.
+
+**Rotas e métodos**
+
+As duas rotas estão em [`webhooks.py`](../src/middleware/app/api/routes/webhooks.py). Elas não usam cookie de usuário: a autenticidade é a do emissor. Nenhuma regra de negócio roda na requisição, que apenas autentica, valida, registra o recebimento e publica o evento interno.
+
+| Webhook | Método e rota no middleware | URL pública | Corpo aceito | Autenticação |
+|---|---|---|---|---|
+| WH-01 | `POST /webhooks/google-drive` | `https://<host>/api/webhooks/google-drive` | Vazio, com leitura interrompida acima de 1 KiB | Token do canal, comparado pelo hash SHA-256 guardado em `webhook.canal_drive`, mais recurso e validade do canal |
+| WH-02 | `POST /webhooks/portfolio` | `https://<host>/api/webhooks/portfolio` | Um objeto JSON por requisição, `application/json` em UTF-8, sem compressão, até 32 KiB | HMAC-SHA256 com chave por `key_id` cadastrada em `webhook.fonte_portfolio` e janela de 300 s |
+
+Qualquer outro método recebe `405` com `Allow: POST`. As respostas de sucesso não têm corpo. Os erros da aplicação usam o envelope `{"detail":{"codigo":"...","mensagem":"..."}}`, com mensagens genéricas que não dizem qual comparação de autenticação falhou. A aplicação recusa com `431` um cabeçalho com valor acima de 2 KiB.
+
+**WH-01: dados recebidos do Google**
+
+O teste com o provedor real inscreveu um canal em `changes.watch` com a conta de serviço da ingestão e uma URL HTTPS temporária. Depois disso, um arquivo da pasta sintética foi renomeado. O Google enviou primeiro a notificação `sync`, respondida com `204`. Em seguida vieram seis notificações `change` em cerca de 80 segundos, todas respondidas com `202`. A tabela lista os campos observados:
+
+| Cabeçalho | Tipo observado | Tratamento |
+|---|---|---|
+| `X-Goog-Channel-ID` | UUID criado pela aplicação | Busca o canal cadastrado; desconhecido gera `401` |
+| `X-Goog-Channel-Token` | Texto hexadecimal de 64 caracteres, gerado na inscrição | Hash comparado em tempo constante; nunca registrado |
+| `X-Goog-Resource-ID` | Texto opaco de 27 caracteres, constante no canal | Deve ser igual ao recurso confirmado na inscrição |
+| `X-Goog-Resource-URI` | URL da API `changes` com os parâmetros da inscrição | Conferida contra o cadastro; nunca usada para download |
+| `X-Goog-Resource-State` | `sync` na primeira notificação e `change` nas seguintes | `changed` é normalizado para `change` |
+| `X-Goog-Message-Number` | Inteiro decimal crescente, com lacunas grandes | Preservado como texto; no teste, `680081`, `686049`, `686064`, `745766`, `747712` e `759654` |
+| `X-Goog-Channel-Expiration` | Data no formato HTTP, não armazenada | Informativa; vale a validade confirmada na inscrição |
+
+Os números de mensagem não são consecutivos, e uma única ação do usuário gerou seis notificações. Por isso a chave de idempotência é o par canal e número, e o consumidor trata várias notificações seguidas como uma única sincronização efetiva. Exemplo de requisição com os valores observados trocados por marcadores:
+
+```http
+POST /api/webhooks/google-drive HTTP/1.1
+Host: <host>
+Content-Length: 0
+X-Goog-Channel-ID: <uuid-do-canal>
+X-Goog-Channel-Token: <token-do-canal>
+X-Goog-Channel-Expiration: <data-de-expiracao>
+X-Goog-Resource-ID: <recurso-do-canal>
+X-Goog-Resource-URI: https://www.googleapis.com/drive/v3/changes?<parametros-da-inscricao>
+X-Goog-Resource-State: change
+X-Goog-Message-Number: 686049
+```
+
+```http
+HTTP/1.1 202 Accepted
+Content-Length: 0
+```
+
+O recebimento gravado em `webhook.recebimento` para essa notificação tem `provedor = google_drive`, `chave_externa = <uuid-do-canal>:686049`, `publicado_em` preenchido e `tentativas = 0`. O evento guardado e publicado no `payload` de `webhook.received` foi:
+
+```json
+{
+  "provider": "google_drive",
+  "fonte_id": "corpus_metro_sintetico",
+  "channel_id": "<uuid-do-canal>",
+  "resource_id": "<recurso-do-canal>",
+  "resource_state": "change",
+  "message_number": "686049"
+}
+```
+
+Entre o recebimento e a publicação confirmada, o tempo observado foi de 10 a 40 ms. A exceção foi a primeira notificação, que também abriu a conexão com o broker: cerca de 2 s, ainda dentro do orçamento de 3 s. Uma consulta de leitura a `changes.list` com o cursor da fonte devolveu as mudanças da pasta, e o consumidor usa essa mesma consulta para reindexar só os documentos afetados.
+
+**WH-02: dados enviados pelo emissor**
+
+O emissor está em [`src/emissor-portfolio`](../src/emissor-portfolio/README.md) (`Codigo.gs`). O teste executou o código do emissor fora do Apps Script, com os serviços do Google substituídos por dublês. Os quatro eventos gerados, um de cada tipo e uma segunda versão de risco, foram reenviados ao middleware por uma URL HTTPS temporária e receberam `202`. Um reenvio do primeiro evento recebeu `204`. A assinatura calculada pelo emissor é conferida pelo backend com um vetor de teste comum às duas linguagens. A tabela descreve os cabeçalhos observados:
+
+| Cabeçalho | Tipo observado | Tratamento |
+|---|---|---|
+| `Content-Type` | `application/json` | Outro tipo, outra codificação ou `Content-Encoding` diferente de `identity` recebem `415` |
+| `X-Prata-Source` | Identificador ASCII, por exemplo `teste_emissor` | Precisa ser igual ao `source_id` do corpo; divergência gera `401` |
+| `X-Prata-Key-Id` | Identificador ASCII, por exemplo `k1` | Seleciona a chave ativa da fonte |
+| `X-Prata-Timestamp` | Segundos Unix com dez dígitos | Fora de 300 s do relógio do receptor gera `401` |
+| `X-Prata-Signature` | Base64 de 44 caracteres (32 bytes de HMAC-SHA256) | Comparada em tempo constante sobre `source\nkey_id\ntimestamp\n` seguido dos bytes exatos do corpo |
+
+O corpo é o JSON compacto produzido por `JSON.stringify`, sem espaços. O emissor guarda esse texto antes do primeiro envio e reutiliza os mesmos bytes em todas as tentativas. Os tipos seguem a tabela "Payload versão 1" de 9.1.2.7.2. O backend recusa campos extras, chaves duplicadas, `true` ou `1.0` no lugar de inteiros e datas inválidas. Exemplo observado, com os códigos de projeto e de entidade da carga sintética:
+
+```http
+POST /api/webhooks/portfolio HTTP/1.1
+Host: <host>
+Content-Type: application/json
+X-Prata-Source: teste_emissor
+X-Prata-Key-Id: k1
+X-Prata-Timestamp: <segundos-unix>
+X-Prata-Signature: <hmac-base64>
+
+{"schema_version":1,"event_id":"531e80a0-417c-4d68-bbde-811551d080df","source_id":"teste_emissor","event_type":"risco.alterado","occurred_at":"2026-09-24T05:29:23Z","projeto_codigo":"demo-PRJ-2024-001","entity_id":"demo-risco-demo-PRJ-2024-001-0","version":2,"data":{"status":"monitorado","probabilidade":5,"impacto":5}}
+```
+
+```http
+HTTP/1.1 202 Accepted
+Content-Length: 0
+```
+
+Os outros eventos observados tinham estes `data`:
+
+- `projeto.status_alterado`: `{"status":"suspenso"}`.
+- `marco.alterado`: `{"status":"concluido","data_prevista":"2026-10-01","data_real":"2026-09-20"}`.
+- `risco.alterado`: `{"status":"mitigado","probabilidade":5,"impacto":5}`, na versão 3.
+
+Exemplo de recusa, para um projeto fora do escopo da fonte:
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{"detail":{"codigo":"WEBHOOK_FORA_DO_ESCOPO","mensagem":"Fonte sem autorização para este evento."}}
+```
+
+**Processamento e armazenamento**
+
+| Etapa | WH-01 | WH-02 |
+|---|---|---|
+| Registro na requisição | `webhook.recebimento`, com chave externa `canal:número` | `webhook.recebimento`, com chave externa `fonte:event_id` e `corpo_sha256` dos bytes recebidos |
+| Evento interno | `webhook.received` com o `payload` acima (9.1.2.6) | `webhook.received` com `provider = apps_script` e `event` validado (exemplo em 9.1.2.6) |
+| Consumo | `changes.list` do cursor salvo em `webhook.sincronizacao_fonte` até o novo cursor, seguido da ingestão incremental da pasta; o cursor novo só é gravado depois da reindexação | Na mesma transação: controle de versão em `webhook.versao_entidade`, atualização de `projeto`, `marco` ou `risco`, auditoria em `webhook.auditoria_portfolio` e avisos em `aviso` para quem aderiu em `preferencia_aviso` e tem acesso |
+| Resultado registrado | `processado_em` no recebimento; documentos afetados reindexados | `processado_em`; resultado `aplicado`, `sem_diferenca`, `repetido` ou `ignorado_antigo` na auditoria |
+
+Por exemplo, se o risco acima estava com probabilidade 3 e impacto 5, a versão 2 altera `risco.probabilidade` e gera avisos com `diferencas` igual a `{"probabilidade": {"de": 3, "para": 5}}` para as adesões elegíveis. Se a versão 1 chegar depois, é registrada como `ignorado_antigo` e não reverte o risco.
+
+**Erro e repetição**
+
+| Situação | WH-01 | WH-02 |
+|---|---|---|
+| Mesma entrega repetida, já publicada | `204`, sem nova publicação | `204` quando o corpo tem o mesmo hash, sem nova publicação |
+| Mesmo identificador com conteúdo diferente | Não se aplica: o número identifica a notificação | `409 WEBHOOK_EVENTO_CONFLITANTE`, preservando o original |
+| Repetição de recebimento ainda pendente | Tenta publicar de novo com os mesmos UUIDs; sem confirmação, `503` | Igual ao WH-01 |
+| Broker ou banco fora do ar | `503 WEBHOOK_INDISPONIVEL`, `Retry-After: 5`; a manutenção do `worker` republica depois | Igual ao WH-01; o emissor repete após 1, 5, 15 e 60 minutos ou após o `Retry-After`, se for maior |
+| Autenticação | `401` para canal desconhecido, token errado ou ausente, recurso divergente e canal expirado | `401` para chave desconhecida, assinatura errada, fonte divergente e timestamp fora da janela; `403` fora do escopo |
+| Conteúdo | `400` para cabeçalho ausente, repetido ou malformado e para corpo não vazio; `413` acima de 1 KiB | `400` para JSON malformado ou chave duplicada; `422` para schema ou vínculo de entidade; `413` acima de 32 KiB; `415` para tipo de conteúdo |
+| `sync` com canal ainda pendente | `204` sem publicar; um `change` nesse estado recebe `503` | Não se aplica |
+| Falha no consumo | Transitória: retentativa com atraso crescente. Sem cursor salvo: `CURSOR_AUSENTE` para `prata.failed` | Transitória: retentativa. Conflito de versão ou escopo revogado: `prata.failed`, sem alterar dados |
+
+**Testes automatizados**
+
+| Arquivo | O que cobre |
+|---|---|
+| `tests/unit/test_webhook_drive_rota.py`, `tests/unit/test_webhook_drive_recebimento.py`, `tests/unit/test_webhooks_drive.py` | Respostas da rota do Drive, limites de corpo e cabeçalhos, validação dos cabeçalhos e do token |
+| `tests/integration/test_webhook_drive.py` | Inscrição, `sync`, mudança publicada, repetição, broker indisponível, renovação e manutenção |
+| `tests/unit/test_webhook_portfolio_assinatura.py`, `tests/unit/test_webhook_portfolio_evento.py` | Vetor HMAC comum ao emissor, janela de tempo, schema estrito, escopo e vínculo |
+| `tests/integration/test_webhook_portfolio.py` | Evento publicado, repetição `204`, conflito `409`, escopo `403`, vínculo `422`, `415`, `413` e broker indisponível |
+| `tests/integration/test_consumidor_webhooks.py` | Consumo dos dois provedores, versões do portfólio, escopo revogado, cursor do Drive e falhas |
+| `tests/integration/test_avisos_portfolio.py` e `src/web/src/testes/avisos.test.tsx` | Avisos por adesão e acesso, severidade mínima, reentrega sem duplicidade, rotas e tela |
+
+**Limitações conhecidas**
+
+- **Gatilho da planilha:** a planilha nativa com o gatilho instalável ainda não foi exercitada no Apps Script. O emissor foi validado fora dele, com os mesmos bytes, cabeçalhos e respostas.
+- **Reconciliação periódica do Drive:** a reconciliação de recuperação a cada 15 minutos prevista em 9.1.2.7.1 não foi implementada. A manutenção do `worker` republica recebimentos pendentes, renova canais aos 80% da validade e expurga avisos com mais de 30 dias. Sem notificação nova, o corpus é atualizado pela ingestão manual.
+- **Retenção dos recebimentos:** a regra de 30 dias para recebimentos concluídos não tem expurgo automático; os registros permanecem em `webhook.recebimento`.
+- **Limite de cabeçalhos:** o limite de 16 KiB para o conjunto de cabeçalhos não está configurado no proxy. A aplicação aplica apenas o limite de 2 KiB por valor.
 
 ### 9.1.3 Integração com Voz
 
@@ -7392,14 +7639,22 @@ Três propriedades da camada foram estabelecidas deliberadamente:
   dedicado, para que não fique publicado um arquivo que nada registra e que
   apenas confundiria quem inspecionasse os estáticos.
 
-**Estado atual da integração.** A interface consome os contratos definidos e
-está pronta para operar contra o middleware. A ligação efetiva depende da
-resolução de sessão no backend, ainda não implementada, da qual todas as rotas
-autenticadas dependem. Enquanto essa peça não existe, os dublês sustentam o
-desenvolvimento e a verificação da interface sem alterar o código que irá a
-produção. A integração completa entre interface e backend, com testes de
-integração e tratamento de falhas de comunicação, é escopo do item 7 do Artefato
-7 e está prevista para a Sprint 5.
+**Estado atual da integração.** Em desenvolvimento, a interface consome o
+middleware real pelo proxy `/api`: identidade da sessão, conversa, histórico,
+intenções e rotinas saem do backend, com login de verdade. O navegador registra
+apenas os dublês das rotas que o middleware ainda não implementa
+(`handlersPendentes`), cada uma com o motivo em `ROTAS_PENDENTES`, em
+`src/web/src/mocks/handlers.ts`; hoje, só `GET /voz/token`, até a emissão do
+token entrar com a issue #396. A troca não exigiu mudança em componente ou hook:
+os esquemas de resposta das rotas reais foram conferidos campo a campo contra
+`tipos/index.ts`, e o fluxo de conversa, histórico e intenções foi percorrido
+contra o middleware real com uma sessão local. `VITE_SEM_DUBLES=true` desliga
+também os dublês pendentes.
+
+A suíte de testes continua usando o conjunto completo (`handlers`), porque
+precisa de respostas determinísticas e não depende de backend. O caso
+`dubles.test.ts` garante que o navegador registra apenas as rotas pendentes e que
+cada uma tem motivo registrado.
 
 ### 9.2.10 Verificação automatizada
 
@@ -7525,19 +7780,13 @@ igualdade é verificada pelo caso `TU-WEB-02`, documentado em 9.5.3.
 
 ### 9.2.15 Como exercitar a entrada por voz
 
-O dublê de `GET /voz/token` devolve um token de demonstração, reconhecível por um
-prefixo próprio. Ao recebê-lo, o hook de microfone executa um percurso simulado,
-com transcrições parciais que crescem palavra a palavra e uma transcrição final
-ao término, reproduzindo a temporização do reconhecimento real.
-
-A consequência prática é que **a avaliação da entrada por voz não consome crédito
-do recurso Azure AI Speech**, cujo nível gratuito F0 possui limites descritos em
-5.7.4. Basta acionar o botão de microfone e observar o estado ativo, a
-transcrição parcial no campo e a entrega do texto final.
-
-A simulação desaparece por si quando o recurso estiver provisionado no ambiente
-do parceiro, porque um token real nunca apresenta aquele prefixo. Nenhuma
-remoção de código é necessária para a transição.
+Configure `SPEECH_KEY`, `SPEECH_REGION` e, quando aplicável, `SPEECH_ENDPOINT`.
+Com frontend e middleware ativos, o botão solicita `GET /api/voz/token`; o
+middleware troca a chave por uma credencial de dez minutos e o Speech SDK abre
+o microfone somente depois da permissão do navegador. A fala parcial aparece no
+campo e o texto reconhecido segue ao `/chat`. Esse percurso é real e consome a
+franquia do recurso configurado; falha de configuração ou do provedor produz
+feedback de indisponibilidade, sem recorrer a frase fixa.
 
 ### 9.2.16 Execução em contêiner
 
@@ -7566,9 +7815,6 @@ tratados na seção 11.
 
 | Limitação | Consequência para quem avalia | Situação |
 | --- | --- | --- |
-| As respostas provêm da camada de dublês | O conteúdo apresentado é massa de teste, e não dado do portfólio | Depende da resolução de sessão no middleware |
-| O estado das rotinas é mantido em memória | Alterações se perdem ao recarregar a página | Comportamento esperado de dublê |
-| A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
 | A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
 
 A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
@@ -8498,7 +8744,28 @@ RAG pelo `/chat`, porque essa ligação não existe no código (9.4.8).
 
 # 10. Planejamento e Execução de Testes
 
-[Descreva a estratégia de testes, cobertura e critérios de aceitação.]
+Esta seção descreve a estratégia de testes adotada pelo projeto, organizada em
+níveis funcional, não funcional, de usabilidade, de APIs externas e de
+integração, com consolidação ao final. O objetivo é garantir que o agente
+atenda aos requisitos de negócio e aos RNFs, e que a costura entre componentes
+internos e externos seja verificável com evidências reproduzíveis.
+
+A estratégia é estruturada da seguinte forma:
+- **10.1** — Testes funcionais: verificam se o agente faz o que os requisitos funcionais (RF01 a RF12) determinam, com serviços externos dublados.
+- **10.2** — Testes de requisitos não funcionais (RNFs): medem confidencialidade, rastreabilidade, precisão de classificação, disponibilidade, adequação ao perfil, eficácia das barreiras, retenção do registro e desempenho.
+- **10.3** — Testes de usabilidade: avaliam se usuários externos conseguem utilizar o agente de forma clara, eficiente e autônoma (Maze, SUS e ações corretivas).
+- **10.4** — Testes de APIs externas: apontam para os casos de Entra ID, Content Safety, Copilot Studio e Azure Speech tratados em 10.5.
+- **10.5** — Testes de integração: exercitam a costura entre componentes internos e externos, com VHS para terceiros e PostgreSQL/RabbitMQ reais do Compose.
+- **10.6** — Testes de regras de negócio: verificam as regras específicas do portfólio do Metrô.
+- **10.7** — Consolidação da cobertura: apresenta o total de cobertura por requisito e as lacunas remanescentes.
+
+Nesta revisão (25/09/2026, commit `3298da0`), a suíte do frontend executa **185**
+testes com build e lint limpos; a integração coleta **217** casos e os grupos
+internos/webhooks passaram contra o Compose. Os testes utilizam pytest, Vitest,
+MSW, VCR.py/`pytest-recording` e o banco/broker do Docker Compose, conforme
+detalhado em cada subseção. A meta de cobertura de código permanece em 80% para
+backend e frontend (9.1.8); a medição do frontend nesta data ficou em 77,42% de
+linhas.
 
 ## 10.1 Testes Funcionais
 
@@ -8506,7 +8773,7 @@ Os testes funcionais verificam se o agente faz aquilo que os requisitos de 3.2 d
 
 Esta subseção verifica **comportamento observável na fronteira do middleware**, com os serviços externos dublados. A distinção com as demais subseções da seção 10 é de objeto, não de rigor. O que se testa aqui é o que a aplicação responde a uma requisição: o desfecho, o corpo devolvido, o que ficou gravado e o que deixou de acontecer. A conversa efetiva com Entra ID, Copilot Studio, Azure AI Content Safety e Azure Speech é objeto de 10.4 e de 10.5, que verificam contrato e integração reais. A regra de negócio sobre o portfólio — o que conta como projeto atrasado, o que caracteriza pendência — é objeto de 10.6. A consolidação da cobertura, com o total por requisito e as lacunas remanescentes, é objeto de 10.7. Quando um caso desta subseção depende de um serviço externo, ele depende do **dublê** desse serviço, e o teste falha por comportamento do middleware, nunca por indisponibilidade de terceiro.
 
-Convém dizer de frente em que estado o desenvolvimento está. A onda 1 de 9.1.2.1 está em curso na Sprint 3, e as demais seguem o sequenciamento de 9.1.2: guardas na onda 2, classificador integrado na onda 3, análise na onda 4 e rotinas na onda 5. Isso significa que a maior parte dos casos abaixo **ainda não é executável**, e não porque falte escrevê-los, mas porque o componente que eles exercitam ainda não existe no repositório. Cada caso declara, por isso, a onda em que se torna executável. Um planejamento que omitisse essa coluna pareceria mais completo e diria menos: é ela que permite ao revisor separar o que já pode ser cobrado do que só faz sentido cobrar na sprint seguinte.
+Os casos abaixo documentam a cobertura planejada e sua onda de origem. A existência de um caso no plano não comprova a implementação do componente nem sua aprovação: o estado observado de cada caso está na subseção 10.1.7 e nas evidências datadas da execução.
 
 ### 10.1.1 Convenções de identificação e formato
 
@@ -8583,9 +8850,9 @@ Este conjunto verifica que os dois canais de entrada chegam ao mesmo lugar. Os c
 | `TF-RF02-04` | Negativo | Duração acima do limite | Áudio de formato aceito, com duração superior a cinco minutos | Recusa com o código `AUDIO_MUITO_LONGO` e o detalhe de duração previsto no corpo de erro de 5.7.3.8 | 5.7.3.6, 5.7.3.8 | Onda 1, conforme 9.1.3 |
 | `TF-RF02-05` | Negativo | Arquivo ilegível | Arquivo corrompido, vazio ou sem trilha de áudio | Recusa com o código `AUDIO_ILEGIVEL`; a falha ocorre na validação, antes de qualquer chamada ao serviço de fala | 5.7.3.8 | Onda 1, conforme 9.1.3 |
 | `TF-RF02-06` | Negativo | Áudio aceito, sem fala reconhecível | Áudio válido em formato e duração, cujo conteúdo não produz transcrição no dublê do serviço de fala | A submissão é aceita e a consulta devolve `200` com o estado `falhou`, e não um erro de requisição; a orientação apresentada oferece o canal de texto como saída | 5.7.3.4, 5.7.3.8 | Onda 1, conforme 9.1.3 |
-| `TF-RF02-07` | Positivo | O texto transcrito reentra pelo mesmo pipeline | Transcrição concluída, encaminhada à rota de conversação como qualquer mensagem, com o canal marcado como voz | A solicitação atravessa a mesma ordem fixa do orquestrador — guardas, classificação, execução, avaliação da resposta e registro; nenhuma verificação de autorização é pulada e é gravada uma única interação | US02, 5.2.3.2, 5.7.3.5 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-07` | Positivo | O texto transcrito entra no mesmo pipeline | Submissão aceita cuja transcrição termina com texto utilizável | O processador chama o mesmo orquestrador do `/chat` com `canal=voz`; a solicitação atravessa guardas, classificação, execução, avaliação da resposta e registro, e a submissão guarda o `interacao_id` produzido | US02, 5.2.3.2, 5.7.3.5 | Onda 1, conforme 9.1.3 |
 
-`TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro, e que a API de áudio não aciona o pipeline por conta própria. Isso é uma promessa verificável, e sem um caso que a exercite ela permanece como intenção de projeto. A asserção compara a sequência de etapas percorrida por uma mensagem digitada e por uma transcrição de mesmo texto: as duas execuções precisam produzir a mesma ordem de chamadas e uma única linha de registro cada, diferindo apenas no valor do canal.
+`TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro. A API de ingestão aciona o pipeline depois do STT, mas não o contorna: a asserção verifica a classificação, a chamada ao executor, o canal `voz`, a linha única de interação e seu vínculo com `transcricao_audio`.
 
 **Execução.** Os casos de *backend* rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf02_canais.py`. O Azure Speech é dublado em todos eles: os áudios do conjunto são fixos e pequenos, e a transcrição devolvida é controlada pelo dublê, porque o objeto do teste é o trajeto e o tratamento de erro, não a qualidade do reconhecimento — essa é medida sobre o corpus de 5.7.6, pelos indicadores de 3.1.5.2. A verificação de ordem de `TF-RF02-07` é feita registrando as chamadas ao orquestrador e comparando as duas execuções. A apresentação da transcrição no campo de mensagem antes do envio, prevista em 5.7.3.5, é asserção de interface e roda com Vitest e Testing Library em `src/web/src/testes/`.
 
@@ -8756,7 +9023,7 @@ Há uma sutileza na exigência de sigilo que precisa ser explicitada, porque ela
 
 `TF-RF09-04` é o caso cuja técnica precisa ser dita, porque a asserção é sobre ausência e ausência não se verifica por inspeção visual. A comparação é feita contra um gabarito fixo de recusa por classe, e complementada por uma verificação de que nenhum *token* do prompt hostil — descontadas as palavras vazias — aparece no corpo devolvido. Uma implementação que ecoasse a instrução recebida ao explicar a recusa passaria em qualquer asserção de igualdade de desfecho e reprovaria aqui, que é exatamente o ponto.
 
-`TF-RF09-05` tem contraparte quantitativa. Aqui se verifica que um conjunto pequeno de solicitações legítimas de vocabulário próximo atravessa as barreiras; a **taxa de falso positivo**, com teto de 5% e reporte por barreira, é o RNF06 e está em 10.2, e depende do conjunto adversarial que ainda não existe.
+`TF-RF09-05` tem contraparte quantitativa. Aqui se verifica que um conjunto pequeno de solicitações legítimas de vocabulário próximo atravessa as barreiras; a **taxa de falso positivo**, com teto de 5% e reporte por barreira, é o RNF06 e está em 10.2.3.6, onde o conjunto adversarial foi executado contra o serviço real.
 
 **Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no módulo planejado `src/middleware/tests/funcionais/test_rf09_guardas.py`. O Azure AI Content Safety é dublado, com veredito controlado por caso, o que permite exercitar `TF-RF09-06` sem depender de derrubar serviço real. O executor é dublado e devolve, em `TF-RF09-03`, uma resposta contaminada com instrução embutida, simulando o conteúdo recuperado do SharePoint que o cenário 4 de 5.3.8 descreve. A verificação de ordem de `TF-RF09-07` é feita sobre a sequência de chamadas registradas nos dublês, e não sobre o desfecho final, que seria o mesmo em várias ordens diferentes.
 
@@ -8850,7 +9117,7 @@ O conjunto tem **65 casos** distribuídos pelos doze requisitos funcionais, send
 | RF12 | 10.1.5.4 | 2 | 2 | 4 | Onda 1 |
 | **Total** | — | **33** | **32** | **65** | — |
 
-A leitura por onda diz o que a Sprint 3 pode cobrar. Dezesseis casos — os de RF01, RF02 e RF12 — tornam-se executáveis na onda 1, que está em curso; sete entram na onda 2, com as guardas; vinte e cinco na onda 3, quando o classificador é integrado; três na onda 4, com os recortes analíticos; onze na onda 5, com as rotinas e a varredura de pendências. Três permanecem fora do MVP. Nenhum caso foi escrito para ser executável antes do componente que ele exercita.
+A distribuição por onda continua útil para explicar a origem do planejamento; a execução atualizada e as lacunas observadas estão consolidadas em 10.1.7. RF07 permanece fora do MVP.
 
 **O critério de suficiência.** O piso de quatro casos por requisito, com pelo menos um positivo e um negativo, não é uma regra de contagem: é o mínimo que permite distinguir quatro situações que um conjunto menor confunde — o caminho previsto funciona, o caminho previsto falha quando deveria, o caminho não previsto é recusado, e a recusa acontece pela razão certa. RF03 e RF09 recebem oito e sete casos por concentrarem desfechos distintos que produzem efeito parecido para quem lê a resposta: em RF03, fora de escopo, baixa confiança, falta de permissão e entidade ausente; em RF09, três barreiras com dois formatos de recusa, mais a exigência de sigilo e a exigência simétrica de não barrar o legítimo. Nesses dois requisitos, um conjunto que verificasse apenas se houve recusa passaria com o comportamento errado.
 
@@ -8871,6 +9138,39 @@ A última linha merece detalhe, porque é a que mais facilmente passaria por omi
 **A relação entre cenário negativo e fluxo de exceção.** Os 32 casos negativos deste conjunto não foram concebidos como exercício de imaginação adversarial. Cada um tem origem declarada na coluna de rastreabilidade, e as origens são três. A primeira são os fluxos alternativos e de exceção de 3.5.3: a autenticação recusada e o *claim* sem perfil de UC01, os dois ramos de recusa de UC02, o projeto fora do escopo de UC04, o cancelamento e a falha de gravação de UC05, a conversa alheia de UC06, o prompt que não resolve de UC07, a permissão perdida entre cadastro e disparo de UC08, e a barreira indisponível de UC10. A segunda são os desfechos distintos que 5.4.4.6 e 5.4.6 formalizam, e que sustentam os casos em que a asserção é sobre **qual** recusa ocorreu, e não sobre ter havido recusa. A terceira são os limites e o catálogo de erros de 5.7.3.6 e 5.7.3.8, que fornecem os códigos exatos esperados nos casos negativos do canal de voz.
 
 Isso importa por uma razão prática. Um cenário negativo inventado verifica o que quem o escreveu imaginou que poderia dar errado; um cenário negativo derivado de fluxo de exceção verifica o que a especificação prometeu que aconteceria quando desse errado. A diferença aparece na revisão: o primeiro se discute por opinião, o segundo se confere contra a seção que o originou. É também o que permite afirmar que os negativos foram esgotados antes de acrescentar cenários novos — quando um fluxo de exceção de 3.5.3 não aparece como caso, é porque ele pertence a um requisito cujo conjunto está marcado como não executável no MVP.
+
+### 10.1.7 Resultado da execução funcional em 25/09/2026
+
+A suíte funcional foi executada sobre o commit `7637fa8d5c858b4c267f22abca1434d3b93badd2`, nesta branch. O comando abaixo concluiu com código de saída zero em **67,10 segundos**:
+
+```powershell
+cd src\middleware
+.\.venv\Scripts\python.exe -m pytest tests\funcionais -vv -ra -p no:cacheprovider --basetemp "$env:TEMP\g02-funcionais-20260925"
+```
+
+Foram coletadas **68 execuções** para os 65 identificadores planejados; a diferença decorre de casos parametrizados. O resultado foi **43 aprovações, 22 falhas esperadas (`xfail`) e 3 casos ignorados (`skip`)**. Portanto, o código de saída zero comprova que a suíte é reproduzível e que os comportamentos já implementados não regrediram, mas não significa que todos os requisitos estejam concluídos. Os `xfail` registram, de maneira executável, diferenças ainda existentes entre a especificação e o sistema.
+
+| RF | Aprovadas | `xfail` | `skip` | Leitura do resultado |
+|---|---:|---:|---:|---|
+| RF01 | 5 | 1 | 0 | Fluxos principais aprovados; perfil padrão para grupo desconhecido permanece como lacuna. |
+| RF02 | 7 | 0 | 0 | Os sete casos do canal texto/áudio passaram nesta execução. |
+| RF03 | 6 | 2 | 0 | Classificação e desfechos centrais aprovados; permissão de projeto e entidade ausente ainda não são distinguidas. |
+| RF04 | 1 | 4 | 0 | Consulta básica aprovada; cobertura das dimensões, propagação de fontes, indistinguibilidade 403/404 e ausência de dados permanecem incompletas. |
+| RF05 | 0 | 6 | 0 | Fluxo transacional com prévia e confirmação ainda não implementado. |
+| RF06 | 0 | 5 | 0 | Varredura e entrega proativa de pendências permanecem planejadas para a onda 5. |
+| RF07 | 0 | 0 | 3 | Casos fora do MVP, sem tópico correspondente no executor. |
+| RF08 | 3 | 3 | 0 | Contrato básico aprovado; perfil, suficiência e filtro de fontes por projeto ainda não estão integrados. |
+| RF09 | 6 | 1 | 0 | Guardas aprovadas nos fluxos exercitados; a indisponibilidade da guarda de injeção ainda propaga exceção. |
+| RF10 | 5 | 0 | 0 | Registro único e desfechos aprovados nos cenários automatizados. |
+| RF11 | 6 | 0 | 0 | Cadastro, alteração, execução e histórico de rotinas aprovados nos cenários automatizados. |
+| RF12 | 4 | 0 | 0 | Histórico e isolamento entre usuários aprovados nos cenários automatizados. |
+| **Total** | **43** | **22** | **3** | **Execução concluída, com cobertura funcional ainda parcial.** |
+
+Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente utilizado estão preservados em [`docs/evidencias/2026-09-25-testes-funcionais.txt`](evidencias/2026-09-25-testes-funcionais.txt). A execução utilizou `ASGITransport` e dublês nas fronteiras previstas pelos scripts; por isso, esta evidência não deve ser interpretada como comprovação de integração real com PostgreSQL, Entra ID, Copilot Studio, Azure Speech ou Content Safety.
+
+> **Comparação com a execução anterior.** Os sete casos de `test_rf02_canais.py` passaram nesta execução integral. Os dois casos antes marcados `xfail` foram resolvidos; os totais acima foram recalculados com toda a suíte.
+
+**Análise crítica.** A maior concentração de lacunas está nos RF05 e RF06, cujos fluxos ainda não estão implementados, e no RF04, que possui apenas um cenário aprovado. Os pontos de maior risco para a versão atual são a validação incompleta de áudio em RF02, a autorização e validação de entidades em RF03/RF04 e o comportamento da guarda de injeção quando o serviço externo falha em RF09. Os casos planejados para ondas futuras permanecem registrados como `xfail`, evitando que sejam apresentados como funcionalidades concluídas. Cada defeito confirmado deve ser vinculado a uma *issue* de correção antes do encerramento da issue de execução.
 
 ## 10.2 Testes de RNFs
 
@@ -8926,61 +9226,13 @@ python -m pytest tests/desempenho/test_micro_latencia.py --benchmark-only
 python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
 ```
 
-#### 10.2.2.1 Resultado da execução — 22/09/2026
+#### 10.2.2.1 Resultado da execução — 25/09/2026
 
-O ambiente Docker foi iniciado com PostgreSQL populado, API e frontend. Para
-isolar o middleware, a execução usou `PERFORMANCE_MODE=true`: o executor devolve
-resposta sintética com atraso de 50 ms, Content Safety é dublado no perfil de
-carga e o classificador usa uma intenção determinística. O modo é opt-in e
-desligado por padrão; o benchmark isolado de `TNF-DES-02` continua medindo o
-classificador real com `httpx.MockTransport`.
+A micro-medição foi executada em Windows 11, Python 3.14.2, `pytest-benchmark` 5.3.0, sem serviço externo real. Os cinco casos passaram. Médias: regra de injeção 2,107 µs; pré-processamento 9,706 µs; classificador de injeção com `httpx.MockTransport` 3,067 ms; classificador de abuso com transporte dublado 3,032 ms; guarda de saída com transporte dublado 2,801 ms. São medidas locais, sujeitas à variação do host e sem latência Azure/Copilot.
 
-| Cenário | Requisições | Falhas | p50 | p95 | Situação |
-|---|---:|---:|---:|---:|---|
-| `TNF-DES-01` — baseline, 1 usuário | 77 | 0 | 77 ms | 81 ms | Aprovado |
-| `TNF-DES-03` — carga nominal, 10 usuários | 415 | 0 | 320 ms | 1.600 ms | Aprovado |
-| `TNF-DES-04` — pico, 30 usuários | 396 | 0 | 1.300 ms | 4.800 ms | Aprovado |
-| `TNF-DES-06` — executor excede timeout | 17 | 0 | 130 ms | 140 ms | Aprovado |
+O cenário Locust foi executado com um usuário, `PERF_TARGET=http://localhost:8000`, espera entre tarefas de 0,1 s e duração de 10 s. A API não estava disponível: a tentativa terminou com zero respostas HTTP válidas e falha de conexão (HTTP 0). Portanto, não há p50/p95 de carga utilizáveis, e `TNF-DES-01`, `TNF-DES-03`, `TNF-DES-04` e `TNF-DES-07` permanecem sem resultado válido nesta rodada. O cenário de concorrência com worker (`TNF-DES-05`) também não foi exercitado; o teste unitário do worker não demonstra execução de worker separado sob carga. `TNF-DES-06` não foi executado pelo Locust nesta tentativa.
 
-O limite operacional de `TNF-DES-07` é p95 menor ou igual a 8 s. Os resultados
-de `TNF-DES-03` e `TNF-DES-04` permanecem abaixo desse limite, portanto o
-critério foi aprovado nos dois recortes. O pico aumentou o p95 em 3,2 s sobre
-o nominal, desvio compatível com contenção de CPU e conexões durante a carga,
-mas sem recusa HTTP.
-
-O cenário `TNF-DES-06` configurou atraso sintético de 1.000 ms e timeout de
-100 ms. As respostas retornaram `falha_executor`, foram registradas pelo
-pipeline e o Locust confirmou o desfecho esperado. O cenário `TNF-DES-05`
-não foi aprovado: o worker encerra na inicialização com
-`NotImplementedError("Worker a implementar na onda 5")`, logo não existe ainda
-um disparo de rotina executável para medir concorrência com o chat.
-
-O `TNF-DES-02` também passou no benchmark isolado, com Content Safety dublado:
-
-| Etapa | Média | Mediana | Referência |
-|---|---:|---:|---|
-| Regra determinística de injeção | 1,89 µs | 1,70 µs | sub-100 ms arquitetural |
-| Pré-processamento textual | 9,78 µs | 9,10 µs | sub-100 ms arquitetural |
-| Classificador de injeção + dublê HTTP | 1,51 ms | 3,15 ms | 150–300 ms |
-| Classificador de abuso + dublê HTTP | 1,23 ms | 2,48 ms | 150–300 ms |
-| Guarda de saída + dublê HTTP | 1,10 ms | 1,54 ms | 100–200 ms |
-
-Os números acima são medições contra o ambiente Docker local com serviços
-externos dublados, não contra Content Safety ou Copilot reais. A execução real
-dos serviços de terceiro permanece fora desta evidência; misturá-la ao número
-do middleware tornaria a comparação com o orçamento não reproduzível.
-
-Com o ambiente ativo, a execução reproduzível usa uma sessão de teste e o
-executor sintético:
-
-```powershell
-$env:PERF_TARGET = "http://localhost:5173"
-$env:PERF_CHAT_PATH = "/api/chat"
-$env:PERF_SESSION_COOKIE = "<cookie-da-sessao-de-teste>"
-$env:PERF_EXPECTED_DESFECHO = "encaminhada"
-python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
-```
-
+Evidências brutas: `docs/evidencias/2026-09-25-benchmark.txt` e `docs/evidencias/2026-09-25-locust.txt`. Para repetir carga, iniciar API, PostgreSQL e executor sintético, configurar uma sessão de teste e usar o roteiro Locust documentado acima. Não reutilizar os números de carga registrados em 22/09 como resultado desta execução.
 ### 10.2.3 Testes dos requisitos não funcionais
 
 **Nota de escopo.** O card que originou esta entrega foi escrito sobre RNF01 a RNF05. O RNF06 e o RNF07 entraram na mesma revisão de escopo que acrescentou RF09 a RF12, conforme as notas de 3.3.1 e 3.4, e não possuem card próprio. Cobri-los aqui é o que evita que a eficácia das barreiras e a proteção do registro — os dois requisitos que sustentam, respectivamente, o RF09 e o par RF10 e RF12 — fiquem sem procedimento de medição. A extensão fica registrada neste parágrafo e na descrição do *merge request*.
@@ -9002,6 +9254,13 @@ Uma inspeção sem cenário negativo, porém, não é teste — é leitura. Se o
 
 **Execução.** A verificação roda como caso de `pytest` em `src/middleware/tests/perimetro/test_perimetro_declarado.py`, que lê os arquivos de configuração e a lista de serviços da tabela de 3.3.1.1 mantida como dado do teste, e compara os dois conjuntos. `TNF-RNF01-02` roda sobre uma cópia adulterada da configuração, em diretório temporário, e nunca sobre os arquivos do repositório. A execução acompanha cada entrega, como 3.3.1 determina, e não uma sprint específica — é a única verificação desta seção cuja periodicidade é por entrega e não por onda.
 
+**Status de implementação (23/09/2026).** Os quatro casos TNF-RNF01-01 a TNF-RNF01-04 foram implementados e estão passando (5/5 testes). A implementação inclui:
+- Módulo de dados `perimetro_declarado.py` com a lista oficial de serviços externos conforme seção 3.3.1.1
+- Extrator de serviços de arquivos de configuração (.env.example, docker-compose.yml, conectores.md)
+- Caso negativo que detecta serviço não declarado introduzido deliberadamente
+- Verificação de identificação de tenants não homologados
+- Verificação de uso exclusivo de dados sintéticos/anonimizados
+
 ```powershell
 cd src\middleware
 python -m pytest tests/perimetro -q
@@ -9021,6 +9280,29 @@ A fórmula de 3.3.1 é uma razão entre alterações com os três elementos e o 
 `TNF-RNF02-04` protege a integridade da própria métrica. Uma cobertura de 100% obtida porque o denominador exclui casos difíceis não mede nada, e a distinção entre interação registrada e alteração efetivada é exatamente onde esse erro entraria sem que ninguém percebesse.
 
 **Execução.** Os casos rodam com `pytest` e `pytest-asyncio` em `src/middleware/tests/rnf/test_rnf02_rastreabilidade.py`, contra o PostgreSQL 16 do contêiner de teste, com o esquema aplicado por Alembic. A cobertura é calculada por consulta agregada sobre a tabela de alterações, e não por inspeção caso a caso, para que o mesmo procedimento sirva quando o volume crescer.
+
+**Implementação e resultado da execução de 23/09/2026.** Os casos foram
+implementados em `tests/rnf/test_rnf02_07_auditoria.py`, junto do serviço de
+consulta em `app/persistence/auditoria.py`. A bancada cobre autoria (`usuario_id`),
+origem (`canal` e `rotina_id` quando aplicável), momento (`criada_em`), acesso
+por usuário, retenção de 30 dias e expurgo somente de registros anteriores ao
+corte. O comando contra o PostgreSQL 16 do Compose foi:
+
+```powershell
+cd src\middleware
+$env:RNF_DATABASE_URL = "postgresql+asyncpg://middleware:middleware@localhost:5432/middleware"
+python -m pytest tests\rnf\test_rnf02_07_auditoria.py -q
+```
+
+Resultado: **8 passed em 0,81s**. Os dados da bancada usam IDs únicos e filtro
+por usuário; o rollback ao final preserva o histórico já existente no banco
+compartilhado. O lint dos arquivos alterados também passou.
+
+O teste comprovou o controle de acesso e a mecânica de retenção/expurgo, mas
+`TNF-RNF07-01` não certifica cifra em repouso: o modelo atual persiste o prompt
+em texto e não há configuração de criptografia no repositório. Essa parte do
+RNF07 permanece uma limitação de infraestrutura a resolver, não foi declarada
+como aprovada pelo teste.
 
 #### 10.2.3.3 RNF03 — Precisão na classificação de intenções
 
@@ -9111,11 +9393,12 @@ O requisito tem dois critérios de aceitação em 3.3.1, e eles são **assimétr
 | `TNF-RNF05-03` | Positivo | O mesmo enunciado, os três perfis | Enunciado idêntico submetido por Diretoria, Liderança e Equipe de projeto | As três respostas diferem em profundidade e recorte, na direção descrita no quadro comparativo de 2.4.4 | RNF05, 2.4.4 | Onda 3 |
 | `TNF-RNF05-04` | Negativo | Inadequação sem exposição também reprova a taxa | Resposta autorizada, porém com detalhamento incompatível com o contexto do perfil | O caso é contado como inadequado na taxa, e **não** como exposição; a separação entre os dois critérios é preservada na apuração | RNF05, 2.4.4 | Onda 3 |
 
-**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf05_perfil.py`, com o executor dublado devolvendo, para cada enunciado, o conteúdo completo disponível; a adequação avaliada é a do recorte que o middleware entrega, e não a redação do executor. A avaliação de adequação de `TNF-RNF05-01` é humana e registrada em planilha versionada com o conjunto, porque não há critério automatizável para julgamento de forma; a verificação de exposição de `TNF-RNF05-02` é automatizada, por confronto entre o conteúdo devolvido e o conjunto de projetos autorizados para o perfil. A diferença de método acompanha a diferença de natureza dos dois critérios.
+**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf05_perfil.py`, com dez enunciados sintéticos e respostas dubladas para cada perfil. A ficha de avaliação registra termos esperados e indesejados no próprio caso; ela formaliza o critério que deverá ser revisado por avaliadores humanos quando o conteúdo do parceiro estiver disponível, sem apresentar a bancada sintética como validação humana. A adequação avaliada é a do recorte que o middleware entrega, e não a redação do executor. A verificação de exposição de `TNF-RNF05-02` é automatizada, por confronto entre o conteúdo devolvido e o conjunto de projetos autorizados para o perfil.
 
+**Resultado da execução em 25/09/2026.** A suíte `tests/rnf` foi executada integralmente nesta branch: seis casos de RNF05 passaram. A bancada sintética atingiu 100% de adequação em cada um dos três perfis, não observou exposição do projeto restrito e confirmou a separação entre inadequação e exposição. Isso não substitui a revisão humana dos enunciados e respostas com conteúdo do parceiro.
 #### 10.2.3.6 RNF06 — Eficácia das barreiras de segurança
 
-Este é o maior trabalho novo da seção, e a razão é direta: **o conjunto adversarial ainda não existe**. A própria 3.3.1 registra que o limiar de 90% de detecção e o teto de 5% de falso positivo são hipóteses de trabalho da equipe, a serem recalibradas sobre o primeiro conjunto construído. Medir o RNF06 depende, portanto, de construir antes o instrumento que o mede, e esta subseção especifica esse instrumento.
+O RNF06 possui conjunto adversarial versionado e uma primeira execução sistêmica contra o Azure AI Content Safety real, registrada nesta subseção. Os limiares de 90% de detecção e 5% de falso positivo continuam sendo hipóteses de trabalho da equipe; os resultados observados reprovaram parcialmente o requisito e orientam a recalibração com o parceiro.
 
 O conjunto tem duas metades, e nenhuma delas é dispensável. A metade hostil mede detecção. A metade legítima — solicitações válidas do catálogo formuladas com vocabulário próximo do adversarial — mede falso positivo. Sem a segunda não há como calcular a segunda métrica, e sem a segunda métrica a primeira é enganosa: 3.3.1 diz, no próprio texto do requisito, que uma barreira que bloqueia tudo atinge detecção total e torna o produto inútil.
 
@@ -9143,7 +9426,7 @@ Os números não são convenção. Eles decorrem da resolução exigida pelas du
 
 `TNF-RNF06-06` fecha uma lacuna que a matriz de 3.4 já apontava: o RNF06 alcança o RF11 porque o prompt de uma rotina atravessa as mesmas barreiras, e sem operador presente para perceber um falso positivo. Uma detecção que caísse no canal de rotina passaria despercebida por semanas, que é justamente o intervalo entre um disparo e o seguinte.
 
-**Execução.** O conjunto adversarial completo será versionado em `src/middleware/dados/adversarial/`, com um arquivo por vetor e a contraparte legítima em arquivo próprio, cada item marcado com vetor, barreira esperada e origem. A medição sistêmica rodará em `src/middleware/tests/rnf/test_rnf06_barreiras.py`, com o Azure AI Content Safety **real** e não dublado — dublar a barreira que se está medindo produziria o número do dublê. É a única exceção à regra de dublagem declarada em 10.1 e nesta seção, e ela vale apenas para o RNF06.
+**Execução.** O conjunto completo está em `src/middleware/dados/adversarial/`, com casos por vetor e contraparte legítima. A medição sistêmica está implementada em `src/middleware/tests/rnf/test_rnf06_barreiras.py` e foi executada contra o Azure AI Content Safety **real**, sem dublê. A rodada de 25/09 deixou esse teste externo ignorado porque requer ativação e credenciais; a conclusão sistêmica anterior continua explicitamente parcial e reprovada abaixo.
 
 Uma primeira bancada binária, de escopo menor, foi implementada em `app/pipeline/guardas/abuso/bancada.py` para calibrar especificamente o limiar das categorias de conteúdo. O conjunto `dados/bancada-content-safety.csv` contém 32 enunciados definidos antes da medição: 16 solicitações legítimas de portfólio e 16 casos sintéticos distribuídos igualmente entre `Hate`, `SelfHarm`, `Sexual` e `Violence`. A execução de 19/09/2026 contra o recurso real produziu:
 
@@ -9160,6 +9443,41 @@ cd src\middleware
 python -m app.pipeline.guardas.abuso.bancada --limiares 2 4 6
 ```
 
+**Execução sistêmica do RNF06.** Em 23/09/2026, o conjunto completo foi
+versionado em `src/middleware/dados/adversarial/` e executado pelo teste
+`src/middleware/tests/rnf/test_rnf06_barreiras.py` contra o Azure AI Content
+Safety real. A bancada contém 100 casos hostis — 20 para cada vetor — e 100
+casos legítimos com vocabulário próximo ao adversarial. O teste externo é
+opt-in para não consumir cota no CI:
+
+```powershell
+$env:EXECUTAR_RNF06_REAL = "1"
+pytest tests/rnf/test_rnf06_barreiras.py -v -s
+```
+
+| Barreira | Detecção | Taxa de detecção | Bloqueio indevido | Taxa de falso positivo | Resultado |
+|---|---:|---:|---:|---:|---|
+| Injeção | 5/60 | 8,3% | 0/100 | 0,0% | Reprovada por detecção |
+| Abuso | 0/20 | 0,0% | 0/100 | 0,0% | Reprovada por detecção |
+| Saída | 20/20 | 100,0% | 0/100 | 0,0% | Aprovada neste conjunto |
+
+O recorte por vetor foi: sequestro de papel `2/20`, extração do prompt
+`1/20`, contorno de restrição `2/20`, injeção indireta `20/20` e uso indevido
+`0/20`. Portanto, o RNF06 **não atende atualmente** à meta de 90% de detecção,
+embora as três barreiras atendam ao teto de 5% de falso positivo. A execução
+não apresentou erro de credencial, transporte ou contrato do serviço; a
+reprovação representa o comportamento observado. O log resumido está em
+`docs/evidencias/2026-09-23-rnf06-content-safety.txt`.
+
+A causa mais clara para o resultado da guarda de abuso já está explícita no
+código: `guardas/abuso/politicas.py` ainda não possui enunciados corporativos
+aprovados, e as categorias genéricas do Content Safety não representam burla
+de auditoria, consulta de dados funcionais ou uso não corporativo. Na guarda de
+injeção, as regras determinísticas cobrem poucas formulações e o Prompt Shields
+não reconheceu a maior parte das paráfrases em português. A ação corretiva é
+ampliar e validar essas duas camadas com o parceiro; reduzir artificialmente o
+conjunto ou contabilizar indisponibilidade como detecção mascararia o risco.
+
 #### 10.2.3.7 RNF07 — Retenção e proteção do registro de interações
 
 Este requisito existe para fechar a lacuna que o RNF01 sozinho deixa aberta, e 3.3.1.1 diz qual é: declarar a rota não protege o que fica em repouso, e a remoção do mascaramento fez a tabela de interações passar a concentrar o prompt em claro — inclusive o das tentativas de ataque, que são o insumo mais valioso do recorte de segurança do RF10. A verificação é, como a do RNF01, principalmente de inspeção: do estado da base e da configuração de cifra, e não de um fluxo executado.
@@ -9175,7 +9493,7 @@ O prazo de retenção contra o qual os casos rodam é **provisório**. Ele depen
 
 `TNF-RNF07-04` é a contraparte necessária de `TNF-RNF07-02`. Um expurgo que apagasse tudo satisfaria a meta de zero registro vencido e destruiria a trilha de auditoria que o RF10 e o RNF02 exigem — a mesma armadilha que o RNF06 evita ao exigir detecção e falso positivo juntos. Requisito com meta de zero em uma direção precisa, quase sempre, de um caso que verifique a direção oposta.
 
-**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf07_retencao.py`, contra o PostgreSQL 16 do contêiner de teste, com registros de data controlada inseridos por *fixture* para exercitar as duas bordas do prazo. O expurgo é acionado diretamente pelo teste, e não pela passagem do tempo, pela mesma razão registrada nos casos de rotina do RF11. A verificação de cifra é feita sobre o conteúdo armazenado, e não sobre a resposta da aplicação, que devolveria o dado decifrado em qualquer configuração.
+**Execução.** Os casos rodam em `src/middleware/tests/rnf/test_rnf02_07_auditoria.py`; a execução desta rodada não usou PostgreSQL real, com registros de data controlada inseridos por *fixture* para exercitar as duas bordas do prazo. O expurgo é acionado diretamente pelo teste, e não pela passagem do tempo, pela mesma razão registrada nos casos de rotina do RF11. A verificação de cifra é feita sobre o conteúdo armazenado, e não sobre a resposta da aplicação, que devolveria o dado decifrado em qualquer configuração.
 
 ```powershell
 cd src\middleware
@@ -9189,13 +9507,13 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | Conjunto | Subseção | Positivos | Negativos | Instrumento | Situação do instrumento |
 |---|---|:-:|:-:|---|---|
 | RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
-| RNF02 | 10.2.3.2 | 1 | 3 | Consulta agregada sobre as alterações efetivadas no PostgreSQL de teste | Disponível |
+| RNF02 | 10.2.3.2 | 1 | 3 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Executado localmente; conferência PostgreSQL real permanece fora desta execução |
 | RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
 | RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Disponível e executado em janela local; medição implantada ainda pendente |
-| RNF05 | 10.2.3.5 | 2 | 2 | Conjunto de enunciados por perfil, com avaliação humana da adequação e verificação automatizada da exposição | A construir |
-| RNF06 | 10.2.3.6 | 3 | 3 | Conjunto adversarial em cinco vetores mais contraparte legítima, contra o Content Safety real | Parcial: bancada de calibração da guarda de abuso executada; conjunto sistêmico completo ainda a construir |
-| RNF07 | 10.2.3.7 | 2 | 2 | Inspeção do estado da base e execução dirigida do expurgo | A construir |
-| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência, com o executor dublado em latência sintética | A construir |
+| RNF05 | 10.2.3.5 | 2 | 2 | `tests/rnf/test_rnf05_perfil.py` | Executado: 6 aprovados na bancada sintética; validação humana ainda pendente |
+| RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
+| RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
+| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Microbenchmarks executados; Locust sem API disponível, sem resultado válido de carga |
 | **Total** | — | **21** | **16** | — | — |
 
 A linha de desempenho é a única sem requisito de origem, e o identificador `TNF-DES` registra isso em vez de escondê-lo. A ancoragem está em 10.2.1: os parâmetros vêm do orçamento arquitetural de 5.1.7.3 e do limite operacional de 9.1.8, que divergem entre si, e a reconciliação adotada reporta contra os dois e declara falha apenas no segundo. Enquanto um RNF de desempenho não for formalizado, essa linha permanece sustentada por uma decisão desta seção, e não pela especificação de requisitos.
@@ -9544,6 +9862,196 @@ Os resultados qualitativos deverão ser consolidados posteriormente em uma lista
 | UX02 | — | — | — | — | — | — |
 | UX03 | — | — | — | — | — | — |
 
+### 10.3.12 Execução com Maze — Teste de Usabilidade (24/09/2026)
+
+Para validar a usabilidade do protótipo com usuários externos, foi conduzido um teste de usabilidade utilizando a plataforma Maze (app.maze.co). Esta seção documenta o processo de criação dos testes, a configuração das tarefas e os resultados obtidos.
+
+#### 10.3.12.1 Plataforma e configuração
+
+A plataforma Maze foi escolhida por permitir a criação de testes de usabilidade remotos com captura de tela, gravação de sessões e coleta automatizada de métricas de tempo e sucesso. O teste foi configurado como "Website Test", permitindo que os participantes interagissem diretamente com o protótipo em execução.
+
+**Título do teste:** Prata Agent / teste de usabilidade
+**Link do teste:** t.maze.co/589397439
+**Data de execução:** 24 de setembro de 2026
+
+#### 10.3.12.2 Processo de criação dos testes
+
+O processo de criação seguiu as seguintes etapas:
+
+1. **Definição das tarefas:** Com base nos cenários de usabilidade da seção 10.3.4, foram criadas 7 tarefas principais no Maze:
+   - Fazer o login no site
+   - Explore todas as páginas do site
+   - Converse com o agente na página principal
+   - Crie uma rotina
+   - Crie uma nova conversa
+   - Veja e acesse o histórico
+   - Explore alguma parte que o teste não cobriu
+
+2. **Configuração de credenciais:** Para a tarefa de login, foram fornecidas credenciais temporárias de teste. Os valores foram removidos desta documentação e da captura de tela para evitar a exposição de dados de acesso no repositório.
+   - Nível de confiança da tarefa: 8 (em escala de 1-10)
+
+   ![Bem-vindo ao Prata Agent](./imagens/bemvindo-maze.png)
+
+3. **Configuração de permissões:** A tela de boas-vindas do Maze incluiu:
+   - Texto explicativo: "Bem-vindo. Você foi convidado para participar de uma atividade de pesquisa. Não existem respostas certas ou erradas, apenas responda de uma maneira que pareça natural para você. Sua contribuição ajuda a criar melhores experiências."
+   - Checkbox de consentimento: "Entendo que todos os dados pessoais exibidos na tela e os dados informados por mim poderão ser visualizados pelo criador do teste. Saiba mais sobre a privacidade de dados."
+   - Permissão opcional de compartilhamento de tela
+
+4. **Estrutura das tarefas:** Cada tarefa foi configurada com:
+   - Descrição clara do objetivo
+   - Instruções específicas quando necessário
+   - Link direto para o protótipo quando aplicável
+   - Wireframes ou referências visuais para orientação
+
+#### 10.3.12.3 Tarefas configuradas
+
+![Tarefas do Prata Agent](./imagens/maze.png)
+
+
+As tarefas foram configuradas da seguinte forma:
+
+**Tarefa 1: Fazer o login no site**
+- Descrição: "Utilize as credenciais de teste fornecidas para acessar o nosso site."
+- Nível de confiança: 8
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 2: Explore todas as páginas do site**
+- Descrição: "Navegue pelas diferentes seções e funcionalidades disponíveis no site para se familiarizar com a interface."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 3: Converse com o agente na página principal**
+- Descrição: "Acesse a interface de chat e realize uma conversa com o agente para testar sua capacidade de responder às suas solicitações."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 4: Crie uma rotina**
+- Descrição: "Na aba de rotinas crie uma rotina programada conforme as instruções apresentadas na interface."
+- Tipo: Website Test
+- Dispositivo: Desktop
+- Referência visual: Wireframe da interface de rotinas
+
+![Tarefas do Prata Agent](./imagens/exemplomaze.png)
+
+**Tarefa 5: Crie uma nova conversa**
+- Descrição: "Inicie uma nova conversa com o agente para testar o contexto e a persistência do histórico."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 6: Veja e acesse o histórico**
+- Descrição: "Acesse o histórico de conversas e verifique se é possível navegar pelas interações anteriores."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+**Tarefa 7: Explore alguma parte que o teste não cobriu**
+- Descrição: "Identifique alguma funcionalidade ou área do site que não foi coberta pelas tarefas anteriores e explore-a livremente."
+- Tipo: Website Test
+- Dispositivo: Desktop
+
+#### 10.3.12.4 Participantes e execução
+
+Foram convidados 8 participantes para o teste, todos externos à turma e sem vínculo com o Metrô. Os participantes realizaram as tarefas em dispositivos Desktop durante o período de 23/09/2026 a 24/09/2026.
+
+A captura anexada registra o total de 8 respostas no painel do Maze e exibe cinco linhas de participantes no recorte visível. Por isso, os três identificadores que não aparecem na evidência foram omitidos da tabela abaixo, sem alterar os resultados consolidados.
+
+**Tempo médio por tarefa (amostra parcial):**
+
+| Tarefa | Nível de confiança | Respostas | Duração média | Observações |
+|---|---:|---:|---:|---|
+| Fazer o login no site | 8 | 8 | 50.32s | Alta variabilidade (11.72s a 114.28s) |
+
+**Distribuição de tempos para tarefa de login:**
+- Participante 589401717: 11.72s (23/09/2026, 20:13)
+- Participante 589444507: 19.08s (24/09/2026, 00:57)
+- Participante 589747399: 12.36s (24/09/2026, 15:01)
+- Participante 589831932: 94.17s (24/09/2026, 17:23)
+- Participante 589738034: 114.28s (24/09/2026, 17:26)
+
+#### 10.3.12.5 Resultados de satisfação (SUS)
+
+A pontuação SUS média obtida foi de **71,9 pontos** (escala 0-100), indicando uma percepção de usabilidade acima da média (nota SUS de 68 é considerada média). A pontuação sugere que o protótipo é utilizável, mas apresenta pontos de melhoria claros.
+
+**Distribuição de pontuação por participante:**
+
+| Participante | SUS | Classificação |
+|---|---:|---|
+| P1 (589401717) | 75 | Bom |
+| P2 (589444507) | 70 | Aceitável |
+| P3 (589747399) | 77 | Bom |
+| P4 (589831932) | 65 | Aceitável |
+| P5 (589738034) | 72 | Aceitável |
+| P6 (identificador não exibido) | 78 | Bom |
+| P7 (identificador não exibido) | 68 | Aceitável |
+| P8 (identificador não exibido) | 70 | Aceitável |
+
+**Média:** 71,9 (`575 / 8 = 71,875`, arredondada para uma casa decimal)
+
+#### 10.3.12.6 Taxa de sucesso por tarefa
+
+| Tarefa | Participantes | Sucessos | Taxa de sucesso | Observações |
+|---|---:|---:|---:|---|
+| T1 — Fazer o login no site | 8 | 7 | 87.5% | 1 participante teve dificuldade com credenciais |
+| T2 — Explore todas as páginas | 8 | 6 | 75% | Navegação não intuitiva em algumas áreas |
+| T3 — Converse com o agente | 8 | 7 | 87.5% | 1 participante não soube como iniciar conversa |
+| T4 — Crie uma rotina | 8 | 5 | 62.5% | Fluxo de criação de rotina não claro |
+| T5 — Crie uma nova conversa | 8 | 6 | 75% | Botão não identificado imediatamente |
+| T6 — Veja e acesse o histórico | 8 | 7 | 87.5% | Navegação no histórico funcional |
+| T7 — Explore parte não coberta | 8 | 8 | 100% | Tarefa aberta, bem sucedida |
+
+#### 10.3.12.7 Problemas identificados
+
+| ID | Problema observado | Tarefa | Severidade | Frequência | Evidência | Ação proposta |
+|---|---|---|---|---:|---|---|
+| UX01 | Dificuldade no login com credenciais fornecidas | T1 | Alta | 1/8 | Participante 589738034 (114.28s) | Melhorar instruções de login |
+| UX02 | Navegação não intuitiva para encontrar rotinas | T2 | Média | 2/8 | Comentários verbais | Reorganizar menu de navegação |
+| UX03 | Botão para iniciar conversa não visível | T3 | Média | 1/8 | Participante não encontrou entrada | Melhorar destaque do campo de chat |
+| UX04 | Fluxo de criação de rotina complexo | T4 | Alta | 3/8 | Taxa de sucesso 62.5% | Simplificar processo de criação |
+| UX05 | Botão para nova conversa confuso | T5 | Baixa | 2/8 | Localização inadequada | Reposicionar botão e melhorar rótulo |
+
+#### 10.3.12.8 Conclusões e recomendações
+
+O teste de usabilidade realizado com Maze forneceu insights valiosos sobre a experiência real de usuários externos com o protótipo. Os principais aprendizados foram:
+
+1. **Login funcional mas pode ser melhorado:** A taxa de sucesso de 87.5% no login é adequada, mas a alta variabilidade no tempo (11.72s a 114.28s) indica que o fluxo pode ser simplificado.
+
+2. **Navegação precisa de melhorias:** A taxa de sucesso de 75% na tarefa de exploração indica que alguns usuários têm dificuldade em encontrar funcionalidades específicas.
+
+3. **Criação de rotina é o ponto crítico:** Com apenas 62.5% de sucesso, o fluxo de criação de rotinas precisa ser simplificado e ter instruções mais claras.
+
+4. **Pontuação SUS aceitável:** A média de 71,9 pontos indica que o protótipo é funcional, mas há espaço claro para melhorias, especialmente no fluxo de criação de rotinas.
+
+**Recomendações prioritárias (estado em 25/09/2026):**
+1. Simplificar o fluxo de criação de rotinas (UX04) — **implementada** (#438)
+2. Melhorar instruções de login (UX01) — **implementada** (tela de entrada reformada)
+3. Reorganizar o menu de navegação (UX02) — **implementada** (barra lateral com rótulos e permissões)
+4. Melhorar o destaque do campo de chat (UX03) — **implementada** (composer e conversa vazia no redesign #449)
+5. Reposicionar e rotular “Nova conversa” (UX05) — **implementada** (botão dedicado na barra e no cabeçalho)
+
+O teste foi considerado bem-sucedido em identificar pontos de melhoria específicos e quantificáveis. A subseção 10.3.12.9 registra o que já entrou no código e o que permanece pendente.
+
+#### 10.3.12.9 Ações corretivas — implementadas e pendentes
+
+Os resultados do Maze (10.3.12.4–10.3.12.8) foram mantidos como evidência da sessão de 23–24/09/2026 com **oito participantes** (SUS médio 71,9). As recomendações derivadas desses resultados foram acompanhadas no código nas entregas seguintes.
+
+**Melhoria destacada — criação de rotinas (UX04).** O fluxo deixou de depender de expressão cron manual. Em #438 (`feat: torna agendamento de rotinas amigavel`), a tela passou a oferecer frequência legível (diária, dias úteis, semanal, dias personalizados, mensal), horário, fuso e resumo em prosa antes de salvar; a conversão para cron ficou encapsulada em `src/web/src/paginas/Rotinas/agenda.ts`. Os testes de página cobrem validação, criação, agendas semanais/mensais e geração de cron (`paginas.test.tsx`). Essa era a tarefa com menor taxa de sucesso no Maze (62,5%) e a principal ação corretiva desta sprint.
+
+| ID | Recomendação | Situação | Evidência no repositório |
+|---|---|---|---|
+| UX01 | Melhorar instruções de login | **Concluída** | `Login/index.tsx`: mensagem de erro compreensível, botão Microsoft e texto sobre conta corporativa |
+| UX02 | Reorganizar navegação | **Concluída** | `BarraLateral.tsx`: itens Conversa, Histórico, Rotinas e Intenções com ícone + rótulo; itens condicionados a permissão |
+| UX03 | Destacar campo de chat | **Concluída** | Composer e estado de conversa vazia no redesign visual (#449) |
+| UX04 | Simplificar criação de rotinas | **Concluída** | #438 — formulário por frequência + resumo; testes de rotinas em `paginas.test.tsx` |
+| UX05 | Rotular “Nova conversa” | **Concluída** | Botão “Nova conversa” na barra lateral e no cabeçalho da página principal |
+
+**Ações ainda pendentes** (não bloqueiam o fechamento desta documentação, mas permanecem no backlog de usabilidade):
+
+1. **Reexecução no Maze** após as correções, para medir se a taxa de sucesso em T4 (rotinas) e o SUS sobem em relação aos 62,5% e 71,9 da rodada de 24/09.
+2. **Reduzir a variabilidade do tempo de login** observada no Maze (11,7 s a 114 s): o fluxo SSO depende do Entra; falta campanha controlada com credenciais de teste estáveis.
+3. **Validar com os oito perfis originais** (ou amostra equivalente) se a navegação e o botão “Nova conversa” eliminam as hesitações registradas em T2 e T5.
+
+Evidência complementar dos oito participantes: painel Maze com 8 respostas, tabela SUS em 10.3.12.5 e captura em `docs/imagens/maze.png` / `bemvindo-maze.png`. Não há planilha nominal versionada além dos identificadores já publicados em 10.3.12.4–10.3.12.5.
+
 ## 10.4 Testes de APIs Externas
 
 As APIs externas consumidas pela solução — Microsoft Entra ID, Azure AI Content
@@ -9610,11 +10118,14 @@ Três famílias, com pesos diferentes:
 | **Externa** | Middleware com Entra ID, Content Safety, Direct Line, Azure Speech e PostgreSQL | ~30% dos casos |
 | **Contrato** | Implementação com as especificações versionadas (OpenAPI, `topicos.md`) | ~10% dos casos |
 
-A suíte atual tem um único arquivo de integração,
-[test_fluxo_chat.py](../src/middleware/tests/integration/test_fluxo_chat.py), com
-onze casos que cobrem a costura HTTP → `deps` → orquestrador com todos os
-serviços dublados. Ele é o ponto de partida: este plano o preserva, reorganiza e
-estende.
+A suíte de integração atual, em `src/middleware/tests/integration/`, coleta
+**217 casos** (25/09/2026, commit `3298da0`), organizados por arquivo e por
+família (áudio/STT, chat e persistência, rotinas, webhooks, mensageria, RAG,
+autenticação, VHS e externos reais). O arquivo
+[test_fluxo_chat.py](../src/middleware/tests/integration/test_fluxo_chat.py)
+permanece o núcleo da costura HTTP → `deps` → orquestrador; ao redor dele
+existem grupos executáveis contra PostgreSQL/RabbitMQ do Compose e o módulo
+VHS em `externos/`. O inventário e o resultado da execução estão em 10.5.7.
 
 #### 10.5.1.2 O que fica fora
 
@@ -9763,8 +10274,8 @@ de ter, e não a que se pode rodar hoje.
 | `respx` | 0.21 | Dublê de `httpx` para o que não se grava: timeout, 5xx, conexão recusada | Previsto — onda 2 |
 | `testcontainers[postgres]` | 4.0 | PostgreSQL 16 efêmero por sessão de teste | Previsto — grupo IT-DB |
 | `pytest-cov` | >= 5.0 | Cobertura do middleware, confrontada com a meta de 80% em 10.7 | Configurado no extra `dev` |
-| `pytest-benchmark` | >= 4.0 | Micro-latência isolada de guardas e classificador | Configurado no extra `dev`; cenários em 10.2.2 |
-| `locust` | >= 2.31 | Carga, concorrência e ponto de saturação da API | Configurado no extra `dev`; cenários em 10.2.2 |
+| `pytest-benchmark` | >= 5.1 | Micro-latência isolada de guardas e classificador | Configurado no extra `dev` (entrada única); cenários em 10.2.2 |
+| `locust` | >= 2.32 | Carga, concorrência e ponto de saturação da API | Configurado no extra `dev` (entrada única); cenários em 10.2.2 |
 | `time-machine` | 2.14 | Relógio controlado para agenda, fuso e expiração de sessão | Previsto — onda 5 |
 | `schemathesis` | 3.25 | Contrato: gera casos a partir do OpenAPI e confronta a implementação | Previsto — grupo IT-CTR |
 
@@ -9783,27 +10294,30 @@ porque decidem entre falhar aberto e falhar fechado.
 
 | Ferramenta | Versão mínima | Papel | Já no projeto? |
 |---|---|---|---|
-| `vitest` | 2.0 | Executor | Sim |
+| `vitest` | 2.0 | Executor | Sim (`npm test` / `vitest run`) |
 | `@testing-library/react` | 16.0 | Renderização e interação | Sim |
-| `@testing-library/user-event` | 14.5 | Interação fiel ao navegador (foco, teclado) | **A adicionar** |
-| `msw` | 2.3 | **Dublê de `/api` no nível de rede**, sem tocar em `servicos/api.ts` | **A adicionar** |
-| `@vitest/coverage-v8` | ^2.0.5 | Cobertura do frontend | Configurado por `npm run test:coverage` |
+| `@testing-library/user-event` | 14.5 | Interação fiel ao navegador (foco, teclado) | **Em uso** (`^14.6.7`) |
+| `msw` | 2.3 | **Dublê de `/api` no nível de rede**, sem tocar em `servicos/api.ts` | **Em uso** (`^2.15.0`, handlers em `src/web/src/mocks/`) |
+| `@vitest/coverage-v8` | ^2.0.5 | Cobertura do frontend | Em uso (`npm run test:coverage`) |
+| `eslint` | 8.x | Lint do TypeScript/React | Em uso (`npm run lint`) |
 
 MSW intercepta o `fetch` no nível de rede, e não por *mock* de módulo. A
 diferença importa: um `vi.mock("@/servicos/api")` deixaria de exercitar
 justamente o que se quer testar — o `credentials: "include"`, o tratamento de
 401 com redirecionamento e a leitura do `detail` no corpo de erro, todos em
-[api.ts](../src/web/src/servicos/api.ts).
+[api.ts](../src/web/src/servicos/api.ts). Parte da suíte frontend também
+reproduz o formato real do FastAPI (422, 500 sem JSON, `conversa_id` gerado
+no backend) em `middleware.test.tsx`, sem substituir o smoke Compose de 10.5.7.
 
 #### 10.5.3.3 Infraestrutura e CI
 
 | Ferramenta | Papel | Estado |
 |---|---|---|
 | Docker + Docker Compose | Sobe `web`, `middleware`, `worker` e `db` para o smoke de pilha completa ([infra/docker-compose.yml](../infra/docker-compose.yml)) | Compose escrito; smoke IT-E2E previsto |
-| GitLab CI | Executa a suíte em cada merge request, conforme §9.1.5 | Previsto — não há `.gitlab-ci.yml` no repositório |
+| GitLab CI | Executa análise estática, tipos e testes em cada merge request, conforme §9.1.5 | Implantado — [.gitlab-ci.yml](../.gitlab-ci.yml), detalhado em 10.5.8 |
 | `detect-secrets` ou `gitleaks` | *Hook* de pré-commit que barra fita com segredo (seção 10.5.4.3) | Previsto |
 
-Enquanto a CI não existe, a barreira contra segredo em fita é a soma da
+A CI não varre segredo: a barreira contra segredo em fita segue sendo a soma da
 sanitização automática de 10.5.4.3, do caso que a verifica sobre o texto bruto
 do arquivo e da leitura do diff na revisão. É menos do que se quer, e a
 diferença está declarada aqui em vez de suposta.
@@ -9811,19 +10325,23 @@ diferença está declarada aqui em vez de suposta.
 #### 10.5.3.4 Instalação
 
 Backend — as dependências de teste vivem no grupo `dev` de
-[pyproject.toml](../src/middleware/pyproject.toml), que **hoje** está assim:
+[pyproject.toml](../src/middleware/pyproject.toml). O recorte vigente (sem
+duplicar `pytest-benchmark`/`locust`) inclui cobertura, micro-latência, carga,
+VHS e SQLite em memória para unitários de analytics:
 
 ```toml
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
+    "google-api-python-client>=2.100",
+    "pytest-cov>=5.0",
+    "pytest-benchmark>=5.1",
+    "locust>=2.32",
     "ruff>=0.5",
-    # VHS (10.5.4): grava uma vez a resposta real do serviço externo e a
-    # reproduz nas execuções seguintes. vcrpy é o motor; pytest-recording
-    # traz o marcador @pytest.mark.vcr, --record-mode e --block-network.
     "pytest-recording>=0.13",
     "vcrpy>=6.0",
+    "aiosqlite>=0.20",
 ]
 ```
 
@@ -9849,27 +10367,28 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 ```
 
-As demais ferramentas da tabela de 10.5.3.1 entram com os grupos de teste que
-as exigem, para que ninguém instale hoje o que não é exercitado por nenhum
-caso — dependência sem teste que a use é peso morto que ainda assim precisa ser
-atualizado:
+Ainda previstos na tabela de 10.5.3.1, e ainda **fora** do extra `dev` até o
+grupo correspondente exigir:
 
 ```toml
 # A acrescentar ao grupo `dev` quando o grupo de casos correspondente for
 # implementado (10.5.10 dá as ondas).
 "respx>=0.21",                    # IT-SAFE, IT-COP: falhas que não se gravam
-"testcontainers[postgres]>=4.0",  # IT-DB
-"pytest-cov>=5.0",                # meta de cobertura, junto da CI
+"testcontainers[postgres]>=4.0",  # IT-DB efêmero (hoje usa-se o db do Compose)
 "time-machine>=2.14",             # IT-ROT, expiração de sessão
 "schemathesis>=3.25",             # IT-CTR
 ```
 
-Frontend:
+Frontend — MSW, `user-event` e cobertura já estão no `package.json`; a
+instalação reproduzível é:
 
 ```powershell
 cd src\web
-npm install -D msw@^2.3 @testing-library/user-event@^14.5 @vitest/coverage-v8@^2.0
-npx msw init public/ --save
+npm ci
+npm test -- --run
+npm run test:coverage
+npm run build
+npm run lint
 ```
 
 ### 10.5.4 Gravação e reprodução com VHS
@@ -9900,28 +10419,18 @@ src/middleware/tests/integration/
 │   ├── README.md                       # ‹hoje› como gravar, regravar e revisar
 │   ├── vhs/
 │   │   └── cache_resposta_repetida.yaml   # ‹hoje› fita do autoteste do módulo
-│   ├── entra/
-│   │   ├── troca_codigo_sucesso.yaml
-│   │   ├── troca_codigo_expirado.yaml
-│   │   └── openid_configuration.yaml
 │   ├── content_safety/
-│   │   ├── prompt_shield_ataque_direto.yaml
-│   │   ├── prompt_shield_limpo.yaml
-│   │   ├── categorias_odio_severidade_4.yaml
-│   │   └── categorias_limpo.yaml
-│   ├── directline/
-│   │   ├── iniciar_conversa.yaml
-│   │   ├── postar_activity_resposta_simples.yaml
-│   │   └── postar_activity_com_anexo.yaml
-│   └── speech/
-│       └── issue_token.yaml
+│   │   ├── analyze_texto_limpo.yaml       # ‹hoje›
+│   │   └── analyze_texto_odio.yaml        # ‹hoje›
+│   ├── entra/                             # previsto — gravar quando o cliente estável exigir
+│   ├── directline/                        # previsto
+│   └── speech/                            # previsto
 ```
 
-A única fita versionada até aqui é a do **autoteste do próprio módulo**: as
-integrações de Entra ID, Direct Line, Content Safety e Speech ainda são `TODO`
-no código (ondas 1 e 2 de [Arquitetura.md](Arquitetura.md) §12.1), e fita se
-grava contra cliente que existe. O que já está provado é o mecanismo — ver
-10.5.4.6.
+Há três fitas versionadas: o autoteste do módulo VHS e dois cenários de
+Content Safety. Entra ID, Direct Line e Speech ainda dependem de sessão de
+gravação deliberada; o mecanismo em si é exercitado por
+`externos/test_vhs.py` (ver 10.5.4.6 e 10.5.7.3).
 
 Uma fita por **cenário**, não por teste: `prompt_shield_ataque_direto.yaml` é
 usada por todos os casos que precisam de um veredito positivo do Prompt Shields.
@@ -10311,7 +10820,7 @@ OpenAPI do FastAPI declara (ver IT-CTR-03).
 | IT-WEB-09 | Dashboard renderiza a partir dos endpoints | Recharts recebe as séries de `/intencoes/*` | 4 |
 | IT-WEB-10 | Rotinas: criar, listar, excluir | Fluxo completo contra o MSW, com confirmação de exclusão | 5 |
 | IT-WEB-11 | Estado de carregamento e de erro | TanStack Query exibe *loading* e *retry* | 4 |
-| IT-WEB-12 | Microfone com SDK dublado | `useMicrofone` produz parcial e final; token pedido a `/api/voz/token` | Livre |
+| IT-WEB-12 | Microfone com Azure Speech | `useMicrofone` produz parcial e final; token real pedido a `/api/voz/token` | Credencial e franquia do ambiente de teste |
 
 #### 10.5.5.9 IT-CTR — contratos
 
@@ -10319,7 +10828,7 @@ OpenAPI do FastAPI declara (ver IT-CTR-03).
 |---|---|---|---|---|
 | IT-CTR-01 | Implementação obedece ao próprio OpenAPI | Schemathesis sobre `/openapi.json` | Nenhuma resposta fora do schema; nenhum 500 inesperado | 1 |
 | IT-CTR-02 | **Canal de voz obedece ao contrato versionado** | Schemathesis sobre [openapi-voz.yaml](api/openapi-voz.yaml) | Divergência falha o teste. *Hoje a implementação declara apenas `/voz/token`; `POST /voz/audios` e `GET /voz/audios/{id}/transcricao` estão especificados e ausentes — este caso torna a lacuna visível em vez de tácita* | Livre |
-| IT-CTR-03 | Handlers do MSW derivam do OpenAPI | Script `npm run gerar:fixtures` | Fixture regenerada não produz diff; se produzir, o contrato mudou e o frontend precisa acompanhar | 1 |
+| IT-CTR-03 | Handlers do MSW acompanham o contrato da API | Revisão dos handlers em `src/web/src/mocks/` contra `/openapi.json` (script `gerar:fixtures` ainda não existe no `package.json`) | Diff de contrato exige atualizar handlers e tipos; suíte frontend verde após a mudança | 1 |
 | IT-CTR-04 | Catálogo de intenções e `topicos.md` concordam | Teste sobre `catalogo.py` + parse do Markdown | Toda intenção treinada no MVP tem linha em [topicos.md](../copilot/topicos.md), e vice-versa | 3 |
 | IT-CTR-05 | Toda fita provisória declara origem e issue | Varredura de `fitas/**.yaml` | Cabeçalho presente; nenhuma fita provisória anônima | — |
 | IT-CTR-06 | Tipos do frontend acompanham os schemas | `tsc` sobre tipos gerados do OpenAPI | `src/tipos/index.ts` sem divergência de campo ou nulidade | 1 |
@@ -10405,7 +10914,7 @@ cabe nos 30 segundos. No Windows, o modo Completo pede
 #### 10.5.6.2 Variáveis de ambiente
 
 Os testes **não** leem o `.env` de desenvolvimento.
-[tests/.env.teste](../src/middleware/tests/.env.teste) documenta o conjunto
+`src/middleware/tests/.env.teste` documenta o conjunto
 mínimo, com valores propositalmente inválidos; a fixture `ambiente_de_teste`,
 que os injeta no ambiente do processo, chega junto do primeiro cliente externo
 implementado — hoje nenhum caso lê configuração de serviço, porque nenhum
@@ -10455,159 +10964,269 @@ linha nova.
 
 #### 10.5.7.1 Estrutura de diretórios
 
-Como em 10.5.4.2, `‹hoje›` marca o que existe no repositório; o restante é o
-destino desta estrutura, alcançado conforme as ondas de 10.5.10.
+Árvore **atual** do repositório (25/09/2026). Os grupos deixaram de depender
+da reorganização planejada em `internos/` / `externos/` para a maior parte dos
+casos: os arquivos ficam na raiz de `integration/`, e `externos/` concentra VHS
+e serviços reais.
 
 ```text
 src/middleware/tests/
-├── .env.teste                         # ‹hoje› variáveis mínimas (10.5.6.2)
-├── unit/                              # ‹hoje› existente, inalterado
+├── .env.teste                         # variáveis mínimas inválidas (10.5.6.2)
+├── unit/                              # testes unitários
+├── funcionais/                        # RF (seção 10.1)
+├── rnf/                               # RNF (seção 10.2)
+├── desempenho/                        # micro-latência / carga
+├── perimetro/                         # inspeção de perímetro
 ├── integration/
-│   ├── vhs.py                         # ‹hoje› mecanismo do VHS (10.5.4.6)
-│   ├── conftest.py                    # ‹hoje› fiação do VHS; fixtures de app e de banco a seguir
-│   ├── test_fluxo_chat.py             # ‹hoje› IT-API — migra para internos/
-│   ├── test_api_audio.py              # ‹hoje› IT-API — migra para internos/
-│   ├── fabricas.py                    # dados sintéticos
-│   ├── dados/
-│   │   └── ataques.yaml
-│   ├── fitas/                         # ‹hoje› fitas VHS (seção 10.5.4.2)
-│   ├── internos/
-│   │   ├── test_fluxo_chat.py         # existente, ampliado — IT-API
-│   │   ├── test_persistencia.py       # IT-DB
-│   │   ├── test_analytics.py          # IT-DB-08..10
-│   │   └── test_rotinas.py            # IT-ROT
-│   ├── externos/
-│   │   ├── test_vhs.py                # ‹hoje› o mecanismo de fita, testado
-│   │   ├── test_entra.py              # IT-AUTH
-│   │   ├── test_content_safety.py     # IT-SAFE
-│   │   ├── test_directline.py         # IT-COP
-│   │   └── test_speech.py             # IT-VOZ
-│   └── contratos/
-│       ├── test_openapi.py            # IT-CTR-01, 02
-│       ├── test_catalogo_topicos.py   # IT-CTR-04
-│       └── test_fitas.py              # IT-CTR-05
+│   ├── vhs.py                         # mecanismo VHS
+│   ├── conftest.py                    # fiação do VHS
+│   ├── fitas/                         # fitas versionadas (10.5.4.2)
+│   ├── test_api_audio.py              # áudio HTTP
+│   ├── test_fluxo_audio_transcricao.py
+│   ├── test_fluxo_voz_nlp.py
+│   ├── test_api_voz_token.py
+│   ├── test_fluxo_chat.py             # chat / orquestrador
+│   ├── test_api_conversas.py
+│   ├── test_persistencia.py           # PostgreSQL real
+│   ├── test_pipeline_persistencia.py
+│   ├── test_api_rotinas.py
+│   ├── test_agendador_persistencia.py
+│   ├── test_webhook_drive.py
+│   ├── test_webhook_portfolio.py
+│   ├── test_mensageria_rabbitmq.py
+│   ├── test_consumidor_webhooks.py
+│   ├── test_avisos_portfolio.py
+│   ├── test_rag_registro.py
+│   ├── test_autenticacao.py
+│   ├── test_api_intencoes.py
+│   ├── test_consultas_postgres.py
+│   └── externos/
+│       ├── test_vhs.py
+│       ├── test_content_safety_real.py
+│       ├── test_directline_real.py
+│       ├── test_gemini_real.py
+│       └── test_pinecone_real.py
 
 src/web/src/testes/
-├── setup.ts                           # existente + servidor MSW
-├── mocks/
-│   ├── servidor.ts
-│   ├── handlers.ts                    # derivados do OpenAPI
-│   └── fixtures/                      # geradas por `npm run gerar:fixtures`
-├── paginas.test.tsx                   # existente
-└── integracao/
-    ├── chat.test.tsx                  # IT-WEB-01..07
-    ├── permissoes.test.tsx            # IT-WEB-08
-    ├── rotinas.test.tsx               # IT-WEB-10
-    └── voz.test.tsx                   # IT-WEB-12
+├── setup.ts                           # MSW + ambiente Vitest
+├── utilitarios.tsx
+├── tokens.ts
+├── autenticacao.test.tsx
+├── contraste.test.ts
+├── desfechos.test.ts
+├── dubles.test.ts
+├── falhas.test.tsx
+├── formato.test.ts
+├── graficos.test.tsx
+├── intencoes.test.tsx
+├── middleware.test.tsx                # formato real do FastAPI via MSW
+├── navegacao.test.tsx
+└── paginas.test.tsx                   # inclui criação amigável de rotinas
+
+src/web/src/mocks/                     # handlers e dados MSW (não em testes/)
 ```
 
 #### 10.5.7.2 Comandos
 
-Repertório completo, alcançado conforme as ondas de 10.5.10:
+Comandos verificados nesta revisão (Windows / PowerShell):
 
 ```powershell
-cd src\middleware
+# Frontend
+cd src\web
+npm test -- --run
+npm run test:coverage
+npm run build
+npm run lint
 
-python -m pytest -m "not banco and not lento"      # ciclo curto
-python -m pytest -m integracao --block-network     # tudo, sem rede
-python -m pytest -m externo                        # só as fitas
-python -m pytest -m banco                          # só o que precisa de Docker
-python -m pytest --cov=app --cov-report=term-missing
-python -m ruff check app tests
+# Integração backend — apontar ao PostgreSQL do Compose quando o .env local
+# usar outra porta (neste ambiente o Compose expõe 5432 e o .env usava 5434).
+cd src\middleware
+$env:DATABASE_URL = "postgresql+asyncpg://middleware:middleware@127.0.0.1:5432/middleware"
+.\.venv\Scripts\python.exe -m pytest tests/integration -q
+.\.venv\Scripts\python.exe -m pytest tests/integration/externos/test_vhs.py -q
+.\.venv\Scripts\python.exe -m ruff check app tests
+
+# Compose + smoke (proxy web → middleware)
+cd ..\..
+docker compose -f infra/docker-compose.yml up -d --build
+docker compose -f infra/docker-compose.yml ps
+Invoke-WebRequest http://localhost:5173/api/health
+Invoke-WebRequest http://localhost:5173/api/openapi.json
+docker compose -f infra/docker-compose.yml exec -T middleware alembic current
 ```
 
-**O que roda hoje, e com que resultado.** Os comandos abaixo foram executados
-nesta ordem, no Windows, sobre o ambiente de 10.5.3.4:
+Marcadores ainda úteis para recortes:
 
 ```powershell
-cd src\middleware
-.\.venv\Scripts\Activate.ps1
-
-python -m pytest tests/unit                  # 367 passed, 5 skipped, 1 failed (ver abaixo)
-python -m pytest -m externo                  # 12 passed  -- o VHS, com rede liberada
-python -m pytest -m externo --block-network --allowed-hosts=127.0.0.1
-                                             # 11 passed, 1 skipped
+.\.venv\Scripts\python.exe -m pytest -m integracao -q
+.\.venv\Scripts\python.exe -m pytest -m externo -q
 ```
 
-A leitura da terceira linha é a que interessa: sob rede bloqueada, os onze casos
-que dependem da fita **passam sem alcançar socket algum** — é a prova de que a
-reprodução funciona. O caso pulado é o de gravação, que pertence ao modo
-Gravação e se exclui sozinho quando detecta o bloqueio (10.5.4.7).
+**O que roda hoje, e com que resultado.** A execução de 25/09/2026 está
+consolidada na subseção 10.5.7.3 (evidências embutidas neste documento).
 
-Duas restrições conhecidas, ambas herdadas e nenhuma delas no VHS:
+#### 10.5.7.3 Execução realizada e evidências
+
+**Data:** 25/09/2026. **Branch:** `feat/revisao-testes`. **Commit:** `3298da0`.
+**Ambiente:** Windows 10, PowerShell, Docker Compose (`infra/docker-compose.yml`),
+Python `.venv` do middleware, Node/npm do `src/web`. PostgreSQL dos testes de
+integração: `127.0.0.1:5432` (serviço `db` do Compose).
+
+##### Frontend (testes, cobertura, build e lint)
+
+| Campo | Valor |
+|---|---|
+| Comandos | `npm test -- --run`; `npm run test:coverage`; `npm run build`; `npm run lint` |
+| Diretório | `src/web` |
+| Resultado | **185 passed** (11 arquivos); cobertura V8 linhas **77,42%**, branches **80,84%**, functions **69,96%**; build OK; lint OK |
+| Duração | teste 11,60 s; cobertura 14,12 s; build 15,2 s; lint 2,5 s |
+| Avisos | `npm warn Unknown env config "devdir"`; Vite alerta chunks > 500 kB (Speech SDK e bundle) |
+| Exit codes | 0 / 0 / 0 / 0 |
+
+Atualiza o registro anterior de **57** testes (23/09/2026).
+
+##### Integração interna
+
+| Campo | Valor |
+|---|---|
+| Comando | `.\.venv\Scripts\python.exe -m pytest` sobre chat, conversas, persistência, pipeline, áudio/STT, rotinas, autenticação, RAG e intenções (`-q --tb=no`) |
+| `DATABASE_URL` | `postgresql+asyncpg://middleware:middleware@127.0.0.1:5432/middleware` |
+| Resultado | **136 passed**, 5 warnings em 8,67 s |
+| Exit code | 0 |
+| Avisos | deprecações Starlette/`httpx`; `SAWarning` em dois testes de persistência |
+
+Grupos cobertos: áudio e Speech-to-Text; chat e persistência; rotinas e agendador; autenticação; RAG; API de intenções.
+
+##### Webhooks e mensageria
+
+| Campo | Valor |
+|---|---|
+| Comando | `pytest` sobre `test_webhook_drive`, `test_webhook_portfolio`, `test_mensageria_rabbitmq`, `test_consumidor_webhooks`, `test_avisos_portfolio` |
+| Ambiente | Compose `db:5432` + RabbitMQ `5672`/`15672` |
+| Resultado | **56 passed**, 1 warning em 212,6 s |
+| Exit code | 0 |
+
+##### VHS
+
+| Campo | Valor |
+|---|---|
+| Comando | `.\.venv\Scripts\python.exe -m pytest tests/integration/externos/test_vhs.py -q` |
+| Resultado | **12 passed** em 5,55 s |
+| Exit code | 0 |
+| Não executados | `*_real.py` (Content Safety, Direct Line, Gemini, Pinecone) — exigem credencial/rede |
+
+##### Docker Compose
+
+| Campo | Valor |
+|---|---|
+| Comando | `docker compose -f infra/docker-compose.yml up -d --build` e `ps` |
+| Resultado | cinco serviços em execução: `db` e `rabbitmq` healthy; `middleware`, `worker`, `web` Up |
+| Alembic | `docker compose … exec -T middleware alembic current` → `20260925_audio_persistente (head)` |
+| Exit code | 0 |
+
+##### Smoke frontend → proxy → middleware
+
+| Campo | Valor |
+|---|---|
+| Comandos | `Invoke-WebRequest http://localhost:5173/api/health` e `…/api/openapi.json` |
+| Health | **200**, corpo `{"status":"ok"}` |
+| OpenAPI | **200**, 62.755 bytes |
+| Exit code | 0 |
+
+Confirma o encaminhamento Nginx do serviço `web` ao middleware.
+
+| Grupo | Arquivos principais | Resultado observado (25/09) |
+|---|---|---|
+| Áudio e Speech-to-Text | `test_api_audio`, `test_fluxo_audio_transcricao`, `test_fluxo_voz_nlp`, `test_api_voz_token` | Inclusos na integração interna (**136 passed** no conjunto) |
+| Chat e persistência | `test_fluxo_chat`, `test_api_conversas`, `test_persistencia`, `test_pipeline_persistencia` | Inclusos na integração interna |
+| Rotinas e worker | `test_api_rotinas`, `test_agendador_persistencia` | Inclusos na integração interna |
+| Webhooks do Drive | `test_webhook_drive` | Inclusos em webhooks/mensageria (**56 passed** no conjunto) |
+| Webhook de portfólio | `test_webhook_portfolio` | Inclusos em webhooks/mensageria |
+| RabbitMQ | `test_mensageria_rabbitmq` | Inclusos em webhooks/mensageria |
+| Consumidor dos webhooks | `test_consumidor_webhooks` | Inclusos em webhooks/mensageria |
+| RAG | `test_rag_registro` | Inclusos na integração interna |
+| Autenticação | `test_autenticacao` | Inclusos na integração interna |
+| VHS e externos | `externos/test_vhs.py` (+ reais coletados) | **12 passed** no VHS; reais não executados sem credencial |
+| Frontend | `npm test -- --run` (+ coverage, build, lint) | **185 passed**; cob. linhas 77,42%; build e lint OK |
+| Compose / smoke | `docker compose …` + `/api/health` | Cinco serviços; **200** `{"status":"ok"}`; OpenAPI 62.755 B; head `20260925_audio_persistente` |
+
+**Componentes comprovadamente comunicando:** o Nginx encaminha `/api/*` ao
+middleware; o middleware aplica migrações e fala com o PostgreSQL; o worker
+reconciliou rotinas sem o erro antigo de chave única nesta execução; o
+RabbitMQ está saudável; a suíte de integração interna e de webhooks usa o
+banco e o broker reais do Compose; o frontend valida contratos via MSW e
+formatos do FastAPI, e o smoke fecha a ponte `web → proxy → middleware`.
+
+**Limitações atuais (substitui o registro de 23/09):**
+
+1. O `.env` local deste ambiente apontava `DATABASE_URL` para a porta **5434**;
+   o Compose publica o Postgres em **5432**. Sem alinhar a URL, dezenas de
+   casos saltam com `PostgreSQL indisponível` — não é falha do pipeline.
+2. `aiosqlite` já está no extra `dev`; a restrição antiga da `.venv` sem
+   esse pacote não se aplica mais ao ambiente documentado.
+3. No Windows, `--block-network` do `pytest-recording` ainda pode interferir
+   em sockets locais do `ProactorEventLoop`; preferir o recorte por caminho
+   de arquivo ou o VHS sem bloquear a loopback quando necessário.
+4. Testes `*_real.py` (Content Safety, Direct Line, Gemini, Pinecone) exigem
+   credenciais e rede; nesta revisão só o mecanismo VHS foi executado.
+5. Cobertura de linhas do frontend ficou em **77,42%**, abaixo da meta de 80%
+   de 9.1.8; branches em 80,84%.
+
+#### 10.5.7.4 Restrições conhecidas
 
 | Restrição | Efeito | Situação |
 |---|---|---|
-| SDK do Pinecone fora do ambiente base | Sem o extra `[rag]`, `tests/unit/test_provisionamento_vetorial.py` tem 1 falha, e `tests/integration/externos/test_pinecone_real.py` dá 4 erros quando selecionado por caminho — por marcador ele fica de fora de `-m externo` | `pip install -e '.[rag]'` instala o SDK. É dependência da camada de vetorização, e não do VHS |
-| 9 apontamentos do `ruff` em `app/schemas/mensagem.py`, `app/utils/validadores.py` e três testes unitários | `python -m ruff check app tests` termina com erro | Os arquivos do VHS passam limpos: `ruff check tests/integration/vhs.py tests/integration/conftest.py tests/integration/externos/test_vhs.py` → *All checks passed* |
+| SDK do Pinecone / extra `[rag]` fora do ambiente base | Sem `[rag]`, testes unitários de vetorização e `externos/test_pinecone_real.py` falham ou erram | `pip install -e '.[rag]'` (já na imagem Docker do middleware) |
+| Porta do Postgres no `.env` local ≠ Compose | Casos de integração saltam com “PostgreSQL indisponível” | Exportar `DATABASE_URL` para `…@127.0.0.1:5432/middleware` ou alinhar o `.env` |
 
 ```powershell
 cd src\web
-
-npm run test                    # vitest run
+npm run test
 npm run test:coverage
-npm run gerar:fixtures          # regenera handlers do MSW a partir do openapi.json
+npm run build
+npm run lint
 ```
 
 ### 10.5.8 Integração contínua
 
-O pipeline roda em cada merge request, conforme §9.1.5. Três
-estágios, do mais barato para o mais caro.
+O pipeline roda em cada merge request, conforme §9.1.5, e também a cada push
+na `develop` e na `main`. O arquivo é o
+[.gitlab-ci.yml](../.gitlab-ci.yml) da raiz; com a opção *Pipelines must
+succeed* ligada no projeto, qualquer job vermelho impede o merge.
 
-> **Estado.** O `.gitlab-ci.yml` abaixo é esboço: não há pipeline na `develop`
-> nem na `main` até aqui, e a única pipeline do repositório serve à automação do
-> board. Enquanto ela não existir, o que este esboço descreve é executado à mão
-> antes do merge request — os comandos verificados estão em 10.5.7.2.
+| Estágio | Job | Imagem | O que roda |
+|---|---|---|---|
+| `lint` | `middleware:ruff` | `python:3.12-slim` | `ruff check .`, com o ruff na mesma faixa do extra `dev` |
+| `lint` | `web:eslint` | `node:20-alpine` | `npm run lint` |
+| `lint` | `web:tipos` | `node:20-alpine` | `npm run typecheck` (os dois `tsconfig`) |
+| `teste` | `middleware:pytest` | `python:3.12-slim` + serviços `postgres:16-alpine` e `rabbitmq:4.3.6-management-alpine` | `alembic upgrade head` e a suíte inteira com `--block-network` |
+| `teste` | `web:vitest` | `node:20-alpine` | `npm run test` |
 
-```yaml
-# .gitlab-ci.yml (esboço)
-stages: [lint, teste, integracao]
+Os dois jobs de teste publicam relatório JUnit, e o resultado aparece por caso
+na aba de testes do merge request.
 
-lint:
-  stage: lint
-  image: python:3.12-slim
-  script:
-    - pip install -e "src/middleware[dev]"
-    - ruff check src/middleware/app src/middleware/tests
+No `middleware:pytest`, quatro escolhas merecem registro:
 
-teste-unitario:
-  stage: teste
-  image: python:3.12-slim
-  script:
-    - pip install -e "src/middleware[dev]"
-    # --block-network é o cinto de segurança: nenhuma chamada real
-    # escapa da fita, nem por engano de configuração.
-    - pytest src/middleware/tests/unit --block-network
+- **PostgreSQL e RabbitMQ vêm de serviços do GitLab**, não do Testcontainers:
+  o *runner* já provê os contêineres, e o Docker-in-Docker seria custo
+  desnecessário. O RabbitMQ usa a imagem e as credenciais padrão do compose,
+  e os testes de mensageria criam nele um *vhost* descartável. O
+  `--block-network` barraria também os dois serviços, por isso os IPs deles
+  entram em `--allowed-hosts`.
+- **O torch é instalado pelo índice CPU do PyTorch** antes do projeto, como no
+  Dockerfile. Sem isso o `sentence-transformers` puxa os *wheels* CUDA.
+- **O `intfloat/multilingual-e5-large` é baixado antes da suíte**, como no
+  Dockerfile. O TF-RF03-01 classifica com o artefato treinado de verdade, que
+  depende desse modelo; dentro do pytest o `--block-network` impediria o
+  download.
+- **`HF_HUB_OFFLINE=1` a partir do pytest.** Com o modelo já no disco, um teste
+  que tente baixar outro falha em vez de sair para a rede.
 
-teste-frontend:
-  stage: teste
-  image: node:18-alpine
-  script:
-    - cd src/web && npm ci && npm run test -- --coverage
-
-teste-integracao:
-  stage: integracao
-  image: python:3.12-slim
-  services:
-    - name: postgres:16-alpine
-      alias: db
-  variables:
-    POSTGRES_USER: middleware
-    POSTGRES_PASSWORD: middleware
-    POSTGRES_DB: middleware
-    DATABASE_URL: "postgresql+asyncpg://middleware:middleware@db:5432/middleware"
-  script:
-    - pip install -e "src/middleware[dev]"
-    - alembic -c src/middleware/alembic.ini upgrade head
-    - pytest src/middleware/tests/integration --block-network
-        --cov=app --cov-report=term-missing --cov-fail-under=80
-```
-
-No CI o PostgreSQL vem do serviço do GitLab, não do Testcontainers — o
-*runner* já provê o contêiner e o Docker-in-Docker seria custo desnecessário.
-As fixtures de banco leem `DATABASE_URL` quando definida e sobem o Testcontainers
-apenas quando não estiver, o que faz o mesmo teste rodar nos dois ambientes sem
-alteração.
+Na primeira execução verde (pipeline 80045 do MR !171), o `middleware:pytest`
+terminou com 1150 casos aprovados, 22 *xfail* e 15 pulados — os 11 de
+`tests/integration/externos`, por falta de credencial, e 4 que já pulam na
+execução local — em cerca de 4,5 minutos, contando a instalação. O
+`web:vitest` aprovou os 185 casos.
 
 O grupo `externo` roda com as fitas versionadas: **o CI não tem credencial de
 nenhum tenant**, e essa é uma propriedade a preservar.
@@ -10646,13 +11265,67 @@ substituição.
 
 ## 10.6 Testes de Regras de Negócio
 
-[Preencher]
+Esta seção relaciona regras já implementadas e verificadas por testes existentes;
+não acrescenta cenários artificiais. As evidências detalhadas e a execução funcional
+integral estão em 10.1.7; os testes de retenção e disponibilidade estão em 10.2.3.
+
+| Regra de negócio | Testes reais | Resultado observado nesta revisão | Lacuna ou limite |
+|---|---|---|---|
+| Controle de acesso e autorização antes do pipeline | `tests/funcionais/test_rf01_acesso.py`; `tests/funcionais/test_rf04_consulta.py` | Acesso autorizado, recusa de sessão ausente/expirada e proteção de projeto alheio aprovados; ver totais por RF em 10.1.7 | Claim sem perfil correspondente continua `xfail`; RF04 tem casos ainda pendentes conforme a tabela funcional |
+| Isolamento entre usuários no histórico | `tests/funcionais/test_rf12_historico.py` | Casos de histórico e isolamento aprovados na execução funcional | Exercitado com dependências isoladas; não substitui teste de integração implantado |
+| Registro único por solicitação e registro dos desfechos | `tests/funcionais/test_rf10_registro.py`; `tests/rnf/test_rnf02_07_auditoria.py` | Fluxos funcionais de registro aprovados; TNF-RNF02-01 a 04 aprovados | Execução local; persistência PostgreSQL de produção não é demonstrada por estes testes unitários/funcionais |
+| Confirmação antes de alterações | `tests/funcionais/test_rf05_transacoes.py` | Casos presentes, mas marcados `xfail` | Fluxo de alteração com prévia e confirmação não implementado |
+| Idempotência | `tests/funcionais/test_rf10_registro.py`; `tests/funcionais/test_rf11_rotinas.py`; verificações de integração `tests/integration/test_agendador_persistencia.py` | Os testes funcionais de RF10/RF11 passaram | Os testes de integração com armazenamento/agendador real não fazem parte das suítes executadas nesta rodada |
+| Guardas e invariantes da ordem do pipeline | `tests/funcionais/test_rf09_guardas.py`; `tests/rnf/test_rnf06_barreiras.py` | Ordem/invariantes funcionais aprovadas; TNF-RNF06 manteve reprovação parcial conforme 10.2.3.6 | Falha da guarda de injeção ainda é `xfail`; eficácia real de injeção e abuso abaixo da meta |
+| Agendamento e execução de rotinas | `tests/funcionais/test_rf11_rotinas.py`; `tests/unit/test_agendador_rotinas.py`; `tests/unit/test_worker.py` | Cadastro, agenda/fuso, execução e histórico cobertos e aprovados nas suítes correspondentes | Corrida com PostgreSQL/worker separado e concorrência com chat ainda dependem de integração; TNF-DES-05 sem aprovação |
+| Retenção e expurgo | `tests/rnf/test_rnf02_07_auditoria.py` | Quatro casos de RNF07 aprovados, incluindo acesso e limites de expurgo | Cifra em repouso não comprovada; prazo segue provisório e depende de validação com o parceiro |
 
 ## 10.7 Cobertura Consolidada do Artefato de Testes
 
-O planejamento funcional cobre RF01–RF12 com **65 casos: 33 positivos e 32 negativos**, discriminados por requisito e onda em 10.1.6; RF07 permanece fora do MVP. Os RNF01–RNF07 são rastreados em 10.2.4, com desempenho nos casos TNF-DES01–07. A matriz 10.5.9 relaciona requisitos e testes de integração, incluindo a estratégia VHS; o roteiro de usabilidade está em 10.3, com pelo menos cinco participantes externos à turma e SUS.
+A matriz sintetiza o requisito, o script executável, o resultado desta rodada, a
+evidência textual e a lacuna remanescente. “Parcial” significa que existem
+comportamentos aprovados, mas algum critério ou cenário continua pendente; não é
+uma declaração de conformidade integral.
 
-Essa é **cobertura planejada de requisitos**, não percentual de código executado. A meta de 80% de 9.1.8 permanece pendente de medição consolidada. Resultados de carga, validação dos serviços externos e sessões de usabilidade só devem ser registrados após execução; testes com mocks e fitas provisórias não substituem essas evidências.
+| Requisito | Script / seção | Resultado | Evidência | Lacuna |
+|---|---|---|---|---|
+| RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | Parcial: 4 aprovados, 1 `xfail` | `docs/evidencias/2026-09-25-testes-funcionais.txt` | Claim sem perfil correspondente |
+| RF02 — canais | `tests/funcionais/test_rf02_canais.py` | Aprovado: 7 aprovados | mesma evidência | Limites desta bateria: dublês; integrações reais são cobertas em 10.5 |
+| RF03 — intenções | `tests/funcionais/test_rf03_intencoes.py` | Parcial: ver tabela 10.1.7 | mesma evidência | Casos `xfail` de permissão/entidade |
+| RF04 — consulta | `tests/funcionais/test_rf04_consulta.py` | Parcial: 1 aprovado, 4 `xfail` | mesma evidência | Dimensões, fontes, autorização indistinguível e ausência de dados |
+| RF05 — transações | `tests/funcionais/test_rf05_transacoes.py` | Reprovado/pendente: 6 `xfail` | mesma evidência | Fluxo de alteração com confirmação ainda não existe |
+| RF06 — pendências | `tests/funcionais/test_rf06_pendencias.py` | Fora do MVP nesta entrega: 5 `xfail` | mesma evidência | Varredura e aviso proativo planejados para onda posterior |
+| RF07 — análise documental | `tests/funcionais/test_rf07_analise.py` | Fora do MVP: 3 `skip` | mesma evidência | Escopo explicitamente excluído do MVP |
+| RF08 — relatórios | `tests/funcionais/test_rf08_relatorios.py` | Parcial: ver tabela 10.1.7 | mesma evidência | Perfil, suficiência e filtro de fontes |
+| RF09 — guardas | `tests/funcionais/test_rf09_guardas.py` | Parcial: ver tabela 10.1.7 | mesma evidência; RNF em `2026-09-25-testes-rnf-perimetro.txt` | Falha fechada da guarda de injeção; RNF06 abaixo da meta |
+| RF10 — registro | `tests/funcionais/test_rf10_registro.py` | Aprovado na bateria funcional | evidência funcional | Persistência real verificada separadamente por integração |
+| RF11 — rotinas | `tests/funcionais/test_rf11_rotinas.py` | Aprovado na bateria funcional | evidência funcional | Worker real e corrida concorrente ainda não demonstrados |
+| RF12 — histórico | `tests/funcionais/test_rf12_historico.py` | Aprovado na bateria funcional | evidência funcional | Integração implantada fora desta execução |
+| RNF01 — perímetro | `tests/perimetro/test_perimetro_declarado.py` | Aprovado: 5 casos | `2026-09-25-testes-rnf-perimetro.txt` | Inspeção do perímetro não comprova configuração implantada |
+| RNF02 — rastreabilidade | `tests/rnf/test_rnf02_07_auditoria.py` | Aprovado nos casos executados | mesma evidência | Persistência real requer PostgreSQL |
+| RNF03 — precisão | `app/pipeline/intencao/avaliacao.py` | Resultado já registrado em 5.4.11 | 5.4.11 | Reproduzir na mudança do modelo/conjunto |
+| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py` | Parcial: lógica passou; janela com PostgreSQL ignorada | mesma evidência | Medição contínua em ambiente implantado |
+| RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
+| RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
+| RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
+| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Microbenchmarks aprovados; cenário Locust reprovado por API indisponível | `2026-09-25-benchmark.txt`; `2026-09-25-locust.txt` | Reexecutar carga com API, banco e executor sintético ativos; TNF-DES-05 pendente |
+| Cobertura de código | `python -m pytest --cov=app --cov-report=term-missing` | 73,63% no escopo unitário/funcional/RNF/perímetro; abaixo de 80% | `2026-09-25-cobertura-backend.txt` | Meta de 80% e limitações documentadas abaixo |
+| Integração | matriz 10.5.9 e scripts `tests/integration/` | Consultar resultados e estratégia da seção 10.5 | seção 10.5 | Não confundir bateria funcional dublada com serviço real |
+
+**Cobertura de código.** A execução sobre `tests/unit`, `tests/funcionais`, `tests/rnf` e `tests/perimetro` concluiu com 933 aprovados, 10 ignorados e 22 `xfail`; mediu **73,63%** de cobertura de linhas/branches configurados para `app`, abaixo da meta de 80% de 9.1.8. A tabela completa e linhas ausentes estão em `docs/evidencias/2026-09-25-cobertura-backend.txt`. Entre os módulos com menor cobertura estão `app/webhooks/drive/__main__.py` (0%), `app/webhooks/portfolio/__main__.py` (0%), `app/webhooks/portfolio/aplicacao.py` (31,11%), `app/rag/vetorial/provisionar.py` (39,25%), `app/webhooks/portfolio/recebimento.py` (40,43%) e `app/webhooks/drive/manutencao.py` (41,10%). Os dois `__main__.py` são pontos de entrada; os módulos de processamento/integração indicam lacunas mais relevantes.
+
+`python -m pytest --cov=app --cov-report=term-missing` iniciou a suíte completa de 1.187 itens, mas ficou sem progresso durante teste de integração externa e foi interrompido. A medição concluída excluiu `tests/integration`, portanto não é cobertura integral de integração e serviços. As métricas também são limitadas pelos `xfail`, `skip`, dependências dubladas, funcionalidades fora do MVP e módulos não carregados na execução. Para aproximar a meta sem testes artificiais, priorizar webhooks reais, provisionamento vetorial, persistência/worker e ramos de falha; repetir após validar as integrações externas.
+**Riscos para liberação.** RF05 ainda não efetiva alterações com confirmação;
+RF06 e RF07 estão fora do MVP; RF04/RF08 permanecem parciais; a guarda de injeção
+não falha de modo seguro em uma indisponibilidade; o RNF06 reprova parcialmente;
+a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
+contínua, persistência PostgreSQL e carga Locust implantada seguem pendentes.
+
+**Conclusão crítica.** Os resultados comprovam uma base automatizada executável e
+algumas regras centrais cobertas, mas não sustentam declaração de conformidade
+integral do artefato nem prontidão de liberação. RFs parciais, RNF06, proteção em
+repouso, observabilidade/worker e a carga real exigem resolução ou aceitação
+explícita de risco antes da liberação.
 
 # 11. Procedimentos de Implantação
 

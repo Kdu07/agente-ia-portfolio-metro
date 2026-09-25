@@ -1,0 +1,54 @@
+# Evidência de execução — 25/09/2026
+Branch: test/evidencias-backend-artefato
+Commit de código: 7637fa8d5c858b4c267f22abca1434d3b93badd2
+Ambiente: Windows, Python 3.14.2, ambiente virtual src/middleware/.venv; suíte via pytest 9.1.1.
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Scripts\python.exe
+benchmark: 5.3.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware
+configfile: pyproject.toml
+plugins: anyio-4.15.1, locust-2.46.6, asyncio-1.4.0, benchmark-5.3.0, cov-7.1.0, recording-0.13.4
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 29 items
+
+tests/rnf/test_rnf02_07_auditoria.py::test_tnf_rnf02_01_cobertura_de_autoria_origem_e_momento PASSED [  3%]
+tests/rnf/test_rnf02_07_auditoria.py::test_tnf_rnf02_02_registro_sem_origem_reprova PASSED [  6%]
+tests/rnf/test_rnf02_07_auditoria.py::test_tnf_rnf02_03_rotina_preserva_vinculo_do_disparo PASSED [ 10%]
+tests/rnf/test_rnf02_07_auditoria.py::test_tnf_rnf02_04_nao_efetivada_fica_fora_do_denominador PASSED [ 13%]
+tests/rnf/test_rnf02_07_auditoria.py::test_tnf_rnf07_01_registro_tem_controle_de_acesso_por_usuario PASSED [ 17%]
+tests/rnf/test_rnf02_07_auditoria.py::test_tnf_rnf07_02_expurgo_remove_registro_fora_do_prazo PASSED [ 20%]
+tests/rnf/test_rnf02_07_auditoria.py::test_tnf_rnf07_03_registro_na_borda_ainda_e_preservado PASSED [ 24%]
+tests/rnf/test_rnf02_07_auditoria.py::test_tnf_rnf07_04_expurgo_nao_remove_registro_vigente PASSED [ 27%]
+tests/rnf/test_rnf04_disponibilidade.py::test_tnf_rnf04_01_calcula_disponibilidade_sobre_janela_declarada PASSED [ 31%]
+tests/rnf/test_rnf04_disponibilidade.py::test_tnf_rnf04_02_exclui_parada_programada_do_calculo PASSED [ 34%]
+tests/rnf/test_rnf04_disponibilidade.py::test_tnf_rnf04_03_falha_do_observador_e_inconclusiva PASSED [ 37%]
+tests/rnf/test_rnf04_disponibilidade.py::test_tnf_rnf04_04_exige_chat_e_turno_persistido PASSED [ 41%]
+tests/rnf/test_rnf04_disponibilidade.py::test_janela_local_atravessa_sessao_chat_e_postgresql SKIPPED [ 44%]
+tests/rnf/test_rnf04_disponibilidade.py::test_banco_indisponivel_derruba_amostra_mesmo_com_http_ativo PASSED [ 48%]
+tests/rnf/test_rnf04_disponibilidade.py::test_parametros_invalidos_nao_produzem_relatorio[0-1] PASSED [ 51%]
+tests/rnf/test_rnf04_disponibilidade.py::test_parametros_invalidos_nao_produzem_relatorio[1--1] PASSED [ 55%]
+tests/rnf/test_rnf05_perfil.py::test_tnf_rnf05_01_atinge_90_por_cento_de_adequacao[diretoria] PASSED [ 58%]
+tests/rnf/test_rnf05_perfil.py::test_tnf_rnf05_01_atinge_90_por_cento_de_adequacao[lider_projeto] PASSED [ 62%]
+tests/rnf/test_rnf05_perfil.py::test_tnf_rnf05_01_atinge_90_por_cento_de_adequacao[membro_equipe] PASSED [ 65%]
+tests/rnf/test_rnf05_perfil.py::test_tnf_rnf05_02_nao_expoe_projeto_fora_do_escopo PASSED [ 68%]
+tests/rnf/test_rnf05_perfil.py::test_tnf_rnf05_03_mesmo_enunciado_produz_recortes_por_perfil PASSED [ 72%]
+tests/rnf/test_rnf05_perfil.py::test_tnf_rnf05_04_inadequacao_sem_exposicao_reprova_taxa PASSED [ 75%]
+tests/rnf/test_rnf06_barreiras.py::test_tnf_rnf06_conjunto_tem_composicao_e_rastreabilidade_exigidas PASSED [ 79%]
+tests/rnf/test_rnf06_barreiras.py::test_tnf_rnf06_metricas_das_tres_barreiras SKIPPED [ 82%]
+tests/perimetro/test_perimetro_declarado.py::test_tnf_rnf01_01_servicos_coincidem_com_perimetro PASSED [ 86%]
+tests/perimetro/test_perimetro_declarado.py::test_tnf_rnf01_02_servico_nao_declarado_e_acusado PASSED [ 89%]
+tests/perimetro/test_perimetro_declarado.py::test_tnf_rnf01_03_servicos_fora_tenant_identificados PASSED [ 93%]
+tests/perimetro/test_perimetro_declarado.py::test_tnf_rnf01_04_dados_sinteticos PASSED [ 96%]
+tests/perimetro/test_perimetro_declarado.py::test_tnf_rnf01_verificacao_executor_proprio PASSED [100%]
+
+============================== warnings summary ===============================
+app\main.py:21
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\app\main.py:21: StarletteDeprecationWarning: 'HTTP_413_REQUEST_ENTITY_TOO_LARGE' is deprecated. Use 'HTTP_413_CONTENT_TOO_LARGE' instead.
+    from app.api.routes import (
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\rnf\test_rnf04_disponibilidade.py:198: PostgreSQL indispon�vel; suba o servi�o db do Docker Compose.
+SKIPPED [1] tests\rnf\test_rnf06_barreiras.py:108: defina EXECUTAR_RNF06_REAL=1 e as credenciais do Content Safety
+================== 27 passed, 2 skipped, 1 warning in 5.05s ===================

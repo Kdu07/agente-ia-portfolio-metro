@@ -3,7 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>Agente de Portfólio — Metrô SP</title>
+    <script>
+      // Aplica o tema antes da primeira pintura: sem isto, quem usa o escuro vê um clarão branco a cada recarga.
+      // O nginx não manda CSP hoje; se um dia mandar, este script precisa entrar por hash.
+      try { var p = localStorage.getItem("prata:tema"); if (p === "escuro" || (p !== "claro" && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark"); } catch (_) {}
+    </script>
   </head>
   <body>
     <div id="raiz"></div>
