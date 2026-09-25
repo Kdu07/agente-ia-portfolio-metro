@@ -80,6 +80,11 @@ rag = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
+    # A suíte de integração do webhook do Drive exercita encerramento e
+    # renovação de canais, caminhos que tratam `googleapiclient.errors.HttpError`.
+    # Mantê-lo no extra de desenvolvimento faz `pytest` reproduzível após o
+    # comando de instalação documentado no README, mesmo sem instalar todo o RAG.
+    "google-api-python-client>=2.100",
     # Cobertura e desempenho sistêmico (Projeto.md §10.1 e §10.2).
     # Os cenários de carga e micro-latência chegam no card de desempenho;
     # este extra mantém os instrumentos reproduzíveis no ambiente de dev.
