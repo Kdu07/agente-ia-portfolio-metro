@@ -53,7 +53,6 @@ from app.persistence.models import (
     StatusMarco,
     StatusProjeto,
     StatusRisco,
-    Usuario,
     UsuarioProjeto,
 )
 from app.persistence.repository import (
@@ -246,13 +245,6 @@ async def _limpar(sessao) -> None:
     # sai antes do pai. Do contrário o banco recusa, e com razão.
 
     # Limpa schema portfolio (ordem reversa das dependências)
-    from app.persistence.tabelas_portfolio import (
-        IndicadorTabela,
-        MarcoTabela,
-        RiscoTabela,
-        UsuarioProjetoTabela,
-    )
-
     await sessao.execute(
         delete(IndicadorTabela).where(IndicadorTabela.id.like(f"{PREFIXO}%"))
     )
@@ -272,8 +264,6 @@ async def _limpar(sessao) -> None:
     await sessao.execute(delete(UsuarioTabela).where(UsuarioTabela.id.like(f"{PREFIXO}%")))
 
     # Limpa projetos do portfolio
-    from app.persistence.tabelas_portfolio import ProjetoTabela
-
     await sessao.execute(
         delete(ProjetoTabela).where(ProjetoTabela.codigo.like(f"{PREFIXO}%"))
     )
@@ -535,7 +525,7 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
                 id=f"{PREFIXO}marco-{dados_projeto['codigo']}-{i}",
                 projeto_codigo=dados_projeto["codigo"],
                 nome=f"Marco {i+1}",
-                descricao=f"Marco importante do projeto",
+                descricao="Marco importante do projeto",
                 data_prevista=agora.date() + timedelta(days=aleatorio.randint(30, 365)),
                 status=aleatorio.choice([s.value for s in StatusMarco]),
                 criado_em=agora - timedelta(days=aleatorio.randint(15, 60)),
@@ -550,7 +540,7 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
                 id=f"{PREFIXO}indicador-{dados_projeto['codigo']}-{i}",
                 projeto_codigo=dados_projeto["codigo"],
                 nome=f"Indicador {i+1}",
-                descricao=f"Indicador de desempenho",
+                descricao="Indicador de desempenho",
                 valor_atual=round(aleatorio.uniform(50, 95), 2),
                 valor_meta=round(aleatorio.uniform(80, 100), 2),
                 unidade=aleatorio.choice(["%", "R$ mil", "dias", "unidades"]),

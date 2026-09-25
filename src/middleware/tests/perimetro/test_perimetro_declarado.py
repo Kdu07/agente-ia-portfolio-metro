@@ -5,21 +5,17 @@ Implementa os casos TNF-RNF01-01 a TNF-RNF01-04 conforme seção 10.2.3.1 do Pro
 A verificação é feita por inspeção de configuração, não por execução de fluxo.
 """
 
-import os
 import re
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
-from typing import Set, Dict, List
 
-import pytest
 import yaml
 
 from .perimetro_declarado import (
     PERIMETRO_DECLARADO,
-    SERVICOS_INTERNOS,
-    Tenant,
     ServicoExterno,
+    Tenant,
 )
 
 
@@ -27,7 +23,7 @@ class ExtratorServicos:
     """Extrai serviços externos de arquivos de configuração."""
 
     @staticmethod
-    def do_env_example(caminho: Path) -> Set[str]:
+    def do_env_example(caminho: Path) -> set[str]:
         """Extrai serviços externos do .env.example baseado em padrões de variáveis."""
         servicos = set()
 
@@ -53,7 +49,7 @@ class ExtratorServicos:
         return servicos
 
     @staticmethod
-    def do_docker_compose(caminho: Path) -> Set[str]:
+    def do_docker_compose(caminho: Path) -> set[str]:
         """Extrai serviços externos do docker-compose.yml."""
         servicos = set()
 
@@ -63,7 +59,7 @@ class ExtratorServicos:
         conteudo = yaml.safe_load(caminho.read_text(encoding="utf-8"))
 
         if "services" in conteudo:
-            for nome_servico in conteudo["services"].keys():
+            for nome_servico in conteudo["services"]:
                 if nome_servico not in internos:
                     # Mapeamento de nomes de serviço para nomes reconhecidos
                     mapeamento = {
@@ -75,7 +71,7 @@ class ExtratorServicos:
         return servicos
 
     @staticmethod
-    def dos_conectores(caminho: Path) -> Set[str]:
+    def dos_conectores(caminho: Path) -> set[str]:
         """Extrai serviços externos do arquivo de conectores do Copilot."""
         servicos = set()
 
@@ -98,7 +94,7 @@ class ExtratorServicos:
         return servicos
 
 
-def obter_servicos_configurados() -> Set[str]:
+def obter_servicos_configurados() -> set[str]:
     """Obtém todos os serviços externos configurados no repositório."""
     # O arquivo de teste está em src/middleware/tests/perimetro/
     # Precisamos ir até a raiz do repositório

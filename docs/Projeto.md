@@ -10264,10 +10264,10 @@ justamente o que se quer testar — o `credentials: "include"`, o tratamento de
 | Ferramenta | Papel | Estado |
 |---|---|---|
 | Docker + Docker Compose | Sobe `web`, `middleware`, `worker` e `db` para o smoke de pilha completa ([infra/docker-compose.yml](../infra/docker-compose.yml)) | Compose escrito; smoke IT-E2E previsto |
-| GitLab CI | Executa a suíte em cada merge request, conforme §9.1.5 | Previsto — não há `.gitlab-ci.yml` no repositório |
+| GitLab CI | Executa análise estática, tipos e testes em cada merge request, conforme §9.1.5 | Implantado — [.gitlab-ci.yml](../.gitlab-ci.yml), detalhado em 10.5.8 |
 | `detect-secrets` ou `gitleaks` | *Hook* de pré-commit que barra fita com segredo (seção 10.5.4.3) | Previsto |
 
-Enquanto a CI não existe, a barreira contra segredo em fita é a soma da
+A CI não varre segredo: a barreira contra segredo em fita segue sendo a soma da
 sanitização automática de 10.5.4.3, do caso que a verifica sobre o texto bruto
 do arquivo e da leitura do diff na revisão. É menos do que se quer, e a
 diferença está declarada aqui em vez de suposta.
@@ -11062,12 +11062,11 @@ ou dado real do Metrô foi usado.
 
 #### 10.5.7.4 Restrições conhecidas
 
-Duas restrições conhecidas, ambas herdadas e nenhuma delas no VHS:
+Uma restrição conhecida, herdada e fora do VHS:
 
 | Restrição | Efeito | Situação |
 |---|---|---|
 | SDK do Pinecone fora do ambiente base | Sem o extra `[rag]`, `tests/unit/test_provisionamento_vetorial.py` tem 1 falha, e `tests/integration/externos/test_pinecone_real.py` dá 4 erros quando selecionado por caminho — por marcador ele fica de fora de `-m externo` | `pip install -e '.[rag]'` instala o SDK. É dependência da camada de vetorização, e não do VHS |
-| 9 apontamentos do `ruff` em `app/schemas/mensagem.py`, `app/utils/validadores.py` e três testes unitários | `python -m ruff check app tests` termina com erro | Os arquivos do VHS passam limpos: `ruff check tests/integration/vhs.py tests/integration/conftest.py tests/integration/externos/test_vhs.py` → *All checks passed* |
 
 ```powershell
 cd src\web
@@ -11079,63 +11078,44 @@ npm run gerar:fixtures          # regenera handlers do MSW a partir do openapi.j
 
 ### 10.5.8 Integração contínua
 
-O pipeline roda em cada merge request, conforme §9.1.5. Três
-estágios, do mais barato para o mais caro.
+O pipeline roda em cada merge request, conforme §9.1.5, e também a cada push
+na `develop` e na `main`. O arquivo é o
+[.gitlab-ci.yml](../.gitlab-ci.yml) da raiz; com a opção *Pipelines must
+succeed* ligada no projeto, qualquer job vermelho impede o merge.
 
-> **Estado.** O `.gitlab-ci.yml` abaixo é esboço: não há pipeline na `develop`
-> nem na `main` até aqui, e a única pipeline do repositório serve à automação do
-> board. Enquanto ela não existir, o que este esboço descreve é executado à mão
-> antes do merge request — os comandos verificados estão em 10.5.7.2.
+| Estágio | Job | Imagem | O que roda |
+|---|---|---|---|
+| `lint` | `middleware:ruff` | `python:3.12-slim` | `ruff check .`, com o ruff na mesma faixa do extra `dev` |
+| `lint` | `web:eslint` | `node:20-alpine` | `npm run lint` |
+| `lint` | `web:tipos` | `node:20-alpine` | `npm run typecheck` (os dois `tsconfig`) |
+| `teste` | `middleware:pytest` | `python:3.12-slim` + serviços `postgres:16-alpine` e `rabbitmq:4.3.6-management-alpine` | `alembic upgrade head` e a suíte inteira com `--block-network` |
+| `teste` | `web:vitest` | `node:20-alpine` | `npm run test` |
 
-```yaml
-# .gitlab-ci.yml (esboço)
-stages: [lint, teste, integracao]
+Os dois jobs de teste publicam relatório JUnit, e o resultado aparece por caso
+na aba de testes do merge request.
 
-lint:
-  stage: lint
-  image: python:3.12-slim
-  script:
-    - pip install -e "src/middleware[dev]"
-    - ruff check src/middleware/app src/middleware/tests
+No `middleware:pytest`, quatro escolhas merecem registro:
 
-teste-unitario:
-  stage: teste
-  image: python:3.12-slim
-  script:
-    - pip install -e "src/middleware[dev]"
-    # --block-network é o cinto de segurança: nenhuma chamada real
-    # escapa da fita, nem por engano de configuração.
-    - pytest src/middleware/tests/unit --block-network
+- **PostgreSQL e RabbitMQ vêm de serviços do GitLab**, não do Testcontainers:
+  o *runner* já provê os contêineres, e o Docker-in-Docker seria custo
+  desnecessário. O RabbitMQ usa a imagem e as credenciais padrão do compose,
+  e os testes de mensageria criam nele um *vhost* descartável. O
+  `--block-network` barraria também os dois serviços, por isso os IPs deles
+  entram em `--allowed-hosts`.
+- **O torch é instalado pelo índice CPU do PyTorch** antes do projeto, como no
+  Dockerfile. Sem isso o `sentence-transformers` puxa os *wheels* CUDA.
+- **O `intfloat/multilingual-e5-large` é baixado antes da suíte**, como no
+  Dockerfile. O TF-RF03-01 classifica com o artefato treinado de verdade, que
+  depende desse modelo; dentro do pytest o `--block-network` impediria o
+  download.
+- **`HF_HUB_OFFLINE=1` a partir do pytest.** Com o modelo já no disco, um teste
+  que tente baixar outro falha em vez de sair para a rede.
 
-teste-frontend:
-  stage: teste
-  image: node:18-alpine
-  script:
-    - cd src/web && npm ci && npm run test -- --coverage
-
-teste-integracao:
-  stage: integracao
-  image: python:3.12-slim
-  services:
-    - name: postgres:16-alpine
-      alias: db
-  variables:
-    POSTGRES_USER: middleware
-    POSTGRES_PASSWORD: middleware
-    POSTGRES_DB: middleware
-    DATABASE_URL: "postgresql+asyncpg://middleware:middleware@db:5432/middleware"
-  script:
-    - pip install -e "src/middleware[dev]"
-    - alembic -c src/middleware/alembic.ini upgrade head
-    - pytest src/middleware/tests/integration --block-network
-        --cov=app --cov-report=term-missing --cov-fail-under=80
-```
-
-No CI o PostgreSQL vem do serviço do GitLab, não do Testcontainers — o
-*runner* já provê o contêiner e o Docker-in-Docker seria custo desnecessário.
-As fixtures de banco leem `DATABASE_URL` quando definida e sobem o Testcontainers
-apenas quando não estiver, o que faz o mesmo teste rodar nos dois ambientes sem
-alteração.
+Na primeira execução verde (pipeline 80045 do MR !171), o `middleware:pytest`
+terminou com 1150 casos aprovados, 22 *xfail* e 15 pulados — os 11 de
+`tests/integration/externos`, por falta de credencial, e 4 que já pulam na
+execução local — em cerca de 4,5 minutos, contando a instalação. O
+`web:vitest` aprovou os 185 casos.
 
 O grupo `externo` roda com as fitas versionadas: **o CI não tem credencial de
 nenhum tenant**, e essa é uma propriedade a preservar.
