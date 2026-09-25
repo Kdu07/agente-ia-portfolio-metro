@@ -1974,3 +1974,116 @@ Uma taxa única para as seis funções é coerente com a forma como a equipe tra
 | **Total de pessoal** | **381,50 h** | | **R$ 30.996,88** |
 
 **Custo de pessoal = 381,50 h × R$ 81,25 = R$ 30.996,88**
+
+### 7.4 Insumos, licenças e plataformas da construção
+
+Entram aqui as ferramentas e os recursos de nuvem usados diretamente para construir e validar a solução. Durante o módulo, parte deles foi obtida sem custo, em planos acadêmicos, contas gratuitas ou no ambiente do Inteli. Num contrato real essa gratuidade não existe, e o orçamento precifica o equivalente comercial. Os itens que continuam sem custo mesmo num contrato real aparecem na tabela com valor zero e a razão, para mostrar que foram considerados.
+
+| Insumo | Uso no projeto | Premissa de quantidade | Cálculo | Custo |
+|---|---|---|---|---:|
+| GitLab Premium | Repositório, Kanban, merge requests e CI | 6 usuários por 3 meses; o plano gratuito do GitLab.com limita grupos privados a 5 usuários | 6 × US$ 29 × 3 = US$ 522,00 × 5,1991 × 1,035 | R$ 2.808,92 |
+| Figma Professional | Protótipos, mockups e correções de interface | 2 assentos completos por 3 meses | 2 × US$ 16 × 3 = US$ 96,00 × 5,1991 × 1,035 | R$ 516,58 |
+| Maze Starter | Sessões de usabilidade com gravação | 1 mês, período das sessões da Sprint 4 | US$ 99,00 × 5,1991 × 1,035 | R$ 532,73 |
+| Azure, ambiente de desenvolvimento e homologação | PostgreSQL, registro de imagens e cofre de segredos | 2 meses, setembro e outubro | 2 × R$ 194,64 (ver abaixo) | R$ 389,28 |
+| Azure Container Apps de desenvolvimento | API, web e worker de teste | Escala a zero fora do uso, dentro da franquia mensal gratuita | Seção 7.5.3 | R$ 0,00 |
+| Content Safety e Speech de desenvolvimento | Guardas e transcrição nos testes | Nível gratuito F0, usado no módulo | Franquia do fornecedor | R$ 0,00 |
+| Copilot Studio de teste | Demonstração de RF04 a RF06 | Ambiente de teste cedido pelo Metrô | Sem cobrança ao fornecedor | R$ 0,00 |
+| Linguagens, bibliotecas, Docker e IDE | Desenvolvimento e testes | Software livre ou gratuito | Sem licença paga | R$ 0,00 |
+| **Total de insumos** | | | | **R$ 4.247,51** |
+
+O ambiente de desenvolvimento repete o dimensionamento do `infra/azure/provisionar.sh`, com preços da tabela oficial da Microsoft em reais para `brazilsouth`:
+
+| Recurso | Preço unitário | Cálculo mensal | Custo mensal |
+|---|---:|---|---:|
+| PostgreSQL Flexible Server B1ms, computação | R$ 0,181/h | 730 h × R$ 0,181 | R$ 132,13 |
+| PostgreSQL, armazenamento de 32 GB | R$ 1,1297/GB-mês | 32 × R$ 1,1297 | R$ 36,15 |
+| Container Registry Basic | R$ 0,8613/dia | 365 × R$ 0,8613 / 12 | R$ 26,20 |
+| Key Vault Standard, 10.000 operações | R$ 0,1551 por 10.000 operações | 1 × R$ 0,1551 | R$ 0,16 |
+| **Total mensal** | | | **R$ 194,64** |
+
+**Custo total da construção (C) = pessoal + insumos = R$ 30.996,88 + R$ 4.247,51 = R$ 35.244,39**
+
+Os três serviços cotados em dólar são convertidos pela PTAX de venda de 25/09/2026, R$ 5,1991, com IOF de 3,5% sobre compras internacionais com cartão. O GitLab Premium é vendido em assinatura anual; o orçamento aloca ao contrato apenas os três meses de uso, e os outros nove ficam com a empresa para os contratos seguintes.
+
+### 7.5 Custo de operação da solução em produção
+
+Esta seção dimensiona o que o Metrô paga por mês para manter a solução no ar, no seu próprio tenant. O valor não entra no preço do contrato, mas é decisivo para a viabilidade (seção 7.12) e responde à promessa da seção 2.8.9 do `Projeto.md`, que separa o custo de construção, fixo, do custo de operação, majoritariamente variável.
+
+#### 7.5.1 Volume de uso
+
+Todo o custo variável e todo o benefício da seção 7.12 derivam do mesmo volume, para que custo e retorno não sejam calculados sobre bases diferentes.
+
+| Variável | Valor | Origem |
+|---|---:|---|
+| Frentes do portfólio com responsável | 86 | Anexo 2 do TAPI: 31 programas e projetos, dos quais 7 programas agrupam 55 projetos; 24 + 55 + 7 = 86 |
+| Integrantes do PMO corporativo (GPM) usuários do agente | 4 | Premissa a validar com o parceiro |
+| **Usuários ativos** | **90** | 86 + 4 |
+| Interações por usuário por dia útil | 6 | Premissa: consultas de status, riscos, marcos e pendências |
+| Dias úteis por mês | 21 | Calendário médio |
+| **Interações de usuários por mês** | **11.340** | 90 × 6 × 21 |
+| Rotinas agendadas por mês | 390 | Uma rotina semanal por usuário: 90 × 52 / 12 |
+| **Interações totais por mês** | **11.730** | 11.340 + 390 |
+| Parcela encaminhada ao Copilot Studio | 90% | As demais são recusadas pelo middleware antes da execução, fora do catálogo ou barradas pelas guardas |
+| Interações por voz | 20% das interações de usuários | O canal de voz é diferencial desejável no TAPI, não canal principal |
+| Duração média de um enunciado por voz | 12 s | Seção 5.7.2.7 do `Projeto.md` |
+
+#### 7.5.2 Microsoft Copilot Studio
+
+Cada solicitação encaminhada ao Copilot Studio aciona uma ação do agente sobre o SharePoint ou o Power BI e produz uma resposta generativa. Pela tabela de cobrança da Microsoft, uma ação do agente consome 5 créditos e uma resposta generativa, 2.
+
+**Créditos por mês = 11.730 × 90% × (5 + 2) = 73.899 créditos**
+
+| Modalidade | Preço | Cálculo | Custo mensal |
+|---|---:|---|---:|
+| Pacote de 25.000 créditos | R$ 1.145,10 por pacote por mês | 3 pacotes × R$ 1.145,10 | **R$ 3.435,30** |
+| Pagamento conforme o uso | R$ 0,0517 por crédito | 73.899 × R$ 0,0517 | R$ 3.820,58 |
+
+Os pacotes são R$ 385,28 por mês mais baratos que o pagamento conforme o uso, mesmo com 1.101 créditos ociosos, e são a modalidade adotada.
+
+#### 7.5.3 Azure Container Apps
+
+O dimensionamento é o do `infra/azure/provisionar.sh`: `middleware` e `worker` com 2 vCPU e 4 GiB cada, porque o classificador carrega o modelo de *embeddings* em memória, e `web` com 0,25 vCPU e 0,5 GiB. Em produção os três ficam com uma réplica mínima: o `worker` porque precisa estar de pé para disparar as rotinas (seção 6.5.5 do `Projeto.md`), a API porque o classificador leva minutos para aquecer, o que torna inaceitável a partida a frio no expediente, e a web para não somar outra partida a frio ao primeiro acesso do dia.
+
+A Microsoft cobra à taxa ativa o tempo em que a réplica processa requisições e à taxa ociosa o restante. O orçamento considera a API e a web ativas no expediente, 21 dias × 11 h = 231 h por mês, e o `worker` ativo 21 h por mês, uma hora por dia útil.
+
+| Medida mensal | Cálculo | Quantidade |
+|---|---|---:|
+| vCPU-segundos ativos | (2 + 0,25) × 831.600 s + 2 × 75.600 s | 2.022.300 |
+| vCPU-segundos ociosos | (2 + 0,25) × 1.796.400 s + 2 × 2.552.400 s | 9.146.700 |
+| GiB-segundos | (4 + 0,5 + 4) × 2.628.000 s | 22.338.000 |
+
+Descontada a franquia mensal gratuita de 180.000 vCPU-segundos e 360.000 GiB-segundos:
+
+**Custo = (1.842.300 × US$ 0,000024 + 9.146.700 × US$ 0,000003 + 21.978.000 × US$ 0,000003) × 5,1701 = US$ 137,59 × 5,1701 = R$ 711,35 por mês**
+
+A taxa de R$ 5,1701 por dólar é a que a própria Microsoft aplica na sua tabela em reais, conferida nos preços do PostgreSQL, do Speech e do Content Safety; o Container Apps é cotado por segundo e só tem precisão suficiente na tabela em dólar. As requisições ficam abaixo da franquia de 2 milhões por mês.
+
+#### 7.5.4 Demais serviços
+
+| Serviço | Premissa | Cálculo | Custo mensal |
+|---|---|---|---:|
+| PostgreSQL Flexible Server B1ms | Uma instância contínua, 32 GB, backup de 7 dias dentro da franquia igual ao armazenamento provisionado | R$ 132,13 + R$ 36,15 | R$ 168,28 |
+| Azure AI Content Safety | 3 avaliações por interação: duas de entrada e uma de saída | 35.190 registros / 1.000 × R$ 1,9388 | R$ 68,23 |
+| Azure AI Speech | 11.340 × 20% × 12 s = 7,56 h de áudio | 7,56 h × R$ 5,1701 | R$ 39,09 |
+| Container Registry Basic | Imagens da `web` e do `middleware` | 365 × R$ 0,8613 / 12 | R$ 26,20 |
+| Key Vault Standard | 10.000 operações | 1 × R$ 0,1551 | R$ 0,16 |
+| Log Analytics | Até 5 GB de ingestão e 30 dias de retenção | Franquia gratuita | R$ 0,00 |
+| Entra ID, Cost Management, certificado TLS e domínio | Já contratados pelo Metrô ou gratuitos na plataforma | Sem custo incremental | R$ 0,00 |
+
+Content Safety e Speech são cotados no nível pago S0: o nível gratuito F0, usado no desenvolvimento, admite um único recurso por assinatura e tem limites incompatíveis com a produção. Eles precisam ser reprovisionados no tenant do Metrô antes de qualquer uso com dado real, como exige o risco `R12`.
+
+#### 7.5.5 Consolidação
+
+| Componente | Custo mensal | Custo anual |
+|---|---:|---:|
+| Microsoft Copilot Studio | R$ 3.435,30 | R$ 41.223,60 |
+| Azure Container Apps | R$ 711,35 | R$ 8.536,20 |
+| Azure Database for PostgreSQL | R$ 168,28 | R$ 2.019,36 |
+| Azure AI Content Safety | R$ 68,23 | R$ 818,76 |
+| Azure AI Speech | R$ 39,09 | R$ 469,08 |
+| Azure Container Registry | R$ 26,20 | R$ 314,40 |
+| Azure Key Vault | R$ 0,16 | R$ 1,92 |
+| Log Analytics | R$ 0,00 | R$ 0,00 |
+| **Operação em produção** | **R$ 4.448,61** | **R$ 53.383,32** |
+
+O Copilot Studio responde por 77% do custo de operação e é o único item que cresce em degraus de R$ 1.145,10 a cada 25.000 créditos. O classificador de intenções, a operação mais frequente, roda no próprio middleware e não tem custo por requisição, como antecipava a seção 2.8.9 do `Projeto.md`. Depois da implantação, o Azure Cost Management deve comparar o consumo real com esta estimativa, mês a mês.
