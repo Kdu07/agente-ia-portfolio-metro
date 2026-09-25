@@ -103,6 +103,8 @@ app = FastAPI(
     version="0.2.0",
 )
 
+app.add_exception_handler(voz.ErroAudioApi, voz.tratar_erro_audio)
+
 app.include_router(health.router, tags=["infra"])
 app.include_router(auth.router, tags=["auth"])
 app.include_router(chat.router, tags=["chat"])

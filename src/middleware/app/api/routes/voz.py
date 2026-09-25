@@ -6,31 +6,52 @@ da seção 5.7.3 do projeto.md.
 """
 
 import logging
-from pathlib import Path
-from typing import Annotated
+from datetime import UTC, datetime
+from typing import Annotated, Any
 
 from fastapi import (
     APIRouter,
     BackgroundTasks,
+    Depends,
     File,
     Form,
-    HTTPException,
+    Request,
     Response,
     UploadFile,
     status,
 )
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.api.deps import UsuarioAtual
-from app.schemas.audio import AudioUploadResponse, TranscricaoResponse
+from app.api.deps import (
+    SessaoBanco,
+    UsuarioAtual,
+    obter_audios,
+    obter_processador_audio,
+)
+from app.persistence.models import EstadoTranscricao, TranscricaoAudio
+from app.persistence.repository import AudioRepository
+from app.schemas.audio import AudioUploadResponse, ErroAudioResponse, TranscricaoResponse
 from app.servicos.audio_service import AudioProcessingError, AudioService
+from app.servicos.processamento_audio import ProcessadorAudio
 from app.utils.validadores import (
     validar_extensao_audio,
     validar_formato_audio,
     validar_tamanho_arquivo,
 )
-from app.voz.speech import ErroConfiguracaoSpeech, ErroTokenSpeech, emitir_token
-from app.voz.transcricao import ErroTranscricao, transcrever_arquivo
+from app.voz.midia import (
+    LIMITE_DURACAO_SEGUNDOS,
+    AudioMuitoLongo,
+    ErroMidia,
+    InspecaoMidiaIndisponivel,
+    inspecionar_audio,
+    validar_duracao,
+)
+from app.voz.speech import (
+    ErroConfiguracaoSpeech,
+    ErroTokenSpeech,
+    emitir_token,
+)
 
 router = APIRouter(prefix="/voz")
 logger = logging.getLogger(__name__)
@@ -39,50 +60,30 @@ logger = logging.getLogger(__name__)
 audio_service = AudioService()
 
 
-async def _processar_transcricao(
-    id_audio: str,
-    caminho_arquivo: Path,
-    idioma: str | None,
-) -> None:
-    """Executa a transcrição após o retorno do HTTP 202."""
-    audio_service.registrar_transcricao(
-        TranscricaoResponse(id_audio=id_audio, estado="transcrevendo")
+class ErroAudioApi(Exception):
+    """Erro publico com corpo estavel conforme o contrato do canal de voz."""
+
+    def __init__(
+        self,
+        status_code: int,
+        codigo: str,
+        mensagem: str,
+        detalhe: dict[str, Any] | None = None,
+    ) -> None:
+        self.status_code = status_code
+        self.resposta = ErroAudioResponse(
+            codigo=codigo,
+            mensagem=mensagem,
+            detalhe=detalhe,
+        )
+
+
+async def tratar_erro_audio(_request: Request, erro: ErroAudioApi) -> JSONResponse:
+    """Serializa o erro sem o envelope ``detail`` do HTTPException."""
+    return JSONResponse(
+        status_code=erro.status_code,
+        content=erro.resposta.model_dump(exclude_none=True),
     )
-    try:
-        resultado = await transcrever_arquivo(
-            caminho_arquivo,
-            idioma=idioma,
-        )
-        audio_service.registrar_transcricao(
-            TranscricaoResponse(
-                id_audio=id_audio,
-                estado="concluida",
-                texto=resultado.texto,
-                idioma=resultado.idioma,
-                confianca=resultado.confianca,
-                duracao_segundos=resultado.duracao_segundos,
-                latencia_ms=resultado.latencia_ms,
-            )
-        )
-    except ErroTranscricao as erro:
-        audio_service.registrar_transcricao(
-            TranscricaoResponse(
-                id_audio=id_audio,
-                estado="falhou",
-                mensagem_erro=erro.mensagem,
-            )
-        )
-    except Exception:
-        logger.exception("Falha inesperada ao transcrever áudio %s", id_audio)
-        audio_service.registrar_transcricao(
-            TranscricaoResponse(
-                id_audio=id_audio,
-                estado="falhou",
-                mensagem_erro="Não foi possível concluir a transcrição",
-            )
-        )
-    finally:
-        audio_service.limpar_arquivo(caminho_arquivo)
 
 
 class TokenResposta(BaseModel):
@@ -104,6 +105,7 @@ class TokenResposta(BaseModel):
     response_model=TokenResposta,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Sessão ausente ou expirada"},
+        status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Cota temporária excedida"},
         status.HTTP_503_SERVICE_UNAVAILABLE: {
             "description": "Serviço de fala não configurado ou indisponível"
         },
@@ -114,25 +116,35 @@ async def token(usuario: UsuarioAtual, response: Response) -> TokenResposta:
 
     O frontend renova antes de expirar, e não ao receber erro: uma
     renovação reativa interromperia a fala do usuário no meio.
-
-    `no-store` impede que um proxy ou o cache do navegador guarde a
-    credencial. Configuração ausente e falha do serviço respondem 503 com a
-    mesma mensagem: o detalhe fica no log, não no navegador.
     """
-    try:
-        emitido = await emitir_token()
-    except (ErroConfiguracaoSpeech, ErroTokenSpeech) as erro:
-        logger.warning("Token de voz não emitido para %s: %s", usuario.id, erro)
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE,
-            "Entrada por voz indisponível no momento. Digite a mensagem.",
-        ) from None
     response.headers["Cache-Control"] = "no-store"
+    try:
+        credencial = await emitir_token()
+    except ErroConfiguracaoSpeech as erro:
+        logger.error("Configuração do Azure Speech inválida: %s", erro)
+        raise ErroAudioApi(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "SERVICO_INDISPONIVEL",
+            "O canal de voz está temporariamente indisponível.",
+        ) from erro
+    except ErroTokenSpeech as erro:
+        logger.warning("Falha ao emitir token do Azure Speech: %s", erro)
+        codigo = "COTA_EXCEDIDA" if erro.cota_excedida else "SERVICO_INDISPONIVEL"
+        http_status = (
+            status.HTTP_429_TOO_MANY_REQUESTS
+            if codigo == "COTA_EXCEDIDA"
+            else status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+        raise ErroAudioApi(
+            http_status,
+            codigo,
+            "O canal de voz está temporariamente indisponível.",
+        ) from erro
     return TokenResposta(
-        token=emitido.token,
-        regiao=emitido.regiao,
-        expira_em_segundos=emitido.expira_em_segundos,
-        idioma=emitido.idioma,
+        token=credencial.token,
+        regiao=credencial.regiao,
+        expira_em_segundos=credencial.expira_em_segundos,
+        idioma=credencial.idioma,
     )
 
 
@@ -174,8 +186,14 @@ async def token(usuario: UsuarioAtual, response: Response) -> TokenResposta:
 )
 async def upload_audio(
     background_tasks: BackgroundTasks,
-    audio: Annotated[UploadFile, File(description="Arquivo de áudio (mp3, wav, ogg, webm, mp4)")],
     usuario: UsuarioAtual,
+    banco: SessaoBanco,
+    audios: Annotated[AudioRepository, Depends(obter_audios)],
+    processador: Annotated[ProcessadorAudio, Depends(obter_processador_audio)],
+    audio: Annotated[
+        UploadFile | None,
+        File(description="Arquivo de áudio (mp3, wav, ogg, webm, mp4)"),
+    ] = None,
     idioma: Annotated[
         str | None, Form(description="Código BCP 47 do idioma (padrão: pt-BR)")
     ] = None,
@@ -203,48 +221,126 @@ async def upload_audio(
     """
     # Valida se arquivo foi fornecido
     if not audio or not audio.filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Campo 'audio' é obrigatório"
+        raise ErroAudioApi(
+            status.HTTP_400_BAD_REQUEST,
+            "AUDIO_AUSENTE",
+            "Não recebi nenhum áudio. Tente gravar de novo.",
         )
 
     # Valida extensão
     try:
-        validar_extensao_audio(audio.filename)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(e))
+        extensao = validar_extensao_audio(audio.filename)
+    except ValueError as erro:
+        raise ErroAudioApi(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            "AUDIO_FORMATO_NAO_SUPORTADO",
+            "Não consigo ler esse formato de áudio.",
+        ) from erro
 
     # Valida tamanho
     try:
-        validar_tamanho_arquivo(audio.size or 0)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=str(e))
+        if audio.size is not None:
+            validar_tamanho_arquivo(audio.size)
+    except ValueError as erro:
+        raise ErroAudioApi(
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            "AUDIO_MUITO_GRANDE",
+            "O arquivo é grande demais.",
+            {"bytes": audio.size, "limite_bytes": 25 * 1024 * 1024},
+        ) from erro
 
     # Valida formato real via magic bytes
     try:
         formato_detectado = validar_formato_audio(audio.file)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(e))
+    except ValueError as erro:
+        raise ErroAudioApi(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            "AUDIO_FORMATO_NAO_SUPORTADO",
+            "Não consigo ler esse formato de áudio.",
+        ) from erro
+    if formato_detectado != extensao:
+        raise ErroAudioApi(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            "AUDIO_FORMATO_NAO_SUPORTADO",
+            "A extensão do arquivo não corresponde ao conteúdo enviado.",
+        )
 
     # Gera ID único e salva arquivo usando o serviço
     id_audio = audio_service.gerar_id_audio()
 
     try:
         caminho_arquivo = audio_service.salvar_arquivo(audio.file, id_audio, formato_detectado)
-    except AudioProcessingError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Falha ao processar arquivo: {e}",
-        )
+    except AudioProcessingError as erro:
+        raise ErroAudioApi(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "FALHA_INTERNA",
+            "Não foi possível armazenar o áudio recebido.",
+        ) from erro
 
-    # Calcula expiração
-    duracao_segundos = 0.0  # TODO: Calcular duração real do áudio
+    try:
+        validar_tamanho_arquivo(caminho_arquivo.stat().st_size)
+        midia = inspecionar_audio(caminho_arquivo)
+        validar_duracao(midia.duracao_segundos)
+    except AudioMuitoLongo as erro:
+        audio_service.limpar_arquivo(caminho_arquivo)
+        raise ErroAudioApi(
+            status.HTTP_400_BAD_REQUEST,
+            "AUDIO_MUITO_LONGO",
+            "O áudio tem mais de 5 minutos. Grave um trecho mais curto ou digite a solicitação.",
+            {
+                "duracao_segundos": erro.duracao_segundos,
+                "limite_segundos": LIMITE_DURACAO_SEGUNDOS,
+            },
+        ) from erro
+    except ErroMidia as erro:
+        audio_service.limpar_arquivo(caminho_arquivo)
+        raise ErroAudioApi(
+            status.HTTP_400_BAD_REQUEST,
+            "AUDIO_ILEGIVEL",
+            "Não consegui abrir esse áudio. Tente gravar de novo.",
+        ) from erro
+    except ValueError as erro:
+        audio_service.limpar_arquivo(caminho_arquivo)
+        raise ErroAudioApi(
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            "AUDIO_MUITO_GRANDE",
+            "O arquivo é grande demais.",
+            {
+                "bytes": caminho_arquivo.stat().st_size if caminho_arquivo.exists() else None,
+                "limite_bytes": 25 * 1024 * 1024,
+            },
+        ) from erro
+    except InspecaoMidiaIndisponivel as erro:
+        audio_service.limpar_arquivo(caminho_arquivo)
+        logger.exception("Validador de mídia indisponível")
+        raise ErroAudioApi(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "SERVICO_INDISPONIVEL",
+            "Não foi possível validar o áudio agora. Tente novamente.",
+        ) from erro
+
+    duracao_segundos = midia.duracao_segundos
     expiracao = audio_service.calcular_expiracao(duracao_segundos)
-    audio_service.registrar_transcricao(TranscricaoResponse(id_audio=id_audio, estado="recebido"))
+    await audios.criar(
+        TranscricaoAudio(
+            id=id_audio,
+            usuario_id=usuario.id,
+            estado=EstadoTranscricao.RECEBIDO,
+            formato=formato_detectado,
+            duracao_segundos=duracao_segundos,
+            criada_em=datetime.now(UTC),
+            expira_em=expiracao,
+        )
+    )
+    # O processamento abre outra sessao e precisa enxergar a submissao.
+    await banco.commit()
     background_tasks.add_task(
-        _processar_transcricao,
+        processador.processar,
         id_audio,
         caminho_arquivo,
         idioma,
+        usuario,
+        conversa_id,
     )
 
     return AudioUploadResponse(
@@ -252,7 +348,7 @@ async def upload_audio(
         estado="recebido",
         duracao_segundos=duracao_segundos,
         consultar_em=f"/voz/audios/{id_audio}/transcricao",
-        expira_em=expiracao.isoformat() + "Z",
+        expira_em=expiracao.isoformat().replace("+00:00", "Z"),
     )
 
 
@@ -311,6 +407,7 @@ async def upload_audio(
 async def consultar_transcricao(
     id_audio: str,
     usuario: UsuarioAtual,
+    audios: Annotated[AudioRepository, Depends(obter_audios)],
 ) -> TranscricaoResponse:
     """Consulta o resultado da transcrição de um áudio.
 
@@ -325,10 +422,22 @@ async def consultar_transcricao(
       -H "Cookie: sessao=<cookie>"
     ```
     """
-    transcricao = audio_service.obter_transcricao(id_audio)
+    transcricao = await audios.obter(id_audio, usuario.id)
     if transcricao is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Áudio não encontrado ou resultado expirado",
+        raise ErroAudioApi(
+            status.HTTP_404_NOT_FOUND,
+            "AUDIO_NAO_ENCONTRADO",
+            "Esse áudio não está mais disponível.",
         )
-    return transcricao
+    return TranscricaoResponse(
+        id_audio=transcricao.id,
+        estado=transcricao.estado.value,
+        texto=transcricao.texto,
+        idioma=transcricao.idioma,
+        confianca=transcricao.confianca,
+        duracao_segundos=transcricao.duracao_segundos,
+        latencia_ms=transcricao.latencia_ms,
+        mensagem_erro=transcricao.mensagem_erro,
+        conversa_id=transcricao.conversa_id,
+        interacao_id=transcricao.interacao_id,
+    )

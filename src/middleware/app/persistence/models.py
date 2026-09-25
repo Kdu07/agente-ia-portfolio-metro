@@ -42,6 +42,15 @@ class StatusExecucao(Enum):
     FALHA = "falha"  # erro de execução (executor fora, banco indisponível)
 
 
+class EstadoTranscricao(Enum):
+    """Ciclo de vida persistido de uma submissao de audio."""
+
+    RECEBIDO = "recebido"
+    TRANSCREVENDO = "transcrevendo"
+    CONCLUIDA = "concluida"
+    FALHOU = "falhou"
+
+
 class StatusProjeto(Enum):
     """Status de um projeto no portfólio."""
 
@@ -168,6 +177,26 @@ class Interacao:
     def bloqueada(self) -> bool:
         """True quando a resposta do executor não foi entregue."""
         return self.desfecho.bloqueada
+
+
+@dataclass
+class TranscricaoAudio:
+    """Submissao de voz persistida e vinculada ao seu proprietario."""
+
+    id: str
+    usuario_id: str
+    estado: EstadoTranscricao
+    formato: str
+    duracao_segundos: float
+    criada_em: datetime
+    expira_em: datetime
+    conversa_id: str | None = None
+    interacao_id: str | None = None
+    texto: str | None = None
+    idioma: str | None = None
+    confianca: float | None = None
+    latencia_ms: int | None = None
+    mensagem_erro: str | None = None
 
 
 @dataclass

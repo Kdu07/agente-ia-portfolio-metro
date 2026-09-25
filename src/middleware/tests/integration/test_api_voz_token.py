@@ -77,6 +77,7 @@ def test_falha_na_emissao_responde_503_generico(com_sessao, emitir, falha):
 
     assert resposta.status_code == 503
     assert resposta.json() == {
-        "detail": "Entrada por voz indisponível no momento. Digite a mensagem."
+        "codigo": "SERVICO_INDISPONIVEL",
+        "mensagem": "O canal de voz está temporariamente indisponível.",
     }
     assert "SPEECH_KEY" not in resposta.text and "401" not in resposta.text

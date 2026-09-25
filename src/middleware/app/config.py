@@ -214,6 +214,10 @@ class Settings(BaseSettings):
     speech_idioma: str = "pt-BR"
     speech_api_version: str = "2025-10-15"
     speech_timeout_seconds: float = 30.0
+    # O ffprobe confirma trilha de audio e duracao antes de chamar o Azure.
+    # O binario faz parte da imagem; o caminho e configuravel para Windows.
+    ffprobe_path: str = "ffprobe"
+    ffprobe_timeout_seconds: float = 10.0
 
     # --- Implantação ----------------------------------------------------
     # Carrega o classificador e o e5-large na subida da API, numa thread,

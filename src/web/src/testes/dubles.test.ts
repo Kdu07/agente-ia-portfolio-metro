@@ -32,15 +32,16 @@ describe("Camada de dublês", () => {
     for (const pendente of handlersPendentes) expect(handlers).toContain(pendente);
   });
 
-  it("o worker do navegador registra apenas os dublês pendentes", async () => {
+  it("não inicia MSW no navegador quando nenhuma rota esta pendente", async () => {
     vi.stubEnv("DEV", true);
     vi.stubEnv("VITE_SEM_DUBLES", "");
     const { iniciarDubles } = await import("@/mocks/navegador");
 
     await iniciarDubles();
 
-    expect(setupWorker).toHaveBeenCalledWith(...handlersPendentes);
-    expect(iniciar).toHaveBeenCalledWith(expect.objectContaining({ onUnhandledRequest: "bypass" }));
+    expect(handlersPendentes).toHaveLength(0);
+    expect(setupWorker).not.toHaveBeenCalled();
+    expect(iniciar).not.toHaveBeenCalled();
   });
 
   it("VITE_SEM_DUBLES desliga também os pendentes", async () => {

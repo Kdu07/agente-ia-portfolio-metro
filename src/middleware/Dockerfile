@@ -11,6 +11,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# Valida duracao, decodificacao e presenca exclusiva de trilha de audio
+# antes de consumir a franquia do Azure Speech.
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copiado antes do código para que a camada de dependências seja
 # reaproveitada quando só a aplicação muda.
 COPY pyproject.toml ./

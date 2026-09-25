@@ -50,7 +50,11 @@ class ErroReconhecimentoSpeech(RuntimeError):
 
 
 class ErroTokenSpeech(RuntimeError):
-    """O Azure Speech não emitiu o token; tratar como indisponibilidade."""
+    """O servidor não conseguiu emitir a credencial efêmera de voz."""
+
+    def __init__(self, mensagem: str, *, cota_excedida: bool = False) -> None:
+        super().__init__(mensagem)
+        self.cota_excedida = cota_excedida
 
 
 def reconhecer_arquivo_wav(
@@ -112,11 +116,7 @@ def reconhecer_arquivo_wav(
 
 
 def _url_emissao(regiao: str) -> str:
-    """`issueToken` do domínio próprio, se configurado, ou o regional.
-
-    Recurso com domínio personalizado (`SPEECH_ENDPOINT`) emite pelo próprio
-    domínio; sem ele, vale o endpoint regional do serviço.
-    """
+    """Monta o endpoint de token pelo domínio configurado ou pela região."""
     endpoint = settings.speech_endpoint.strip().rstrip("/")
     if endpoint:
         return f"{endpoint}/sts/v1.0/issueToken"
@@ -128,41 +128,43 @@ async def emitir_token(*, cliente: httpx.AsyncClient | None = None) -> TokenVoz:
 
     Chamado por api/routes/voz.py, que exige sessão válida: um endpoint
     aberto seria um proxy gratuito para o recurso de Speech do parceiro.
-
-    A chave vai só no cabeçalho desta chamada servidor a servidor. Falha de
-    rede, recusa ou resposta vazia do serviço viram `ErroTokenSpeech`, sem o
-    corpo da resposta: o erro do provedor pode ecoar a chave recebida.
     """
     chave = settings.speech_key.strip()
     regiao = settings.speech_region.strip()
-    idioma = settings.speech_idioma.strip()
+    idioma = settings.speech_idioma.strip() or "pt-BR"
     if not chave:
         raise ErroConfiguracaoSpeech("SPEECH_KEY não configurada")
     if not regiao:
         raise ErroConfiguracaoSpeech("SPEECH_REGION não configurada")
-
-    proprio = cliente is None
-    if cliente is None:
+    proprio_cliente = cliente is None
+    if proprio_cliente:
         cliente = httpx.AsyncClient(timeout=settings.speech_timeout_seconds)
     try:
+        assert cliente is not None
         resposta = await cliente.post(
             _url_emissao(regiao),
             headers={"Ocp-Apim-Subscription-Key": chave, "Content-Length": "0"},
         )
     except httpx.HTTPError as erro:
         logger.warning("Emissão de token do Speech falhou: %s", type(erro).__name__)
-        raise ErroTokenSpeech("Serviço de fala indisponível") from None
+        raise ErroTokenSpeech("Não foi possível acessar o Azure Speech") from None
     finally:
-        if proprio:
+        if proprio_cliente and cliente is not None:
             await cliente.aclose()
 
-    if resposta.status_code != 200:
+    if resposta.status_code == 429:
+        logger.warning("Emissão de token do Speech recusada: HTTP 429")
+        raise ErroTokenSpeech(
+            "Azure Speech respondeu HTTP 429: limite temporário atingido",
+            cota_excedida=True,
+        )
+    if resposta.status_code >= 400:
         logger.warning("Emissão de token do Speech recusada: HTTP %s", resposta.status_code)
-        raise ErroTokenSpeech(f"Serviço de fala respondeu {resposta.status_code}")
+        raise ErroTokenSpeech(f"Azure Speech respondeu HTTP {resposta.status_code}")
     token = resposta.text.strip()
     if not token:
-        raise ErroTokenSpeech("Serviço de fala devolveu token vazio")
-    return TokenVoz(token=token, regiao=regiao, idioma=idioma or "pt-BR")
+        raise ErroTokenSpeech("O Azure Speech devolveu um token vazio")
+    return TokenVoz(token=token, regiao=regiao, idioma=idioma)
 
 
 def main() -> None:

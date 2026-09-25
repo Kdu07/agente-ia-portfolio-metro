@@ -29,7 +29,6 @@ import type {
   Desfecho,
   Execucao,
   Rotina,
-  TokenVoz,
   ValidacaoRotina,
 } from "@/tipos";
 import { USUARIO } from "./dados/usuario";
@@ -292,24 +291,8 @@ const handlersComRotaReal = [
 ];
 
 /** Rotas ainda sem implementacao no middleware, e por que continuam dubladas. */
-export const ROTAS_PENDENTES: { rota: string; motivo: string }[] = [
-  {
-    rota: "GET /voz/token",
-    motivo: "A emissão do token do Azure Speech entra no middleware com a issue #396.",
-  },
-];
+export const ROTAS_PENDENTES: { rota: string; motivo: string }[] = [];
 
-export const handlersPendentes = [
-  // Voz
-  http.get(`${BASE}/voz/token`, () => {
-    const corpo: TokenVoz = {
-      token: "token-de-demonstracao-nao-funcional",
-      regiao: "brazilsouth",
-      expira_em_segundos: 540,
-      idioma: "pt-BR",
-    };
-    return HttpResponse.json(corpo);
-  }),
-];
+export const handlersPendentes = [];
 
 export const handlers = [...handlersComRotaReal, ...handlersPendentes];

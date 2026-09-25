@@ -6,7 +6,17 @@ Este módulo define os schemas de resposta para os endpoints de submissão
 e consulta de transcrição.
 """
 
+from typing import Any
+
 from pydantic import BaseModel, Field
+
+
+class ErroAudioResponse(BaseModel):
+    """Envelope estavel dos erros publicos do canal de voz."""
+
+    codigo: str
+    mensagem: str
+    detalhe: dict[str, Any] | None = None
 
 
 class AudioUploadResponse(BaseModel):
@@ -70,4 +80,12 @@ class TranscricaoResponse(BaseModel):
     mensagem_erro: str | None = Field(
         default=None,
         description="Orientação ao usuário quando a transcrição falha (presente apenas no estado 'falhou')"
+    )
+    conversa_id: str | None = Field(
+        default=None,
+        description="Conversa criada ou continuada pelo texto transcrito",
+    )
+    interacao_id: str | None = Field(
+        default=None,
+        description="Registro persistido pelo pipeline para esta fala",
     )

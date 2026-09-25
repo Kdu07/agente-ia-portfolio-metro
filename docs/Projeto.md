@@ -2173,7 +2173,7 @@ Esta seção apresenta a especificação consolidada da pilha de tecnologias par
 A plataforma de acesso foi desenhada em arquitetura de Single Page Application (SPA) responsiva, eliminando a fragmentação de código e garantindo operação uniforme em qualquer dispositivo:
 
 - **Interface Web Própria (Desktop e Mobile Web):** Desenvolvida como aplicação web responsiva servida por Nginx, acessível via navegadores em estações de trabalho (Desktop) e dispositivos móveis.
-- **Design Adaptativo e Acessibilidade:** Construída com Tailwind CSS e componentes shadcn/ui sobre primitivos de interface acessíveis, com quebras de layout dinâmicas que organizam o chat conversacional, a barra de histórico, a gestão de rotinas e os gráficos analíticos em telas de qualquer dimensão sem exigir bases de código mobile dedicadas.
+- **Design Adaptativo e Acessibilidade:** Construída com Tailwind CSS e primitivos de interface acessíveis, com quebras de layout dinâmicas que organizam o chat conversacional, a barra de histórico, a gestão de rotinas e os gráficos analíticos em telas de qualquer dimensão sem exigir bases de código mobile dedicadas.
 - **Canal de Voz Unificado:** Entrada multimodal por áudio diretamente pelo navegador via Azure Speech SDK, com transcrição em tempo real consumida pelo mesmo endpoint conversacional.
 
 ### 5.1.2 Tecnologias do Pilar 1 — Middleware Próprio, Frontend e Serviços Locais
@@ -2181,8 +2181,8 @@ A plataforma de acesso foi desenhada em arquitetura de Single Page Application (
 Composto pelo frontend estático, pela API backend assíncrona, pelo worker agendador de rotinas e pela persistência local:
 
 - **Frontend / Camada de Apresentação (`src/web/`):**
-  - *Core & Build:* **React 19**, **TypeScript** e **Vite**, gerando artefatos estáticos leves sem dependência de runtime Node.js em produção.
-  - *Estilização & UI:* **Tailwind CSS** para design responsivo e **shadcn/ui**, sobre os primitivos do Radix, para componentes acessíveis.
+  - *Core & Build:* **React 18**, **TypeScript** e **Vite**, gerando artefatos estáticos leves sem dependência de runtime Node.js em produção.
+  - *Estilização & UI:* **Tailwind CSS** para design responsivo e componentes acessíveis.
   - *Gerenciamento de Estado de Servidor:* **TanStack Query** para controle de cache, sincronização e revalidação do histórico de conversas e execuções de rotinas.
   - *Visualização de Dados:* **Recharts** para exibição do dashboard de telemetria, análise de distribuição de intenções e monitoramento das guardas de segurança.
 - **Backend, API e Orquestração (`src/middleware/`):**
@@ -2225,7 +2225,7 @@ Serviços homologados no tenant do parceiro que recebem requisições validadas 
 
 | Camada | Tecnologia / Ferramenta | Papel na Solução | Critério / Justificativa |
 |---|---|---|---|
-| **Interface / Frontend** | React 19 / TypeScript / Vite / Tailwind CSS / shadcn/ui | Interface Web Unificada (Desktop e Mobile) | SPA leve, responsiva, estática e sem runtime Node.js em produção. |
+| **Interface / Frontend** | React 18 / TypeScript / Vite / Tailwind CSS | Interface Web Unificada (Desktop e Mobile) | SPA leve, responsiva, estática e sem runtime Node.js em produção. |
 | **Servidor Web / Proxy** | Nginx | Servir estáticos da SPA e proxy reverso para `/api` | Elimina problemas de CORS e gerencia rotas estáticas em mesma origem. |
 | **Backend & API (BFF)** | Python 3.12 / FastAPI / Pydantic v2 | API REST assíncrona, orquestrador e controle de sessão | Alta performance Input/Output, tipagem forte e controle centralizado em `deps.py`. |
 | **Autenticação** | Microsoft Entra ID (OAuth PKCE) | Gestão de identidade, perfis e permissões | Autenticação corporativa com sessão segura em cookies `httpOnly`. |
@@ -2499,7 +2499,7 @@ C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio —
 
 ### 5.2.3 Diagrama atual da Sprint 2
 
-Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o Copilot é o executor previsto. O diagrama inclui componentes planejados: emissão de token de voz, parte das guardas, cliente Copilot e execução de rotinas ainda possuem etapas não implementadas; não representam funcionalidades integralmente entregues na S3.
+Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o executor é escolhido por configuração. Em relação ao estado da S3, a emissão de token de voz, as três guardas, o cliente do executor e a execução de rotinas receberam implementação nas ondas seguintes; o estado verificável de cada integração é registrado nas respectivas seções, sem transformar o diagrama em evidência de deploy.
 
 O diagrama adota três agrupamentos principais. O `src/web` concentra a
 experiência do usuário; o `src/middleware` recebe as requisições e aplica o
@@ -2523,7 +2523,7 @@ flowchart TB
 
   subgraph CLIENT["Navegador / Cliente"]
     direction TB
-    SPA["src/web (React 19 + Vite + Tailwind)<br/><i>Chat · Histórico · Intenções · Rotinas</i>"]
+    SPA["src/web (React 18 + Vite + Tailwind)<br/><i>Chat · Histórico · Intenções · Rotinas</i>"]
   end
 
   subgraph DOCKER["Ambiente Local / Docker Compose"]
@@ -4679,9 +4679,9 @@ Quanto às metas registradas ao final da seção 3.1.5, a definição do serviç
 
 ### 5.7.3 API de recebimento de áudios do usuário
 
-> **Estado da implementação.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. As subseções 5.7.3.1 a 5.7.3.8 especificam o contrato-alvo. O comportamento implementado, com exemplos de requisição e resposta obtidos da aplicação, e as divergências em relação ao contrato estão em 5.7.3.9.
+> **Estado vigente após a correção #450.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. Ausência do arquivo responde 400 no envelope `codigo`, `mensagem` e `detalhe`. Depois dos magic bytes, o `ffprobe` confirma decodificação, presença exclusiva de trilha de áudio e duração; arquivos acima de 300 segundos são recusados antes do Azure Speech. A idempotência por cabeçalho continua prevista, mas ainda não implementada.
 
-> A transcrição REST é executada em segundo plano e mantida em memória no processo. Seu texto precisa ser enviado posteriormente a `/chat` com `canal=voz`; não há encaminhamento automático ao NLP no upload. O microfone da interface usa outro trajeto, com o token de `GET /voz/token` (5.7.4.6). Esses limites não alteram a decisão tecnológica nem antecipam a integração final da S5.
+> A submissão e seus estados agora vivem em `transcricao_audio`, vinculados ao proprietário. A consulta filtra `id_audio`, `usuario_id` e expiração na própria consulta SQL, devolvendo o mesmo 404 para identificador alheio, vencido ou inexistente. Depois do STT, `ProcessadorAudio` envia automaticamente o texto ao mesmo `Orquestrador` de `/chat` com `canal=voz`; a interação e o vínculo com a submissão são confirmados na mesma transação. O trajeto contínuo do navegador recebe token efêmero real por `GET /voz/token`, sem expor `SPEECH_KEY`.
 
 Esta subseção especifica o contrato da API que recebe os áudios enviados pelo usuário — o trajeto de ingestão adotado em 5.7.1.3 como caminho canônico do canal de voz. É o contrato entre a interface de voz e o pipeline de PLN: o que a interface pode enviar, o que o servidor garante devolver e o que acontece quando algo dá errado.
 
@@ -4697,7 +4697,7 @@ Os caminhos declarados abaixo são os da aplicação. O navegador os alcança so
 
 **A submissão aceita não é a transcrição concluída.** São dois estados, com códigos de resposta distintos. Confundi-los obrigaria o cliente a distinguir pelo corpo da resposta se a operação terminou, e tornaria impossível representar o intervalo em que o áudio já é responsabilidade do servidor mas ainda não produziu texto — exatamente o intervalo em que a interface precisa exibir progresso.
 
-**O registro da interação independe do trajeto.** Conforme fixado em 5.7.1.3, tanto a ingestão quanto o modo de transmissão contínua gravam uma única interação, com o canal marcado como voz. Esta API não cria um segundo registro: ela produz o texto que, submetido ao endpoint de conversação, origina a interação. O que a ingestão acrescenta ao registro é a existência do áudio de origem durante o intervalo previsto na política de retenção de 5.7.1.5.
+**O registro da interação independe do trajeto.** Conforme fixado em 5.7.1.3, tanto a ingestão quanto o modo de transmissão contínua gravam uma única interação, com o canal marcado como voz. Na ingestão, o processamento em segundo plano chama diretamente o orquestrador e grava o `interacao_id` na submissão; o cliente não repete o texto em `/chat`. No modo contínuo, o SDK entrega o texto ao mesmo envio usado pelo campo digitado. Os dois caminhos convergem antes das guardas e do classificador.
 
 #### 5.7.3.2 Endpoints
 
@@ -4836,13 +4836,11 @@ Decorrido o prazo devolvido em `expira_em`, o resultado deixa de estar disponív
 
 #### 5.7.3.5 Encaminhamento ao pipeline de conversação
 
-Esta API **não aciona o pipeline**. Ela produz texto; o texto é submetido ao endpoint de conversação pelo cliente, como qualquer outra mensagem, com o canal marcado como voz.
+Após concluir a transcrição, o processamento assíncrono encaminha automaticamente o texto ao mesmo `Orquestrador` utilizado pelo endpoint de conversação, com o canal marcado como voz. Portanto, áudio e texto percorrem a mesma ordem de guardas, classificação de intenção, execução e registro da interação. Os identificadores `conversa_id` e `interacao_id` ficam associados ao registro persistente da transcrição e são devolvidos na consulta do resultado.
 
-A escolha preserva um invariante da arquitetura descrita em 5.2: o orquestrador é o único ponto de entrada do pipeline, e é essa unicidade que garante que as guardas, a classificação e o registro sejam obrigatórios para toda solicitação. Uma API de áudio que chamasse o pipeline por conta própria criaria um segundo caminho de entrada — e um segundo caminho é, por construção, um caminho que alguém pode esquecer de proteger quando o primeiro mudar.
+Essa integração mantém o orquestrador como ponto único da lógica do pipeline: a rota de áudio não replica classificação nem execução, apenas entrega o texto transcrito ao serviço existente. Assim, mudanças nas guardas ou nas regras de intenção continuam valendo para os dois canais.
 
-Há uma consequência de interface que decorre disso, e que atende ao risco R03. Entre a transcrição e o envio existe um momento em que o texto está visível e ainda não foi processado. A interface apresenta a transcrição no campo de mensagem antes do envio, de modo que a pessoa veja o que foi entendido e possa corrigir. Uma sigla transcrita errada deixa de se propagar como intenção mal classificada, que é precisamente o encadeamento que o R03 descreve. Para as intenções que alteram dados, soma-se a esta verificação a confirmação já exigida pelo RF05, resultando em duas oportunidades de interceptar um erro de transcrição antes que ele produza efeito.
-
-O texto encaminhado é indistinguível, para o pipeline, de um texto digitado. É o que sustenta a afirmação de 5.3.2 de que a classificação é a mesma para os dois canais, e o que permite que a medição de degradação ponta a ponta de 3.1.5.2 compare os dois caminhos sobre o mesmo classificador.
+O principal risco restante é semântico: uma transcrição plausível, porém incorreta, pode seguir normalmente para a classificação sem produzir exceção. Por isso, ações com efeito de escrita continuam sujeitas à confirmação prevista no RF05, e os testes ponta a ponta devem incluir vocabulário real do Metrô e casos como números de linhas, siglas e nomes de projetos.
 
 #### 5.7.3.6 Formatos, limites e sua justificativa
 
@@ -4911,141 +4909,6 @@ Duas propriedades atravessam a tabela.
 **Toda mensagem oferece uma saída.** Em cinco dos oito casos a saída inclui o canal de texto, o que operacionaliza no nível da interface o plano de resposta ao risco R03 registrado em 2.6.3: tratar a voz como incremento, com retorno sempre possível ao texto.
 
 **Falha de transcrição não é erro de requisição.** A indisponibilidade do serviço de fala, o tempo esgotado e o áudio sem fala reconhecível não aparecem nesta tabela: eles ocorrem depois da aceitação e se manifestam como o estado `falhou` descrito em 5.7.3.4, com resposta `200`. Um erro de requisição informa que o pedido não pôde ser atendido; um estado informa o desfecho de um pedido que foi atendido.
-
-#### 5.7.3.9 Comportamento implementado e exemplos reproduzíveis
-
-As subseções anteriores descrevem o contrato-alvo, também registrado em [`openapi-voz.yaml`](api/openapi-voz.yaml). Esta subseção registra o que as rotas de [`voz.py`](../src/middleware/app/api/routes/voz.py) fazem hoje, com respostas obtidas executando a aplicação, e onde elas divergem do contrato. Os exemplos podem ser reproduzidos com o middleware em execução e um cookie de sessão válido, ou pelos testes de [`test_api_audio.py`](../src/middleware/tests/integration/test_api_audio.py).
-
-**Endpoints e parâmetros**
-
-| Método | Caminho na aplicação | Caminho pelo proxy | Entrada | Sucesso |
-|---|---|---|---|:-:|
-| `POST` | `/voz/audios` | `/api/voz/audios` | `multipart/form-data` com o arquivo em `audio` (obrigatório), e `idioma` e `conversa_id` (textos opcionais) | `202` |
-| `GET` | `/voz/audios/{id_audio}/transcricao` | `/api/voz/audios/{id_audio}/transcricao` | `id_audio` no caminho | `200` |
-
-As duas rotas exigem o cookie `sessao`. `idioma` é repassado ao serviço de fala; ausente, vale `SPEECH_IDIOMA`, com padrão `pt-BR`. `conversa_id` é aceito, mas ainda não é usado. O cabeçalho `Idempotency-Key` não é lido.
-
-**Validação, na ordem em que acontece**
-
-| Etapa | Regra implementada | Resposta quando falha |
-|---|---|---|
-| Sessão | Cookie `sessao` válido | `401`, `{"detail": "Sessão ausente"}` |
-| Campo `audio` | Presente no formulário | `422`, com a lista de validação do FastAPI |
-| Extensão do nome | `.wav`, `.webm`, `.ogg`, `.mp4` ou `.mp3` | `415`, com a lista de extensões aceitas |
-| Tamanho | Até 25 MB (26.214.400 bytes) | `413`, `{"detail": "Arquivo muito grande. Tamanho máximo: 25 MB"}` |
-| Conteúdo real | Assinatura do arquivo: `RIFF` (WAV), `OggS` (Ogg), EBML com `DocType=webm` nos primeiros 4 KiB (WebM), `ftyp` (MP4), `ID3` ou cabeçalho MPEG (MP3) | `415`, `{"detail": "Formato de arquivo não reconhecido. ..."}` |
-
-O `Content-Type` declarado para a parte do arquivo não é usado: valem a extensão e a assinatura. Por isso um arquivo `.webm` que não seja WebM é recusado mesmo com `audio/webm` no cabeçalho. A assinatura não valida trilhas, codecs nem a decodificação do áudio. Nenhum arquivo recusado chega ao serviço de fala.
-
-**Exemplo de submissão aceita**
-
-```http
-POST /api/voz/audios HTTP/1.1
-Host: <host>
-Cookie: sessao=<cookie httpOnly>
-Content-Type: multipart/form-data; boundary=----limite
-
-------limite
-Content-Disposition: form-data; name="audio"; filename="fala.wav"
-Content-Type: audio/wav
-
-<bytes do WAV>
-------limite
-Content-Disposition: form-data; name="idioma"
-
-pt-BR
-------limite--
-```
-
-```http
-HTTP/1.1 202 Accepted
-Content-Type: application/json
-
-{"id_audio":"21a65f6d-acf3-4857-bb30-948d7d08e41c","estado":"recebido","duracao_segundos":0.0,"consultar_em":"/voz/audios/21a65f6d-acf3-4857-bb30-948d7d08e41c/transcricao","expira_em":"2026-09-24T07:53:49.670402Z"}
-```
-
-Equivalente com `curl`:
-
-```bash
-curl -X POST "https://<host>/api/voz/audios" -H "Cookie: sessao=<cookie>" -F "audio=@fala.wav" -F "idioma=pt-BR"
-```
-
-| Campo | Tipo | Conteúdo implementado |
-|---|---|---|
-| `id_audio` | texto (UUID v4) | Identificador da submissão |
-| `estado` | texto | Sempre `recebido` |
-| `duracao_segundos` | número | Hoje sempre `0.0`: a duração ainda não é apurada na validação |
-| `consultar_em` | texto | Caminho da consulta, sem o prefixo `/api` |
-| `expira_em` | texto ISO 8601 em UTC | Uma hora após a submissão |
-
-O arquivo é gravado em `uploads/audio/` e transcrito em segundo plano (`BackgroundTasks`) pela Fast Transcription (5.7.4), depois da resposta. Ao terminar, com ou sem sucesso, o arquivo é apagado.
-
-**Consulta do resultado**
-
-```http
-GET /api/voz/audios/21a65f6d-acf3-4857-bb30-948d7d08e41c/transcricao HTTP/1.1
-Host: <host>
-Cookie: sessao=<cookie httpOnly>
-```
-
-A resposta é sempre `200` enquanto o identificador existir, e o corpo traz todos os campos, com `null` nos que não se aplicam ao estado:
-
-| Campo | Tipo | Presente com valor em |
-|---|---|---|
-| `id_audio` | texto | Todos os estados |
-| `estado` | `recebido`, `transcrevendo`, `concluida` ou `falhou` | Todos os estados |
-| `texto`, `idioma`, `confianca`, `duracao_segundos`, `latencia_ms` | texto, texto, número de 0 a 1, número, inteiro | `concluida` |
-| `mensagem_erro` | texto | `falhou` |
-
-Exemplo de transcrição concluída, no formato devolvido pela rota:
-
-```json
-{"id_audio":"a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19","estado":"concluida","texto":"Qual o avanço do projeto da Linha 15 Prata?","idioma":"pt-BR","confianca":0.94,"duracao_segundos":11.4,"latencia_ms":1830,"mensagem_erro":null}
-```
-
-Exemplo real de falha, obtido com o middleware sem `SPEECH_ENDPOINT` configurado:
-
-```json
-{"id_audio":"21a65f6d-acf3-4857-bb30-948d7d08e41c","estado":"falhou","texto":null,"idioma":null,"confianca":null,"duracao_segundos":null,"latencia_ms":null,"mensagem_erro":"SPEECH_ENDPOINT nao configurado"}
-```
-
-As falhas da transcrição são registradas no estado `falhou`, e não como erro HTTP:
-
-- **Fala não reconhecida:** "Nenhuma fala foi reconhecida no audio".
-- **Limite temporário do serviço:** acontece quando o provedor responde `429`.
-- **Áudio que o serviço não processou:** acontece quando o provedor responde `400`, `404`, `413`, `415` ou `422`.
-- **Serviço indisponível:** tempo esgotado, falha de rede ou outro erro do provedor.
-- **Configuração ausente:** falta `SPEECH_KEY`, `SPEECH_ENDPOINT` ou `SPEECH_IDIOMA`.
-
-**Códigos de resposta implementados**
-
-| HTTP | Rota | Quando | Corpo |
-|:-:|---|---|---|
-| `202` | `POST /voz/audios` | Áudio aceito | Estrutura acima |
-| `200` | `GET .../transcricao` | Identificador conhecido, em qualquer estado | Estrutura acima |
-| `401` | Ambas | Sem sessão válida | `{"detail": "Sessão ausente"}` |
-| `404` | `GET .../transcricao` | Identificador desconhecido ou perdido após reinício do processo | `{"detail": "Áudio não encontrado ou resultado expirado"}` |
-| `413` | `POST /voz/audios` | Arquivo acima de 25 MB | `{"detail": "Arquivo muito grande. Tamanho máximo: 25 MB"}` |
-| `415` | `POST /voz/audios` | Extensão fora da lista ou conteúdo que não corresponde a um formato aceito | `{"detail": "..."}` com os formatos aceitos |
-| `422` | `POST /voz/audios` | Formulário sem o campo `audio` | Lista de validação do FastAPI |
-| `500` | `POST /voz/audios` | Falha ao gravar o arquivo em disco | `{"detail": "Falha ao processar arquivo: ..."}` |
-
-**Divergências entre o implementado e o contrato-alvo**
-
-| Contrato (5.7.3.3 a 5.7.3.8 e `openapi-voz.yaml`) | Implementado |
-|---|---|
-| Erros com `codigo`, `mensagem` e `detalhe` | Erros no formato padrão do FastAPI, `{"detail": ...}`, sem código estável |
-| `400 AUDIO_AUSENTE` sem o campo `audio` | `422` do FastAPI |
-| Formatos definidos pelo tipo de conteúdo; MP3 fora da lista | Formatos definidos pela extensão e pela assinatura; MP3 aceito |
-| Duração apurada e limite de 5 minutos (`AUDIO_MUITO_LONGO`) | Duração não apurada (`0.0`) e sem limite de duração |
-| `Location` na aceitação e `Retry-After` na consulta em andamento | Nenhum dos dois cabeçalhos |
-| `Idempotency-Key` devolve a submissão original | Cabeçalho ignorado; um reenvio cria outra submissão |
-| Consulta restrita a quem submeteu | Qualquer sessão válida consulta qualquer `id_audio` conhecido |
-| Resultado expira em `expira_em`, com `404` depois | `expira_em` é informado, mas o resultado fica em memória até o processo reiniciar |
-| Uma submissão simultânea por usuário (`COTA_EXCEDIDA`) | Sem limite na API; o `429` do serviço vira estado `falhou` |
-| `mensagem_erro` orientada à pessoa, sem detalhes internos | Mensagens técnicas, sem acentuação, e que nomeiam a variável ausente quando falta configuração |
-
-Essas divergências ficam registradas para correção antes do uso com dados reais. As mais sensíveis são a consulta sem verificação de propriedade e a mensagem que expõe configuração. O microfone da interface não depende desta API: ele usa o token de `GET /voz/token` (5.7.4.6) e transmite o áudio diretamente ao serviço de fala.
 
 ### 5.7.4 API de conversão de fala em texto
 
@@ -6362,66 +6225,37 @@ Os wireframes estabelecem a estrutura responsiva, enquanto os mockups detalham e
 
 ## 8.3 Guia Visual
 
-A identidade visual utiliza o logotipo do Prata Agent, composto pelo símbolo relacionado ao transporte metroferroviário, pela inicial do produto e por sua assinatura verbal. O logotipo é desenhado em vetor, a partir do traçado do arquivo original, e existe em duas versões: marinho, para fundos claros, e prateada, para as superfícies marinho da barra lateral, da tela de entrada e do avatar do agente. As duas preservam as proporções e o filete azul da assinatura. A cor vem dos tokens do tema, e não da imagem, de modo que o mesmo desenho serve às duas superfícies; a versão prateada anterior, em imagem sobre fundo transparente, desaparecia sobre o fundo claro.
+A identidade visual utiliza o logotipo do Prata Agent, composto pelo símbolo relacionado ao transporte metroferroviário, pela inicial do produto e por sua assinatura verbal. A versão adotada possui fundo transparente, lettering prateado e detalhes azuis, devendo ter suas proporções preservadas.
 
-![Logotipo do Prata Agent nas versões marinho e prateada](./imagens/logo-prata-versoes.png)
+![Logotipo do Prata Agent](./imagens/logo-prata-agent.png)
 
-A paleta parte de três cores de marca. O marinho ocupa a barra lateral, a tela de entrada e a mensagem de quem pergunta; o azul é reservado a ação, seleção e foco; o prata aparece apenas na assinatura e nos detalhes da marca. As demais cores são neutras, levemente tingidas de azul, e as cores de estado continuam semânticas: verde, vermelho, âmbar, azul e violeta identificam os desfechos do pipeline, e o vermelho de gravação fica restrito à entrada por voz. A área da conversa usa um degradê azul suave sobre o fundo da página. Cada cor é um token com valor claro e escuro, e a verificação de contraste de todos os pares está em 9.2.5.
+A interface utiliza fundo predominantemente branco, barra lateral em cinza claro e azul como cor de ação, seleção e apoio à identidade. Textos principais usam tons escuros de alto contraste, enquanto descrições, horários e informações auxiliares utilizam cinza. Verde identifica o acompanhamento ativo e vermelho é reservado a atrasos e ao estado de gravação de voz.
 
-| Token | Claro | Escuro | Uso |
-|---|---|---|---|
-| `--background` | `#F4F7FB` | `#0A111D` | Fundo das páginas |
-| `--card` | `#FFFFFF` | `#111B2C` | Cartões, resposta do agente e campo de mensagem |
-| `--foreground` | `#0E1A2E` | `#EDF2F9` | Títulos e texto de maior peso |
-| `--texto` | `#2F3D55` | `#C3CDDC` | Corpo do texto |
-| `--muted-foreground` | `#5A6A82` | `#8D9AB0` | Texto secundário, horários e legendas |
-| `--primary` | `#1D5BD6` | `#2F6BE0` | Ação principal e seleção |
-| `--sidebar` | `#0B1A33` | `#070D18` | Barra lateral |
-| `--bolha-usuario` | `#14305C` | `#244A86` | Mensagem de quem pergunta |
-| `--prata-claro` e `--prata-escuro` | `#E4E9F0` e `#9DA9BA` | iguais | Detalhes da marca |
-| `--gravacao` | `#D23B3B` | igual | Gravação de voz |
-
-A tipografia utiliza a família `Mona Sans`, fonte variável distribuída sob a licença SIL Open Font License e servida junto com a aplicação, sem depender de serviço externo. O corpo usa peso 400 e entrelinha de 1,55; os títulos usam peso 650 e o eixo de largura da fonte em 116%, o que os distingue do corpo sem trocar de família. Rótulos são escritos em frase, sem caixa alta espaçada, e números em colunas usam algarismos de largura fixa para que se alinhem.
-
-Os ícones vêm de uma única família, a Phosphor, em peso regular e nos tamanhos de 16, 18 e 20 pixels; o peso preenchido marca apenas o item ativo da navegação. Nenhum caractere Unicode é usado como ícone, porque cada um vem de uma fonte de reserva diferente e desalinha do texto. Todo botão que tem só ícone traz nome acessível e uma dica com o mesmo texto.
-
-A interface tem tema claro e tema escuro. A escolha entre Claro, Escuro e Sistema fica no menu do perfil e é guardada no navegador; em Sistema, o tema acompanha a configuração do sistema operacional. O tema escuro não é a inversão do claro: cada token recebe um valor escolhido para o fundo escuro, verificado pelo mesmo teste de contraste. O tema é aplicado antes da primeira pintura da página, para que ela não apareça por um instante no tema errado.
-
-O movimento segue quatro princípios:
-
-- responde a uma ação da pessoa, como abrir um menu, enviar uma mensagem ou trocar de tela, e nunca anima seções inteiras na entrada da página;
-- dura entre 120 e 480 milissegundos;
-- só tem animação contínua o indicador de que o agente está respondendo e a gravação de voz;
-- com a preferência de movimento reduzido do sistema operacional, nada se desloca e as transições terminam no primeiro quadro.
-
-A única ênfase decorativa é o brilho prateado que percorre uma vez a borda do campo de mensagem quando ele recebe foco.
+A tipografia utiliza a família `Inter`, com alternativas nativas do sistema. Títulos e ações principais recebem peso forte; rótulos de navegação utilizam caixa alta e maior espaçamento; mensagens mantêm tamanho e entrelinha adequados à leitura contínua.
 
 | Componente | Função na interface | Situação |
 |---|---|---|
-| Logotipo do Prata Agent | Identificar o produto | Implementado, nas versões marinho e prateada |
+| Logotipo do Prata Agent | Identificar o produto | Implementado |
 | Nova conversa | Iniciar um novo contexto conversacional | Implementado |
 | Página principal | Acessar a experiência conversacional | Implementado |
 | Rotinas | Acessar as rotinas automatizadas | Implementado |
 | Arquivos | Acessar documentos relacionados ao projeto | Mapeado no wireframe; implementação posterior |
 | Integrações | Acessar conexões externas | Mapeado no wireframe; implementação posterior |
-| Conversas recentes | Retomar as oito conversas mais recentes pela barra lateral, agrupadas por data | Implementado |
-| Histórico | Buscar, retomar e arquivar conversas anteriores | Implementado |
-| Menu do perfil | Mostrar a identidade da sessão, escolher o tema e sair | Implementado |
+| Histórico | Retomar conversas anteriores | Implementado visualmente |
 | Acesso Microsoft | Iniciar autenticação corporativa | Integração prevista com o backend |
-| Cabeçalho da conversa | Identificar a conversa aberta e iniciar outra | Implementado |
+| Cabeçalho contextual | Identificar o projeto acompanhado | Implementado |
 | Alerta de marco | Sinalizar uma situação que exige atenção | Implementado |
 | Campo de mensagem | Receber solicitações em linguagem natural | Implementado |
 | Entrada por voz | Permitir interação por fala | Controle visual implementado |
-| Etiqueta de desfecho | Indicar, com texto e ícone, por que uma mensagem não foi atendida | Implementado |
-| Filtro por situação | Alternar entre todas as rotinas, as ativas e as pausadas, com a contagem de cada grupo | Implementado com dados demonstrativos |
-| Busca e ordenação | Localizar e organizar automações | Implementado com dados demonstrativos |
+| Resumo de Rotinas | Informar quantidade total, ativa e pausada | Implementado visualmente |
+| Busca, filtros e ordenação | Localizar e organizar automações | Implementado com dados demonstrativos |
 | Cartão de rotina | Exibir agenda, próximo disparo e intenção prevista | Implementado com dados demonstrativos |
 | Formulário de criação e edição | Configurar os campos previstos no contrato de Rotina | Implementado visualmente |
 | Ativar ou pausar | Alterar o estado de agendamento | Implementado localmente; persistência pendente |
 | Confirmação de exclusão | Evitar remoção acidental | Implementado visualmente |
 | Feedback e estado vazio | Comunicar carregamento, validação, sucesso e ausência de dados | Implementado |
 
-Em larguras abaixo de 768 pixels, a barra lateral é recolhida e aberta como painel deslizante por um botão de menu, e os diálogos passam a ser gavetas presas à base da tela. Em telas largas, a barra lateral pode ser reduzida a uma coluna de ícones, e a escolha é lembrada entre as visitas. A interface mantém suporte a telas com largura mínima de 320 pixels.
+Em larguras de até 850 pixels, a barra lateral é recolhida e aberta por um botão de menu, com sobreposição para separar a navegação do conteúdo. Em larguras de até 520 pixels, elementos secundários do compositor são reduzidos ou ocultados, o título contextual é redimensionado e o alerta ocupa a largura disponível. A interface mantém suporte a telas com largura mínima de 320 pixels.
 
 # 9. Desenvolvimento do Projeto
 
@@ -6746,7 +6580,7 @@ python -m pytest -m integracao
 
 **Situação:** contratos definidos na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini, e implementados em #388 (autenticidade), #390 (WH-01), #389 (WH-02), #394 (consumo) e #447/#448 (preferências e avisos). O contrato documental está em 9.1.2.7.1 e o de eventos estruturados em 9.1.2.7.2; as rotas implementadas, os payloads observados em teste e as limitações conhecidas estão em 9.1.2.7.3.
 
-O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint e descreveu a interação de voz desejada: gravar, concluir a gravação, obter a transcrição, revisar ou editar o texto e só então enviá-lo ao agente. Não há emissor de callback de áudio definido pela equipe.
+O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint. O navegador mantém a interação revisável: conclui a fala, coloca o texto no campo e só o envia quando a pessoa confirma. A ingestão assíncrona de arquivo, por sua vez, é um contrato servidor-servidor e encaminha o texto ao pipeline depois da validação e do STT. Nenhum dos dois trajetos possui emissor de callback de áudio; portanto, ele não foi escolhido como webhook do grupo.
 
 A recomendação técnica é preservar essa revisão explícita do texto e concentrar os webhooks na atualização das fontes do portfólio. Um webhook é uma chamada entre sistemas, sem implicar notificação visual ao usuário, mas a interação de microfone descrita não depende dele.
 
@@ -6761,10 +6595,10 @@ O segundo webhook exige uma planilha nativa do Google Sheets e a configuração 
 
 | Frente | Evidência no repositório | Consequência para a definição |
 |---|---|---|
-| Microfone da interface | [`useMicrofone.ts`](../src/web/src/hooks/useMicrofone.ts) prevê Speech SDK e mantém uma simulação; [`Composer.tsx`](../src/web/src/componentes/chat/Composer.tsx) separa o campo de texto da ação de enviar. | O microfone e a API de upload são trajetos distintos hoje. Consolidar a experiência solicitada pertence à frente de voz; esta definição não muda o SDK nem implementa envio de gravação pelo navegador. |
-| Recebimento de áudio | [`voz.py`](../src/middleware/app/api/routes/voz.py) retorna `202`, executa `_processar_transcricao` em `BackgroundTasks` e disponibiliza consulta por `id_audio`. | O processamento é assíncrono para o cliente da aplicação, mas isso não demonstra a existência de um callback do provedor. |
+| Microfone da interface | [`useMicrofone.ts`](../src/web/src/hooks/useMicrofone.ts) solicita um token efêmero e usa o Speech SDK real; [`Composer.tsx`](../src/web/src/componentes/chat/Composer.tsx) separa o campo de texto da ação de enviar. | O áudio contínuo vai diretamente ao Azure, enquanto somente a credencial curta passa pelo middleware. Não existe frase simulada no código de produção. |
+| Recebimento de áudio | [`voz.py`](../src/middleware/app/api/routes/voz.py) valida e retorna `202`; [`processamento_audio.py`](../src/middleware/app/servicos/processamento_audio.py) executa STT e o pipeline em segundo plano. | O processamento é assíncrono para o cliente e produz uma interação rastreável com `canal=voz`. |
 | Serviço de transcrição | [`transcricao.py`](../src/middleware/app/voz/transcricao.py) chama `transcriptions:transcribe` e extrai o resultado da resposta HTTP. | A integração atual usa Fast Transcription. A revisão do texto pelo usuário pode ser atendida sem callback de conclusão. |
-| Armazenamento do resultado | [`audio_service.py`](../src/middleware/app/servicos/audio_service.py) mantém `_transcricoes` em memória de processo. | A necessidade de persistência permanece. Ao revisar #389, manter responsável e tarefa para vincular resultado, áudio e proprietário em armazenamento durável. |
+| Armazenamento do resultado | `TranscricaoAudioTabela` e `AudioRepository` persistem estado, texto, metadados, proprietário, conversa e interação; a migration `20260925_audio_persistente` cria a estrutura. | Reinício de réplica não apaga o resultado e a consulta não revela submissão de outro usuário. |
 | Fonte documental | A seção 9.4.3.1 e [`drive.py`](../src/middleware/app/rag/ingestao/drive.py) identificam o Google Drive como fonte do corpus sintético. | Implementar e demonstrar o contrato do Drive; a equivalência de negócio com SharePoint não significa equivalência de protocolo nem homologação no ambiente Microsoft. |
 | Dados estruturados | [`portfolio.py`](../src/middleware/app/api/routes/portfolio.py) consulta projetos, riscos, marcos e indicadores persistidos. | WH-02 define campos, autoridade e autorização; o mapeamento concreto da planilha e das entidades deve ser cadastrado antes da ativação. |
 
@@ -7422,42 +7256,33 @@ que o navegador nunca manipula token de acesso.
 
 | Tecnologia | Versão | Papel | Justificativa |
 | --- | --- | --- | --- |
-| React | 19.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
+| React | 18.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
 | TypeScript | 5.5 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
 | Vite | 5.4 | Empacotador e servidor de desenvolvimento | Recarga rápida durante o desenvolvimento e divisão automática de pacote na construção |
 | React Router | 6.26 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
 | TanStack Query | 5.51 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
-| Tailwind CSS | 4.3 | Estilização | Vocabulário visual declarado como tokens CSS em um único arquivo, com valor claro e escuro, e breakpoints responsivos prontos |
-| shadcn/ui sobre Radix | Radix 1.6 | Componentes de interface | O código dos componentes fica no repositório, em `componentes/ui/`, e herda do Radix o comportamento acessível: foco preso nos diálogos, fechamento por Esc e navegação por teclado nos menus |
-| Motion | 13.4 | Movimento | Transições que respeitam a preferência de movimento reduzido a partir de uma configuração única na raiz |
-| Phosphor Icons | 2.1 | Ícones | Família única, com pesos, importada ícone a ícone para não carregar o índice inteiro |
-| Mona Sans | 5.3 | Tipografia | Fonte variável com eixo de largura, servida junto com a aplicação |
-| Sonner e Vaul | 2.0 e 1.1 | Avisos e gavetas | Avisos temporários anunciados ao leitor de tela e diálogos em forma de gaveta no celular |
-| Recharts | 3.8 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
+| Tailwind CSS | 3.4 | Estilização | Vocabulário visual declarado em configuração única, com breakpoints responsivos prontos |
+| Recharts | 2.12 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
 | Azure Speech SDK | 1.38 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
 | MSW | 2.15 | Dublês de API | Interceptação na camada de rede, o que permite exercitar a interface sem alterar o código de produção |
 | Vitest | 2.0 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
 | Testing Library | 16.0 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
-| ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações, inclusive a que obriga os ícones a passarem por `componentes/ui/icones.ts` |
+| ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações |
 
 ### 9.2.3 Estrutura de diretórios da interface
 
 ```
 src/web/
 ├── public/                     Estáticos servidos sem processamento
-│   ├── favicon.svg             Símbolo da marca, em vetor
+│   ├── logo-prata.png
 │   └── mockServiceWorker.js    Worker do MSW, removido do pacote de produção
 ├── src/
 │   ├── componentes/
 │   │   ├── chat/               Componentes da tela de conversa
 │   │   ├── graficos/           Visualizações do painel de intenções
-│   │   ├── marca/              Logotipo, símbolo e traçado das linhas, em SVG
-│   │   ├── moldura/            Barra lateral, conversas recentes e menu do perfil
-│   │   ├── movimento/          Transições padronizadas
-│   │   ├── ui/                 Componentes do shadcn/ui e componentes transversais
-│   │   └── ProvedoresVisuais.tsx  Tema, ícones, movimento, dicas e avisos
+│   │   └── ui/                 Componentes transversais de interface
 │   ├── estilos/
-│   │   └── global.css          Tokens de cor dos dois temas e camada base
+│   │   └── global.css          Camada de estilo compartilhada
 │   ├── hooks/                  Lógica de estado reutilizável
 │   ├── mocks/
 │   │   ├── dados/              Massa de teste por domínio
@@ -7467,18 +7292,16 @@ src/web/
 │   ├── servicos/
 │   │   ├── api.ts              Cliente HTTP tipado
 │   │   └── chaves.ts           Chaves de cache do TanStack Query
-│   ├── tema/                   Preferência de tema claro, escuro ou do sistema
 │   ├── testes/                 Suítes automatizadas e utilitários de teste
 │   ├── tipos/
 │   │   └── index.ts            Contratos da API espelhando app/schemas
 │   ├── utilitarios/
-│   │   ├── cn.ts               Combinação de classes do Tailwind
-│   │   └── formato.ts          Formatação e agrupamento de datas
+│   │   └── formato.ts          Formatação de data e hora
 │   ├── main.tsx                Ponto de entrada
 │   └── rotas.tsx               Mapa de rotas
-├── components.json             Configuração do CLI do shadcn/ui
 ├── index.html
 ├── package.json
+├── tailwind.config.ts
 ├── tsconfig.json               Configuração do código da aplicação
 ├── tsconfig.node.json          Configuração dos arquivos de build
 ├── vite.config.ts
@@ -7494,10 +7317,9 @@ dependência entre páginas que deveriam ser independentes.
 
 A existência de dois arquivos de configuração do TypeScript merece registro. O
 `tsconfig.json` cobre `src/` e serve à aplicação; o `tsconfig.node.json` cobre
-`vite.config.ts`, que roda em Node e não no navegador. Sem o segundo, o arquivo
-de configuração ficava fora da verificação de tipos e um erro real nele só
-apareceria em tempo de execução do build. Desde o Tailwind 4 não há mais
-`tailwind.config.ts`: o tema é declarado no próprio CSS.
+`vite.config.ts` e `tailwind.config.ts`, que rodam em Node e não no navegador.
+Sem o segundo, os arquivos de configuração ficavam fora da verificação de tipos
+e um erro real neles só apareceria em tempo de execução do build.
 
 ### 9.2.4 Convenções de codificação
 
@@ -7526,17 +7348,6 @@ classe apenas quando a encontra literalmente no código. Construções como
 `text-desfecho-${cor}` compilam sem erro e não pintam nada. Por isso as classes
 de cada desfecho estão escritas inteiras em `componentes/chat/desfechos.ts`.
 
-**Cor só por token.** Nenhum componente declara cor em hexadecimal nem usa a
-paleta padrão do Tailwind. As cores são tokens de `estilos/global.css`, com
-valor claro e escuro, consumidos por classes como `bg-card` e
-`text-muted-foreground` ou, nos gráficos, por `var(--token)`. Um token novo só
-entra com os dois valores e com o par de contraste no teste descrito em 9.2.5.
-
-**Componentes do shadcn/ui no repositório.** Os componentes gerados pelo CLI do
-shadcn/ui ficam em `componentes/ui/`, com nome em minúsculas, como o CLI os
-escreve, e são código do projeto: foram traduzidos e passaram a usar os ícones
-de `ui/icones.ts`. Os componentes próprios usam PascalCase e português.
-
 **Comentários explicam decisão, não mecânica.** Os comentários do código
 registram por que uma escolha foi feita e o que aconteceria sem ela. Descrever o
 que a linha faz é redundante com a própria linha; descrever a razão preserva a
@@ -7546,40 +7357,27 @@ informação que se perde quando o autor sai do projeto.
 
 | Componente | Responsabilidade |
 | --- | --- |
-| `ProvedoresVisuais.tsx` | Raiz visual da aplicação: tema, tamanho e peso padrão dos ícones, movimento, dicas e avisos. Os testes renderizam as telas dentro do mesmo provedor, o que evita que a suíte exercite uma interface diferente da publicada |
-| `ui/Layout.tsx` | Moldura da aplicação. Atua como rota-pai e renderiza `Outlet`, o que permite que a tela de entrada exista fora da moldura, e lembra se a barra lateral está recolhida |
-| `moldura/BarraLateral.tsx` | Logotipo, nova conversa, navegação principal com indicador do item ativo e conversas recentes; no celular, vira painel deslizante |
-| `moldura/ConversasRecentes.tsx` | Até oito conversas, agrupadas em hoje, ontem, esta semana e anteriores, com acesso ao histórico completo |
-| `moldura/MenuDoPerfil.tsx` | Identidade da sessão, escolha entre tema claro, escuro e do sistema, e saída |
-| `marca/LogoPrata.tsx` e `marca/SimboloPrata.tsx` | Logotipo e símbolo em SVG, pintados pelos tokens nas versões marinho e prateada |
-| `ui/icones.ts` | Único ponto de importação de ícones, com nomes pelo papel na interface; o lint barra a importação do pacote em qualquer outro arquivo |
-| `ui/DialogoResponsivo.tsx` | Diálogo em telas largas e gaveta no celular, com o foco devolvido ao controle que o abriu |
-| `ui/CabecalhoPagina.tsx` | Cabeçalho fixo das páginas, com o botão da barra lateral e o título da tela |
-| `ui/BotaoIcone.tsx` | Botão só com ícone, que exige nome acessível e mostra uma dica com o mesmo texto |
-| `ui/CampoSelecao.tsx` | Campo de seleção nativo do navegador com a aparência do tema, mantido nativo pelo comportamento de teclado e de leitor de tela |
-| `ui/EstadoVazio.tsx` | Estado vazio padrão das telas, alinhado à esquerda, com ícone, título, descrição e ação opcional |
-| Demais arquivos de `ui/` | Barra lateral, diálogo, diálogo de alerta, gaveta, menu suspenso, dica, avatar, interruptor, esqueleto, aviso e contêiner de gráfico do shadcn/ui, com textos em português e os ícones do projeto |
-| `chat/BolhaMensagem.tsx` | Uma mensagem da conversa: a pergunta, em marinho e alinhada à direita; a resposta, com avatar da Prata, horário, canal, botão de copiar, filete lateral e etiqueta de desfecho |
-| `chat/Composer.tsx` | Campo de envio que cresce com o texto, com Enter para enviar e Shift mais Enter para quebrar linha, exibição da transcrição parcial durante a gravação e brilho prateado no foco |
-| `chat/BotaoMicrofone.tsx` | Acionamento da captura de voz, com estado visível, pulso durante a gravação e `aria-pressed` |
-| `chat/ConversaVazia.tsx` | Estado inicial de uma conversa nova, alinhado à esquerda, com quatro sugestões correspondentes a intenções reais do catálogo |
-| `chat/IndicadorDigitando.tsx` | Sinaliza que o agente compõe a resposta com três estações que acendem em sequência, com `role="status"` e texto equivalente para leitor de tela |
-| `chat/AvisoMarco.tsx` | Alerta de marco dispensável, exposto como região nomeada |
-| `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo, ícone e classes visuais |
+| `ui/Layout.tsx` | Moldura da aplicação: barra lateral, navegação principal e identidade da sessão. Atua como rota-pai e renderiza `Outlet`, o que permite que a tela de entrada exista fora da moldura |
+| `ui/EstadoVazio.tsx` | Estado vazio padrão das telas, com título, descrição e ação opcional |
+| `chat/BolhaMensagem.tsx` | Uma mensagem da conversa, com avatar, horário, filete lateral e etiqueta de desfecho |
+| `chat/Composer.tsx` | Campo de envio, com Enter para enviar e Shift mais Enter para quebrar linha, e exibição da transcrição parcial durante a gravação |
+| `chat/BotaoMicrofone.tsx` | Acionamento da captura de voz, com estado visível e `aria-pressed` |
+| `chat/ConversaVazia.tsx` | Estado inicial de uma conversa nova, com quatro sugestões correspondentes a intenções reais do catálogo |
+| `chat/IndicadorDigitando.tsx` | Sinaliza que o agente compõe a resposta, com `role="status"` e texto equivalente para leitor de tela |
+| `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo e classes visuais |
 | `graficos/CartaoResumo.tsx` | Números de topo de cada recorte do painel, em lista de definições |
-| `graficos/BarrasPorIntencao.tsx` | Volume de mensagens por intenção, em barras horizontais, com as intenções de contagem zero visíveis como contorno tracejado |
-| `graficos/DistribuicaoDesfechos.tsx` | Mensagens atendidas como número no título e uma barra para cada um dos outros sete desfechos, com a cor da etiqueta do chat |
-| `graficos/SerieBloqueios.tsx` | Bloqueios ao longo do tempo, uma linha por guarda, com cor, tracejado e nome próprios, sem total agregado |
-| `graficos/TabelaEnunciados.tsx` | Enunciados recusados agrupados por repetição, com medidor da confiança média; é o backlog de novas intenções |
-| `graficos/TempoPorEtapa.tsx` | Latência do pipeline em uma barra empilhada por etapa, com a mediana e o 95º percentil de cada uma |
+| `graficos/BarrasPorIntencao.tsx` | Volume de mensagens por intenção, em barras horizontais, com as intenções de contagem zero visíveis |
+| `graficos/DistribuicaoDesfechos.tsx` | Distribuição das mensagens entre os oito desfechos, com a cor semântica de cada um |
+| `graficos/SerieBloqueios.tsx` | Bloqueios ao longo do tempo, uma linha por guarda, sem total agregado |
+| `graficos/TabelaEnunciados.tsx` | Enunciados recusados agrupados por repetição, o backlog de novas intenções |
 
 O arquivo `componentes/graficos/README.md` registra as três regras que valem
 para as visualizações do painel de intenções e como cada componente as cumpre:
 uso obrigatório de contêiner responsivo, séries de bloqueio nunca somadas em um
 total agregado, e exibição de intenções com contagem zero, que são achado e não
-ausência de dado. Os gráficos marcam o SVG como decorativo, não recebem foco de
-teclado e repetem os dados em uma tabela fora da tela, que é a forma que o
-leitor de tela consegue navegar.
+ausência de dado. Os três gráficos marcam o SVG como decorativo e repetem os
+dados em uma tabela fora da tela, que é a forma que o leitor de tela consegue
+navegar.
 
 **Apresentação dos desfechos.** O backend informa o desfecho, não a cor nem o
 rótulo. A tradução acontece em um único arquivo para que a bolha, o histórico e
@@ -7602,75 +7400,64 @@ não deve ensinar qual barreira interceptou a mensagem, e isso vale tanto para o
 texto da resposta quanto para a etiqueta ao lado. Os dois desfechos de injeção
 compartilham o rótulo "Não atendida" por essa razão. O segundo critério é o
 1.4.1 da WCAG, segundo o qual a cor nunca é o único portador de significado: o
-rótulo textual e o ícone carregam a mesma informação, e é o rótulo que chega a
-quem usa leitor de tela ou não distingue as cores.
+rótulo textual carrega a mesma informação e é ele que chega a quem usa leitor de
+tela ou não distingue as cores.
 
-**Contraste nos dois temas.** Todas as cores da interface são tokens definidos
-em `src/web/src/estilos/global.css`, nomeados pelo papel que exercem e não pelo
-tom, cada um com valor para o tema claro e para o escuro. A adoção de tokens
-únicos é o que torna a verificação possível: antes da reforma visual, cinzas
-declarados de forma avulsa ao longo da folha de estilo não deixavam um lugar
-único a auditar.
+As cores estão definidas em `tailwind.config.ts` e nomeadas pelo significado, e
+não pelo tom, de modo que uma mudança de paleta não exija alteração no código
+que as consome. Todas foram verificadas contra os dois fundos em que aparecem, o
+branco da página e o cinza da bolha do agente, com o mínimo de 4,5:1 exigido
+pelo nível AA da WCAG para texto pequeno.
 
-A verificação é automatizada. A suíte `src/testes/contraste.test.ts` lê os
-tokens do mesmo arquivo CSS que vai para produção e confere cada combinação de
-texto e fundo que a interface efetivamente usa, nos dois temas, em 104 casos.
-Um token alterado sem que o par continue legível faz a suíte falhar, e não o
-contraste na tela de alguém. O mínimo é 4,5:1 para texto (WCAG 1.4.3) e 3:1
-para ícone, borda e linha de gráfico que carregam informação (WCAG 1.4.11).
+| Cor | Valor | Contraste sobre página | Contraste sobre bolha |
+| --- | --- | --- | --- |
+| `ok` | `#186B48` | 6,49 | 5,79 |
+| `injecao` | `#B4342A` | 6,06 | 5,41 |
+| `abuso` | `#8A5309` | 6,32 | 5,64 |
+| `recusa` | `#0B5EA8` | 6,60 | 5,89 |
+| `falha` | `#63488B` | 7,42 | 6,62 |
 
-Cada linha das tabelas abaixo mostra o pior caso entre os fundos listados. Para
-o texto, o pior fundo é sempre o topo do degradê da conversa (`--canvas-topo`,
-`#E3EDFD` no claro e `#152C55` no escuro); para as cores de desfecho, o fundo
-de filtros, cabeçalhos de tabela e botões secundários (`--secondary`, `#EEF2F8`
-no claro e `#172338` no escuro).
+Além das cores dos desfechos, o texto da interface usa uma escala de tokens
+nomeados pelo papel que exercem na hierarquia de leitura, definidos em
+`src/web/src/estilos/global.css`. A adoção dos tokens substituiu seis cinzas
+declarados de forma avulsa ao longo da folha de estilo, o que tornava a
+verificação de contraste inviável na prática: não havia um lugar único a
+auditar.
 
-| Token | Uso | Claro | Pior caso | Escuro | Pior caso | Mínimo |
-| --- | --- | --- | --- | --- | --- | --- |
-| `--foreground` | Títulos e texto de maior peso | `#0E1A2E` | 14,76 | `#EDF2F9` | 12,26 | 4,5 |
-| `--texto` | Corpo do texto | `#2F3D55` | 9,27 | `#C3CDDC` | 8,59 | 4,5 |
-| `--muted-foreground` | Texto secundário, horários e legendas | `#5A6A82` | 4,66 | `#8D9AB0` | 4,85 | 4,5 |
-| `--primario-texto` | Texto e ícone de ação sobre fundo neutro | `#1A52C2` | 5,87 | `#7EAAFF` | 5,96 | 4,5 |
-| `--desfecho-ok` | Etiqueta de mensagem atendida | `#186B48` | 5,78 | `#4FCB8F` | 7,70 | 4,5 |
-| `--desfecho-injecao` | Etiqueta de bloqueio por injeção e de resposta retida | `#B4342A` | 5,39 | `#FF8B7E` | 6,93 | 4,5 |
-| `--desfecho-abuso` | Etiqueta de uso indevido | `#8A5309` | 5,63 | `#E6B04E` | 8,01 | 4,5 |
-| `--desfecho-recusa` | Etiqueta de fora do escopo e de baixa confiança | `#0B5EA8` | 5,88 | `#7EB0FF` | 7,15 | 4,5 |
-| `--desfecho-falha` | Etiqueta de falha do executor | `#63488B` | 6,60 | `#BBA2FF` | 7,29 | 4,5 |
+A verificação foi feita contra todos os fundos claros em que a interface
+efetivamente aplica cada token, e não apenas contra o branco. A distinção não é
+formal: o cinza secundário anterior aprovava sobre a página e reprovava sobre a
+bolha do agente e sobre a etiqueta de status, de modo que uma verificação
+restrita ao branco teria declarado conformidade inexistente.
 
-Os demais pares são verificados contra o fundo específico em que aparecem.
-
-| Frente | Fundo | Claro | Escuro | Mínimo |
+| Token | Valor | Uso | Pior caso medido | Mínimo exigido |
 | --- | --- | --- | --- | --- |
-| Texto do botão principal | `--primary` | 5,97 | 4,88 | 4,5 |
-| Branco da mensagem de quem pergunta | `--bolha-usuario` | 13,07 | 8,75 | 4,5 |
-| Texto e ícone da barra lateral (`--sidebar-foreground`) | `--sidebar`, `--sidebar-topo` e item ativo | 8,76 | 10,17 | 4,5 |
-| Texto secundário da barra lateral (`--sidebar-suave`) | `--sidebar`, `--sidebar-topo` e item ativo | 5,30 | 5,37 | 4,5 |
-| Marinho sobre os tons de prata da marca | `--prata-claro` e `--prata-escuro` | 7,29 | 7,29 | 4,5 |
-| Texto do botão de entrada com a Microsoft | `--ms-botao-fundo` | 6,48 | 13,39 | 4,5 |
-| Ícone branco do botão de gravação | `--gravacao` | 4,74 | 4,74 | 3,0 |
-| Ícone do aviso de sucesso | `--foreground`, fundo do aviso | 8,52 | 5,77 | 3,0 |
-| Interruptor desligado (`--controle-desligado`) | `--card` e `--secondary` | 3,38 | 3,62 | 3,0 |
-| Anel de foco (`--ring`) | `--background` | 5,55 | 8,18 | 3,0 |
-| Linha da guarda de injeção (`--serie-injecao`) | `--card` | 6,06 | 8,43 | 3,0 |
-| Linha da guarda de uso indevido (`--serie-abuso`) | `--card` | 3,14 | 5,67 | 3,0 |
-| Linha da guarda de saída (`--serie-saida`) | `--card` | 7,42 | 7,99 | 3,0 |
-| Etapa de classificação (`--etapa-classificacao`) | `--card` | 3,83 | 5,92 | 3,0 |
-| Etapa do executor (`--etapa-executor`) | `--card` | 4,70 | 4,51 | 3,0 |
+| `--texto-forte` | `#172033` | Títulos e corpo do documento | 14,51 | 4,5 |
+| `--texto-padrao` | `#344054` | Texto de interface, rótulos e navegação | 9,33 | 4,5 |
+| `--texto-suave` | `#646d82` | Texto secundário, horários, legendas e metadados | 4,62 | 4,5 |
+| `--indicador-neutro` | `#8691a5` | Ponto de status inativo | 3,18 | 3,0 |
+| `--texto-desabilitado` | `#98a2b3` | Texto de controle desabilitado | 2,30 | isento |
 
-As séries dos gráficos são medidas pelo critério de 3:1 porque são linhas e
-barras, não texto: valores, rótulos e legendas usam os tokens de texto da
-primeira tabela. Além do contraste com o fundo, as séries passaram por um
-validador de paleta que confere a separação entre cores vizinhas para as
-formas mais comuns de daltonismo; como reforço, cada guarda tem também um
-tracejado próprio e o nome escrito no fim da linha.
+As correções aplicadas foram as seguintes.
+
+| Elemento | Antes | Razão anterior | Depois | Razão |
+| --- | --- | --- | --- | --- |
+| Aviso sob o campo de mensagem | `#a3abba` | 2,31 | `--texto-suave` | 5,18 |
+| Horário das mensagens | `#98a2b3` | 2,58 | `--texto-suave` | 5,18 |
+| Datas do histórico | `#8b95a5` | 2,80 | `--texto-suave` | 4,79 |
+| Rótulos dos campos de rotina | `#8a94a4` | 3,06 | `--texto-suave` | 5,18 |
+| Cabeçalho do histórico | `#7a8493` | 3,50 | `--texto-suave` | 4,79 |
+| Etiqueta de status | `#667085` | 4,44 | `--texto-suave` | 4,62 |
+| Destaque do cartão de notificação | `#e13b3b` | 4,29 | `#df2d2d` | 4,61 |
+| Ponto de status inativo | `#98a2b3` | 2,58 | `--indicador-neutro` | 3,18 |
 
 Duas exceções permanecem, ambas por decisão registrada e não por omissão. A
-primeira é o texto de controle desabilitado, que a WCAG 1.4.3 isenta por se
-tratar de componente inativo: escurecê-lo o faria parecer acionável, o que
-prejudicaria a compreensão em vez de melhorá-la. A segunda são as estações
-animadas do indicador de digitação, que são decorativas, estão marcadas com
+primeira é o texto do botão de envio desabilitado, que a WCAG 1.4.3 isenta por
+se tratar de componente inativo: escurecê-lo o faria parecer acionável, o que
+prejudicaria a compreensão em vez de melhorá-la. A segunda são os pontos
+animados do indicador de digitação, que são decorativos, estão marcados com
 `aria-hidden` e têm seu significado carregado pelo texto equivalente lido por
-leitor de tela.
+leitor de tela, conforme descrito em 9.2.5.
 
 ### 9.2.6 Páginas e navegabilidade
 
@@ -7993,19 +7780,13 @@ igualdade é verificada pelo caso `TU-WEB-02`, documentado em 9.5.3.
 
 ### 9.2.15 Como exercitar a entrada por voz
 
-O dublê de `GET /voz/token` devolve um token de demonstração, reconhecível por um
-prefixo próprio. Ao recebê-lo, o hook de microfone executa um percurso simulado,
-com transcrições parciais que crescem palavra a palavra e uma transcrição final
-ao término, reproduzindo a temporização do reconhecimento real.
-
-A consequência prática é que **a avaliação da entrada por voz não consome crédito
-do recurso Azure AI Speech**, cujo nível gratuito F0 possui limites descritos em
-5.7.4. Basta acionar o botão de microfone e observar o estado ativo, a
-transcrição parcial no campo e a entrega do texto final.
-
-A simulação desaparece por si quando o recurso estiver provisionado no ambiente
-do parceiro, porque um token real nunca apresenta aquele prefixo. Nenhuma
-remoção de código é necessária para a transição.
+Configure `SPEECH_KEY`, `SPEECH_REGION` e, quando aplicável, `SPEECH_ENDPOINT`.
+Com frontend e middleware ativos, o botão solicita `GET /api/voz/token`; o
+middleware troca a chave por uma credencial de dez minutos e o Speech SDK abre
+o microfone somente depois da permissão do navegador. A fala parcial aparece no
+campo e o texto reconhecido segue ao `/chat`. Esse percurso é real e consome a
+franquia do recurso configurado; falha de configuração ou do provedor produz
+feedback de indisponibilidade, sem recorrer a frase fixa.
 
 ### 9.2.16 Execução em contêiner
 
@@ -8034,8 +7815,6 @@ tratados na seção 11.
 
 | Limitação | Consequência para quem avalia | Situação |
 | --- | --- | --- |
-| A emissão do token de voz ainda é dublada no navegador | Sem a issue #396 integrada, `GET /voz/token` responde pelo dublê | Resolvida quando a rota real entrar e o dublê sair de `ROTAS_PENDENTES` |
-| A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
 | A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
 
 A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
@@ -9050,9 +8829,9 @@ Este conjunto verifica que os dois canais de entrada chegam ao mesmo lugar. Os c
 | `TF-RF02-04` | Negativo | Duração acima do limite | Áudio de formato aceito, com duração superior a cinco minutos | Recusa com o código `AUDIO_MUITO_LONGO` e o detalhe de duração previsto no corpo de erro de 5.7.3.8 | 5.7.3.6, 5.7.3.8 | Onda 1, conforme 9.1.3 |
 | `TF-RF02-05` | Negativo | Arquivo ilegível | Arquivo corrompido, vazio ou sem trilha de áudio | Recusa com o código `AUDIO_ILEGIVEL`; a falha ocorre na validação, antes de qualquer chamada ao serviço de fala | 5.7.3.8 | Onda 1, conforme 9.1.3 |
 | `TF-RF02-06` | Negativo | Áudio aceito, sem fala reconhecível | Áudio válido em formato e duração, cujo conteúdo não produz transcrição no dublê do serviço de fala | A submissão é aceita e a consulta devolve `200` com o estado `falhou`, e não um erro de requisição; a orientação apresentada oferece o canal de texto como saída | 5.7.3.4, 5.7.3.8 | Onda 1, conforme 9.1.3 |
-| `TF-RF02-07` | Positivo | O texto transcrito reentra pelo mesmo pipeline | Transcrição concluída, encaminhada à rota de conversação como qualquer mensagem, com o canal marcado como voz | A solicitação atravessa a mesma ordem fixa do orquestrador — guardas, classificação, execução, avaliação da resposta e registro; nenhuma verificação de autorização é pulada e é gravada uma única interação | US02, 5.2.3.2, 5.7.3.5 | Onda 1, conforme 9.1.3 |
+| `TF-RF02-07` | Positivo | O texto transcrito entra no mesmo pipeline | Submissão aceita cuja transcrição termina com texto utilizável | O processador chama o mesmo orquestrador do `/chat` com `canal=voz`; a solicitação atravessa guardas, classificação, execução, avaliação da resposta e registro, e a submissão guarda o `interacao_id` produzido | US02, 5.2.3.2, 5.7.3.5 | Onda 1, conforme 9.1.3 |
 
-`TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro, e que a API de áudio não aciona o pipeline por conta própria. Isso é uma promessa verificável, e sem um caso que a exercite ela permanece como intenção de projeto. A asserção compara a sequência de etapas percorrida por uma mensagem digitada e por uma transcrição de mesmo texto: as duas execuções precisam produzir a mesma ordem de chamadas e uma única linha de registro cada, diferindo apenas no valor do canal.
+`TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro. A API de ingestão aciona o pipeline depois do STT, mas não o contorna: a asserção verifica a classificação, a chamada ao executor, o canal `voz`, a linha única de interação e seu vínculo com `transcricao_audio`.
 
 **Execução.** Os casos de *backend* rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no módulo planejado `src/middleware/tests/funcionais/test_rf02_canais.py`. O Azure Speech é dublado em todos eles: os áudios do conjunto são fixos e pequenos, e a transcrição devolvida é controlada pelo dublê, porque o objeto do teste é o trajeto e o tratamento de erro, não a qualidade do reconhecimento — essa é medida sobre o corpus de 5.7.6, pelos indicadores de 3.1.5.2. A verificação de ordem de `TF-RF02-07` é feita registrando as chamadas ao orquestrador e comparando as duas execuções. A apresentação da transcrição no campo de mensagem antes do envio, prevista em 5.7.3.5, é asserção de interface e roda com Vitest e Testing Library em `src/web/src/testes/`.
 
@@ -9367,6 +9146,13 @@ Foram coletadas **68 execuções** para os 65 identificadores planejados; a dife
 | **Total** | **41** | **24** | **3** | **Execução concluída, com cobertura funcional ainda parcial.** |
 
 Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente utilizado estão preservados em [`docs/evidencias/2026-09-24-testes-funcionais.txt`](evidencias/2026-09-24-testes-funcionais.txt). A execução utilizou `ASGITransport` e dublês nas fronteiras previstas pelos scripts; por isso, esta evidência não deve ser interpretada como comprovação de integração real com PostgreSQL, Entra ID, Copilot Studio, Azure Speech ou Content Safety.
+
+> **Reexecução focal da correção #450 (25/09/2026).** Os sete casos de
+> `test_rf02_canais.py` passaram. Os dois `xfail` de RF02 foram removidos depois
+> da implementação da aferição de duração e do envelope estruturado. Essa
+> execução atualiza apenas a linha de RF02; os totais acima continuam sendo a
+> evidência histórica integral de 24/09 e não foram recalculados sem executar e
+> registrar novamente toda a bateria funcional.
 
 **Análise crítica.** A maior concentração de lacunas está nos RF05 e RF06, cujos fluxos ainda não estão implementados, e no RF04, que possui apenas um cenário aprovado. Os pontos de maior risco para a versão atual são a validação incompleta de áudio em RF02, a autorização e validação de entidades em RF03/RF04 e o comportamento da guarda de injeção quando o serviço externo falha em RF09. Os casos planejados para ondas futuras permanecem registrados como `xfail`, evitando que sejam apresentados como funcionalidades concluídas. Cada defeito confirmado deve ser vinculado a uma *issue* de correção antes do encerramento da issue de execução.
 
@@ -11051,7 +10837,7 @@ OpenAPI do FastAPI declara (ver IT-CTR-03).
 | IT-WEB-09 | Dashboard renderiza a partir dos endpoints | Recharts recebe as séries de `/intencoes/*` | 4 |
 | IT-WEB-10 | Rotinas: criar, listar, excluir | Fluxo completo contra o MSW, com confirmação de exclusão | 5 |
 | IT-WEB-11 | Estado de carregamento e de erro | TanStack Query exibe *loading* e *retry* | 4 |
-| IT-WEB-12 | Microfone com SDK dublado | `useMicrofone` produz parcial e final; token pedido a `/api/voz/token` | Livre |
+| IT-WEB-12 | Microfone com Azure Speech | `useMicrofone` produz parcial e final; token real pedido a `/api/voz/token` | Credencial e franquia do ambiente de teste |
 
 #### 10.5.5.9 IT-CTR — contratos
 

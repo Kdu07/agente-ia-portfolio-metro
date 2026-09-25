@@ -257,9 +257,9 @@ Quatro cuidados que não se leem no código:
 - **Partida a frio.** A primeira mensagem que chega ao classificador carrega os
   pesos do modelo, e a resposta pode passar de dois minutos. As seguintes
   levam poucos segundos.
-- **Rotas ainda não implementadas respondem 500.** Intenções e o token de voz
-  ainda levantam `NotImplementedError`; a interface mostra uma mensagem
-  genérica. Conversas e rotinas já possuem implementação real no middleware.
+- **Voz depende do Azure Speech.** `GET /voz/token` usa as credenciais do
+  servidor para emitir um token curto. Sem `SPEECH_KEY` e `SPEECH_REGION`, a
+  interface informa indisponibilidade e não substitui a fala por dado simulado.
 
 ## Banco vetorial (Pinecone)
 
@@ -464,10 +464,16 @@ Transcription. Além da chave, configure o endpoint exibido no recurso Azure:
 SPEECH_ENDPOINT=https://<regiao>.api.cognitive.microsoft.com
 SPEECH_API_VERSION=2025-10-15
 SPEECH_TIMEOUT_SECONDS=30
+FFPROBE_PATH=ffprobe
+FFPROBE_TIMEOUT_SECONDS=10
 ```
 
-`app.voz.transcricao.transcrever_arquivo` aceita AAC, FLAC, M4A, MP3, MP4,
-OGG, WAV e WebM e devolve texto, idioma, confiança média, duração e latência.
+O contêiner instala FFmpeg; localmente, `ffprobe` precisa estar no `PATH` ou
+ser indicado em `FFPROBE_PATH`. Ele rejeita arquivo corrompido, sem áudio, com
+vídeo ou acima de cinco minutos antes de qualquer chamada tarifada.
+
+`app.voz.transcricao.transcrever_arquivo` aceita MP3, MP4, OGG, WAV e WebM
+validados e devolve texto, idioma, confiança média, duração e latência.
 Ela também aceita uma lista opcional de termos do domínio para melhorar o
-reconhecimento. A integração desse resultado ao endpoint de upload e ao
-pipeline de NLP é feita na task de integração seguinte.
+reconhecimento. `ProcessadorAudio` encaminha o resultado ao orquestrador com
+`canal=voz`; a submissão e o vínculo com a interação ficam no PostgreSQL.
