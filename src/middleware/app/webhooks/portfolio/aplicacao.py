@@ -15,7 +15,9 @@ como processado. Segue "Consumo, ordenação e persistência":
 3. só os campos que o contrato autoriza para o tipo são escritos, e a
    auditoria guarda os valores anteriores e novos desses campos. Versão
    maior sem diferença material avança a versão como `sem_diferenca`, que
-   não deve gerar aviso (#447).
+   não gera aviso;
+4. na mesma transação, os avisos das adesões elegíveis (#447,
+   `app/avisos/geracao.py`).
 """
 
 import hashlib
@@ -30,6 +32,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.webhooks import WebhookRecusado
+from app.avisos.geracao import gerar_avisos
 from app.mensageria.consumidor import FalhaDefinitiva
 from app.persistence.tabelas_portfolio import MarcoTabela, ProjetoTabela, RiscoTabela
 from app.schemas.mensagem import MensagemEvento
@@ -181,6 +184,8 @@ async def tratar_evento_portfolio(evento: MensagemEvento, sessao: AsyncSession) 
         validado = validar_evento(bruto, fonte_autenticada=str(bruto.get("source_id")))
     except WebhookRecusado:
         raise FalhaDefinitiva("PAYLOAD_INVALIDO") from None
-    await aplicar_evento(
-        sessao, validado, message_id=str(evento.message_id), agora=datetime.now(UTC)
+    agora = datetime.now(UTC)
+    aplicacao = await aplicar_evento(
+        sessao, validado, message_id=str(evento.message_id), agora=agora
     )
+    await gerar_avisos(sessao, aplicacao, agora=agora)
