@@ -24,6 +24,7 @@ class AudioService:
         """Inicializa o serviço com diretório de armazenamento."""
         self.diretorio_audio = Path(settings.base_dir) / "uploads" / "audio"
         self.diretorio_audio.mkdir(parents=True, exist_ok=True)
+
     def salvar_arquivo(
         self,
         arquivo: BinaryIO,
@@ -71,7 +72,6 @@ class AudioService:
         # TODO: Definir política de retenção exata no projeto.md
         # Por enquanto, expira em 1 hora
         tempo_retention = timedelta(hours=1)
-        # Mantém o contrato ingênuo existente; a API o serializa explicitamente como UTC.
         return datetime.now(UTC) + tempo_retention
 
     def gerar_id_audio(self) -> str:
