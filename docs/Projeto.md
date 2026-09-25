@@ -6580,7 +6580,7 @@ python -m pytest -m integracao
 
 #### 9.1.2.7 Definição dos webhooks (S4)
 
-**Situação da definição:** contratos documentados na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini, para revisão da equipe. O contrato documental está em 9.1.2.7.1 e o de eventos estruturados em 9.1.2.7.2. A base de inspeção do código é a `develop` no commit `6999f9d`, consultada em 21/09/2026 e conferida em 22/09/2026. Os comportamentos novos abaixo são requisitos de implementação, não evidência de webhooks em execução.
+**Situação:** contratos definidos na [issue #386](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/issues/386), sob responsabilidade de Eduardo Casarini, e implementados em #388 (autenticidade), #390 (WH-01), #389 (WH-02), #394 (consumo) e #447/#448 (preferências e avisos). O contrato documental está em 9.1.2.7.1 e o de eventos estruturados em 9.1.2.7.2; as rotas implementadas, os payloads observados em teste e as limitações conhecidas estão em 9.1.2.7.3.
 
 O Artefato 10 exige dois webhooks definidos pelo grupo, com recebimento, processamento, armazenamento e resposta ao provedor. O backlog original previa conclusão de transcrição (#389) e alteração no SharePoint (#390). No esclarecimento de escopo de 21/09/2026, Eduardo confirmou que o Google Drive simula o SharePoint e descreveu a interação de voz desejada: gravar, concluir a gravação, obter a transcrição, revisar ou editar o texto e só então enviá-lo ao agente. Não há emissor de callback de áudio definido pela equipe.
 
@@ -6588,10 +6588,10 @@ A recomendação técnica é preservar essa revisão explícita do texto e conce
 
 | Webhook definido | Evento de negócio | Objetivo e justificativa | Situação e rastreabilidade |
 |---|---|---|---|
-| WH-01: atualização documental | Mudança em arquivo do corpus acompanhado no Google Drive | Solicitar atualização do índice usado pelo RAG, preservando origem e permissões e reduzindo a defasagem das respostas. | Contrato definido em 9.1.2.7.1; RF04/US04 e RF01/US01; seção 9.4.3; revisar o provedor de #390. |
-| WH-02: eventos do portfólio | Alteração de status de projeto, marco ou risco em planilha Google Sheets controlada, com envio por Apps Script | Sincronizar registros estruturados e permitir avisos internos por adesão do usuário. Esse efeito é distinto da reindexação documental. | Contrato definido em 9.1.2.7.2; RF04/US04 e RF01/US01; substituir o escopo de #389 depende de alinhamento do backlog com a equipe. |
+| WH-01: atualização documental | Mudança em arquivo do corpus acompanhado no Google Drive | Solicitar atualização do índice usado pelo RAG, preservando origem e permissões e reduzindo a defasagem das respostas. | Contrato em 9.1.2.7.1, implementado em #390 e #394 e exercitado com o Google Drive real (9.1.2.7.3); RF04/US04 e RF01/US01; seção 9.4.3. |
+| WH-02: eventos do portfólio | Alteração de status de projeto, marco ou risco em planilha Google Sheets controlada, com envio por Apps Script | Sincronizar registros estruturados e permitir avisos internos por adesão do usuário. Esse efeito é distinto da reindexação documental. | Contrato em 9.1.2.7.2, implementado em #389, #394, #447 e #448 (9.1.2.7.3); RF04/US04 e RF01/US01. |
 
-O segundo webhook exige uma planilha nativa do Google Sheets, configuração de gatilho e implementação do emissor; os arquivos `.xlsx` existentes no Drive não demonstram essa capacidade. Os dois contratos usam dados sintéticos, não autorizam escrita nos documentos do parceiro nem concedem acesso adicional ao conteúdo. A notificação por Teams ou correio eletrônico da feature F57 continua fora desse recorte.
+O segundo webhook exige uma planilha nativa do Google Sheets e a configuração do gatilho; os arquivos `.xlsx` existentes no Drive não demonstram essa capacidade. O emissor está em [`src/emissor-portfolio`](../src/emissor-portfolio/README.md). Os dois contratos usam dados sintéticos, não autorizam escrita nos documentos do parceiro nem concedem acesso adicional ao conteúdo. A notificação por Teams ou correio eletrônico da feature F57 continua fora desse recorte.
 
 **Estado atual e impacto nos contratos**
 
@@ -6606,9 +6606,9 @@ O segundo webhook exige uma planilha nativa do Google Sheets, configuração de 
 
 A documentação da Microsoft confirma que a [Fast Transcription devolve o resultado de forma síncrona](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/fast-transcription-create). Já os [webhooks de Speech são associados a Batch Transcription e Custom Speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text). Acrescentar Batch Transcription apenas para criar um segundo webhook introduziria outro trajeto de áudio sem necessidade demonstrada para a experiência descrita.
 
-Para a fonte documental, a referência é a [notificação de mudanças do Google Drive](https://developers.google.com/workspace/drive/api/guides/push). O provedor envia `POST` com cabeçalhos `X-Goog-*` e corpo vazio; os detalhes precisam ser consultados pela API. O contrato deverá prever registro e renovação de canais, validação do token de canal, consulta incremental, filtragem para o corpus autorizado e processamento de exclusões. Não se deve exigir um JSON ou HMAC de corpo que o provedor não envia.
+Para a fonte documental, a referência é a [notificação de mudanças do Google Drive](https://developers.google.com/workspace/drive/api/guides/push). O provedor envia `POST` com cabeçalhos `X-Goog-*` e corpo vazio; os detalhes precisam ser consultados pela API. O contrato prevê registro e renovação de canais, validação do token de canal, consulta incremental, filtragem para o corpus autorizado e processamento de exclusões. Não se deve exigir um JSON ou HMAC de corpo que o provedor não envia.
 
-Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com/apps-script/guides/triggers/installable) podem reagir a edições humanas em planilhas, e [`UrlFetchApp`](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) permite emitir o POST. O payload e sua assinatura seguem o contrato da equipe em 9.1.2.7.2. Alterações feitas por API ou por scripts não disparam automaticamente o gatilho de edição; retentativa, registro durável do evento e prevenção de duplicatas também precisam ser implementados.
+Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com/apps-script/guides/triggers/installable) podem reagir a edições humanas em planilhas, e [`UrlFetchApp`](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) permite emitir o POST. O payload e sua assinatura seguem o contrato da equipe em 9.1.2.7.2. Alterações feitas por API ou por scripts não disparam automaticamente o gatilho de edição; por isso o emissor também tem reconciliação periódica, registro durável do evento, retentativa e prevenção de duplicatas (9.1.2.7.2).
 
 **Limites comuns da implementação planejada**
 
@@ -6617,7 +6617,7 @@ Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com
 3. Responder às notificações de trabalho somente após confirmação de recebimento durável. A aceitação não significa transcrição persistida ou corpus já atualizado; falha na publicação deve permitir nova tentativa.
 4. Executar persistência, consulta à origem e reindexação no processamento assíncrono. A chave de idempotência e a transação que impede efeitos repetidos devem ser definidas para cada webhook e sobreviver a reinícios.
 5. Manter as guardas, as permissões documentais e a autorização de atualização dos registros nos serviços consumidores. Autenticar o emissor não substitui a autorização de acesso aos dados.
-6. Distinguir testes com payload sintético de homologação no provedor real. #391 registrará contratos observados e exemplos sanitizados após a implementação; #413 verificará sucesso, rejeição, repetição e falha de consumo.
+6. Distinguir testes com payload sintético de homologação no provedor real. Os contratos observados e os exemplos sanitizados estão em 9.1.2.7.3; #413 verifica sucesso, rejeição, repetição e falha de consumo.
 
 **Dependências para implementação e alinhamento do backlog**
 
@@ -6629,7 +6629,7 @@ Para WH-02, [gatilhos instaláveis do Apps Script](https://developers.google.com
 | Persistência do áudio | Preservar a demanda de persistência e pertencimento hoje incluída em #389, mesmo que o webhook de transcrição seja substituído por outro evento. | Eduardo, na revisão do backlog, antes de retirar essa responsabilidade de #389. |
 | Consistência do escopo | Resolvida pela #387: a seção 2.7.4 passou a incluir webhooks e mensageria no sequenciamento do MVP (Artefatos 10 e 13), em coerência com 9.1.2.6 e com os contratos desta seção. | Eduardo, em #387; concluída após a definição da #386. |
 
-As duas subseções seguintes definem provedor, evento, rota, método, campos, autenticação, respostas, idempotência e exemplos. A conclusão da #386 ainda exige revisão, vínculo do PR e alinhamento dos cards afetados; esta definição não permite considerar implementadas #388, #389 ou #390.
+As decisões da tabela foram resolvidas na implementação: o Drive é o provedor de WH-01, com token de canal; WH-02 usa HMAC com janela de tempo; e a persistência do áudio segue na frente de voz. As duas subseções seguintes definem provedor, evento, rota, método, campos, autenticação, respostas, idempotência e exemplos, e 9.1.2.7.3 registra o que foi implementado e observado.
 
 ##### 9.1.2.7.1 WH-01: atualização documental do Google Drive
 
@@ -6696,7 +6696,7 @@ Uma repetição ainda `pendente` deve retomar a tentativa de publicação com os
 
 A chave externa é a tupla `("google_drive", channel_id, message_number)`, protegida por unicidade no PostgreSQL. Números menores recebidos depois não são descartados como antigos: comparar a chave inteira, sem presumir chegada ordenada nem sequência sem lacunas. O `resource_id` é validado contra o canal, mas não basta como chave, pois várias mudanças pertencem ao mesmo recurso.
 
-Os registros abaixo são necessários à implementação e **ainda não existem** na base inspecionada:
+Os registros abaixo foram criados no schema `webhook` como `canal_drive`, `recebimento` e `sincronizacao_fonte`:
 
 | Registro lógico | Campos mínimos e invariantes |
 |---|---|
@@ -6730,9 +6730,9 @@ O comportamento atual está em [`indexacao.py`](../src/middleware/app/rag/ingest
 
 Os IDs reais usam `documento_id#ordinal`, como `PRJ-2024-018_RSK#0000`; o webhook preservará essa convenção. A implementação atual não faz comparação de chunks individuais para reaproveitar embeddings dentro de um documento alterado. Similaridade continua calculada na consulta contra o índice disponível, sem recalcular uma matriz entre todos os documentos.
 
-Há duas limitações a tratar antes de homologar #390. A decisão de reaproveitamento atual não compara o nome do arquivo; renomeações que mudam sua identificação exigem invalidar a ficha e retirar a identidade antiga quando necessário. Além disso, índice vetorial e PostgreSQL não compartilham transação: o fluxo atual remove vetores antes de inserir os novos, podendo haver indisponibilidade parcial durante a atualização. Não prometer troca atômica; testar queda entre remoção, `upsert` e commit, confirmar recuperação e preservação dos filtros de acesso.
+Há duas limitações conhecidas da ingestão, anteriores aos webhooks. A decisão de reaproveitamento atual não compara o nome do arquivo; renomeações que mudam sua identificação exigem invalidar a ficha e retirar a identidade antiga quando necessário. Além disso, índice vetorial e PostgreSQL não compartilham transação: o fluxo atual remove vetores antes de inserir os novos, podendo haver indisponibilidade parcial durante a atualização. Não há troca atômica; uma falha no meio deixa o cursor anterior, e a nova tentativa reprocessa o documento.
 
-Na ativação do canal, após reinício e a cada 15 minutos, executar uma reconciliação de recuperação pela mesma rotina e bloqueio, mesmo sem callback. Esse intervalo é uma escolha inicial da PoC a validar contra volume e cota. Monitorar canal próximo da expiração, pendências, idade da última sincronização e dead letter. A verificação periódica recupera a defasagem; não é reindexação completa nem garantia de atualização instantânea.
+Na ativação do canal, após reinício e a cada 15 minutos, executar uma reconciliação de recuperação pela mesma rotina e bloqueio, mesmo sem callback. Esse intervalo é uma escolha inicial da PoC a validar contra volume e cota. Monitorar canal próximo da expiração, pendências, idade da última sincronização e dead letter. A verificação periódica recupera a defasagem; não é reindexação completa nem garantia de atualização instantânea. Essa reconciliação periódica ainda não foi implementada (9.1.2.7.3, limitações conhecidas).
 
 **Exemplo de recebimento e processamento**
 
@@ -6780,7 +6780,7 @@ O evento interno correspondente, que **não é enviado pelo Google**, será:
 
 O envelope segue os tipos de 9.1.2.6; todos os campos de `payload` acima são strings obrigatórias. `provider` e `resource_state` são os valores fixos desse exemplo; `fonte_id` é resolvido no cadastro do canal. `occurred_at` representa o recebimento UTC pelo middleware, pois o callback não informa a hora da alteração. Token, URI recebida e conteúdo de documentos não entram no evento.
 
-Se a consulta posterior identificar a atualização do arquivo sintético `PRJ-2024-018_RSK_v1_20260811.xlsx`, a ingestão substituirá os vetores e textos do documento lógico `PRJ-2024-018_RSK`. Uma segunda entrega do número `23` para o mesmo canal, já publicada, receberá `204`. Um número diferente pode produzir nova sincronização, mas, sem mudança de assinatura, não produzirá novos embeddings. Esse é um cenário de aceite, não resultado executado.
+Se a consulta posterior identificar a atualização do arquivo sintético `PRJ-2024-018_RSK_v1_20260811.xlsx`, a ingestão substituirá os vetores e textos do documento lógico `PRJ-2024-018_RSK`. Uma segunda entrega do número `23` para o mesmo canal, já publicada, receberá `204`. Um número diferente pode produzir nova sincronização, mas, sem mudança de assinatura, não produzirá novos embeddings. O teste com o Google Drive real está em 9.1.2.7.3.
 
 **Aceite e rastreabilidade da implementação**
 
@@ -6796,11 +6796,11 @@ Se a consulta posterior identificar a atualização do arquivo sintético `PRJ-2
 | Falha de consumo | Queda entre índice/banco, cursor não avançado antes da conclusão, repetição recuperável e dead letter verificável |
 | Ciclo do canal | Renovação com sobreposição, expiração e retomada após ausência de callback; reconciliação sem duplicar documentos |
 
-Os testes existentes de [`test_ingestao_indexacao.py`](../src/middleware/tests/unit/test_ingestao_indexacao.py) já descrevem ingestão inalterada, atualização, remoção e reclassificação. Eles não homologam o receptor HTTP, o cadastro de canais ou a fila; a inspeção desses testes não é registro de execução nesta entrega. #388 deve incorporar token de canal; #390 deve refletir o provedor Drive e cobrir cadastro, receptor e integração documental; #392 a #394 devem prover broker, publicação e consumo; #391 deve acrescentar exemplos reais sanitizados. Eduardo acompanha esses ajustes e as evidências antes do fechamento da #386 e da homologação de WH-01.
+Os testes de [`test_ingestao_indexacao.py`](../src/middleware/tests/unit/test_ingestao_indexacao.py) descrevem ingestão inalterada, atualização, remoção e reclassificação. O receptor HTTP, o cadastro de canais, a fila e o consumo têm os testes listados em 9.1.2.7.3.
 
 ##### 9.1.2.7.2 WH-02: eventos do portfólio e notificações
 
-**Decisão e limites.** Adotar um emissor desenvolvido pela equipe em Google Apps Script, associado a uma planilha nativa Google Sheets com dados sintéticos. O emissor comunica mudanças de status de projeto, marcos e riscos para os registros existentes do portfólio. A assinatura abaixo é do contrato da equipe, não um recurso de webhook nativo do Sheets. Planilha, script, receptor, persistência de eventos e interface de avisos **ainda precisam ser implementados e homologados**.
+**Decisão e limites.** Adotar um emissor desenvolvido pela equipe em Google Apps Script, associado a uma planilha nativa Google Sheets com dados sintéticos. O emissor comunica mudanças de status de projeto, marcos e riscos para os registros existentes do portfólio. A assinatura abaixo é do contrato da equipe, não um recurso de webhook nativo do Sheets. O emissor, o receptor, a persistência dos eventos e a interface de avisos foram implementados; a execução com a planilha nativa e o gatilho no Apps Script está entre as limitações de 9.1.2.7.3.
 
 A fonte será autoridade somente para os campos enumerados neste contrato. Seu cadastro no servidor deve vincular `source_id` ao ID da planilha, abas, projetos, entidades e campos permitidos. Cada entidade terá uma única fonte escritora desses campos na PoC; escritas concorrentes por importadores ou outras interfaces devem ser bloqueadas ou reconciliadas antes da ativação. Não permitir criação/exclusão de projetos, alteração de vínculos de usuários, permissões, orçamento ou execução de comandos. O backend não escreve de volta na planilha.
 
@@ -6886,7 +6886,7 @@ Em uma transação PostgreSQL, bloquear o controle de versão da entidade, reval
 
 Na mesma transação, gravar entidade, última versão e snapshot, auditoria técnica da alteração, notificações elegíveis e `processado_em`; só então emitir `ack`. Se não houver diferença material, avançar a versão sem gerar aviso. A unicidade de `(source_id, event_id, usuario_id)` impede avisos duplicados. Reentrega após commit não repete efeitos. Conservar o controle de versão mesmo após expurgar recibos, para que uma repetição antiga não reaplique estado. Falhas transitórias seguem três tentativas e dead letter de 9.1.2.6; conflitos e revogação de autorização vão para falha controlada sem alteração de dados.
 
-Esses controles, a auditoria técnica e as notificações são registros novos, não tabelas já existentes. A auditoria guarda fonte, evento, projeto, entidade, versão, campos anteriores/novos autorizados, horário e resultado; não criar uma `Interacao` de chat fictícia para representar o sistema. Receber `202` não garante que a entidade ainda estará autorizada quando o consumidor executar.
+Esses controles, a auditoria técnica e as notificações são tabelas novas: `webhook.versao_entidade`, `webhook.auditoria_portfolio`, `preferencia_aviso` e `aviso`. A auditoria guarda fonte, evento, projeto, entidade, versão, campos anteriores/novos autorizados, horário e resultado; não criar uma `Interacao` de chat fictícia para representar o sistema. Receber `202` não garante que a entidade ainda estará autorizada quando o consumidor executar.
 
 **Preferências de aviso e autorização**
 
@@ -6896,7 +6896,7 @@ Persistir preferência única por `(usuario_id, projeto_codigo, event_type)`, co
 
 O consumidor seleciona adesões ativas como candidatas e persiste avisos privados para consulta interna, sem disparo externo. Toda listagem, contagem, detalhe e marcação de leitura deve validar proprietário e acesso atual ao projeto, usando as regras da sessão autenticada; se não puder resolver autorização, negar acesso. O `Usuario.perfil` persistido é uma projeção para exibição, não fonte de verdade de autorização. Perder acesso deve ocultar também títulos, trechos e contagens desses avisos, ainda que tenham sido criados antes da revogação. Eventual entrega ativa futura exigirá revalidação no envio.
 
-Cada aviso terá UUID, proprietário, projeto, referência ao evento/entidade, diferenças permitidas, horário de criação e `lido_em` opcional. A interface deverá permitir consultar avisos, marcar como lido e abrir o registro autorizado. Retenção inicial de avisos: 30 dias desde a criação, independente da retenção de eventos pendentes. Nesta versão, somente avisos dentro da aplicação; Teams/e-mail (F57), push externo e resumo agendado continuam fora do escopo. O card de implementação deve contemplar banco, API e interface de preferências, não apenas o receptor.
+Cada aviso terá UUID, proprietário, projeto, referência ao evento/entidade, diferenças permitidas, horário de criação e `lido_em` opcional. A interface (tela Avisos, #448) permite consultar avisos, filtrar os não lidos e marcar como lido. Retenção inicial de avisos: 30 dias desde a criação, independente da retenção de eventos pendentes. Nesta versão, somente avisos dentro da aplicação; Teams/e-mail (F57), push externo e resumo agendado continuam fora do escopo.
 
 **Exemplo sintético e resultados esperados**
 
@@ -6920,7 +6920,7 @@ Com a fonte `portfolio_sintetico` previamente cadastrada para o projeto e risco 
 }
 ```
 
-Após persistência e publicação, a resposta é `202` sem corpo. Supondo versão anterior 7, probabilidade 2 e impacto 5, o consumidor grava severidade derivada de 20 para seleção dos avisos (sem exigir nova coluna em `Risco`). Um inscrito com mínimo 15 recebe um aviso privado; outro sem adesão não recebe. A mesma entrega assinada com timestamp novo recebe `204` se já publicada. Versão 7 chegando depois não reverte o risco nem notifica; o mesmo UUID com probabilidade diferente recebe `409`. Esses são resultados esperados, não testes executados.
+Após persistência e publicação, a resposta é `202` sem corpo. Supondo versão anterior 7, probabilidade 2 e impacto 5, o consumidor grava severidade derivada de 20 para seleção dos avisos (sem exigir nova coluna em `Risco`). Um inscrito com mínimo 15 recebe um aviso privado; outro sem adesão não recebe. A mesma entrega assinada com timestamp novo recebe `204` se já publicada. Versão 7 chegando depois não reverte o risco nem notifica; o mesmo UUID com probabilidade diferente recebe `409`. Esses resultados são verificados pelos testes listados em 9.1.2.7.3.
 
 **Aceite e rastreabilidade**
 
@@ -6936,7 +6936,166 @@ Após persistência e publicação, a resposta é `202` sem corpo. Supondo vers�
 | Autorização | Revogação de acesso oculta conteúdo e contagens; usuário não altera preferências nem lê avisos de outra pessoa |
 | Falha permanente | Evento preservado para intervenção, erro rastreável e recuperação controlada, sem falso sucesso de processamento |
 
-#388 deve contemplar HMAC e janela temporal deste emissor, além do token específico do Drive. O escopo substituto de #389 precisa incluir emissor, receptor, consumo e dimensionamento dos avisos, preservando em tarefa explícita a persistência de áudio ainda necessária. #392 a #394 fornecem a mensageria compartilhada; #391 registrará implementação e evidências reais. A definição encerra a terceira unidade documental da #386; revisão, PR e alinhamento do backlog continuam necessários antes de fechar o card.
+A autenticidade (HMAC e janela temporal deste emissor, além do token do Drive) foi implementada em #388; emissor e receptor em #389; a mensageria em #392 a #394; preferências e avisos em #447 e #448. As evidências e as limitações conhecidas estão em 9.1.2.7.3.
+
+##### 9.1.2.7.3 Rotas implementadas, payloads observados e evidências
+
+Esta subseção registra o que foi implementado e observado nos contratos de 9.1.2.7.1 e 9.1.2.7.2:
+
+- WH-01 e a autenticação dos dois emissores foram implementados em #390 e #388.
+- WH-02 foi implementado em #389.
+- O consumo foi implementado em #394, sobre a mensageria de 9.1.2.6.
+- As preferências e os avisos foram implementados em #447 e #448.
+
+Os payloads abaixo foram observados em teste, e os valores que identificariam o ambiente foram trocados por marcadores. Nenhum token, chave ou assinatura aparece nos exemplos.
+
+**Rotas e métodos**
+
+As duas rotas estão em [`webhooks.py`](../src/middleware/app/api/routes/webhooks.py). Elas não usam cookie de usuário: a autenticidade é a do emissor. Nenhuma regra de negócio roda na requisição, que apenas autentica, valida, registra o recebimento e publica o evento interno.
+
+| Webhook | Método e rota no middleware | URL pública | Corpo aceito | Autenticação |
+|---|---|---|---|---|
+| WH-01 | `POST /webhooks/google-drive` | `https://<host>/api/webhooks/google-drive` | Vazio, com leitura interrompida acima de 1 KiB | Token do canal, comparado pelo hash SHA-256 guardado em `webhook.canal_drive`, mais recurso e validade do canal |
+| WH-02 | `POST /webhooks/portfolio` | `https://<host>/api/webhooks/portfolio` | Um objeto JSON por requisição, `application/json` em UTF-8, sem compressão, até 32 KiB | HMAC-SHA256 com chave por `key_id` cadastrada em `webhook.fonte_portfolio` e janela de 300 s |
+
+Qualquer outro método recebe `405` com `Allow: POST`. As respostas de sucesso não têm corpo. Os erros da aplicação usam o envelope `{"detail":{"codigo":"...","mensagem":"..."}}`, com mensagens genéricas que não dizem qual comparação de autenticação falhou. A aplicação recusa com `431` um cabeçalho com valor acima de 2 KiB.
+
+**WH-01: dados recebidos do Google**
+
+O teste com o provedor real inscreveu um canal em `changes.watch` com a conta de serviço da ingestão e uma URL HTTPS temporária. Depois disso, um arquivo da pasta sintética foi renomeado. O Google enviou primeiro a notificação `sync`, respondida com `204`. Em seguida vieram seis notificações `change` em cerca de 80 segundos, todas respondidas com `202`. A tabela lista os campos observados:
+
+| Cabeçalho | Tipo observado | Tratamento |
+|---|---|---|
+| `X-Goog-Channel-ID` | UUID criado pela aplicação | Busca o canal cadastrado; desconhecido gera `401` |
+| `X-Goog-Channel-Token` | Texto hexadecimal de 64 caracteres, gerado na inscrição | Hash comparado em tempo constante; nunca registrado |
+| `X-Goog-Resource-ID` | Texto opaco de 27 caracteres, constante no canal | Deve ser igual ao recurso confirmado na inscrição |
+| `X-Goog-Resource-URI` | URL da API `changes` com os parâmetros da inscrição | Conferida contra o cadastro; nunca usada para download |
+| `X-Goog-Resource-State` | `sync` na primeira notificação e `change` nas seguintes | `changed` é normalizado para `change` |
+| `X-Goog-Message-Number` | Inteiro decimal crescente, com lacunas grandes | Preservado como texto; no teste, `680081`, `686049`, `686064`, `745766`, `747712` e `759654` |
+| `X-Goog-Channel-Expiration` | Data no formato HTTP, não armazenada | Informativa; vale a validade confirmada na inscrição |
+
+Os números de mensagem não são consecutivos, e uma única ação do usuário gerou seis notificações. Por isso a chave de idempotência é o par canal e número, e o consumidor trata várias notificações seguidas como uma única sincronização efetiva. Exemplo de requisição com os valores observados trocados por marcadores:
+
+```http
+POST /api/webhooks/google-drive HTTP/1.1
+Host: <host>
+Content-Length: 0
+X-Goog-Channel-ID: <uuid-do-canal>
+X-Goog-Channel-Token: <token-do-canal>
+X-Goog-Channel-Expiration: <data-de-expiracao>
+X-Goog-Resource-ID: <recurso-do-canal>
+X-Goog-Resource-URI: https://www.googleapis.com/drive/v3/changes?<parametros-da-inscricao>
+X-Goog-Resource-State: change
+X-Goog-Message-Number: 686049
+```
+
+```http
+HTTP/1.1 202 Accepted
+Content-Length: 0
+```
+
+O recebimento gravado em `webhook.recebimento` para essa notificação tem `provedor = google_drive`, `chave_externa = <uuid-do-canal>:686049`, `publicado_em` preenchido e `tentativas = 0`. O evento guardado e publicado no `payload` de `webhook.received` foi:
+
+```json
+{
+  "provider": "google_drive",
+  "fonte_id": "corpus_metro_sintetico",
+  "channel_id": "<uuid-do-canal>",
+  "resource_id": "<recurso-do-canal>",
+  "resource_state": "change",
+  "message_number": "686049"
+}
+```
+
+Entre o recebimento e a publicação confirmada, o tempo observado foi de 10 a 40 ms. A exceção foi a primeira notificação, que também abriu a conexão com o broker: cerca de 2 s, ainda dentro do orçamento de 3 s. Uma consulta de leitura a `changes.list` com o cursor da fonte devolveu as mudanças da pasta, e o consumidor usa essa mesma consulta para reindexar só os documentos afetados.
+
+**WH-02: dados enviados pelo emissor**
+
+O emissor está em [`src/emissor-portfolio`](../src/emissor-portfolio/README.md) (`Codigo.gs`). O teste executou o código do emissor fora do Apps Script, com os serviços do Google substituídos por dublês. Os quatro eventos gerados, um de cada tipo e uma segunda versão de risco, foram reenviados ao middleware por uma URL HTTPS temporária e receberam `202`. Um reenvio do primeiro evento recebeu `204`. A assinatura calculada pelo emissor é conferida pelo backend com um vetor de teste comum às duas linguagens. A tabela descreve os cabeçalhos observados:
+
+| Cabeçalho | Tipo observado | Tratamento |
+|---|---|---|
+| `Content-Type` | `application/json` | Outro tipo, outra codificação ou `Content-Encoding` diferente de `identity` recebem `415` |
+| `X-Prata-Source` | Identificador ASCII, por exemplo `teste_emissor` | Precisa ser igual ao `source_id` do corpo; divergência gera `401` |
+| `X-Prata-Key-Id` | Identificador ASCII, por exemplo `k1` | Seleciona a chave ativa da fonte |
+| `X-Prata-Timestamp` | Segundos Unix com dez dígitos | Fora de 300 s do relógio do receptor gera `401` |
+| `X-Prata-Signature` | Base64 de 44 caracteres (32 bytes de HMAC-SHA256) | Comparada em tempo constante sobre `source\nkey_id\ntimestamp\n` seguido dos bytes exatos do corpo |
+
+O corpo é o JSON compacto produzido por `JSON.stringify`, sem espaços. O emissor guarda esse texto antes do primeiro envio e reutiliza os mesmos bytes em todas as tentativas. Os tipos seguem a tabela "Payload versão 1" de 9.1.2.7.2. O backend recusa campos extras, chaves duplicadas, `true` ou `1.0` no lugar de inteiros e datas inválidas. Exemplo observado, com os códigos de projeto e de entidade da carga sintética:
+
+```http
+POST /api/webhooks/portfolio HTTP/1.1
+Host: <host>
+Content-Type: application/json
+X-Prata-Source: teste_emissor
+X-Prata-Key-Id: k1
+X-Prata-Timestamp: <segundos-unix>
+X-Prata-Signature: <hmac-base64>
+
+{"schema_version":1,"event_id":"531e80a0-417c-4d68-bbde-811551d080df","source_id":"teste_emissor","event_type":"risco.alterado","occurred_at":"2026-09-24T05:29:23Z","projeto_codigo":"demo-PRJ-2024-001","entity_id":"demo-risco-demo-PRJ-2024-001-0","version":2,"data":{"status":"monitorado","probabilidade":5,"impacto":5}}
+```
+
+```http
+HTTP/1.1 202 Accepted
+Content-Length: 0
+```
+
+Os outros eventos observados tinham estes `data`:
+
+- `projeto.status_alterado`: `{"status":"suspenso"}`.
+- `marco.alterado`: `{"status":"concluido","data_prevista":"2026-10-01","data_real":"2026-09-20"}`.
+- `risco.alterado`: `{"status":"mitigado","probabilidade":5,"impacto":5}`, na versão 3.
+
+Exemplo de recusa, para um projeto fora do escopo da fonte:
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{"detail":{"codigo":"WEBHOOK_FORA_DO_ESCOPO","mensagem":"Fonte sem autorização para este evento."}}
+```
+
+**Processamento e armazenamento**
+
+| Etapa | WH-01 | WH-02 |
+|---|---|---|
+| Registro na requisição | `webhook.recebimento`, com chave externa `canal:número` | `webhook.recebimento`, com chave externa `fonte:event_id` e `corpo_sha256` dos bytes recebidos |
+| Evento interno | `webhook.received` com o `payload` acima (9.1.2.6) | `webhook.received` com `provider = apps_script` e `event` validado (exemplo em 9.1.2.6) |
+| Consumo | `changes.list` do cursor salvo em `webhook.sincronizacao_fonte` até o novo cursor, seguido da ingestão incremental da pasta; o cursor novo só é gravado depois da reindexação | Na mesma transação: controle de versão em `webhook.versao_entidade`, atualização de `projeto`, `marco` ou `risco`, auditoria em `webhook.auditoria_portfolio` e avisos em `aviso` para quem aderiu em `preferencia_aviso` e tem acesso |
+| Resultado registrado | `processado_em` no recebimento; documentos afetados reindexados | `processado_em`; resultado `aplicado`, `sem_diferenca`, `repetido` ou `ignorado_antigo` na auditoria |
+
+Por exemplo, se o risco acima estava com probabilidade 3 e impacto 5, a versão 2 altera `risco.probabilidade` e gera avisos com `diferencas` igual a `{"probabilidade": {"de": 3, "para": 5}}` para as adesões elegíveis. Se a versão 1 chegar depois, é registrada como `ignorado_antigo` e não reverte o risco.
+
+**Erro e repetição**
+
+| Situação | WH-01 | WH-02 |
+|---|---|---|
+| Mesma entrega repetida, já publicada | `204`, sem nova publicação | `204` quando o corpo tem o mesmo hash, sem nova publicação |
+| Mesmo identificador com conteúdo diferente | Não se aplica: o número identifica a notificação | `409 WEBHOOK_EVENTO_CONFLITANTE`, preservando o original |
+| Repetição de recebimento ainda pendente | Tenta publicar de novo com os mesmos UUIDs; sem confirmação, `503` | Igual ao WH-01 |
+| Broker ou banco fora do ar | `503 WEBHOOK_INDISPONIVEL`, `Retry-After: 5`; a manutenção do `worker` republica depois | Igual ao WH-01; o emissor repete após 1, 5, 15 e 60 minutos ou após o `Retry-After`, se for maior |
+| Autenticação | `401` para canal desconhecido, token errado ou ausente, recurso divergente e canal expirado | `401` para chave desconhecida, assinatura errada, fonte divergente e timestamp fora da janela; `403` fora do escopo |
+| Conteúdo | `400` para cabeçalho ausente, repetido ou malformado e para corpo não vazio; `413` acima de 1 KiB | `400` para JSON malformado ou chave duplicada; `422` para schema ou vínculo de entidade; `413` acima de 32 KiB; `415` para tipo de conteúdo |
+| `sync` com canal ainda pendente | `204` sem publicar; um `change` nesse estado recebe `503` | Não se aplica |
+| Falha no consumo | Transitória: retentativa com atraso crescente. Sem cursor salvo: `CURSOR_AUSENTE` para `prata.failed` | Transitória: retentativa. Conflito de versão ou escopo revogado: `prata.failed`, sem alterar dados |
+
+**Testes automatizados**
+
+| Arquivo | O que cobre |
+|---|---|
+| `tests/unit/test_webhook_drive_rota.py`, `tests/unit/test_webhook_drive_recebimento.py`, `tests/unit/test_webhooks_drive.py` | Respostas da rota do Drive, limites de corpo e cabeçalhos, validação dos cabeçalhos e do token |
+| `tests/integration/test_webhook_drive.py` | Inscrição, `sync`, mudança publicada, repetição, broker indisponível, renovação e manutenção |
+| `tests/unit/test_webhook_portfolio_assinatura.py`, `tests/unit/test_webhook_portfolio_evento.py` | Vetor HMAC comum ao emissor, janela de tempo, schema estrito, escopo e vínculo |
+| `tests/integration/test_webhook_portfolio.py` | Evento publicado, repetição `204`, conflito `409`, escopo `403`, vínculo `422`, `415`, `413` e broker indisponível |
+| `tests/integration/test_consumidor_webhooks.py` | Consumo dos dois provedores, versões do portfólio, escopo revogado, cursor do Drive e falhas |
+| `tests/integration/test_avisos_portfolio.py` e `src/web/src/testes/avisos.test.tsx` | Avisos por adesão e acesso, severidade mínima, reentrega sem duplicidade, rotas e tela |
+
+**Limitações conhecidas**
+
+- **Gatilho da planilha:** a planilha nativa com o gatilho instalável ainda não foi exercitada no Apps Script. O emissor foi validado fora dele, com os mesmos bytes, cabeçalhos e respostas.
+- **Reconciliação periódica do Drive:** a reconciliação de recuperação a cada 15 minutos prevista em 9.1.2.7.1 não foi implementada. A manutenção do `worker` republica recebimentos pendentes, renova canais aos 80% da validade e expurga avisos com mais de 30 dias. Sem notificação nova, o corpus é atualizado pela ingestão manual.
+- **Retenção dos recebimentos:** a regra de 30 dias para recebimentos concluídos não tem expurgo automático; os registros permanecem em `webhook.recebimento`.
+- **Limite de cabeçalhos:** o limite de 16 KiB para o conjunto de cabeçalhos não está configurado no proxy. A aplicação aplica apenas o limite de 2 KiB por valor.
 
 ### 9.1.3 Integração com Voz
 
