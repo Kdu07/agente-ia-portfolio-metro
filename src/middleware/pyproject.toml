@@ -91,7 +91,9 @@ dev = [
     "pytest-cov>=5.0",
     "pytest-benchmark>=5.1",
     "locust>=2.32",
-    "ruff>=0.5",
+    # Faixa travada: o conjunto padrão de regras muda entre minors do ruff, e a
+    # CI instalaria uma versão diferente da local.
+    "ruff>=0.16,<0.17",
     # VHS (Projeto.md 10.5.4): grava uma vez a resposta real do serviço
     # externo e a reproduz nas execuções seguintes. vcrpy é o motor;
     # pytest-recording traz o marcador @pytest.mark.vcr, --record-mode e

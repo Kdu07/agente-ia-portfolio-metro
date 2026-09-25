@@ -170,11 +170,11 @@ npm run test:coverage  # suíte com relatório em src/web/coverage/
 | Catálogo de intenções | Completo |
 | Classificador de intenções | Treinado e avaliado, atendendo ao RNF03 |
 | Pré-processamento e vetorização | Implementados |
-| Interface — Chat e Rotinas | Telas implementadas |
-| Interface — Histórico e Intenções | Em construção |
-| Autenticação, persistência, guardas, análise de intenções e voz | Em construção |
-
-O planejamento das frentes pendentes está em [Arquitetura da solução](docs/Arquitetura.md).
+| Interface — Chat, Histórico, Intenções e Rotinas | Implementadas |
+| Autenticação, persistência, guardas, análise de intenções e voz | Implementadas |
+| Webhooks para integrações externas | Implementados |
+| Sistema de mensageria assíncrona (RabbitMQ) | Implementado |
+| Implantação em nuvem (Azure Container Apps, PostgreSQL, CI/CD) | Implementada |
 
 ## 📝 Documentação
 
@@ -196,10 +196,10 @@ O projeto segue [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-B
 
 | Versão | Sprint | Status | Escopo |
 |---|---|---|---|
-| `v1.0.0` | Sprint 1 | ✅ Lançada | Entendimento do negócio, visão do produto, personas, jornadas, requisitos (RF/RNF), modelagem estática, diagramas UML e artefatos de gestão do projeto. |
-| `v2.0.0` | Sprint 2 | 🚧 Em fechamento | Arquitetura da solução revisada, pipeline de PLN com classificador treinado e avaliado, catálogo de intenções, wireframes, mockups e protótipos, canal de voz, modelagem de dados, implantação em nuvem e planejamento das Sprints 3 a 5. |
-| `v3.0.0` | Sprint 3 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 3. |
-| `v4.0.0` | Sprint 4 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 4. |
+| `v1.0.0` | Sprint 1 | Lançada | Entendimento do negócio, visão do produto, personas, jornadas, requisitos (RF/RNF), modelagem estática, diagramas UML e artefatos de gestão do projeto. |
+| `v2.0.0` | Sprint 2 | Lançada | Arquitetura da solução revisada, pipeline de PLN com classificador treinado e avaliado, catálogo de intenções, wireframes, mockups e protótipos, canal de voz, modelagem de dados, implantação em nuvem e planejamento das Sprints 3 a 5. |
+| `v3.0.0` | Sprint 3 | Lançada | Orquestração do pipeline integrada e testada, pré-processamento e vetorização, executores dublês, canal de voz integrado ao NLP, testes de integração, autenticação e autorização, e planejamento da Sprint 4. |
+| `v4.0.0` | Sprint 4 | Lançada | Implantação em nuvem com Container Apps e PostgreSQL gerenciado, pipelines de CI/CD, executor próprio com RAG, webhooks e sistema de mensageria assíncrona (RabbitMQ), rotinas agendadas, painel de análise de intenções, histórico de conversas, testes funcionais e de desempenho, persistência completa com banco de dados, e guardas com Content Safety. |
 | `v5.0.0` | Sprint 5 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 5. |
 
 O histórico detalhado de cada entrega — incluindo métricas, retrospectivas e planejamento da sprint seguinte — é registrado em [Gestão do projeto](docs/GestaoProjeto.md#3-avaliação-das-sprints).

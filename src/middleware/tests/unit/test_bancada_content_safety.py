@@ -6,6 +6,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from app.config import settings
 from app.pipeline.guardas.abuso import bancada
 from app.pipeline.guardas.abuso.bancada import Caso, Resultado
 
@@ -72,7 +73,10 @@ def test_resultado_sem_severidade_nao_inventa_categoria() -> None:
     assert medicao.categoria_maxima is None
 
 
-async def test_executar_consulta_cada_caso_uma_vez() -> None:
+async def test_executar_consulta_cada_caso_uma_vez(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Sem o endpoint, a URL fica relativa e o httpx a recusa antes do
+    # transporte. Fixá-lo aqui tira o teste da dependência do `.env` local.
+    monkeypatch.setattr(settings, "content_safety_endpoint", "https://content-safety.teste")
     chamadas: list[httpx.Request] = []
 
     def responder(request: httpx.Request) -> httpx.Response:

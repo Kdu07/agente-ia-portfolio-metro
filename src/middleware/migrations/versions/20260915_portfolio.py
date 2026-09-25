@@ -13,7 +13,6 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
 
 revision: str = "20260915_portfolio"
 down_revision: str | None = "5b1f0c9a7d21"
