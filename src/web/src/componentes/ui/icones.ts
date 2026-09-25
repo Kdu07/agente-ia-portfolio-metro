@@ -85,7 +85,8 @@ export { ProhibitIcon as IconeRegrasDeUso } from "@phosphor-icons/react/dist/csr
 // Sugestões da conversa vazia
 export { FlagIcon as IconeMarco } from "@phosphor-icons/react/dist/csr/Flag";
 export { WarningIcon as IconeRisco } from "@phosphor-icons/react/dist/csr/Warning";
-export { ChartLineUpIcon as IconeComparar } from "@phosphor-icons/react/dist/csr/ChartLineUp";
+export { BookOpenIcon as IconeConceito } from "@phosphor-icons/react/dist/csr/BookOpen";
+export { ScalesIcon as IconeDecisao } from "@phosphor-icons/react/dist/csr/Scales";
 
 // Usados pelos componentes do shadcn
 export { CaretRightIcon as IconeCaretDireita } from "@phosphor-icons/react/dist/csr/CaretRight";
