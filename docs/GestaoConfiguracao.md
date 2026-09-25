@@ -133,7 +133,7 @@ O projeto adota um fluxo baseado em GitFlow, no qual o trabalho é desenvolvido 
 | `develop` | Integração contínua do trabalho em desenvolvimento | `main` | `main`, ao fim de cada sprint, por merge request revisado |
 | `feat/<nome>` | Desenvolvimento de funcionalidades | `develop` | `develop` |
 | `fix/<nome>` | Correção de defeitos identificados durante o desenvolvimento | `develop` | `develop` |
-| `release/<versão>` | Estabilização excepcional de uma entrega, quando a `develop` não puder ser promovida inteira; não utilizada desde a Sprint 3 | `develop` | `main` e `develop` |
+| `release/<versão>` | **Opcional.** Estabilização de uma entrega quando a `develop` não puder ser promovida inteira; não utilizada desde a Sprint 3 | `develop` | `main` e `develop` |
 | `hotfix/<nome>` | Correção urgente de uma versão estável | `main` | `main` e `develop` |
 | `docs/<nome>` | Criação ou atualização de documentação | `develop` | `develop` |
 | `design/<nome>` | Criação ou atualização de artefatos de design e modelagem | `develop` | `develop` |
@@ -147,7 +147,7 @@ O papel de cada branch decorre da sua permanência e do seu destino.
 
 **As demais são temporárias e existem enquanto durar o card que as originou.** `feat` e `fix` carregam alteração de comportamento do sistema, a primeira acrescentando e a segunda corrigindo. `docs`, `design` e `test` carregam, respectivamente, documentação, artefatos de modelagem e casos de teste, e não alteram o comportamento da aplicação. A promoção normal para a `main` é o merge request da própria `develop`; `release` fica reservada ao caso em que parte do que está na `develop` não pode acompanhar a entrega e precisa ser estabilizado à parte. `hotfix` é a exceção a esse fluxo, e existe porque uma correção urgente em produção não pode esperar o ciclo de integração; por isso parte da `main` e retorna às duas branches permanentes, para que a correção não desapareça do desenvolvimento.
 
-> **Revisão da Sprint 4: integração da `develop` na `main`.** Até a Sprint 2, a promoção passava por branch de release (`release-sprint-1`, integrada em 14/08/2026, e `release/v0.2.0-Sprint2`, em 28/08/2026). Desde a Sprint 3 o grupo integra a `develop` diretamente na `main` por merge request revisado: !88 em 05/09/2026 (Sprint 3, semana 1) e !110 em 12/09/2026 (Sprint 3). O acordo decorre de a entrega de cada sprint ser o estado integral da `develop`: o controle de qualidade acontece na revisão de cada merge request de trabalho e na execução das suítes de teste antes do merge, de modo que a branch de release repetia a `develop` sem acrescentar estabilização. Esta tabela e a seção 2.5 passaram a registrar a regra praticada, e não mais a anterior.
+> **Revisão da Sprint 4: integração da `develop` na `main`.** Até a Sprint 2, a promoção passava por branch de release (`release-sprint-1`, integrada em 14/08/2026, e `release/v0.2.0-Sprint2`, em 28/08/2026). Desde a Sprint 3 o grupo integra a `develop` diretamente na `main` por merge request revisado: !88 em 05/09/2026 (Sprint 3, semana 1) e !110 em 12/09/2026 (Sprint 3). O acordo decorre de a entrega de cada sprint ser o estado integral da `develop`: o controle de qualidade acontece na revisão de cada merge request de trabalho e na execução das suítes de teste antes do merge, de modo que a branch de release repetia a `develop` sem acrescentar estabilização. A branch de release é, portanto, **opcional**: nenhuma regra do projeto exige que a promoção para a `main` passe por ela. O padrão é o merge request da `develop` para a `main` ao fim de cada sprint, e a `release` só é criada quando parte do trabalho integrado na `develop` não puder acompanhar a entrega. Esta tabela e a seção 2.5 passaram a registrar a regra praticada, e não mais a anterior.
 
 > **Revisão da Sprint 2.** Os prefixos de funcionalidade e de correção passaram de `feature/` e `bugfix/` para **`feat/` e `fix/`**, alinhando a nomenclatura de branch aos tipos já utilizados nas mensagens de commit do padrão *Conventional Commits* e à prática efetivamente adotada pela equipe no repositório. Branches criadas antes desta revisão permanecem com o nome original em seu histórico; a convenção vale para as branches criadas a partir da Sprint 3.
 
@@ -422,7 +422,7 @@ feat: implementar produtor AMQP com confirmacao de publicacao #393
 feat: integrar produtor de eventos ao ciclo de vida da API #393
 test: validar topologia, confirmacao e falhas do produtor #393
 ```
-   As mensagens citam o card sem parênteses, forma que coexiste na Sprint 4 com a regra da seção 3; a unificação é tratada na revisão da política de commits (#401).
+   As mensagens citam o card sem parênteses; o formato da referência ao card está na seção 3.
 3. Enviar a branch e abrir o merge request para a `develop`, com título, descrição, labels e revisão da seção 4.1;
 4. Executar a suíte de testes e aguardar a revisão por outra pessoa;
 5. Integrar com *Delete source branch*: a branch remota deixou de existir no merge de 23/09/2026 (commit `81a25a2`), e restou apenas a limpeza local da seção 2.5.
@@ -449,7 +449,9 @@ git tag -a sprint-4 -m "Entrega da Sprint 4"
 git push origin sprint-4
 ```
 
-#### Preparação de release (uso excepcional)
+#### Preparação de release (opcional)
+
+A release não é etapa obrigatória do fluxo. Ela só é criada quando o padrão da seção anterior não servir.
 
 Quando parte do trabalho integrado na `develop` não puder acompanhar a entrega, uma branch de release estabiliza o recorte que será promovido. A branch deve partir da `develop` atualizada:
 
