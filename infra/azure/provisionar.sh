@@ -17,11 +17,12 @@
 #   dados      copia os esquemas rag e portfolio do banco local
 #   apps       middleware e web; o worker de rotinas só com COM_WORKER=1
 #   entra      redirect URI do login no registro de aplicativo
-#   alertas    grupo de ação, alerta de reinício e orçamento
+#   alertas    grupo de ação, alertas de reinício e de indisponibilidade, orçamento
 #   pipeline   identidade do GitLab CI no estágio, por OIDC e sem segredo
 #   fechar     remove o acesso temporário ao banco
 #   conferir   só leitura: segredos por referência ao cofre, TLS e rede do banco
-# Fora de `tudo`: conta, ligar, desligar, parar, retomar, saude, rebaixar
+# Fora de `tudo`: conta, ligar, desligar, parar, retomar, saude, metricas
+# (só leitura: disponibilidade, erro e latência no Log Analytics), rebaixar
 # (downgrade do alembic antes de voltar a uma imagem anterior) e local
 # (grava as chaves do Content Safety e do Speech no .env da máquina).
 #
@@ -642,6 +643,16 @@ fase_alertas() {
         --condition "total RestartCount > 0" --window-size 15m --evaluation-frequency 5m \
         --action ag-prata -o none
   done
+  # Indisponibilidade do middleware como o usuário a percebe: o proxy do
+  # web devolve 502, 503 ou 504 quando o middleware não responde. Um teste
+  # sintético acordaria a cada poucos minutos o app escalado a zero e
+  # gastaria crédito; este alerta só observa o tráfego que já existe.
+  existe az monitor metrics alert show -g "$RG" -n "alerta-indisponivel-$APP_API" ||
+    az monitor metrics alert create -g "$RG" -n "alerta-indisponivel-$APP_API" \
+      --scopes "$(azv containerapp show -g "$RG" -n "$APP_WEB" --query id)" \
+      --condition "total Requests > 0 where statusCode includes 502 or 503 or 504" \
+      --window-size 5m --evaluation-frequency 1m --action ag-prata \
+      --description "O web recebeu 502, 503 ou 504 em /api: o $APP_API não respondeu" -o none
 
   # Orçamento da assinatura inteira, na moeda de cobrança dela. Avisa; não
   # bloqueia gasto.
@@ -897,6 +908,29 @@ fase_saude() {
   url="https://$(web_fqdn)/api/health/pronto"
   resposta=$(curl --fail-with-body --show-error --silent --max-time 300 "$url")
   echo "  $url -> $resposta"
+}
+
+# Só leitura. Roda as consultas de infra/azure/consultas/ no Log Analytics
+# e imprime o resultado de cada uma para os apps do estágio, na janela
+# JANELA (padrão 24h). Cada .kql traz no topo os `let` com os nomes do dev,
+# para poder ser colado direto no portal; aqui eles viram os do estágio.
+# Pela API REST, porque o `az monitor log-analytics query` pede extensão.
+fase_metricas() {
+  local ws arquivo corpo janela="${JANELA:-24h}"
+  ws=$(azv monitor log-analytics workspace show -g "$RG" -n "$LAW" --query customerId)
+  corpo=$(mktemp)
+  for arquivo in "$AQUI"/consultas/*.kql; do
+    echo "  -- $(basename "$arquivo" .kql), últimas $janela"
+    sed -e "s/^let web = .*/let web = \"$APP_WEB\";/" \
+      -e "s/^let middleware = .*/let middleware = \"$APP_API\";/" \
+      -e "s/^let janela = .*/let janela = $janela;/" "$arquivo" |
+      jq -Rs '{query: .}' >"$corpo"
+    az rest --method post --url "https://api.loganalytics.io/v1/workspaces/$ws/query" \
+      --resource https://api.loganalytics.io --body "@$(caminho_nativo "$corpo")" -o json |
+      jq -r '.tables[0] | (.columns | map(.name)), (.rows[] | map(tostring)) | @tsv' |
+      tr -d '\r' | sed 's/^/  /'
+  done
+  rm -f "$corpo"
 }
 
 # --- Execução -------------------------------------------------------------
