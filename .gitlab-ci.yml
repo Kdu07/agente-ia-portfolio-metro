@@ -15,10 +15,10 @@ workflow:
     # da sprint): é a pipeline de branch que implanta. Outras branches só têm
     # a pipeline do MR, para cada push não rodar tudo duas vezes.
     - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "main"
-    # "Run pipeline" na interface. Com IMPLANTAR=dev, a branch escolhida vai
-    # para o dev, se a identidade do dev aceitar aquele ramo (fase pipeline
-    # do provisionar.sh).
-    - if: $CI_PIPELINE_SOURCE == "web"
+    # Disparo manual: "Run pipeline" na interface (web) ou `glab ci run`
+    # (api). Com IMPLANTAR=dev, a branch escolhida vai para o dev, se a
+    # identidade do dev aceitar aquele ramo (fase pipeline do provisionar.sh).
+    - if: $CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api"
 
 stages:
   - lint
@@ -167,7 +167,7 @@ web:vitest:
     ESTAGIO: dev
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "develop"
-    - if: $CI_PIPELINE_SOURCE == "web" && $IMPLANTAR == "dev"
+    - if: ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api") && $IMPLANTAR == "dev"
 
 .prd:
   variables:
