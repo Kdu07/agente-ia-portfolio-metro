@@ -19,10 +19,17 @@ from app.webhooks.modelos import (
     CanalRegistrado,
     EstadoCanal,
     EstadoSincronizacao,
+    FontePortfolio,
     Provedor,
     Recebimento,
+    TipoEventoPortfolio,
 )
-from app.webhooks.tabelas import CanalDriveTabela, RecebimentoTabela, SincronizacaoFonteTabela
+from app.webhooks.tabelas import (
+    CanalDriveTabela,
+    FontePortfolioTabela,
+    RecebimentoTabela,
+    SincronizacaoFonteTabela,
+)
 
 # Renovar ao atingir 80% da validade concedida (seção 9.1.2.7.1, item 6).
 FRACAO_RENOVACAO = 0.8
@@ -158,6 +165,7 @@ class RecebimentoRepository(_RepositorioBase):
         canal_id: str | None,
         evento: dict[str, Any],
         agora: datetime,
+        corpo_sha256: bytes | None = None,
     ) -> tuple[Recebimento, bool]:
         """Registra a notificação; devolve o registro e se ele é novo.
 
@@ -176,6 +184,7 @@ class RecebimentoRepository(_RepositorioBase):
                 canal_id=canal_id,
                 evento=evento,
                 recebido_em=agora,
+                corpo_sha256=corpo_sha256,
             )
             .on_conflict_do_nothing(constraint="uq_recebimento_chave_externa")
             .returning(RecebimentoTabela)
@@ -268,3 +277,41 @@ class SincronizacaoRepository(_RepositorioBase):
                 set_={"cursor": cursor, "atualizado_em": agora},
             )
         )
+
+
+class FontePortfolioRepository(_RepositorioBase):
+    """Cadastro dos emissores do WH-02."""
+
+    async def salvar(
+        self,
+        *,
+        source_id: str,
+        planilha_id: str,
+        projetos: set[str],
+        tipos: set[TipoEventoPortfolio],
+        ativa: bool = True,
+        agora: datetime,
+    ) -> None:
+        """Cria ou substitui o cadastro inteiro da fonte."""
+        valores = {
+            "planilha_id": planilha_id,
+            "projetos": sorted(projetos),
+            "tipos": sorted(tipo.value for tipo in tipos),
+            "ativa": ativa,
+            "atualizada_em": agora,
+        }
+        await self._sessao.execute(
+            pg_insert(FontePortfolioTabela)
+            .values(source_id=source_id, criada_em=agora, **valores)
+            .on_conflict_do_update(index_elements=[FontePortfolioTabela.source_id], set_=valores)
+        )
+
+    async def obter(self, source_id: str) -> FontePortfolio | None:
+        linha = await self._sessao.get(FontePortfolioTabela, source_id)
+        return None if linha is None else linha.to_dominio()
+
+    async def listar(self) -> list[FontePortfolio]:
+        linhas = await self._sessao.scalars(
+            select(FontePortfolioTabela).order_by(FontePortfolioTabela.source_id)
+        )
+        return [linha.to_dominio() for linha in linhas]
