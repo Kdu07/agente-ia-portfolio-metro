@@ -41,7 +41,7 @@ describe("Navegação entre conversas", () => {
 
     expect(await screen.findByText("Como posso ajudar?")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Quais marcos estão atrasados no portfólio?" }),
+      screen.getByRole("button", { name: "Quando termina o projeto Estação Morumbi?" }),
     ).toBeInTheDocument();
   });
 
