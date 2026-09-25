@@ -11,3 +11,4 @@ export { CartaoResumo, type ItemResumo } from "./CartaoResumo";
 export { DistribuicaoDesfechos } from "./DistribuicaoDesfechos";
 export { SerieBloqueios } from "./SerieBloqueios";
 export { TabelaEnunciados } from "./TabelaEnunciados";
+export { TempoPorEtapa } from "./TempoPorEtapa";

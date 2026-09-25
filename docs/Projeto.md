@@ -2173,7 +2173,7 @@ Esta seção apresenta a especificação consolidada da pilha de tecnologias par
 A plataforma de acesso foi desenhada em arquitetura de Single Page Application (SPA) responsiva, eliminando a fragmentação de código e garantindo operação uniforme em qualquer dispositivo:
 
 - **Interface Web Própria (Desktop e Mobile Web):** Desenvolvida como aplicação web responsiva servida por Nginx, acessível via navegadores em estações de trabalho (Desktop) e dispositivos móveis.
-- **Design Adaptativo e Acessibilidade:** Construída com Tailwind CSS e primitivos de interface acessíveis, com quebras de layout dinâmicas que organizam o chat conversacional, a barra de histórico, a gestão de rotinas e os gráficos analíticos em telas de qualquer dimensão sem exigir bases de código mobile dedicadas.
+- **Design Adaptativo e Acessibilidade:** Construída com Tailwind CSS e componentes shadcn/ui sobre primitivos de interface acessíveis, com quebras de layout dinâmicas que organizam o chat conversacional, a barra de histórico, a gestão de rotinas e os gráficos analíticos em telas de qualquer dimensão sem exigir bases de código mobile dedicadas.
 - **Canal de Voz Unificado:** Entrada multimodal por áudio diretamente pelo navegador via Azure Speech SDK, com transcrição em tempo real consumida pelo mesmo endpoint conversacional.
 
 ### 5.1.2 Tecnologias do Pilar 1 — Middleware Próprio, Frontend e Serviços Locais
@@ -2181,8 +2181,8 @@ A plataforma de acesso foi desenhada em arquitetura de Single Page Application (
 Composto pelo frontend estático, pela API backend assíncrona, pelo worker agendador de rotinas e pela persistência local:
 
 - **Frontend / Camada de Apresentação (`src/web/`):**
-  - *Core & Build:* **React 18**, **TypeScript** e **Vite**, gerando artefatos estáticos leves sem dependência de runtime Node.js em produção.
-  - *Estilização & UI:* **Tailwind CSS** para design responsivo e componentes acessíveis.
+  - *Core & Build:* **React 19**, **TypeScript** e **Vite**, gerando artefatos estáticos leves sem dependência de runtime Node.js em produção.
+  - *Estilização & UI:* **Tailwind CSS** para design responsivo e **shadcn/ui**, sobre os primitivos do Radix, para componentes acessíveis.
   - *Gerenciamento de Estado de Servidor:* **TanStack Query** para controle de cache, sincronização e revalidação do histórico de conversas e execuções de rotinas.
   - *Visualização de Dados:* **Recharts** para exibição do dashboard de telemetria, análise de distribuição de intenções e monitoramento das guardas de segurança.
 - **Backend, API e Orquestração (`src/middleware/`):**
@@ -2225,7 +2225,7 @@ Serviços homologados no tenant do parceiro que recebem requisições validadas 
 
 | Camada | Tecnologia / Ferramenta | Papel na Solução | Critério / Justificativa |
 |---|---|---|---|
-| **Interface / Frontend** | React 18 / TypeScript / Vite / Tailwind CSS | Interface Web Unificada (Desktop e Mobile) | SPA leve, responsiva, estática e sem runtime Node.js em produção. |
+| **Interface / Frontend** | React 19 / TypeScript / Vite / Tailwind CSS / shadcn/ui | Interface Web Unificada (Desktop e Mobile) | SPA leve, responsiva, estática e sem runtime Node.js em produção. |
 | **Servidor Web / Proxy** | Nginx | Servir estáticos da SPA e proxy reverso para `/api` | Elimina problemas de CORS e gerencia rotas estáticas em mesma origem. |
 | **Backend & API (BFF)** | Python 3.12 / FastAPI / Pydantic v2 | API REST assíncrona, orquestrador e controle de sessão | Alta performance Input/Output, tipagem forte e controle centralizado em `deps.py`. |
 | **Autenticação** | Microsoft Entra ID (OAuth PKCE) | Gestão de identidade, perfis e permissões | Autenticação corporativa com sessão segura em cookies `httpOnly`. |
@@ -2523,7 +2523,7 @@ flowchart TB
 
   subgraph CLIENT["Navegador / Cliente"]
     direction TB
-    SPA["src/web (React 18 + Vite + Tailwind)<br/><i>Chat · Histórico · Intenções · Rotinas</i>"]
+    SPA["src/web (React 19 + Vite + Tailwind)<br/><i>Chat · Histórico · Intenções · Rotinas</i>"]
   end
 
   subgraph DOCKER["Ambiente Local / Docker Compose"]
@@ -6362,37 +6362,66 @@ Os wireframes estabelecem a estrutura responsiva, enquanto os mockups detalham e
 
 ## 8.3 Guia Visual
 
-A identidade visual utiliza o logotipo do Prata Agent, composto pelo símbolo relacionado ao transporte metroferroviário, pela inicial do produto e por sua assinatura verbal. A versão adotada possui fundo transparente, lettering prateado e detalhes azuis, devendo ter suas proporções preservadas.
+A identidade visual utiliza o logotipo do Prata Agent, composto pelo símbolo relacionado ao transporte metroferroviário, pela inicial do produto e por sua assinatura verbal. O logotipo é desenhado em vetor, a partir do traçado do arquivo original, e existe em duas versões: marinho, para fundos claros, e prateada, para as superfícies marinho da barra lateral, da tela de entrada e do avatar do agente. As duas preservam as proporções e o filete azul da assinatura. A cor vem dos tokens do tema, e não da imagem, de modo que o mesmo desenho serve às duas superfícies; a versão prateada anterior, em imagem sobre fundo transparente, desaparecia sobre o fundo claro.
 
-![Logotipo do Prata Agent](./imagens/logo-prata-agent.png)
+![Logotipo do Prata Agent nas versões marinho e prateada](./imagens/logo-prata-versoes.png)
 
-A interface utiliza fundo predominantemente branco, barra lateral em cinza claro e azul como cor de ação, seleção e apoio à identidade. Textos principais usam tons escuros de alto contraste, enquanto descrições, horários e informações auxiliares utilizam cinza. Verde identifica o acompanhamento ativo e vermelho é reservado a atrasos e ao estado de gravação de voz.
+A paleta parte de três cores de marca. O marinho ocupa a barra lateral, a tela de entrada e a mensagem de quem pergunta; o azul é reservado a ação, seleção e foco; o prata aparece apenas na assinatura e nos detalhes da marca. As demais cores são neutras, levemente tingidas de azul, e as cores de estado continuam semânticas: verde, vermelho, âmbar, azul e violeta identificam os desfechos do pipeline, e o vermelho de gravação fica restrito à entrada por voz. A área da conversa usa um degradê azul suave sobre o fundo da página. Cada cor é um token com valor claro e escuro, e a verificação de contraste de todos os pares está em 9.2.5.
 
-A tipografia utiliza a família `Inter`, com alternativas nativas do sistema. Títulos e ações principais recebem peso forte; rótulos de navegação utilizam caixa alta e maior espaçamento; mensagens mantêm tamanho e entrelinha adequados à leitura contínua.
+| Token | Claro | Escuro | Uso |
+|---|---|---|---|
+| `--background` | `#F4F7FB` | `#0A111D` | Fundo das páginas |
+| `--card` | `#FFFFFF` | `#111B2C` | Cartões, resposta do agente e campo de mensagem |
+| `--foreground` | `#0E1A2E` | `#EDF2F9` | Títulos e texto de maior peso |
+| `--texto` | `#2F3D55` | `#C3CDDC` | Corpo do texto |
+| `--muted-foreground` | `#5A6A82` | `#8D9AB0` | Texto secundário, horários e legendas |
+| `--primary` | `#1D5BD6` | `#2F6BE0` | Ação principal e seleção |
+| `--sidebar` | `#0B1A33` | `#070D18` | Barra lateral |
+| `--bolha-usuario` | `#14305C` | `#244A86` | Mensagem de quem pergunta |
+| `--prata-claro` e `--prata-escuro` | `#E4E9F0` e `#9DA9BA` | iguais | Detalhes da marca |
+| `--gravacao` | `#D23B3B` | igual | Gravação de voz |
+
+A tipografia utiliza a família `Mona Sans`, fonte variável distribuída sob a licença SIL Open Font License e servida junto com a aplicação, sem depender de serviço externo. O corpo usa peso 400 e entrelinha de 1,55; os títulos usam peso 650 e o eixo de largura da fonte em 116%, o que os distingue do corpo sem trocar de família. Rótulos são escritos em frase, sem caixa alta espaçada, e números em colunas usam algarismos de largura fixa para que se alinhem.
+
+Os ícones vêm de uma única família, a Phosphor, em peso regular e nos tamanhos de 16, 18 e 20 pixels; o peso preenchido marca apenas o item ativo da navegação. Nenhum caractere Unicode é usado como ícone, porque cada um vem de uma fonte de reserva diferente e desalinha do texto. Todo botão que tem só ícone traz nome acessível e uma dica com o mesmo texto.
+
+A interface tem tema claro e tema escuro. A escolha entre Claro, Escuro e Sistema fica no menu do perfil e é guardada no navegador; em Sistema, o tema acompanha a configuração do sistema operacional. O tema escuro não é a inversão do claro: cada token recebe um valor escolhido para o fundo escuro, verificado pelo mesmo teste de contraste. O tema é aplicado antes da primeira pintura da página, para que ela não apareça por um instante no tema errado.
+
+O movimento segue quatro princípios:
+
+- responde a uma ação da pessoa, como abrir um menu, enviar uma mensagem ou trocar de tela, e nunca anima seções inteiras na entrada da página;
+- dura entre 120 e 480 milissegundos;
+- só tem animação contínua o indicador de que o agente está respondendo e a gravação de voz;
+- com a preferência de movimento reduzido do sistema operacional, nada se desloca e as transições terminam no primeiro quadro.
+
+A única ênfase decorativa é o brilho prateado que percorre uma vez a borda do campo de mensagem quando ele recebe foco.
 
 | Componente | Função na interface | Situação |
 |---|---|---|
-| Logotipo do Prata Agent | Identificar o produto | Implementado |
+| Logotipo do Prata Agent | Identificar o produto | Implementado, nas versões marinho e prateada |
 | Nova conversa | Iniciar um novo contexto conversacional | Implementado |
 | Página principal | Acessar a experiência conversacional | Implementado |
 | Rotinas | Acessar as rotinas automatizadas | Implementado |
 | Arquivos | Acessar documentos relacionados ao projeto | Mapeado no wireframe; implementação posterior |
 | Integrações | Acessar conexões externas | Mapeado no wireframe; implementação posterior |
-| Histórico | Retomar conversas anteriores | Implementado visualmente |
+| Conversas recentes | Retomar as oito conversas mais recentes pela barra lateral, agrupadas por data | Implementado |
+| Histórico | Buscar, retomar e arquivar conversas anteriores | Implementado |
+| Menu do perfil | Mostrar a identidade da sessão, escolher o tema e sair | Implementado |
 | Acesso Microsoft | Iniciar autenticação corporativa | Integração prevista com o backend |
-| Cabeçalho contextual | Identificar o projeto acompanhado | Implementado |
+| Cabeçalho da conversa | Identificar a conversa aberta e iniciar outra | Implementado |
 | Alerta de marco | Sinalizar uma situação que exige atenção | Implementado |
 | Campo de mensagem | Receber solicitações em linguagem natural | Implementado |
 | Entrada por voz | Permitir interação por fala | Controle visual implementado |
-| Resumo de Rotinas | Informar quantidade total, ativa e pausada | Implementado visualmente |
-| Busca, filtros e ordenação | Localizar e organizar automações | Implementado com dados demonstrativos |
+| Etiqueta de desfecho | Indicar, com texto e ícone, por que uma mensagem não foi atendida | Implementado |
+| Filtro por situação | Alternar entre todas as rotinas, as ativas e as pausadas, com a contagem de cada grupo | Implementado com dados demonstrativos |
+| Busca e ordenação | Localizar e organizar automações | Implementado com dados demonstrativos |
 | Cartão de rotina | Exibir agenda, próximo disparo e intenção prevista | Implementado com dados demonstrativos |
 | Formulário de criação e edição | Configurar os campos previstos no contrato de Rotina | Implementado visualmente |
 | Ativar ou pausar | Alterar o estado de agendamento | Implementado localmente; persistência pendente |
 | Confirmação de exclusão | Evitar remoção acidental | Implementado visualmente |
 | Feedback e estado vazio | Comunicar carregamento, validação, sucesso e ausência de dados | Implementado |
 
-Em larguras de até 850 pixels, a barra lateral é recolhida e aberta por um botão de menu, com sobreposição para separar a navegação do conteúdo. Em larguras de até 520 pixels, elementos secundários do compositor são reduzidos ou ocultados, o título contextual é redimensionado e o alerta ocupa a largura disponível. A interface mantém suporte a telas com largura mínima de 320 pixels.
+Em larguras abaixo de 768 pixels, a barra lateral é recolhida e aberta como painel deslizante por um botão de menu, e os diálogos passam a ser gavetas presas à base da tela. Em telas largas, a barra lateral pode ser reduzida a uma coluna de ícones, e a escolha é lembrada entre as visitas. A interface mantém suporte a telas com largura mínima de 320 pixels.
 
 # 9. Desenvolvimento do Projeto
 
@@ -7393,33 +7422,42 @@ que o navegador nunca manipula token de acesso.
 
 | Tecnologia | Versão | Papel | Justificativa |
 | --- | --- | --- | --- |
-| React | 18.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
+| React | 19.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
 | TypeScript | 5.5 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
 | Vite | 5.4 | Empacotador e servidor de desenvolvimento | Recarga rápida durante o desenvolvimento e divisão automática de pacote na construção |
 | React Router | 6.26 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
 | TanStack Query | 5.51 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
-| Tailwind CSS | 3.4 | Estilização | Vocabulário visual declarado em configuração única, com breakpoints responsivos prontos |
-| Recharts | 2.12 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
+| Tailwind CSS | 4.3 | Estilização | Vocabulário visual declarado como tokens CSS em um único arquivo, com valor claro e escuro, e breakpoints responsivos prontos |
+| shadcn/ui sobre Radix | Radix 1.6 | Componentes de interface | O código dos componentes fica no repositório, em `componentes/ui/`, e herda do Radix o comportamento acessível: foco preso nos diálogos, fechamento por Esc e navegação por teclado nos menus |
+| Motion | 13.4 | Movimento | Transições que respeitam a preferência de movimento reduzido a partir de uma configuração única na raiz |
+| Phosphor Icons | 2.1 | Ícones | Família única, com pesos, importada ícone a ícone para não carregar o índice inteiro |
+| Mona Sans | 5.3 | Tipografia | Fonte variável com eixo de largura, servida junto com a aplicação |
+| Sonner e Vaul | 2.0 e 1.1 | Avisos e gavetas | Avisos temporários anunciados ao leitor de tela e diálogos em forma de gaveta no celular |
+| Recharts | 3.8 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
 | Azure Speech SDK | 1.38 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
 | MSW | 2.15 | Dublês de API | Interceptação na camada de rede, o que permite exercitar a interface sem alterar o código de produção |
 | Vitest | 2.0 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
 | Testing Library | 16.0 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
-| ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações |
+| ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações, inclusive a que obriga os ícones a passarem por `componentes/ui/icones.ts` |
 
 ### 9.2.3 Estrutura de diretórios da interface
 
 ```
 src/web/
 ├── public/                     Estáticos servidos sem processamento
-│   ├── logo-prata.png
+│   ├── favicon.svg             Símbolo da marca, em vetor
 │   └── mockServiceWorker.js    Worker do MSW, removido do pacote de produção
 ├── src/
 │   ├── componentes/
 │   │   ├── chat/               Componentes da tela de conversa
 │   │   ├── graficos/           Visualizações do painel de intenções
-│   │   └── ui/                 Componentes transversais de interface
+│   │   ├── marca/              Logotipo, símbolo e traçado das linhas, em SVG
+│   │   ├── moldura/            Barra lateral, conversas recentes e menu do perfil
+│   │   ├── movimento/          Transições padronizadas
+│   │   ├── ui/                 Componentes do shadcn/ui e componentes transversais
+│   │   └── ProvedoresVisuais.tsx  Tema, ícones, movimento, dicas e avisos
 │   ├── estilos/
-│   │   └── global.css          Camada de estilo compartilhada
+│   │   └── global.css          Tokens de cor dos dois temas e camada base
 │   ├── hooks/                  Lógica de estado reutilizável
 │   ├── mocks/
 │   │   ├── dados/              Massa de teste por domínio
@@ -7429,16 +7467,18 @@ src/web/
 │   ├── servicos/
 │   │   ├── api.ts              Cliente HTTP tipado
 │   │   └── chaves.ts           Chaves de cache do TanStack Query
+│   ├── tema/                   Preferência de tema claro, escuro ou do sistema
 │   ├── testes/                 Suítes automatizadas e utilitários de teste
 │   ├── tipos/
 │   │   └── index.ts            Contratos da API espelhando app/schemas
 │   ├── utilitarios/
-│   │   └── formato.ts          Formatação de data e hora
+│   │   ├── cn.ts               Combinação de classes do Tailwind
+│   │   └── formato.ts          Formatação e agrupamento de datas
 │   ├── main.tsx                Ponto de entrada
 │   └── rotas.tsx               Mapa de rotas
+├── components.json             Configuração do CLI do shadcn/ui
 ├── index.html
 ├── package.json
-├── tailwind.config.ts
 ├── tsconfig.json               Configuração do código da aplicação
 ├── tsconfig.node.json          Configuração dos arquivos de build
 ├── vite.config.ts
@@ -7454,9 +7494,10 @@ dependência entre páginas que deveriam ser independentes.
 
 A existência de dois arquivos de configuração do TypeScript merece registro. O
 `tsconfig.json` cobre `src/` e serve à aplicação; o `tsconfig.node.json` cobre
-`vite.config.ts` e `tailwind.config.ts`, que rodam em Node e não no navegador.
-Sem o segundo, os arquivos de configuração ficavam fora da verificação de tipos
-e um erro real neles só apareceria em tempo de execução do build.
+`vite.config.ts`, que roda em Node e não no navegador. Sem o segundo, o arquivo
+de configuração ficava fora da verificação de tipos e um erro real nele só
+apareceria em tempo de execução do build. Desde o Tailwind 4 não há mais
+`tailwind.config.ts`: o tema é declarado no próprio CSS.
 
 ### 9.2.4 Convenções de codificação
 
@@ -7485,6 +7526,17 @@ classe apenas quando a encontra literalmente no código. Construções como
 `text-desfecho-${cor}` compilam sem erro e não pintam nada. Por isso as classes
 de cada desfecho estão escritas inteiras em `componentes/chat/desfechos.ts`.
 
+**Cor só por token.** Nenhum componente declara cor em hexadecimal nem usa a
+paleta padrão do Tailwind. As cores são tokens de `estilos/global.css`, com
+valor claro e escuro, consumidos por classes como `bg-card` e
+`text-muted-foreground` ou, nos gráficos, por `var(--token)`. Um token novo só
+entra com os dois valores e com o par de contraste no teste descrito em 9.2.5.
+
+**Componentes do shadcn/ui no repositório.** Os componentes gerados pelo CLI do
+shadcn/ui ficam em `componentes/ui/`, com nome em minúsculas, como o CLI os
+escreve, e são código do projeto: foram traduzidos e passaram a usar os ícones
+de `ui/icones.ts`. Os componentes próprios usam PascalCase e português.
+
 **Comentários explicam decisão, não mecânica.** Os comentários do código
 registram por que uma escolha foi feita e o que aconteceria sem ela. Descrever o
 que a linha faz é redundante com a própria linha; descrever a razão preserva a
@@ -7494,27 +7546,40 @@ informação que se perde quando o autor sai do projeto.
 
 | Componente | Responsabilidade |
 | --- | --- |
-| `ui/Layout.tsx` | Moldura da aplicação: barra lateral, navegação principal e identidade da sessão. Atua como rota-pai e renderiza `Outlet`, o que permite que a tela de entrada exista fora da moldura |
-| `ui/EstadoVazio.tsx` | Estado vazio padrão das telas, com título, descrição e ação opcional |
-| `chat/BolhaMensagem.tsx` | Uma mensagem da conversa, com avatar, horário, filete lateral e etiqueta de desfecho |
-| `chat/Composer.tsx` | Campo de envio, com Enter para enviar e Shift mais Enter para quebrar linha, e exibição da transcrição parcial durante a gravação |
-| `chat/BotaoMicrofone.tsx` | Acionamento da captura de voz, com estado visível e `aria-pressed` |
-| `chat/ConversaVazia.tsx` | Estado inicial de uma conversa nova, com quatro sugestões correspondentes a intenções reais do catálogo |
-| `chat/IndicadorDigitando.tsx` | Sinaliza que o agente compõe a resposta, com `role="status"` e texto equivalente para leitor de tela |
-| `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo e classes visuais |
+| `ProvedoresVisuais.tsx` | Raiz visual da aplicação: tema, tamanho e peso padrão dos ícones, movimento, dicas e avisos. Os testes renderizam as telas dentro do mesmo provedor, o que evita que a suíte exercite uma interface diferente da publicada |
+| `ui/Layout.tsx` | Moldura da aplicação. Atua como rota-pai e renderiza `Outlet`, o que permite que a tela de entrada exista fora da moldura, e lembra se a barra lateral está recolhida |
+| `moldura/BarraLateral.tsx` | Logotipo, nova conversa, navegação principal com indicador do item ativo e conversas recentes; no celular, vira painel deslizante |
+| `moldura/ConversasRecentes.tsx` | Até oito conversas, agrupadas em hoje, ontem, esta semana e anteriores, com acesso ao histórico completo |
+| `moldura/MenuDoPerfil.tsx` | Identidade da sessão, escolha entre tema claro, escuro e do sistema, e saída |
+| `marca/LogoPrata.tsx` e `marca/SimboloPrata.tsx` | Logotipo e símbolo em SVG, pintados pelos tokens nas versões marinho e prateada |
+| `ui/icones.ts` | Único ponto de importação de ícones, com nomes pelo papel na interface; o lint barra a importação do pacote em qualquer outro arquivo |
+| `ui/DialogoResponsivo.tsx` | Diálogo em telas largas e gaveta no celular, com o foco devolvido ao controle que o abriu |
+| `ui/CabecalhoPagina.tsx` | Cabeçalho fixo das páginas, com o botão da barra lateral e o título da tela |
+| `ui/BotaoIcone.tsx` | Botão só com ícone, que exige nome acessível e mostra uma dica com o mesmo texto |
+| `ui/CampoSelecao.tsx` | Campo de seleção nativo do navegador com a aparência do tema, mantido nativo pelo comportamento de teclado e de leitor de tela |
+| `ui/EstadoVazio.tsx` | Estado vazio padrão das telas, alinhado à esquerda, com ícone, título, descrição e ação opcional |
+| Demais arquivos de `ui/` | Barra lateral, diálogo, diálogo de alerta, gaveta, menu suspenso, dica, avatar, interruptor, esqueleto, aviso e contêiner de gráfico do shadcn/ui, com textos em português e os ícones do projeto |
+| `chat/BolhaMensagem.tsx` | Uma mensagem da conversa: a pergunta, em marinho e alinhada à direita; a resposta, com avatar da Prata, horário, canal, botão de copiar, filete lateral e etiqueta de desfecho |
+| `chat/Composer.tsx` | Campo de envio que cresce com o texto, com Enter para enviar e Shift mais Enter para quebrar linha, exibição da transcrição parcial durante a gravação e brilho prateado no foco |
+| `chat/BotaoMicrofone.tsx` | Acionamento da captura de voz, com estado visível, pulso durante a gravação e `aria-pressed` |
+| `chat/ConversaVazia.tsx` | Estado inicial de uma conversa nova, alinhado à esquerda, com quatro sugestões correspondentes a intenções reais do catálogo |
+| `chat/IndicadorDigitando.tsx` | Sinaliza que o agente compõe a resposta com três estações que acendem em sequência, com `role="status"` e texto equivalente para leitor de tela |
+| `chat/AvisoMarco.tsx` | Alerta de marco dispensável, exposto como região nomeada |
+| `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo, ícone e classes visuais |
 | `graficos/CartaoResumo.tsx` | Números de topo de cada recorte do painel, em lista de definições |
-| `graficos/BarrasPorIntencao.tsx` | Volume de mensagens por intenção, em barras horizontais, com as intenções de contagem zero visíveis |
-| `graficos/DistribuicaoDesfechos.tsx` | Distribuição das mensagens entre os oito desfechos, com a cor semântica de cada um |
-| `graficos/SerieBloqueios.tsx` | Bloqueios ao longo do tempo, uma linha por guarda, sem total agregado |
-| `graficos/TabelaEnunciados.tsx` | Enunciados recusados agrupados por repetição, o backlog de novas intenções |
+| `graficos/BarrasPorIntencao.tsx` | Volume de mensagens por intenção, em barras horizontais, com as intenções de contagem zero visíveis como contorno tracejado |
+| `graficos/DistribuicaoDesfechos.tsx` | Mensagens atendidas como número no título e uma barra para cada um dos outros sete desfechos, com a cor da etiqueta do chat |
+| `graficos/SerieBloqueios.tsx` | Bloqueios ao longo do tempo, uma linha por guarda, com cor, tracejado e nome próprios, sem total agregado |
+| `graficos/TabelaEnunciados.tsx` | Enunciados recusados agrupados por repetição, com medidor da confiança média; é o backlog de novas intenções |
+| `graficos/TempoPorEtapa.tsx` | Latência do pipeline em uma barra empilhada por etapa, com a mediana e o 95º percentil de cada uma |
 
 O arquivo `componentes/graficos/README.md` registra as três regras que valem
 para as visualizações do painel de intenções e como cada componente as cumpre:
 uso obrigatório de contêiner responsivo, séries de bloqueio nunca somadas em um
 total agregado, e exibição de intenções com contagem zero, que são achado e não
-ausência de dado. Os três gráficos marcam o SVG como decorativo e repetem os
-dados em uma tabela fora da tela, que é a forma que o leitor de tela consegue
-navegar.
+ausência de dado. Os gráficos marcam o SVG como decorativo, não recebem foco de
+teclado e repetem os dados em uma tabela fora da tela, que é a forma que o
+leitor de tela consegue navegar.
 
 **Apresentação dos desfechos.** O backend informa o desfecho, não a cor nem o
 rótulo. A tradução acontece em um único arquivo para que a bolha, o histórico e
@@ -7537,64 +7602,75 @@ não deve ensinar qual barreira interceptou a mensagem, e isso vale tanto para o
 texto da resposta quanto para a etiqueta ao lado. Os dois desfechos de injeção
 compartilham o rótulo "Não atendida" por essa razão. O segundo critério é o
 1.4.1 da WCAG, segundo o qual a cor nunca é o único portador de significado: o
-rótulo textual carrega a mesma informação e é ele que chega a quem usa leitor de
-tela ou não distingue as cores.
+rótulo textual e o ícone carregam a mesma informação, e é o rótulo que chega a
+quem usa leitor de tela ou não distingue as cores.
 
-As cores estão definidas em `tailwind.config.ts` e nomeadas pelo significado, e
-não pelo tom, de modo que uma mudança de paleta não exija alteração no código
-que as consome. Todas foram verificadas contra os dois fundos em que aparecem, o
-branco da página e o cinza da bolha do agente, com o mínimo de 4,5:1 exigido
-pelo nível AA da WCAG para texto pequeno.
+**Contraste nos dois temas.** Todas as cores da interface são tokens definidos
+em `src/web/src/estilos/global.css`, nomeados pelo papel que exercem e não pelo
+tom, cada um com valor para o tema claro e para o escuro. A adoção de tokens
+únicos é o que torna a verificação possível: antes da reforma visual, cinzas
+declarados de forma avulsa ao longo da folha de estilo não deixavam um lugar
+único a auditar.
 
-| Cor | Valor | Contraste sobre página | Contraste sobre bolha |
-| --- | --- | --- | --- |
-| `ok` | `#186B48` | 6,49 | 5,79 |
-| `injecao` | `#B4342A` | 6,06 | 5,41 |
-| `abuso` | `#8A5309` | 6,32 | 5,64 |
-| `recusa` | `#0B5EA8` | 6,60 | 5,89 |
-| `falha` | `#63488B` | 7,42 | 6,62 |
+A verificação é automatizada. A suíte `src/testes/contraste.test.ts` lê os
+tokens do mesmo arquivo CSS que vai para produção e confere cada combinação de
+texto e fundo que a interface efetivamente usa, nos dois temas, em 104 casos.
+Um token alterado sem que o par continue legível faz a suíte falhar, e não o
+contraste na tela de alguém. O mínimo é 4,5:1 para texto (WCAG 1.4.3) e 3:1
+para ícone, borda e linha de gráfico que carregam informação (WCAG 1.4.11).
 
-Além das cores dos desfechos, o texto da interface usa uma escala de tokens
-nomeados pelo papel que exercem na hierarquia de leitura, definidos em
-`src/web/src/estilos/global.css`. A adoção dos tokens substituiu seis cinzas
-declarados de forma avulsa ao longo da folha de estilo, o que tornava a
-verificação de contraste inviável na prática: não havia um lugar único a
-auditar.
+Cada linha das tabelas abaixo mostra o pior caso entre os fundos listados. Para
+o texto, o pior fundo é sempre o topo do degradê da conversa (`--canvas-topo`,
+`#E3EDFD` no claro e `#152C55` no escuro); para as cores de desfecho, o fundo
+de filtros, cabeçalhos de tabela e botões secundários (`--secondary`, `#EEF2F8`
+no claro e `#172338` no escuro).
 
-A verificação foi feita contra todos os fundos claros em que a interface
-efetivamente aplica cada token, e não apenas contra o branco. A distinção não é
-formal: o cinza secundário anterior aprovava sobre a página e reprovava sobre a
-bolha do agente e sobre a etiqueta de status, de modo que uma verificação
-restrita ao branco teria declarado conformidade inexistente.
+| Token | Uso | Claro | Pior caso | Escuro | Pior caso | Mínimo |
+| --- | --- | --- | --- | --- | --- | --- |
+| `--foreground` | Títulos e texto de maior peso | `#0E1A2E` | 14,76 | `#EDF2F9` | 12,26 | 4,5 |
+| `--texto` | Corpo do texto | `#2F3D55` | 9,27 | `#C3CDDC` | 8,59 | 4,5 |
+| `--muted-foreground` | Texto secundário, horários e legendas | `#5A6A82` | 4,66 | `#8D9AB0` | 4,85 | 4,5 |
+| `--primario-texto` | Texto e ícone de ação sobre fundo neutro | `#1A52C2` | 5,87 | `#7EAAFF` | 5,96 | 4,5 |
+| `--desfecho-ok` | Etiqueta de mensagem atendida | `#186B48` | 5,78 | `#4FCB8F` | 7,70 | 4,5 |
+| `--desfecho-injecao` | Etiqueta de bloqueio por injeção e de resposta retida | `#B4342A` | 5,39 | `#FF8B7E` | 6,93 | 4,5 |
+| `--desfecho-abuso` | Etiqueta de uso indevido | `#8A5309` | 5,63 | `#E6B04E` | 8,01 | 4,5 |
+| `--desfecho-recusa` | Etiqueta de fora do escopo e de baixa confiança | `#0B5EA8` | 5,88 | `#7EB0FF` | 7,15 | 4,5 |
+| `--desfecho-falha` | Etiqueta de falha do executor | `#63488B` | 6,60 | `#BBA2FF` | 7,29 | 4,5 |
 
-| Token | Valor | Uso | Pior caso medido | Mínimo exigido |
+Os demais pares são verificados contra o fundo específico em que aparecem.
+
+| Frente | Fundo | Claro | Escuro | Mínimo |
 | --- | --- | --- | --- | --- |
-| `--texto-forte` | `#172033` | Títulos e corpo do documento | 14,51 | 4,5 |
-| `--texto-padrao` | `#344054` | Texto de interface, rótulos e navegação | 9,33 | 4,5 |
-| `--texto-suave` | `#646d82` | Texto secundário, horários, legendas e metadados | 4,62 | 4,5 |
-| `--indicador-neutro` | `#8691a5` | Ponto de status inativo | 3,18 | 3,0 |
-| `--texto-desabilitado` | `#98a2b3` | Texto de controle desabilitado | 2,30 | isento |
+| Texto do botão principal | `--primary` | 5,97 | 4,88 | 4,5 |
+| Branco da mensagem de quem pergunta | `--bolha-usuario` | 13,07 | 8,75 | 4,5 |
+| Texto e ícone da barra lateral (`--sidebar-foreground`) | `--sidebar`, `--sidebar-topo` e item ativo | 8,76 | 10,17 | 4,5 |
+| Texto secundário da barra lateral (`--sidebar-suave`) | `--sidebar`, `--sidebar-topo` e item ativo | 5,30 | 5,37 | 4,5 |
+| Marinho sobre os tons de prata da marca | `--prata-claro` e `--prata-escuro` | 7,29 | 7,29 | 4,5 |
+| Texto do botão de entrada com a Microsoft | `--ms-botao-fundo` | 6,48 | 13,39 | 4,5 |
+| Ícone branco do botão de gravação | `--gravacao` | 4,74 | 4,74 | 3,0 |
+| Ícone do aviso de sucesso | `--foreground`, fundo do aviso | 8,52 | 5,77 | 3,0 |
+| Interruptor desligado (`--controle-desligado`) | `--card` e `--secondary` | 3,38 | 3,62 | 3,0 |
+| Anel de foco (`--ring`) | `--background` | 5,55 | 8,18 | 3,0 |
+| Linha da guarda de injeção (`--serie-injecao`) | `--card` | 6,06 | 8,43 | 3,0 |
+| Linha da guarda de uso indevido (`--serie-abuso`) | `--card` | 3,14 | 5,67 | 3,0 |
+| Linha da guarda de saída (`--serie-saida`) | `--card` | 7,42 | 7,99 | 3,0 |
+| Etapa de classificação (`--etapa-classificacao`) | `--card` | 3,83 | 5,92 | 3,0 |
+| Etapa do executor (`--etapa-executor`) | `--card` | 4,70 | 4,51 | 3,0 |
 
-As correções aplicadas foram as seguintes.
-
-| Elemento | Antes | Razão anterior | Depois | Razão |
-| --- | --- | --- | --- | --- |
-| Aviso sob o campo de mensagem | `#a3abba` | 2,31 | `--texto-suave` | 5,18 |
-| Horário das mensagens | `#98a2b3` | 2,58 | `--texto-suave` | 5,18 |
-| Datas do histórico | `#8b95a5` | 2,80 | `--texto-suave` | 4,79 |
-| Rótulos dos campos de rotina | `#8a94a4` | 3,06 | `--texto-suave` | 5,18 |
-| Cabeçalho do histórico | `#7a8493` | 3,50 | `--texto-suave` | 4,79 |
-| Etiqueta de status | `#667085` | 4,44 | `--texto-suave` | 4,62 |
-| Destaque do cartão de notificação | `#e13b3b` | 4,29 | `#df2d2d` | 4,61 |
-| Ponto de status inativo | `#98a2b3` | 2,58 | `--indicador-neutro` | 3,18 |
+As séries dos gráficos são medidas pelo critério de 3:1 porque são linhas e
+barras, não texto: valores, rótulos e legendas usam os tokens de texto da
+primeira tabela. Além do contraste com o fundo, as séries passaram por um
+validador de paleta que confere a separação entre cores vizinhas para as
+formas mais comuns de daltonismo; como reforço, cada guarda tem também um
+tracejado próprio e o nome escrito no fim da linha.
 
 Duas exceções permanecem, ambas por decisão registrada e não por omissão. A
-primeira é o texto do botão de envio desabilitado, que a WCAG 1.4.3 isenta por
-se tratar de componente inativo: escurecê-lo o faria parecer acionável, o que
-prejudicaria a compreensão em vez de melhorá-la. A segunda são os pontos
-animados do indicador de digitação, que são decorativos, estão marcados com
+primeira é o texto de controle desabilitado, que a WCAG 1.4.3 isenta por se
+tratar de componente inativo: escurecê-lo o faria parecer acionável, o que
+prejudicaria a compreensão em vez de melhorá-la. A segunda são as estações
+animadas do indicador de digitação, que são decorativas, estão marcadas com
 `aria-hidden` e têm seu significado carregado pelo texto equivalente lido por
-leitor de tela, conforme descrito em 9.2.5.
+leitor de tela.
 
 ### 9.2.6 Páginas e navegabilidade
 

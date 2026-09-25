@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
 import { HttpResponse, http } from "msw";
 import { afterEach, describe, expect, it } from "vitest";
@@ -34,10 +35,15 @@ describe("Saída", () => {
       </Routes>,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Sair" }));
+    // "Sair" fica no menu do perfil. O Radix abre o menu no `pointerdown`,
+    // que o `fireEvent.click` nao dispara; o `userEvent` percorre a
+    // sequencia completa de eventos do ponteiro.
+    const usuario = userEvent.setup();
+    await usuario.click(await screen.findByRole("button", { name: /Fernanda Silva/ }));
+    await usuario.click(await screen.findByRole("menuitem", { name: "Sair" }));
 
     expect(
-      await screen.findByRole("button", { name: /Entrar com Microsoft/ }),
+      await screen.findByRole("button", { name: /Entrar com a Microsoft/ }),
     ).toBeInTheDocument();
     expect(sessionStorage.getItem("prata.conversa.ativa")).toBeNull();
   });
