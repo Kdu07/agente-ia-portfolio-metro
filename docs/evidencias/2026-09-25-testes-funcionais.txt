@@ -1,0 +1,126 @@
+# Evidência de execução — 25/09/2026
+Branch: test/evidencias-backend-artefato
+Commit de código: 7637fa8d5c858b4c267f22abca1434d3b93badd2
+Ambiente: Windows, Python 3.14.2, ambiente virtual src/middleware/.venv; suíte via pytest 9.1.1.
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Scripts\python.exe
+benchmark: 5.3.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware
+configfile: pyproject.toml
+plugins: anyio-4.15.1, locust-2.46.6, asyncio-1.4.0, benchmark-5.3.0, cov-7.1.0, recording-0.13.4
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 68 items
+
+tests/funcionais/test_rf01_acesso.py::test_tf_rf01_01_lider_alcanca_projeto_sob_sua_responsabilidade PASSED [  1%]
+tests/funcionais/test_rf01_acesso.py::test_tf_rf01_02_membro_nao_recebe_atributos_de_projeto_alheio PASSED [  2%]
+tests/funcionais/test_rf01_acesso.py::test_tf_rf01_03_sessao_ausente_ou_expirada_recusa_antes_do_pipeline[None] PASSED [  4%]
+tests/funcionais/test_rf01_acesso.py::test_tf_rf01_03_sessao_ausente_ou_expirada_recusa_antes_do_pipeline[sessao-expirada-ou-adulterada] PASSED [  5%]
+tests/funcionais/test_rf01_acesso.py::test_tf_rf01_04_claim_sem_perfil_correspondente_e_recusada XFAIL [  7%]
+tests/funcionais/test_rf01_acesso.py::test_tf_rf01_05_mesmo_enunciado_obedece_a_escopos_distintos PASSED [  8%]
+tests/funcionais/test_rf02_canais.py::test_tf_rf02_01_entrada_por_texto PASSED [ 10%]
+tests/funcionais/test_rf02_canais.py::test_tf_rf02_02_audio_percorre_upload_e_transcricao PASSED [ 11%]
+tests/funcionais/test_rf02_canais.py::test_tf_rf02_03_formato_fora_dos_aceitos PASSED [ 13%]
+tests/funcionais/test_rf02_canais.py::test_tf_rf02_04_audio_acima_de_cinco_minutos_e_recusado PASSED [ 14%]
+tests/funcionais/test_rf02_canais.py::test_tf_rf02_05_arquivo_ilegivel_e_recusado_antes_do_stt PASSED [ 16%]
+tests/funcionais/test_rf02_canais.py::test_tf_rf02_06_audio_sem_fala_termina_no_estado_falhou PASSED [ 17%]
+tests/funcionais/test_rf02_canais.py::test_tf_rf02_07_texto_transcrito_reentra_no_pipeline_como_voz PASSED [ 19%]
+tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_01_enunciado_canonico_classifica_na_intencao_correta PASSED [ 20%]
+tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_02_intencao_resolvida_chega_ao_executor PASSED [ 22%]
+tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_03_fora_de_escopo_produz_recusa_orientativa PASSED [ 23%]
+tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_04_baixa_confianca_pede_reformulacao PASSED [ 25%]
+tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_05_recusa_por_permissao_difere_de_fora_de_escopo XFAIL [ 26%]
+tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_06_entidade_obrigatoria_ausente_pede_complemento XFAIL [ 27%]
+tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_07_solicitacao_recusada_fica_registrada PASSED [ 29%]
+tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_08_classe_de_manipulacao_produz_bloqueio_seco PASSED [ 30%]
+tests/funcionais/test_rf04_consulta.py::test_tf_rf04_01_consulta_dimensoes_do_portfolio XFAIL [ 32%]
+tests/funcionais/test_rf04_consulta.py::test_tf_rf04_02_referencia_acompanha_o_conteudo XFAIL [ 33%]
+tests/funcionais/test_rf04_consulta.py::test_tf_rf04_03_projeto_inexistente_retorna_404 PASSED [ 35%]
+tests/funcionais/test_rf04_consulta.py::test_tf_rf04_04_projeto_alheio_e_inexistente_sao_indistinguiveis XFAIL [ 36%]
+tests/funcionais/test_rf04_consulta.py::test_tf_rf04_05_dado_ausente_nao_e_inventado XFAIL) [ 38%]
+tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_01_grava_somente_apos_confirmacao XFAILlementado) [ 39%]
+tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_02_negacao_preserva_valor_anterior XFAILlementado) [ 41%]
+tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_03_sem_escrita_recusa_antes_de_ler_valor XFAILlementado) [ 42%]
+tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_04_alteracao_registra_origem_autoria_e_momento XFAILlementado) [ 44%]
+tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_05_falha_de_gravacao_nao_deixa_estado_parcial XFAILlementado) [ 45%]
+tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_06_parametro_ausente_pede_complemento XFAILlementado) [ 47%]
+tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_01_varredura_alerta_responsavel XFAILa 5) [ 48%]
+tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_02_contato_parte_do_sistema XFAILa 5) [ 50%]
+tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_03_projeto_completo_nao_gera_alerta XFAILa 5) [ 51%]
+tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_04_alerta_chega_somente_ao_responsavel XFAILa 5) [ 52%]
+tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_05_resposta_ao_alerta_retorna_ao_fluxo_transacional XFAILa 5) [ 54%]
+tests/funcionais/test_rf07_analise.py::test_tf_rf07_01_compara_projetos_autorizados SKIPPED.md 10.1.4.1)) [ 55%]
+tests/funcionais/test_rf07_analise.py::test_tf_rf07_02_relaciona_risco_entre_projetos SKIPPED.md 10.1.4.1)) [ 57%]
+tests/funcionais/test_rf07_analise.py::test_tf_rf07_03_agregado_nao_revela_projeto_alheio SKIPPED.md 10.1.4.1)) [ 58%]
+tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_01_tipo_de_material_chega_ao_executor[gerar_relatorio_status] PASSED [ 60%]
+tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_01_tipo_de_material_chega_ao_executor[gerar_previa_diretoria] PASSED [ 61%]
+tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_01_tipo_de_material_chega_ao_executor[gerar_relatorio_encerramento] PASSED [ 63%]
+tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_02_detalhe_do_material_varia_por_perfil XFAIL [ 64%]
+tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_03_dados_insuficientes_nao_geram_material XFAIL [ 66%]
+tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_04_material_nao_recebe_fonte_nao_autorizada XFAIL [ 67%]
+tests/funcionais/test_rf09_guardas.py::test_tf_rf09_01_injecao_e_bloqueada_antes_do_executor PASSED [ 69%]
+tests/funcionais/test_rf09_guardas.py::test_tf_rf09_02_abuso_e_recusado_sem_chamar_executor PASSED [ 70%]
+tests/funcionais/test_rf09_guardas.py::test_tf_rf09_03_saida_suspeita_e_retida PASSED [ 72%]
+tests/funcionais/test_rf09_guardas.py::test_tf_rf09_04_bloqueio_nao_revela_regra_disparada PASSED [ 73%]
+tests/funcionais/test_rf09_guardas.py::test_tf_rf09_05_enunciado_legitimo_proximo_ao_limite_nao_e_bloqueado PASSED [ 75%]
+tests/funcionais/test_rf09_guardas.py::test_tf_rf09_06_indisponibilidade_da_guarda_falha_de_modo_seguro XFAIL [ 76%]
+tests/funcionais/test_rf09_guardas.py::test_tf_rf09_07_ordem_das_guardas_e_invariante PASSED [ 77%]
+tests/funcionais/test_rf10_registro.py::test_tf_rf10_01_uma_linha_por_solicitacao_sem_duplicidade PASSED [ 79%]
+tests/funcionais/test_rf10_registro.py::test_tf_rf10_02_registro_contem_os_cinco_campos_obrigatorios PASSED [ 80%]
+tests/funcionais/test_rf10_registro.py::test_tf_rf10_03_perfil_sem_permissao_nao_acessa_recortes PASSED [ 82%]
+tests/funcionais/test_rf10_registro.py::test_tf_rf10_04_acesso_direto_tambem_e_negado_no_servidor PASSED [ 83%]
+tests/funcionais/test_rf10_registro.py::test_tf_rf10_05_recortes_analiticos_previstos_sao_produzidos PASSED [ 85%]
+tests/funcionais/test_rf11_rotinas.py::test_tf_rf11_01_cadastro_persiste_agenda_fuso_e_registra_job PASSED [ 86%]
+tests/funcionais/test_rf11_rotinas.py::test_tf_rf11_02_prompt_fora_do_catalogo_nao_cria_rotina PASSED [ 88%]
+tests/funcionais/test_rf11_rotinas.py::test_tf_rf11_03_disparo_reavalia_prompt_e_identidade PASSED [ 89%]
+tests/funcionais/test_rf11_rotinas.py::test_tf_rf11_04_permissao_revogada_falha_e_desativa PASSED [ 91%]
+tests/funcionais/test_rf11_rotinas.py::test_tf_rf11_05_execucao_registra_estado_resultado_e_interacao PASSED [ 92%]
+tests/funcionais/test_rf11_rotinas.py::test_tf_rf11_06_sem_permissao_nao_gerencia_rotinas PASSED [ 94%]
+tests/funcionais/test_rf12_historico.py::test_tf_rf12_01_lista_somente_conversas_proprias_com_titulo PASSED [ 95%]
+tests/funcionais/test_rf12_historico.py::test_tf_rf12_02_retomada_entrega_historico_ao_executor PASSED [ 97%]
+tests/funcionais/test_rf12_historico.py::test_tf_rf12_03_conversa_alheia_retorna_404 PASSED [ 98%]
+tests/funcionais/test_rf12_historico.py::test_tf_rf12_04_conversa_alheia_e_inexistente_sao_indistinguiveis PASSED [100%]
+
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+.venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+app\main.py:21
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\app\main.py:21: StarletteDeprecationWarning: 'HTTP_413_REQUEST_ENTITY_TOO_LARGE' is deprecated. Use 'HTTP_413_CONTENT_TOO_LARGE' instead.
+    from app.api.routes import (
+
+tests/funcionais/test_rf01_acesso.py::test_tf_rf01_03_sessao_ausente_ou_expirada_recusa_antes_do_pipeline[sessao-expirada-ou-adulterada]
+  C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Lib\site-packages\starlette\testclient.py:455: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+    return super().request(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [3] tests\funcionais\test_rf07_analise.py: RF07 est� explicitamente fora do MVP e sem t�pico no executor (Projeto.md 10.1.4.1)
+XFAIL tests/funcionais/test_rf01_acesso.py::test_tf_rf01_04_claim_sem_perfil_correspondente_e_recusada - grupo desconhecido ainda recebe perfil padr�o de membro
+XFAIL tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_05_recusa_por_permissao_difere_de_fora_de_escopo - pipeline n�o distingue recusa por projeto
+XFAIL tests/funcionais/test_rf03_intencoes.py::test_tf_rf03_06_entidade_obrigatoria_ausente_pede_complemento - valida��o de entidades ainda n�o implementada
+XFAIL tests/funcionais/test_rf04_consulta.py::test_tf_rf04_01_consulta_dimensoes_do_portfolio - consulta em linguagem natural ainda n�o retorna as sete dimens�es
+XFAIL tests/funcionais/test_rf04_consulta.py::test_tf_rf04_02_referencia_acompanha_o_conteudo - contrato do executor ainda n�o estrutura refer�ncia de origem
+XFAIL tests/funcionais/test_rf04_consulta.py::test_tf_rf04_04_projeto_alheio_e_inexistente_sao_indistinguiveis - rota diferencia projeto alheio (403) de inexistente (404)
+XFAIL tests/funcionais/test_rf04_consulta.py::test_tf_rf04_05_dado_ausente_nao_e_inventado - resposta expl�cita para dado ausente ainda pertence ao executor futuro
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_01_grava_somente_apos_confirmacao - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_02_negacao_preserva_valor_anterior - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_03_sem_escrita_recusa_antes_de_ler_valor - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_04_alteracao_registra_origem_autoria_e_momento - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_05_falha_de_gravacao_nao_deixa_estado_parcial - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf05_transacoes.py::test_tf_rf05_06_parametro_ausente_pede_complemento - fluxo transacional de portf�lio com pr�via e confirma��o ainda n�o implementado
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_01_varredura_alerta_responsavel - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_02_contato_parte_do_sistema - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_03_projeto_completo_nao_gera_alerta - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_04_alerta_chega_somente_ao_responsavel - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf06_pendencias.py::test_tf_rf06_05_resposta_ao_alerta_retorna_ao_fluxo_transacional - varredura e entrega proativa de pend�ncias est�o planejadas para a Onda 5
+XFAIL tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_02_detalhe_do_material_varia_por_perfil - perfil ainda n�o � enviado ao contrato do executor
+XFAIL tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_03_dados_insuficientes_nao_geram_material - regra de sufici�ncia de dados do relat�rio ainda n�o implementada
+XFAIL tests/funcionais/test_rf08_relatorios.py::test_tf_rf08_04_material_nao_recebe_fonte_nao_autorizada - filtragem de fontes por projeto ainda n�o integra o executor
+XFAIL tests/funcionais/test_rf09_guardas.py::test_tf_rf09_06_indisponibilidade_da_guarda_falha_de_modo_seguro - falha do servi�o da guarda de inje��o ainda propaga exce��o
+====== 43 passed, 3 skipped, 22 xfailed, 4 warnings in 67.10s (0:01:07) =======
