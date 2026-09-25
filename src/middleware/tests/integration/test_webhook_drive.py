@@ -25,12 +25,13 @@ from uuid import uuid4
 import aio_pika
 import httpx
 import pytest
-from sqlalchemy import delete, inspect, update
+from sqlalchemy import delete, inspect, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.api import deps
 from app.config import settings
 from app.main import app
+from app.mensageria.consumidor import ConsumidorWebhooks
 from app.mensageria.produtor import ProdutorEventos
 from app.mensageria.topologia import WEBHOOK_RECEBIDO, declarar_topologia
 from app.persistence.sessao import criar_engine
@@ -357,6 +358,65 @@ async def test_sync_e_token_errado_nao_geram_trabalho(canal, cliente, fabrica, u
     assert (sync.status_code, errado.status_code) == (204, 401)
     assert await recebimentos(fabrica) == []
     assert await mensagens_na_fila(url_isolada) == []
+
+
+async def test_corpo_malformado_e_recusado_sem_registrar_nem_publicar(
+    canal, cliente, fabrica, url_isolada
+):
+    canal_id, token = canal
+
+    resposta = await cliente.post(
+        "/webhooks/google-drive",
+        content=b"{",
+        headers=cabecalhos(canal_id, token),
+    )
+
+    assert resposta.status_code == 400
+    assert resposta.json()["detail"]["codigo"] == "WEBHOOK_INVALIDO"
+    assert await recebimentos(fabrica) == []
+    assert await mensagens_na_fila(url_isolada) == []
+
+
+async def test_rota_publica_e_consumidor_confirma_a_mudanca(
+    canal, cliente, fabrica, url_isolada
+):
+    processados = []
+
+    async def tratar(evento, _sessao):
+        processados.append(evento)
+
+    consumidor = ConsumidorWebhooks(
+        url_isolada,
+        exchange="prata.events",
+        dead_letter_exchange="prata.dead-letter",
+        fabrica=fabrica,
+        tratadores={"google_drive": tratar},
+        max_retries=2,
+        prefetch=1,
+    )
+    await consumidor.iniciar()
+    canal_id, token = canal
+    try:
+        resposta = await cliente.post(
+            "/webhooks/google-drive",
+            headers=cabecalhos(canal_id, token, numero="680082"),
+        )
+        assert resposta.status_code == 202
+
+        for _ in range(50):
+            async with fabrica() as sessao:
+                registro = await sessao.scalar(
+                    select(RecebimentoTabela).where(
+                        RecebimentoTabela.chave_externa == f"{canal_id}:680082"
+                    )
+                )
+                if processados and registro is not None and registro.processado_em is not None:
+                    break
+            await asyncio.sleep(0.1)
+        else:
+            pytest.fail("A mudança aceita pela rota não foi confirmada pelo consumidor")
+    finally:
+        await consumidor.encerrar()
 
 
 # --- Recuperação e renovação ---------------------------------------------

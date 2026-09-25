@@ -24,20 +24,27 @@ from urllib.parse import quote, unquote, urlsplit, urlunsplit
 import aio_pika
 import httpx
 import pytest
-from sqlalchemy import delete, inspect
+from sqlalchemy import delete, inspect, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.api import deps
 from app.config import settings
 from app.main import app
+from app.mensageria.consumidor import ConsumidorWebhooks
 from app.mensageria.produtor import ProdutorEventos
 from app.mensageria.topologia import WEBHOOK_RECEBIDO, declarar_topologia
 from app.persistence.sessao import criar_engine
 from app.persistence.tabelas_portfolio import MarcoTabela, ProjetoTabela, RiscoTabela
 from app.webhooks.drive.manutencao import republicar_pendentes
 from app.webhooks.modelos import TipoEventoPortfolio
+from app.webhooks.portfolio.aplicacao import tratar_evento_portfolio
 from app.webhooks.repositorio import FontePortfolioRepository, RecebimentoRepository
-from app.webhooks.tabelas import FontePortfolioTabela, RecebimentoTabela
+from app.webhooks.tabelas import (
+    AuditoriaPortfolioTabela,
+    FontePortfolioTabela,
+    RecebimentoTabela,
+    VersaoEntidadeTabela,
+)
 
 pytestmark = pytest.mark.integracao
 
@@ -210,6 +217,8 @@ async def emissor(fabrica, portfolio, tmp_path, monkeypatch):
         await sessao.commit()
     yield Emissor(fonte, segredo, portfolio[0])
     async with fabrica() as sessao:
+        for tabela in (AuditoriaPortfolioTabela, VersaoEntidadeTabela):
+            await sessao.execute(delete(tabela).where(tabela.source_id == fonte))
         await sessao.execute(delete(RecebimentoTabela).where(RecebimentoTabela.fonte_id == fonte))
         await sessao.execute(
             delete(FontePortfolioTabela).where(FontePortfolioTabela.source_id == fonte)
@@ -337,6 +346,36 @@ async def test_assinatura_fora_da_janela_responde_401(cliente, emissor, fabrica)
         )
 
 
+async def test_assinatura_hmac_incorreta_responde_401_sem_publicar(
+    cliente, emissor, fabrica, url_isolada
+):
+    corpo = _bytes(emissor.evento())
+    cabecalhos = emissor.cabecalhos(corpo)
+    cabecalhos["X-Prata-Signature"] = base64.b64encode(b"x" * 32).decode()
+
+    resposta = await cliente.post(ROTA, content=corpo, headers=cabecalhos)
+
+    assert resposta.status_code == 401
+    async with fabrica() as sessao:
+        assert (
+            await RecebimentoRepository(sessao).listar_pendentes(
+                recebidos_antes=datetime.now(UTC) + timedelta(days=1)
+            )
+            == []
+        )
+    assert await fila(url_isolada) == []
+
+
+async def test_json_malformado_responde_400_sem_publicar(cliente, emissor, url_isolada):
+    corpo = b'{"event_id":'
+
+    resposta = await enviar(cliente, emissor, corpo=corpo)
+
+    assert resposta.status_code == 400
+    assert resposta.json()["detail"]["codigo"] == "WEBHOOK_INVALIDO"
+    assert await fila(url_isolada) == []
+
+
 async def test_conteudo_que_nao_e_json_responde_415(cliente, emissor):
     resposta = await enviar(
         cliente, emissor, emissor.evento(), cabecalhos={"Content-Type": "text/plain"}
@@ -381,3 +420,47 @@ async def test_broker_fora_deixa_pendente_que_o_worker_republica(
     assert publicados == 1
     [mensagem] = await fila(url_isolada)
     assert json.loads(mensagem.body)["payload"]["event"]["event_id"] == evento["event_id"]
+
+
+async def test_rota_publica_e_consumidor_aplica_evento_no_portfolio(
+    cliente, emissor, fabrica, url_isolada
+):
+    consumidor = ConsumidorWebhooks(
+        url_isolada,
+        exchange="prata.events",
+        dead_letter_exchange="prata.dead-letter",
+        fabrica=fabrica,
+        tratadores={"apps_script": tratar_evento_portfolio},
+        max_retries=2,
+        prefetch=1,
+    )
+    await consumidor.iniciar()
+    evento = emissor.evento(
+        version=7,
+        data={"status": "materializado", "probabilidade": 5, "impacto": 5},
+    )
+    try:
+        resposta = await enviar(cliente, emissor, evento)
+        assert resposta.status_code == 202
+
+        for _ in range(50):
+            async with fabrica() as sessao:
+                risco = await sessao.get(RiscoTabela, evento["entity_id"])
+                recebimento = await sessao.scalar(
+                    select(RecebimentoTabela).where(
+                        RecebimentoTabela.chave_externa
+                        == f"{emissor.fonte}:{evento['event_id']}"
+                    )
+                )
+                if (
+                    risco is not None
+                    and recebimento is not None
+                    and risco.status == "materializado"
+                    and recebimento.processado_em is not None
+                ):
+                    break
+            await asyncio.sleep(0.1)
+        else:
+            pytest.fail("O evento aceito pela rota não foi aplicado pelo consumidor")
+    finally:
+        await consumidor.encerrar()
