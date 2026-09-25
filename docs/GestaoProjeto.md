@@ -190,7 +190,7 @@ A equipe utiliza o **WhatsApp para comunicações informais**, como avisos rápi
 
 As dailies acontecem **presencialmente, às 14h, em todos os dias nos quais a equipe possui instrução**, com duração máxima de **15 minutos**. Quando a equipe não estiver reunida presencialmente, o acompanhamento poderá ocorrer de forma assíncrona no Slack. Cada integrante apresenta de forma objetiva as atividades concluídas, as próximas atividades e os impedimentos identificados. Quando um integrante não puder participar, sua atualização deve ser enviada pelo canal formal antes do encontro.
 
-**Condução.** A daily é conduzida pelo Scrum Master da sprint, a quem cabe abrir o encontro no horário, manter a ordem de fala, encerrá-lo dentro dos 15 minutos e realizar as três verificações descritas adiante. Quando o Scrum Master não puder conduzir, a condução passa a outro integrante indicado na véspera, de modo que o ritual não dependa da presença de uma única pessoa. Na Sprint 4, o Scrum Master e condutor das dailies é **Eduardo Casarini**.
+**Condução.** A daily é conduzida pelo Scrum Master da sprint, a quem cabe abrir o encontro no horário, manter a ordem de fala, encerrá-lo dentro dos 15 minutos e realizar as três verificações descritas adiante. Quando o Scrum Master não puder conduzir, a condução passa a outro integrante indicado na véspera, de modo que o ritual não dependa da presença de uma única pessoa.
 
 **Roteiro.** Cada integrante responde a três perguntas, nesta ordem: o que concluiu desde a daily anterior, o que pretende concluir até a próxima e o que o impede de avançar. A resposta deve referenciar o card correspondente, e não apenas descrever a atividade, para que o acompanhamento seja verificável no quadro por quem não participou do encontro.
 
@@ -201,7 +201,7 @@ O Kanban do GitLab apoia esse acompanhamento ao tornar visíveis o estado das ta
 **Acompanhamento de carga e dependências (revisão da Sprint 2).** Para tornar verificável a regra registrada na seção [2.9.1](#291-revisão-sprint-2), a daily passa a incluir três verificações objetivas, conduzidas pelo Scrum Master da sprint:
 
 1. **Carga.** Comparação da quantidade e do *size* das issues em `Doing` por integrante. Diferença superior a 2:1 entre a maior e a menor carga atribuída deve ser discutida na própria daily e resolvida por redistribuição ou por registro da justificativa no card.
-2. **Dependências.** Verificação das issues que bloqueiam outras atividades. Toda issue impeditiva deve receber a label `BLOCK`, indicar o que a bloqueia e ter um próximo passo definido com responsável.
+2. **Dependências.** Verificação das issues que bloqueiam outras atividades. Toda issue impeditiva deve receber a label `BLOCKED`, indicar o que a bloqueia e ter um próximo passo definido com responsável.
 3. **Fila de revisão.** Verificação das issues em `Waiting Review` e `Review`. Itens que ultrapassem o SLA de 24 horas úteis devem receber um revisor nomeado ainda na daily, priorizando os merge requests que bloqueiam outras entregas.
 
 O resultado dessas três verificações orienta a redistribuição de tarefas do dia e é a base do acompanhamento consolidado na retrospectiva.
@@ -361,7 +361,7 @@ Issue → Branch → Desenvolvimento/Documentação → Commit → Push → MR �
 
 - Uma issue somente deve ser iniciada quando seu DoR estiver atendido.
 - Uma issue somente deve ser encerrada quando todos os critérios de seu DoD estiverem atendidos.
-- Quando uma dependência impedir o avanço, a issue deve receber a label `BLOCK` e registrar o impedimento.
+- Quando uma dependência impedir o avanço, a issue deve receber a label `BLOCKED` e registrar o impedimento.
 - Branches, commits e merge requests devem ser relacionados à issue correspondente.
 - A abertura do merge request não caracteriza a conclusão da atividade; revisão, atendimento aos comentários e merge fazem parte da entrega.
 - A pessoa revisora deve verificar o DoD, os arquivos alterados, a coerência com outros artefatos, os conflitos e os testes aplicáveis.
@@ -372,21 +372,20 @@ As dependências entre artefatos devem ser respeitadas. Um exemplo de sequência
 
 ### 2.7 Política de commits e uso do GitLab
 
-**Commits.** Os commits devem seguir o padrão *Conventional Commits*, no formato `<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> (#<card>)` ou `<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> #<card>`. As duas formas da referência, com e sem parênteses, são aceitas; o que é obrigatório é a referência ao card, separada da descrição por um espaço. Cada commit deve representar uma unidade lógica de alteração, iniciar por verbo no infinitivo em letra minúscula, descrever objetivamente o que mudou e referenciar a issue correspondente. Mensagens vagas e commits que misturem atividades sem relação devem ser evitados. O envio direto de alterações para `main` ou `develop` não faz parte do fluxo do grupo: toda alteração chega à `develop` por merge request. Os tipos aceitos, os exemplos válidos e inválidos, o padrão de título e descrição de merge request e as demais regras técnicas estão detalhados no [GestaoConfiguracao.md](GestaoConfiguracao.md).
+**Commits.** Os commits devem seguir o padrão *Conventional Commits*, no formato `<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> (#<card>)` ou `<tipo>(<escopo opcional>): <verbo no infinitivo> <complemento> #<card>`. As duas formas da referência, com e sem parênteses, são aceitas a partir da Sprint 5; o que é obrigatório é a referência ao card, separada da descrição por um espaço. A aferição da Sprint 4, na seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4), seguiu a regra então vigente, que exigia parênteses, e não é recalculada. Cada commit deve representar uma unidade lógica de alteração, iniciar por verbo no infinitivo em letra minúscula, descrever objetivamente o que mudou e referenciar a issue correspondente. Mensagens vagas e commits que misturem atividades sem relação devem ser evitados. O envio direto de alterações para `main` ou `develop` não faz parte do fluxo do grupo: toda alteração chega à `develop` por merge request. Os tipos aceitos, os exemplos válidos e inválidos, o padrão de título e descrição de merge request e as demais regras técnicas estão detalhados no [GestaoConfiguracao.md](GestaoConfiguracao.md).
 
 Exemplos do ciclo da Sprint 4, retirados do histórico da `develop`:
 
-| Mensagem | Situação |
-|---|---|
-| `feat: implementar produtor AMQP com confirmacao de publicacao #393` | Válida, referência sem parênteses |
-| `test: corrigir fixture dos testes de auditoria (#442)` | Válida, referência entre parênteses |
-| `feat: guardar os segredos no key vault e proteger o banco (#378, #379)` | Válida, mais de um card |
-| `feat: adiciona evidencias executaveis (#446)` | Inválida: verbo na terceira pessoa (`adicionar`) |
-| `docs: registra resultado da implementação dos testes do RNF01(#441)` | Inválida: terceira pessoa e referência colada à descrição, sem espaço |
-| `fix: resolve conflitos(#426)` | Inválida: terceira pessoa, descrição vaga e referência sem espaço |
-| `feat: atualiza secao de testes de integracao (#446)` | Inválida: terceira pessoa e tipo errado; alteração de documentação usa `docs` |
+| Commit | Data | Mensagem | Situação |
+|---|---|---|---|
+| `9fdc817` | 22/09 | `feat: implementar produtor AMQP com confirmacao de publicacao #393` | Válida, referência sem parênteses |
+| `3843f32` | 23/09 | `test: corrigir fixture dos testes de auditoria (#442)` | Válida, referência entre parênteses |
+| `b462191` | 24/09 | `feat: guardar os segredos no key vault e proteger o banco (#378, #379)` | Válida, mais de um card |
+| `159aa1e` | 23/09 | `feat: adiciona evidencias executaveis (#446)` | Inválida: verbo na terceira pessoa (`adicionar`) |
+| `6eae97c` | 23/09 | `docs: registra resultado da implementação dos testes do RNF01(#441)` | Inválida: terceira pessoa e referência colada à descrição, sem espaço |
+| `400b986` | 23/09 | `feat: atualiza secao de testes de integracao (#446)` | Inválida: terceira pessoa e tipo errado; alteração de documentação usa `docs` |
 
-**Integração contínua e merge request.** Na Sprint 4 o repositório não possui pipeline de integração contínua (não há `.gitlab-ci.yml` na `develop`), e nada bloqueia o merge automaticamente. O que barra um merge request é a revisão: ele só é integrado depois da aprovação de outro integrante, e quem o abre deve executar antes as suítes da parte alterada (`python -m pytest` no middleware e `npm run test` na interface) e registrar o resultado em *Como testar* ou no DoD. Quando houver pipeline, a regra passa a ser não integrar merge request com pipeline falhando.
+**Integração contínua e merge request.** Na Sprint 4 o repositório não possui pipeline de integração contínua (não há `.gitlab-ci.yml` na `develop`), e nada bloqueia o merge automaticamente. O que barra um merge request é a revisão: ele só é integrado depois da aprovação de outro integrante, e quem o abre deve executar antes as suítes da parte alterada (`python -m pytest` no middleware e `npm run test` na interface) e registrar o resultado em *Como testar* ou no DoD. A partir do primeiro merge request aberto depois que um `.gitlab-ci.yml` for integrado à `develop`, a regra passa a ser não integrar merge request com pipeline falhando.
 
 **Movimentação do quadro.** O quadro é a fonte oficial do estado das atividades. Movimentar o card é responsabilidade da pessoa designada nele, e não do revisor ou do Scrum Master. A correspondência entre coluna e etapa do fluxo é a seguinte.
 
@@ -402,10 +401,22 @@ Exemplos do ciclo da Sprint 4, retirados do histórico da `develop`:
 Regras de uso:
 
 - O card muda de coluna no momento em que o fato ocorre, e não no fechamento do dia. Quadro atualizado em lote deixa de informar durante a daily e inviabiliza as três verificações da seção [2.2.2](#222-dailies).
-- Card impedido permanece na coluna em que está, recebe a label `BLOCK` e registra em comentário o que o bloqueia e qual é o próximo passo.
+- Card impedido permanece na coluna em que está, recebe a label `BLOCKED` e registra em comentário o que o bloqueia e qual é o próximo passo.
 - Cada integrante deve manter no máximo duas atividades em `doing` simultaneamente. Acima disso, a verificação de carga perde precisão e o trabalho em curso deixa de refletir o que está efetivamente sendo feito.
-- O fechamento da issue ocorre pelo merge, por meio de `Closes #<issue>` na descrição do merge request. Issue encerrada sem merge request associado deve registrar em comentário a razão do encerramento.
+- O fechamento da issue é feito pela pessoa responsável logo após o merge na `develop`, depois de conferir o DoD. `Closes #<issue>` na descrição do merge request registra o vínculo, mas o GitLab só fecha a issue automaticamente no merge para a branch padrão, que é a `main`: em 24/09/2026, #389 (!160), #391 (!156), #395 (!159) e #399 (!158) continuaram abertas depois de integradas na `develop`. Issue encerrada sem merge request associado deve registrar em comentário a razão do encerramento.
 - Atividade sem evidência no repositório, como reunião ou sessão com usuário externo, recebe a label `MEET` ou `OFFSITE` e é encerrada com registro em comentário descrevendo o resultado.
+
+> **Revisão da Sprint 4 (24/09/2026).** As políticas das seções 2.2 a 2.7 foram revisadas contra a prática do ciclo. Regras alteradas:
+>
+> | Regra | Antes | Agora | Motivo |
+> |---|---|---|---|
+> | Referência ao card no commit e no título de MR | Só `(#N)` | `(#N)` ou `#N`, a partir da Sprint 5 | 34 dos 58 commits integrados da Sprint 4 usaram `#N`; as duas formas geram o mesmo vínculo no GitLab |
+> | Label de impedimento | `BLOCK` | `BLOCKED` | `BLOCK` não existe no projeto; `BLOCKED` é a label disponível no quadro |
+> | Colunas do quadro | Nomes em minúsculas | `Backlog`, `Doing`, `Waiting Review` e `Review` | Nomes reais das labels do quadro |
+> | Fechamento da issue | Automático por `Closes #N` | Manual, logo após o merge na `develop`, com o DoD conferido | O GitLab só fecha automaticamente no merge para a `main` |
+> | Integração contínua | Não registrada | Sem pipeline: o merge é barrado pela revisão, e o autor executa as suítes antes | Não há `.gitlab-ci.yml` na `develop` |
+>
+> Regras revisadas e mantidas: a daily presencial de 15 minutos conduzida pelo Scrum Master, com as três verificações de carga, dependências e fila de revisão, porque são elas que alimentam o acompanhamento da retrospectiva, onde o funcionamento no ciclo é avaliado; o SLA de 24 horas úteis para a primeira revisão, porque 23 dos 24 merge requests do período tiveram revisor nomeado; a estrutura das issues com DoR, DoD, milestone, prioridade e tamanho, porque todas as 99 issues da milestone `Sprint 04` têm prioridade e tamanho; e o fluxo da seção 2.6, que continua sendo o praticado. A coerência com o contrato de convivência será conferida na revisão da Sprint 4 da seção 2.9 (#402).
 
 ### 2.8 Fechamento da sprint
 

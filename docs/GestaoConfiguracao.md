@@ -603,7 +603,7 @@ que decisão sustenta, com que outras seções mantém coerência.
 - Nomes de arquivo aparecem entre crases, e seções são referenciadas por número e nome.
 - Quando restar pendência que não impeça o merge, acrescenta-se ao final a seção `## Pendências`, em lista, indicando o item e o que falta para resolvê-lo.
 
-**Vinculação ao card.** Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a atividade e puder fechar a issue automaticamente. Quando o merge apenas contribuir para uma atividade que continuará aberta, deve-se utilizar `Refs #<issue>`.
+**Vinculação ao card.** Deve-se utilizar `Closes #<issue>` quando o merge concluir integralmente a atividade. Como a branch padrão do projeto é a `main`, o GitLab não fecha a issue no merge para a `develop`: a pessoa responsável fecha a issue manualmente logo após o merge, depois de conferir o DoD. Quando o merge apenas contribuir para uma atividade que continuará aberta, deve-se utilizar `Refs #<issue>`.
 
 ## 5. Infraestrutura como código
 
