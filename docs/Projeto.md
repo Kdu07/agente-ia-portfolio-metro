@@ -4679,9 +4679,9 @@ Quanto às metas registradas ao final da seção 3.1.5, a definição do serviç
 
 ### 5.7.3 API de recebimento de áudios do usuário
 
-> **Estado da implementação na S3.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. Sem autenticação, a resposta é 401; sem o campo obrigatório, o FastAPI retorna 422. As subseções seguintes especificam o contrato-alvo: duração e seu limite, expiração efetiva, idempotência e catálogo padronizado de erros ainda não estão integralmente implementados. WebM é identificado pela assinatura EBML e pelo campo `DocType=webm`, com inspeção limitada aos primeiros 4 KiB; isso não valida a presença de trilha de áudio, os codecs ou a decodificação. A consulta também ainda não verifica a propriedade do áudio pelo usuário — pendência de proteção de acesso antes de uso com dados reais.
+> **Estado da implementação.** O backend implementa `POST /voz/audios` (multipart, campo `audio`, cookie `sessao`, resposta 202) e `GET /voz/audios/{id_audio}/transcricao` (200 ou 404); pelo proxy web, usa-se o prefixo `/api`. As subseções 5.7.3.1 a 5.7.3.8 especificam o contrato-alvo. O comportamento implementado, com exemplos de requisição e resposta obtidos da aplicação, e as divergências em relação ao contrato estão em 5.7.3.9.
 
-> A transcrição REST é executada em segundo plano e mantida em memória no processo. Seu texto precisa ser enviado posteriormente a `/chat` com `canal=voz`; não há encaminhamento automático ao NLP no upload. O microfone da interface usa outro trajeto, dependente de `/voz/token`, ainda não implementado. Esses limites não alteram a decisão tecnológica nem antecipam a integração final da S5.
+> A transcrição REST é executada em segundo plano e mantida em memória no processo. Seu texto precisa ser enviado posteriormente a `/chat` com `canal=voz`; não há encaminhamento automático ao NLP no upload. O microfone da interface usa outro trajeto, com o token de `GET /voz/token` (5.7.4.6). Esses limites não alteram a decisão tecnológica nem antecipam a integração final da S5.
 
 Esta subseção especifica o contrato da API que recebe os áudios enviados pelo usuário — o trajeto de ingestão adotado em 5.7.1.3 como caminho canônico do canal de voz. É o contrato entre a interface de voz e o pipeline de PLN: o que a interface pode enviar, o que o servidor garante devolver e o que acontece quando algo dá errado.
 
@@ -4911,6 +4911,141 @@ Duas propriedades atravessam a tabela.
 **Toda mensagem oferece uma saída.** Em cinco dos oito casos a saída inclui o canal de texto, o que operacionaliza no nível da interface o plano de resposta ao risco R03 registrado em 2.6.3: tratar a voz como incremento, com retorno sempre possível ao texto.
 
 **Falha de transcrição não é erro de requisição.** A indisponibilidade do serviço de fala, o tempo esgotado e o áudio sem fala reconhecível não aparecem nesta tabela: eles ocorrem depois da aceitação e se manifestam como o estado `falhou` descrito em 5.7.3.4, com resposta `200`. Um erro de requisição informa que o pedido não pôde ser atendido; um estado informa o desfecho de um pedido que foi atendido.
+
+#### 5.7.3.9 Comportamento implementado e exemplos reproduzíveis
+
+As subseções anteriores descrevem o contrato-alvo, também registrado em [`openapi-voz.yaml`](api/openapi-voz.yaml). Esta subseção registra o que as rotas de [`voz.py`](../src/middleware/app/api/routes/voz.py) fazem hoje, com respostas obtidas executando a aplicação, e onde elas divergem do contrato. Os exemplos podem ser reproduzidos com o middleware em execução e um cookie de sessão válido, ou pelos testes de [`test_api_audio.py`](../src/middleware/tests/integration/test_api_audio.py).
+
+**Endpoints e parâmetros**
+
+| Método | Caminho na aplicação | Caminho pelo proxy | Entrada | Sucesso |
+|---|---|---|---|:-:|
+| `POST` | `/voz/audios` | `/api/voz/audios` | `multipart/form-data` com o arquivo em `audio` (obrigatório), e `idioma` e `conversa_id` (textos opcionais) | `202` |
+| `GET` | `/voz/audios/{id_audio}/transcricao` | `/api/voz/audios/{id_audio}/transcricao` | `id_audio` no caminho | `200` |
+
+As duas rotas exigem o cookie `sessao`. `idioma` é repassado ao serviço de fala; ausente, vale `SPEECH_IDIOMA`, com padrão `pt-BR`. `conversa_id` é aceito, mas ainda não é usado. O cabeçalho `Idempotency-Key` não é lido.
+
+**Validação, na ordem em que acontece**
+
+| Etapa | Regra implementada | Resposta quando falha |
+|---|---|---|
+| Sessão | Cookie `sessao` válido | `401`, `{"detail": "Sessão ausente"}` |
+| Campo `audio` | Presente no formulário | `422`, com a lista de validação do FastAPI |
+| Extensão do nome | `.wav`, `.webm`, `.ogg`, `.mp4` ou `.mp3` | `415`, com a lista de extensões aceitas |
+| Tamanho | Até 25 MB (26.214.400 bytes) | `413`, `{"detail": "Arquivo muito grande. Tamanho máximo: 25 MB"}` |
+| Conteúdo real | Assinatura do arquivo: `RIFF` (WAV), `OggS` (Ogg), EBML com `DocType=webm` nos primeiros 4 KiB (WebM), `ftyp` (MP4), `ID3` ou cabeçalho MPEG (MP3) | `415`, `{"detail": "Formato de arquivo não reconhecido. ..."}` |
+
+O `Content-Type` declarado para a parte do arquivo não é usado: valem a extensão e a assinatura. Por isso um arquivo `.webm` que não seja WebM é recusado mesmo com `audio/webm` no cabeçalho. A assinatura não valida trilhas, codecs nem a decodificação do áudio. Nenhum arquivo recusado chega ao serviço de fala.
+
+**Exemplo de submissão aceita**
+
+```http
+POST /api/voz/audios HTTP/1.1
+Host: <host>
+Cookie: sessao=<cookie httpOnly>
+Content-Type: multipart/form-data; boundary=----limite
+
+------limite
+Content-Disposition: form-data; name="audio"; filename="fala.wav"
+Content-Type: audio/wav
+
+<bytes do WAV>
+------limite
+Content-Disposition: form-data; name="idioma"
+
+pt-BR
+------limite--
+```
+
+```http
+HTTP/1.1 202 Accepted
+Content-Type: application/json
+
+{"id_audio":"21a65f6d-acf3-4857-bb30-948d7d08e41c","estado":"recebido","duracao_segundos":0.0,"consultar_em":"/voz/audios/21a65f6d-acf3-4857-bb30-948d7d08e41c/transcricao","expira_em":"2026-09-24T07:53:49.670402Z"}
+```
+
+Equivalente com `curl`:
+
+```bash
+curl -X POST "https://<host>/api/voz/audios" -H "Cookie: sessao=<cookie>" -F "audio=@fala.wav" -F "idioma=pt-BR"
+```
+
+| Campo | Tipo | Conteúdo implementado |
+|---|---|---|
+| `id_audio` | texto (UUID v4) | Identificador da submissão |
+| `estado` | texto | Sempre `recebido` |
+| `duracao_segundos` | número | Hoje sempre `0.0`: a duração ainda não é apurada na validação |
+| `consultar_em` | texto | Caminho da consulta, sem o prefixo `/api` |
+| `expira_em` | texto ISO 8601 em UTC | Uma hora após a submissão |
+
+O arquivo é gravado em `uploads/audio/` e transcrito em segundo plano (`BackgroundTasks`) pela Fast Transcription (5.7.4), depois da resposta. Ao terminar, com ou sem sucesso, o arquivo é apagado.
+
+**Consulta do resultado**
+
+```http
+GET /api/voz/audios/21a65f6d-acf3-4857-bb30-948d7d08e41c/transcricao HTTP/1.1
+Host: <host>
+Cookie: sessao=<cookie httpOnly>
+```
+
+A resposta é sempre `200` enquanto o identificador existir, e o corpo traz todos os campos, com `null` nos que não se aplicam ao estado:
+
+| Campo | Tipo | Presente com valor em |
+|---|---|---|
+| `id_audio` | texto | Todos os estados |
+| `estado` | `recebido`, `transcrevendo`, `concluida` ou `falhou` | Todos os estados |
+| `texto`, `idioma`, `confianca`, `duracao_segundos`, `latencia_ms` | texto, texto, número de 0 a 1, número, inteiro | `concluida` |
+| `mensagem_erro` | texto | `falhou` |
+
+Exemplo de transcrição concluída, no formato devolvido pela rota:
+
+```json
+{"id_audio":"a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19","estado":"concluida","texto":"Qual o avanço do projeto da Linha 15 Prata?","idioma":"pt-BR","confianca":0.94,"duracao_segundos":11.4,"latencia_ms":1830,"mensagem_erro":null}
+```
+
+Exemplo real de falha, obtido com o middleware sem `SPEECH_ENDPOINT` configurado:
+
+```json
+{"id_audio":"21a65f6d-acf3-4857-bb30-948d7d08e41c","estado":"falhou","texto":null,"idioma":null,"confianca":null,"duracao_segundos":null,"latencia_ms":null,"mensagem_erro":"SPEECH_ENDPOINT nao configurado"}
+```
+
+As falhas da transcrição são registradas no estado `falhou`, e não como erro HTTP:
+
+- **Fala não reconhecida:** "Nenhuma fala foi reconhecida no audio".
+- **Limite temporário do serviço:** acontece quando o provedor responde `429`.
+- **Áudio que o serviço não processou:** acontece quando o provedor responde `400`, `404`, `413`, `415` ou `422`.
+- **Serviço indisponível:** tempo esgotado, falha de rede ou outro erro do provedor.
+- **Configuração ausente:** falta `SPEECH_KEY`, `SPEECH_ENDPOINT` ou `SPEECH_IDIOMA`.
+
+**Códigos de resposta implementados**
+
+| HTTP | Rota | Quando | Corpo |
+|:-:|---|---|---|
+| `202` | `POST /voz/audios` | Áudio aceito | Estrutura acima |
+| `200` | `GET .../transcricao` | Identificador conhecido, em qualquer estado | Estrutura acima |
+| `401` | Ambas | Sem sessão válida | `{"detail": "Sessão ausente"}` |
+| `404` | `GET .../transcricao` | Identificador desconhecido ou perdido após reinício do processo | `{"detail": "Áudio não encontrado ou resultado expirado"}` |
+| `413` | `POST /voz/audios` | Arquivo acima de 25 MB | `{"detail": "Arquivo muito grande. Tamanho máximo: 25 MB"}` |
+| `415` | `POST /voz/audios` | Extensão fora da lista ou conteúdo que não corresponde a um formato aceito | `{"detail": "..."}` com os formatos aceitos |
+| `422` | `POST /voz/audios` | Formulário sem o campo `audio` | Lista de validação do FastAPI |
+| `500` | `POST /voz/audios` | Falha ao gravar o arquivo em disco | `{"detail": "Falha ao processar arquivo: ..."}` |
+
+**Divergências entre o implementado e o contrato-alvo**
+
+| Contrato (5.7.3.3 a 5.7.3.8 e `openapi-voz.yaml`) | Implementado |
+|---|---|
+| Erros com `codigo`, `mensagem` e `detalhe` | Erros no formato padrão do FastAPI, `{"detail": ...}`, sem código estável |
+| `400 AUDIO_AUSENTE` sem o campo `audio` | `422` do FastAPI |
+| Formatos definidos pelo tipo de conteúdo; MP3 fora da lista | Formatos definidos pela extensão e pela assinatura; MP3 aceito |
+| Duração apurada e limite de 5 minutos (`AUDIO_MUITO_LONGO`) | Duração não apurada (`0.0`) e sem limite de duração |
+| `Location` na aceitação e `Retry-After` na consulta em andamento | Nenhum dos dois cabeçalhos |
+| `Idempotency-Key` devolve a submissão original | Cabeçalho ignorado; um reenvio cria outra submissão |
+| Consulta restrita a quem submeteu | Qualquer sessão válida consulta qualquer `id_audio` conhecido |
+| Resultado expira em `expira_em`, com `404` depois | `expira_em` é informado, mas o resultado fica em memória até o processo reiniciar |
+| Uma submissão simultânea por usuário (`COTA_EXCEDIDA`) | Sem limite na API; o `429` do serviço vira estado `falhou` |
+| `mensagem_erro` orientada à pessoa, sem detalhes internos | Mensagens técnicas, sem acentuação, e que nomeiam a variável ausente quando falta configuração |
+
+Essas divergências ficam registradas para correção antes do uso com dados reais. As mais sensíveis são a consulta sem verificação de propriedade e a mensagem que expõe configuração. O microfone da interface não depende desta API: ele usa o token de `GET /voz/token` (5.7.4.6) e transmite o áudio diretamente ao serviço de fala.
 
 ### 5.7.4 API de conversão de fala em texto
 
