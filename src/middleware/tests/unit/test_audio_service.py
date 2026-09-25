@@ -1,12 +1,13 @@
 """Testes unitários para o serviço de processamento de áudio."""
 
+from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from app.servicos.audio_service import AudioService, AudioProcessingError
+from app.servicos.audio_service import AudioService
 
 
 class TestAudioService:
@@ -67,9 +68,8 @@ class TestAudioService:
         """Deve retornar datetime futuro."""
         expiracao = audio_service.calcular_expiracao(10.0)
 
-        from datetime import datetime
         assert isinstance(expiracao, datetime)
-        assert expiracao > datetime.utcnow()
+        assert expiracao > datetime.now(UTC)
 
     def test_limpar_arquivo_existente(self, audio_service):
         """Deve remover arquivo existente."""

@@ -360,7 +360,7 @@ async def test_sync_e_token_errado_nao_geram_trabalho(canal, cliente, fabrica, u
     assert await mensagens_na_fila(url_isolada) == []
 
 
-async def test_corpo_malformado_e_recusado_sem_registrar_nem_publicar(
+async def test_corpo_nao_vazio_e_recusado_sem_registrar_nem_publicar(
     canal, cliente, fabrica, url_isolada
 ):
     canal_id, token = canal
@@ -377,9 +377,7 @@ async def test_corpo_malformado_e_recusado_sem_registrar_nem_publicar(
     assert await mensagens_na_fila(url_isolada) == []
 
 
-async def test_rota_publica_e_consumidor_confirma_a_mudanca(
-    canal, cliente, fabrica, url_isolada
-):
+async def test_rota_publica_e_consumidor_confirma_a_mudanca(canal, cliente, fabrica, url_isolada):
     processados = []
 
     async def tratar(evento, _sessao):

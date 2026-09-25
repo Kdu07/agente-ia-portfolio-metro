@@ -5,7 +5,7 @@ e preparar para transcrição via Azure AI Speech. Separa a lógica de
 negócio das rotas HTTP.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import BinaryIO
 from uuid import uuid4
@@ -84,8 +84,7 @@ class AudioService:
         # TODO: Definir política de retenção exata no projeto.md
         # Por enquanto, expira em 1 hora
         tempo_retention = timedelta(hours=1)
-        # Mantém o contrato ingênuo existente; a API o serializa explicitamente como UTC.
-        return datetime.utcnow() + tempo_retention  # noqa: DTZ003
+        return datetime.now(UTC) + tempo_retention
 
     def gerar_id_audio(self) -> str:
         """Gera um identificador único para o áudio.

@@ -357,12 +357,10 @@ async def test_assinatura_hmac_incorreta_responde_401_sem_publicar(
 
     assert resposta.status_code == 401
     async with fabrica() as sessao:
-        assert (
-            await RecebimentoRepository(sessao).listar_pendentes(
-                recebidos_antes=datetime.now(UTC) + timedelta(days=1)
-            )
-            == []
+        registros = await sessao.scalars(
+            select(RecebimentoTabela).where(RecebimentoTabela.fonte_id == emissor.fonte)
         )
+        assert registros.all() == []
     assert await fila(url_isolada) == []
 
 
@@ -448,8 +446,7 @@ async def test_rota_publica_e_consumidor_aplica_evento_no_portfolio(
                 risco = await sessao.get(RiscoTabela, evento["entity_id"])
                 recebimento = await sessao.scalar(
                     select(RecebimentoTabela).where(
-                        RecebimentoTabela.chave_externa
-                        == f"{emissor.fonte}:{evento['event_id']}"
+                        RecebimentoTabela.chave_externa == f"{emissor.fonte}:{evento['event_id']}"
                     )
                 )
                 if (
