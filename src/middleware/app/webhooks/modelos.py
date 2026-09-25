@@ -38,6 +38,15 @@ class TipoEventoPortfolio(Enum):
     RISCO = "risco.alterado"
 
 
+class ResultadoAplicacao(Enum):
+    """Desfecho da aplicação de um evento do portfólio (seção 9.1.2.7.2)."""
+
+    APLICADO = "aplicado"  # versão maior com diferença material
+    SEM_DIFERENCA = "sem_diferenca"  # versão maior, mesmos valores: avança sem aviso
+    REPETIDO = "repetido"  # mesma versão e mesmos campos: sem efeito
+    IGNORADO_ANTIGO = "ignorado_antigo"  # versão menor que a já aplicada
+
+
 class EstadoSincronizacao(Enum):
     """Estado operacional da reconciliação de uma fonte documental."""
 

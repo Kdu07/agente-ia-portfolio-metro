@@ -15,7 +15,12 @@ registro operacional das conversas.
 - `webhook.sincronizacao_fonte`: o cursor de mudanças confirmado de cada
   fonte. O cursor vem do servidor, nunca de um callback;
 - `webhook.fonte_portfolio`: o emissor do WH-02 (seção 9.1.2.7.2), com a
-  planilha, os projetos e os tipos de evento que ele pode alterar.
+  planilha, os projetos e os tipos de evento que ele pode alterar;
+- `webhook.versao_entidade`: a última versão aplicada por
+  `(source_id, event_type, entity_id)`. Sobrevive ao expurgo dos
+  recebimentos, para que uma repetição antiga nunca reaplique estado;
+- `webhook.auditoria_portfolio`: cada evento aplicado ou descartado, com os
+  campos anteriores e novos autorizados e o desfecho.
 
 O recebimento serve aos dois webhooks: a chave externa do Drive é
 `canal:número da mensagem`, e a do Apps Script é `source_id:event_id`,
@@ -26,6 +31,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -47,6 +53,7 @@ from app.webhooks.modelos import (
     FontePortfolio,
     Provedor,
     Recebimento,
+    ResultadoAplicacao,
     TipoEventoPortfolio,
 )
 
@@ -195,3 +202,51 @@ class FontePortfolioTabela(Base):
             tipos=frozenset(TipoEventoPortfolio(tipo) for tipo in self.tipos),
             ativa=self.ativa,
         )
+
+
+class VersaoEntidadeTabela(Base):
+    """Última versão do emissor aplicada a uma entidade do portfólio."""
+
+    __tablename__ = "versao_entidade"
+
+    source_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    event_type: Mapped[str] = mapped_column(Text, primary_key=True)
+    entity_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    # Até 2**53 - 1, o maior inteiro exato do emissor em JavaScript.
+    versao: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    # Hash dos campos normalizados da versão: decide entre repetição
+    # inofensiva e conflito quando a mesma versão chega de novo.
+    dados_sha256: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    atualizada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(f"event_type IN ({_valores(TipoEventoPortfolio)})", name="event_type"),
+        CheckConstraint("versao >= 0", name="versao"),
+        {"schema": ESQUEMA},
+    )
+
+
+class AuditoriaPortfolioTabela(Base):
+    """Registro técnico de cada evento do portfólio processado."""
+
+    __tablename__ = "auditoria_portfolio"
+
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    message_id: Mapped[str] = mapped_column(Text, nullable=False)
+    source_id: Mapped[str] = mapped_column(Text, nullable=False)
+    event_id: Mapped[str] = mapped_column(Text, nullable=False)
+    event_type: Mapped[str] = mapped_column(Text, nullable=False)
+    projeto_codigo: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_id: Mapped[str] = mapped_column(Text, nullable=False)
+    versao: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    # Só os campos que o contrato autoriza para o tipo.
+    anteriores: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    novos: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    resultado: Mapped[str] = mapped_column(Text, nullable=False)
+    registrado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(f"resultado IN ({_valores(ResultadoAplicacao)})", name="resultado"),
+        Index("ix_auditoria_portfolio_entidade", "projeto_codigo", "entity_id"),
+        {"schema": ESQUEMA},
+    )

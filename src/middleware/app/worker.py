@@ -29,11 +29,13 @@ from apscheduler.events import (
 )
 
 from app.config import settings
+from app.mensageria.consumidor import ConsumidorWebhooks
 from app.mensageria.produtor import ProdutorEventos
 from app.persistence import sessao
 from app.rotinas.agendador import carregar_agenda, criar_agendador
 from app.webhooks.drive.inscricao import InscricaoDrive
 from app.webhooks.drive.manutencao import executar_manutencao
+from app.webhooks.tratadores import montar_tratadores
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +131,28 @@ def _inscricao_drive() -> InscricaoDrive | None:
     )
 
 
+async def _consumir_webhooks(encerramento: asyncio.Event) -> None:
+    """Consome `prata.webhooks.incoming` até o encerramento (#394).
+
+    Montado aqui dentro, e não na subida: sem banco ou sem configuração, o
+    consumidor não sobe, mas o agendador de rotinas segue funcionando.
+    """
+    try:
+        consumidor = ConsumidorWebhooks(
+            settings.rabbitmq_url.get_secret_value(),
+            exchange=settings.rabbitmq_exchange,
+            dead_letter_exchange=settings.rabbitmq_dead_letter_exchange,
+            fabrica=sessao.fabrica_de_sessoes(),
+            tratadores=montar_tratadores(),
+            max_retries=settings.rabbitmq_max_retries,
+            prefetch=settings.rabbitmq_prefetch_count,
+        )
+    except Exception:
+        logger.exception("Consumidor de webhooks não pôde ser montado")
+        return
+    await consumidor.executar(encerramento)
+
+
 async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None:
     """Sobe o agendador e mantém o processo vivo.
 
@@ -149,6 +173,7 @@ async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None
     agendador = None
     monitor = _MonitorExecucoes()
     manutencao: asyncio.Task[None] | None = None
+    consumo: asyncio.Task[None] | None = None
     produtor: ProdutorEventos | None = None
 
     sessao.iniciar()
@@ -175,6 +200,7 @@ async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None
                     intervalo_segundos=settings.webhook_manutencao_segundos,
                 )
             )
+            consumo = asyncio.create_task(_consumir_webhooks(evento))
 
         await evento.wait()
     finally:
@@ -186,6 +212,12 @@ async def principal(*, evento_encerramento: asyncio.Event | None = None) -> None
                 await asyncio.wait_for(manutencao, timeout=PRAZO_CANCELAMENTO_SEGUNDOS)
             except TimeoutError:
                 logger.warning("Manutenção dos webhooks cancelada no encerramento")
+        if consumo is not None:
+            # O consumidor espera a mensagem em curso antes de fechar.
+            try:
+                await asyncio.wait_for(consumo, timeout=PRAZO_ENCERRAMENTO_SEGUNDOS)
+            except TimeoutError:
+                logger.warning("Consumidor de webhooks cancelado no encerramento")
         if produtor is not None:
             await produtor.encerrar()
         if agendador is not None and agendador.running:
