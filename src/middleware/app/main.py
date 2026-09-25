@@ -12,6 +12,7 @@ Execução local:
 """
 
 import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -33,6 +34,33 @@ from app.config import settings
 from app.mensageria.produtor import ProdutorEventos
 from app.persistence import sessao as db
 from app.pipeline.intencao import classificador
+
+FORMATO_LOG = "%(levelname)s:     %(name)s: %(message)s"
+
+
+def configurar_logs(nome: str = "app") -> None:
+    """Liga o nível INFO dos loggers do middleware, com saída no stderr.
+
+    O uvicorn configura só os loggers dele. Sem isto, os do pacote `app`
+    ficam sem handler, e o Python só imprime WARNING para cima: a linha
+    `RAG situacao=... recuperados=...` de `rag/fluxo.py`, que diz se uma
+    abstenção veio da busca ou do modelo, não chegava ao Log Analytics.
+    Nenhum INFO do pacote carrega texto de pergunta, resposta ou corpus,
+    só identificadores, contagens e scores.
+
+    O handler fica no logger `app`, e não na raiz, para não duplicar as
+    linhas do uvicorn nem ligar o INFO de bibliotecas. Idempotente:
+    `--reload` e os testes importam este módulo mais de uma vez.
+    """
+    logger = logging.getLogger(nome)
+    if not logger.handlers:
+        manipulador = logging.StreamHandler()
+        manipulador.setFormatter(logging.Formatter(FORMATO_LOG))
+        logger.addHandler(manipulador)
+    logger.setLevel(logging.INFO)
+
+
+configurar_logs()
 
 
 @asynccontextmanager

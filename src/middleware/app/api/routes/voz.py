@@ -16,6 +16,7 @@ from fastapi import (
     File,
     Form,
     Request,
+    Response,
     UploadFile,
     status,
 )
@@ -99,13 +100,24 @@ class TokenResposta(BaseModel):
     idioma: str
 
 
-@router.get("/token", response_model=TokenResposta)
-async def token(usuario: UsuarioAtual) -> TokenResposta:
+@router.get(
+    "/token",
+    response_model=TokenResposta,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"description": "Sessão ausente ou expirada"},
+        status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Cota temporária excedida"},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "description": "Serviço de fala não configurado ou indisponível"
+        },
+    },
+)
+async def token(usuario: UsuarioAtual, response: Response) -> TokenResposta:
     """Devolve um token de curta duração do Azure Speech.
 
     O frontend renova antes de expirar, e não ao receber erro: uma
     renovação reativa interromperia a fala do usuário no meio.
     """
+    response.headers["Cache-Control"] = "no-store"
     try:
         credencial = await emitir_token()
     except ErroConfiguracaoSpeech as erro:

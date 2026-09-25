@@ -160,6 +160,25 @@ def test_lista_somente_rotinas_do_usuario_e_calcula_proximo_disparo(api_rotinas)
     assert itens["rotina-inativa"]["proximo_disparo"] is None
 
 
+def test_devolve_o_rotulo_legivel_da_intencao_prevista(api_rotinas) -> None:
+    """A tela de rotinas mostra o rótulo do catálogo, e não o id técnico.
+
+    Uma intenção sem rótulo cadastrado recebe um nome derivado do id, como
+    no painel de intenções, em vez de aparecer crua.
+    """
+    client, rotinas, _ = api_rotinas
+    rotinas.itens["rotina-a"] = replace(
+        rotinas.itens["rotina-a"],
+        intencao_prevista="intencao_sem_rotulo",
+    )
+
+    itens = {item["id"]: item for item in client.get("/rotinas").json()}
+
+    assert itens["rotina-inativa"]["intencao_prevista"] == "consultar_riscos"
+    assert itens["rotina-inativa"]["intencao_prevista_rotulo"] == "Consultar riscos"
+    assert itens["rotina-a"]["intencao_prevista_rotulo"] == "Intencao sem rotulo"
+
+
 def test_valida_prompt_e_agenda_sem_persistir(api_rotinas) -> None:
     client, rotinas, _ = api_rotinas
     quantidade = len(rotinas.itens)

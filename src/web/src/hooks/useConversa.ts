@@ -33,12 +33,19 @@ export interface Linha {
   texto: string;
   horario: string;
   desfecho?: Desfecho;
+  /** Por onde a pergunta chegou; so a pergunta carrega o canal do turno. */
+  canal?: Canal;
+  /**
+   * Linha criada nesta tela, e nao carregada do servidor. So estas entram
+   * com animacao: o historico que abre com a conversa aparece parado.
+   */
+  local?: boolean;
 }
 
 function turnoParaLinhas(turno: Turno): Linha[] {
   const horario = horaCurta(turno.criada_em);
   return [
-    { id: `${turno.id}-pergunta`, autor: "usuario", texto: turno.prompt, horario },
+    { id: `${turno.id}-pergunta`, autor: "usuario", texto: turno.prompt, horario, canal: turno.canal },
     {
       id: `${turno.id}-resposta`,
       autor: "agente",
@@ -105,6 +112,7 @@ export function useConversa(conversaId?: string) {
           texto: resposta.resposta,
           horario: horaCurta(new Date().toISOString()),
           desfecho: resposta.desfecho,
+          local: true,
         },
       ]);
       // O historico da barra lateral mostra a conversa mais recente no
@@ -147,6 +155,8 @@ export function useConversa(conversaId?: string) {
         autor: "usuario",
         texto,
         horario: horaCurta(new Date().toISOString()),
+        canal,
+        local: true,
       },
     ]);
     envio.mutate({ mensagem: texto, canal });
@@ -183,6 +193,7 @@ export function useConversa(conversaId?: string) {
       sincronizandoPersistencia && locaisJaPersistidos
         ? linhasGravadas
         : [...linhasGravadas, ...linhasLocais],
+    titulo: conversa?.titulo ?? null,
     conversaIdAtual: conversaAtual,
     carregando,
     enviando: envio.isPending,
