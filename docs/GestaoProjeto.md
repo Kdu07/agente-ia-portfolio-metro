@@ -208,7 +208,7 @@ O resultado dessas três verificações orienta a redistribuição de tarefas do
 
 **Assuntos que extrapolam a daily.** Discussão técnica, decisão de escopo ou alinhamento que exija mais do que um enunciado não é resolvido no encontro. O assunto é anotado, e a própria daily define quem participa e quando ocorre a conversa à parte. A regra protege os 15 minutos previstos: a daily é um ponto de sincronização, e não o espaço em que o grupo trabalha.
 
-**Registro.** A daily não produz ata. O que precisa sobreviver ao encontro é registrado onde a equipe já consulta: impedimento vira comentário no card, acompanhado da label `BLOCK`; redistribuição vira troca de responsável no quadro; e revisor definido vira atribuição no merge request. Uma daily que não produz nenhum desses registros não deixou rastro verificável, e o acompanhamento do dia seguinte parte da memória de quem esteve presente.
+**Registro.** A daily não produz ata. O que precisa sobreviver ao encontro é registrado onde a equipe já consulta: impedimento vira comentário no card, acompanhado da label `BLOCKED`; redistribuição vira troca de responsável no quadro; e revisor definido vira atribuição no merge request. Uma daily que não produz nenhum desses registros não deixou rastro verificável, e o acompanhamento do dia seguinte parte da memória de quem esteve presente.
 
 #### 2.2.3 Revisões de merge request
 
@@ -347,7 +347,7 @@ Os cards criados até a Sprint 3 permanecem com as labels originais. O históric
 | `DEVOPS` | `DEPLOY` |
 | `CODE_REVIEW` | Sem equivalente. A revisão passou a ser etapa do fluxo, marcada por `review`, e não atividade com label própria |
 | `BLOCKED` | `BLOCK` |
-| `DOR_INCOMPLETE` e `DOD_INCOMPLETE` | Sem equivalente. A incompletude passa a ser tratada como impedimento, com `BLOCK` |
+| `DOR_INCOMPLETE` e `DOD_INCOMPLETE` | Sem equivalente. A incompletude passa a ser tratada como impedimento, com `BLOCKED` |
 
 > **Revisão da Sprint 3.** A tabela desta seção foi substituída pela taxonomia oficial do Escritório de Projetos. A revisão da Sprint 2 havia ajustado o documento à nomenclatura do quadro, trocando `DOCS` por `DOCUMENTATION`, o que eliminou a divergência entre documento e prática mas preservou a divergência entre a prática e a regra pela qual o grupo é avaliado. A adequação vale para os cards criados a partir da Sprint 4.
 
