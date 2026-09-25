@@ -8744,7 +8744,28 @@ RAG pelo `/chat`, porque essa ligação não existe no código (9.4.8).
 
 # 10. Planejamento e Execução de Testes
 
-[Descreva a estratégia de testes, cobertura e critérios de aceitação.]
+Esta seção descreve a estratégia de testes adotada pelo projeto, organizada em
+níveis funcional, não funcional, de usabilidade, de APIs externas e de
+integração, com consolidação ao final. O objetivo é garantir que o agente
+atenda aos requisitos de negócio e aos RNFs, e que a costura entre componentes
+internos e externos seja verificável com evidências reproduzíveis.
+
+A estratégia é estruturada da seguinte forma:
+- **10.1** — Testes funcionais: verificam se o agente faz o que os requisitos funcionais (RF01 a RF12) determinam, com serviços externos dublados.
+- **10.2** — Testes de requisitos não funcionais (RNFs): medem confidencialidade, rastreabilidade, precisão de classificação, disponibilidade, adequação ao perfil, eficácia das barreiras, retenção do registro e desempenho.
+- **10.3** — Testes de usabilidade: avaliam se usuários externos conseguem utilizar o agente de forma clara, eficiente e autônoma (Maze, SUS e ações corretivas).
+- **10.4** — Testes de APIs externas: apontam para os casos de Entra ID, Content Safety, Copilot Studio e Azure Speech tratados em 10.5.
+- **10.5** — Testes de integração: exercitam a costura entre componentes internos e externos, com VHS para terceiros e PostgreSQL/RabbitMQ reais do Compose.
+- **10.6** — Testes de regras de negócio: verificam as regras específicas do portfólio do Metrô.
+- **10.7** — Consolidação da cobertura: apresenta o total de cobertura por requisito e as lacunas remanescentes.
+
+Nesta revisão (25/09/2026, commit `3298da0`), a suíte do frontend executa **185**
+testes com build e lint limpos; a integração coleta **217** casos e os grupos
+internos/webhooks passaram contra o Compose. Os testes utilizam pytest, Vitest,
+MSW, VCR.py/`pytest-recording` e o banco/broker do Docker Compose, conforme
+detalhado em cada subseção. A meta de cobertura de código permanece em 80% para
+backend e frontend (9.1.8); a medição do frontend nesta data ficou em 77,42% de
+linhas.
 
 ## 10.1 Testes Funcionais
 
@@ -10000,13 +10021,36 @@ O teste de usabilidade realizado com Maze forneceu insights valiosos sobre a exp
 
 4. **Pontuação SUS aceitável:** A média de 71,9 pontos indica que o protótipo é funcional, mas há espaço claro para melhorias, especialmente no fluxo de criação de rotinas.
 
-**Recomendações prioritárias:**
-1. Simplificar o fluxo de criação de rotinas (UX04)
-2. Melhorar instruções de login (UX01)
-3. Reorganizar o menu de navegação (UX02)
-4. Melhorar o destaque do campo de chat (UX03)
+**Recomendações prioritárias (estado em 25/09/2026):**
+1. Simplificar o fluxo de criação de rotinas (UX04) — **implementada** (#438)
+2. Melhorar instruções de login (UX01) — **implementada** (tela de entrada reformada)
+3. Reorganizar o menu de navegação (UX02) — **implementada** (barra lateral com rótulos e permissões)
+4. Melhorar o destaque do campo de chat (UX03) — **implementada** (composer e conversa vazia no redesign #449)
+5. Reposicionar e rotular “Nova conversa” (UX05) — **implementada** (botão dedicado na barra e no cabeçalho)
 
-O teste foi considerado bem-sucedido em identificar pontos de melhoria específicos e quantificáveis, que servirão como base para iterações futuras da interface.
+O teste foi considerado bem-sucedido em identificar pontos de melhoria específicos e quantificáveis. A subseção 10.3.12.9 registra o que já entrou no código e o que permanece pendente.
+
+#### 10.3.12.9 Ações corretivas — implementadas e pendentes
+
+Os resultados do Maze (10.3.12.4–10.3.12.8) foram mantidos como evidência da sessão de 23–24/09/2026 com **oito participantes** (SUS médio 71,9). As recomendações derivadas desses resultados foram acompanhadas no código nas entregas seguintes.
+
+**Melhoria destacada — criação de rotinas (UX04).** O fluxo deixou de depender de expressão cron manual. Em #438 (`feat: torna agendamento de rotinas amigavel`), a tela passou a oferecer frequência legível (diária, dias úteis, semanal, dias personalizados, mensal), horário, fuso e resumo em prosa antes de salvar; a conversão para cron ficou encapsulada em `src/web/src/paginas/Rotinas/agenda.ts`. Os testes de página cobrem validação, criação, agendas semanais/mensais e geração de cron (`paginas.test.tsx`). Essa era a tarefa com menor taxa de sucesso no Maze (62,5%) e a principal ação corretiva desta sprint.
+
+| ID | Recomendação | Situação | Evidência no repositório |
+|---|---|---|---|
+| UX01 | Melhorar instruções de login | **Concluída** | `Login/index.tsx`: mensagem de erro compreensível, botão Microsoft e texto sobre conta corporativa |
+| UX02 | Reorganizar navegação | **Concluída** | `BarraLateral.tsx`: itens Conversa, Histórico, Rotinas e Intenções com ícone + rótulo; itens condicionados a permissão |
+| UX03 | Destacar campo de chat | **Concluída** | Composer e estado de conversa vazia no redesign visual (#449) |
+| UX04 | Simplificar criação de rotinas | **Concluída** | #438 — formulário por frequência + resumo; testes de rotinas em `paginas.test.tsx` |
+| UX05 | Rotular “Nova conversa” | **Concluída** | Botão “Nova conversa” na barra lateral e no cabeçalho da página principal |
+
+**Ações ainda pendentes** (não bloqueiam o fechamento desta documentação, mas permanecem no backlog de usabilidade):
+
+1. **Reexecução no Maze** após as correções, para medir se a taxa de sucesso em T4 (rotinas) e o SUS sobem em relação aos 62,5% e 71,9 da rodada de 24/09.
+2. **Reduzir a variabilidade do tempo de login** observada no Maze (11,7 s a 114 s): o fluxo SSO depende do Entra; falta campanha controlada com credenciais de teste estáveis.
+3. **Validar com os oito perfis originais** (ou amostra equivalente) se a navegação e o botão “Nova conversa” eliminam as hesitações registradas em T2 e T5.
+
+Evidência complementar dos oito participantes: painel Maze com 8 respostas, tabela SUS em 10.3.12.5 e captura em `docs/imagens/maze.png` / `bemvindo-maze.png`. Não há planilha nominal versionada além dos identificadores já publicados em 10.3.12.4–10.3.12.5.
 
 ## 10.4 Testes de APIs Externas
 
@@ -10074,11 +10118,14 @@ Três famílias, com pesos diferentes:
 | **Externa** | Middleware com Entra ID, Content Safety, Direct Line, Azure Speech e PostgreSQL | ~30% dos casos |
 | **Contrato** | Implementação com as especificações versionadas (OpenAPI, `topicos.md`) | ~10% dos casos |
 
-A suíte atual tem um único arquivo de integração,
-[test_fluxo_chat.py](../src/middleware/tests/integration/test_fluxo_chat.py), com
-onze casos que cobrem a costura HTTP → `deps` → orquestrador com todos os
-serviços dublados. Ele é o ponto de partida: este plano o preserva, reorganiza e
-estende.
+A suíte de integração atual, em `src/middleware/tests/integration/`, coleta
+**217 casos** (25/09/2026, commit `3298da0`), organizados por arquivo e por
+família (áudio/STT, chat e persistência, rotinas, webhooks, mensageria, RAG,
+autenticação, VHS e externos reais). O arquivo
+[test_fluxo_chat.py](../src/middleware/tests/integration/test_fluxo_chat.py)
+permanece o núcleo da costura HTTP → `deps` → orquestrador; ao redor dele
+existem grupos executáveis contra PostgreSQL/RabbitMQ do Compose e o módulo
+VHS em `externos/`. O inventário e o resultado da execução estão em 10.5.7.
 
 #### 10.5.1.2 O que fica fora
 
@@ -10227,8 +10274,8 @@ de ter, e não a que se pode rodar hoje.
 | `respx` | 0.21 | Dublê de `httpx` para o que não se grava: timeout, 5xx, conexão recusada | Previsto — onda 2 |
 | `testcontainers[postgres]` | 4.0 | PostgreSQL 16 efêmero por sessão de teste | Previsto — grupo IT-DB |
 | `pytest-cov` | >= 5.0 | Cobertura do middleware, confrontada com a meta de 80% em 10.7 | Configurado no extra `dev` |
-| `pytest-benchmark` | >= 4.0 | Micro-latência isolada de guardas e classificador | Configurado no extra `dev`; cenários em 10.2.2 |
-| `locust` | >= 2.31 | Carga, concorrência e ponto de saturação da API | Configurado no extra `dev`; cenários em 10.2.2 |
+| `pytest-benchmark` | >= 5.1 | Micro-latência isolada de guardas e classificador | Configurado no extra `dev` (entrada única); cenários em 10.2.2 |
+| `locust` | >= 2.32 | Carga, concorrência e ponto de saturação da API | Configurado no extra `dev` (entrada única); cenários em 10.2.2 |
 | `time-machine` | 2.14 | Relógio controlado para agenda, fuso e expiração de sessão | Previsto — onda 5 |
 | `schemathesis` | 3.25 | Contrato: gera casos a partir do OpenAPI e confronta a implementação | Previsto — grupo IT-CTR |
 
@@ -10247,17 +10294,20 @@ porque decidem entre falhar aberto e falhar fechado.
 
 | Ferramenta | Versão mínima | Papel | Já no projeto? |
 |---|---|---|---|
-| `vitest` | 2.0 | Executor | Sim |
+| `vitest` | 2.0 | Executor | Sim (`npm test` / `vitest run`) |
 | `@testing-library/react` | 16.0 | Renderização e interação | Sim |
-| `@testing-library/user-event` | 14.5 | Interação fiel ao navegador (foco, teclado) | **A adicionar** |
-| `msw` | 2.3 | **Dublê de `/api` no nível de rede**, sem tocar em `servicos/api.ts` | **A adicionar** |
-| `@vitest/coverage-v8` | ^2.0.5 | Cobertura do frontend | Configurado por `npm run test:coverage` |
+| `@testing-library/user-event` | 14.5 | Interação fiel ao navegador (foco, teclado) | **Em uso** (`^14.6.7`) |
+| `msw` | 2.3 | **Dublê de `/api` no nível de rede**, sem tocar em `servicos/api.ts` | **Em uso** (`^2.15.0`, handlers em `src/web/src/mocks/`) |
+| `@vitest/coverage-v8` | ^2.0.5 | Cobertura do frontend | Em uso (`npm run test:coverage`) |
+| `eslint` | 8.x | Lint do TypeScript/React | Em uso (`npm run lint`) |
 
 MSW intercepta o `fetch` no nível de rede, e não por *mock* de módulo. A
 diferença importa: um `vi.mock("@/servicos/api")` deixaria de exercitar
 justamente o que se quer testar — o `credentials: "include"`, o tratamento de
 401 com redirecionamento e a leitura do `detail` no corpo de erro, todos em
-[api.ts](../src/web/src/servicos/api.ts).
+[api.ts](../src/web/src/servicos/api.ts). Parte da suíte frontend também
+reproduz o formato real do FastAPI (422, 500 sem JSON, `conversa_id` gerado
+no backend) em `middleware.test.tsx`, sem substituir o smoke Compose de 10.5.7.
 
 #### 10.5.3.3 Infraestrutura e CI
 
@@ -10275,19 +10325,23 @@ diferença está declarada aqui em vez de suposta.
 #### 10.5.3.4 Instalação
 
 Backend — as dependências de teste vivem no grupo `dev` de
-[pyproject.toml](../src/middleware/pyproject.toml), que **hoje** está assim:
+[pyproject.toml](../src/middleware/pyproject.toml). O recorte vigente (sem
+duplicar `pytest-benchmark`/`locust`) inclui cobertura, micro-latência, carga,
+VHS e SQLite em memória para unitários de analytics:
 
 ```toml
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
+    "google-api-python-client>=2.100",
+    "pytest-cov>=5.0",
+    "pytest-benchmark>=5.1",
+    "locust>=2.32",
     "ruff>=0.5",
-    # VHS (10.5.4): grava uma vez a resposta real do serviço externo e a
-    # reproduz nas execuções seguintes. vcrpy é o motor; pytest-recording
-    # traz o marcador @pytest.mark.vcr, --record-mode e --block-network.
     "pytest-recording>=0.13",
     "vcrpy>=6.0",
+    "aiosqlite>=0.20",
 ]
 ```
 
@@ -10313,27 +10367,28 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 ```
 
-As demais ferramentas da tabela de 10.5.3.1 entram com os grupos de teste que
-as exigem, para que ninguém instale hoje o que não é exercitado por nenhum
-caso — dependência sem teste que a use é peso morto que ainda assim precisa ser
-atualizado:
+Ainda previstos na tabela de 10.5.3.1, e ainda **fora** do extra `dev` até o
+grupo correspondente exigir:
 
 ```toml
 # A acrescentar ao grupo `dev` quando o grupo de casos correspondente for
 # implementado (10.5.10 dá as ondas).
 "respx>=0.21",                    # IT-SAFE, IT-COP: falhas que não se gravam
-"testcontainers[postgres]>=4.0",  # IT-DB
-"pytest-cov>=5.0",                # meta de cobertura, junto da CI
+"testcontainers[postgres]>=4.0",  # IT-DB efêmero (hoje usa-se o db do Compose)
 "time-machine>=2.14",             # IT-ROT, expiração de sessão
 "schemathesis>=3.25",             # IT-CTR
 ```
 
-Frontend:
+Frontend — MSW, `user-event` e cobertura já estão no `package.json`; a
+instalação reproduzível é:
 
 ```powershell
 cd src\web
-npm install -D msw@^2.3 @testing-library/user-event@^14.5 @vitest/coverage-v8@^2.0
-npx msw init public/ --save
+npm ci
+npm test -- --run
+npm run test:coverage
+npm run build
+npm run lint
 ```
 
 ### 10.5.4 Gravação e reprodução com VHS
@@ -10364,28 +10419,18 @@ src/middleware/tests/integration/
 │   ├── README.md                       # ‹hoje› como gravar, regravar e revisar
 │   ├── vhs/
 │   │   └── cache_resposta_repetida.yaml   # ‹hoje› fita do autoteste do módulo
-│   ├── entra/
-│   │   ├── troca_codigo_sucesso.yaml
-│   │   ├── troca_codigo_expirado.yaml
-│   │   └── openid_configuration.yaml
 │   ├── content_safety/
-│   │   ├── prompt_shield_ataque_direto.yaml
-│   │   ├── prompt_shield_limpo.yaml
-│   │   ├── categorias_odio_severidade_4.yaml
-│   │   └── categorias_limpo.yaml
-│   ├── directline/
-│   │   ├── iniciar_conversa.yaml
-│   │   ├── postar_activity_resposta_simples.yaml
-│   │   └── postar_activity_com_anexo.yaml
-│   └── speech/
-│       └── issue_token.yaml
+│   │   ├── analyze_texto_limpo.yaml       # ‹hoje›
+│   │   └── analyze_texto_odio.yaml        # ‹hoje›
+│   ├── entra/                             # previsto — gravar quando o cliente estável exigir
+│   ├── directline/                        # previsto
+│   └── speech/                            # previsto
 ```
 
-A única fita versionada até aqui é a do **autoteste do próprio módulo**: as
-integrações de Entra ID, Direct Line, Content Safety e Speech ainda são `TODO`
-no código (ondas 1 e 2 de [Arquitetura.md](Arquitetura.md) §12.1), e fita se
-grava contra cliente que existe. O que já está provado é o mecanismo — ver
-10.5.4.6.
+Há três fitas versionadas: o autoteste do módulo VHS e dois cenários de
+Content Safety. Entra ID, Direct Line e Speech ainda dependem de sessão de
+gravação deliberada; o mecanismo em si é exercitado por
+`externos/test_vhs.py` (ver 10.5.4.6 e 10.5.7.3).
 
 Uma fita por **cenário**, não por teste: `prompt_shield_ataque_direto.yaml` é
 usada por todos os casos que precisam de um veredito positivo do Prompt Shields.
@@ -10783,7 +10828,7 @@ OpenAPI do FastAPI declara (ver IT-CTR-03).
 |---|---|---|---|---|
 | IT-CTR-01 | Implementação obedece ao próprio OpenAPI | Schemathesis sobre `/openapi.json` | Nenhuma resposta fora do schema; nenhum 500 inesperado | 1 |
 | IT-CTR-02 | **Canal de voz obedece ao contrato versionado** | Schemathesis sobre [openapi-voz.yaml](api/openapi-voz.yaml) | Divergência falha o teste. *Hoje a implementação declara apenas `/voz/token`; `POST /voz/audios` e `GET /voz/audios/{id}/transcricao` estão especificados e ausentes — este caso torna a lacuna visível em vez de tácita* | Livre |
-| IT-CTR-03 | Handlers do MSW derivam do OpenAPI | Script `npm run gerar:fixtures` | Fixture regenerada não produz diff; se produzir, o contrato mudou e o frontend precisa acompanhar | 1 |
+| IT-CTR-03 | Handlers do MSW acompanham o contrato da API | Revisão dos handlers em `src/web/src/mocks/` contra `/openapi.json` (script `gerar:fixtures` ainda não existe no `package.json`) | Diff de contrato exige atualizar handlers e tipos; suíte frontend verde após a mudança | 1 |
 | IT-CTR-04 | Catálogo de intenções e `topicos.md` concordam | Teste sobre `catalogo.py` + parse do Markdown | Toda intenção treinada no MVP tem linha em [topicos.md](../copilot/topicos.md), e vice-versa | 3 |
 | IT-CTR-05 | Toda fita provisória declara origem e issue | Varredura de `fitas/**.yaml` | Cabeçalho presente; nenhuma fita provisória anônima | — |
 | IT-CTR-06 | Tipos do frontend acompanham os schemas | `tsc` sobre tipos gerados do OpenAPI | `src/tipos/index.ts` sem divergência de campo ou nulidade | 1 |
@@ -10869,7 +10914,7 @@ cabe nos 30 segundos. No Windows, o modo Completo pede
 #### 10.5.6.2 Variáveis de ambiente
 
 Os testes **não** leem o `.env` de desenvolvimento.
-[tests/.env.teste](../src/middleware/tests/.env.teste) documenta o conjunto
+`src/middleware/tests/.env.teste` documenta o conjunto
 mínimo, com valores propositalmente inválidos; a fixture `ambiente_de_teste`,
 que os injeta no ambiente do processo, chega junto do primeiro cliente externo
 implementado — hoje nenhum caso lê configuração de serviço, porque nenhum
@@ -10919,161 +10964,227 @@ linha nova.
 
 #### 10.5.7.1 Estrutura de diretórios
 
-Como em 10.5.4.2, `‹hoje›` marca o que existe no repositório; o restante é o
-destino desta estrutura, alcançado conforme as ondas de 10.5.10.
+Árvore **atual** do repositório (25/09/2026). Os grupos deixaram de depender
+da reorganização planejada em `internos/` / `externos/` para a maior parte dos
+casos: os arquivos ficam na raiz de `integration/`, e `externos/` concentra VHS
+e serviços reais.
 
 ```text
 src/middleware/tests/
-├── .env.teste                         # ‹hoje› variáveis mínimas (10.5.6.2)
-├── unit/                              # ‹hoje› existente, inalterado
+├── .env.teste                         # variáveis mínimas inválidas (10.5.6.2)
+├── unit/                              # testes unitários
+├── funcionais/                        # RF (seção 10.1)
+├── rnf/                               # RNF (seção 10.2)
+├── desempenho/                        # micro-latência / carga
+├── perimetro/                         # inspeção de perímetro
 ├── integration/
-│   ├── vhs.py                         # ‹hoje› mecanismo do VHS (10.5.4.6)
-│   ├── conftest.py                    # ‹hoje› fiação do VHS; fixtures de app e de banco a seguir
-│   ├── test_fluxo_chat.py             # ‹hoje› IT-API — migra para internos/
-│   ├── test_api_audio.py              # ‹hoje› IT-API — migra para internos/
-│   ├── fabricas.py                    # dados sintéticos
-│   ├── dados/
-│   │   └── ataques.yaml
-│   ├── fitas/                         # ‹hoje› fitas VHS (seção 10.5.4.2)
-│   ├── internos/
-│   │   ├── test_fluxo_chat.py         # existente, ampliado — IT-API
-│   │   ├── test_persistencia.py       # IT-DB
-│   │   ├── test_analytics.py          # IT-DB-08..10
-│   │   └── test_rotinas.py            # IT-ROT
-│   ├── externos/
-│   │   ├── test_vhs.py                # ‹hoje› o mecanismo de fita, testado
-│   │   ├── test_entra.py              # IT-AUTH
-│   │   ├── test_content_safety.py     # IT-SAFE
-│   │   ├── test_directline.py         # IT-COP
-│   │   └── test_speech.py             # IT-VOZ
-│   └── contratos/
-│       ├── test_openapi.py            # IT-CTR-01, 02
-│       ├── test_catalogo_topicos.py   # IT-CTR-04
-│       └── test_fitas.py              # IT-CTR-05
+│   ├── vhs.py                         # mecanismo VHS
+│   ├── conftest.py                    # fiação do VHS
+│   ├── fitas/                         # fitas versionadas (10.5.4.2)
+│   ├── test_api_audio.py              # áudio HTTP
+│   ├── test_fluxo_audio_transcricao.py
+│   ├── test_fluxo_voz_nlp.py
+│   ├── test_api_voz_token.py
+│   ├── test_fluxo_chat.py             # chat / orquestrador
+│   ├── test_api_conversas.py
+│   ├── test_persistencia.py           # PostgreSQL real
+│   ├── test_pipeline_persistencia.py
+│   ├── test_api_rotinas.py
+│   ├── test_agendador_persistencia.py
+│   ├── test_webhook_drive.py
+│   ├── test_webhook_portfolio.py
+│   ├── test_mensageria_rabbitmq.py
+│   ├── test_consumidor_webhooks.py
+│   ├── test_avisos_portfolio.py
+│   ├── test_rag_registro.py
+│   ├── test_autenticacao.py
+│   ├── test_api_intencoes.py
+│   ├── test_consultas_postgres.py
+│   └── externos/
+│       ├── test_vhs.py
+│       ├── test_content_safety_real.py
+│       ├── test_directline_real.py
+│       ├── test_gemini_real.py
+│       └── test_pinecone_real.py
 
 src/web/src/testes/
-├── setup.ts                           # existente + servidor MSW
-├── mocks/
-│   ├── servidor.ts
-│   ├── handlers.ts                    # derivados do OpenAPI
-│   └── fixtures/                      # geradas por `npm run gerar:fixtures`
-├── paginas.test.tsx                   # existente
-└── integracao/
-    ├── chat.test.tsx                  # IT-WEB-01..07
-    ├── permissoes.test.tsx            # IT-WEB-08
-    ├── rotinas.test.tsx               # IT-WEB-10
-    └── voz.test.tsx                   # IT-WEB-12
+├── setup.ts                           # MSW + ambiente Vitest
+├── utilitarios.tsx
+├── tokens.ts
+├── autenticacao.test.tsx
+├── contraste.test.ts
+├── desfechos.test.ts
+├── dubles.test.ts
+├── falhas.test.tsx
+├── formato.test.ts
+├── graficos.test.tsx
+├── intencoes.test.tsx
+├── middleware.test.tsx                # formato real do FastAPI via MSW
+├── navegacao.test.tsx
+└── paginas.test.tsx                   # inclui criação amigável de rotinas
+
+src/web/src/mocks/                     # handlers e dados MSW (não em testes/)
 ```
 
 #### 10.5.7.2 Comandos
 
-Repertório completo, alcançado conforme as ondas de 10.5.10:
+Comandos verificados nesta revisão (Windows / PowerShell):
 
 ```powershell
+# Frontend
+cd src\web
+npm test -- --run
+npm run test:coverage
+npm run build
+npm run lint
+
+# Integração backend — apontar ao PostgreSQL do Compose quando o .env local
+# usar outra porta (neste ambiente o Compose expõe 5432 e o .env usava 5434).
 cd src\middleware
+$env:DATABASE_URL = "postgresql+asyncpg://middleware:middleware@127.0.0.1:5432/middleware"
+.\.venv\Scripts\python.exe -m pytest tests/integration -q
+.\.venv\Scripts\python.exe -m pytest tests/integration/externos/test_vhs.py -q
+.\.venv\Scripts\python.exe -m ruff check app tests
 
-python -m pytest -m "not banco and not lento"      # ciclo curto
-python -m pytest -m integracao --block-network     # tudo, sem rede
-python -m pytest -m externo                        # só as fitas
-python -m pytest -m banco                          # só o que precisa de Docker
-python -m pytest --cov=app --cov-report=term-missing
-python -m ruff check app tests
-```
-
-**O que roda hoje, e com que resultado.** Os comandos abaixo foram executados
-nesta ordem, no Windows, sobre o ambiente de 10.5.3.4. A execução detalhada
-está consolidada na subseção 10.5.7.3.
-
-```powershell
-cd src\middleware
-.\.venv\Scripts\python.exe -m pytest tests/integration/externos -q
-                                             # 16 passed, 4 skipped
-.\.venv\Scripts\python.exe -m pytest -m integracao --block-network -q
-                                             # 11 passed, 1 skipped, 38 errors
-cd ..\web
-npm test -- --run                            # 57 passed
-npm run build                                # passou
+# Compose + smoke (proxy web → middleware)
+cd ..\..
 docker compose -f infra/docker-compose.yml up -d --build
-                                             # cinco serviços em execução
+docker compose -f infra/docker-compose.yml ps
 Invoke-WebRequest http://localhost:5173/api/health
-                                             # 200, {"status":"ok"}
+Invoke-WebRequest http://localhost:5173/api/openapi.json
+docker compose -f infra/docker-compose.yml exec -T middleware alembic current
 ```
 
-O grupo externo passou com as fitas sob rede bloqueada, comprovando a
-reprodução sem acesso aos serviços Microsoft. O frontend passou e o smoke pelo
-proxy confirmou a comunicação `web → middleware`; as migrações chegaram a
-`20260922_latencia_por_etapa (head)` e o PostgreSQL ficou saudável.
+Marcadores ainda úteis para recortes:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -m integracao -q
+.\.venv\Scripts\python.exe -m pytest -m externo -q
+```
+
+**O que roda hoje, e com que resultado.** A execução de 25/09/2026 está
+consolidada na subseção 10.5.7.3 (evidências embutidas neste documento).
 
 #### 10.5.7.3 Execução realizada e evidências
 
-**Data:** 23/09/2026. **Branch:** `feat/testes-fluxos`. **Base:** `3cffe12`.
-O ambiente utilizou Windows, PowerShell, Docker Desktop 29.8.0, Docker Compose
-v5.5.1, Python 3.11 e Node/npm do projeto.
+**Data:** 25/09/2026. **Branch:** `feat/revisao-testes`. **Commit:** `3298da0`.
+**Ambiente:** Windows 10, PowerShell, Docker Compose (`infra/docker-compose.yml`),
+Python `.venv` do middleware, Node/npm do `src/web`. PostgreSQL dos testes de
+integração: `127.0.0.1:5432` (serviço `db` do Compose).
 
-Os registros brutos das execuções, preservando comandos, saídas e códigos de
-retorno, estão versionados em [docs/evidencias/](evidencias/):
+##### Frontend (testes, cobertura, build e lint)
 
-| Artefato | Evidência |
+| Campo | Valor |
 |---|---|
-| [2026-09-23-frontend.txt](evidencias/2026-09-23-frontend.txt) | Vitest do frontend: 57 testes aprovados |
-| [2026-09-23-vhs-externos.txt](evidencias/2026-09-23-vhs-externos.txt) | Integrações externas reproduzidas por VHS, sem rede externa |
-| [2026-09-23-compose-smoke.txt](evidencias/2026-09-23-compose-smoke.txt) | Estado dos cinco serviços e smoke HTTP pelo proxy |
-| [2026-09-23-worker.log](evidencias/2026-09-23-worker.log) | Logs do worker e do PostgreSQL, incluindo a violação de chave única |
-| [2026-09-23-integracao-limitada.txt](evidencias/2026-09-23-integracao-limitada.txt) | Saída integral da integração backend com rede bloqueada |
+| Comandos | `npm test -- --run`; `npm run test:coverage`; `npm run build`; `npm run lint` |
+| Diretório | `src/web` |
+| Resultado | **185 passed** (11 arquivos); cobertura V8 linhas **77,42%**, branches **80,84%**, functions **69,96%**; build OK; lint OK |
+| Duração | teste 11,60 s; cobertura 14,12 s; build 15,2 s; lint 2,5 s |
+| Avisos | `npm warn Unknown env config "devdir"`; Vite alerta chunks > 500 kB (Speech SDK e bundle) |
+| Exit codes | 0 / 0 / 0 / 0 |
 
-| Fluxo | Comando | Resultado |
+Atualiza o registro anterior de **57** testes (23/09/2026).
+
+##### Integração interna
+
+| Campo | Valor |
+|---|---|
+| Comando | `.\.venv\Scripts\python.exe -m pytest` sobre chat, conversas, persistência, pipeline, áudio/STT, rotinas, autenticação, RAG e intenções (`-q --tb=no`) |
+| `DATABASE_URL` | `postgresql+asyncpg://middleware:middleware@127.0.0.1:5432/middleware` |
+| Resultado | **136 passed**, 5 warnings em 8,67 s |
+| Exit code | 0 |
+| Avisos | deprecações Starlette/`httpx`; `SAWarning` em dois testes de persistência |
+
+Grupos cobertos: áudio e Speech-to-Text; chat e persistência; rotinas e agendador; autenticação; RAG; API de intenções.
+
+##### Webhooks e mensageria
+
+| Campo | Valor |
+|---|---|
+| Comando | `pytest` sobre `test_webhook_drive`, `test_webhook_portfolio`, `test_mensageria_rabbitmq`, `test_consumidor_webhooks`, `test_avisos_portfolio` |
+| Ambiente | Compose `db:5432` + RabbitMQ `5672`/`15672` |
+| Resultado | **56 passed**, 1 warning em 212,6 s |
+| Exit code | 0 |
+
+##### VHS
+
+| Campo | Valor |
+|---|---|
+| Comando | `.\.venv\Scripts\python.exe -m pytest tests/integration/externos/test_vhs.py -q` |
+| Resultado | **12 passed** em 5,55 s |
+| Exit code | 0 |
+| Não executados | `*_real.py` (Content Safety, Direct Line, Gemini, Pinecone) — exigem credencial/rede |
+
+##### Docker Compose
+
+| Campo | Valor |
+|---|---|
+| Comando | `docker compose -f infra/docker-compose.yml up -d --build` e `ps` |
+| Resultado | cinco serviços em execução: `db` e `rabbitmq` healthy; `middleware`, `worker`, `web` Up |
+| Alembic | `docker compose … exec -T middleware alembic current` → `20260925_audio_persistente (head)` |
+| Exit code | 0 |
+
+##### Smoke frontend → proxy → middleware
+
+| Campo | Valor |
+|---|---|
+| Comandos | `Invoke-WebRequest http://localhost:5173/api/health` e `…/api/openapi.json` |
+| Health | **200**, corpo `{"status":"ok"}` |
+| OpenAPI | **200**, 62.755 bytes |
+| Exit code | 0 |
+
+Confirma o encaminhamento Nginx do serviço `web` ao middleware.
+
+| Grupo | Arquivos principais | Resultado observado (25/09) |
 |---|---|---|
-| Frontend | `cd src/web; npm test -- --run` | **57 passed** em 7 arquivos |
-| Build frontend | `cd src/web; npm run build` | **Passou** |
-| Integrações externas reproduzidas | `cd src/middleware; .\\.venv\\Scripts\\python.exe -m pytest tests/integration/externos -q` | **16 passed, 4 skipped** |
-| Integração com rede bloqueada | `cd src/middleware; .\\.venv\\Scripts\\python.exe -m pytest -m integracao --block-network -q` | **11 passed, 1 skipped, 38 errors** |
-| Configuração e subida do Compose | `docker compose -f infra/docker-compose.yml config --quiet` e `up -d --build` | **Passou**; cinco serviços em execução |
-| Smoke pelo proxy | `Invoke-WebRequest http://localhost:5173/api/health` | **200**, `{"status":"ok"}` |
-| Contrato exposto | `Invoke-WebRequest http://localhost:5173/api/openapi.json` | **200**, 52.736 bytes |
-| Banco e migrações | `docker compose ... exec middleware alembic current` | **Passou**, `20260922_latencia_por_etapa (head)` |
+| Áudio e Speech-to-Text | `test_api_audio`, `test_fluxo_audio_transcricao`, `test_fluxo_voz_nlp`, `test_api_voz_token` | Inclusos na integração interna (**136 passed** no conjunto) |
+| Chat e persistência | `test_fluxo_chat`, `test_api_conversas`, `test_persistencia`, `test_pipeline_persistencia` | Inclusos na integração interna |
+| Rotinas e worker | `test_api_rotinas`, `test_agendador_persistencia` | Inclusos na integração interna |
+| Webhooks do Drive | `test_webhook_drive` | Inclusos em webhooks/mensageria (**56 passed** no conjunto) |
+| Webhook de portfólio | `test_webhook_portfolio` | Inclusos em webhooks/mensageria |
+| RabbitMQ | `test_mensageria_rabbitmq` | Inclusos em webhooks/mensageria |
+| Consumidor dos webhooks | `test_consumidor_webhooks` | Inclusos em webhooks/mensageria |
+| RAG | `test_rag_registro` | Inclusos na integração interna |
+| Autenticação | `test_autenticacao` | Inclusos na integração interna |
+| VHS e externos | `externos/test_vhs.py` (+ reais coletados) | **12 passed** no VHS; reais não executados sem credencial |
+| Frontend | `npm test -- --run` (+ coverage, build, lint) | **185 passed**; cob. linhas 77,42%; build e lint OK |
+| Compose / smoke | `docker compose …` + `/api/health` | Cinco serviços; **200** `{"status":"ok"}`; OpenAPI 62.755 B; head `20260925_audio_persistente` |
 
-**Componentes comprovadamente comunicando:** o Nginx encaminhou `/api/health`
-e `/api/openapi.json` ao middleware; o middleware iniciou após aplicar as
-migrações e comunicou-se com o PostgreSQL; o worker iniciou o APScheduler e
-acessou o PostgreSQL; o RabbitMQ iniciou saudável; o frontend compilou e sua
-suíte validou chamadas com MSW; as integrações externas foram reproduzidas por
-fitas VHS sem alcançar serviços externos.
+**Componentes comprovadamente comunicando:** o Nginx encaminha `/api/*` ao
+middleware; o middleware aplica migrações e fala com o PostgreSQL; o worker
+reconciliou rotinas sem o erro antigo de chave única nesta execução; o
+RabbitMQ está saudável; a suíte de integração interna e de webhooks usa o
+banco e o broker reais do Compose; o frontend valida contratos via MSW e
+formatos do FastAPI, e o smoke fecha a ponte `web → proxy → middleware`.
 
-**Limitações e defeitos encontrados:**
+**Limitações atuais (substitui o registro de 23/09):**
 
-1. A `.venv` local não possui `aiosqlite`, bloqueando os testes de integração
-  que semeiam SQLite, embora a imagem Docker instale essa dependência.
-2. No Windows, `pytest-recording --block-network` intercepta sockets locais do
-  `ProactorEventLoop`; por isso, os erros dessa execução não representam falha
-  do pipeline. Os testes externos passaram sob bloqueio.
-3. O worker repetiu `duplicate key value violates unique constraint
-  "apscheduler_jobs_pkey"` para `rotina:demo-rotina-diretoria`, indicando
-  falha de idempotência na reconciliação.
-4. O caminho real de STT não foi comprovado; Speech, Entra, Direct Line e
-  Content Safety foram exercitados somente por fitas, sem credenciais reais.
-5. O fluxo completo de chat autenticado pelo navegador não foi declarado
-  aprovado: o smoke comprovou o proxy e a saúde, enquanto frontend e backend
-  usam MSW, dublês e fitas.
-
-Esses pontos devem gerar issues próprias: corrigir a idempotência do worker,
-incluir `aiosqlite` no ambiente local e ajustar o bloqueio de rede no Windows
-para permitir sockets locais sem liberar destinos externos. Nenhuma credencial
-ou dado real do Metrô foi usado.
+1. O `.env` local deste ambiente apontava `DATABASE_URL` para a porta **5434**;
+   o Compose publica o Postgres em **5432**. Sem alinhar a URL, dezenas de
+   casos saltam com `PostgreSQL indisponível` — não é falha do pipeline.
+2. `aiosqlite` já está no extra `dev`; a restrição antiga da `.venv` sem
+   esse pacote não se aplica mais ao ambiente documentado.
+3. No Windows, `--block-network` do `pytest-recording` ainda pode interferir
+   em sockets locais do `ProactorEventLoop`; preferir o recorte por caminho
+   de arquivo ou o VHS sem bloquear a loopback quando necessário.
+4. Testes `*_real.py` (Content Safety, Direct Line, Gemini, Pinecone) exigem
+   credenciais e rede; nesta revisão só o mecanismo VHS foi executado.
+5. Cobertura de linhas do frontend ficou em **77,42%**, abaixo da meta de 80%
+   de 9.1.8; branches em 80,84%.
 
 #### 10.5.7.4 Restrições conhecidas
 
-Uma restrição conhecida, herdada e fora do VHS:
-
 | Restrição | Efeito | Situação |
 |---|---|---|
-| SDK do Pinecone fora do ambiente base | Sem o extra `[rag]`, `tests/unit/test_provisionamento_vetorial.py` tem 1 falha, e `tests/integration/externos/test_pinecone_real.py` dá 4 erros quando selecionado por caminho — por marcador ele fica de fora de `-m externo` | `pip install -e '.[rag]'` instala o SDK. É dependência da camada de vetorização, e não do VHS |
+| SDK do Pinecone / extra `[rag]` fora do ambiente base | Sem `[rag]`, testes unitários de vetorização e `externos/test_pinecone_real.py` falham ou erram | `pip install -e '.[rag]'` (já na imagem Docker do middleware) |
+| Porta do Postgres no `.env` local ≠ Compose | Casos de integração saltam com “PostgreSQL indisponível” | Exportar `DATABASE_URL` para `…@127.0.0.1:5432/middleware` ou alinhar o `.env` |
 
 ```powershell
 cd src\web
-
-npm run test                    # vitest run
+npm run test
 npm run test:coverage
-npm run gerar:fixtures          # regenera handlers do MSW a partir do openapi.json
+npm run build
+npm run lint
 ```
 
 ### 10.5.8 Integração contínua
