@@ -1,7 +1,6 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import configuracaoTailwind from "../../tailwind.config";
 import {
   BarrasPorIntencao,
   CartaoResumo,
@@ -9,15 +8,16 @@ import {
   SerieBloqueios,
   TabelaEnunciados,
 } from "@/componentes/graficos";
-import { COR, corDoDesfecho } from "@/componentes/graficos/cores";
+import { COR, COR_CONTORNO, COR_GRADE, COR_NEUTRA, COR_VALOR, COR_VOLUME, ESTILO_DA_ETAPA, ESTILO_DA_GUARDA, corDoDesfecho } from "@/componentes/graficos/cores";
 import { formatarDia, formatarDuracao, formatarPercentual } from "@/componentes/graficos/formatos";
-import { porMomento } from "@/componentes/graficos/SerieBloqueios";
+import { porMomento } from "@/componentes/graficos/porMomento";
 import {
   BAIXA_CONFIANCA,
   DISTRIBUICAO_DESFECHOS,
   SERIE_BLOQUEIOS,
   VOLUME_POR_INTENCAO,
 } from "@/mocks/dados/intencoes";
+import { TOKENS_CLARO, TOKENS_ESCURO } from "./tokens";
 
 afterEach(cleanup);
 
@@ -40,6 +40,19 @@ describe("Regra 1: conteiner responsivo", () => {
 
     expect(conteineres(container)).toHaveLength(1);
     expect(container.querySelector("svg.recharts-surface")).not.toBeNull();
+  });
+
+  // O Recharts 3 torna o SVG focavel por padrao. Dentro de `aria-hidden`,
+  // isso vira uma parada de Tab sem nome: o teclado chega onde o leitor de
+  // tela nao le.
+  it.each([
+    { nome: "BarrasPorIntencao", elemento: <BarrasPorIntencao dados={VOLUME_POR_INTENCAO} /> },
+    { nome: "DistribuicaoDesfechos", elemento: <DistribuicaoDesfechos dados={DISTRIBUICAO_DESFECHOS} /> },
+    { nome: "SerieBloqueios", elemento: <SerieBloqueios series={SERIE_BLOQUEIOS} /> },
+  ])("$nome nao deixa foco dentro do desenho escondido", ({ elemento }) => {
+    const { container } = render(elemento);
+
+    expect(container.querySelectorAll('[aria-hidden="true"] [tabindex]:not([tabindex="-1"])')).toHaveLength(0);
   });
 
   it("a tabela de enunciados rola dentro do cartao em tela estreita", () => {
@@ -119,7 +132,12 @@ describe("Componentes", () => {
       (caminho) => caminho.getAttribute("fill"),
     );
     expect(cores).toContain(COR.injecao);
-    expect(cores).toContain(COR.ok);
+    expect(cores).toContain(COR.falha);
+    // As atendidas saem das barras e viram numero no titulo; na tabela
+    // acessivel continuam as oito linhas.
+    expect(cores).not.toContain(COR.ok);
+    expect(cores).toHaveLength(DISTRIBUICAO_DESFECHOS.length - 1);
+    expect(screen.getByText(/Atendidas:/)).toHaveTextContent("Atendidas: 495 de 596 (83,1%)");
     expect(screen.getByRole("row", { name: /Atendida/ })).toBeInTheDocument();
   });
 
@@ -138,10 +156,23 @@ describe("Componentes", () => {
 });
 
 describe("Cores e formatos", () => {
-  it("as cores dos graficos sao as mesmas verificadas no tailwind.config.ts", () => {
-    const paleta = configuracaoTailwind.theme.extend.colors.desfecho;
-
-    expect(COR).toEqual(paleta);
+  it("toda cor dos graficos e um token de global.css definido nos dois temas", () => {
+    const cores = [
+      ...Object.values(COR),
+      COR_NEUTRA,
+      COR_GRADE,
+      COR_CONTORNO,
+      COR_VOLUME,
+      COR_VALOR,
+      ...Object.values(ESTILO_DA_GUARDA).map((estilo) => estilo.cor),
+      ...Object.values(ESTILO_DA_ETAPA).map((estilo) => estilo.cor),
+    ];
+    for (const cor of cores) {
+      const token = /^var\(--([\w-]+)\)$/.exec(cor)?.[1];
+      expect(token, `${cor} nao e um var(--token)`).toBeDefined();
+      expect(TOKENS_CLARO[token!], `--${token} ausente no tema claro`).toMatch(/^#/);
+      expect(TOKENS_ESCURO[token!], `--${token} ausente no tema escuro`).toMatch(/^#/);
+    }
   });
 
   it("cada desfecho usa a cor da etiqueta do chat", () => {

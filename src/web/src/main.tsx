@@ -2,8 +2,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// Só o eixo de largura (wdth): é ele que dá os títulos expandidos. A
+// fonte vem do pacote, e não do Google Fonts, para não depender de rede
+// externa numa rede corporativa.
+import "@fontsource-variable/mona-sans/wdth.css";
 
 import { Rotas } from "@/rotas";
+import { ProvedoresVisuais } from "@/componentes/ProvedoresVisuais";
 import { iniciarDubles } from "@/mocks/navegador";
 import { ErroApi } from "@/servicos/api";
 import "@/estilos/global.css";
@@ -28,15 +33,17 @@ const cliente = new QueryClient({
 function montar() {
   createRoot(document.getElementById("raiz")!).render(
     <StrictMode>
-      <QueryClientProvider client={cliente}>
-        {/* As duas flags ativam agora o comportamento que sera padrao
-            na versao 7 do React Router. Ativar cedo evita descobrir a
-            diferenca durante a migracao, e silencia o aviso que a
-            biblioteca emite em cada execucao. */}
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Rotas />
-        </BrowserRouter>
-      </QueryClientProvider>
+      <ProvedoresVisuais>
+        <QueryClientProvider client={cliente}>
+          {/* As duas flags ativam agora o comportamento que sera padrao
+              na versao 7 do React Router. Ativar cedo evita descobrir a
+              diferenca durante a migracao, e silencia o aviso que a
+              biblioteca emite em cada execucao. */}
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <Rotas />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ProvedoresVisuais>
     </StrictMode>,
   );
 }

@@ -282,8 +282,8 @@ controle de acesso.
 
 | Camada | Escolha | Por quê |
 |---|---|---|
-| Interface | React 18 + TypeScript + Vite (SPA estática) | Nenhum runtime JS em produção; o Python segue sendo o único servidor de aplicação da equipe |
-| Estilo e componentes | Tailwind CSS + primitivos acessíveis | Responsivo por breakpoint, exigência de mobile e desktop |
+| Interface | React 19 + TypeScript + Vite (SPA estática) | Nenhum runtime JS em produção; o Python segue sendo o único servidor de aplicação da equipe |
+| Estilo e componentes | Tailwind CSS + shadcn/ui sobre os primitivos acessíveis do Radix | Responsivo por breakpoint, exigência de mobile e desktop; tema claro e escuro por tokens |
 | Estado de servidor | TanStack Query | Cache e revalidação do histórico e das execuções de rotina |
 | Gráficos | Recharts | Dashboard de intenções |
 | API | FastAPI (Python 3.12) + Pydantic v2 | Base já existente do middleware |

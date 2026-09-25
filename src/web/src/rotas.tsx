@@ -18,17 +18,43 @@
  */
 
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
-import type { ReactNode } from "react";
+import { lazy, type ReactNode, Suspense } from "react";
 
 import { useUsuario } from "@/hooks/useUsuario";
 import type { Permissao } from "@/tipos";
 import { Layout } from "@/componentes/ui/Layout";
 import { Principal } from "@/paginas/Principal";
-import { Rotinas } from "@/paginas/Rotinas";
 import { Historico } from "@/paginas/Historico";
-import { Intencoes } from "@/paginas/Intencoes";
 import { Login } from "@/paginas/Login";
 import { NaoEncontrada } from "@/paginas/NaoEncontrada";
+
+/*
+ * Intencoes e Rotinas saem do pacote inicial: o painel traz o Recharts, e
+ * as duas telas sao restritas por permissao, entao boa parte de quem abre
+ * o app nunca as visita. A conversa, que e a porta de entrada, continua
+ * no pacote principal.
+ */
+const Intencoes = lazy(() => import("@/paginas/Intencoes").then((modulo) => ({ default: modulo.Intencoes })));
+const Rotinas = lazy(() => import("@/paginas/Rotinas").then((modulo) => ({ default: modulo.Rotinas })));
+
+/**
+ * Enquanto o pedaco da pagina chega, so o leitor de tela e avisado. Cada
+ * pagina tem o proprio esqueleto de carregamento; um segundo, de outro
+ * formato, piscaria antes dele.
+ */
+function CarregandoPagina({ children }: { children: ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <p role="status" className="sr-only">
+          Carregando a página
+        </p>
+      }
+    >
+      {children}
+    </Suspense>
+  );
+}
 
 function RotaProtegida({
   permissao,
@@ -81,7 +107,9 @@ export function Rotas() {
           path="/intencoes"
           element={
             <RotaProtegida permissao="ver_intencoes">
-              <Intencoes />
+              <CarregandoPagina>
+                <Intencoes />
+              </CarregandoPagina>
             </RotaProtegida>
           }
         />
@@ -89,7 +117,9 @@ export function Rotas() {
           path="/rotinas"
           element={
             <RotaProtegida permissao="gerir_rotinas">
-              <Rotinas />
+              <CarregandoPagina>
+                <Rotinas />
+              </CarregandoPagina>
             </RotaProtegida>
           }
         />

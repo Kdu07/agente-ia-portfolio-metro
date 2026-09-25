@@ -77,7 +77,7 @@ describe("Navegação entre conversas", () => {
     await screen.findByText(/62% de avanço físico/, {}, { timeout: 3000 });
 
     expect(
-      screen.queryByRole("dialog", { name: "Notificação do assistente" }),
+      screen.queryByRole("region", { name: "Alerta de marco" }),
     ).not.toBeInTheDocument();
   });
 

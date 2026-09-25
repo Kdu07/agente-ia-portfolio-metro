@@ -132,6 +132,10 @@ function responderChat(mensagem: string): { desfecho: Desfecho; resposta: string
 // recarregamento, como convem a um duble.
 let rotinas: Rotina[] = [...ROTINAS];
 
+// Mesmo motivo para as conversas: arquivar tira a conversa da lista ate a
+// pagina ser recarregada, como faria o backend.
+let conversas = [...CONVERSAS];
+
 const handlersComRotaReal = [
   // Autenticacao
   http.get(`${BASE}/auth/eu`, () => HttpResponse.json(USUARIO)),
@@ -164,7 +168,7 @@ const handlersComRotaReal = [
   // Conversas
   http.get(`${BASE}/conversas`, async () => {
     await delay(LATENCIA_CONSULTA);
-    return HttpResponse.json(CONVERSAS);
+    return HttpResponse.json(conversas);
   }),
   http.get(`${BASE}/conversas/:id`, async ({ params }) => {
     await delay(LATENCIA_CONSULTA);
@@ -172,7 +176,10 @@ const handlersComRotaReal = [
     if (!conversa) return new HttpResponse(null, { status: 404 });
     return HttpResponse.json(conversa);
   }),
-  http.delete(`${BASE}/conversas/:id`, () => new HttpResponse(null, { status: 204 })),
+  http.delete(`${BASE}/conversas/:id`, ({ params }) => {
+    conversas = conversas.filter((conversa) => conversa.id !== String(params.id));
+    return new HttpResponse(null, { status: 204 });
+  }),
 
   // Rotinas
   http.get(`${BASE}/rotinas`, async () => {
@@ -201,6 +208,7 @@ const handlersComRotaReal = [
       timezone: pedido.timezone ?? "America/Sao_Paulo",
       ativa: pedido.ativa ?? true,
       intencao_prevista: "consultar_status_portfolio",
+      intencao_prevista_rotulo: "Consultar status do portfólio",
       proximo_disparo: new Date(Date.now() + 86_400_000).toISOString(),
       criada_em: agora,
       atualizada_em: agora,

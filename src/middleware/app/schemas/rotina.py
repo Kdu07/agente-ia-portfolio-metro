@@ -35,6 +35,8 @@ class RotinaResposta(BaseModel):
 
     `intencao_prevista` vem da validação feita no cadastro e serve para
     mostrar ao usuário o que a rotina vai fazer antes do primeiro disparo.
+    `intencao_prevista_rotulo` é o nome legível da mesma intenção, o mesmo
+    do painel de intenções: a tela mostra o rótulo, e não o id técnico.
     `proximo_disparo` é calculado pelo agendador a partir do cron e do
     fuso — é o que confirma visualmente que "todo dia 5" foi entendido.
     """
@@ -46,6 +48,7 @@ class RotinaResposta(BaseModel):
     timezone: str
     ativa: bool
     intencao_prevista: str | None
+    intencao_prevista_rotulo: str | None
     proximo_disparo: datetime | None
     criada_em: datetime
     atualizada_em: datetime
