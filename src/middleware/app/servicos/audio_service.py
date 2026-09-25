@@ -5,13 +5,12 @@ e preparar para transcrição via Azure AI Speech. Separa a lógica de
 negócio das rotas HTTP.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import BinaryIO
 from uuid import uuid4
 
 from app.config import settings
-from app.schemas.audio import TranscricaoResponse
 
 
 class AudioProcessingError(Exception):
@@ -25,18 +24,6 @@ class AudioService:
         """Inicializa o serviço com diretório de armazenamento."""
         self.diretorio_audio = Path(settings.base_dir) / "uploads" / "audio"
         self.diretorio_audio.mkdir(parents=True, exist_ok=True)
-        # Armazenamento transitório da PoC. A persistência definitiva será
-        # substituída pelo repositório de banco na task específica de dados.
-        self._transcricoes: dict[str, TranscricaoResponse] = {}
-
-    def registrar_transcricao(self, transcricao: TranscricaoResponse) -> None:
-        """Registra ou atualiza o estado de uma transcrição."""
-        self._transcricoes[transcricao.id_audio] = transcricao
-
-    def obter_transcricao(self, id_audio: str) -> TranscricaoResponse | None:
-        """Obtém uma transcrição transitória pelo identificador."""
-        return self._transcricoes.get(id_audio)
-
     def salvar_arquivo(
         self,
         arquivo: BinaryIO,
@@ -85,7 +72,7 @@ class AudioService:
         # Por enquanto, expira em 1 hora
         tempo_retention = timedelta(hours=1)
         # Mantém o contrato ingênuo existente; a API o serializa explicitamente como UTC.
-        return datetime.utcnow() + tempo_retention  # noqa: DTZ003
+        return datetime.now(UTC) + tempo_retention
 
     def gerar_id_audio(self) -> str:
         """Gera um identificador único para o áudio.

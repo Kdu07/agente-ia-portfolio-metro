@@ -10,6 +10,8 @@ import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
+import httpx
+
 from app.config import settings
 
 # Validade do token emitido pelo serviço. O frontend deve renovar antes
@@ -42,6 +44,14 @@ class ErroConfiguracaoSpeech(RuntimeError):
 
 class ErroReconhecimentoSpeech(RuntimeError):
     """O Azure Speech não produziu uma transcrição utilizável."""
+
+
+class ErroTokenSpeech(RuntimeError):
+    """O servidor não conseguiu emitir a credencial efêmera de voz."""
+
+    def __init__(self, mensagem: str, *, cota_excedida: bool = False) -> None:
+        super().__init__(mensagem)
+        self.cota_excedida = cota_excedida
 
 
 def reconhecer_arquivo_wav(
@@ -102,13 +112,48 @@ def reconhecer_arquivo_wav(
     raise ErroReconhecimentoSpeech("O Azure Speech devolveu um resultado inesperado")
 
 
-async def emitir_token() -> TokenVoz:
+async def emitir_token(*, cliente: httpx.AsyncClient | None = None) -> TokenVoz:
     """Solicita ao Azure Speech um token de curta duração.
 
     Chamado por api/routes/voz.py, que exige sessão válida: um endpoint
     aberto seria um proxy gratuito para o recurso de Speech do parceiro.
     """
-    raise NotImplementedError("Integração com Azure Speech pendente")
+    chave = settings.speech_key.strip()
+    regiao = settings.speech_region.strip()
+    endpoint = settings.speech_endpoint.strip().rstrip("/")
+    if not chave:
+        raise ErroConfiguracaoSpeech("SPEECH_KEY não configurada")
+    if not regiao:
+        raise ErroConfiguracaoSpeech("SPEECH_REGION não configurada")
+    if not endpoint:
+        endpoint = f"https://{regiao}.api.cognitive.microsoft.com"
+
+    proprio_cliente = cliente is None
+    if proprio_cliente:
+        cliente = httpx.AsyncClient(timeout=settings.speech_timeout_seconds)
+    try:
+        assert cliente is not None
+        resposta = await cliente.post(
+            f"{endpoint}/sts/v1.0/issueToken",
+            headers={"Ocp-Apim-Subscription-Key": chave},
+        )
+    except (httpx.TimeoutException, httpx.NetworkError) as erro:
+        raise ErroTokenSpeech("Não foi possível acessar o Azure Speech") from erro
+    finally:
+        if proprio_cliente and cliente is not None:
+            await cliente.aclose()
+
+    if resposta.status_code == 429:
+        raise ErroTokenSpeech(
+            "Limite temporário do Azure Speech atingido",
+            cota_excedida=True,
+        )
+    if resposta.status_code >= 400:
+        raise ErroTokenSpeech("O Azure Speech recusou a emissão do token")
+    token = resposta.text.strip()
+    if not token:
+        raise ErroTokenSpeech("O Azure Speech devolveu um token vazio")
+    return TokenVoz(token=token, regiao=regiao, idioma=settings.speech_idioma)
 
 
 def main() -> None:

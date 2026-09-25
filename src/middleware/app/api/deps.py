@@ -31,6 +31,7 @@ from app.executor.desempenho import ExecutorDesempenho
 from app.executor.fabrica import montar_executor
 from app.mensageria.produtor import ProdutorEventos
 from app.persistence.repository import (
+    AudioRepository,
     ConversaRepository,
     ExecucaoRepository,
     InteracaoRepository,
@@ -47,14 +48,17 @@ from app.persistence.repository_portfolio import (
 from app.persistence.sessao import fabrica_de_sessoes, obter_sessao
 from app.pipeline.orquestrador import Orquestrador
 from app.schemas.usuario import Permissao, UsuarioAutenticado
+from app.servicos.processamento_audio import ProcessadorAudio
 
 __all__ = [
+    "AudioRepository",
     "FabricaSessoes",
     "Produtor",
     "SessaoBanco",
     "UsuarioAtual",
     "UsuarioAutenticado",
     "exige_permissao",
+    "obter_audios",
     "obter_conversas",
     "obter_execucoes",
     "obter_executor",
@@ -63,6 +67,7 @@ __all__ = [
     "obter_interacoes",
     "obter_marcos",
     "obter_orquestrador",
+    "obter_processador_audio",
     "obter_produtor",
     "obter_projetos",
     "obter_riscos",
@@ -155,6 +160,16 @@ def obter_executor(banco: SessaoBanco, usuario: UsuarioAtual) -> Executor:
 def obter_interacoes(banco: SessaoBanco) -> InteracaoRepository:
     """Repositório do registro de interações."""
     return InteracaoRepository(banco)
+
+
+def obter_audios(banco: SessaoBanco) -> AudioRepository:
+    """Repositorio das submissoes de audio do usuario."""
+    return AudioRepository(banco)
+
+
+def obter_processador_audio() -> ProcessadorAudio:
+    """Processador que abre transacoes proprias depois da resposta 202."""
+    return ProcessadorAudio()
 
 
 def obter_conversas(banco: SessaoBanco) -> ConversaRepository:
