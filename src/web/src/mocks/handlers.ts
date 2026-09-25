@@ -1,15 +1,22 @@
 /**
  * Dubles das rotas do middleware.
  *
- * As rotas do FastAPI ainda levantam NotImplementedError, e o frontend
- * precisa andar sem depender delas. O MSW intercepta na rede: as telas
- * chamam `api.get("/conversas")` de verdade, e quem responde e este
- * arquivo. Quando uma rota do backend passar a existir, basta apagar o
- * handler correspondente e a mesma tela passa a falar com o servidor,
- * sem alteracao nenhuma no componente.
+ * O MSW intercepta na rede: as telas chamam `api.get("/conversas")` de
+ * verdade, e quem responde e o duble ou o servidor, sem que componente ou
+ * hook saibam qual dos dois. Trocar um pelo outro nunca exige mexer em
+ * tela; se exigir, o duble virou dependencia e o desenho esta errado.
  *
- * Isso vale como criterio: se remover um handler exigir mexer em tela, o
- * duble virou dependencia e o desenho esta errado.
+ * Os dubles tem dois usos, separados neste arquivo:
+ *
+ * - `handlers` (todos) serve a suite de testes, que precisa de respostas
+ *   deterministicas e sem backend;
+ * - `handlersPendentes` e o que o navegador registra em desenvolvimento:
+ *   so as rotas que o middleware ainda nao implementa, cada uma com o
+ *   motivo em `ROTAS_PENDENTES`. Todas as outras vao ao middleware real.
+ *
+ * Quando uma rota pendente passar a existir no backend, basta mover o
+ * handler dela para `handlersComRotaReal` e retirar a linha de
+ * `ROTAS_PENDENTES`.
  *
  * `BASE` acompanha `servicos/api.ts`; os dois precisam concordar.
  */
@@ -125,7 +132,7 @@ function responderChat(mensagem: string): { desfecho: Desfecho; resposta: string
 // recarregamento, como convem a um duble.
 let rotinas: Rotina[] = [...ROTINAS];
 
-export const handlers = [
+const handlersComRotaReal = [
   // Autenticacao
   http.get(`${BASE}/auth/eu`, () => HttpResponse.json(USUARIO)),
   http.post(`${BASE}/auth/logout`, () => new HttpResponse(null, { status: 204 })),
@@ -274,7 +281,17 @@ export const handlers = [
     await delay(LATENCIA_CONSULTA);
     return HttpResponse.json(LATENCIA);
   }),
+];
 
+/** Rotas ainda sem implementacao no middleware, e por que continuam dubladas. */
+export const ROTAS_PENDENTES: { rota: string; motivo: string }[] = [
+  {
+    rota: "GET /voz/token",
+    motivo: "A emissão do token do Azure Speech entra no middleware com a issue #396.",
+  },
+];
+
+export const handlersPendentes = [
   // Voz
   http.get(`${BASE}/voz/token`, () => {
     const corpo: TokenVoz = {
@@ -286,3 +303,5 @@ export const handlers = [
     return HttpResponse.json(corpo);
   }),
 ];
+
+export const handlers = [...handlersComRotaReal, ...handlersPendentes];

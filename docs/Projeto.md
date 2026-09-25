@@ -7392,14 +7392,22 @@ Três propriedades da camada foram estabelecidas deliberadamente:
   dedicado, para que não fique publicado um arquivo que nada registra e que
   apenas confundiria quem inspecionasse os estáticos.
 
-**Estado atual da integração.** A interface consome os contratos definidos e
-está pronta para operar contra o middleware. A ligação efetiva depende da
-resolução de sessão no backend, ainda não implementada, da qual todas as rotas
-autenticadas dependem. Enquanto essa peça não existe, os dublês sustentam o
-desenvolvimento e a verificação da interface sem alterar o código que irá a
-produção. A integração completa entre interface e backend, com testes de
-integração e tratamento de falhas de comunicação, é escopo do item 7 do Artefato
-7 e está prevista para a Sprint 5.
+**Estado atual da integração.** Em desenvolvimento, a interface consome o
+middleware real pelo proxy `/api`: identidade da sessão, conversa, histórico,
+intenções e rotinas saem do backend, com login de verdade. O navegador registra
+apenas os dublês das rotas que o middleware ainda não implementa
+(`handlersPendentes`), cada uma com o motivo em `ROTAS_PENDENTES`, em
+`src/web/src/mocks/handlers.ts`; hoje, só `GET /voz/token`, até a emissão do
+token entrar com a issue #396. A troca não exigiu mudança em componente ou hook:
+os esquemas de resposta das rotas reais foram conferidos campo a campo contra
+`tipos/index.ts`, e o fluxo de conversa, histórico e intenções foi percorrido
+contra o middleware real com uma sessão local. `VITE_SEM_DUBLES=true` desliga
+também os dublês pendentes.
+
+A suíte de testes continua usando o conjunto completo (`handlers`), porque
+precisa de respostas determinísticas e não depende de backend. O caso
+`dubles.test.ts` garante que o navegador registra apenas as rotas pendentes e que
+cada uma tem motivo registrado.
 
 ### 9.2.10 Verificação automatizada
 
@@ -7566,8 +7574,7 @@ tratados na seção 11.
 
 | Limitação | Consequência para quem avalia | Situação |
 | --- | --- | --- |
-| As respostas provêm da camada de dublês | O conteúdo apresentado é massa de teste, e não dado do portfólio | Depende da resolução de sessão no middleware |
-| O estado das rotinas é mantido em memória | Alterações se perdem ao recarregar a página | Comportamento esperado de dublê |
+| A emissão do token de voz ainda é dublada no navegador | Sem a issue #396 integrada, `GET /voz/token` responde pelo dublê | Resolvida quando a rota real entrar e o dublê sair de `ROTAS_PENDENTES` |
 | A entrada por voz opera em modo simulado | A transcrição é uma frase fixa, e não a fala capturada | Depende do provisionamento do recurso no ambiente do parceiro |
 | A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
 
