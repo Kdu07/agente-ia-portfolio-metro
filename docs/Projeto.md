@@ -6426,67 +6426,157 @@ As ondas seguem a ordem de dependência técnica, não de importância funcional
 
 #### 9.1.2.6 Sistema de troca de mensagens (S5)
 
-O sistema de troca de mensagens será implementado com **RabbitMQ**, usando AMQP 0-9-1. A escolha mantém a operação no mesmo perímetro do `middleware` e do `worker`, oferece confirmação de publicação, reconhecimento explícito pelo consumidor, retentativas e fila de mensagens rejeitadas sem introduzir um segundo banco para coordenar o trabalho. A primeira entrega deve tratar esta seção como contrato de implementação; o broker ainda não faz parte da infraestrutura atual.
+**Tecnologia e justificativa**
 
-**Topologia inicial:**
+O sistema de troca de mensagens usa **RabbitMQ 4.3** (imagem `rabbitmq:4.3.6-management-alpine`) com o protocolo AMQP 0-9-1. O `middleware` e o `worker` se comunicam com ele pelo cliente assíncrono `aio-pika` 9.6. O broker roda no mesmo perímetro do `middleware` e do `worker`. Ele oferece confirmação de publicação (`publisher confirms`), reconhecimento explícito pelo consumidor, filas de espera para retentativa e uma fila de mensagens rejeitadas, tudo sem um segundo banco para coordenar o trabalho.
 
-| Elemento | Nome | Responsabilidade |
+A agenda de rotinas continua no PostgreSQL. O `APScheduler` do `worker` guarda os disparos no mesmo banco das rotinas, e essa decisão está registrada em [`config.py`](../src/middleware/app/config.py): um único PostgreSQL evita um broker separado só para a agenda. O intermediário dedicado resolve outro problema, o dos webhooks (9.1.2.7):
+
+- Os provedores esperam resposta em poucos segundos e reenviam a notificação quando não a recebem.
+- O trabalho disparado por uma notificação é demorado e pode falhar por motivo transitório: consultar a API do Drive, reindexar o corpus, aplicar alterações do portfólio e gerar avisos.
+- Uma fila durável com confirmação separa as duas etapas. A rota responde `202` somente quando o evento está garantido. Depois o processamento é repetido com atraso crescente, e as falhas definitivas ficam isoladas para inspeção.
+
+Usar uma tabela do banco como fila exigiria reimplementar consulta periódica, trava de consumo, atraso crescente e descarte, que o RabbitMQ já entrega com semântica conhecida.
+
+As filas de transcrição de áudio e de execução de rotinas fazem parte da topologia, mas ainda não têm produtor nem consumidor. A transcrição segue em `BackgroundTasks` (9.1.3), e as rotinas seguem no agendador. As duas ficam reservadas com a mesma estrutura de retentativa e descarte, para que uma migração futura não altere os argumentos das filas.
+
+**Topologia**
+
+A topologia é declarada por `declarar_topologia`, em [`topologia.py`](../src/middleware/app/mensageria/topologia.py). O produtor e o consumidor a declaram ao se conectar, em qualquer ordem, e a declaração repetida é idempotente. Declarar uma fila existente com argumentos diferentes faz o broker recusar a operação (`PRECONDITION_FAILED`). Por isso, os argumentos das filas só mudam com uma migração planejada da topologia.
+
+| Elemento | Nome | Tipo e argumentos | Responsabilidade |
+|---|---|---|---|
+| Exchange | `prata.events` | `topic`, durável | Receber os eventos publicados pelo `middleware` e devolver às filas de trabalho as mensagens que terminaram a espera |
+| Exchange | `prata.dead-letter` | `direct`, durável | Receber as mensagens rejeitadas pelas filas de trabalho |
+| Exchange | `prata.retry` | `direct`, durável | Encaminhar a mensagem à fila de espera da próxima tentativa |
+| Fila de trabalho | `prata.webhooks.incoming` | durável; `x-dead-letter-exchange=prata.dead-letter` | Eventos dos dois webhooks, consumidos pelo `worker` |
+| Fila de trabalho | `prata.audio.transcription` | durável; `x-dead-letter-exchange=prata.dead-letter` | Reservada para solicitações de transcrição |
+| Fila de trabalho | `prata.routines.execution` | durável; `x-dead-letter-exchange=prata.dead-letter` | Reservada para disparos de rotinas |
+| Filas de espera | `<fila>.retry.1` a `<fila>.retry.5` | durável; `x-message-ttl` de 5 s, 20 s, 60 s, 300 s e 900 s; `x-dead-letter-exchange=prata.events` com a chave original | Segurar a mensagem até a próxima tentativa |
+| Fila de falhas | `prata.failed` | durável | Guardar mensagens com falha definitiva ou tentativas esgotadas, para inspeção e reprocessamento controlado |
+
+| Chave de roteamento | Fila de trabalho | Destino de descarte |
 |---|---|---|
-| Exchange | `prata.events` (`topic`, durable) | Receber eventos publicados pelo middleware e pelos webhooks |
-| Fila | `prata.audio.transcription` (durable) | Entregar solicitações de transcrição ao consumidor de áudio |
-| Fila | `prata.routines.execution` (durable) | Entregar disparos de rotinas ao consumidor do worker |
-| Fila | `prata.webhooks.incoming` (durable) | Isolar eventos recebidos de sistemas externos |
-| Exchange | `prata.dead-letter` (`direct`, durable) | Reter mensagens que excederam as tentativas |
-| Fila | `prata.failed` (durable) | Permitir inspeção e reprocessamento controlado de falhas |
+| `webhook.received` | `prata.webhooks.incoming` | `prata.failed`, pela mesma chave em `prata.dead-letter` |
+| `audio.transcription.requested` | `prata.audio.transcription` | `prata.failed`, pela mesma chave em `prata.dead-letter` |
+| `routine.execution.requested` | `prata.routines.execution` | `prata.failed`, pela mesma chave em `prata.dead-letter` |
 
-As chaves de roteamento iniciais são `audio.transcription.requested`, `routine.execution.requested` e `webhook.received`. As filas de trabalho usam `x-dead-letter-exchange=prata.dead-letter`; a publicação deve usar mensagem persistente e `publisher confirms`. A ordem é garantida apenas dentro da fila e não deve ser usada para coordenar conversas diferentes.
+Para chegar ao descarte com a chave original, `prata.failed` é ligada a `prata.dead-letter` pelas mesmas chaves das filas de trabalho. Assim, quem inspeciona uma falha sabe de onde a mensagem veio. Cada fila de trabalho tem cinco filas de espera, ligadas a `prata.retry` pelo próprio nome. O tempo de espera é fixo por fila, e não por mensagem, porque o RabbitMQ só expira a mensagem que está no começo da fila: uma espera longa por mensagem seguraria as esperas curtas que chegassem depois dela. Quando o tempo acaba, a mensagem volta a `prata.events` com a chave original e é entregue de novo à fila de trabalho. A ordem é garantida apenas dentro de uma fila e não coordena eventos de entidades diferentes.
 
-**Contrato da mensagem:**
+**Contrato da mensagem**
 
-Todo evento será um JSON UTF-8 com o envelope abaixo. `message_id` é único para a tentativa lógica, `correlation_id` acompanha a solicitação de ponta a ponta e `occurred_at` é UTC no formato ISO 8601.
+Todo evento é um JSON UTF-8 validado por `MensagemEvento`, em [`mensagem.py`](../src/middleware/app/schemas/mensagem.py). O modelo recusa campos extras, exige `occurred_at` com fuso horário e o converte para UTC. `event_type` tem até 120 caracteres, `producer` tem até 80 e `schema_version` começa em 1.
+
+| Campo | Tipo | Conteúdo |
+|---|---|---|
+| `message_id` | UUID | Identificador da tentativa lógica. No `webhook.received`, é o UUID do recebimento gravado em `webhook.recebimento`, e por isso uma republicação reaproveita o mesmo valor |
+| `event_type` | texto | Uma das chaves de roteamento da topologia |
+| `schema_version` | inteiro ≥ 1 | Versão do envelope; hoje `1` |
+| `occurred_at` | data e hora ISO 8601 com fuso | Momento do recebimento, normalizado para UTC |
+| `correlation_id` | UUID | Acompanha a solicitação de ponta a ponta, também estável por recebimento |
+| `producer` | texto | Componente que publicou; hoje `middleware` |
+| `payload` | objeto | Conteúdo do evento; no `webhook.received`, traz `provider` e os dados já validados do provedor |
+
+Exemplo de `webhook.received` publicado pelo WH-02, com dados sintéticos:
 
 ```json
 {
-  "message_id": "uuid",
-  "event_type": "audio.transcription.requested",
+  "message_id": "3f0c1f5e-8d0a-4b8e-9d64-2a8f1c7b5e10",
+  "event_type": "webhook.received",
   "schema_version": 1,
-  "occurred_at": "2026-01-01T12:00:00Z",
-  "correlation_id": "uuid",
+  "occurred_at": "2026-09-25T02:00:01Z",
+  "correlation_id": "b1a4d2c9-6e3f-4f1a-8c2d-7e5b9a0c3d44",
   "producer": "middleware",
-  "payload": {}
+  "payload": {
+    "provider": "apps_script",
+    "event": {
+      "schema_version": 1,
+      "event_id": "0b6f8e2a-4c1d-4e7f-9a3b-5d2c1e0f8a76",
+      "source_id": "planilha_portfolio",
+      "event_type": "risco.alterado",
+      "occurred_at": "2026-09-25T02:00:00Z",
+      "projeto_codigo": "PRJ-2024-018",
+      "entity_id": "RSK-07",
+      "version": 4,
+      "data": { "status": "monitorado", "probabilidade": 5, "impacto": 4 }
+    }
+  }
 }
 ```
 
-O produtor rejeita eventos sem `message_id`, `event_type`, `schema_version`, `correlation_id` ou `payload`. O consumidor registra `message_id` antes de executar um efeito externo e ignora uma mensagem já processada, tornando a entrega **at-least-once** idempotente. Mensagens inválidas ou que excederem três tentativas vão para `prata.failed`; falhas transitórias devem ser reencaminhadas com atraso crescente.
+No WH-01, o `payload` traz `provider: "google_drive"`, `fonte_id`, `channel_id`, `resource_id`, `resource_state` e `message_number`. O conteúdo dos arquivos não viaja na mensagem: o consumidor consulta as mudanças na API do Drive (9.1.2.7.1).
 
-**Produtores e consumidores:**
+A mensagem AMQP é persistente (`delivery_mode=2`), com `content_type=application/json` e `content_encoding=utf-8`. Ela repete o `message_id`, o `correlation_id`, o tipo (`type`), o produtor (`app_id`) e o instante (`timestamp`) nas propriedades, e leva `schema_version` nos cabeçalhos. A cada nova tentativa, o consumidor acrescenta o cabeçalho `x-tentativa`, com o número da tentativa.
 
-- O endpoint de áudio publica `audio.transcription.requested` e continua respondendo `202` com o identificador da solicitação.
-- O endpoint de webhook valida autenticação, assinatura, tamanho e `event_type`, registra o evento e publica `webhook.received`; ele não executa a regra de negócio dentro da requisição HTTP.
-- O agendador publica `routine.execution.requested` quando uma rotina vence, preservando dono, conversa, permissões a resolver e `correlation_id`.
-- O `worker` consome as filas de áudio e rotinas com `prefetch` limitado, confirma (`ack`) somente após o processamento e rejeita (`nack`) mensagens para retentativa ou dead letter conforme a classe do erro.
-- O consumidor de webhook encaminha o evento validado ao serviço correspondente; não há chamada direta a serviços externos antes da validação e da deduplicação.
+**Produtores**
 
-O webhook deve responder rapidamente com `202` após a publicação confirmada. Sem confirmação do RabbitMQ, responde erro transitório e não declara o evento recebido. A assinatura deve ser validada com segredo configurado fora do código e comparação em tempo constante; o corpo bruto usado na assinatura não pode ser reconstruído a partir de um JSON reserializado.
+- O `ProdutorEventos`, em [`produtor.py`](../src/middleware/app/mensageria/produtor.py), é criado na subida da API sem conectar. A conexão robusta é aberta na primeira publicação, e a API sobe mesmo com o broker fora do ar.
+- O produtor recusa com `ValueError`, antes de conectar, um `event_type` sem fila na topologia, porque isso é erro de programação. Ele publica com `mandatory` e só retorna depois do `publisher confirm`.
+- Sem confirmação, ou com a mensagem devolvida sem rota, o produtor levanta `FalhaPublicacao` com o `message_id` e o `correlation_id`. Os logs registram identificadores e o tipo do erro, nunca o `payload` nem a URL, que contém a senha.
+- As rotas `POST /webhooks/google-drive` (WH-01) e `POST /webhooks/portfolio` (WH-02) autenticam e validam a notificação. Depois gravam o recebimento em `webhook.recebimento`, confirmam a transação e publicam `webhook.received`.
+- Com a publicação confirmada, a rota marca `publicado_em` e responde `202`. Sem confirmação, responde `503` com `Retry-After: 5`, e o recebimento fica pendente com o código `PUBLICACAO_NAO_CONFIRMADA`. Nesse caso a rota não executa a regra de negócio dentro da requisição HTTP.
+- A manutenção do `worker` (`executar_manutencao`) republica os recebimentos pendentes com os mesmos identificadores, cobrindo quedas do broker e do processo entre gravar e publicar.
 
-**Configuração e operação:**
+**Consumidor**
 
-As variáveis mínimas são `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_LETTER_EXCHANGE`, `RABBITMQ_PREFETCH_COUNT` e `RABBITMQ_MAX_RETRIES`. Em desenvolvimento, o RabbitMQ será um serviço do `docker-compose`; em produção, as credenciais serão fornecidas pelo ambiente de implantação. Não devem ser gravados payloads sensíveis nos logs. Métricas mínimas: mensagens publicadas, confirmadas, consumidas, rejeitadas, idade da mensagem, tamanho da fila e mensagens em dead letter.
+O `ConsumidorWebhooks`, em [`consumidor.py`](../src/middleware/app/mensageria/consumidor.py), roda como tarefa do `worker` e consome `prata.webhooks.incoming` com `prefetch` igual a `RABBITMQ_PREFETCH_COUNT`. A entrega é **at-least-once**, e o processamento é idempotente:
 
-**Casos de uso e testes:**
+1. Uma trava de transação do PostgreSQL por `message_id` (`pg_advisory_xact_lock`) serializa duas entregas da mesma mensagem. O recebimento é lido na mesma transação em que o tratador trabalha. Se já foi processado, o consumidor apenas confirma (`ack`), sem repetir o efeito.
+2. O tratador é escolhido pelo `payload.provider`. `google_drive` usa a sincronização do corpus, que lista as mudanças desde o cursor salvo e reindexa os arquivos afetados. Esse tratador só é registrado quando as credenciais do Drive estão configuradas. `apps_script` aplica o evento do portfólio com controle de versão e gera os avisos por adesão (9.1.2.7.2).
+3. Com sucesso, `processado_em` é gravado na mesma transação dos efeitos no banco, e só depois a mensagem é confirmada. Uma queda entre o `commit` e o `ack` gera reentrega, que o passo 1 absorve.
+4. Uma falha definitiva rejeita a mensagem sem repor, e o descarte da fila a leva para `prata.failed`. As falhas definitivas são `PAYLOAD_INVALIDO`, `RECEBIMENTO_DESCONHECIDO`, `PROVEDOR_SEM_TRATADOR`, `CONFLITO_DE_VERSAO`, `ESCOPO_REVOGADO` e `CURSOR_AUSENTE`.
+5. Qualquer outra falha é transitória. A mensagem é republicada em `prata.retry` para a fila de espera da tentativa seguinte, e a original é confirmada. Esgotadas as `RABBITMQ_MAX_RETRIES`, a mensagem é rejeitada e vai para `prata.failed`.
+6. Tentativas e o código da última falha ficam no recebimento, sem conteúdo sensível. No encerramento, o consumidor espera a mensagem em curso antes de fechar a conexão.
 
-| Caso | Comportamento verificável |
-|---|---|
-| Publicação confirmada | O produtor serializa o envelope, publica na exchange correta e só retorna sucesso após `publisher confirm`. |
-| Broker indisponível | A API não perde o evento, retorna erro transitório e registra a correlação para nova tentativa. |
-| Consumo com sucesso | O consumidor executa o handler e confirma a mensagem uma única vez. |
-| Falha transitória | A mensagem é rejeitada para retentativa até o limite, sem perder o `message_id`. |
-| Falha permanente ou payload inválido | A mensagem não é processada e vai para `prata.failed`. |
-| Redelivery | A mesma mensagem não produz efeito externo duas vezes. |
-| Webhook válido | A assinatura é validada, o evento é publicado e a resposta é `202`. |
-| Webhook inválido ou duplicado | A assinatura inválida é recusada; o `message_id` duplicado é tratado de forma idempotente. |
+**Configuração e operação**
 
-Esta entrega documenta o desenho e os critérios de aceite. A implementação posterior deve adicionar o cliente RabbitMQ compartilhado, declarar a topologia na inicialização, integrar o endpoint de webhook e substituir os `NotImplementedError` do `worker` por consumidores testados com um broker efêmero ou dublado.
+| Variável | Padrão | Uso |
+|---|---|---|
+| `RABBITMQ_URL` | vazio | URL `amqp://` ou `amqps://` completa. Quando vazia, é montada a partir das cinco variáveis abaixo |
+| `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_VHOST` | `localhost`, `5672`, `prata` | Endereço e vhost do broker |
+| `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | `prata`, `prata-local` | Credenciais; os valores padrão servem apenas ao ambiente local |
+| `RABBITMQ_EXCHANGE` | `prata.events` | Exchange de eventos |
+| `RABBITMQ_DEAD_LETTER_EXCHANGE` | `prata.dead-letter` | Exchange de descarte |
+| `RABBITMQ_PREFETCH_COUNT` | `10` | Mensagens entregues ao consumidor sem confirmação |
+| `RABBITMQ_MAX_RETRIES` | `2` | Retentativas após a primeira execução, ou seja, até três execuções |
+
+No ambiente local, o RabbitMQ é o serviço `rabbitmq` de [`infra/docker-compose.yml`](../infra/docker-compose.yml), com volume próprio e `healthcheck`. O `middleware` e o `worker` só sobem depois que ele está saudável. As portas `5672` (AMQP) e `15672` (painel de gerenciamento) ficam restritas a `127.0.0.1`. O passo a passo está no [README do middleware](../src/middleware/README.md). Em produção, as credenciais vêm do ambiente de implantação.
+
+A operação é observada de duas formas:
+
+- O painel de gerenciamento mostra o tamanho de cada fila, as taxas de publicação, confirmação e entrega, e as mensagens em `prata.failed`.
+- A tabela `webhook.recebimento` mostra, por evento, quando foi publicado (`publicado_em`), quando foi processado (`processado_em`), quantas tentativas houve e o código da última falha.
+
+**Caso de uso: do webhook ao consumo**
+
+Uma pessoa altera a probabilidade do risco `RSK-07` na planilha do portfólio:
+
+1. O gatilho do Apps Script assina e envia o evento `risco.alterado` para `POST /webhooks/portfolio`.
+2. O `middleware` valida a assinatura, o esquema e o escopo da fonte, grava o recebimento e publica `webhook.received`. Com a confirmação do broker, responde `202`.
+3. O `worker` consome a mensagem e aplica a versão nova do risco. Na mesma transação, gera um aviso para cada pessoa que ativou avisos de risco daquele projeto e ainda tem acesso a ele. Por fim, confirma a mensagem.
+4. Uma reentrega da mesma mensagem não altera nada. Um reenvio do mesmo evento pelo Apps Script é respondido com `204` e não é publicado de novo.
+
+Os testes de integração exercitam esse caminho contra PostgreSQL e RabbitMQ reais. Cada teste cria um vhost temporário e é pulado quando o banco ou o broker não estão disponíveis:
+
+| Caso | Comportamento verificado | Teste |
+|---|---|---|
+| Topologia | A declaração repetida é idempotente, e a mensagem rejeitada chega a `prata.failed` | `test_mensageria_rabbitmq.py`: `test_declaracao_repetida_e_idempotente`, `test_evento_chega_a_fila_e_rejeitado_vai_para_falhas` |
+| Publicação confirmada | O envelope chega confirmado à fila; um tipo sem fila volta ao produtor | `test_mensageria_rabbitmq.py`: `test_produtor_publica_envelope_confirmado`, `test_evento_sem_fila_volta_ao_produtor` |
+| Broker indisponível | A rota responde erro transitório, e a manutenção publica depois com os mesmos identificadores | `test_webhook_portfolio.py`: `test_broker_fora_deixa_pendente_que_o_worker_republica`; `test_webhook_drive.py`: `test_broker_fora_deixa_pendente_que_a_recuperacao_publica` |
+| Webhook válido | O evento validado chega à fila, e a resposta é `202` | `test_webhook_portfolio.py`: `test_evento_valido_chega_a_fila_com_o_evento_validado`; `test_webhook_drive.py`: `test_mudanca_chega_a_fila_com_os_identificadores_do_banco` |
+| Webhook repetido | O mesmo evento não é publicado de novo | `test_webhook_portfolio.py`: `test_mesmo_corpo_reenviado_responde_204`; `test_webhook_drive.py`: `test_repeticao_nao_publica_de_novo` |
+| Consumo com sucesso e reentrega | O tratador executa uma vez, mesmo com a mensagem entregue de novo | `test_consumidor_webhooks.py`: `test_sucesso_processa_uma_vez_mesmo_com_reentrega` |
+| Falha transitória | A mensagem espera, é repetida até o limite e vai para `prata.failed`; ou é concluída numa nova tentativa | `test_consumidor_webhooks.py`: `test_falha_transitoria_espera_e_tenta_de_novo_ate_esgotar`, `test_falha_transitoria_seguida_de_sucesso` |
+| Falha definitiva | A mensagem vai para `prata.failed` sem nova tentativa | `test_consumidor_webhooks.py`: `test_falha_definitiva_vai_para_a_fila_de_falhas`, `test_provedor_sem_tratador_e_descartado` |
+| Portfólio aplicado | As versões seguem o contrato, e o escopo revogado não altera dados | `test_consumidor_webhooks.py`: `test_versoes_do_portfolio_seguem_o_contrato`, `test_escopo_revogado_antes_do_processamento_nao_altera_dados` |
+| Corpus do Drive | As mudanças reindexam e avançam o cursor; uma falha preserva o cursor | `test_consumidor_webhooks.py`: `test_mudancas_do_drive_reindexam_e_avancam_o_cursor`, `test_reindexacao_que_falha_preserva_o_cursor` |
+| Avisos | Só quem aderiu e tem acesso recebe o aviso, e a reentrega não duplica | `test_avisos_portfolio.py`: `test_aviso_so_para_quem_aderiu_e_tem_acesso`, `test_reentrega_nao_duplica_aviso` |
+
+As decisões do consumidor (confirmar, esperar, descartar e reconectar) também têm testes unitários, com broker dublado, em `test_consumidor_decisoes.py`. Com o `docker compose` de `infra/` em execução, os testes de integração rodam em `src/middleware` com:
+
+```bash
+python -m pytest -m integracao
+```
 
 #### 9.1.2.7 Definição dos webhooks (S4)
 
