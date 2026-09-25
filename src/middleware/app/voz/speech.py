@@ -7,10 +7,15 @@ ser rotacionada no tenant do parceiro.
 """
 
 import argparse
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
+import httpx
+
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 # Validade do token emitido pelo serviço. O frontend deve renovar antes
 # de expirar, e não ao receber erro: uma renovação reativa interromperia
@@ -42,6 +47,10 @@ class ErroConfiguracaoSpeech(RuntimeError):
 
 class ErroReconhecimentoSpeech(RuntimeError):
     """O Azure Speech não produziu uma transcrição utilizável."""
+
+
+class ErroTokenSpeech(RuntimeError):
+    """O Azure Speech não emitiu o token; tratar como indisponibilidade."""
 
 
 def reconhecer_arquivo_wav(
@@ -102,13 +111,58 @@ def reconhecer_arquivo_wav(
     raise ErroReconhecimentoSpeech("O Azure Speech devolveu um resultado inesperado")
 
 
-async def emitir_token() -> TokenVoz:
+def _url_emissao(regiao: str) -> str:
+    """`issueToken` do domínio próprio, se configurado, ou o regional.
+
+    Recurso com domínio personalizado (`SPEECH_ENDPOINT`) emite pelo próprio
+    domínio; sem ele, vale o endpoint regional do serviço.
+    """
+    endpoint = settings.speech_endpoint.strip().rstrip("/")
+    if endpoint:
+        return f"{endpoint}/sts/v1.0/issueToken"
+    return f"https://{regiao}.api.cognitive.microsoft.com/sts/v1.0/issueToken"
+
+
+async def emitir_token(*, cliente: httpx.AsyncClient | None = None) -> TokenVoz:
     """Solicita ao Azure Speech um token de curta duração.
 
     Chamado por api/routes/voz.py, que exige sessão válida: um endpoint
     aberto seria um proxy gratuito para o recurso de Speech do parceiro.
+
+    A chave vai só no cabeçalho desta chamada servidor a servidor. Falha de
+    rede, recusa ou resposta vazia do serviço viram `ErroTokenSpeech`, sem o
+    corpo da resposta: o erro do provedor pode ecoar a chave recebida.
     """
-    raise NotImplementedError("Integração com Azure Speech pendente")
+    chave = settings.speech_key.strip()
+    regiao = settings.speech_region.strip()
+    idioma = settings.speech_idioma.strip()
+    if not chave:
+        raise ErroConfiguracaoSpeech("SPEECH_KEY não configurada")
+    if not regiao:
+        raise ErroConfiguracaoSpeech("SPEECH_REGION não configurada")
+
+    proprio = cliente is None
+    if cliente is None:
+        cliente = httpx.AsyncClient(timeout=settings.speech_timeout_seconds)
+    try:
+        resposta = await cliente.post(
+            _url_emissao(regiao),
+            headers={"Ocp-Apim-Subscription-Key": chave, "Content-Length": "0"},
+        )
+    except httpx.HTTPError as erro:
+        logger.warning("Emissão de token do Speech falhou: %s", type(erro).__name__)
+        raise ErroTokenSpeech("Serviço de fala indisponível") from None
+    finally:
+        if proprio:
+            await cliente.aclose()
+
+    if resposta.status_code != 200:
+        logger.warning("Emissão de token do Speech recusada: HTTP %s", resposta.status_code)
+        raise ErroTokenSpeech(f"Serviço de fala respondeu {resposta.status_code}")
+    token = resposta.text.strip()
+    if not token:
+        raise ErroTokenSpeech("Serviço de fala devolveu token vazio")
+    return TokenVoz(token=token, regiao=regiao, idioma=idioma or "pt-BR")
 
 
 def main() -> None:
