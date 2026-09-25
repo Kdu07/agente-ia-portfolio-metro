@@ -24,7 +24,18 @@ import { useMicrofone } from "@/hooks/useMicrofone";
 
 export function Principal() {
   const { conversaId } = useParams<{ conversaId: string }>();
-  const { linhas, carregando, enviando, erro, enviar, reenviarUltima, conversaIdAtual } = useConversa(conversaId);
+  const {
+    linhas,
+    carregando,
+    enviando,
+    erro,
+    podeReenviar,
+    erroAoCarregar,
+    recarregar,
+    enviar,
+    reenviarUltima,
+    conversaIdAtual,
+  } = useConversa(conversaId);
 
   // O alerta proativo so faz sentido numa conversa nova: ele fala do
   // agora, e reaparecer ao abrir uma conversa de tres dias atras daria a
@@ -121,15 +132,29 @@ export function Principal() {
           </div>
         ) : null}
 
+        {erroAoCarregar ? (
+          <div
+            role="alert"
+            className="mx-auto mb-2 flex w-[min(760px,100%)] items-center justify-between gap-4 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3"
+          >
+            <span className="text-sm text-slate-900">{erroAoCarregar}</span>
+            <button type="button" className="outline-button" onClick={recarregar}>
+              Recarregar conversa
+            </button>
+          </div>
+        ) : null}
+
         {erro ? (
           <div
             role="alert"
             className="mx-auto mb-2 flex w-[min(760px,100%)] items-center justify-between gap-4 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3"
           >
             <span className="text-sm text-slate-900">{erro}</span>
-            <button type="button" className="outline-button" onClick={reenviarUltima}>
-              Tentar novamente
-            </button>
+            {podeReenviar ? (
+              <button type="button" className="outline-button" onClick={reenviarUltima}>
+                Tentar novamente
+              </button>
+            ) : null}
           </div>
         ) : null}
 
