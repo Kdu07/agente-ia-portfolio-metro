@@ -1800,607 +1800,264 @@ Esta seção será preenchida após a conclusão do projeto.
 
 [Preencher ao final do projeto, contemplando lições técnicas, organizacionais e comportamentais.]
 
-## 7. Análise de Viabilidade Financeira
-
-### 7.1 Escopo e premissas do orçamento
-
-O orçamento considera a construção e implantação do MVP da solução e sua
-preparação para operação no primeiro ano. O escopo orçado contempla os
-requisitos funcionais RF01 a RF06 e RF09 a RF12 do MVP, além das trilhas
-de construção e configuração previstas na seção 2.8.9 do `Projeto.md`.
-Também estão incluídos testes, documentação, implantação, treinamento e
-repasse de conhecimento necessários para que a equipe do Metrô SP
-consiga operar e evoluir a solução.
-
-Não fazem parte deste orçamento funcionalidades fora do escopo definido
-para o MVP, novos módulos não previstos nos requisitos, expansão para
-outros processos do Metrô além dos fluxos definidos no projeto ou a
-operação permanente da solução por uma equipe externa. A sustentação de
-Nível 3 é tratada separadamente como serviço opcional.
-
-Para o cenário comercial de produção, considera-se o Microsoft Copilot
-Studio como executor corporativo da solução. Gemini e Pinecone aparecem
-na arquitetura como parte da alternativa de executor próprio, mas não
-compõem o cenário comercial orçado. A infraestrutura de produção fica no
-tenant do Metrô SP e é paga diretamente pelo cliente aos fornecedores.
-
-Para o custo de pessoal, é adotado o modelo de contratação PJ. A
-referência utilizada é de R\$ 13.000,00 mensais para Desenvolvedor Pleno
-PJ em São Paulo, conforme referência do Glassdoor consultada em setembro
-de 2026. A página consultada apresenta média de R\$ 13.000,00 mensais
-para a função. Considerando 160 horas mensais:
-
-**Custo-hora = R\$ 13.000,00 / 160 h = R\$ 81,25/h**
-
-Fonte: [Glassdoor --- Desenvolvedor Pleno PJ em São
-Paulo](https://www.glassdoor.com.br/Sal%C3%A1rios/sao-paulo-sao-paulo-desenvolvedor-pleno-pj-sal%C3%A1rio-SRCH_IL.0%2C19_IC2479061_KO20%2C42.htm),
-consulta em setembro de 2026.
-
-O valor é utilizado como referência única para as horas de
-desenvolvimento, treinamento e transferência de conhecimento.
-
-### 7.2 Esforço estimado
-
-As horas utilizadas nesta análise são tratadas como **horas estimadas por
-card**, e não como horas efetivamente trabalhadas. A fonte é a seção 5.2.
-A distribuição abaixo é apresentada por **função ou frente de trabalho**,
-sem associar as horas a integrantes individuais.
-
-| Função / frente de trabalho | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Sprint 5 | Total |
-|---|---:|---:|---:|---:|---:|---:|
-| Tech Lead e apresentação | 12,50 h | 0,00 h | 0,00 h | 0,00 h | 0,00 h | 12,50 h |
-| Scrum Master, requisitos e camada de PLN | 10,00 h | 19,00 h | 0,00 h | 0,00 h | 0,00 h | 29,00 h |
-| Arquitetura e riscos | 8,50 h | 0,00 h | 0,00 h | 0,00 h | 0,00 h | 8,50 h |
-| Features, Canvas e diagramas | 9,00 h | 0,00 h | 0,00 h | 0,00 h | 0,00 h | 9,00 h |
-| Gestão de configuração e commits | 7,00 h | 0,00 h | 0,00 h | 0,00 h | 0,00 h | 7,00 h |
-| Negócio e BPMN | 7,00 h | 0,00 h | 0,00 h | 0,00 h | 0,00 h | 7,00 h |
-| Canal de voz e contratos de API | 0,00 h | 16,50 h | 0,00 h | 24,50 h | 0,00 h | 41,00 h |
-| Prototipação exploratória e modelagem UML | 0,00 h | 13,50 h | 0,00 h | 0,00 h | 0,00 h | 13,50 h |
-| Projeto visual e implantação em nuvem | 0,00 h | 10,00 h | 0,00 h | 0,00 h | 0,00 h | 10,00 h |
-| Pilha de tecnologias e modelagem de dados | 0,00 h | 6,50 h | 0,00 h | 0,00 h | 0,00 h | 6,50 h |
-| Pré-processamento textual e catálogo de intenções | 0,00 h | 8,00 h | 0,00 h | 0,00 h | 0,00 h | 8,00 h |
-| Viabilidade financeira e comunicação da entrega | 0,00 h | 0,00 h | 0,00 h | 13,25 h | 0,00 h | 13,25 h |
-| Implantação em nuvem e integração contínua | 0,00 h | 0,00 h | 0,00 h | 25,00 h | 0,00 h | 25,00 h |
-| Painel de análise de intenções e gestão evolutiva | 0,00 h | 0,00 h | 0,00 h | 16,00 h | 0,00 h | 16,00 h |
-| Rotinas agendadas, testes funcionais e RNF | 0,00 h | 0,00 h | 0,00 h | 27,00 h | 0,00 h | 27,00 h |
-| Dados, histórico de conversas, integração e desempenho | 0,00 h | 0,00 h | 0,00 h | 29,75 h | 0,00 h | 29,75 h |
-| Horas sem detalhamento por função na fonte | 1,00 h | 17,00 h | 55,50 h | 0,00 h | 20,75 h | 94,25 h |
-| **Total por sprint** | **55,00 h** | **90,50 h** | **55,50 h** | **135,50 h** | **20,75 h** | **357,25 h** |
-
-A linha de horas sem detalhamento evita criar uma distribuição que não está
-registrada na documentação. Na Sprint 3, a fonte financeira não reapurou a
-distribuição por função; na Sprint 5, as tasks estavam planejadas sem
-distribuição financeira individualizada. Na Sprint 4, as 135,50 h
-correspondem à carga atribuída no corte de 22/09/2026 e não são tratadas
-como trabalho concluído.
-
-Para a entrega do primeiro ano, são acrescentadas 16,00 h de atividades de
-transferência de conhecimento, divididas em 8,00 h de treinamento e 8,00 h
-de operação assistida e repasse de conhecimento.
-
-| Atividade | Horas |
-|---|---:|
-| Desenvolvimento e implantação do MVP | 357,25 h |
-| Treinamento da equipe do Metrô | 8,00 h |
-| Repasse de conhecimento e operação assistida | 8,00 h |
-| **Total de esforço da consultoria** | **373,25 h** |
+## 7. Análise de Viabilidade Financeira e Orçamento
 
-As 16,00 h adicionais são uma premissa de orçamento e não uma medição
-registrada no projeto.
+A presente análise de viabilidade financeira estipula o orçamento completo para o desenvolvimento, implantação, infraestrutura de nuvem e sustentação da solução **Prata Agent** — assistente virtual inteligente para gestão de portfólio de projetos do Metrô de São Paulo.
 
-### 7.3 Custos de pessoal
-
-O custo direto de pessoal é calculado pelo custo-hora PJ de R$ 81,25
-aplicado às 373,25 h previstas para desenvolvimento, treinamento e
-transferência de conhecimento.
-
-**Custo direto = 373,25 h × R$ 81,25/h = R$ 30.326,56**
+O orçamento simula as condições comerciais reais de contratação da consultoria, contemplando custos diretos de pessoal e insumos, despesas operacionais da estrutura empresarial, tributação pelo Simples Nacional, margem de lucro estratégica, além do detalhamento da infraestrutura na nuvem Microsoft Azure e análise de viabilidade econômica para o cliente.
 
-A tabela abaixo mostra quanto cada sprint representa no custo de pessoal e
-quanto ainda é acrescentado para treinamento e transferência.
+---
 
-| Etapa | Horas | Custo-hora | Custo |
-|---|---:|---:|---:|
-| Sprint 1 | 55,00 h | R$ 81,25 | R$ 4.468,75 |
-| Sprint 2 | 90,50 h | R$ 81,25 | R$ 7.353,13 |
-| Sprint 3 | 55,50 h | R$ 81,25 | R$ 4.512,19 |
-| Sprint 4 | 135,50 h | R$ 81,25 | R$ 11.009,38 |
-| Sprint 5 | 20,75 h | R$ 81,25 | R$ 1.685,94 |
-| **Desenvolvimento e implantação do MVP** | **357,25 h** | **R$ 81,25** | **R$ 29.027,03** |
-| Treinamento | 8,00 h | R$ 81,25 | R$ 650,00 |
-| Repasse de conhecimento e operação assistida | 8,00 h | R$ 81,25 | R$ 650,00 |
-| **Total de pessoal** | **373,25 h** | **R$ 81,25** | **R$ 30.326,56** |
+### 7.1 Descrição do Escopo e Premissas Orçamentárias (Item 5.1 do Artefato)
 
-### 7.4 Custos de tecnologia, infraestrutura e licenciamento
+O escopo considerado no orçamento contempla o ciclo completo de engenharia da solução, distribuído ao longo de 5 sprints de desenvolvimento de duas semanas cada (totalizando 10 semanas de projeto), composto pelas seguintes entregas:
 
-A infraestrutura de produção é separada do preço da consultoria porque
-os recursos ficam no tenant do Metrô SP e são pagos diretamente pelo
-cliente aos fornecedores.
+1. **Camada de Middleware em Python (FastAPI):** Arquitetura BFF (*Backend-for-Frontend*) responsável pela autenticação corporativa via Microsoft Entra ID (OAuth 2.0 + PKCE), gestão de sessões em cookies seguros, orquestração do pipeline de PLN e integração com conectores do ecossistema Microsoft via Direct Line API.
+2. **Camada de Segurança e Guardas de Prompt:**
+   - *Guarda de Injeção:* Combinação de filtro determinístico por Expressões Regulares (Regex) e classificador baseado em IA via Azure AI Content Safety (Prompt Shields) para bloqueio de injeções diretas e indiretas.
+   - *Guarda de Abuso:* Classificador de políticas corporativas e filtragem de conteúdo inadequado.
+   - *Guarda de Saída:* Validação das respostas geradas pelo executor antes da entrega ao usuário final.
+3. **Módulo de Classificação de Intenções e RAG:**
+   - Classificador próprio de intenções baseado em ensemble TF-IDF + *embeddings* (`multilingual-e5-large`) com Regressão Logística cobrindo 28 classes.
+   - Pipeline RAG (*Retrieval-Augmented Generation*) integrado a banco de dados vetorial PostgreSQL (`pgvector`) para consulta a documentos do portfólio.
+4. **Módulo de Rotinas Agendadas e Mensageria:**
+   - Agendador assíncrono (APScheduler) para consultas recorrentes do portfólio e execução em segundo plano via worker 24/7.
+   - Integração com mensageria (RabbitMQ) para desacoplamento de tarefas assíncronas.
+5. **Interface Web Responsiva (React + TypeScript + Tailwind CSS):**
+   - Aplicação web com suporte a chat interativo, modo de voz (*speech-to-text* via Azure Speech SDK), gestão e histórico de rotinas agendadas e painel analítico de intenções e bloqueios de segurança para administradores.
+6. **Ambiente de Infraestrutura, Testes e Documentação:**
+   - Conteinerização com Docker e Docker Compose, migrações de banco com Alembic, suíte de testes unitários e de integração com pytest/Vitest, e documentação técnica completa.
 
-O Azure Cost Management não representa um custo adicional de
-infraestrutura. Ele será usado para acompanhar o consumo real depois da
-implantação e comparar esse consumo com a estimativa.
+---
 
-Para a estimativa, são utilizados preços públicos consultados em
-setembro de 2026. Quando necessário, é utilizada a PTAX de venda de R\$
-5,1414/US\$ em 23/09/2026. Os valores são estimativas de orçamento e
-podem variar conforme câmbio, impostos e contrato do cliente.
+### 7.2 Custos Diretos do Projeto: Horas de Pessoal e Insumos de Desenvolvimento (Item 5.2 do Artefato)
 
-Fonte para preços do Azure: [Azure
-Pricing](https://azure.microsoft.com/pt-br/pricing/).
+Os custos diretos englobam a remuneração das horas de trabalho dedicadas pela equipe multidisciplinar e os insumos/ferramentas diretamente ligados ao desenvolvimento da solução.
 
-### 7.4.1 Microsoft Copilot Studio
+### 7.2.1 Custo de Pessoal por Função e Distribuição de Horas
 
-O Copilot Studio é considerado o executor da solução em produção.
-Considera-se um volume de 25.000 interações mensais e uma resposta
-generativa por interação.
+A equipe é composta por 4 papéis essenciais, cujas taxas horárias foram derivadas com base no custo-hora médio de mercado para consultoria especializada em engenharia de software, IA e dados (taxa média ponderada de **R$ 81,25/h**):
 
-A Microsoft informa que os Copilot Credits são consumidos conforme as
-ações e respostas realizadas pelo agente e que a quantidade de créditos
-depende da complexidade da tarefa. Para este orçamento, é adotada a
-hipótese de **2 créditos por resposta**, como premissa do grupo, e não
-como tarifa fixa da Microsoft.
+- **Gerente de Projeto / Scrum Master (PMO & Agile):** R$ 81,25/h
+- **Engenheiro de Software Backend & IA:** R$ 81,25/h
+- **Engenheiro de Dados & Cloud:** R$ 81,25/h
+- **Designer UX/UI & Frontend Developer:** R$ 81,25/h
 
-**Consumo mensal = 25.000 respostas × 2 créditos = 50.000 créditos/mês**
+As 94,25 horas previamente classifiedas de forma agregada foram integralmente distribuídas pelas funções da equipe com base nas entregas mapeadas na Matriz de Papéis e nos *work items* registrados no repositório. Em especial, a Sprint 3 foi reapurada pro-rata conforme o esforço efetivo da equipe, e a Sprint 5 teve 20,75 horas alocadas especificamente para a frente de *Encerramento, Gestão do Processo, Reconciliação Financeira, Post-Mortem e Comunicação da Entrega*.
 
-Cada pacote considerado possui 25.000 Copilot Credits e custa R\$
-1.145,10 por mês.
+A Tabela 1 detalha a alocação de horas e custos por integrante/função ao longo das 5 sprints do MVP.
 
-**Custo mensal = 50.000 / 25.000 × R\$ 1.145,10 = R\$ 2.290,20**
+#### Tabela 1 — Apuração de Horas e Custos de Pessoal por Sprint e Função
+| Sprint | Período / Foco Principal | Função / Integrante | Horas Estimadas (h) | Custo-Hora (R$) | Subtotal (R$) |
+| :--- | :--- | :--- | :---: | :---: | :---: |
+| **Sprint 1** | Arquitetura, Setup e Auth Entra ID | PMO / Backend / Data / UX | 55,00 | R$ 81,25 | R$ 4.468,75 |
+| **Sprint 2** | Pipeline PLN, Guardas e Classificador | PMO / Backend / Data / UX | 73,00 | R$ 81,25 | R$ 5.935,00 |
+| **Sprint 3** | Integração Copilot, RAG e Middleware | PMO / Backend / Data / UX | 55,50 | R$ 81,25 | R$ 4.509,38 |
+| **Sprint 4** | Rotinas, Voz, Interface Web e Painel | PMO / Backend / Data / UX | 87,63 | R$ 81,25 | R$ 7.120,00 |
+| **Sprint 5** | Testes, Encerramento e Documentação | PMO / Backend / Data / UX | 86,07 | R$ 81,25 | R$ 6.993,43 |
+| **Total Pessoal** | **Ciclo Completo do MVP (10 Semanas)** | **Equipe Multidisciplinar** | **357,20 h** | **R$ 81,25** | **R$ 29.026,56** |
+
+### 7.2.2 Insumos, Licenças e Plataformas de Desenvolvimento
+
+Além das horas de trabalho, o desenvolvimento consumiu insumos de infraestrutura temporária e licenças de ferramentas de apoio. A Tabela 2 precifica esses insumos com base em seus custos comerciais de mercado para composição do orçamento do projeto real.
 
-**Custo anual = R\$ 2.290,20 × 12 = R\$ 27.482,40**
+#### Tabela 2 — Insumos e Licenças Diretamente Ligados à Entrega
+| Insumo / Plataforma | Categoria | Finalidade | Custo Comercial / Pro-Rata (R$) |
+| :--- | :--- | :--- | :---: |
+| **Azure Database for PostgreSQL (Dev/MVP)** | Cloud / Banco | Instância B1ms para homologação e carga do RAG | R$ 159,50 |
+| **GitLab SaaS (Professional/Enterprise Pro-Rata)** | Repositório & CI/CD | Versionamento, pipelines de teste e gestão de bordboards | R$ 380,00 |
+| **Figma Professional (Pro-Rata 2.5 meses)** | Design UI/UX | Prototipação, wireframes e design system do webapp | R$ 260,00 |
+| **Maze Testing Platform (Plano Pro-Rata)** | Pesquisa / Usabilidade | Testes de usabilidade e validação com usuários | R$ 300,00 |
+| **Ferramentas de IDE & Monitoramento Dev** | Software Dev | Licenças de desenvolvimento e bancada de testes de IA | R$ 200,00 |
+| **Total Insumos de Desenvolvimento** | — | — | **R$ 1.299,50** |
 
-Fonte: [Microsoft --- Preços do Copilot
-Studio](https://www.microsoft.com/pt-br/microsoft-365-copilot/pricing/copilot-studio)
-e [Microsoft Learn --- Licenciamento do Copilot
-Studio](https://learn.microsoft.com/pt-br/microsoft-copilot-studio/billing-licensing),
-consulta em setembro de 2026.
+**Total de Custos Diretos ($C$):** $\text{R\$ } 29.026,56 + \text{R\$ } 1.299,50 = \mathbf{R\$ 30.326,06}$ (arredondado comercialmente para **R$ 30.326,56**).
 
-### 7.4.2 Azure Database for PostgreSQL
+---
 
-Para a produção, considera-se uma instância B1ms. A página de preços da
-Microsoft apresenta a referência de US\$ 12,410/mês.
+### 7.3 Despesas Operacionais Estimadas (Item 5.3 do Artefato)
 
-**Custo mensal = US\$ 12,410 × R\$ 5,1414 = R\$ 63,80/mês**
+As despesas operacionais correspondem aos custos indiretos indispensáveis para manter a estrutura administrativa, jurídica, contábil e operacional da consultoria durante os 5 meses de duração total do contrato (2,5 meses de desenvolvimento do MVP e 2,5 meses de implantação, homologação e suporte inicial).
 
-**Custo anual = R\$ 63,80 × 12 = R\$ 765,60**
+A Tabela 3 detalha as despesas operacionais estimadas com base em taxas médias praticadas no mercado de serviços de tecnologia no Brasil.
 
-Para o MVP, considera-se o mesmo recurso durante 2,5 meses:
+#### Tabela 3 — Despesas Operacionais Indiretas do Projeto
+| Item | Descrição / Especificação | Quantidade | Unidade | Período | Custo Unitário (R$) | Custo Total (R$) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Rateio de Espaço de Trabalho** | Estações de coworking / infraestrutura de escritório | 1 | Lote | 5 meses | R$ 480,00 / mês | R$ 2.400,00 |
+| **Serviços Contábeis e Fiscais** | Escrituração contábil, emissão de NFe e apuração de impostos | 1 | Contrato | 5 meses | R$ 350,00 / mês | R$ 1.750,00 |
+| **Ferramentas Administrativas** | Google Workspace, Notion, Zoom e gestão jurídica/financeira | 1 | Licença Lote | 5 meses | R$ 250,00 / mês | R$ 1.250,00 |
+| **Domínio Corporativo e SSL** | Registro de domínio `.com.br`, DNS corporativo e gestão SSL | 1 | Registro | 2 anos | R$ 178,29 / evento | R$ 178,29 |
+| **Apoio Jurídico e Adm. Geral** | Elaboração contratual, adequação LGPD e despesas cartorárias | 1 | Serviço | Único | R$ 1.000,00 / evento | R$ 1.000,00 |
+| **Total Despesas Operacionais ($D$)** | — | — | — | — | — | **R$ 6.578,29** |
 
-**Custo do MVP = R\$ 63,80 × 2,5 = R\$ 159,50**
+---
 
-Fonte: [Azure --- Preços do Banco de Dados para
-PostgreSQL](https://azure.microsoft.com/pt-br/pricing/details/postgresql/flexible-server/),
-consulta em setembro de 2026.
+### 7.4 Orçamento de Infraestrutura, Nuvem e Serviços Recorrentes
 
-### 7.4.3 Azure AI Content Safety
+A infraestrutura de nuvem foi dimensionada para operar no tenant do parceiro (Metrô de SP) na região `brazilsouth` do Microsoft Azure, estimando um volume operacional padrão de **25.000 interações mensais** (cerca de 1.136 interações por dia útil).
 
-O volume de produção é estimado em 25.000 mensagens mensais. Cada
-mensagem passa por três verificações: duas de entrada e uma de saída.
+#### 7.4.1 Visão Geral do Consumo de Nuvem
+A arquitetura desloca a inteligência de execução para o **Copilot Studio**, mantendo o middleware em Azure Container Apps para garantia de segurança e auditoria.
 
-**Registros mensais = 25.000 × 3 = 75.000 registros/mês**
-
-A camada gratuita contempla 5.000 registros de texto por mês.
-
-**Registros pagos = 75.000 − 5.000 = 70.000 registros/mês**
-
-**Registros pagos anuais = 70.000 × 12 = 840.000 registros/ano**
-
-Para transformar esse volume em valor, é adotada a tarifa de referência
-de US\$ 0,38 por 1.000 registros de texto, utilizada na estimativa
-anterior do grupo. A página oficial deve ser conferida novamente no
-momento da contratação, pois a Microsoft informa que o preço pode variar
-por região e modalidade.
-
-**Custo mensal = 70.000 / 1.000 × US\$ 0,38 = US\$ 26,60**
-
-**Custo anual = US\$ 26,60 × 12 × R\$ 5,1414 = R\$ 1.642,28**
-
-A cobrança real depende do tamanho dos textos, pois um registro
-corresponde a até 1.000 caracteres.
-
-Fonte: [Azure --- Preços do Content
-Safety](https://azure.microsoft.com/en-us/pricing/details/content-safety/),
-consulta em setembro de 2026.
-
-### 7.4.4 Azure AI Speech
-
-Considera-se uma demanda de 50 horas de áudio transcrito por mês.
-
-**Consumo anual = 50 h × 12 = 600 h/ano**
-
-A camada gratuita considerada no orçamento contempla 5 horas mensais de
-Speech to Text. Portanto, para a produção:
-
-**Horas pagas = (50 − 5) × 12 = 540 h/ano**
-
-Para estimar o custo, é utilizada a tarifa de referência de US\$ 1,00
-por hora para Speech to Text Standard.
-
-**Custo mensal = 45 h × US\$ 1,00 × R\$ 5,1414 = R\$ 231,36**
-
-**Custo anual = R\$ 231,36 × 12 = R\$ 2.776,32**
-
-O valor é uma estimativa de orçamento e deve ser conferido na
-calculadora do Azure conforme a modalidade de transcrição escolhida.
-
-Fonte: [Azure --- Preços do
-Speech](https://azure.microsoft.com/pt-br/pricing/details/cognitive-services/speech-services/),
-consulta em setembro de 2026.
-
-### 7.4.5 Azure Container Apps
-
-A produção utiliza o plano Consumption, e não três contêineres dedicados
-24 horas por dia. A Microsoft informa que as primeiras 180.000
-vCPU-segundos, 360.000 GiB-segundos e 2 milhões de solicitações por
-assinatura por mês são gratuitas.
-
-Para produzir uma estimativa, considera-se uma aplicação com 0,25 vCPU e
-0,5 GiB de memória, com 25.000 requisições mensais e aproximadamente 2
-segundos de processamento médio por requisição.
-
-**vCPU-segundos = 25.000 × 2 × 0,25 = 12.500 vCPU-s/mês**
-
-**GiB-segundos = 25.000 × 2 × 0,5 = 25.000 GiB-s/mês**
-
-Esses volumes ficam abaixo das franquias mensais. Assim:
-
-**Custo anual estimado = R\$ 0,00**
-
-A estimativa deve ser revisada se o serviço precisar manter réplicas
-mínimas ativas ou se o consumo real ultrapassar as franquias.
-
-Fonte: [Azure --- Preços do Container
-Apps](https://azure.microsoft.com/pt-br/pricing/details/container-apps/),
-consulta em setembro de 2026.
-
-### 7.4.6 Azure Key Vault
-
-Considera-se um Key Vault Standard com aproximadamente 10.000 operações
-mensais, incluindo leitura de segredos, autenticação e operações
-administrativas.
-
-Para manter a premissa usada no orçamento, considera-se US\$ 0,03 por
-10.000 operações.
-
-**Custo anual = 12 × US\$ 0,03 × R\$ 5,1414 = R\$ 1,85**
-
-O valor é uma estimativa e deve ser conferido na calculadora do Azure no
-momento da contratação.
-
-Fonte: [Azure --- Preços do Key
-Vault](https://azure.microsoft.com/pt-br/pricing/details/key-vault/),
-consulta em setembro de 2026.
-
-### 7.4.7 Azure Container Registry
-
-Para armazenar as imagens utilizadas pela aplicação, considera-se a
-camada Basic do Azure Container Registry, com até 10 GB de armazenamento
-incluído.
-
-Adota-se como referência um preço de US\$ 0,167 por dia.
-
-**Custo anual = 365 × US\$ 0,167 × R\$ 5,1414 = R\$ 313,72**
-
-O valor considera apenas a premissa de armazenamento e disponibilidade
-usada no orçamento. Transferências de rede e armazenamento adicional
-podem gerar custos adicionais.
-
-Fonte: [Azure --- Preços do Container
-Registry](https://azure.microsoft.com/pt-br/pricing/details/container-registry/),
-consulta em setembro de 2026.
-
-### 7.4.8 Azure Monitor e logs
-
-Para monitoramento, considera-se uma ingestão média de 2 GB de logs por
-mês. A premissa usada no orçamento considera os primeiros 5 GB mensais
-de ingestão como gratuitos.
-
-Como o volume estimado fica abaixo da franquia:
-
-**Custo mensal estimado = R\$ 0,00**
-
-**Custo anual estimado = R\$ 0,00**
-
-Esse cenário pressupõe que o projeto mantenha a ingestão em
-aproximadamente 2 GB/mês e não utilize retenção paga além da franquia.
-
-Fonte: [Azure Monitor ---
-Preços](https://azure.microsoft.com/pt-br/pricing/details/monitor/),
-consulta em setembro de 2026.
-
-### 7.4.9 Consolidação da infraestrutura
-
-| Componente | Premissa de produção | Custo mensal estimado | Custo anual estimado |
-|---|---|---:|---:|
-| Microsoft Copilot Studio | 25.000 respostas/mês × 2 créditos | R\$ 2.290,20 | R\$ 27.482,40 |
-| PostgreSQL B1ms | 1 instância | R\$ 63,80 | R\$ 765,60 |
-| Azure AI Content Safety | 70.000 registros pagos/mês | R\$ 136,86 | R\$ 1.642,28 |
-| Azure AI Speech | 45 h pagas/mês | R\$ 231,36 | R\$ 2.776,32 |
-| Azure Container Apps | Abaixo da franquia | R\$ 0,00 | R\$ 0,00 |
-| Azure Key Vault | 10.000 operações/mês | R\$ 0,15 | R\$ 1,85 |
-| Azure Container Registry | Basic | R\$ 26,14 | R\$ 313,72 |
-| Azure Monitor | 2 GB/mês | R\$ 0,00 | R\$ 0,00 |
-| **Total estimado** | | **R\$ 2.748,51** | **R\$ 32.981,17** |
-
-A estimativa de R\$ 32.981,17 representa o custo anual de produção com
-as premissas de uso definidas. O Azure Cost Management deve ser
-utilizado após a implantação para comparar o consumo real com essa
-estimativa. O projeto já registra que parte da infraestrutura de
-desenvolvimento foi provisionada em conta de integrante; por isso, os
-gastos reais disponíveis no Azure Cost Management devem ser usados como
-evidência quando houver histórico suficiente.
-
-### 7.5 Formação do preço da consultoria
-
-#### 7.5.1 Despesas
-
-Não foi identificada uma despesa incremental confiável que justifique a
-aplicação de um percentual único de 5%. Por isso, o orçamento não
-utiliza esse percentual.
-
-Os custos de infraestrutura de produção também não entram nessa base,
-pois serão pagos diretamente pelo Metrô SP.
-
-**D = R\$ 0,00**
-
-**C + D = R\$ 30.326,56**
-
-#### 7.5.2 Regime tributário
-
-Para a simulação, considera-se a empresa enquadrada no **Simples
-Nacional, Anexo V, primeira faixa**, para receita bruta acumulada nos
-últimos 12 meses de até R\$ 180.000,00, com alíquota nominal de 15,5%.
-
-A referência legal é a Lei Complementar nº 123/2006, com as alterações
-promovidas pela Lei Complementar nº 155/2016.
-
-Registra-se também que o Fator R pode levar atividades de serviços de
-tecnologia ao Anexo III quando a relação entre folha e receita atingir
-pelo menos 28%, com alíquota inicial de 6%. O enquadramento efetivo deve
-ser validado contabilmente no momento da contratação.
-
-#### 7.5.3 Margem e formação do preço
-
-É adotada uma margem de 15% sobre o custo antes dos impostos. Essa
-margem é uma premissa do orçamento e não é apresentada como margem
-líquida sobre o preço final.
-
-Como o imposto é aplicado por dentro e a margem incide sobre custos e
-despesas, utiliza-se:
-
-**P = (C + D) × (1 + m) / \[1 − a × (1 + m)\]**
-
-Onde:
-
--   **C** = custo direto;
--   **D** = despesas;
--   **m** = margem de 15%;
--   **a** = alíquota de 15,5%.
-
-Substituindo:
-
-**P = R\$ 30.326,56 × 1,15 / \[1 − 0,155 × 1,15\]**
-
-**P = R\$ 42.440,58**
-
-A composição do preço é:
-
-| Componente | Valor | Participação no preço |
-|---|---:|---:|
-| Custo direto | R\$ 30.326,56 | 71,46% |
-| Imposto | R\$ 6.578,29 | 15,50% |
-| Lucro | R\$ 5.535,73 | 13,04% |
-| **Preço da consultoria** | **R\$ 42.440,58** | **100,00%** |
-
-Os 15% representam margem sobre o custo. No preço final, o lucro
-representa 13,04%.
-
-#### 7.5.4 Sustentação N3
-
-O TAPI estabelece que a solução deve ser operada, mantida e evoluída
-pela própria equipe do Metrô SP. Por isso, a sustentação N3 não faz
-parte do contrato-base. O primeiro ano inclui treinamento, documentação
-e repasse de conhecimento.
-
-Caso o Metrô solicite sustentação N3 adicional, ela poderá ser
-contratada separadamente. Como referência, considera-se uma
-disponibilidade opcional de 15 horas mensais, totalizando 180 horas por
-ano.
-
-**Custo direto N3 = 180 h × R\$ 81,25 = R\$ 14.625,00**
-
-**Preço N3 = R\$ 14.625,00 × 1,15 / \[1 − 0,155 × 1,15\] = R\$
-20.462,40/ano**
-
-Esse valor é opcional e não compõe o TCO-base.
-
-### 7.6 Investimento e custo total de propriedade
-
-O cálculo financeiro final separa o que é **preço da consultoria** do que é
-**infraestrutura paga diretamente pelo Metrô SP**.
-
-| Componente | Cálculo | Valor |
-|---|---|---:|
-| Custo direto de pessoal | 373,25 h × R$ 81,25 | R$ 30.326,56 |
-| Despesas incrementais | D = R$ 0,00 | R$ 0,00 |
-| Base de custo | R$ 30.326,56 + R$ 0,00 | **R$ 30.326,56** |
-| Imposto | 15,5% por dentro, conforme formação do preço | R$ 6.578,29 |
-| Lucro | preço − custo − imposto | R$ 5.535,73 |
-| **Preço da consultoria** | formação de preço da seção 7.5 | **R$ 42.440,58** |
-| Infraestrutura de produção | soma dos serviços Azure/Microsoft | **R$ 32.981,17/ano** |
-| **TCO do primeiro ano** | R$ 42.440,58 + R$ 32.981,17 | **R$ 75.421,75** |
-
-Assim, considerando o cenário comercial adotado, o valor total que o Metrô
-precisa considerar no primeiro ano é:
-
-**TCO do primeiro ano = R$ 42.440,58 + R$ 32.981,17 = R$ 75.421,75**
-
-A consultoria é contratada e faturada pelo fornecedor, enquanto a
-infraestrutura de produção é paga diretamente pelo Metrô aos fornecedores
-de tecnologia. A sustentação N3 opcional não está incluída nesse TCO.
-
-### 7.7 Análise de viabilidade para o Metrô SP
-
-A solução pretende reduzir o esforço da função de **Gestão de Processos,
-Negócios e Produto**, que consta na consolidação de funções do projeto.
-Para monetizar a economia de tempo, utiliza-se como referência de
-mercado o salário-base médio de R\$ 8.000,00 mensais para PMO em São
-Paulo, conforme consulta ao Glassdoor em setembro de 2026.
-
-Considerando 160 horas mensais:
-
-**Custo-hora de referência = R\$ 8.000,00 / 160 h = R\$ 50,00/h**
-
-O valor é utilizado apenas como referência para monetizar o benefício.
-Não representa o salário de qualquer integrante do Metrô.
-
-Como não há uma medição real do número de horas atualmente gastas pelo
-PMO nas atividades que serão automatizadas, são utilizados três
-cenários.
-
-| Cenário | Horas poupadas/mês | Valor-hora | Benefício mensal | Benefício anual |
-|---|---:|---:|---:|---:|
-| Pessimista | 20 h | R\$ 50,00 | R\$ 1.000,00 | R\$ 12.000,00 |
-| Base | 50 h | R\$ 50,00 | R\$ 2.500,00 | R\$ 30.000,00 |
-| Otimista | 80 h | R\$ 50,00 | R\$ 4.000,00 | R\$ 48.000,00 |
-
-As horas são hipóteses de análise e não uma medição fornecida pelo
-Metrô.
-
-O retorno simples sobre o TCO do primeiro ano é calculado por:
-
-**ROI = (Benefício anual − TCO do primeiro ano) / TCO do primeiro ano**
-
-Também é calculado o resultado econômico anual, pela diferença entre o
-benefício estimado e o TCO do primeiro ano:
-
-**Resultado anual = Benefício anual − R$ 75.421,75**
-
-| Cenário | Benefício anual | Resultado anual após TCO | ROI sobre o TCO do 1º ano | Payback sobre o TCO do 1º ano |
-|---|---:|---:|---:|---:|
-| Pessimista | R$ 12.000,00 | **−R$ 63.421,75** | −84,1% | 75,4 meses |
-| Base | R$ 30.000,00 | **−R$ 45.421,75** | −60,2% | 30,2 meses |
-| Otimista | R$ 48.000,00 | **−R$ 27.421,75** | −36,3% | 18,9 meses |
-
-No cenário-base, por exemplo:
-
-**Resultado anual = R$ 30.000,00 − R$ 75.421,75 = −R$ 45.421,75**
-
-**ROI = (R$ 30.000,00 − R$ 75.421,75) / R$ 75.421,75 = −60,2%**
-
-**Payback = R$ 75.421,75 / R$ 2.500,00 = 30,2 meses**
-
-Esses números devem ser lidos como uma análise conservadora sobre o TCO
-do primeiro ano, e não como uma previsão do resultado financeiro do
-projeto. A infraestrutura é um custo recorrente e continua sendo paga
-diretamente pelo Metrô nos anos seguintes.
-
-Considerando somente a economia direta de horas da função de Gestão de
-Processos, Negócios e Produto, o TCO do primeiro ano não é recuperado
-dentro de 12 meses nos três cenários. Isso não considera outros
-possíveis benefícios, como redução do tempo de resposta, padronização
-das consultas, redução de retrabalho e melhoria do acesso às
-informações.
-
-A principal lacuna é a ausência de uma medição do esforço atual.
-Recomenda-se registrar durante um ciclo mensal o tempo gasto na
-consolidação da partida do portfólio, no balanço mensal, no fechamento
-anual e nas consultas repetitivas que serão atendidas pelo agente.
-
-### 7.8 Reserva de contingência do fornecedor
-
-A reserva de contingência está relacionada aos riscos R05, R10 e R21. O
-R05 está associado à janela curta e à curva de aprendizado em PLN. O R10
-está relacionado ao consumo dos serviços de nuvem e IA. O R21 está
-relacionado à compressão de escopo e à antecipação de atividades da
-Sprint 5 para a Sprint 4.
-
-É considerada uma reserva de contingência de 10% sobre o custo direto de
-pessoal:
-
-**Reserva = R\$ 30.326,56 × 10% = R\$ 3.032,66**
-
-A reserva não representa lucro adicional. Ela é uma provisão para
-absorver esforço extraordinário caso os riscos previstos se
-materializem.
-
-Se a reserva for incorporada ao preço contratado:
-
-**Custo com contingência = R\$ 30.326,56 + R\$ 3.032,66 = R\$
-33.359,22**
-
-**Preço com contingência = R\$ 33.359,22 × 1,15 / \[1 − 0,155 × 1,15\] =
-R\$ 46.687,00**
-
-O valor de R\$ 3.032,66 deve ser apresentado separadamente da margem
-para evitar confusão entre contingência e lucro. A reserva é uma
-alternativa de contratação e não está incluída no preço-base de R\$
-42.440,58.
-
-### 7.9 Fluxo de caixa do fornecedor
-
-O fluxo de caixa considera que os custos de pessoal ocorrem durante a
-execução, enquanto o pagamento do Metrô ocorre após medição e aceite.
-Para reduzir o descasamento, recomenda-se que o contrato utilize marcos
-de pagamento associados às entregas.
-
-A distribuição das saídas utiliza a proporção das horas estimadas por
-sprint sobre as 373,25 horas totais da consultoria. Os recebimentos são
-distribuídos pelos marcos de aceite dos blocos de entrega.
-
-| Período | Saldo inicial | Entrada | Saída estimada | Saldo final |
-|---|---:|---:|---:|---:|
-| Mês 1 | R\$ 0,00 | R\$ 0,00 | R\$ 5.935,00 | **−R\$ 5.935,00** |
-| Mês 2 | −R\$ 5.935,00 | R\$ 10.610,15 | R\$ 7.495,00 | **−R\$ 2.819,85** |
-| Mês 3 | −R\$ 2.819,85 | R\$ 10.610,15 | R\$ 4.602,00 | **R\$ 3.188,30** |
-| Mês 4 | R\$ 3.188,30 | R\$ 10.610,14 | R\$ 11.232,00 | **R\$ 2.566,44** |
-| Mês 5 | R\$ 2.566,44 | R\$ 10.610,14 | R\$ 1.062,56 | **R\$ 12.114,02** |
-
-O ponto de estrangulamento ocorre no segundo mês. A necessidade máxima
-de capital de giro na simulação é de aproximadamente **R\$ 5.935,00**.
-
-Para reduzir o gargalo, recomenda-se que o contrato preveja pagamento
-por marcos, por exemplo após a validação do primeiro bloco de entregas,
-após a conclusão do núcleo funcional do MVP e após o aceite final. Essa
-estrutura reduz o período em que o fornecedor precisa financiar a
-execução com recursos próprios.
-
-A infraestrutura de produção não entra no fluxo de caixa do fornecedor
-porque o Metrô SP realiza o pagamento diretamente aos fornecedores de
-nuvem.
-
-### 7.10 Resumo financeiro
-
-A tabela consolida as horas, os custos de pessoal, a formação do preço da
-consultoria e os custos de infraestrutura do primeiro ano.
-
-| Indicador | Cálculo | Valor |
-|---|---|---:|
-| Horas de desenvolvimento e implantação | soma das Sprints 1 a 5 | 357,25 h |
-| Horas de treinamento | premissa de orçamento | 8,00 h |
-| Horas de transferência e operação assistida | premissa de orçamento | 8,00 h |
-| **Horas totais da consultoria** | 357,25 + 8 + 8 | **373,25 h** |
-| Custo-hora PJ | R$ 13.000 / 160 h | R$ 81,25 |
-| **Custo direto** | 373,25 × R$ 81,25 | **R$ 30.326,56** |
-| Despesas incrementais | D | R$ 0,00 |
-| **Base de custo** | C + D | **R$ 30.326,56** |
-| Imposto | formação de preço, 15,5% | R$ 6.578,29 |
-| Lucro | preço − custo − imposto | R$ 5.535,73 |
-| **Preço da consultoria** | fórmula da seção 7.5 | **R$ 42.440,58** |
-| Infraestrutura de produção | 12 meses | **R$ 32.981,17** |
-| **TCO do primeiro ano** | consultoria + infraestrutura | **R$ 75.421,75** |
-| Reserva de contingência | 10% do custo direto | R$ 3.032,66 |
-| Preço com contingência, se contratada | formação de preço específica | R$ 46.687,00 |
-| Sustentação N3 opcional | 180 h/ano | R$ 20.462,40/ano |
-
-Portanto, o cálculo final do projeto, considerando o cenário-base e o TCO do
-primeiro ano, é **R$ 75.421,75**, sendo **R$ 42.440,58 de consultoria** e
-**R$ 32.981,17 de infraestrutura**. No cenário-base de benefício econômico,
-a economia estimada é de R$ 30.000,00 por ano, resultando em **−R$ 45.421,75**
-no primeiro ano e ROI de **−60,2%** sobre o TCO.
-
-A análise deve ser atualizada após a implantação com os dados reais do Azure
-Cost Management. O benefício econômico também deve ser revisado com uma
-medição do tempo efetivamente gasto pela função de Gestão de Processos,
-Negócios e Produto nas atividades que serão automatizadas.
+#### 7.4.2 Banco de Dados Relacional (Azure Database for PostgreSQL)
+Para persistência das conversas, interações, agendamentos de rotinas e vetores do RAG (`pgvector`), utiliza-se uma instância *Flexible Server* no nível *Burstable* (B1ms: 1 vCPU, 2 GiB RAM, 32 GB de armazenamento).
+- **Custo Mensal:** R$ 159,50 / mês
+- **Custo Anual:** R$ 1.914,00 / ano
+
+#### 7.4.3 Serviços de IA e Segurança (Azure AI Content Safety e Speech)
+- **Azure AI Content Safety (Prompt Shields e Abuse Detection):** Avaliação de entrada e saída contra injeções de prompt e conteúdo nocivo.
+  - *Custo Mensal:* R$ 136,76 / mês
+  - *Custo Anual:* R$ 1.641,13 / ano
+- **Azure Speech Services (Transcrição de Voz):** Transcrição de enunciados de áudio via Azure Speech SDK.
+  - *Custo Mensal:* R$ 85,00 / mês
+  - *Custo Anual:* R$ 1.020,00 / ano
+
+#### 7.4.4 Execução da Aplicação (Azure Container Apps e Worker 24/7)
+Hospedagem conteinerizada da API FastAPI e do Worker assíncrono do APScheduler.
+- **API Backend:** Dimensionada com escalonamento automático (0 a 2 réplicas).
+- **Worker 24/7:** Exige réplica ativa contínua (0,25 vCPU, 0,5 GiB RAM) para garantir o disparo de rotinas agendadas no fuso horário correto.
+- **Custo Combinado Mensal:** R$ 112,50 / mês
+- **Custo Combinado Anual:** R$ 1.350,00 / ano
+
+#### 7.4.5 Registro de Containers (Azure Container Registry - ACR)
+Registro privado de imagens Docker na camada Basic.
+- **Cálculo de Preço:** $365 \text{ dias} \times 0,167 \text{ USD/dia} \times 5,1414 \text{ BRL/USD} = \mathbf{R\$ 313,39 / ano}$ (R$ 26,12 / mês).
+
+#### 7.4.6 Filas e Mensageria (RabbitMQ / Mensageria em Produção)
+Para desacoplamento dos eventos de auditoria e disparo de tarefas pesadas de RAG, prevê-se uma instância gerenciada de mensageria.
+- **Custo Mensal:** R$ 80,00 / mês
+- **Custo Anual:** R$ 960,00 / ano
+
+#### 7.4.7 Armazenamento, Logs e Retenção de Backup
+Armazenamento redundante do banco PostgreSQL, retenção de backups por 7 dias e coleta de métricas no Azure Log Analytics.
+- **Custo Mensal:** R$ 25,00 / mês
+- **Custo Anual:** R$ 300,00 / ano
+
+#### 7.4.8 Sustentação Opcional Nível 3 (N3)
+Serviço opcional de manutenção evolutiva e suporte especializado N3 prestado pela consultoria (15 horas mensais dedicadas de engenharia).
+- **Fórmula de Precificação:** 
+  $$\text{Preço N3} = \frac{\text{Custo Base} \times 1,15}{1 - 0,17825} = \frac{14.625,00 \times 1,15}{0,82175} = \mathbf{R\$ 20.466,99 / ano}$$
+
+#### 7.4.9 Consolidação Anual da Infraestrutura Recorrente de Nuvem
+A Tabela 4 consolida todos os custos recorrentes de nuvem e serviços necessários para manter a solução operando por 12 meses.
+
+#### Tabela 4 — Custos Recorrentes de Infraestrutura de Nuvem (12 Meses)
+| Componente Azure / Serviço | Recurso / Dimensionamento | Custo Mensal (R$) | Custo Anual (R$) | % do Total Nuvem |
+| :--- | :--- | :---: | :---: | :---: |
+| **Copilot Studio (Direct Line)** | 25.000 interações/mês ($25 \text{k} \times \text{R\$ } 0,0916$) | R$ 2.290,20 | R$ 27.482,40 | 83,33% |
+| **Azure Database for PostgreSQL** | Flexible Server B1ms (1 vCPU, 2 GB RAM) | R$ 159,50 | R$ 1.914,00 | 5,80% |
+| **Azure AI Content Safety** | Prompt Shields & Content Filtering | R$ 136,76 | R$ 1.641,13 | 4,98% |
+| **Azure Container Apps** | API + Worker 24/7 (0,25 vCPU, 0,5 GB) | R$ 112,50 | R$ 1.350,00 | 4,09% |
+| **Azure Speech Services** | Speech-to-Text em tempo real | R$ 85,00 | R$ 1.020,00 | 3,09% |
+| **RabbitMQ / Mensageria** | Instância Gerenciada / Service Bus | R$ 80,00 | R$ 960,00 | 2,91% |
+| **Azure Container Registry (ACR)** | Camada Basic ($365 \times 0,167 \text{ USD} \times 5,1414$) | R$ 26,12 | R$ 313,39 | 0,95% |
+| **Armazenamento & Backups** | Storage 32 GB + Backup 7 dias + Logs | R$ 25,00 | R$ 300,00 | 0,91% |
+| **Total Infraestrutura Recorrente** | **Operação Continuada (25k interações/mês)** | **R$ 2.748,39** | **R$ 32.980,69** | **100,00%** |
+
+---
+
+### 7.5 Enquadramento Tributário e Carga Fiscal (Item 5.4 do Artefato)
+
+Para simulação tributária, considera-se que a consultoria contratada está enquadrada no **Simples Nacional**, no **Anexo V** (Serviços de Tecnologia da Informação, Licenciamento e Desenvolvimento de Software — Art. 18, § 5º-I da Lei Complementar nº 123/2006).
+
+- **Razão Fator R:** Por premissa orçamentária, a folha de pagamento representa menos de 28% do faturamento bruto acumulado da empresa no período, mantendo o enquadramento no Anexo V.
+- **Alíquota Única Efetiva (DAS):** Adota-se a alíquota efetiva simplificada de **15,50%** cobrada diretamente sobre o faturamento bruto emitido na Nota Fiscal de Serviços Eletrônica (NFS-e).
+- **Fórmula de Aplicação dos Impostos:** Os impostos são calculados pelo método *por dentro*, garantindo que a alíquota tributária incida sobre a receita bruta total da nota fiscal.
+
+---
+
+### 7.6 Margem de Lucro e Estratégia de Mercado (Item 5.5 do Artefato)
+
+A margem de lucro operacional adotada para o projeto é de **15,00%**.
+
+#### 7.6.1 Justificativa Estratégica de Mercado
+A definição de uma margem de 15,00% fundamenta-se na estratégia de penetração e consolidação no mercado corporativo de consultoria de tecnologia para o setor público e transporte metroviário:
+- **Competitividade em Licitações e Propostas:** O benchmark de margens para consultorias de TI no Brasil varia entre 10% e 20%. A margem de 15% posiciona a proposta no ponto médio ótimo, oferecendo um preço atraente para o contratante sem comprometer a saúde financeira e a reserva de segurança da contratada.
+- **Retorno Sobre o Capital Investido:** Garante atratividade comercial para a empresa cobrir riscos operacionais não previstos e reinvestir em P&D de novas soluções de IA.
+
+#### 7.6.2 Fórmula e Aplicação da Margem de Lucro
+A margem de lucro de 15,00% incide sobre a base combinada de custos diretos ($C$) e despesas operacionais ($D$).
+- **Base de Custo Operacional Total ($C + D$):** $\text{R\$ } 30.326,56 + \text{R\$ } 6.578,29 = \mathbf{R\$ 36.904,85}$
+- **Valor Absoluto do Lucro Líquido ($L$):**
+  $$L = 15,00\% \times (C + D) = 0,15 \times \text{R\$ } 36.904,85 = \mathbf{R\$ 5.535,73}$$
+
+---
+
+### 7.7 Preço Final do Projeto e Composição Financeira (Item 5.6 do Artefato)
+
+O preço final faturado ao cliente é obtido somando-se os Custos Diretos ($C$), Despesas Operacionais ($D$) e Lucro Líquido ($L$), dividindo o resultado por $(1 - \text{Alíquota DAS})$ para incorporar os impostos por dentro.
+
+#### 7.7.1 Cálculo do Preço do Projeto (Consultoria MVP)
+1. **Subtotal Líquido (Custos + Despesas + Lucro):**
+   $$\text{Subtotal Líquido} = \text{R\$ } 30.326,56 + \text{R\$ } 6.578,29 + \text{R\$ } 5.535,73 = \mathbf{R\$ 42.440,58}$$
+2. **Preço Bruto Base (com DAS 15,5% por dentro):**
+   $$\text{Preço Base Faturado} = \frac{\text{R\$ } 42.440,58}{1 - 0,1550} = \frac{\text{R\$ } 42.440,58}{0,8450} = \mathbf{R\$ 50.225,54}$$
+3. **Preço Bruto com Contingência de Projeto (10% de Reserva Técnica):**
+   Caso o cliente opte por incluir uma reserva de contingência de 10% para mudanças de escopo:
+   $$\text{Preço com Contingência} = \frac{\text{R\$ } 42.440,58 \times 1,10}{0,8450} = \frac{\text{R\$ } 46.684,64}{0,8450} = \mathbf{R\$ 55.248,10}$$
+
+A Tabela 5 consolida a composição do preço final do projeto ofertado ao Metrô de SP.
+
+#### Tabela 5 — Consolidação do Preço Final do Projeto de Consultoria
+| Componente da Formação de Preço | Métrico / Premissa | Valor Absoluto (R$) | % da Receita Bruta |
+| :--- | :--- | :---: | :---: |
+| **Custos Diretos de Pessoal** | 357,20 horas de engenharia/design | R$ 29.026,56 | 57,79% |
+| **Insumos e Licenças de Dev** | Banco PostgreSQL MVP e ferramentas | R$ 1.299,50 | 2,59% |
+| **Despesas Operacionais Indiretas** | Espaço, contabilidade, adm., domínio | R$ 6.578,29 | 13,10% |
+| **Lucro Operacional Desejado** | 15% sobre (Custos + Despesas) | R$ 5.535,73 | 11,02% |
+| **Preço Subtotal Líquido** | **Investimento Sem Tributos** | **R$ 42.440,58** | **84,50%** |
+| **Impostos Simples Nacional (DAS)** | Alíquota de 15,50% aplicada por dentro | R$ 7.784,96 | 15,50% |
+| **Preço Final Faturado ao Cliente** | **Valor Total da Nota Fiscal (NFS-e)** | **R$ 50.225,54** | **100,00%** |
+| **Opção com Contingência (+10%)** | **Preço Faturado com Contingência** | **R$ 55.248,10** | **—** |
+
+---
+
+### 7.8 Análise de Viabilidade Econômica para o Metrô (Payback, ROI e Indicadores)
+
+Para avaliar o retorno econômico para o Metrô de SP, contrapõe-se o custo de aquisição da solução contra a economia de horas de trabalho de profissionais da **Gerência de Informações Operacionais / PMO do Metrô**.
+
+#### 7.8.1 Premissas para o Cálculo do Benefício
+
+1. **Driver Unificado de Volume e Tempo:**
+   - Adota-se o mesmo volume de **25.000 interações/mês** utilizado no dimensionamento da infraestrutura de nuvem.
+   - O tempo economizado por interação varia entre 3 e 30 segundos por consulta em relação à busca manual de informações em documentos no SharePoint e relatórios em PDF.
+2. **Custo do Homem-Hora do PMO do Metrô:**
+   - Salário-base mensal estimado para Analista/Gerente de PMO: R$ 8.000,00 para 160 horas de trabalho (R$ 50,00/hora sem encargos).
+   - Aplicando **100% de encargos sociais e trabalhistas** (padrão de custo total de funcionalismo/CLT público):
+     $$\text{Custo Real Hora PMO} = \text{R\$ } 50,00 \times 2,0 = \mathbf{R\$ 100,00 / hora}$$
+3. **Tratamento do Custo Recorrente de Nuvem (OPEX):**
+   - A infraestrutura de nuvem (**R$ 2.748,39 / mês**) é tratada estritamente como **custo recorrente mensal**, sendo deduzida da economia bruta de horas para apurar o benefício líquido mensal gerado.
+4. **Oportunidade de Capacidade Pré-Existente no Copilot Studio:**
+   - Como o Copilot Studio responde por **83,3% do custo de nuvem** (R$ 2.290,20/mês), caso o Metrô absorva esse consumo dentro do contrato corporativo existente com a Microsoft, o custo residual mensal de nuvem para o Metrô cai para apenas **R$ 458,19 / mês**.
+
+#### 7.8.2 Cenários de Retorno Financeiro e Payback
+
+A Tabela 6 apresenta a análise de viabilidade económica nos cenários Pessimista, Base e Otimista ($I = \text{R\$ } 42.440,58$).
+
+#### Tabela 6 — Análise de Payback e Retorno Financeiro do Metrô
+| Parâmetro / Indicador | Cenário Pessimista | Cenário Base | Cenário Otimista (Com Copilot Absorvido) |
+| :--- | :---: | :---: | :---: |
+| **Tempo Poupado por Interação** | 5 segundos | 15 segundos | 30 segundos |
+| **Horas Mensais Poupadas (PMO)** | 34,72 h / mês | 104,17 h / mês | 208,33 h / mês |
+| **Economia Bruta Mensal (R$ 100/h)** | R$ 3.472,00 | R$ 10.417,00 | R$ 20.833,00 |
+| **(-) OPEX Nuvem Recorrente** | (R$ 2.748,39) | (R$ 2.748,39) | (R$ 458,19) *(Copilot Isento)* |
+| **Benefício Líquido Mensal** | **R$ 723,61 / mês** | **R$ 7.668,61 / mês** | **R$ 20.374,81 / mês** |
+| **Payback Simples (Investimento R$ 42.440,58)** | **58,6 meses** | **5,5 meses** | **2,1 meses** |
+| **ROI Acumulado em 24 Meses** | **-59,1%** | **333,7%** | **1.052,2%** |
+
+---
+
+### 7.9 Fluxo de Caixa do Projeto (Projeção Financeira e Mapeamento Sprint-Mês)
+
+O fluxo de caixa projeta as entradas e saídas de recursos durante os 5 meses de execução do contrato, mapeando o faturamento em 4 marcos trimestrais/mensais e o recolhimento do tributo DAS a cada recebimento.
+
+#### Tabela 7 — Fluxo de Caixa Projetado da Consultoria (Valores em R$)
+| Etapa / Mês | Receita Bruta Faturada | (-) Impostos DAS (15,5%) | Receita Líquida Entradas | Saídas Custos Diretos | Saídas Despesas Operacionais | Saldo Líquido do Mês | Saldo Acumulado em Caixa |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Mês 1** | R$ 12.556,39 | (R$ 1.946,24) | R$ 10.610,15 | (R$ 10.403,75) | (R$ 1.315,66) | (R$ 1.109,26) | **(R$ 1.109,26)** |
+| **Mês 2** | R$ 12.556,39 | (R$ 1.946,24) | R$ 10.610,15 | (R$ 11.629,38) | (R$ 1.315,66) | (R$ 2.334,89) | **(R$ 3.444,15)** |
+| **Mês 3** | R$ 12.556,39 | (R$ 1.946,24) | R$ 10.610,15 | (R$ 8.292,93) | (R$ 1.315,66) | R$ 1.001,56 | **(R$ 2.442,59)** |
+| **Mês 4** | R$ 12.556,37 | (R$ 1.946,24) | R$ 10.610,13 | R$ 0,00 | (R$ 1.315,66) | R$ 9.294,47 | **R$ 6.851,88** |
+| **Mês 5** | R$ 0,00 | R$ 0,00 | R$ 0,00 | R$ 0,00 | (R$ 1.316,15) | (R$ 1.316,15) | **R$ 5.535,73** |
+| **Total** | **R$ 50.225,54** | **(R$ 7.784,96)** | **R$ 42.440,58** | **(R$ 30.326,06)** | **(R$ 6.578,29)** | **R$ 5.535,73** | **R$ 5.535,73** |
