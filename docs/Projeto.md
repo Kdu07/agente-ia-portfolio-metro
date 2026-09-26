@@ -110,6 +110,8 @@
 - [11. Procedimentos de Implantação](#11-procedimentos-de-implantação)
   - [11.1 Implantação e Configuração do Banco de Dados](#111-implantação-e-configuração-do-banco-de-dados)
   - [11.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento](#112-implantação-do-protótipo-para-uso-pela-equipe-de-desenvolvimento)
+  - [11.3 Monitoramento e Manutenção](#113-monitoramento-e-manutenção)
+  - [11.4 Retorno a uma Versão Anterior](#114-retorno-a-uma-versão-anterior)
 - [Referências](#referências)
 
 # 1. Introdução
@@ -11231,6 +11233,11 @@ execução local — em cerca de 4,5 minutos, contando a instalação. O
 O grupo `externo` roda com as fitas versionadas: **o CI não tem credencial de
 nenhum tenant**, e essa é uma propriedade a preservar.
 
+Na `develop` e na `main`, o mesmo arquivo segue, depois destes dois estágios,
+para a publicação das imagens e a implantação na Azure, descritas em 11.2.3.
+Os jobs de entrega entram na Azure por OIDC, com identidade restrita ao ramo, e
+também não guardam credencial.
+
 ### 10.5.9 Rastreabilidade com os requisitos
 
 | Requisito | O que exige | Casos que o cobrem |
@@ -11329,15 +11336,619 @@ explícita de risco antes da liberação.
 
 # 11. Procedimentos de Implantação
 
-[Descreva os passos para configuração, execução e implantação da solução.]
+O Prata Agent roda na Azure, no Azure Container Apps da região `brazilsouth`, em
+dois estágios. O `dev` recebe tudo o que é integrado na `develop` e serve à
+equipe. O `prd` recebe o que chega à `main` ao fim de cada sprint e é o
+ambiente das demonstrações ao parceiro. Este capítulo descreve o que foi
+executado para colocá-los no ar e o que se repete a cada nova versão: a
+configuração do banco (11.1), a implantação das aplicações e a entrega
+contínua (11.2), o monitoramento (11.3) e o retorno a uma versão anterior
+(11.4).
+
+Todo o procedimento está em três scripts versionados em
+[`infra/azure/`](../infra/azure/), e nenhum recurso foi criado à mão no portal:
+
+| Script | Papel |
+|---|---|
+| `variaveis.sh` | Nomes dos recursos de cada estágio; carregado pelos outros dois |
+| `provisionar.sh <estágio> <fase>...` | Cria o que falta, fase por fase. Rodar de novo não duplica nada, porque cada passo testa se o recurso existe antes de criá-lo |
+| `implantar.sh <estágio>` | Publica uma versão: migração do banco, troca das imagens e verificação de saúde |
+
+O [`README.md`](../infra/azure/README.md) da pasta é a referência de operação
+do dia a dia. As decisões, os comandos e as evidências ficam neste capítulo.
+
+A assinatura é do tipo FreeTrial e admite um único Container Apps Environment
+por região e um único recurso gratuito de cada serviço cognitivo. Por isso os
+dois estágios dividem parte da infraestrutura, e o isolamento entre eles é
+feito por identidade, cofre e banco:
+
+| Compartilhado pelos estágios | Próprio de cada estágio |
+|---|---|
+| Grupo de recursos `rg-prata-agent` | Identidade gerenciada `id-prata-<estágio>` |
+| Registro de imagens `acrpratag02t17` | Key Vault `kv-prata-<estágio>-g02t17` |
+| Log Analytics `log-prata` | Banco e usuário `prata_<estágio>` |
+| Servidor PostgreSQL `psql-prata-g02t17` | Apps `ca-web-<estágio>` e `ca-middleware-<estágio>` |
+| Container Apps Environment `cae-prata-dev` | Job de migração `caj-migracao-<estágio>` |
+| Content Safety `cs-prata-g02t17` e Speech `speech-prata-g02t17` | Identidade do pipeline `id-prata-ci-<estágio>` |
+
+```mermaid
+flowchart LR
+    U["Navegador"] -->|"HTTPS"| WEB
+    subgraph CAE["cae-prata-dev (Container Apps Environment)"]
+        WEB["ca-web-(estágio)<br/>nginx: estáticos + proxy /api"] -->|"HTTP interno"| API["ca-middleware-(estágio)<br/>FastAPI"]
+        JOB["caj-migracao-(estágio)<br/>alembic upgrade head"]
+    end
+    API -->|"TLS 1.2+"| PG[("psql-prata-g02t17<br/>banco prata_(estágio)")]
+    JOB -->|"TLS 1.2+"| PG
+    API -.->|"segredos por referência"| KV["kv-prata-(estágio)-g02t17"]
+    API --> CS["Content Safety"]
+    API --> SP["Speech"]
+    API --> EXT["Entra ID, Pinecone, OpenRouter"]
+    CAE -.->|"logs de console e de sistema"| LAW["log-prata"]
+    ACR["acrpratag02t17"] -.->|"imagens"| CAE
+    CI["GitLab CI"] -->|"OIDC: id-prata-ci-(estágio)"| ACR
+    CI -->|"implantar.sh"| CAE
+```
+
+*Figura 47 — Recursos de um estágio na Azure e o caminho da entrega contínua.*
+
+O teto de gasto é de R$ 300 por ano para os dois estágios juntos. Essa
+restrição explica três escolhas que aparecem ao longo do capítulo: os apps
+escalam a zero quando ociosos, o banco é desligado entre um uso e outro, e o
+worker de rotinas fica fora da nuvem (11.2.1).
 
 ## 11.1 Implantação e Configuração do Banco de Dados
 
-[Preencher]
+### 11.1.1 Pré-requisitos
+
+Para executar os scripts, a máquina de quem provisiona precisa de:
+
+- **Azure CLI 2.90** com sessão aberta (`az login`) numa conta com papel de
+  *Owner* na assinatura. O papel é necessário porque o script atribui papéis
+  às identidades gerenciadas.
+- **Docker**, porque o `psql` e o `pg_dump` rodam em contêiner descartável e as
+  imagens são construídas localmente. O `az acr build` não está disponível em
+  assinatura de crédito.
+- **Git Bash**, no Windows. Os scripts exportam `MSYS_NO_PATHCONV=1` e convertem
+  caminhos com `cygpath` quando a CLI os recebe.
+- O `src/middleware/.env` preenchido. A fase `segredos` lê dele os valores e os
+  grava no Key Vault sem imprimi-los.
+- Para a carga inicial (11.1.5), o banco local da porta 5434 com o corpus já
+  ingerido.
+
+### 11.1.2 Servidor e bancos dos estágios
+
+A fase `banco` cria o servidor PostgreSQL gerenciado quando ele não existe e,
+em seguida, o banco e o usuário do estágio:
+
+```bash
+bash infra/azure/provisionar.sh dev fundacao cofre banco
+bash infra/azure/provisionar.sh prd cofre banco
+```
+
+| Parâmetro | Valor | Motivo |
+|---|---|---|
+| Versão | PostgreSQL 16 | A mesma do Compose e da CI |
+| Camada | Burstable `Standard_B1ms`, 32 GB | Coberta pela cota gratuita de 12 meses da assinatura |
+| Alta disponibilidade | Desligada | Uma réplica em espera dobraria o custo, e o protótipo não tem requisito de continuidade além do RNF04, medido no middleware |
+| Retenção de backup | 7 dias | O mínimo do serviço, suficiente para desfazer um erro de operação da semana |
+| Bancos | `prata_dev` e `prata_prd` | Um por estágio, no mesmo servidor |
+
+O servidor é um só, mas cada estágio tem um usuário de aplicação próprio, de
+mesmo nome do banco e sem privilégio de administrador. Como o PostgreSQL
+concede `CONNECT` ao `PUBLIC` por padrão, a fase executa
+`REVOKE CONNECT ON DATABASE prata_<estágio> FROM PUBLIC`. Sem esse comando, o
+usuário do `dev` conseguiria abrir o banco do `prd`. A senha do administrador
+fica apenas no cofre do `dev`, que é quem cria o servidor, e nenhum app a usa.
+
+### 11.1.3 Credenciais e acesso de rede
+
+As senhas são geradas pelo próprio script e gravadas direto no cofre do
+estágio: `db-senha` e, a partir dela, `database-url`. Os Container Apps e o job
+de migração recebem a `DATABASE_URL` como referência ao Key Vault, lida pela
+identidade `id-prata-<estágio>`. O valor nunca aparece na configuração do
+serviço, no terminal ou no repositório. A correspondência completa entre
+variáveis e segredos está na seção 8.1 do
+[GestaoConfiguracao.md](GestaoConfiguracao.md).
+
+![Lista de segredos do cofre kv-prata-prd-g02t17, apenas com os nomes](./imagens/implantacao/03-segredos-cofre.jpg)
+
+*Figura 48 — Segredos do cofre do `prd`: só os nomes aparecem, e o valor nunca sai do Key Vault.*
+
+O servidor exige TLS 1.2 ou superior (`require_secure_transport` ligado) e
+aceita conexão apenas pela regra de serviços da Azure. A justificativa dessa
+regra e os cinco controles que compensam a exposição restante estão na seção 6
+do mesmo documento. Durante o provisionamento, a fase `banco` abre uma regra
+temporária, `provisionamento`, para o IP de quem executa. A fase `fechar` a
+remove ao final.
+
+![Rede do servidor psql-prata-g02t17, com acesso dos serviços do Azure e nenhuma regra de IP](./imagens/implantacao/04-rede-banco.jpg)
+
+*Figura 49 — Rede do servidor PostgreSQL: TLS imposto, acesso só pela regra de serviços da Azure e nenhuma regra de firewall por IP.*
+
+### 11.1.4 Migrações de esquema
+
+O esquema é versionado pelo Alembic, em `src/middleware/migrations/`, e
+aplicado por um Container Apps Job, e não pela máquina de quem implanta:
+
+```bash
+bash infra/azure/provisionar.sh dev migracao
+```
+
+A fase troca a imagem do job `caj-migracao-<estágio>` pela versão que vai ser
+implantada, executa `alembic upgrade head` e espera o resultado (`Succeeded`,
+ou falha com o nome da execução para consulta dos logs). O job usa a mesma
+imagem do middleware, com 1 vCPU, 2 GiB e sem aquecer o classificador. Assim,
+a migração que roda na nuvem é exatamente a que acompanha o código publicado.
+O `implantar.sh` executa essa fase antes de trocar as imagens dos apps, de
+modo que nenhuma versão nova sobe contra um esquema antigo.
+
+O job nasce em dois passos: o recurso primeiro e o segredo depois. Com os dois
+na mesma chamada, a Azure tenta ler o segredo antes de associar a identidade ao
+job e recusa a criação com `IdentityDoesNotExist`.
+
+### 11.1.5 Carga inicial de dados
+
+A fase `dados` copia os esquemas `rag` (trechos do corpus sintético) e
+`portfolio` (projetos) do banco local da porta 5434 para o banco do estágio,
+com `pg_dump --data-only` e `psql` em contêineres descartáveis:
+
+```bash
+bash infra/azure/provisionar.sh dev banco dados fechar
+```
+
+A cópia pula o esquema que já tem linhas. Dois conjuntos ficam de fora de
+propósito. O esquema `public` é a trilha de auditoria (RNF02), e carga
+sintética não entra nela. A tabela `portfolio.usuario_projeto` liga ids de
+usuário a projetos, e os ids locais são personas de desenvolvimento que não
+existem no Entra ID. Um usuário real é vinculado aos projetos depois do
+primeiro login.
+
+No `dev`, a cópia trouxe o texto dos 1.883 vetores do índice `dev` do
+Pinecone. No `prd`, a fase ainda não foi executada: o esquema está migrado,
+mas o banco não tem corpus, e as consultas ao RAG terminam em abstenção até
+que `bash infra/azure/provisionar.sh prd banco dados fechar` seja rodado com o
+banco local disponível.
+
+### 11.1.6 Parada, retomada e cópias de segurança
+
+O servidor parado guarda os dados e não cobra computação. Entre um uso e outro,
+o ambiente inteiro é desligado e religado com um comando:
+
+```bash
+bash infra/azure/provisionar.sh dev parar     # apps a zero e banco desligado (~4 min)
+bash infra/azure/provisionar.sh dev retomar   # banco, apps e verificação de saúde (~10 a 20 min)
+```
+
+O `retomar` liga o banco primeiro e só depois os apps, porque o middleware
+falha na primeira consulta se subir antes. Como o servidor é compartilhado,
+parar um estágio desliga o banco do outro. A Azure religa sozinha um servidor
+parado há 7 dias, e nesse caso basta rodar `parar` de novo.
+
+As cópias de segurança são as do próprio serviço, com retenção de 7 dias e
+restauração para qualquer instante dentro da janela
+(`az postgres flexible-server restore`). A restauração cria um servidor novo.
+Depois dela, basta apontar a `database-url` do cofre para ele e rodar
+`RECONFIGURAR=1 bash infra/azure/provisionar.sh <estágio> apps`.
+
+### 11.1.7 Verificação
+
+A fase `conferir` só lê e termina com erro se encontrar qualquer desvio da
+configuração descrita nesta seção:
+
+```bash
+bash infra/azure/provisionar.sh prd conferir
+```
+
+Ela verifica os seguintes pontos:
+
+- `require_secure_transport` ligado e TLS mínimo 1.2;
+- nenhuma regra de firewall além da de serviços da Azure, o que acusa a
+  `provisionamento` esquecida quando a fase `fechar` não roda;
+- os segredos obrigatórios presentes no cofre;
+- nenhum segredo guardado no app ou passado por valor.
+
+A saída lista apenas nomes, nunca valores.
 
 ## 11.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento
 
-[Preencher]
+### 11.2.1 Aplicações e configuração
+
+Cada estágio tem duas aplicações, construídas a partir dos Dockerfiles descritos
+na seção 5 do [GestaoConfiguracao.md](GestaoConfiguracao.md):
+
+| App | Imagem | Entrada | Recursos | Escala |
+|---|---|---|---|---|
+| `ca-web-<estágio>` | `prata-web`: estáticos do React no nginx | Pública, HTTPS, porta 80 | 0,25 vCPU, 0,5 GiB | 0 a 2 réplicas |
+| `ca-middleware-<estágio>` | `prata-middleware`: FastAPI com o classificador e o modelo de *embeddings* | Interna, porta 8000 | 2 vCPU, 4 GiB | 0 a 1 réplica |
+
+O navegador fala só com o web, e o nginx encaminha o prefixo `/api` ao
+middleware pelo nome interno do app. Frontend e API ficam na mesma origem, o que
+permite ao cookie de sessão `httpOnly` viajar sem CORS. No Container Apps, esse
+proxy precisa de duas linhas que o Compose não exigia: `proxy_http_version 1.1`,
+porque o ingresso recusa HTTP/1.0 com 426, e `Host $proxy_host`, porque o
+ambiente escolhe o app de destino pelo cabeçalho `Host`.
+
+O middleware tem três sondas. A de partida consulta `/health`. A de prontidão
+consulta `/health/pronto`, que só responde depois que o classificador aquece, e
+por isso nenhuma mensagem chega a uma réplica fria. A de vida consulta
+`/health` a cada 30 segundos. A configuração não sigilosa (executor, backend
+vetorial, identificadores do Entra e grupos de perfil) é lida do `.env` de quem
+provisiona e gravada no app. Os segredos chegam por referência ao cofre
+(11.1.3).
+
+O worker de rotinas (`python -m app.worker`) é suportado pelo script, mas não é
+criado por padrão. Ele precisa de uma réplica sempre ligada para disparar as
+rotinas no horário, o que consumiria o teto de gasto. Quem precisar dele na
+nuvem o cria com `COM_WORKER=1 bash infra/azure/provisionar.sh <estágio> apps`.
+
+### 11.2.2 Provisionamento de um estágio
+
+Um estágio inteiro é criado com um comando, depois de `az login`:
+
+```bash
+bash infra/azure/provisionar.sh dev tudo
+```
+
+O `tudo` executa as fases abaixo, nesta ordem. Cada uma também roda sozinha:
+
+| Fase | O que faz |
+|---|---|
+| `fundacao` | Registra os provedores, cria o grupo, o Log Analytics (retenção de 30 dias) e o registro de imagens |
+| `imagens` | Constrói e publica as duas imagens com a tag do commit |
+| `cofre` | Identidade gerenciada do estágio, Key Vault com RBAC e os papéis de leitura de segredo e de *pull* no registro |
+| `banco` | Servidor, banco e usuário do estágio (11.1.2) |
+| `cognitivos` | Content Safety e Speech no nível gratuito, na mesma região |
+| `segredos` | Grava no cofre os valores do `.env` e as chaves dos recursos cognitivos, sem exibi-los |
+| `ambiente` | Container Apps Environment com logs no Log Analytics |
+| `migracao` | Job do Alembic (11.1.4) |
+| `dados` | Carga inicial (11.1.5) |
+| `apps` | Middleware e web; com `RECONFIGURAR=1`, regrava a configuração inteira |
+| `entra` | Registra a URI de retorno do login no registro de aplicativo do Entra ID |
+| `alertas` | Grupo de ação, alertas e orçamento (11.3.3) |
+| `pipeline` | Identidade da entrega contínua (11.2.3) |
+| `fechar` | Remove o acesso temporário ao banco |
+| `conferir` | Verificação final, só leitura (11.1.7) |
+
+O `dev` foi criado em 22/09/2026 e o `prd` em 24/09/2026. A criação do `prd`
+revelou o limite de um único Container Apps Environment por região na
+assinatura (`MaxNumberOfRegionalEnvironmentsInSubExceeded`), e por isso ele
+entrou no ambiente `cae-prata-dev`.
+
+![Recursos do grupo rg-prata-agent no portal da Azure](./imagens/implantacao/01-grupo-recursos.jpg)
+
+*Figura 50 — Recursos do grupo `rg-prata-agent`, com os dois estágios, as identidades do pipeline e os alertas.*
+
+### 11.2.3 Entrega contínua
+
+A partir da Sprint 4, uma versão nova não depende de alguém rodar os scripts na
+própria máquina. O [`.gitlab-ci.yml`](../.gitlab-ci.yml) ganhou dois estágios
+depois dos de verificação descritos em 10.5.8:
+
+| Estágio | Job | Quando | O que roda |
+|---|---|---|---|
+| `imagens` | `imagens:dev` | Push na `develop` | `provisionar.sh dev imagens` contra um Docker do serviço `docker:dind` |
+| `imagens` | `imagens:prd` | Push na `main` | `provisionar.sh prd imagens` |
+| `implantar` | `implantar:dev` | Automático, depois do anterior | `implantar.sh dev` |
+| `implantar` | `implantar:prd` | **Só com clique** | `implantar.sh prd` |
+
+Os jobs de entrega só começam se lint e testes passarem. Eles usam a mesma tag,
+o `$CI_COMMIT_SHORT_SHA`, nas duas pontas, e cada deploy fica registrado em
+*Operate › Environments* do GitLab, com a URL do estágio. Os dois jobs de
+implantação levam um `resource_group`, de modo que dois deploys do mesmo
+estágio nunca correm ao mesmo tempo.
+
+![Pipeline 80209 com os estágios lint, teste, imagens e implantar concluídos](./imagens/implantacao/07-pipeline.jpg)
+
+*Figura 51 — Pipeline 80209: verificação, publicação das imagens e implantação no `dev`.*
+
+![Ambiente dev no GitLab com a última implantação](./imagens/implantacao/08-ambientes.jpg)
+
+*Figura 52 — Ambiente `dev` no GitLab (Operate › Environments), com a implantação em vigor e o acesso ao estágio.*
+
+O disparo manual do `prd` é deliberado. A semana de entrega é curta, e um
+deploy automático a cada merge na `main` arriscaria derrubar o ambiente das
+demonstrações. O `dev`, ao contrário, acompanha a `develop` sem intervenção.
+Quando o ambiente está parado (11.1.6), o `implantar.sh` sai com código 3, sem
+mexer em nada, e a pipeline mostra aviso em vez de falha: religar o ambiente é
+decisão de quem responde pelo custo, e não efeito colateral de um merge.
+
+**Credencial sem segredo.** O pipeline entra na Azure por OIDC. Cada job de
+entrega recebe do GitLab um token assinado, com o projeto e o ramo de origem.
+A Azure o troca por acesso à identidade `id-prata-ci-<estágio>`, criada pela
+fase `pipeline`, cuja credencial federada só aceita tokens deste projeto e do
+ramo do estágio: `develop` para o `dev` e `main` para o `prd`. No GitLab ficam
+apenas três identificadores não sigilosos: `AZURE_TENANT_ID`,
+`AZURE_SUBSCRIPTION_ID` e `AZURE_CLIENT_ID`, este com escopo de ambiente.
+Não há senha para vazar, expirar ou girar, e um job de outro ramo não obtém
+acesso mesmo que leia essas variáveis.
+
+A identidade de cada estágio tem apenas os papéis que o deploy usa:
+
+| Papel | Escopo | Para quê |
+|---|---|---|
+| *Reader* | Grupo `rg-prata-agent` | Ler o estado do banco, o ambiente, o cofre e o registro |
+| *AcrPush* | Registro `acrpratag02t17` | Publicar as imagens |
+| *Contributor* | `ca-web-<estágio>`, `ca-middleware-<estágio>` e `caj-migracao-<estágio>` | Trocar a imagem e executar a migração |
+| *Managed Identity Operator* | `id-prata-<estágio>` | Atualizar um app que usa essa identidade |
+
+Nenhum desses papéis lê segredo do cofre. A identidade do `dev` não alcança
+nenhum recurso do `prd`, e a do `prd` não alcança os do `dev`.
+
+A construção no pipeline parte da imagem em uso no estágio (`--cache-from`).
+Assim, as camadas do torch e do modelo de *embeddings*, que somam cerca de
+3 GB, só são refeitas quando o `pyproject.toml` muda, e o *push* leva apenas as
+camadas novas. Na pipeline 80209, o middleware saiu inteiro do cache e o job
+`imagens:dev` levou 5 minutos, contra 9 da construção completa. A maior parte
+foi o *download* da imagem de referência. O cache só funciona com imagem
+construída pelo próprio pipeline. As feitas na máquina com BuildKit não servem
+ao construtor clássico do serviço `docker:dind`, e por isso a primeira execução
+de cada estágio constrói tudo.
+
+Uma branch ainda não integrada pode ser testada no `dev` sem esperar o merge:
+
+```bash
+RAMO=<branch> bash infra/azure/provisionar.sh dev pipeline   # aceita o ramo na identidade do dev
+glab ci run -b <branch> --variables IMPLANTAR:dev
+az identity federated-credential delete -g rg-prata-agent \
+  --identity-name id-prata-ci-dev -n gitlab-<branch com hífens> --yes
+```
+
+A implantação continua disponível à mão, pelo mesmo script que o pipeline
+chama:
+
+```bash
+bash infra/azure/provisionar.sh dev imagens
+bash infra/azure/implantar.sh dev
+```
+
+### 11.2.4 Verificação de funcionamento
+
+O `implantar.sh` termina com a fase `saude`, que tem dois passos. Primeiro ela
+espera que a revisão nova do middleware e a do web recebam todo o tráfego. Com
+revisão única, a anterior continua atendendo até a nova ter uma réplica pronta,
+o que no middleware leva cerca de um minuto, porque o classificador aquece
+antes. Depois, pede `https://<web>/api/health/pronto` e exige
+`{"status": "pronto"}`. Essa resposta percorre o caminho inteiro: ingresso
+público, nginx, proxy interno, middleware com o classificador aquecido e
+conexão ao banco. O deploy que não chega a esse ponto aparece vermelho na
+pipeline. Enquanto isso, a versão anterior segue no ar.
+
+Depois de cada implantação, a equipe confere três pontos:
+
+- **Login:** abrir a URL do estágio e entrar com uma conta de teste de cada
+  perfil (diretoria, líder de projeto e membro de equipe). As contas foram
+  criadas no tenant do Entra ID da assinatura, e as senhas são entregues por
+  canal privado. O login é validado pelo retorno 303 do
+  `/api/auth/callback` e pelo 200 do `/api/auth/eu` nos logs (11.3.1).
+- **Conversa:** enviar ao chat uma das sugestões da tela inicial e confirmar
+  uma resposta com fontes. As sugestões foram escolhidas entre perguntas que o
+  corpus sintético responde.
+- **Revisões:** conferir em `az containerapp revision list` que a revisão nova
+  está ativa e saudável. A revisão nova do middleware fica alguns minutos em
+  `Activating` enquanto o classificador aquece.
+
+![Revisão ativa do ca-middleware-dev com todo o tráfego](./imagens/implantacao/02-revisoes-middleware.jpg)
+
+*Figura 53 — Revisão ativa do middleware do `dev` depois do deploy: em execução, com 100% do tráfego e uma réplica.*
+
+As três primeiras execuções, em 25/09/2026, foram disparadas a partir da branch
+deste capítulo pelo procedimento de teste de 11.2.3, e cada uma deixou uma
+correção:
+
+| Pipeline | Resultado | O que revelou |
+|---|---|---|
+| 80195 | Falhou em `implantar:dev`, no job de migração | A imagem construída do zero resolveu o SQLAlchemy 2.1, que deixou de instalar o `greenlet`, e o `alembic` quebrou no import. O deploy parou antes de trocar os apps, e o `dev` seguiu na versão anterior. O `pyproject.toml` passou a exigir `sqlalchemy[asyncio]` |
+| 80204 | Completa | A fase `saude` respondeu um segundo depois da troca de imagem, ainda pela revisão anterior: a nova só recebeu o tráfego 42 segundos depois. A espera pelo tráfego descrita acima veio daí |
+| 80209 | Completa | Primeira execução com a verificação corrigida: lint, testes, imagens e implantação no `dev` |
+
+### 11.2.5 Acesso da equipe
+
+| Estágio | Endereço | Atualizado por |
+|---|---|---|
+| `dev` | https://ca-web-dev.wittywater-1f84aed4.brazilsouth.azurecontainerapps.io | Merge na `develop` |
+| `prd` | https://ca-web-prd.wittywater-1f84aed4.brazilsouth.azurecontainerapps.io | Clique em `implantar:prd` na pipeline da `main` |
+
+O acesso às aplicações é pelo login corporativo, com o perfil e as permissões
+dos grupos do Entra ID descritos no RF01. O acesso aos recursos da Azure
+(logs, métricas, operação dos scripts) exige papel na assinatura, concedido por
+quem a administra.
+
+### 11.2.6 Custos
+
+O orçamento `orcamento-prata`, criado pela fase `alertas`, é de R$ 300 por ano,
+com aviso por e-mail em 50%, 80% e 100% do valor. Ele avisa, mas não bloqueia
+gasto. O que mantém o custo dentro do teto:
+
+- apps escalados a zero quando ociosos, sem réplica mínima; antes de uma
+  demonstração, `provisionar.sh <estágio> ligar` deixa uma réplica pronta, e
+  `desligar` a remove depois;
+- banco desligado entre usos (11.1.6);
+- servidor PostgreSQL B1MS e registro Standard na cota gratuita de 12 meses, e
+  Content Safety e Speech no nível gratuito;
+- worker fora da nuvem (11.2.1);
+- monitoramento sem teste sintético, que acordaria os apps a cada poucos
+  minutos (11.3.3).
+
+## 11.3 Monitoramento e Manutenção
+
+### 11.3.1 Logs
+
+O Container Apps Environment envia ao Log Analytics `log-prata` tudo o que os
+contêineres escrevem no console e os eventos da plataforma, com retenção de
+30 dias. Os logs de console ficam na tabela `ContainerAppConsoleLogs_CL`, e os
+eventos da plataforma, na tabela `ContainerAppSystemLogs_CL`:
+
+| App | O que registra |
+|---|---|
+| `ca-web-<estágio>` | Uma linha JSON por requisição, com método, caminho, status, tempo total e tempos do middleware (`request_time`, `upstream_response_time`, `upstream_header_time`) |
+| `ca-middleware-<estágio>` | Acesso do uvicorn, erros com *traceback* e as linhas INFO do pacote `app`, como `RAG situacao=... recuperados=...`, que dizem se uma abstenção veio da busca ou do modelo |
+
+Os logs não carregam texto de pergunta, resposta ou corpus. O log do nginx
+registra `$uri` sem a *query string* e deixa de fora o IP real do usuário, que
+chega no `X-Forwarded-For`. O texto das interações fica apenas na trilha de
+auditoria do banco (RNF02 e RNF07).
+
+A consulta é feita no portal (Log Analytics › `log-prata` › *Logs*) ou pela
+CLI, por meio da API REST do Log Analytics, sem extensão.
+
+### 11.3.2 Métricas
+
+As métricas foram definidas a partir do que o usuário percebe, e todas são
+calculadas sobre o `/api` que passa pelo nginx:
+
+| Métrica | Definição | Fonte |
+|---|---|---|
+| Disponibilidade | Fração das requisições `/api` sem 502, 503 ou 504, os códigos do proxy quando o middleware não responde | Log do web |
+| Erro | Fração das requisições `/api` com qualquer 5xx, inclusive o 500 da própria aplicação, mais as linhas `ERROR` e `CRITICAL` do middleware | Logs do web e do middleware |
+| Latência | p50, p95 e p99 do tempo total no proxy, com o `/api/chat` separado das demais rotas porque é dominado pelo modelo de geração | Log do web |
+| Saúde da plataforma | Sondas que falharam, contêineres reiniciados e réplicas que não subiram | Eventos do ambiente |
+
+A latência é medida no nginx porque o Container Apps não a oferece como
+métrica: a plataforma publica apenas contagem de requisições por código,
+réplicas, reinícios, CPU e memória. Essas métricas nativas continuam
+disponíveis no portal, em *Monitoring › Metrics* de cada app.
+
+As consultas ficam versionadas em
+[`infra/azure/consultas/`](../infra/azure/consultas/), uma por arquivo, e podem
+ser coladas no portal como estão. A fase `metricas` roda as três para o estágio
+e a janela pedidos:
+
+```bash
+JANELA=24h bash infra/azure/provisionar.sh dev metricas
+```
+
+![Consulta de disponibilidade, erro e latência no Log Analytics](./imagens/implantacao/05-consulta-latencia.jpg)
+
+*Figura 54 — Consulta `1-requisicoes-api.kql` no `log-prata`, com as métricas do `/api` do `dev`.*
+
+Na execução da Figura 54, em 25/09/2026 e com janela de 24 horas, as demais
+rotas do `/api` tiveram 61 requisições, 100% de disponibilidade, nenhum 5xx,
+p50 de 8 ms e p95 de 62 ms. O `/api/chat` teve 3 requisições, com p50 de
+16,7 s, tempo quase todo gasto na recuperação e na geração da resposta.
+
+### 11.3.3 Alertas
+
+Os alertas avisam o grupo de ação `ag-prata`, que envia e-mail a quem
+administra a assinatura:
+
+| Alerta | Condição | Janela |
+|---|---|---|
+| `alerta-indisponivel-ca-middleware-<estágio>` | Alguma requisição ao web devolvida com 502, 503 ou 504 | 5 min, avaliada a cada minuto |
+| `alerta-reinicio-ca-middleware-<estágio>` | `RestartCount` do middleware acima de zero | 15 min |
+| `orcamento-prata` | Gasto em 50%, 80% e 100% do teto anual | Anual |
+
+![Regras de alerta do grupo rg-prata-agent](./imagens/implantacao/06-regras-alerta.jpg)
+
+*Figura 55 — Regras de alerta de indisponibilidade e de reinício dos dois estágios, todas habilitadas.*
+
+O alerta de indisponibilidade observa o tráfego real, e não um teste
+sintético. Com os apps escalados a zero, um teste de disponibilidade a cada
+poucos minutos manteria o middleware acordado e consumiria o teto de gasto. O
+efeito é que o alerta dispara quando alguém tenta usar o sistema e o middleware
+não responde, que é a indisponibilidade que importa para o protótipo. O
+estado das sondas continua registrado nos eventos da plataforma, e a fase
+`metricas` o mostra.
+
+O caminho do alerta foi verificado no `dev` em 25/09/2026. Uma cópia temporária
+da regra, idêntica exceto por observar o código 404, disparou dois minutos
+depois da primeira requisição a uma rota inexistente e notificou o `ag-prata`.
+Em seguida foi apagada. A série de 503 já existia na métrica `Requests` do web,
+o que confirma que a condição da regra real usa os valores que a plataforma
+publica.
+
+Provocar uma queda real no teste não foi possível sem ação destrutiva. O
+reinício da revisão do middleware foi gracioso: a plataforma subiu a réplica
+nova antes de derrubar a antiga, e nenhuma das 24 requisições feitas durante o
+reinício falhou. O teste também mostrou um limite da regra. Com o ingresso do
+middleware desligado, o ambiente responde 404, e não 502, porque não encontra o
+app de destino. Esse caso é de configuração, e não de queda, e é pego pela
+fase `saude`, que recusa qualquer resposta diferente de `pronto`.
+
+### 11.3.4 Rotina de manutenção
+
+| Quando | O quê |
+|---|---|
+| Depois de cada deploy | Verificação de 11.2.4 |
+| Antes de uma demonstração | `retomar` ou `ligar` no estágio (11.1.6) |
+| Depois do uso | `parar`, para o banco e os apps não consumirem crédito |
+| Semanalmente | `metricas` com `JANELA=7d` e `conferir` nos dois estágios |
+| Quando uma chave de serviço muda | `segredos` e `RECONFIGURAR=1 ... apps` em cada estágio |
+| Quando o alerta de orçamento dispara | Conferir o que ficou ligado com `az containerapp list` e o estado do banco |
+
+## 11.4 Retorno a uma Versão Anterior
+
+O retorno segue o princípio da seção 7 do
+[GestaoConfiguracao.md](GestaoConfiguracao.md): o histórico não é apagado, e
+voltar a uma versão significa implantar de novo a imagem daquela versão, que
+continua no registro com a tag do commit. O caminho depende de a versão a
+abandonar ter trazido migração de banco ou não.
+
+### 11.4.1 Sem mudança de esquema
+
+Na maioria das versões, o esquema não muda, e o retorno é o próprio deploy:
+
+- **Pelo GitLab:** em *Operate › Environments › <estágio>*, usar *Rollback* na
+  implantação anterior. O GitLab executa de novo o job `implantar` daquela
+  pipeline, com a tag dela. O `alembic upgrade head` da imagem antiga não tem o
+  que aplicar, e a troca de imagem e a verificação de saúde seguem normalmente.
+- **Pela linha de comando:**
+
+  ```bash
+  TAG=<tag anterior> bash infra/azure/implantar.sh prd
+  ```
+
+As tags em uso e as anteriores aparecem em
+`az containerapp revision list -g rg-prata-agent -n ca-middleware-prd -o table`.
+
+### 11.4.2 Com mudança de esquema
+
+A imagem antiga não conhece as revisões de migração mais novas. Implantada
+direto, ela falharia no `alembic upgrade head` e interromperia o deploy antes
+de trocar os apps, sem prejuízo, mas também sem retorno. Por isso o esquema
+volta primeiro, com a imagem atual, que conhece as duas pontas:
+
+```bash
+git switch --detach <tag anterior>
+(cd src/middleware && alembic heads)        # revisão de destino
+git switch -
+REVISAO=<revisão de destino> bash infra/azure/provisionar.sh prd rebaixar
+TAG=<tag anterior> bash infra/azure/implantar.sh prd
+```
+
+A fase `rebaixar` executa `alembic downgrade <revisão>` no job de migração do
+estágio. Com o esquema já na revisão da versão antiga, o `upgrade head` dela
+não tem o que fazer, e o deploy segue como em 11.4.1. As migrações do projeto
+implementam `downgrade`. Uma que remova dados irreversivelmente precisa ser
+avaliada antes do retorno, e a restauração do backup (11.1.6) é a
+alternativa.
+
+Os dois caminhos foram testados no `dev` em 25/09/2026:
+
+- a reexecução do `implantar:dev` da pipeline 80204 levou o estágio de volta à
+  tag `8f455715`, com migração sem efeito e `saude` respondendo `pronto`;
+- a fase `rebaixar`, com a revisão atual como destino, executou
+  `alembic downgrade 20260925_audio_persistente` no job, conectada ao banco
+  pelo segredo, sem nada a desfazer. O teste validou a execução com comando
+  substituído sem alterar o esquema;
+- a reexecução do deploy da pipeline 80209 devolveu o estágio à versão mais
+  nova.
+
+### 11.4.3 Quando acionar
+
+O retorno é acionado por quem fez o deploy, sem esperar reunião, em qualquer
+um destes casos:
+
+- o `implantar:<estágio>` falhou depois de trocar os apps, ou a verificação de
+  11.2.4 falhou;
+- o alerta de indisponibilidade disparou na primeira hora depois do deploy, e
+  a causa não se resolve com `ligar` ou `retomar`;
+- a fase `metricas` mostra aumento de erro 5xx ou de latência no `/api/chat`
+  em relação à versão anterior, na mesma janela de uso.
+
+No `prd`, o retorno vem antes do diagnóstico, porque o ambiente é o das
+demonstrações. A correção segue depois pelo fluxo normal: branch `fix/` a
+partir da `develop` e merge request.
 
 # Referências
 

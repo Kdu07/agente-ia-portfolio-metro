@@ -17,10 +17,13 @@
 #   dados      copia os esquemas rag e portfolio do banco local
 #   apps       middleware e web; o worker de rotinas só com COM_WORKER=1
 #   entra      redirect URI do login no registro de aplicativo
-#   alertas    grupo de ação, alerta de reinício e orçamento
+#   alertas    grupo de ação, alertas de reinício e de indisponibilidade, orçamento
+#   pipeline   identidade do GitLab CI no estágio, por OIDC e sem segredo
 #   fechar     remove o acesso temporário ao banco
 #   conferir   só leitura: segredos por referência ao cofre, TLS e rede do banco
-# Fora de `tudo`: conta, ligar, desligar, parar, retomar, saude e local
+# Fora de `tudo`: conta, ligar, desligar, parar, retomar, saude, metricas
+# (só leitura: disponibilidade, erro e latência no Log Analytics), rebaixar
+# (downgrade do alembic antes de voltar a uma imagem anterior) e local
 # (grava as chaves do Content Safety e do Speech no .env da máquina).
 #
 # Cada passo testa se o recurso existe antes de criar: rodar de novo não
@@ -116,16 +119,17 @@ tem_worker() {
   existe az containerapp show -g "$RG" -n "$APP_WORKER"
 }
 
-executar_job() { # nome do job
-  local execucao estado
-  execucao=$(azv containerapp job start -g "$RG" -n "$1" --query name)
+executar_job() { # nome do job [opções do `job start`]
+  local nome=$1 execucao estado
+  shift
+  execucao=$(azv containerapp job start -g "$RG" -n "$nome" "$@" --query name)
   echo "  execução $execucao"
   while :; do
-    estado=$(azv containerapp job execution show -g "$RG" -n "$1" \
+    estado=$(azv containerapp job execution show -g "$RG" -n "$nome" \
       --job-execution-name "$execucao" --query properties.status)
     case "$estado" in
-      Succeeded) echo "  $1: Succeeded"; return 0 ;;
-      Failed | Stopped | Degraded) echo "  $1: $estado (ver logs do job)" >&2; return 1 ;;
+      Succeeded) echo "  $nome: Succeeded"; return 0 ;;
+      Failed | Stopped | Degraded) echo "  $nome: $estado (ver logs do job)" >&2; return 1 ;;
     esac
     sleep 10
   done
@@ -167,9 +171,21 @@ fase_fundacao() {
 }
 
 fase_imagens() {
-  # Local, com Docker: o `az acr build` não roda em assinatura de crédito.
+  # Com Docker, local ou no pipeline: o `az acr build` não roda em
+  # assinatura de crédito.
   az acr login -n "$ACR"
-  docker build -t "$IMG_API" "$(caminho_nativo "$RAIZ/src/middleware")"
+  # No pipeline o Docker começa vazio. Partindo da imagem em uso no
+  # estágio, o torch e o modelo (uns 3 GB) só são refeitos quando o
+  # pyproject muda, e o push só leva as camadas novas.
+  local cache=() anterior
+  if [ -n "${CI:-}" ]; then
+    anterior=$(azv containerapp show -g "$RG" -n "$APP_API" \
+      --query "properties.template.containers[0].image" 2>/dev/null || true)
+    if [ -n "$anterior" ] && docker pull -q "$anterior"; then
+      cache=(--cache-from "$anterior")
+    fi
+  fi
+  docker build "${cache[@]}" -t "$IMG_API" "$(caminho_nativo "$RAIZ/src/middleware")"
   docker build -t "$IMG_WEB" "$(caminho_nativo "$RAIZ/src/web")"
   docker push "$IMG_API"
   docker push "$IMG_WEB"
@@ -382,6 +398,24 @@ fase_migracao() {
       --set-env-vars "DATABASE_URL=secretref:database-url" -o none
   fi
   executar_job "$JOB_MIGRACAO"
+}
+
+# Desfaz migrações antes de voltar a uma imagem anterior: a imagem antiga
+# não conhece as revisões mais novas, e o `upgrade head` dela falharia. O
+# downgrade roda com a imagem que está no job, que conhece as duas pontas.
+# Depois dele, a volta é o deploy normal da tag antiga (capítulo 11.4 do
+# Projeto.md):
+#   REVISAO=<head do alembic na versão de destino> provisionar.sh prd rebaixar
+# O `job start` com --image substitui o contêiner inteiro da execução: o
+# ambiente precisa ir de novo, com o banco por referência ao segredo.
+fase_rebaixar() {
+  local revisao="${REVISAO:?informe REVISAO=<revisão do alembic de destino>}" imagem
+  imagem=$(azv containerapp job show -g "$RG" -n "$JOB_MIGRACAO" \
+    --query "properties.template.containers[0].image")
+  echo "  alembic downgrade $revisao com $imagem"
+  executar_job "$JOB_MIGRACAO" --image "$imagem" --container-name migracao \
+    --cpu 1 --memory 2Gi --command alembic --args downgrade "$revisao" \
+    --env-vars "DATABASE_URL=secretref:database-url" AQUECER_MODELOS=false
 }
 
 fase_dados() {
@@ -609,6 +643,16 @@ fase_alertas() {
         --condition "total RestartCount > 0" --window-size 15m --evaluation-frequency 5m \
         --action ag-prata -o none
   done
+  # Indisponibilidade do middleware como o usuário a percebe: o proxy do
+  # web devolve 502, 503 ou 504 quando o middleware não responde. Um teste
+  # sintético acordaria a cada poucos minutos o app escalado a zero e
+  # gastaria crédito; este alerta só observa o tráfego que já existe.
+  existe az monitor metrics alert show -g "$RG" -n "alerta-indisponivel-$APP_API" ||
+    az monitor metrics alert create -g "$RG" -n "alerta-indisponivel-$APP_API" \
+      --scopes "$(azv containerapp show -g "$RG" -n "$APP_WEB" --query id)" \
+      --condition "total Requests > 0 where statusCode includes 502 or 503 or 504" \
+      --window-size 5m --evaluation-frequency 1m --action ag-prata \
+      --description "O web recebeu 502, 503 ou 504 em /api: o $APP_API não respondeu" -o none
 
   # Orçamento da assinatura inteira, na moeda de cobrança dela. Avisa; não
   # bloqueia gasto.
@@ -636,6 +680,45 @@ JSON
     --body "@$(caminho_nativo "$corpo")" -o none
   rm -f "$corpo"
   echo "  orçamento de $ORCAMENTO por ano com alertas em 50, 80 e 100% para $email"
+}
+
+# Identidade do pipeline do GitLab neste estágio. Não há segredo: a Azure
+# troca o token OIDC que o GitLab emite para o job por um token de acesso,
+# desde que o token venha deste projeto e do ramo do estágio (develop → dev,
+# main → prd). Os papéis cobrem só o que `imagens` e `implantar.sh` fazem,
+# e só nos recursos deste estágio. O client id impresso vai para a variável
+# AZURE_CLIENT_ID do GitLab, com escopo de ambiente igual ao estágio.
+#
+# Para testar uma branch no dev antes do merge, RAMO=<branch> cria mais uma
+# credencial federada; ela sai com `az identity federated-credential delete`.
+fase_pipeline() {
+  if [ "$ESTAGIO" = prd ] && [ "$RAMO" != main ]; then
+    echo "  o prd só aceita a main" >&2
+    return 1
+  fi
+  existe az identity show -g "$RG" -n "$ID_CI" ||
+    az identity create -g "$RG" -n "$ID_CI" -l "$LOC" -o none
+  local credencial="gitlab-${RAMO//\//-}"
+  existe az identity federated-credential show -g "$RG" --identity-name "$ID_CI" -n "$credencial" ||
+    az identity federated-credential create -g "$RG" --identity-name "$ID_CI" -n "$credencial" \
+      --issuer "$GITLAB_EMISSOR" --audiences api://AzureADTokenExchange \
+      --subject "project_path:$GITLAB_PROJETO:ref_type:branch:ref:$RAMO" -o none
+  echo "  credencial $credencial: $GITLAB_PROJETO, ramo $RAMO"
+
+  carregar_ids
+  local principal alvo
+  principal=$(azv identity show -g "$RG" -n "$ID_CI" --query principalId)
+  # Leitura do grupo: estado do banco, ambiente, cofre e registro.
+  atribuir "$principal" ServicePrincipal Reader "$(azv group show -n "$RG" --query id)"
+  atribuir "$principal" ServicePrincipal AcrPush "$ACR_ID"
+  for alvo in "containerapp $APP_API" "containerapp $APP_WEB" "containerapp job $JOB_MIGRACAO"; do
+    # shellcheck disable=SC2086 # o tipo tem uma ou duas palavras
+    atribuir "$principal" ServicePrincipal Contributor "$(azv ${alvo% *} show -g "$RG" -n "${alvo##* }" --query id)"
+  done
+  # Atualizar um app com identidade atribuída pelo usuário exige poder
+  # atribuir essa identidade, mesmo quando só a imagem muda.
+  atribuir "$principal" ServicePrincipal "Managed Identity Operator" "$ID_RES"
+  echo "  AZURE_CLIENT_ID ($ESTAGIO): $(azv identity show -g "$RG" -n "$ID_CI" --query clientId)"
 }
 
 fase_fechar() {
@@ -820,11 +903,58 @@ fase_retomar() {
   fase_saude
 }
 
+# Com revisão única, a anterior segue com todo o tráfego até a nova ter uma
+# réplica pronta, o que no middleware leva minutos (o classificador aquece
+# primeiro). A revisão nova já aparece "pronta" assim que é provisionada:
+# o sinal de que a versão nova está no ar é o tráfego ter chegado a ela.
+aguardar_trafego() { # nome do app
+  local i ultima com_trafego
+  for i in $(seq 1 60); do
+    ultima=$(azv containerapp show -g "$RG" -n "$1" --query properties.latestRevisionName)
+    com_trafego=$(azv containerapp revision list -g "$RG" -n "$1" \
+      --query "[?properties.trafficWeight==\`100\`].name | [0]")
+    if [ "$ultima" = "$com_trafego" ]; then
+      echo "  $1: tráfego em $ultima"
+      return 0
+    fi
+    sleep 15
+  done
+  echo "  $1: a revisão $ultima não recebeu o tráfego em 15 min; ver 'az containerapp logs show'" >&2
+  return 1
+}
+
+# Sem esperar o tráfego, o `saude` de um deploy responderia pela versão
+# anterior. Num `retomar`, sem revisão nova, a espera passa direto.
 fase_saude() {
   local url resposta
+  aguardar_trafego "$APP_API"
+  aguardar_trafego "$APP_WEB"
   url="https://$(web_fqdn)/api/health/pronto"
   resposta=$(curl --fail-with-body --show-error --silent --max-time 300 "$url")
   echo "  $url -> $resposta"
+}
+
+# Só leitura. Roda as consultas de infra/azure/consultas/ no Log Analytics
+# e imprime o resultado de cada uma para os apps do estágio, na janela
+# JANELA (padrão 24h). Cada .kql traz no topo os `let` com os nomes do dev,
+# para poder ser colado direto no portal; aqui eles viram os do estágio.
+# Pela API REST, porque o `az monitor log-analytics query` pede extensão.
+fase_metricas() {
+  local ws arquivo corpo janela="${JANELA:-24h}"
+  ws=$(azv monitor log-analytics workspace show -g "$RG" -n "$LAW" --query customerId)
+  corpo=$(mktemp)
+  for arquivo in "$AQUI"/consultas/*.kql; do
+    echo "  -- $(basename "$arquivo" .kql), últimas $janela"
+    sed -e "s/^let web = .*/let web = \"$APP_WEB\";/" \
+      -e "s/^let middleware = .*/let middleware = \"$APP_API\";/" \
+      -e "s/^let janela = .*/let janela = $janela;/" "$arquivo" |
+      jq -Rs '{query: .}' >"$corpo"
+    az rest --method post --url "https://api.loganalytics.io/v1/workspaces/$ws/query" \
+      --resource https://api.loganalytics.io --body "@$(caminho_nativo "$corpo")" -o json |
+      jq -r '.tables[0] | (.columns | map(.name)), (.rows[] | map(tostring)) | @tsv' |
+      tr -d '\r' | sed 's/^/  /'
+  done
+  rm -f "$corpo"
 }
 
 # --- Execução -------------------------------------------------------------
@@ -832,7 +962,7 @@ fase_saude() {
 [ $# -gt 0 ] || set -- tudo
 for fase in "$@"; do
   if [ "$fase" = tudo ]; then
-    set -- fundacao imagens cofre banco cognitivos segredos ambiente migracao dados apps entra alertas fechar conferir
+    set -- fundacao imagens cofre banco cognitivos segredos ambiente migracao dados apps entra alertas pipeline fechar conferir
     for f in "$@"; do
       echo "== $f ($ESTAGIO)"
       "fase_$f"
