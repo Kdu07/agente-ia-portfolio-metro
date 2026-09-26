@@ -11451,12 +11451,20 @@ serviço, no terminal ou no repositório. A correspondência completa entre
 variáveis e segredos está na seção 8.1 do
 [GestaoConfiguracao.md](GestaoConfiguracao.md).
 
+![Lista de segredos do cofre kv-prata-prd-g02t17, apenas com os nomes](./imagens/implantacao/03-segredos-cofre.jpg)
+
+*Figura 48 — Segredos do cofre do `prd`: só os nomes aparecem, e o valor nunca sai do Key Vault.*
+
 O servidor exige TLS 1.2 ou superior (`require_secure_transport` ligado) e
 aceita conexão apenas pela regra de serviços da Azure. A justificativa dessa
 regra e os cinco controles que compensam a exposição restante estão na seção 6
 do mesmo documento. Durante o provisionamento, a fase `banco` abre uma regra
 temporária, `provisionamento`, para o IP de quem executa. A fase `fechar` a
 remove ao final.
+
+![Rede do servidor psql-prata-g02t17, com acesso dos serviços do Azure e nenhuma regra de IP](./imagens/implantacao/04-rede-banco.jpg)
+
+*Figura 49 — Rede do servidor PostgreSQL: TLS imposto, acesso só pela regra de serviços da Azure e nenhuma regra de firewall por IP.*
 
 ### 11.1.4 Migrações de esquema
 
@@ -11607,6 +11615,10 @@ revelou o limite de um único Container Apps Environment por região na
 assinatura (`MaxNumberOfRegionalEnvironmentsInSubExceeded`), e por isso ele
 entrou no ambiente `cae-prata-dev`.
 
+![Recursos do grupo rg-prata-agent no portal da Azure](./imagens/implantacao/01-grupo-recursos.jpg)
+
+*Figura 50 — Recursos do grupo `rg-prata-agent`, com os dois estágios, as identidades do pipeline e os alertas.*
+
 ### 11.2.3 Entrega contínua
 
 A partir da Sprint 4, uma versão nova não depende de alguém rodar os scripts na
@@ -11625,6 +11637,14 @@ o `$CI_COMMIT_SHORT_SHA`, nas duas pontas, e cada deploy fica registrado em
 *Operate › Environments* do GitLab, com a URL do estágio. Os dois jobs de
 implantação levam um `resource_group`, de modo que dois deploys do mesmo
 estágio nunca correm ao mesmo tempo.
+
+![Pipeline 80209 com os estágios lint, teste, imagens e implantar concluídos](./imagens/implantacao/07-pipeline.jpg)
+
+*Figura 51 — Pipeline 80209: verificação, publicação das imagens e implantação no `dev`.*
+
+![Ambiente dev no GitLab com a última implantação](./imagens/implantacao/08-ambientes.jpg)
+
+*Figura 52 — Ambiente `dev` no GitLab (Operate › Environments), com a implantação em vigor e o acesso ao estágio.*
 
 O disparo manual do `prd` é deliberado. A semana de entrega é curta, e um
 deploy automático a cada merge na `main` arriscaria derrubar o ambiente das
@@ -11707,6 +11727,10 @@ Depois de cada implantação, a equipe confere três pontos:
 - **Revisões:** conferir em `az containerapp revision list` que a revisão nova
   está ativa e saudável. A revisão nova do middleware fica alguns minutos em
   `Activating` enquanto o classificador aquece.
+
+![Revisão ativa do ca-middleware-dev com todo o tráfego](./imagens/implantacao/02-revisoes-middleware.jpg)
+
+*Figura 53 — Revisão ativa do middleware do `dev` depois do deploy: em execução, com 100% do tráfego e uma réplica.*
 
 As três primeiras execuções, em 25/09/2026, foram disparadas a partir da branch
 deste capítulo pelo procedimento de teste de 11.2.3, e cada uma deixou uma
@@ -11794,6 +11818,15 @@ e a janela pedidos:
 JANELA=24h bash infra/azure/provisionar.sh dev metricas
 ```
 
+![Consulta de disponibilidade, erro e latência no Log Analytics](./imagens/implantacao/05-consulta-latencia.jpg)
+
+*Figura 54 — Consulta `1-requisicoes-api.kql` no `log-prata`, com as métricas do `/api` do `dev`.*
+
+Na execução da Figura 54, em 25/09/2026 e com janela de 24 horas, as demais
+rotas do `/api` tiveram 61 requisições, 100% de disponibilidade, nenhum 5xx,
+p50 de 8 ms e p95 de 62 ms. O `/api/chat` teve 3 requisições, com p50 de
+16,7 s, tempo quase todo gasto na recuperação e na geração da resposta.
+
 ### 11.3.3 Alertas
 
 Os alertas avisam o grupo de ação `ag-prata`, que envia e-mail a quem
@@ -11804,6 +11837,10 @@ administra a assinatura:
 | `alerta-indisponivel-ca-middleware-<estágio>` | Alguma requisição ao web devolvida com 502, 503 ou 504 | 5 min, avaliada a cada minuto |
 | `alerta-reinicio-ca-middleware-<estágio>` | `RestartCount` do middleware acima de zero | 15 min |
 | `orcamento-prata` | Gasto em 50%, 80% e 100% do teto anual | Anual |
+
+![Regras de alerta do grupo rg-prata-agent](./imagens/implantacao/06-regras-alerta.jpg)
+
+*Figura 55 — Regras de alerta de indisponibilidade e de reinício dos dois estágios, todas habilitadas.*
 
 O alerta de indisponibilidade observa o tráfego real, e não um teste
 sintético. Com os apps escalados a zero, um teste de disponibilidade a cada
