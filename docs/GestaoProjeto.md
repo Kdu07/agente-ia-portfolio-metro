@@ -1317,25 +1317,25 @@ A razão entre a maior e a menor carga atribuída é de **2,25:1** (29,75 h cont
 
 ##### Reapuração no fechamento da Sprint 4
 
-> **Nota metodológica.** Corte de **25/09/2026 às 23h16 (UTC−03:00)**, fim do período da sprint. Commit de fechamento na `develop`: `1858598`, merge do !148 às 23h12, o último antes do corte. É a reapuração exigida por `AM24` (#503), com as mesmas regras do corte de 22/09 e três fontes:
+> **Nota metodológica.** Corte de **25/09/2026 às 23h26 (UTC−03:00)**, mesmo horário do relatório de contribuições gerado pelo GitLab. Commit de fechamento na `develop`: `1858598`, merge do !148 às 23h12, o último antes do corte. É a reapuração exigida por `AM24` (#503), com as mesmas regras do corte de 22/09 e três fontes:
 >
 > 1. **Board**, milestone `Sprint 04`, pela API do GitLab: issue concluída é a fechada até o corte, atribuída ao primeiro responsável, com a mesma conversão de *size*.
-> 2. **Repositório**: commits autorais (sem os de merge) com data de autoria entre 14/09 às 00h00 e o corte, identidade reconciliada pelo `.mailmap` (`AM10`). *Na `develop`* conta o que está integrado; *em todas as branches* conta hashes únicos, incluindo o que ainda não entrou.
+> 2. **Repositório**: commits autorais (sem os de merge) com data de autoria entre 14/09 às 00h00 e o corte, identidade reconciliada pelo `.mailmap` (`AM10`). *Na `develop`* conta o que está integrado; *em todas as branches* conta hashes únicos nas branches publicadas no GitLab, incluindo o que ainda não entrou.
 > 3. **Merge requests** para a `develop` criados no período, pela API: *revisão nomeada* é o revisor atribuído, e *merge executado* é quem integrou.
 >
-> O período começa em 14/09, e não no último merge da Sprint 3, como no corte de 22/09; por isso os totais do repositório não são a soma do corte anterior com o que veio depois. O relatório de contribuições gerado pelo GitLab no mesmo horário não foi usado para autoria e integração: ele não reconheceu a conta de uma integrante, que aparece sem merge request criado ou revisado apesar de ter aberto 12 e revisado 21, e conta menos commits que o histórico para três integrantes.
+> O período começa em 14/09, e não no último merge da Sprint 3, como no corte de 22/09; por isso os totais do repositório não são a soma do corte anterior com o que veio depois. O relatório de contribuições foi conferido contra essas fontes. Ele coincide nos merge requests criados e nos commits de três integrantes, mas não substitui as fontes: deixa de fora 32 commits já integrados na `develop`, de três integrantes, com a mesma identidade dos que ele conta; marca como fora da `develop` o commit do !148, integrado às 23h12; lista 39 das 96 issues da milestone; e registra 34 dos 64 merges executados.
 
 **Distribuição por integrante no fechamento**
 
 | Integrante | Issues | Horas atribuídas | Concluídas | Horas concluídas | Commits na `develop` | Commits em todas as branches | MRs abertos | Revisões nomeadas | Merges executados |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Mirela Bianchi | 23 | 30,00 h | 23 | 30,00 h | 39 | 45 | 12 | 21 | 21 |
-| Mariana Reis | 20 | 31,00 h | 20 | 31,00 h | 55 | 55 | 18 | 26 | 26 |
-| Carlos Eduardo Serrano Quaglia | 18 | 25,00 h | 15 | 21,50 h | 18 | 42 | 10 | 7 | 6 |
-| Eduardo Casarini | 18 | 23,50 h | 16 | 21,50 h | 56 | 75 | 18 | 6 | 6 |
-| Celso Rocha | 10 | 16,00 h | 10 | 16,00 h | 60 | 73 | 5 | 4 | 4 |
+| Mariana Reis | 20 | 31,00 h | 20 | 31,00 h | 55 | 55 | 18 | 27 | 26 |
+| Carlos Eduardo Serrano Quaglia | 18 | 25,00 h | 18 | 25,00 h | 18 | 31 | 10 | 7 | 6 |
+| Eduardo Casarini | 18 | 23,50 h | 16 | 21,50 h | 61 | 70 | 19 | 6 | 6 |
+| Celso Rocha | 10 | 16,00 h | 10 | 16,00 h | 61 | 64 | 5 | 4 | 4 |
 | Alexsander Barbosa | 7 | 10,00 h | 7 | 10,00 h | 8 | 8 | 2 | 1 | 1 |
-| **Total** | **96** | **135,50 h** | **91** | **130,00 h** | **236** | **298** | **65** | **65** | **64** |
+| **Total** | **96** | **135,50 h** | **94** | **133,50 h** | **242** | **273** | **66** | **66** | **64** |
 
 As horas atribuídas por integrante mudaram em relação a 22/09 porque issues foram redistribuídas ao longo do ciclo; o total de 135,50 h se manteve. A milestone passou de 97 para 96 issues.
 
@@ -1343,20 +1343,20 @@ As horas atribuídas por integrante mudaram em relação a 22/09 porque issues f
 
 | Indicador | Corte de 22/09 | Fechamento de 25/09 |
 |---|---:|---:|
-| Issues concluídas | 28 de 97 (29%) | **91 de 96 (95%)** |
-| Horas concluídas | 38,25 h de 135,50 h (28%) | **130,00 h de 135,50 h (96%)** |
-| Commits autorais na `develop` / em todas as branches | 58 / 123 (47% integrados) | **236 / 298 (79% integrados)** |
-| Merge requests para a `develop` | 24 — 17 integrados, 6 em revisão, 1 fechado | **65 — 64 integrados, 1 fechado sem merge** |
-| Merge requests com revisor nomeado | 23 de 24 | **65 de 65** |
+| Issues concluídas | 28 de 97 (29%) | **94 de 96 (98%)** |
+| Horas concluídas | 38,25 h de 135,50 h (28%) | **133,50 h de 135,50 h (99%)** |
+| Commits autorais na `develop` / em todas as branches | 58 / 123 (47% integrados) | **242 / 273 (89% integrados)** |
+| Merge requests para a `develop` | 24 — 17 integrados, 6 em revisão, 1 fechado | **66 — 64 integrados, 1 em revisão, 1 fechado sem merge** |
+| Merge requests com revisor nomeado | 23 de 24 | **66 de 66** |
 | Merges executados por duas pessoas | 14 de 17 (82%) | **47 de 64 (73%)** |
 | Maior participação individual nos merges | — | **41%** (26 de 64) |
 | Razão entre a maior e a menor carga atribuída | 2,25:1 | **3,10:1** (31,00 h contra 10,00 h) |
-| Commits na `develop` aderentes à política de commits vigente na Sprint 4 | 0 de 58 (0%) | **66 de 236 (28%)** |
-| Mesmos commits pela regra da Sprint 5, que aceita `(#N)` e `#N` | — | **133 de 236 (56%)** |
+| Commits na `develop` aderentes à política de commits vigente na Sprint 4 | 0 de 58 (0%) | **72 de 242 (30%)** |
+| Mesmos commits pela regra da Sprint 5, que aceita `(#N)` e `#N` | — | **139 de 242 (57%)** |
 
 A aderência aplica as quatro regras da seção 3 do `GestaoConfiguracao.md`: tipo do Conventional Commits no início, verbo no infinitivo (conferido pela terminação em *-ar*, *-er*, *-ir* ou *-or*), referência ao card no fim, separada por espaço, e título de até 72 caracteres. As falhas se sobrepõem:
 
-| Regra descumprida, nos 236 commits | Commits |
+| Regra descumprida, nos 242 commits | Commits |
 |---|---:|
 | Card sem parênteses (regra da Sprint 4) | 133 |
 | Verbo fora do infinitivo | 84 |
@@ -1364,15 +1364,15 @@ A aderência aplica as quatro regras da seção 3 do `GestaoConfiguracao.md`: ti
 | Título acima de 72 caracteres | 23 |
 | Tipo fora do padrão | 5 |
 
-**Issues abertas no fechamento:** #377, #380 e #381, ainda em andamento; #401, com o merge request integrado (!167) e a issue por fechar à mão, como define a seção 2.7; e #402, com a branch pronta e o merge request a abrir.
+**Resíduo e reserva da Sprint 5.** Ficaram abertas duas issues, com 2,00 h: #401, com o merge request integrado (!167) e a issue por fechar à mão, como define a seção 2.7, e #402, com o merge request em revisão (!176). O resíduo ocupa 3% da reserva de 75,25 h que a seção [3.6](#36-sprint-5) separou para ele. A regra de corte da `AM20` não é acionada, e o restante da folga, 73,25 h, fica para as correções de usabilidade.
 
 **Leitura dos números**
 
-- **A conclusão se concentrou nos últimos três dias.** Entre 22/09 e 25/09, 63 issues e 91,75 h foram concluídas, dois terços da sprint em um quarto do tempo. O resultado final é alto (95%), mas repete o padrão que `AM13` e `AM25` tentam corrigir, e confirma o ponto de atenção sobre a operação acima da capacidade.
-- **A integração alcançou o trabalho.** A parte dos commits já na `develop` subiu de 47% para 79%, e nenhum merge request do período ficou sem revisor. Os 62 commits restantes estão em branches que não foram integradas no período.
+- **A conclusão se concentrou nos últimos três dias.** Entre 22/09 e o fechamento, 66 issues e 95,25 h foram concluídas, 70% do que a sprint concluiu, em um quarto do tempo, e 109 dos 242 commits integrados foram escritos nesse intervalo. O resultado final é alto (98%), mas repete o padrão que `AM13` e `AM25` tentam corrigir, e confirma o ponto de atenção sobre a operação acima da capacidade.
+- **A integração alcançou o trabalho.** A parte dos commits já na `develop` subiu de 47% para 89%, e nenhum merge request do período ficou sem revisor. Os 31 commits fora da `develop` são versões anteriores de trabalho que entrou reescrito por outro merge request, a automação experimental do quadro, trabalho de interface ainda não integrado (#397 e #448) e a revisão do contrato (#402), em revisão.
 - **A integração segue concentrada, mas diminuiu.** Duas pessoas executaram 73% dos merges, contra 82% no corte, e a maior participação individual ficou em 41%, um ponto acima do teto de 40% que `AM22` fixa para a Sprint 5. Na prática, quem revisa é quem integra: as colunas de revisões nomeadas e merges executados são quase iguais.
 - **A razão de carga piorou com a redistribuição.** Passou de 2,25:1 para 3,10:1 porque issues mudaram de responsável ao longo do ciclo, e não porque o total mudou. Reforça `AM21`, que leva a verificação de carga para o planejamento.
-- **A política de commits avançou, mas pela forma nova.** Com a regra da Sprint 4, a aderência foi de 0% a 28%; com a regra da Sprint 5, que aceita a referência sem parênteses, chega a 56%. O que falta é principalmente o verbo no infinitivo (84 commits), que é o alvo da conferência na revisão de `AM26`.
+- **A política de commits avançou, mas pela forma nova.** Com a regra da Sprint 4, a aderência foi de 0% a 30%; com a regra da Sprint 5, que aceita a referência sem parênteses, chega a 57%. O que falta é principalmente o verbo no infinitivo (84 commits), que é o alvo da conferência na revisão de `AM26`.
 
 Os números descrevem o processo, e não o desempenho individual: horas vêm do *size* estimado de cada card, e commits variam de tamanho e natureza entre integrantes e tipos de entrega.
 
