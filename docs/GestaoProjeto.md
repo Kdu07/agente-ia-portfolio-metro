@@ -520,6 +520,64 @@ A ação AM13, que previa repriorizar o quadro no penúltimo dia da sprint, depe
 
 Espera-se redução do tempo perdido com incidentes de ambiente local, que na Sprint 3 consumiram horas de trabalho sem produzir entrega. A abertura de issue para defeito encontrado deve tornar visível no board um tipo de trabalho que antes ficava embutido em outras entregas. A adequação da taxonomia de labels alinha o board aos critérios pelos quais o grupo é avaliado. A condução nomeada e o registro no quadro devem sustentar as três verificações da daily sem alongar o encontro. A convenção unificada de merge request elimina a divergência entre documento e prática e permite ler o título do card, o commit e o merge request como uma sequência única. A exceção da branch-base elimina a escolha entre cumprir a regra e documentar código existente, situação que a regra anterior não previa.
 
+#### 2.9.3 Revisão Sprint 4
+
+> **Situação: rascunho para a retrospectiva da Sprint 4 (#402).** Esta revisão percorre o contrato inteiro com os fatos já registrados na seção [3.5](#35-sprint-4). Cada linha marcada como **proposta** depende de aprovação dos seis integrantes na retrospectiva; a data, as decisões e o impacto final serão preenchidos nesse encontro, e só então a seção deixa de ser rascunho.
+
+**Data:** a registrar na retrospectiva da Sprint 4.
+
+**Regras revisadas e mantidas (proposta)**
+
+| Regra | Seção | Razão da manutenção |
+|---|---|---|
+| Regra de ouro | 2.1.1 | Nenhum conflito ou episódio de exposição individual foi registrado no board ou nos canais durante o ciclo. *A confirmar na retrospectiva* |
+| Board e repositório como fontes oficiais | 2.1.1 | 97 de 97 issues da milestone com responsável, *size* e prioridade, sem regularização em bloco, e 23 dos 24 merge requests do período com revisor nomeado desde a abertura (seção 3.5.5) |
+| Repositório fora de pasta sincronizada com nuvem | 2.1.2 | `AM19` efetiva: nenhum incidente de ambiente local com o Git no ciclo, contra quatro na Sprint 3 |
+| Comunicação oficial em dois canais | 2.2.1 | A separação entre WhatsApp informal e Slack formal não gerou ambiguidade registrada. *A confirmar na retrospectiva* |
+| Dailies presenciais às 14h, com 15 minutos, conduzidas pelo Scrum Master | 2.2.2 | Formato mantido. A condução nomeada, criada na revisão anterior, foi exercida no ciclo |
+| Resolução de impasses e conflitos | 2.3 | A progressão não precisou ser acionada. *A confirmar na retrospectiva* |
+| Estrutura das issues, *T-shirt sizing* e labels | 2.5 | Mantidas com a conferência da Sprint 4 registrada na seção 2.5.3 (#401), que adotou a prática real do quadro enquanto as labels oficiais ausentes não são criadas |
+| Fluxo e rastreabilidade | 2.6 | O fluxo issue, branch, commit, merge request e merge continua sendo o praticado |
+| Fechamento da sprint | 2.8 | Mantido; a reapuração das métricas depois do último merge já é exigida por `AM24` |
+
+**Regras alteradas no ciclo e já registradas**
+
+As alterações abaixo foram feitas durante a Sprint 4 e estão descritas nas seções indicadas. Entram nesta revisão para que o contrato registre o motivo em um só lugar.
+
+| Regra | Seção | Alteração | Motivo |
+|---|---|---|---|
+| Referência ao card no commit e no título de merge request | 2.7 | `(#N)` ou `#N`, a partir da Sprint 5 | 34 dos 58 commits integrados da Sprint 4 usaram `#N`, e as duas formas geram o mesmo vínculo no GitLab |
+| Fechamento da issue | 2.7 | Manual, logo após o merge na `develop`, com o DoD conferido | O GitLab só fecha a issue no merge para a `main`, que é a branch padrão |
+| Label de impedimento e colunas do quadro | 2.5.3 e 2.7 | `BLOCKED` e os nomes reais das colunas | `BLOCK` e as colunas em minúsculas não existem no projeto |
+| Integração da `develop` na `main` | `GestaoConfiguracao.md` 2.2 | Merge request da `develop` ao fim de cada sprint; release opcional | O histórico mostra a `develop` integrada diretamente desde a Sprint 3 (!88 e !110) |
+
+**Alterações propostas (a aprovar)**
+
+- **Operação acima da capacidade declarada.** O ciclo atribuiu 135,50 h contra 96,00 h declaradas (141%), com quatro de seis integrantes acima de 16 h e commits no sábado e no domingo, 19 e 20/09 (seção 3.5.3). O grupo precisa escolher uma regra; as opções são:
+  1. **Manter as 16 h e cortar escopo no planejamento:** a soma das horas atribuídas na abertura da sprint não passa da capacidade declarada, e o que exceder fica para a sprint seguinte ou é negociado com a orientação;
+  2. **Declarar a capacidade real:** revisar as 16 h por integrante para o que o grupo de fato consegue sustentar, registrando o novo valor na milestone;
+  3. **Aceitar excesso pontual com limite:** até 110% da capacidade, declarado na milestone com o motivo, e trabalho no fim de semana só por acordo registrado.
+
+  *Recomendação para a discussão:* a opção 1, porque é a única que torna o planejamento verificável e não transforma o excesso em norma. Com uma única sprint restante no módulo, a opção 3 pode valer como exceção declarada, se o escopo da Sprint 5 não couber.
+- **Verificação de carga no planejamento.** A razão de 2,25:1, pelo segundo ciclo acima do teto de 2:1 sem justificativa em card, mostra que a verificação diária chega tarde. A seção 2.2.2 passa a prever a mesma verificação na abertura da sprint, antes de o ciclo começar, conforme `AM21`.
+- **Integração distribuída.** 14 dos 17 merges da Sprint 4 (82%) foram executados por duas pessoas. A seção 2.1.2 passa a registrar que quem revisa também integra, com nenhum integrante executando mais de 40% dos merges do ciclo, conforme `AM22`.
+- **SLA de revisão medido.** O prazo de 24 horas úteis (2.1.2 e 2.2.3) não é medido desde a Sprint 2. Fica mantido, e passa a ser aferido no fechamento pela mediana do tempo até a primeira revisão, conforme `AM23`.
+- **Integração contínua no fluxo de merge.** Com a pipeline integrada à `develop` pelo !171, a seção 2.7 passa a registrar o que ela verifica e a regra de não integrar merge request com pipeline falhando. A regra substitui o registro da Sprint 4, que ainda descrevia a ausência de pipeline.
+- **Conferência da política de commits.** `AM26` passa a conferir as mensagens pelas regras vigentes a partir da Sprint 5, que aceitam `(#N)` e `#N`, e não pela regra anterior, que exigia parênteses.
+- **Prazo interno de quinta-feira.** `AM18` só é avaliada no fechamento. A proposta é manter o prazo de quinta às 23h59 (2.4) com o *checkpoint* da daily de quarta de `AM25`, e decidir na retrospectiva se o resultado da Sprint 4 justifica mudança.
+- **Movimentação do quadro.** Proposta de tornar regra do grupo o que já é prática: card nunca volta de coluna, e cada movimento acontece no momento do fato. Um card movido para frente por engano fica onde está, com comentário explicando.
+
+**Impacto esperado (a confirmar)**
+
+Com a capacidade respeitada no planejamento e a carga verificada antes do ciclo, o trabalho deixa de depender de fim de semana e a conclusão deixa de se acumular no último dia. A integração distribuída reduz o gargalo de merge nos dias de maior volume, e a medição do SLA tira a revisão do campo da impressão. A pipeline e a conferência das mensagens na revisão dão ao fluxo de merge um critério verificável, em vez de depender da atenção de cada revisor.
+
+**Para fechar esta revisão na retrospectiva**
+
+- Registrar a data e a aprovação, ou não, de cada linha marcada como proposta.
+- Decidir a regra de capacidade entre as opções acima.
+- Confirmar as manutenções marcadas como *a confirmar*.
+- Aplicar as alterações aprovadas nas seções 2.1.2, 2.2.2, 2.4 e 2.7 e retirar a marcação de rascunho.
+
 ## 3. Avaliação das sprints
 
 Esta seção será atualizada ao encerramento de cada sprint, registrando evidências, pontos fortes, pontos fracos e ações de melhoria. Os espaços das sprints futuras são mantidos como estrutura de acompanhamento e não representam avaliações antecipadas.
