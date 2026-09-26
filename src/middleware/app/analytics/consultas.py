@@ -40,7 +40,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.persistence.models import Canal
 from app.persistence.tabelas import InteracaoTabela
 from app.pipeline.desfechos import Desfecho
-from app.pipeline.intencao import catalogo
+from app.pipeline.intencao import catalogo, saudacao
 from app.schemas.usuario import Perfil
 
 _I = InteracaoTabela
@@ -96,10 +96,22 @@ def _na_janela(consulta: Select, inicio: datetime, fim: datetime, perfil: Perfil
 
     Uma janela invertida ou vazia é erro de quem chamou, e não resultado
     vazio: devolver zeros esconderia o defeito no cálculo da janela.
+
+    As saudações ficam de fora de todo o painel. Elas são gravadas como
+    `recusada_fora_escopo` com a intenção reservada `saudacao`, e contá-las
+    poria "olá" no topo dos enunciados fora de escopo — o backlog do
+    catálogo —, inflaria a taxa de recusa e puxaria a latência para baixo
+    com respostas que não passam pelo executor. Cumprimento não é pedido, e
+    o painel mede pedidos. `is_distinct_from`, e não `!=`: em SQL, `NULL !=
+    'saudacao'` não é verdadeiro, e as mensagens sem intenção sumiriam.
     """
     if fim <= inicio:
         raise ValueError(f"Janela inválida: fim ({fim}) não é posterior a inicio ({inicio})")
-    consulta = consulta.where(_I.criada_em >= inicio, _I.criada_em < fim)
+    consulta = consulta.where(
+        _I.criada_em >= inicio,
+        _I.criada_em < fim,
+        _I.intencao_id.is_distinct_from(saudacao.INTENCAO),
+    )
     if perfil is not None:
         consulta = consulta.where(_I.perfil == perfil.value)
     return consulta

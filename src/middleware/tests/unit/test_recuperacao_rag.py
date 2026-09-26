@@ -7,10 +7,18 @@ na ordem de similaridade e a segunda conferência de permissão sobre o
 que o banco devolveu.
 """
 
+from datetime import date
+
 import pytest
 
 from app.rag.ingestao.registro import TrechoLido
-from app.rag.recuperacao import Recuperador, preparar_consulta
+from app.rag.recuperacao import (
+    AMPLIACAO_POR_PERIODO,
+    Recuperador,
+    periodos_citados,
+    preparar_consulta,
+    referencia_de,
+)
 from app.rag.vetorial.base import DIMENSAO, Acerto, Escopo
 from app.schemas.usuario import Perfil
 
@@ -25,6 +33,8 @@ def lido(
     projeto: str | None = "PRJ-2024-018",
     perfis: frozenset[Perfil] = DO_PROJETO,
     texto: str | None = None,
+    data_referencia: date | None = None,
+    periodo: str | None = None,
 ) -> TrechoLido:
     documento_id = trecho_id.split("#")[0]
     return TrechoLido(
@@ -36,6 +46,8 @@ def lido(
         link=f"https://drive.example/{documento_id}",
         projeto=projeto,
         perfis=perfis,
+        data_referencia=data_referencia,
+        periodo=periodo,
     )
 
 
@@ -220,3 +232,110 @@ async def test_log_da_divergencia_leva_ids_e_nao_texto(caplog: pytest.LogCapture
 
     assert "port#0007" in caplog.text
     assert "1680000000" not in caplog.text
+
+
+# --- Data de referência -------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("data_referencia", "periodo", "esperada"),
+    [
+        (date(2026, 6, 30), "2026-06", "30/06/2026"),
+        (None, "2026-08", "08/2026"),
+        (None, None, None),
+    ],
+)
+def test_referencia_prefere_a_data_e_cai_para_o_mes(data_referencia, periodo, esperada) -> None:
+    trecho = lido("PORT-2026_BAL#0008", data_referencia=data_referencia, periodo=periodo)
+
+    assert referencia_de(trecho) == esperada
+
+
+async def test_trecho_recuperado_leva_a_referencia_do_documento() -> None:
+    recuperador, _, _, _ = montar(
+        acertos=[Acerto("PORT-2026_BAL#0008", 0.9)],
+        lidos=[lido("PORT-2026_BAL#0008", data_referencia=date(2026, 6, 30))],
+    )
+
+    recuperacao = await recuperador.recuperar("marcos atrasados", LIDER)
+
+    assert recuperacao.trechos[0].referencia == "30/06/2026"
+
+
+# --- Pergunta que cita um mês ------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("pergunta", "esperado"),
+    [
+        ("Quais os indicadores do portfólio em agosto?", {(8, None)}),
+        ("Qual o farol no relatório de agosto de 2026?", {(8, 2026)}),
+        ("Compare março/2026 com 06/2026", {(3, 2026), (6, 2026)}),
+        ("Quais marcos estão atrasados?", set()),
+        ("Qual o marco da Linha 6?", set()),
+    ],
+)
+def test_meses_citados_na_pergunta(pergunta: str, esperado: set) -> None:
+    assert periodos_citados(pergunta) == esperado
+
+
+BALANCOS = {
+    mes: lido(f"PORT-2026_BAL_2026-{mes:02d}#0005", projeto=None, periodo=f"2026-{mes:02d}")
+    for mes in (3, 4, 5, 6, 8)
+}
+
+
+async def test_pergunta_com_mes_ganha_vaga_para_o_documento_do_periodo() -> None:
+    """O slide de agosto vinha abaixo dos meses anteriores e ficava fora dos k."""
+    acertos = [
+        Acerto(BALANCOS[mes].trecho_id, score)
+        for mes, score in ((6, 0.93), (5, 0.92), (4, 0.91), (3, 0.90), (8, 0.86))
+    ]
+    recuperador, repositorio, _, _ = montar(acertos=acertos, lidos=BALANCOS.values(), k=2)
+
+    recuperacao = await recuperador.recuperar("Quais os indicadores do portfólio em agosto?", LIDER)
+
+    assert repositorio.buscas[0]["k"] == 2 * AMPLIACAO_POR_PERIODO
+    assert [t.periodo for t in recuperacao.trechos] == ["2026-06", "2026-08"]
+
+
+async def test_documento_sem_mes_mais_proximo_continua_no_resultado() -> None:
+    """A pergunta cita agosto, mas também precisa da norma, que não tem mês."""
+    norma = lido("IN-04-2023_NI#0003", projeto=None)
+    acertos = [Acerto(norma.trecho_id, 0.95)] + [
+        Acerto(BALANCOS[mes].trecho_id, score)
+        for mes, score in ((6, 0.93), (5, 0.92), (4, 0.91), (8, 0.86))
+    ]
+    recuperador, _, _, _ = montar(acertos=acertos, lidos=[norma, *BALANCOS.values()], k=4)
+
+    recuperacao = await recuperador.recuperar("Até quando sai o relatório de agosto?", LIDER)
+
+    assert [t.trecho_id for t in recuperacao.trechos] == [
+        norma.trecho_id,
+        BALANCOS[6].trecho_id,
+        BALANCOS[5].trecho_id,
+        BALANCOS[8].trecho_id,
+    ]
+
+
+async def test_mes_ja_presente_nos_k_nao_muda_o_resultado() -> None:
+    """Se a busca normal já trouxe o mês, o resultado é o mesmo da busca sem ampliação."""
+    acertos = [
+        Acerto(BALANCOS[mes].trecho_id, score)
+        for mes, score in ((6, 0.93), (8, 0.92), (5, 0.91), (4, 0.90))
+    ]
+    recuperador, _, _, _ = montar(acertos=acertos, lidos=BALANCOS.values(), k=2)
+
+    recuperacao = await recuperador.recuperar("Quais os indicadores do portfólio em agosto?", LIDER)
+
+    assert [t.periodo for t in recuperacao.trechos] == ["2026-06", "2026-08"]
+
+
+async def test_pergunta_sem_mes_mantem_k_e_ordem_de_similaridade() -> None:
+    acertos = [Acerto(BALANCOS[6].trecho_id, 0.93), Acerto(BALANCOS[8].trecho_id, 0.86)]
+    recuperador, repositorio, _, _ = montar(acertos=acertos, lidos=BALANCOS.values(), k=2)
+
+    recuperacao = await recuperador.recuperar("Quais os indicadores do portfólio?", LIDER)
+
+    assert repositorio.buscas[0]["k"] == 2
+    assert [t.periodo for t in recuperacao.trechos] == ["2026-06", "2026-08"]

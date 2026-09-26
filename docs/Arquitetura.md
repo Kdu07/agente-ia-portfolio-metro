@@ -616,7 +616,7 @@ tenant da equipe:
 
 | Recurso | Necessário para | Onde está |
 |---|---|---|
-| Entra ID + Microsoft Graph | Autenticação, perfis e permissões atuais das rotinas | Cliente implementado; uso real requer registro com `User.Read.All` (Application) e consentimento administrativo no tenant |
+| Entra ID + Microsoft Graph | Autenticação, perfis e permissões atuais das rotinas | Cliente implementado e registrado no tenant da equipe para o executor próprio (seção 13); uso real no parceiro requer registro com `User.Read.All` (Application) e consentimento administrativo no tenant |
 | Copilot Studio com Direct Line habilitado | Execução das ações (onda 1 em diante) | **Pendente** — tenant do parceiro |
 | Azure AI Content Safety | Guardas de injeção, abuso e saída (onda 2) | Em operação — tenant da equipe |
 | Azure Speech | Entrada por voz | Em operação — tenant da equipe |

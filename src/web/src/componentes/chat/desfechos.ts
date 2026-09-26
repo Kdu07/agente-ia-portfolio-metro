@@ -110,3 +110,22 @@ export const APARENCIA: Record<Desfecho, Aparencia> = {
     barra: `${BARRA_BASE} before:bg-desfecho-falha`,
   },
 };
+
+/** Intencao reservada que o backend grava na saudacao (`intencao/saudacao.py`). */
+export const INTENCAO_SAUDACAO = "saudacao";
+
+/**
+ * Se a bolha leva etiqueta e filete.
+ *
+ * A excecao e a saudacao. O backend responde "ola" com uma apresentacao,
+ * registrada como `recusada_fora_escopo` porque o vocabulario de
+ * desfechos e fechado, com a intencao reservada `saudacao`. Etiquetar a
+ * apresentacao como "Fora do escopo" diria a quem so cumprimentou que
+ * pediu algo indevido. A marca e explicita, e nao "intencao nula", porque
+ * a recusa por escopo de verdade tambem pode chegar sem intencao, quando o
+ * classificador devolve um rotulo que o catalogo nao reconhece.
+ */
+export function exibeEtiqueta(desfecho: Desfecho, intencaoId?: string | null): boolean {
+  if (desfecho === "recusada_fora_escopo" && intencaoId === INTENCAO_SAUDACAO) return false;
+  return Boolean(APARENCIA[desfecho].rotulo);
+}

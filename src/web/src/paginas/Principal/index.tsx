@@ -139,6 +139,7 @@ export function Principal() {
                 desfecho={linha.desfecho}
                 canal={linha.canal}
                 local={linha.local}
+                intencaoId={linha.intencaoId}
               />
             ))}
             {enviando ? <IndicadorDigitando /> : null}
