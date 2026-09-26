@@ -356,3 +356,17 @@ describe("Página de histórico", () => {
     expect(await screen.findByRole("textbox", { name: "Mensagem" })).toBeInTheDocument();
   });
 });
+
+describe("Saudação", () => {
+  it("apresenta o agente sem etiquetar o cumprimento como fora do escopo", async () => {
+    renderizar(<Principal />);
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Mensagem" }), {
+      target: { value: "olá" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
+
+    expect(await screen.findByText(/Sou a Prata/, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.queryByText("Fora do escopo")).not.toBeInTheDocument();
+  });
+});

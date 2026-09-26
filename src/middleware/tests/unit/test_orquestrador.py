@@ -777,3 +777,31 @@ async def test_bloqueio_no_primeiro_turno_nao_cria_conversa_no_executor(etapas: 
     assert len(conversas.criadas) == 1
     assert conversas.criadas[0].conversa_externa_id is None
     assert copilot.chamadas == []
+
+
+# --- Saudação --------------------------------------------------------------
+
+
+async def test_saudacao_responde_apresentacao_sem_classificar(etapas: dict) -> None:
+    pipeline, copilot, interacoes, _ = montar()
+
+    resposta = await pipeline.processar(pedido("Olá, bom dia!"), USUARIO)
+
+    assert resposta.desfecho == Desfecho.RECUSADA_FORA_ESCOPO.value
+    assert resposta.resposta == orq.respostas.SAUDACAO
+    assert "intencao" not in etapas["ordem"]
+    assert copilot.chamadas == []
+    # Sem classificação, com a intenção reservada: é o que a interface usa
+    # para não etiquetar a apresentação como "fora do escopo", e o que o
+    # painel usa para tirá-la das contagens. Nula é a recusa sem rótulo.
+    assert interacoes.unica.intencao_id == orq.saudacao.INTENCAO
+    assert resposta.intencao_id == orq.saudacao.INTENCAO
+
+
+async def test_saudacao_nao_dispensa_as_guardas(etapas: dict) -> None:
+    etapas["regra_suspeita"] = True
+    pipeline, _, _, _ = montar()
+
+    resposta = await pipeline.processar(pedido("oi"), USUARIO)
+
+    assert resposta.desfecho == Desfecho.BLOQUEADA_INJECAO_REGRA.value

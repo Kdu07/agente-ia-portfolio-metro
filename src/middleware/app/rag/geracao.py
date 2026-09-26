@@ -26,6 +26,22 @@ equipe, e por isso tem teste próprio.
    corporativo, inventar é pior que não responder (seção 5.1), e uma
    afirmação sem fonte não é verificável por ninguém.
 
+**Abster-se é para quando nada trata do assunto.** Pergunta ampla —
+"qual o status do projeto?", sem dizer qual — é respondida com o que os
+trechos trazem, agrupado por projeto; a resposta parcial vale mais que a
+recusa. A trava é a pergunta que nomeia um projeto: se os trechos não
+tratam dele, a resposta é a abstenção, e nunca outro projeto no lugar.
+Sem ela, a recusa por permissão viraria resposta sobre o vizinho.
+
+**A resposta é para uma pessoa ler, não para um leitor de Markdown.** A
+interface mostra texto simples, com as quebras de linha preservadas. As
+instruções pedem frases e listas com "•", e o modelo costuma cumprir —
+mas "costuma" não basta para o que a pessoa lê. Por isso o texto passa
+por `texto_simples` antes de sair: negrito, títulos e marcadores de
+Markdown viram texto e lista simples, e uma lista de fontes que o
+modelo tenha escrito por conta própria é cortada, porque a verdadeira
+é montada pelo executor a partir das citações conferidas.
+
 A mensagem é a mesma nos três casos de propósito. "Não existe" e "existe
 mas você não pode ver" precisam ser indistinguíveis para quem pergunta,
 ou a recusa vira oráculo do que há no corpus — a mesma razão de
@@ -75,13 +91,6 @@ MARCA_NEUTRALIZADA = "[marcação removida]"
 # (só respeita as quebras de linha), então o markdown que o modelo escreve
 # por hábito apareceria cru: `**Repactuação**`, `* item`.
 MARCADOR_ITEM = "• "
-_ITEM_MARKDOWN = re.compile(r"^[ \t]*[*+-][ \t]+", re.MULTILINE)
-_TITULO_MARKDOWN = re.compile(r"^[ \t]*#{1,6}[ \t]+", re.MULTILINE)
-_NEGRITO = re.compile(r"(\*\*|__)(?=\S)(.+?)(?<=\S)\1")
-# Itálico só com asterisco e colado a não-palavra dos dois lados: "5 * 3"
-# (espaço depois do asterisco) e "snake_case" (sublinhado) ficam intactos.
-_ITALICO = re.compile(r"(?<![\w*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?![\w*])")
-_CODIGO = re.compile(r"`([^`\n]+)`")
 
 INSTRUCOES = f"""\
 Você é o assistente de consulta ao portfólio de projetos do Metrô de São Paulo. \
@@ -102,14 +111,47 @@ frase que ela sustenta: [1], [2]. Use apenas números de documentos presentes na
 calcule, converta nem estime o que o documento não traz.
 5. Se documentos diferentes trouxerem valores divergentes para a mesma informação, apresente \
 os dois, cada um com a sua citação, e diga que há divergência. Não escolha um deles.
-6. Se os documentos não trouxerem informação suficiente para responder, responda exatamente \
-{SENTINELA}, sem nenhum outro texto. Responder só uma parte é aceitável quando essa parte \
-está nos documentos e você diz o que ficou sem resposta.
-7. Responda em português do Brasil, de forma direta e curta, sem introdução e sem repetir a \
-pergunta.
-8. Escreva em texto simples, sem markdown: nada de asteriscos, cerquilhas, sublinhados ou \
-crases para formatar. Numa lista, ponha cada item em uma linha própria, começando com \
-"{MARCADOR_ITEM.strip()}".
+6. Pergunta ampla não é motivo para se abster. Se a pergunta não indicar projeto, documento ou \
+período — "qual o status do projeto?", "quais são os riscos?" —, responda com o que os \
+documentos recebidos trazem sobre o assunto, identificando cada projeto pelo nome e pelo código \
+que aparecem no texto. Só nesse caso, e quando a resposta cobrir mais de um projeto, termine \
+com uma frase curta sugerindo que a pessoa indique um projeto para detalhar.
+7. Responder só uma parte é aceitável e preferível a se abster: diga o que os documentos trazem \
+e o que ficou sem resposta. Responda exatamente {SENTINELA}, sem nenhum outro texto, quando \
+nenhum documento trouxer informação relacionada à pergunta — ou quando a pergunta indicar um \
+projeto, documento ou pessoa específicos e os documentos não tratarem dele. Nunca responda \
+sobre outro projeto no lugar do que foi perguntado.
+8. Cada documento traz, quando conhecida, a data de referência no atributo referencia. Quando \
+houver versões do mesmo tipo de documento com referências diferentes — balanços, relatórios de \
+status mensais —, descreva a situação atual pela versão mais recente e diga a data dela. Não \
+repita a mesma informação mês a mês: versões anteriores só entram se a pergunta pedir \
+evolução, histórico ou um período específico.
+9. Sintetize, não transcreva. Os documentos trazem linhas de tabela no formato \
+"coluna: valor | coluna: valor". Transforme cada linha relevante numa frase completa para uma \
+pessoa da gestão, sem copiar nomes de coluna nem o separador "|". Quando o mesmo conteúdo se \
+repetir em vários projetos, diga isso uma vez e liste os projetos. Destaque o que é mais \
+relevante, em no máximo seis itens.
+10. Responda em português do Brasil, de forma direta, sem introdução e sem repetir a pergunta. \
+Escreva em texto \
+simples, sem markdown: nada de asteriscos, cerquilhas, sublinhados, crases, negrito nem tabelas. \
+Não escreva lista de fontes ao fim: ela é montada à parte, a partir das suas citações.
+
+Formato da resposta:
+
+{MARCADOR_ITEM}Resposta com um único item: uma ou duas frases.
+{MARCADOR_ITEM}Resposta com mais de um item: uma frase curta que diga o que foi encontrado e, \
+depois, uma lista com um item por linha, cada linha começando com "{MARCADOR_ITEM.strip()}".
+{MARCADOR_ITEM}Em cada item, o projeto primeiro — código e nome, como aparecem no documento —, \
+depois o fato e a citação no fim.
+
+Exemplo apenas de formato. Os códigos, nomes e datas abaixo são fictícios e nunca devem ser \
+usados como informação:
+
+No balanço de 30/06/2026, dois marcos aparecem atrasados [1]:
+{MARCADOR_ITEM}PRJ-0000-001, Projeto Exemplo: a entrega dos equipamentos, prevista para \
+17/04/2026, ainda não foi concluída [1].
+{MARCADOR_ITEM}PRJ-0000-002, Outro Exemplo: a conclusão da instalação em campo estava prevista \
+para 30/04/2026 [1].
 """
 
 
@@ -181,7 +223,9 @@ def montar_conteudo(pergunta: str, trechos: Sequence[TrechoRecuperado]) -> str:
     """
     blocos = [
         f'<documento n="{numero}" arquivo="{_atributo(trecho.nome_arquivo)}" '
-        f'local="{_atributo(trecho.localizador)}">\n'
+        f'local="{_atributo(trecho.localizador)}"'
+        + (f' referencia="{_atributo(trecho.referencia)}"' if trecho.referencia else "")
+        + ">\n"
         f"{neutralizar(trecho.texto).strip()}\n"
         "</documento>"
         for numero, trecho in enumerate(trechos, start=1)
@@ -192,6 +236,64 @@ def montar_conteudo(pergunta: str, trechos: Sequence[TrechoRecuperado]) -> str:
         + "\n</documentos>\n\n"
         + f"<pergunta>\n{neutralizar(pergunta).strip()}\n</pergunta>"
     )
+
+
+# --- texto simples ----------------------------------------------------------
+
+_NEGRITO = re.compile(r"\*\*(?=\S)(.+?)(?<=\S)\*\*|(?<!\w)__(?=\S)(.+?)(?<=\S)__(?!\w)")
+# Rótulo em negrito emendado na frase anterior ("... balanço: **Abril:**").
+# Vira o começo de uma linha própria antes de o negrito sair.
+_ROTULO_EMENDADO = re.compile(r"(?<=\S)[ \t]+(?=\*\*[^*\n]{1,40}:\*\*)")
+_LINHA_TABELA = re.compile(r"^[ \t]*\|(.+)\|[ \t]*$", re.MULTILINE)
+_ITALICO = re.compile(r"(?<![\w*])\*(?=[^\s*])([^*\n]+?)(?<=[^\s*])\*(?![\w*])")
+_TITULO = re.compile(r"^[ \t]{0,3}#{1,6}[ \t]+", re.MULTILINE)
+# Qualquer marcador de lista, recuado ou não, vira o marcador combinado.
+_MARCADOR = re.compile(r"^[ \t]*[*•+-][ \t]+", re.MULTILINE)
+# Marcador de lista emendado na frase anterior ("Abril: * Marco X"),
+# depois de dois-pontos, ponto ou citação. Vira uma linha própria.
+_MARCADOR_EMENDADO = re.compile(r"(?<=[:.\]])[ \t]+[*•][ \t]+(?=\S)")
+_CODIGO = re.compile(r"`([^`\n]+)`")
+_SEPARADOR_TABELA = re.compile(r"^[ \t]*\|?[ \t]*:?-{3,}[-|: \t]*$\n?", re.MULTILINE)
+# Lista de fontes escrita pelo modelo no fim da resposta. Casada depois
+# que negrito, título e marcador já saíram, para que `**Fontes:**`,
+# `## Fontes` e `- [1] ...` cheguem aqui como texto simples. Duas formas:
+# um título "Fonte(s)"/"Referência(s)" seguido só de linhas que começam
+# por [n], ou tudo numa linha só ("Fontes: [1] a, [2] b").
+_ROTULO_FONTES = r"\n[ \t]*(?:fontes?|refer[êe]ncias?)[ \t]*:?[ \t]*"
+_BLOCO_FONTES = re.compile(
+    _ROTULO_FONTES + r"\n(?:[ \t]*(?:[•-][ \t]*)?\[\d{1,2}\][^\n]*(?:\n|$))+\s*$",
+    re.IGNORECASE,
+)
+_FONTES_EM_LINHA = re.compile(_ROTULO_FONTES + r"\[\d{1,2}\][^\n]*\s*$", re.IGNORECASE)
+
+
+def texto_simples(texto: str) -> str:
+    """Tira o Markdown que o modelo tenha escrito apesar das instruções.
+
+    Conservador de propósito: só mexe no que é marcação sem ambiguidade —
+    negrito, itálico, código, título, marcador de lista, linha separadora
+    de tabela e a lista de fontes escrita pelo modelo. Todo item de lista
+    sai com `MARCADOR_ITEM`, o mesmo que as instruções pedem. O conteúdo
+    das frases e as citações entre colchetes passam intactos.
+    """
+    texto = _SEPARADOR_TABELA.sub("", "\n" + texto.strip())
+    texto = _LINHA_TABELA.sub(
+        lambda linha: "; ".join(c.strip() for c in linha.group(1).split("|") if c.strip()), texto
+    )
+    texto = _ROTULO_EMENDADO.sub("\n", texto)
+    texto = _NEGRITO.sub(lambda achado: achado.group(1) or achado.group(2), texto)
+    texto = _MARCADOR_EMENDADO.sub("\n" + MARCADOR_ITEM, texto)
+    texto = _MARCADOR.sub(MARCADOR_ITEM, texto)
+    texto = _ITALICO.sub(r"\1", texto)
+    texto = _TITULO.sub("", texto)
+    texto = _CODIGO.sub(r"\1", texto)
+    texto = texto.replace("**", "")
+    # Por último, quando o negrito, o título e o marcador já saíram: o
+    # modelo escreve o título das fontes em qualquer um desses formatos.
+    texto = _BLOCO_FONTES.sub("", texto)
+    texto = _FONTES_EM_LINHA.sub("", texto)
+    linhas = [linha.rstrip() for linha in texto.splitlines()]
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(linhas)).strip()
 
 
 # --- interpretação ----------------------------------------------------------
@@ -206,7 +308,7 @@ def interpretar(
     seguem essa ordem: o modelo pode citar o 4 antes do 2, e a interface
     precisa que `[1]` seja a primeira fonte da lista.
     """
-    texto = texto_simples(bruta.strip())
+    texto = texto_simples(bruta)
 
     if _declarou_sem_evidencia(texto):
         # Mesmo acompanhado de outro texto: o modelo declarou que não tem
@@ -239,22 +341,6 @@ def interpretar(
         fontes=fontes,
         modelo=modelo,
     )
-
-
-def texto_simples(texto: str) -> str:
-    """Tira o markdown que o modelo escreva apesar da regra 8.
-
-    A instrução reduz o markdown, mas não o elimina. Esta é a garantia:
-    item de lista vira `•`, título perde a cerquilha, e negrito, itálico e
-    código perdem os marcadores. A lista vem primeiro porque `* **x**`
-    começa com o marcador de item, que o itálico confundiria. As citações
-    `[n]` não são tocadas.
-    """
-    texto = _ITEM_MARKDOWN.sub(MARCADOR_ITEM, texto)
-    texto = _TITULO_MARKDOWN.sub("", texto)
-    texto = _NEGRITO.sub(r"\2", texto)
-    texto = _ITALICO.sub(r"\1", texto)
-    return _CODIGO.sub(r"\1", texto)
 
 
 def _declarou_sem_evidencia(texto: str) -> bool:

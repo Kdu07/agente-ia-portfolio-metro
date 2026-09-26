@@ -8,7 +8,7 @@ gravada, e não desfaz os documentos que já terminaram.
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import delete, select, update
@@ -49,6 +49,11 @@ class TrechoLido:
     # que o índice devolveu (ver `Escopo.alcanca`).
     projeto: str | None
     perfis: frozenset[Perfil]
+    # Data de referência do documento, identificada na ingestão (o
+    # "30/06" de um balanço de junho). Vai para a geração, que precisa
+    # dela para distinguir a versão mais recente de uma série mensal.
+    data_referencia: date | None = None
+    periodo: str | None = None  # "AAAA-MM", quando o documento é mensal
 
 
 def ficha_guardada(metadados: Mapping[str, Any] | None) -> Ficha | None:
@@ -136,7 +141,13 @@ class RegistroIngestao:
         if not trecho_ids:
             return {}
         consulta = (
-            select(TrechoTabela, ArquivoTabela.nome, ArquivoTabela.link)
+            select(
+                TrechoTabela,
+                ArquivoTabela.nome,
+                ArquivoTabela.link,
+                ArquivoTabela.data_referencia,
+                ArquivoTabela.periodo,
+            )
             .join(ArquivoTabela, ArquivoTabela.origem_id == TrechoTabela.origem_id)
             .where(TrechoTabela.trecho_id.in_(list(trecho_ids)))
         )
@@ -151,6 +162,8 @@ class RegistroIngestao:
                 link=link,
                 projeto=trecho.projeto,
                 perfis=frozenset(Perfil(perfil) for perfil in trecho.perfis),
+                data_referencia=data_referencia,
+                periodo=periodo,
             )
-            for trecho, nome, link in resultado
+            for trecho, nome, link, data_referencia, periodo in resultado
         }

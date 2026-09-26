@@ -13,7 +13,7 @@ import pytest
 from app.analytics import consultas
 from app.persistence.models import Canal
 from app.pipeline.desfechos import Desfecho
-from app.pipeline.intencao import catalogo
+from app.pipeline.intencao import catalogo, saudacao
 from app.schemas.usuario import Perfil
 
 FIM = datetime(2026, 9, 21, 12, 0, tzinfo=UTC)
@@ -294,6 +294,33 @@ async def test_fora_de_escopo_inclui_recusas_sem_rotulo(banco_analitico, registr
     enunciados = await consultas.enunciados_fora_de_escopo(banco_analitico, INICIO, FIM)
 
     assert [e.prompt for e in enunciados] == ["Qual a previsão do tempo?"]
+
+
+async def test_saudacao_fica_fora_dos_enunciados_e_das_contagens(banco_analitico, registrar):
+    """Cumprimento não é pedido: não entra no backlog do catálogo nem nos desfechos."""
+    await registrar(
+        criada_em=DENTRO,
+        intencao_id=saudacao.INTENCAO,
+        desfecho=Desfecho.RECUSADA_FORA_ESCOPO,
+        prompt="Olá",
+    )
+    await registrar(
+        criada_em=DENTRO,
+        intencao_id=None,
+        desfecho=Desfecho.RECUSADA_FORA_ESCOPO,
+        prompt="Qual a previsão do tempo?",
+    )
+
+    enunciados = await consultas.enunciados_fora_de_escopo(banco_analitico, INICIO, FIM)
+    desfechos = {
+        linha.chave: linha.total
+        for linha in await consultas.distribuicao_de_desfechos(banco_analitico, INICIO, FIM)
+    }
+    volume = _por_chave(await consultas.volume_por_intencao(banco_analitico, INICIO, FIM))
+
+    assert [e.prompt for e in enunciados] == ["Qual a previsão do tempo?"]
+    assert desfechos[Desfecho.RECUSADA_FORA_ESCOPO.value] == 1
+    assert saudacao.INTENCAO not in volume
 
 
 async def test_fora_de_escopo_nao_mistura_outros_desfechos(banco_analitico, registrar):

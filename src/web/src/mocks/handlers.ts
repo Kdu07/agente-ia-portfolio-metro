@@ -116,6 +116,14 @@ const GATILHOS: { padrao: RegExp; desfecho: Desfecho; resposta: string }[] = [
   },
 ];
 
+// Copiado de `respostas.SAUDACAO`. No backend a saudacao e reconhecida
+// antes do classificador e volta com a intencao reservada `saudacao`; o
+// duble reproduz so o caso simples, sem o vocabulario inteiro de
+// `intencao/saudacao.py`.
+const SAUDACAO =
+  'Olá! Sou a Prata, assistente de consulta ao portfólio de projetos. Busco nos documentos dos projetos informações sobre status, riscos, marcos, pendências e normas de gestão. Experimente perguntar, por exemplo: "quais são os principais riscos do portfólio?"';
+const PADRAO_SAUDACAO = /^(oi|ol[aá]|opa|bom dia|boa tarde|boa noite)[\s!,.?]*$/i;
+
 function responderChat(mensagem: string): { desfecho: Desfecho; resposta: string } {
   const gatilho = GATILHOS.find((item) => item.padrao.test(mensagem.trim()));
   if (gatilho) return { desfecho: gatilho.desfecho, resposta: gatilho.resposta };
@@ -144,7 +152,10 @@ const handlersComRotaReal = [
   http.post(`${BASE}/chat`, async ({ request }) => {
     const pedido = (await request.json()) as ChatRequest;
     await delay(LATENCIA_CHAT);
-    const { desfecho, resposta } = responderChat(pedido.mensagem ?? "");
+    const saudacao = PADRAO_SAUDACAO.test((pedido.mensagem ?? "").trim());
+    const { desfecho, resposta } = saudacao
+      ? { desfecho: "recusada_fora_escopo" as const, resposta: SAUDACAO }
+      : responderChat(pedido.mensagem ?? "");
     // Espelha o orquestrador: sem `conversa_id` o backend abre uma conversa
     // nova e devolve o id dela; `bloqueada` e verdadeiro para todo desfecho
     // que nao entregou a resposta do executor, inclusive as recusas; e a
@@ -152,8 +163,9 @@ const handlersComRotaReal = [
     const corpo: ChatResponse = {
       resposta,
       conversa_id: pedido.conversa_id ?? `conversa-${Date.now()}`,
-      intencao_id:
-        desfecho === "encaminhada"
+      intencao_id: saudacao
+        ? "saudacao"
+        : desfecho === "encaminhada"
           ? "consultar_status_projeto"
           : desfecho === "recusada_fora_escopo"
             ? "fora_de_escopo"

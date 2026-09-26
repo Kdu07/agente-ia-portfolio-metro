@@ -431,9 +431,15 @@ def main(argv: list[str] | None = None) -> int:
     if argumentos.score_minimo is not None:
         settings.rag_score_minimo = argumentos.score_minimo
 
+    # O modelo do backend em uso: o registro da medição sai deste cabeçalho.
+    modelo = (
+        settings.openrouter_modelo
+        if settings.llm_backend == "openrouter"
+        else settings.gemini_modelo
+    )
     cabecalho = (
         f"Bancada do RAG · {len(casos)} casos · namespace {settings.pinecone_namespace!r} · "
-        f"modelo {settings.llm_backend}/{settings.gemini_modelo} · k={settings.rag_top_k} · "
+        f"modelo {settings.llm_backend}/{modelo} · k={settings.rag_top_k} · "
         f"score_minimo={settings.rag_score_minimo}\n"
     )
     try:
