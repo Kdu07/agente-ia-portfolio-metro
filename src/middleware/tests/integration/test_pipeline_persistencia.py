@@ -24,7 +24,7 @@ from app.schemas.usuario import Perfil, UsuarioAutenticado
 
 
 class CopilotFalso:
-    async def enviar(self, texto, intencao_id, exige_confirmacao, conversa_externa_id=None):
+    async def enviar(self, texto, intencao_id, exige_confirmacao, conversa_externa_id=None, historico=()):
         return RespostaCopilot(
             texto="O Projeto Verde está com 60% de avanço.",
             conversa_externa_id="conversa-externa-teste",
@@ -95,7 +95,7 @@ async def test_pipeline_grava_e_recupera_resultado_do_nlp(
 
     interacoes = InteracaoRepository(sessao_banco)
     pipeline = Orquestrador(
-        copilot=CopilotFalso(),
+        executor=CopilotFalso(),
         interacoes=interacoes,
         conversas=ConversaRepository(sessao_banco),
     )

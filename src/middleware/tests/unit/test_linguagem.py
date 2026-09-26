@@ -1,7 +1,7 @@
-"""Testes da porta do modelo de linguagem e do adaptador Gemini (rag.linguagem).
+"""Testes da porta do modelo de linguagem e dos adaptadores Gemini e OpenRouter (rag.linguagem).
 
-O cliente do SDK é dublado: nenhuma chamada sai da máquina, nenhuma
-chave é necessária. O que se afirma é o que o adaptador decide por
+O cliente do SDK e a rede do OpenRouter são dublados: nenhuma chamada
+sai da máquina, nenhuma chave é necessária. O que se afirma é o que o adaptador decide por
 conta própria — por qual canal cada parte do prompt viaja, o que é
 repetido e o que não é, e que ausência de resposta é erro, nunca texto
 vazio. O contrato com o serviço real fica em
@@ -9,14 +9,17 @@ vazio. O contrato com o serviço real fica em
 """
 
 import asyncio
+import json
 from types import SimpleNamespace
 
+import httpx
 import pytest
 
 from app.config import settings
 from app.rag.linguagem.base import ErroGeracao, ModeloLinguagem
 from app.rag.linguagem.fabrica import obter_modelo_linguagem
 from app.rag.linguagem.gemini import ModeloGemini
+from app.rag.linguagem.openrouter import ModeloOpenRouter
 
 INSTRUCOES = "regras do sistema"
 CONTEUDO = "<documentos>...</documentos>\n<pergunta>custo?</pergunta>"
@@ -183,3 +186,135 @@ def test_fabrica_exige_a_chave_do_gemini(monkeypatch: pytest.MonkeyPatch) -> Non
 
     with pytest.raises(RuntimeError, match="gemini_api_key"):
         obter_modelo_linguagem()
+
+
+def test_fabrica_seleciona_o_openrouter(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "llm_backend", "openrouter")
+    monkeypatch.setattr(settings, "openrouter_api_key", "chave-teste")
+    monkeypatch.setattr(settings, "openrouter_modelo", "google/modelo-teste")
+
+    adaptador = obter_modelo_linguagem()
+
+    assert isinstance(adaptador, ModeloOpenRouter)
+    assert adaptador.nome == "openrouter/google/modelo-teste"
+
+
+def test_fabrica_exige_a_chave_do_openrouter(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "llm_backend", "openrouter")
+    monkeypatch.setattr(settings, "openrouter_api_key", "")
+
+    with pytest.raises(RuntimeError, match="openrouter_api_key"):
+        obter_modelo_linguagem()
+
+
+# --- OpenRouter -------------------------------------------------------------
+
+
+def rede(*desfechos) -> tuple[httpx.MockTransport, list[httpx.Request]]:
+    """Transporte dublado: cada desfecho é a resposta de um pedido, ou a exceção dele."""
+    pedidos: list[httpx.Request] = []
+    fila = list(desfechos)
+
+    def tratar(pedido: httpx.Request) -> httpx.Response:
+        pedidos.append(pedido)
+        desfecho = fila.pop(0)
+        if isinstance(desfecho, Exception):
+            raise desfecho
+        return desfecho
+
+    return httpx.MockTransport(tratar), pedidos
+
+
+def escolha(texto) -> httpx.Response:
+    return httpx.Response(200, json={"choices": [{"message": {"content": texto}}]})
+
+
+def openrouter(transporte, relogio: Relogio | None = None, **kwargs) -> ModeloOpenRouter:
+    return ModeloOpenRouter(
+        "chave-teste",
+        "google/modelo-teste",
+        timeout=5.0,
+        transporte=transporte,
+        dormir=relogio or Relogio(),
+        **kwargs,
+    )
+
+
+async def gerar_openrouter(adaptador: ModeloOpenRouter) -> str:
+    return await adaptador.gerar(instrucoes=INSTRUCOES, conteudo=CONTEUDO)
+
+
+async def test_openrouter_separa_instrucao_e_conteudo() -> None:
+    """A mesma fronteira da seção 4.4, nas mensagens `system` e `user`."""
+    transporte, pedidos = rede(escolha("resposta [1]"))
+
+    assert await gerar_openrouter(openrouter(transporte)) == "resposta [1]"
+
+    corpo = json.loads(pedidos[0].content)
+    assert corpo["model"] == "google/modelo-teste"
+    assert corpo["messages"] == [
+        {"role": "system", "content": INSTRUCOES},
+        {"role": "user", "content": CONTEUDO},
+    ]
+    assert pedidos[0].headers["Authorization"] == "Bearer chave-teste"
+
+
+def test_openrouter_implementa_a_porta() -> None:
+    assert isinstance(openrouter(None), ModeloLinguagem)
+
+
+async def test_openrouter_repete_o_transitorio_com_espera_crescente() -> None:
+    transporte, pedidos = rede(
+        httpx.Response(429), httpx.ConnectTimeout("lento"), escolha("resposta [1]")
+    )
+    relogio = Relogio()
+
+    assert await gerar_openrouter(openrouter(transporte, relogio)) == "resposta [1]"
+    assert len(pedidos) == 3
+    assert relogio.esperas == [2.0, 4.0]
+
+
+async def test_openrouter_le_o_erro_que_vem_com_status_200() -> None:
+    """O provedor por trás do OpenRouter falhou depois de aceito o pedido."""
+    transporte, pedidos = rede(
+        httpx.Response(200, json={"error": {"code": 502, "message": "provedor caiu"}}),
+        escolha("resposta [1]"),
+    )
+
+    assert await gerar_openrouter(openrouter(transporte)) == "resposta [1]"
+    assert len(pedidos) == 2
+
+
+async def test_openrouter_nao_repete_erro_do_pedido_nem_ecoa_o_conteudo() -> None:
+    transporte, pedidos = rede(
+        httpx.Response(400, json={"error": {"code": 400, "message": f"invalid: {CONTEUDO}"}})
+    )
+
+    with pytest.raises(ErroGeracao, match="400") as capturado:
+        await gerar_openrouter(openrouter(transporte))
+
+    assert len(pedidos) == 1
+    assert "custo?" not in str(capturado.value)
+
+
+async def test_openrouter_tentativas_esgotadas_levantam_erro_de_geracao() -> None:
+    transporte, _ = rede(httpx.Response(503), httpx.Response(503))
+
+    with pytest.raises(ErroGeracao, match="2 tentativas"):
+        await gerar_openrouter(openrouter(transporte, tentativas=2))
+
+
+@pytest.mark.parametrize(
+    "resposta",
+    [
+        escolha(None),
+        escolha("   \n"),
+        httpx.Response(200, json={"choices": []}),
+        httpx.Response(200, text="não é json"),
+    ],
+)
+async def test_openrouter_resposta_sem_texto_e_erro(resposta: httpx.Response) -> None:
+    transporte, _ = rede(resposta)
+
+    with pytest.raises(ErroGeracao, match="vazia"):
+        await gerar_openrouter(openrouter(transporte))

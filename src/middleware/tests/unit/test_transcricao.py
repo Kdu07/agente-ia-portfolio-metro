@@ -51,6 +51,36 @@ async def test_transcreve_formatos_aceitos(tmp_path, monkeypatch, nome, tipo) ->
 
 
 @pytest.mark.asyncio
+async def test_usa_endpoint_regional_sem_speech_endpoint(tmp_path, monkeypatch) -> None:
+    _configurar(monkeypatch)
+    monkeypatch.setattr(settings, "speech_endpoint", "")
+    monkeypatch.setattr(settings, "speech_region", "brazilsouth")
+    arquivo = tmp_path / "fala.wav"
+    arquivo.write_bytes(b"RIFF-audio-falso")
+
+    def responder(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == "brazilsouth.api.cognitive.microsoft.com"
+        assert request.url.path == "/speechtotext/transcriptions:transcribe"
+        return httpx.Response(200, json={"combinedPhrases": [{"text": "Oi"}]})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(responder)) as cliente:
+        resultado = await transcrever_arquivo(arquivo, cliente=cliente)
+    assert resultado.texto == "Oi"
+
+
+@pytest.mark.asyncio
+async def test_exige_endpoint_ou_regiao(tmp_path, monkeypatch) -> None:
+    _configurar(monkeypatch)
+    monkeypatch.setattr(settings, "speech_endpoint", "")
+    monkeypatch.setattr(settings, "speech_region", "")
+    arquivo = tmp_path / "fala.wav"
+    arquivo.write_bytes(b"RIFF-audio-falso")
+    with pytest.raises(ErroTranscricao) as erro:
+        await transcrever_arquivo(arquivo)
+    assert erro.value.codigo == "CONFIGURACAO_INVALIDA"
+
+
+@pytest.mark.asyncio
 async def test_une_segmentos_e_calcula_confianca_media(tmp_path, monkeypatch) -> None:
     _configurar(monkeypatch)
     arquivo = tmp_path / "fala.mp3"

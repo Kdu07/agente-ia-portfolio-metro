@@ -8,39 +8,63 @@
  *
  * Cada sugestao corresponde a uma intencao real do catalogo. Sugerir o
  * que o agente nao faz seria pior que nao sugerir nada.
+ *
+ * E cada uma precisa ter resposta no corpus. As anteriores ("riscos da
+ * Linha 6", "comparar dois projetos", "registrar um atraso") so rendiam a
+ * abstencao do RAG: a Linha 6 nao existe nos documentos, as outras duas
+ * nao dizem de quais projetos se trata ou pedem uma escrita que o
+ * executor nao faz. Duas das sugestoes vem das normas, que qualquer
+ * perfil le. As de projeto dependem do escopo: diretoria e quem esta
+ * alocado recebem resposta, os demais recebem a abstencao. As perguntas
+ * vem da bancada do RAG (`dados/bancada-rag.csv` no middleware).
+ *
+ * Tudo alinhado a esquerda, como o resto da conversa: o bloco centralizado
+ * com um titulo solto e a assinatura dos chats genericos.
  */
 
-const SUGESTOES = [
-  "Quais marcos estão atrasados no portfólio?",
-  "Mostre os riscos críticos da Linha 6",
-  "Registrar o motivo de um atraso",
-  "Comparar o avanço de dois projetos",
+import { m } from "motion/react";
+
+import { SimboloPrata } from "@/componentes/marca/SimboloPrata";
+import { CASCATA, SOBE } from "@/componentes/movimento/transicoes";
+import { IconeConceito, IconeDecisao, IconeMarco, IconeRisco, type Icone } from "@/componentes/ui/icones";
+
+const SUGESTOES: { texto: string; icone: Icone }[] = [
+  { texto: "Quando termina o projeto Estação Morumbi?", icone: IconeMarco },
+  { texto: "Que faixa de exposição classifica um risco como Alto?", icone: IconeRisco },
+  { texto: "Qual a diferença entre risco e problema?", icone: IconeConceito },
+  {
+    texto: "Quais decisões estão pendentes no relatório de agosto do Sistema de Sinalização?",
+    icone: IconeDecisao,
+  },
 ];
 
 export function ConversaVazia({ onEscolher }: { onEscolher: (texto: string) => void }) {
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center py-10 text-center">
-      <span className="brand-mark brand-mark--letter" aria-hidden="true">P</span>
-
-      <h2 className="mt-4 text-lg font-semibold text-slate-900">Como posso ajudar?</h2>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">
-        Consulte o andamento dos projetos, acompanhe marcos e riscos ou registre
-        uma atualização, em linguagem natural.
-      </p>
-
-      <ul className="mt-6 grid w-full gap-2 text-left">
-        {SUGESTOES.map((sugestao) => (
-          <li key={sugestao}>
+    <m.div initial="initial" animate="animate" variants={CASCATA} className="w-full pt-2 pb-2">
+      <m.div variants={SOBE}>
+        <SimboloPrata decorativa className="h-10.25 w-11.5" />
+      </m.div>
+      <m.h2 variants={SOBE} className="font-display mt-3.5 text-[26px] md:text-[32px]">
+        Como posso ajudar?
+      </m.h2>
+      <m.p variants={SOBE} className="mt-2 max-w-[52ch] text-muted-foreground">
+        Pergunte sobre status, marcos, riscos e pendências dos projetos do portfólio, ou registre uma
+        atualização, em linguagem natural.
+      </m.p>
+      <m.ul variants={SOBE} className="mt-5.5 grid gap-2.5 sm:grid-cols-2">
+        {SUGESTOES.map(({ texto, icone: Desenho }) => (
+          <li key={texto}>
             <button
               type="button"
-              onClick={() => onEscolher(sugestao)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-700"
+              onClick={() => onEscolher(texto)}
+              className="flex h-full w-full items-start gap-3 rounded-lg border bg-card/80 p-3.5 text-left text-sm leading-snug text-foreground transition-colors hover:border-primary/40 hover:bg-card"
             >
-              {sugestao}
+              <Desenho aria-hidden="true" className="mt-px shrink-0 text-primario-texto" />
+              <span>{texto}</span>
             </button>
           </li>
         ))}
-      </ul>
-    </div>
+      </m.ul>
+    </m.div>
   );
 }

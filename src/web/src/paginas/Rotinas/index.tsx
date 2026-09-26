@@ -1,124 +1,120 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+/**
+ * Gestão de rotinas: consultas recorrentes que a Prata executa sozinha.
+ *
+ * A tela junta as peças da pasta: `agenda.ts` converte a frequência em
+ * cron, `LinhaRotina` mostra cada rotina, e os três diálogos (formulário,
+ * resultados e exclusão) prendem o foco e fecham com Esc. As mensagens de
+ * sucesso saem em aviso (toast); os erros ficam na página ou no diálogo
+ * aberto, como `role="alert"`, porque pedem ação.
+ */
 
-import type { Rotina } from "@/tipos";
+import { useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-type FiltroStatus = "todas" | "ativas" | "pausadas";
+import { Button } from "@/componentes/ui/button";
+import { CabecalhoPagina } from "@/componentes/ui/CabecalhoPagina";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/componentes/ui/dropdown-menu";
+import { EstadoVazio } from "@/componentes/ui/EstadoVazio";
+import { IconeAdicionar, IconeAviso, IconeBuscar, IconeOrdenar, IconeRotinas } from "@/componentes/ui/icones";
+import { Input } from "@/componentes/ui/input";
+import { Skeleton } from "@/componentes/ui/skeleton";
+import { api, ErroApi } from "@/servicos/api";
+import { chaves } from "@/servicos/chaves";
+import type { Rotina, ValidacaoRotina } from "@/tipos";
+import {
+  dadosParaApi,
+  FORMULARIO_VAZIO,
+  type FormularioRotina as Formulario,
+  formularioDaRotina,
+  rotuloDaIntencao,
+} from "./agenda";
+import { ConfirmarExclusao } from "./ConfirmarExclusao";
+import { type FiltroStatus, FiltroSituacao } from "./FiltroSituacao";
+import { FormularioRotina } from "./FormularioRotina";
+import { LinhaRotina } from "./LinhaRotina";
+import { ResultadosRotina } from "./ResultadosRotina";
+
 type Ordenacao = "proximo" | "nome" | "atualizacao";
-type ModoFormulario = "criar" | "editar";
 
-interface FormularioRotina {
-  nome: string;
-  prompt: string;
-  agenda_cron: string;
-  timezone: string;
-  ativa: boolean;
-}
-
-const FORMULARIO_VAZIO: FormularioRotina = {
-  nome: "",
-  prompt: "",
-  agenda_cron: "0 8 * * 1-5",
-  timezone: "America/Sao_Paulo",
-  ativa: true,
-};
-
-const ROTINAS_DEMONSTRACAO: Rotina[] = [
-  {
-    id: "rotina-status-semanal",
-    nome: "Resumo semanal do portfólio",
-    prompt: "Consolidar o status, os riscos e os próximos marcos dos projetos ativos.",
-    agenda_cron: "0 9 * * 1",
-    timezone: "America/Sao_Paulo",
-    ativa: true,
-    intencao_prevista: "Consultar status do portfólio",
-    proximo_disparo: "2026-08-31T09:00:00-03:00",
-    criada_em: "2026-08-12T14:20:00-03:00",
-    atualizada_em: "2026-08-25T16:10:00-03:00",
-  },
-  {
-    id: "rotina-riscos",
-    nome: "Riscos da Linha 6",
-    prompt: "Listar riscos críticos da Linha 6 sem atualização há mais de sete dias.",
-    agenda_cron: "0 8 * * 1-5",
-    timezone: "America/Sao_Paulo",
-    ativa: true,
-    intencao_prevista: "Consultar riscos do projeto",
-    proximo_disparo: "2026-08-27T08:00:00-03:00",
-    criada_em: "2026-08-14T10:30:00-03:00",
-    atualizada_em: "2026-08-24T11:45:00-03:00",
-  },
-  {
-    id: "rotina-marcos",
-    nome: "Revisão mensal de marcos",
-    prompt: "Identificar marcos atrasados e preparar um resumo para a reunião do PMO.",
-    agenda_cron: "0 17 5 * *",
-    timezone: "America/Sao_Paulo",
-    ativa: false,
-    intencao_prevista: "Consultar marcos atrasados",
-    proximo_disparo: null,
-    criada_em: "2026-08-08T09:00:00-03:00",
-    atualizada_em: "2026-08-20T15:20:00-03:00",
-  },
+const ORDENACOES: { valor: Ordenacao; rotulo: string }[] = [
+  { valor: "proximo", rotulo: "Próxima execução" },
+  { valor: "nome", rotulo: "Nome" },
+  { valor: "atualizacao", rotulo: "Atualização recente" },
 ];
 
-function descreverAgenda(cron: string) {
-  const conhecidas: Record<string, string> = {
-    "0 8 * * 1-5": "Seg. a sex., às 08:00",
-    "0 9 * * 1": "Toda segunda, às 09:00",
-    "0 17 5 * *": "Todo dia 5, às 17:00",
-  };
-  return conhecidas[cron] ?? `Cron: ${cron}`;
-}
-
-function formatarData(valor: string | null) {
-  if (!valor) return "Sem execução agendada";
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(valor));
-}
-
-function validarFormulario(formulario: FormularioRotina) {
-  const erros: Partial<Record<keyof FormularioRotina, string>> = {};
-  if (formulario.nome.trim().length < 3) erros.nome = "Informe um nome com pelo menos 3 caracteres.";
-  if (formulario.prompt.trim().length < 10) erros.prompt = "Descreva a ação da rotina com pelo menos 10 caracteres.";
-  if (formulario.agenda_cron.trim().split(/\s+/).length !== 5) erros.agenda_cron = "Use uma expressão cron com cinco campos.";
-  if (!formulario.timezone.trim()) erros.timezone = "Selecione um fuso horário.";
-  return erros;
+function mensagemDoErro(erro: unknown, alternativa: string) {
+  if (erro instanceof ErroApi) return erro.detalhe;
+  if (erro instanceof Error && erro.message) return erro.message;
+  return alternativa;
 }
 
 export function Rotinas() {
-  const [rotinas, setRotinas] = useState(ROTINAS_DEMONSTRACAO);
-  const [carregando, setCarregando] = useState(true);
+  const clienteQuery = useQueryClient();
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FiltroStatus>("todas");
   const [ordenacao, setOrdenacao] = useState<Ordenacao>("proximo");
-  const [modalAberto, setModalAberto] = useState(false);
-  const [modoFormulario, setModoFormulario] = useState<ModoFormulario>("criar");
-  const [formulario, setFormulario] = useState(FORMULARIO_VAZIO);
-  const [erros, setErros] = useState<Partial<Record<keyof FormularioRotina, string>>>({});
-  const [rotinaSelecionada, setRotinaSelecionada] = useState<Rotina | null>(null);
+
+  const [formularioAberto, setFormularioAberto] = useState(false);
+  const [modo, setModo] = useState<"criar" | "editar">("criar");
+  const [rotinaEditada, setRotinaEditada] = useState<Rotina | null>(null);
+  const [inicial, setInicial] = useState<Formulario>(FORMULARIO_VAZIO);
+  // Remonta o formulário a cada abertura, para ele começar dos dados de
+  // quem o abriu, e não do que sobrou da vez anterior.
+  const [versaoFormulario, setVersaoFormulario] = useState(0);
+  const [erroFormulario, setErroFormulario] = useState("");
+
+  const [erroOperacao, setErroOperacao] = useState("");
   const [rotinaParaExcluir, setRotinaParaExcluir] = useState<Rotina | null>(null);
-  const [toast, setToast] = useState("");
+  const [rotinaResultados, setRotinaResultados] = useState<Rotina | null>(null);
+  const botaoNovaRotina = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const temporizador = window.setTimeout(() => setCarregando(false), 350);
-    return () => window.clearTimeout(temporizador);
-  }, []);
+  const consultaRotinas = useQuery<Rotina[]>({
+    queryKey: chaves.rotinas,
+    queryFn: () => api.get<Rotina[]>("/rotinas"),
+  });
+  const rotinas = useMemo(() => consultaRotinas.data ?? [], [consultaRotinas.data]);
 
-  useEffect(() => {
-    if (!toast) return;
-    const temporizador = window.setTimeout(() => setToast(""), 3500);
-    return () => window.clearTimeout(temporizador);
-  }, [toast]);
+  const salvarRotina = useMutation({
+    mutationFn: async ({ id, formulario }: { id?: string; formulario: Formulario }) => {
+      const dados = dadosParaApi(formulario);
+      const validacao = await api.post<ValidacaoRotina>("/rotinas/validar", dados);
+      if (!validacao.valida) throw new Error(validacao.erro ?? "A rotina não passou pela validação do backend.");
+      return id ? api.put<Rotina>(`/rotinas/${id}`, dados) : api.post<Rotina>("/rotinas", dados);
+    },
+    onSuccess: async () => clienteQuery.invalidateQueries({ queryKey: chaves.rotinas }),
+  });
+
+  const alterarStatus = useMutation({
+    mutationFn: ({ rotina, ativa }: { rotina: Rotina; ativa: boolean }) =>
+      api.put<Rotina>(`/rotinas/${rotina.id}`, {
+        nome: rotina.nome,
+        prompt: rotina.prompt,
+        agenda_cron: rotina.agenda_cron,
+        timezone: rotina.timezone,
+        ativa,
+      }),
+    onSuccess: async () => clienteQuery.invalidateQueries({ queryKey: chaves.rotinas }),
+  });
+
+  const removerRotina = useMutation({
+    mutationFn: (id: string) => api.delete<void>(`/rotinas/${id}`),
+    onSuccess: async () => clienteQuery.invalidateQueries({ queryKey: chaves.rotinas }),
+  });
 
   const rotinasVisiveis = useMemo(() => {
     const termo = busca.trim().toLocaleLowerCase("pt-BR");
-    return rotinas
+    return [...rotinas]
       .filter((rotina) => {
-        const correspondeBusca = !termo || `${rotina.nome} ${rotina.prompt} ${rotina.intencao_prevista ?? ""}`.toLocaleLowerCase("pt-BR").includes(termo);
+        const texto = `${rotina.nome} ${rotina.prompt} ${rotina.intencao_prevista ?? ""} ${rotuloDaIntencao(rotina)}`;
+        const correspondeBusca = !termo || texto.toLocaleLowerCase("pt-BR").includes(termo);
         const correspondeStatus = filtro === "todas" || (filtro === "ativas" ? rotina.ativa : !rotina.ativa);
         return correspondeBusca && correspondeStatus;
       })
@@ -131,130 +127,204 @@ export function Rotinas() {
       });
   }, [busca, filtro, ordenacao, rotinas]);
 
-  function abrirCriacao() {
-    setModoFormulario("criar");
-    setRotinaSelecionada(null);
-    setFormulario(FORMULARIO_VAZIO);
-    setErros({});
-    setModalAberto(true);
-  }
-
-  function abrirEdicao(rotina: Rotina) {
-    setModoFormulario("editar");
-    setRotinaSelecionada(rotina);
-    setFormulario({ nome: rotina.nome, prompt: rotina.prompt, agenda_cron: rotina.agenda_cron, timezone: rotina.timezone, ativa: rotina.ativa });
-    setErros({});
-    setModalAberto(true);
-  }
-
-  function salvar(evento: FormEvent) {
-    evento.preventDefault();
-    const novosErros = validarFormulario(formulario);
-    setErros(novosErros);
-    if (Object.keys(novosErros).length) return;
-
-    const agora = new Date().toISOString();
-    if (modoFormulario === "editar" && rotinaSelecionada) {
-      setRotinas((atuais) => atuais.map((rotina) => rotina.id === rotinaSelecionada.id ? {
-        ...rotina,
-        ...formulario,
-        proximo_disparo: formulario.ativa ? rotina.proximo_disparo ?? new Date(Date.now() + 86_400_000).toISOString() : null,
-        atualizada_em: agora,
-      } : rotina));
-      setToast("Rotina atualizada com sucesso.");
-    } else {
-      setRotinas((atuais) => [{
-        id: `rotina-${Date.now()}`,
-        ...formulario,
-        intencao_prevista: "A validar pelo backend",
-        proximo_disparo: formulario.ativa ? new Date(Date.now() + 86_400_000).toISOString() : null,
-        criada_em: agora,
-        atualizada_em: agora,
-      }, ...atuais]);
-      setToast("Rotina criada com sucesso.");
-    }
-    setModalAberto(false);
-  }
-
-  function alternarStatus(rotina: Rotina) {
-    const ativa = !rotina.ativa;
-    setRotinas((atuais) => atuais.map((item) => item.id === rotina.id ? {
-      ...item,
-      ativa,
-      proximo_disparo: ativa ? new Date(Date.now() + 86_400_000).toISOString() : null,
-      atualizada_em: new Date().toISOString(),
-    } : item));
-    setToast(ativa ? "Rotina ativada." : "Rotina pausada.");
-  }
-
-  function excluir() {
-    if (!rotinaParaExcluir) return;
-    setRotinas((atuais) => atuais.filter((rotina) => rotina.id !== rotinaParaExcluir.id));
-    setRotinaParaExcluir(null);
-    setToast("Rotina excluída com sucesso.");
-  }
-
   const ativas = rotinas.filter((rotina) => rotina.ativa).length;
+  const contagem = { todas: rotinas.length, ativas, pausadas: rotinas.length - ativas };
+  const operacaoEmCurso = salvarRotina.isPending || alterarStatus.isPending || removerRotina.isPending;
+  const rotuloDaOrdenacao = ORDENACOES.find((opcao) => opcao.valor === ordenacao)?.rotulo ?? "";
+
+  function abrirFormulario(rotina: Rotina | null) {
+    setModo(rotina ? "editar" : "criar");
+    setRotinaEditada(rotina);
+    setInicial(rotina ? formularioDaRotina(rotina) : FORMULARIO_VAZIO);
+    setVersaoFormulario((versao) => versao + 1);
+    setErroFormulario("");
+    setErroOperacao("");
+    setFormularioAberto(true);
+  }
+
+  async function salvar(formulario: Formulario) {
+    setErroFormulario("");
+    try {
+      await salvarRotina.mutateAsync({ id: modo === "editar" ? rotinaEditada?.id : undefined, formulario });
+      setFormularioAberto(false);
+      toast.success(modo === "editar" ? "Rotina atualizada com sucesso." : "Rotina criada com sucesso.");
+    } catch (erro) {
+      setErroFormulario(mensagemDoErro(erro, "Não foi possível salvar a rotina."));
+    }
+  }
+
+  async function alternarStatus(rotina: Rotina) {
+    const ativa = !rotina.ativa;
+    setErroOperacao("");
+    try {
+      await alterarStatus.mutateAsync({ rotina, ativa });
+      toast.success(ativa ? "Rotina ativada." : "Rotina pausada.");
+    } catch (erro) {
+      setErroOperacao(mensagemDoErro(erro, "Não foi possível alterar o estado da rotina."));
+    }
+  }
+
+  function pedirExclusao(rotina: Rotina) {
+    setRotinaParaExcluir(rotina);
+  }
+
+  async function excluir() {
+    if (!rotinaParaExcluir) return;
+    setErroOperacao("");
+    try {
+      await removerRotina.mutateAsync(rotinaParaExcluir.id);
+      setRotinaParaExcluir(null);
+      toast.success("Rotina excluída com sucesso.");
+    } catch (erro) {
+      setErroOperacao(mensagemDoErro(erro, "Não foi possível excluir a rotina."));
+      setRotinaParaExcluir(null);
+    }
+  }
+
+  let lista;
+  if (consultaRotinas.isLoading) {
+    lista = (
+      <div role="status" className="grid gap-px overflow-hidden rounded-xl border bg-border">
+        <span className="sr-only">Carregando rotinas...</span>
+        {[0, 1, 2].map((indice) => (
+          <div key={indice} className="grid gap-2.5 bg-card px-4.5 py-4">
+            <Skeleton className="h-4 w-1/3 bg-muted" />
+            <Skeleton className="h-3 w-2/3 bg-muted" />
+          </div>
+        ))}
+      </div>
+    );
+  } else if (consultaRotinas.isError) {
+    lista = (
+      <div role="alert" className="grid max-w-135 justify-items-start gap-2 rounded-xl border border-destructive/40 bg-card p-6">
+        <span className="mb-1 grid size-10.5 place-items-center rounded-[12px] bg-destructive/10 text-destructive">
+          <IconeAviso aria-hidden="true" />
+        </span>
+        <h2 className="text-base font-semibold">Não foi possível carregar as rotinas</h2>
+        <p className="text-sm text-muted-foreground">{mensagemDoErro(consultaRotinas.error, "Tente novamente em instantes.")}</p>
+        <Button type="button" variant="outline" className="mt-2 bg-card" onClick={() => void consultaRotinas.refetch()}>
+          Tentar novamente
+        </Button>
+      </div>
+    );
+  } else if (rotinasVisiveis.length) {
+    lista = (
+      <section aria-label="Rotinas cadastradas" className="divide-y overflow-hidden rounded-xl border bg-card">
+        {rotinasVisiveis.map((rotina) => (
+          <LinhaRotina
+            key={rotina.id}
+            rotina={rotina}
+            operacaoEmCurso={operacaoEmCurso}
+            onAlternar={alternarStatus}
+            onResultados={setRotinaResultados}
+            onEditar={abrirFormulario}
+            onExcluir={pedirExclusao}
+          />
+        ))}
+      </section>
+    );
+  } else {
+    lista = rotinas.length ? (
+      <EstadoVazio
+        icone={IconeBuscar}
+        titulo="Nenhuma rotina encontrada"
+        descricao="Tente ajustar a busca ou o filtro de situação."
+      />
+    ) : (
+      <EstadoVazio
+        icone={IconeRotinas}
+        titulo="Crie sua primeira rotina"
+        descricao="Automatize uma consulta recorrente para acompanhar o portfólio sem precisar pedir."
+        acao={
+          <Button type="button" onClick={() => abrirFormulario(null)}>
+            Criar rotina
+          </Button>
+        }
+      />
+    );
+  }
 
   return (
-    <div className="page routines-page">
-      <header className="topbar routines-topbar">
-        <div className="assistant-title"><span className="brand-mark brand-mark--letter" aria-hidden="true">R</span><span><strong>Rotinas</strong><small>Automatize acompanhamentos recorrentes</small></span></div>
-        <button className="primary-button" type="button" onClick={abrirCriacao}>+ Nova rotina</button>
-      </header>
+    <div className="flex h-full min-h-0 flex-col">
+      <CabecalhoPagina titulo="Rotinas" />
 
-      <main className="routines-content">
-        <section className="routines-heading" aria-labelledby="rotinas-titulo">
-          <div><p className="eyebrow">Automação do portfólio</p><h1 id="rotinas-titulo">Gerencie suas rotinas</h1><p>Configure consultas recorrentes e acompanhe quando cada rotina será executada.</p></div>
-          <div className="routines-summary" aria-label="Resumo das rotinas"><span><strong>{rotinas.length}</strong><small>Total</small></span><span><strong>{ativas}</strong><small>Ativas</small></span><span><strong>{rotinas.length - ativas}</strong><small>Pausadas</small></span></div>
-        </section>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-245 px-3.5 pt-6 pb-10 md:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-3.5">
+            <div>
+              <h1 className="font-display text-[26px]">Rotinas</h1>
+              <p className="mt-1 text-muted-foreground">Consultas recorrentes que a Prata executa no horário marcado.</p>
+            </div>
+            <Button ref={botaoNovaRotina} type="button" onClick={() => abrirFormulario(null)}>
+              <IconeAdicionar aria-hidden="true" />
+              Nova rotina
+            </Button>
+          </div>
 
-        <section className="routines-toolbar" aria-label="Busca e filtros">
-          <label className="search-field"><span aria-hidden="true">⌕</span><input value={busca} onChange={(evento) => setBusca(evento.target.value)} placeholder="Buscar por nome, ação ou intenção" aria-label="Buscar rotinas" /></label>
-          <label><span>Status</span><select value={filtro} onChange={(evento) => setFiltro(evento.target.value as FiltroStatus)}><option value="todas">Todas</option><option value="ativas">Ativas</option><option value="pausadas">Pausadas</option></select></label>
-          <label><span>Ordenar por</span><select value={ordenacao} onChange={(evento) => setOrdenacao(evento.target.value as Ordenacao)}><option value="proximo">Próxima execução</option><option value="nome">Nome</option><option value="atualizacao">Atualização recente</option></select></label>
-        </section>
+          <div className="mt-5 mb-3.5 flex flex-wrap items-center gap-2.5">
+            <FiltroSituacao valor={filtro} contagem={contagem} onMudar={setFiltro} />
+            <label className="relative min-w-50 flex-1">
+              <IconeBuscar
+                aria-hidden="true"
+                className="pointer-events-none absolute top-1/2 left-3 size-4.5 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                value={busca}
+                onChange={(evento) => setBusca(evento.target.value)}
+                aria-label="Buscar rotinas"
+                placeholder="Buscar por nome, ação ou intenção"
+                className="h-9 bg-card pl-9"
+              />
+            </label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" className="bg-card" aria-label={`Ordenar por ${rotuloDaOrdenacao.toLocaleLowerCase("pt-BR")}`}>
+                  <IconeOrdenar aria-hidden="true" />
+                  {rotuloDaOrdenacao}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-52 rounded-lg p-1.5 shadow-3">
+                <DropdownMenuLabel className="px-2 pt-1 pb-1.5 text-xs font-normal text-muted-foreground">Ordenar por</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={ordenacao} onValueChange={(valor) => setOrdenacao(valor as Ordenacao)}>
+                  {ORDENACOES.map((opcao) => (
+                    <DropdownMenuRadioItem key={opcao.valor} value={opcao.valor} className="rounded-md text-[13.5px]">
+                      {opcao.rotulo}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-        {carregando ? (
-          <section className="routines-loading" aria-label="Carregando rotinas" aria-live="polite"><span /><span /><span /><p>Carregando rotinas...</p></section>
-        ) : rotinasVisiveis.length ? (
-          <section className="routines-list" aria-label="Rotinas cadastradas">
-            {rotinasVisiveis.map((rotina) => (
-              <article className="routine-card" key={rotina.id}>
-                <div className="routine-card-main">
-                  <div className="routine-card-title"><span className={rotina.ativa ? "status-dot status-dot--active" : "status-dot"} /><div><h2>{rotina.nome}</h2><span className={rotina.ativa ? "status-badge status-badge--active" : "status-badge"}>{rotina.ativa ? "Ativa" : "Pausada"}</span></div></div>
-                  <p>{rotina.prompt}</p>
-                  <dl><div><dt>Frequência</dt><dd>{descreverAgenda(rotina.agenda_cron)}</dd></div><div><dt>Próxima execução</dt><dd>{formatarData(rotina.proximo_disparo)}</dd></div><div><dt>Intenção prevista</dt><dd>{rotina.intencao_prevista ?? "Não classificada"}</dd></div></dl>
-                </div>
-                <div className="routine-card-actions"><button type="button" className="text-button" onClick={() => alternarStatus(rotina)}>{rotina.ativa ? "Pausar" : "Ativar"}</button><button type="button" className="secondary-button" onClick={() => abrirEdicao(rotina)}>Editar</button><button type="button" className="danger-button" onClick={() => setRotinaParaExcluir(rotina)}>Excluir</button></div>
-              </article>
-            ))}
-          </section>
-        ) : (
-          <section className="routines-empty" aria-live="polite"><span aria-hidden="true">◇</span><h2>{rotinas.length ? "Nenhuma rotina encontrada" : "Crie sua primeira rotina"}</h2><p>{rotinas.length ? "Tente ajustar a busca ou os filtros selecionados." : "Automatize uma consulta recorrente para acompanhar o portfólio."}</p>{!rotinas.length ? <button className="primary-button" type="button" onClick={abrirCriacao}>Criar rotina</button> : null}</section>
-        )}
-      </main>
+          {erroOperacao ? (
+            <p role="alert" className="mb-3.5 flex gap-2 rounded-md border border-destructive/40 bg-card px-3.5 py-2.5 text-sm text-foreground">
+              <IconeAviso aria-hidden="true" className="mt-px size-4.5 shrink-0 text-destructive" />
+              {erroOperacao}
+            </p>
+          ) : null}
 
-      {modalAberto ? (
-        <div className="modal-backdrop" role="presentation" onMouseDown={(evento) => { if (evento.target === evento.currentTarget) setModalAberto(false); }}>
-          <section className="routine-modal" role="dialog" aria-modal="true" aria-labelledby="formulario-rotina-titulo">
-            <header><div><p className="eyebrow">{modoFormulario === "criar" ? "Nova automação" : "Configuração"}</p><h2 id="formulario-rotina-titulo">{modoFormulario === "criar" ? "Criar rotina" : "Editar rotina"}</h2></div><button type="button" className="modal-close" onClick={() => setModalAberto(false)} aria-label="Fechar formulário">×</button></header>
-            <form onSubmit={salvar} noValidate>
-              <label><span>Nome da rotina *</span><input value={formulario.nome} onChange={(evento) => setFormulario({ ...formulario, nome: evento.target.value })} aria-invalid={Boolean(erros.nome)} aria-describedby={erros.nome ? "erro-nome" : undefined} placeholder="Ex.: Resumo semanal do portfólio" />{erros.nome ? <small className="field-error" id="erro-nome">{erros.nome}</small> : null}</label>
-              <label><span>Ação em linguagem natural *</span><textarea value={formulario.prompt} onChange={(evento) => setFormulario({ ...formulario, prompt: evento.target.value })} aria-invalid={Boolean(erros.prompt)} aria-describedby={erros.prompt ? "erro-prompt" : "ajuda-prompt"} placeholder="Descreva o que o Prata deve consultar ou acompanhar" rows={4} /><small id="ajuda-prompt">O backend validará a intenção antes de salvar definitivamente.</small>{erros.prompt ? <small className="field-error" id="erro-prompt">{erros.prompt}</small> : null}</label>
-              <div className="form-grid"><label><span>Agendamento (cron) *</span><input value={formulario.agenda_cron} onChange={(evento) => setFormulario({ ...formulario, agenda_cron: evento.target.value })} aria-invalid={Boolean(erros.agenda_cron)} aria-describedby={erros.agenda_cron ? "erro-agenda" : "ajuda-agenda"} /><small id="ajuda-agenda">Minuto, hora, dia, mês e dia da semana.</small>{erros.agenda_cron ? <small className="field-error" id="erro-agenda">{erros.agenda_cron}</small> : null}</label><label><span>Fuso horário *</span><select value={formulario.timezone} onChange={(evento) => setFormulario({ ...formulario, timezone: evento.target.value })}><option value="America/Sao_Paulo">America/Sao_Paulo</option><option value="UTC">UTC</option></select></label></div>
-              <label className="switch-field"><input type="checkbox" checked={formulario.ativa} onChange={(evento) => setFormulario({ ...formulario, ativa: evento.target.checked })} /><span><strong>Rotina ativa</strong><small>Agendar assim que a configuração for salva.</small></span></label>
-              <footer><button className="secondary-button" type="button" onClick={() => setModalAberto(false)}>Cancelar</button><button className="primary-button" type="submit">{modoFormulario === "criar" ? "Criar rotina" : "Salvar alterações"}</button></footer>
-            </form>
-          </section>
+          {lista}
         </div>
-      ) : null}
+      </div>
 
-      {rotinaParaExcluir ? (
-        <div className="modal-backdrop"><section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="excluir-rotina-titulo" aria-describedby="excluir-rotina-descricao"><span className="danger-icon" aria-hidden="true">!</span><h2 id="excluir-rotina-titulo">Excluir rotina?</h2><p id="excluir-rotina-descricao">A rotina <strong>{rotinaParaExcluir.nome}</strong> e seu agendamento serão removidos. Esta ação não poderá ser desfeita.</p><div><button className="secondary-button" type="button" onClick={() => setRotinaParaExcluir(null)}>Cancelar</button><button className="danger-button danger-button--solid" type="button" onClick={excluir}>Excluir rotina</button></div></section></div>
-      ) : null}
-
-      {toast ? <div className="toast-success" role="status"><span aria-hidden="true">✓</span>{toast}</div> : null}
+      <FormularioRotina
+        key={versaoFormulario}
+        aberto={formularioAberto}
+        modo={modo}
+        inicial={inicial}
+        salvando={salvarRotina.isPending}
+        erro={erroFormulario}
+        onFechar={() => setFormularioAberto(false)}
+        onSalvar={salvar}
+      />
+      <ResultadosRotina rotina={rotinaResultados} onFechar={() => setRotinaResultados(null)} />
+      <ConfirmarExclusao
+        rotina={rotinaParaExcluir}
+        excluindo={removerRotina.isPending}
+        onCancelar={() => setRotinaParaExcluir(null)}
+        onConfirmar={() => void excluir()}
+        focoAlternativo={botaoNovaRotina.current}
+      />
     </div>
   );
 }

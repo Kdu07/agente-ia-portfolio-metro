@@ -1,0 +1,68 @@
+EVIDENCIA DE EXECUCAO DA SUITE FUNCIONAL - ISSUE #416
+Data: 2026-09-24
+Base executada: e9839df (develop apos o merge da issue #415)
+Ambiente: Windows, Python 3.14.2, pytest 9.1.1
+
+Comando:
+  cd src\middleware
+  .\.venv\Scripts\python.exe -m pytest tests\funcionais -vv -ra -p no:cacheprovider --basetemp "C:\Users\MarianaReis\AppData\Local\Temp\g02-pytest-416"
+
+Resultado global:
+  68 execucoes coletadas
+  41 aprovadas
+  24 xfailed (lacunas conhecidas, descritas abaixo)
+  3 skipped (RF07 fora do MVP)
+  9 avisos
+  Duracao: 241,89 s (4 min 01 s)
+  Codigo de saida: 0
+
+Observacao sobre a contagem:
+  O planejamento possui 65 identificadores de casos. A execucao coleta 68 itens
+  porque casos do RF01 e do RF08 sao parametrizados em mais de uma entrada.
+
+Resultado por requisito:
+  RF01: 5 aprovadas, 1 xfailed
+  RF02: 5 aprovadas, 2 xfailed
+  RF03: 6 aprovadas, 2 xfailed
+  RF04: 1 aprovada, 4 xfailed
+  RF05: 0 aprovadas, 6 xfailed
+  RF06: 0 aprovadas, 5 xfailed
+  RF07: 0 aprovadas, 3 skipped
+  RF08: 3 aprovadas, 3 xfailed
+  RF09: 6 aprovadas, 1 xfailed
+  RF10: 5 aprovadas
+  RF11: 6 aprovadas
+  RF12: 4 aprovadas
+
+Lacunas observadas pelos xfails:
+  TF-RF01-04: grupo desconhecido ainda recebe o perfil padrao de membro.
+  TF-RF02-04: a duracao real do audio ainda nao e calculada.
+  TF-RF02-05: o catalogo estruturado de erros de audio ainda nao foi implementado.
+  TF-RF03-05: o pipeline nao distingue a recusa por permissao de projeto.
+  TF-RF03-06: a validacao de entidades ainda nao esta implementada.
+  TF-RF04-01: a consulta em linguagem natural nao cobre as sete dimensoes do portfolio.
+  TF-RF04-02: fontes/referencias do executor nao chegam ao contrato final esperado.
+  TF-RF04-04: a rota distingue recurso proibido (403) de inexistente (404).
+  TF-RF04-05: a resposta orientativa para ausencia de dados nao esta implementada.
+  TF-RF05-01 a TF-RF05-06: o fluxo transacional de portfolio, com previa e confirmacao,
+    ainda nao esta implementado.
+  TF-RF06-01 a TF-RF06-05: a varredura e entrega proativa de pendencias esta planejada
+    para a onda 5 e ainda nao esta implementada.
+  TF-RF08-02, TF-RF08-03 e TF-RF08-04: perfil, regra de suficiencia e filtro de fontes
+    por projeto ainda nao estao integrados ao executor.
+  TF-RF09-06: a indisponibilidade do servico externo na guarda de injecao propaga
+    excecao, em vez de produzir o comportamento seguro especificado.
+
+Casos ignorados:
+  TF-RF07-01 a TF-RF07-03: analise comparativa declarada fora do MVP e sem topico
+  correspondente no executor.
+
+Avisos sem falha da suite:
+  Deprecacoes de Starlette/httpx, HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+  cookies por requisicao e datetime.utcnow.
+
+Limite desta evidencia:
+  Esta execucao usa ASGITransport e dubles/injecao de dependencias nas fronteiras
+  previstas pelos testes. Ela nao comprova integracao real com PostgreSQL, Entra ID,
+  Copilot Studio, Azure Speech ou Content Safety. Essas integracoes possuem bancadas
+  e evidencias proprias.

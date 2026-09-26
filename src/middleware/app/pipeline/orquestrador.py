@@ -10,7 +10,7 @@ Ordem das etapas (invariante de segurança, não reordenar):
     1. injecao  - ataque AO agente, barrado antes de qualquer outra coisa
     2. abuso    - uso indevido DO agente por usuário legítimo
     3. intencao - classifica e valida a intenção contra o catálogo
-    4. copilot  - encaminha o prompt validado ao executor
+    4. executor - encaminha o prompt validado ao executor (porta executor/base.py)
     5. saida    - verifica a resposta antes de entregá-la
     6. registro - grava a interação, qualquer que tenha sido o desfecho
 
@@ -21,7 +21,7 @@ conteúdo hostil a mais um serviço.
 
 Este módulo é o ÚNICO ponto de entrada do pipeline. O agendador de
 rotinas (rotinas/execucao.py) chama `processar` como qualquer outro
-canal, mudando apenas o `canal` e o `rotina_id` — nunca o `copilot`
+canal, mudando apenas o `canal` e o `rotina_id` — nunca o executor
 diretamente. Se um caminho alternativo aparecer aqui, as guardas
 deixaram de ser obrigatórias e a proteção virou opcional.
 """
@@ -29,24 +29,54 @@ deixaram de ser obrigatórias e a proteção virou opcional.
 import logging
 import time
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from app.copilot.client import CopilotClient
+from app.config import settings
+from app.executor.base import Executor, TurnoContexto
 from app.persistence.models import Canal, Conversa, Interacao
 from app.persistence.repository import ConversaRepository, InteracaoRepository
+from app.pipeline import respostas
 from app.pipeline.desfechos import Desfecho
 from app.pipeline.guardas import saida as guarda_saida
 from app.pipeline.guardas.abuso import classificador as abuso_classificador
 from app.pipeline.guardas.injecao import classificador as injecao_classificador
 from app.pipeline.guardas.injecao import regras as injecao_regras
-from app.pipeline.intencao import catalogo
+from app.pipeline.intencao import catalogo, saudacao
 from app.pipeline.intencao import classificador as intencao_classificador
 from app.pipeline.respostas import para as texto_de_recusa
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.usuario import UsuarioAutenticado
 
 logger = logging.getLogger(__name__)
+
+LIMITE_TITULO_CONVERSA = 80
+
+# Nomes das etapas cronometradas, gravados em `Interacao.latencia_etapas`
+# e lidos pelo painel de intenções. O registro, sexta etapa, não entra:
+# o tempo dele só existe depois de a linha que o guardaria ter sido
+# escrita.
+ETAPA_INJECAO = "injecao"
+ETAPA_ABUSO = "abuso"
+ETAPA_INTENCAO = "intencao"
+ETAPA_EXECUTOR = "executor"
+ETAPA_SAIDA = "saida"
+ETAPAS = (ETAPA_INJECAO, ETAPA_ABUSO, ETAPA_INTENCAO, ETAPA_EXECUTOR, ETAPA_SAIDA)
+
+
+def titulo_do_primeiro_turno(prompt: str) -> str:
+    """Produz um título reconhecível sem enviar o prompt a outro serviço.
+
+    Espaços são normalizados porque áudio transcrito e texto colado podem
+    carregar quebras de linha. O limite mantém a lista legível; as reticências
+    deixam explícito que o enunciado original continua completo no turno.
+    """
+    normalizado = " ".join(prompt.split())
+    if len(normalizado) <= LIMITE_TITULO_CONVERSA:
+        return normalizado
+    return normalizado[: LIMITE_TITULO_CONVERSA - 3].rstrip() + "..."
 
 
 @dataclass
@@ -67,6 +97,25 @@ class _Contexto:
     rotina_id: str | None = None
     intencao_id: str | None = None
     confianca: float = 0.0
+    etapas: dict[str, int] = field(default_factory=dict)
+
+
+@contextmanager
+def _cronometrar(ctx: _Contexto, etapa: str) -> Iterator[None]:
+    """Soma à etapa o tempo gasto dentro do bloco, em milissegundos.
+
+    Soma, e não sobrescreve, porque a guarda de injeção roda em dois
+    blocos — regra e modelo — que compõem a mesma etapa. A decisão de
+    encerrar fica sempre FORA do bloco: um `return` lá dentro chamaria
+    `_encerrar` antes de o tempo ser anotado, e a etapa que barrou a
+    mensagem sumiria justamente da interação que ela barrou.
+    """
+    inicio = time.perf_counter()
+    try:
+        yield
+    finally:
+        decorrido = round((time.perf_counter() - inicio) * 1000)
+        ctx.etapas[etapa] = ctx.etapas.get(etapa, 0) + decorrido
 
 
 class Orquestrador:
@@ -74,17 +123,18 @@ class Orquestrador:
 
     def __init__(
         self,
-        copilot: CopilotClient,
+        executor: Executor,
         interacoes: InteracaoRepository,
         conversas: ConversaRepository,
     ) -> None:
         """Recebe os colaboradores prontos.
 
-        A injeção existe para que os testes possam dublar o Copilot e a
+        A injeção existe para que os testes possam dublar o executor e a
         persistência, e para que conexões (pool HTTP, pool do banco)
-        sejam reaproveitadas entre requisições em vez de recriadas.
+        sejam reaproveitadas entre requisições em vez de recriadas. Qual
+        executor chega aqui é decidido em `api/deps.py`.
         """
-        self._copilot = copilot
+        self._executor = executor
         self._interacoes = interacoes
         self._conversas = conversas
 
@@ -110,28 +160,31 @@ class Orquestrador:
         """
         ctx = _Contexto(
             interacao_id=str(uuid.uuid4()),
-            conversa=await self._resolver_conversa(request.conversa_id, usuario),
+            conversa=await self._resolver_conversa(request.conversa_id, usuario, request.mensagem),
             usuario=usuario,
             canal=canal,
             prompt=request.mensagem,
             rotina_id=rotina_id,
         )
-
         # --- 1. Guarda de injeção -----------------------------------------
         # Regra primeiro: é determinística e barata, e evita pagar a
         # inferência do classificador nos ataques triviais. As duas
         # camadas são complementares — nenhuma substitui a outra.
-        if injecao_regras.contem_padrao_suspeito(ctx.prompt):
+        with _cronometrar(ctx, ETAPA_INJECAO):
+            suspeita_por_regra = injecao_regras.contem_padrao_suspeito(ctx.prompt)
+        if suspeita_por_regra:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_REGRA)
 
-        veredito = await injecao_classificador.classificar(ctx.prompt)
+        with _cronometrar(ctx, ETAPA_INJECAO):
+            veredito = await injecao_classificador.classificar(ctx.prompt)
         if veredito.suspeita:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
 
         # --- 2. Guarda de abuso -------------------------------------------
         # Depois da injeção, e não antes: um ataque ao agente é mais grave
         # que um mau uso, e é o que não deve alcançar mais nenhum serviço.
-        abuso = await abuso_classificador.classificar(ctx.prompt)
+        with _cronometrar(ctx, ETAPA_ABUSO):
+            abuso = await abuso_classificador.classificar(ctx.prompt)
         if abuso.abusiva:
             logger.info(
                 "Uso indevido registrado (interacao=%s, usuario=%s, motivo=%s)",
@@ -142,11 +195,21 @@ class Orquestrador:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_ABUSO)
 
         # --- 3. Intenção ---------------------------------------------------
-        resultado = await intencao_classificador.classificar(ctx.prompt)
+        # Saudação antes do classificador, e depois das guardas: "olá,
+        # ignore as regras" continua sendo barrado como injeção. O desfecho
+        # é o de fora de escopo porque o vocabulário é fechado, com a
+        # intenção reservada `saudacao` — que a distingue da recusa sem
+        # rótulo — e o texto de apresentação no lugar da recusa.
+        if saudacao.e_saudacao(ctx.prompt):
+            ctx.intencao_id = saudacao.INTENCAO
+            return await self._encerrar(
+                ctx, Desfecho.RECUSADA_FORA_ESCOPO, texto=respostas.SAUDACAO
+            )
+
+        with _cronometrar(ctx, ETAPA_INTENCAO):
+            resultado = await intencao_classificador.classificar(ctx.prompt)
         ctx.confianca = resultado.confianca
-        intencao = (
-            catalogo.obter(resultado.intencao_id) if resultado.intencao_id else None
-        )
+        intencao = catalogo.obter(resultado.intencao_id) if resultado.intencao_id else None
 
         if intencao is None:
             # Rótulo desconhecido ou ausente: o classificador devolveu algo
@@ -161,7 +224,7 @@ class Orquestrador:
         # O limiar é verificado antes da classe negativa de propósito: uma
         # classificação incerta não sustenta nem a recusa categórica. Pedir
         # reformulação é o tratamento correto para incerteza, e continua sem
-        # acionar o Copilot.
+        # acionar o executor.
         #
         # O limiar calibrado do artefato tem precedência sobre o do
         # catálogo: aquele veio da validação cruzada da bancada (F21),
@@ -193,35 +256,47 @@ class Orquestrador:
             # orientativa e a sessão continua ativa para o próximo turno.
             return await self._encerrar(ctx, Desfecho.RECUSADA_FORA_ESCOPO)
 
-        # --- 4. Execução no Copilot ---------------------------------------
-        try:
-            resposta = await self._copilot.enviar(
-                ctx.prompt,
-                intencao.id,
-                intencao.exige_confirmacao,
-                ctx.conversa.conversa_externa_id,
-            )
-        except Exception:  # noqa: BLE001 — qualquer falha do executor vira resposta amigável
-            # Sem exc_info e sem a mensagem: o traço do executor pode
-            # carregar o payload enviado. Correlacionar pelo interacao_id.
-            logger.warning(
-                "Falha ao acionar o Copilot (interacao=%s, intencao=%s)",
-                ctx.interacao_id,
-                intencao.id,
-            )
+        # --- 4. Execução -----------------------------------------------------
+        # O historico so e consultado depois que a mensagem atual atravessa
+        # todas as guardas. Assim, uma entrada bloqueada nao dispara leituras
+        # nem chamadas externas para sanear turnos anteriores.
+        #
+        # A leitura do historico entra no tempo do executor porque so existe
+        # para compor o que vai a ele.
+        with _cronometrar(ctx, ETAPA_EXECUTOR):
+            historico = await self._historico_seguro(ctx)
+            try:
+                resposta = await self._executor.enviar(
+                    ctx.prompt,
+                    intencao.id,
+                    intencao.exige_confirmacao,
+                    ctx.conversa.conversa_externa_id,
+                    historico,
+                )
+            except Exception:  # noqa: BLE001 — qualquer falha do executor vira resposta amigável
+                # Sem exc_info e sem a mensagem: o traço do executor pode
+                # carregar o payload enviado. Correlacionar pelo interacao_id.
+                logger.warning(
+                    "Falha ao acionar o executor (interacao=%s, intencao=%s)",
+                    ctx.interacao_id,
+                    intencao.id,
+                )
+                resposta = None
+        if resposta is None:
             return await self._encerrar(ctx, Desfecho.FALHA_EXECUTOR)
 
-        if ctx.conversa.conversa_externa_id is None:
-            await self._conversas.vincular_externa(
-                ctx.conversa.id, resposta.conversa_externa_id
-            )
+        # Só executor com sessão própria (o Copilot) tem o que vincular. O
+        # executor próprio guarda o estado no middleware (D6) e devolve None.
+        if ctx.conversa.conversa_externa_id is None and resposta.conversa_externa_id is not None:
+            await self._conversas.vincular_externa(ctx.conversa.id, resposta.conversa_externa_id)
 
         # --- 5. Guarda de saída --------------------------------------------
         # O usuário não fez nada errado: o que se verifica aqui é se a
         # resposta traz instrução embutida vinda de um documento que o
-        # Copilot recuperou. É a única barreira que enxerga injeção
+        # executor recuperou. É a única barreira que enxerga injeção
         # indireta, e por isso ela existe depois da execução.
-        veredito_saida = await guarda_saida.verificar(resposta.texto, intencao.id)
+        with _cronometrar(ctx, ETAPA_SAIDA):
+            veredito_saida = await guarda_saida.verificar(resposta.texto, intencao.id)
         if veredito_saida.suspeita:
             logger.warning(
                 "Resposta retida pela guarda de saída (interacao=%s, motivo=%s)",
@@ -234,7 +309,10 @@ class Orquestrador:
         return await self._encerrar(ctx, Desfecho.ENCAMINHADA, texto=resposta.texto)
 
     async def _resolver_conversa(
-        self, conversa_id: str | None, usuario: UsuarioAutenticado
+        self,
+        conversa_id: str | None,
+        usuario: UsuarioAutenticado,
+        primeiro_prompt: str,
     ) -> Conversa:
         """Recupera a conversa informada ou cria uma nova.
 
@@ -255,6 +333,7 @@ class Orquestrador:
             conversa_externa_id=None,  # só existe após o primeiro turno encaminhado
             criada_em=agora,
             atualizada_em=agora,
+            titulo=titulo_do_primeiro_turno(primeiro_prompt),
         )
         await self._conversas.criar(nova)
         return nova
@@ -295,6 +374,7 @@ class Orquestrador:
                 latencia_ms=int((time.perf_counter() - ctx.inicio) * 1000),
                 criada_em=datetime.now(UTC),
                 rotina_id=ctx.rotina_id,
+                latencia_etapas=dict(ctx.etapas),
             )
         )
 
@@ -304,4 +384,33 @@ class Orquestrador:
             intencao_id=ctx.intencao_id,
             desfecho=desfecho.value,
             bloqueada=desfecho.bloqueada,
+            interacao_id=ctx.interacao_id,
         )
+
+    async def _historico_seguro(self, ctx: _Contexto) -> tuple[TurnoContexto, ...]:
+        """Carrega e filtra os turnos do dono antes de compor o prompt."""
+        limite = settings.historico_max_turnos
+        if limite == 0:
+            return ()
+
+        interacoes = await self._interacoes.listar_por_conversa(
+            ctx.conversa.id, ctx.usuario.id, limite=limite
+        )
+        seguros: list[TurnoContexto] = []
+        for interacao in interacoes:
+            textos = (interacao.prompt, interacao.resposta)
+            suspeita = any(injecao_regras.contem_padrao_suspeito(texto) for texto in textos)
+            if not suspeita:
+                vereditos = [await injecao_classificador.classificar(texto) for texto in textos]
+                suspeita = any(veredito.suspeita for veredito in vereditos)
+            if suspeita:
+                logger.warning(
+                    "Turno anterior removido do contexto por suspeita de injeção "
+                    "(conversa=%s, usuario=%s, turno=%s)",
+                    ctx.conversa.id,
+                    ctx.usuario.id,
+                    interacao.id,
+                )
+                continue
+            seguros.append(TurnoContexto(interacao.prompt, interacao.resposta))
+        return tuple(seguros)

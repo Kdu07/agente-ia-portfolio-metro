@@ -91,12 +91,64 @@ duas vezes é seguro: ele remove a carga anterior antes de semear.
 
 Para mexer no esquema, ver [migrations/README.md](migrations/README.md).
 
+## Mensageria (RabbitMQ)
+
+O broker AMQP dos eventos assíncronos é um serviço do Compose, com volume
+persistente (`rabbitmqdata`) e verificação de saúde. Exchanges, filas e contrato
+das mensagens estão na seção 9.1.2.6 de [Projeto.md](../../docs/Projeto.md).
+
+```powershell
+# 1. subir o broker com as mesmas credenciais do .env
+docker compose --env-file .env -f ../../infra/docker-compose.yml up -d rabbitmq
+
+# 2. aguardar o estado "healthy"
+docker compose -f ../../infra/docker-compose.yml ps rabbitmq
+```
+
+O `--env-file` faz o broker nascer com o usuário, a senha e o vhost do `.env`;
+sem ele, valem os padrões de desenvolvimento (`prata` / `prata-local`, vhost
+`prata`). O painel de gerenciamento fica em <http://127.0.0.1:15672>, e as
+portas são publicadas só em `127.0.0.1`.
+
+| Variável | Uso |
+|---|---|
+| `RABBITMQ_HOST`, `RABBITMQ_PORT` | `localhost:5672` fora do Compose; dentro dele, `middleware` e `worker` recebem `rabbitmq:5672` |
+| `RABBITMQ_VHOST`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | Acesso ao broker; a senha é `SecretStr` e não aparece em logs nem em erros |
+| `RABBITMQ_URL` | Opcional. URL `amqp://` ou `amqps://` completa, com prioridade sobre as cinco acima; vazia, é montada a partir delas |
+| `RABBITMQ_EXCHANGE`, `RABBITMQ_DEAD_LETTER_EXCHANGE` | Exchange de eventos e de mensagens rejeitadas |
+| `RABBITMQ_PREFETCH_COUNT` | Mensagens sem confirmação por consumidor (mínimo 1) |
+| `RABBITMQ_MAX_RETRIES` | Retentativas depois da primeira execução (2 = até três execuções) |
+
+Numa `RABBITMQ_URL` escrita à mão, codifique os caracteres especiais do usuário,
+da senha e do vhost (`@` vira `%40`); montada pelos componentes, a codificação é
+automática. Uma URL com `localhost` no `.env` também vale dentro do Compose, onde
+o broker não é `localhost` — para rodar em contêiner, deixe-a vazia.
+
+Usuário, senha e vhost só inicializam um volume novo: mudar o `.env` depois não
+troca as credenciais de um broker já provisionado. Para recriá-lo, remova o
+volume `rabbitmqdata`, o que apaga as mensagens retidas.
+
 ## Testes
 
 ```powershell
 python -m pytest -q          # suíte completa
 python -m ruff check app tests
 ```
+
+As ferramentas de cobertura, microbenchmark e carga fazem parte do extra
+`dev`. A cobertura mede `app/`, com decisões de ramo habilitadas, e mostra as
+linhas que ainda não foram exercitadas:
+
+```powershell
+python -m pytest --cov=app --cov-report=term-missing
+python -m pytest tests/desempenho/test_micro_latencia.py --benchmark-only
+python -m locust -f tests/desempenho/locustfile.py --headless -u 10 -r 2 -t 5m
+```
+
+Os dois arquivos de desempenho pertencem à implementação dos cenários da
+seção 10.2 do `Projeto.md`; até que sejam adicionados, os comandos de versão
+`python -m locust --version` e `python -m pytest --trace-config` confirmam que
+Locust, `pytest-benchmark` e `pytest-cov` foram carregados pelo ambiente.
 
 Os testes que dependem de API externa rodam sobre **fitas VHS**: a resposta do
 serviço é gravada uma vez e reproduzida depois, o que evita a requisição
@@ -133,8 +185,81 @@ plantada num documento. Com a camada gratuita, rode-os sob demanda.
 uvicorn app.main:app --reload
 ```
 
+O agendador roda em outro processo. Com o banco e as migrações disponíveis,
+inicie-o em um segundo terminal. Ao receber `Ctrl+C` ou `SIGTERM`, o worker
+pausa novos disparos e aguarda por até 50 segundos as execuções correntes.
+Somente depois ele encerra o agendador e fecha o pool; se o prazo for excedido,
+as execuções restantes são canceladas antes do fechamento:
+
+```powershell
+python -m app.worker
+```
+
+O serviço `worker` do Compose executa esse mesmo comando.
+
 Requer `.env` — parta de [.env.example](.env.example). O PostgreSQL e demais
 serviços sobem por [infra/docker-compose.yml](../../infra/docker-compose.yml).
+
+Para o worker executar rotinas com as permissões atuais do dono, o registro de
+aplicação indicado por `ENTRA_CLIENT_ID` precisa ter a permissão Microsoft Graph
+`User.Read.All` do tipo **Application**, com consentimento do administrador do
+tenant. Essa permissão é diferente da opção **Delegated**: no horário agendado
+não existe usuário conectado para delegar acesso. O worker usa
+`ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID` e `ENTRA_CLIENT_SECRET` no fluxo *client
+credentials*, lê usuário e grupos no Graph e nunca persiste o token obtido.
+
+Configuração no portal Azure/Entra:
+
+1. abra **Microsoft Entra ID → App registrations** e selecione o registro cujo
+   *Application (client) ID* está em `ENTRA_CLIENT_ID`;
+2. em **API permissions**, escolha **Add a permission → Microsoft Graph →
+   Application permissions** e adicione `User.Read.All`;
+3. escolha **Grant admin consent** para o tenant — adicionar sem consentir ainda
+   produz 403 no Graph;
+4. confirme no `.env` o tenant, cliente, segredo e os *object IDs* dos grupos
+   `ENTRA_GRUPO_*`; o segredo é valor de *client secret*, não seu identificador;
+5. com um `oid` de teste ativo, valide sem imprimir token ou dados pessoais:
+
+```powershell
+python -c "import asyncio; from app.auth.entra import consultar_usuario; u=asyncio.run(consultar_usuario('OID-DE-TESTE')); print('Graph OK:', bool(u.oid), 'grupos:', len(u.grupos))"
+```
+
+Um 401 indica credencial/tenant inválido; 403 costuma indicar permissão ausente
+ou consentimento administrativo pendente; 404 indica que o `oid` não pertence
+ao tenant configurado. Não copie o token ou o segredo para logs e evidências.
+
+### Interface contra esta API, sem dublês
+
+Em desenvolvimento a interface responde com os dublês do MSW
+(`src/web/src/mocks/handlers.ts`), e nenhuma chamada chega aqui. Para exercitar
+o caminho real — login no Entra, cookie de sessão, proxy de `/api` e os
+contratos das rotas:
+
+```powershell
+# 1. banco com esquema e carga de demonstração (seção "Banco de dados")
+# 2. a API, nesta pasta
+uvicorn app.main:app --port 8000
+# 3. a interface, em src/web, com os dublês desligados
+$env:VITE_SEM_DUBLES = "true"; npm run dev
+```
+
+Quatro cuidados que não se leem no código:
+
+- **Worker preso.** Um service worker do MSW registrado numa sessão anterior
+  continua respondendo mesmo com `VITE_SEM_DUBLES=true`. Antes de testar,
+  remova-o em DevTools → Application → Service Workers → *Unregister*. Se
+  `/api/auth/eu` aparecer como respondido pelo worker, é isso.
+- **Origem `http://localhost:5173`.** É o redirect URI registrado no Entra. Abrir
+  por `127.0.0.1` ou pelo IP da máquina quebra o login: o Entra devolve para
+  `localhost`, e o cookie do fluxo ficou gravado no outro host. Os cookies saem
+  `Secure`, o que o navegador tolera em HTTP só no `localhost` — fora dele,
+  `SESSION_COOKIE_SECURE` precisa acompanhar o HTTPS.
+- **Partida a frio.** A primeira mensagem que chega ao classificador carrega os
+  pesos do modelo, e a resposta pode passar de dois minutos. As seguintes
+  levam poucos segundos.
+- **Voz depende do Azure Speech.** `GET /voz/token` usa as credenciais do
+  servidor para emitir um token curto. Sem `SPEECH_KEY` e `SPEECH_REGION`, a
+  interface informa indisponibilidade e não substitui a fala por dado simulado.
 
 ## Banco vetorial (Pinecone)
 
@@ -258,9 +383,9 @@ consulta ao índice, não depois dela.
 
 O fluxo de `app/rag/fluxo.py` recebe uma pergunta e o escopo de quem pergunta,
 recupera os trechos visíveis a esse escopo e entrega-os ao modelo de geração,
-que responde citando cada trecho usado — ou se abstém quando eles não bastam. O
-comportamento, as decisões e o que ainda falta para ligá-lo ao orquestrador
-estão na seção 3.10 de
+que responde citando cada trecho usado — ou se abstém quando eles não bastam.
+Com `EXECUTOR=proprio` no `.env`, é ele que responde o `/chat`, no lugar do
+Copilot Studio. O comportamento e as decisões estão nas seções 3.10 e 3.11 de
 [plano-executor-proprio.md](../../docs/plano-executor-proprio.md).
 
 Pré-requisitos: o índice provisionado e o corpus ingerido (seções anteriores),
@@ -270,7 +395,8 @@ com o PostgreSQL no ar — o índice guarda só vetores, e o texto que vai ao mo
 No `.env`:
 
 ```dotenv
-LLM_BACKEND=gemini
+EXECUTOR=proprio        # só para o /chat; os comandos abaixo não dependem dele
+LLM_BACKEND=gemini      # ou openrouter, com OPENROUTER_API_KEY e OPENROUTER_MODELO
 GEMINI_API_KEY=<chave do Google AI Studio, não versionar>
 GEMINI_MODELO=gemini-3.5-flash
 RAG_TOP_K=5
@@ -338,10 +464,16 @@ Transcription. Além da chave, configure o endpoint exibido no recurso Azure:
 SPEECH_ENDPOINT=https://<regiao>.api.cognitive.microsoft.com
 SPEECH_API_VERSION=2025-10-15
 SPEECH_TIMEOUT_SECONDS=30
+FFPROBE_PATH=ffprobe
+FFPROBE_TIMEOUT_SECONDS=10
 ```
 
-`app.voz.transcricao.transcrever_arquivo` aceita AAC, FLAC, M4A, MP3, MP4,
-OGG, WAV e WebM e devolve texto, idioma, confiança média, duração e latência.
+O contêiner instala FFmpeg; localmente, `ffprobe` precisa estar no `PATH` ou
+ser indicado em `FFPROBE_PATH`. Ele rejeita arquivo corrompido, sem áudio, com
+vídeo ou acima de cinco minutos antes de qualquer chamada tarifada.
+
+`app.voz.transcricao.transcrever_arquivo` aceita MP3, MP4, OGG, WAV e WebM
+validados e devolve texto, idioma, confiança média, duração e latência.
 Ela também aceita uma lista opcional de termos do domínio para melhorar o
-reconhecimento. A integração desse resultado ao endpoint de upload e ao
-pipeline de NLP é feita na task de integração seguinte.
+reconhecimento. `ProcessadorAudio` encaminha o resultado ao orquestrador com
+`canal=voz`; a submissão e o vínculo com a interação ficam no PostgreSQL.

@@ -31,7 +31,7 @@ import csv
 import random
 import sys
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy import delete
@@ -41,9 +41,19 @@ from app.persistence.models import (
     Canal,
     Conversa,
     ExecucaoRotina,
+    Indicador,
     Interacao,
+    Marco,
+    PapelProjeto,
+    Prioridade,
+    Projeto,
+    Risco,
     Rotina,
     StatusExecucao,
+    StatusMarco,
+    StatusProjeto,
+    StatusRisco,
+    UsuarioProjeto,
 )
 from app.persistence.repository import (
     ConversaRepository,
@@ -52,6 +62,13 @@ from app.persistence.repository import (
     RotinaRepository,
     UsuarioRepository,
 )
+from app.persistence.repository_portfolio import (
+    IndicadorRepository,
+    MarcoRepository,
+    ProjetoRepository,
+    RiscoRepository,
+    UsuarioProjetoRepository,
+)
 from app.persistence.sessao import fabrica_de_sessoes
 from app.persistence.tabelas import (
     ConversaTabela,
@@ -59,6 +76,13 @@ from app.persistence.tabelas import (
     InteracaoTabela,
     RotinaTabela,
     UsuarioTabela,
+)
+from app.persistence.tabelas_portfolio import (
+    IndicadorTabela,
+    MarcoTabela,
+    ProjetoTabela,
+    RiscoTabela,
+    UsuarioProjetoTabela,
 )
 from app.pipeline.desfechos import Desfecho
 from app.pipeline.intencao.catalogo import FORA_DE_ESCOPO, TENTATIVA_INJECAO
@@ -70,6 +94,61 @@ CSV_ENUNCIADOS = Path(__file__).resolve().parent.parent / "dados" / "testes-cata
 # exatamente o que foi semeado, sem tocar em nada que alguém tenha
 # gravado usando a aplicação.
 PREFIXO = "demo-"
+
+# Dados sintéticos de projetos para demonstração
+PROJETOS_DEMO = [
+    {
+        "codigo": f"{PREFIXO}PRJ-2024-001",
+        "nome": "Expansão Linha 6 - Trecho Sul",
+        "descricao": "Expansão da Linha 6 do Metrô até o Trecho Sul",
+        "status": StatusProjeto.EM_ANDAMENTO.value,
+        "prioridade": Prioridade.ALTA.value,
+        "data_inicio": date(2024, 1, 15),
+        "data_fim_prevista": date(2026, 12, 31),
+        "avanco_percentual": 45,
+    },
+    {
+        "codigo": f"{PREFIXO}PRJ-2024-002",
+        "nome": "Modernização Sinalização Linha 1",
+        "descricao": "Renovação completa do sistema de sinalização",
+        "status": StatusProjeto.EM_ANDAMENTO.value,
+        "prioridade": Prioridade.MEDIA.value,
+        "data_inicio": date(2024, 3, 1),
+        "data_fim_prevista": date(2025, 6, 30),
+        "avanco_percentual": 72,
+    },
+    {
+        "codigo": f"{PREFIXO}PRJ-2024-003",
+        "nome": "Monotrilho Ouro - Fase 2",
+        "descricao": "Continuação do projeto do monotrilho",
+        "status": StatusProjeto.PLANEJADO.value,
+        "prioridade": Prioridade.CRITICA.value,
+        "data_inicio": date(2025, 1, 1),
+        "data_fim_prevista": date(2028, 12, 31),
+        "avanco_percentual": 0,
+    },
+    {
+        "codigo": f"{PREFIXO}PRJ-2024-004",
+        "nome": "Renovação Frota Linha 3",
+        "descricao": "Substituição dos trens antigos por novos modelos",
+        "status": StatusProjeto.SUSPENSO.value,
+        "prioridade": Prioridade.MEDIA.value,
+        "data_inicio": date(2024, 6, 1),
+        "data_fim_prevista": date(2026, 3, 31),
+        "avanco_percentual": 25,
+    },
+    {
+        "codigo": f"{PREFIXO}PRJ-2024-005",
+        "nome": "Estação Corinthians-Itaquera",
+        "descricao": "Nova estação na Linha 3",
+        "status": StatusProjeto.CONCLUIDO.value,
+        "prioridade": Prioridade.BAIXA.value,
+        "data_inicio": date(2023, 1, 1),
+        "data_fim_prevista": date(2024, 12, 31),
+        "data_fim_real": date(2024, 11, 15),
+        "avanco_percentual": 100,
+    },
+]
 
 # Personas do projeto (capítulo 3 do Projeto.md), uma por perfil.
 USUARIOS = [
@@ -164,6 +243,18 @@ async def _limpar(sessao) -> None:
     """Remove apenas as linhas desta carga, na ordem das dependências."""
     # A ordem importa: as chaves estrangeiras são RESTRICT, então o filho
     # sai antes do pai. Do contrário o banco recusa, e com razão.
+
+    # Limpa schema portfolio (ordem reversa das dependências)
+    await sessao.execute(
+        delete(IndicadorTabela).where(IndicadorTabela.id.like(f"{PREFIXO}%"))
+    )
+    await sessao.execute(delete(MarcoTabela).where(MarcoTabela.id.like(f"{PREFIXO}%")))
+    await sessao.execute(delete(RiscoTabela).where(RiscoTabela.id.like(f"{PREFIXO}%")))
+    await sessao.execute(
+        delete(UsuarioProjetoTabela).where(UsuarioProjetoTabela.usuario_id.like(f"{PREFIXO}%"))
+    )
+
+    # Limpa tabelas do schema public (ordem reversa das dependências)
     await sessao.execute(
         delete(ExecucaoRotinaTabela).where(ExecucaoRotinaTabela.id.like(f"{PREFIXO}%"))
     )
@@ -172,6 +263,11 @@ async def _limpar(sessao) -> None:
     await sessao.execute(delete(ConversaTabela).where(ConversaTabela.id.like(f"{PREFIXO}%")))
     await sessao.execute(delete(UsuarioTabela).where(UsuarioTabela.id.like(f"{PREFIXO}%")))
 
+    # Limpa projetos do portfolio
+    await sessao.execute(
+        delete(ProjetoTabela).where(ProjetoTabela.codigo.like(f"{PREFIXO}%"))
+    )
+
 
 async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
     usuarios = UsuarioRepository(sessao)
@@ -179,6 +275,11 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
     interacoes = InteracaoRepository(sessao)
     rotinas = RotinaRepository(sessao)
     execucoes = ExecucaoRepository(sessao)
+    projetos_repo = ProjetoRepository(sessao)
+    riscos_repo = RiscoRepository(sessao)
+    marcos_repo = MarcoRepository(sessao)
+    indicadores_repo = IndicadorRepository(sessao)
+    usuario_projeto_repo = UsuarioProjetoRepository(sessao)
 
     agora = datetime.now(UTC)
     enunciados = _enunciados_por_intencao()
@@ -187,7 +288,7 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
     for usuario_id, nome, perfil, email in USUARIOS:
         await usuarios.garantir(usuario_id, nome, perfil.value, email)
 
-    contagem = {"conversas": 0, "interacoes": 0, "rotinas": 0, "execucoes": 0}
+    contagem = {"conversas": 0, "interacoes": 0, "rotinas": 0, "execucoes": 0, "projetos": 0, "riscos": 0, "marcos": 0, "indicadores": 0, "usuario_projetos": 0}
 
     # --- Conversas com turnos bem-sucedidos ------------------------------
     # Uma conversa por usuário, mais uma arquivada, para que a tela de
@@ -297,7 +398,7 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
         id=f"{PREFIXO}rotina-marcos",
         nome="Marcos da semana",
         prompt="Quais marcos vencem esta semana?",
-        agenda_cron="0 9 * * 1",
+        agenda_cron="0 9 * * mon",
         timezone="America/Sao_Paulo",
         dono_id=USUARIOS[0][0],
         ativa=False,  # desativada: a tela precisa mostrar os dois estados
@@ -317,7 +418,7 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
         rotina_id=rotina_mensal.id,
         iniciada_em=agora - timedelta(days=4, seconds=4),
         concluida_em=None,
-        status=StatusExecucao.SUCESSO,
+        status=StatusExecucao.EM_EXECUCAO,
     )
     await execucoes.registrar_inicio(execucao_ok)
     contagem["execucoes"] += 1
@@ -378,10 +479,122 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
         rotina_id=rotina_semanal.id,
         iniciada_em=agora - timedelta(hours=6),
         concluida_em=None,
-        status=StatusExecucao.BLOQUEADA,
+        status=StatusExecucao.EM_EXECUCAO,
     )
     await execucoes.registrar_inicio(travada)
     contagem["execucoes"] += 1
+
+    # --- Projetos do portfólio -------------------------------------------
+    # Cria projetos sintéticos para demonstração das intenções de transação
+    for dados_projeto in PROJETOS_DEMO:
+        projeto = Projeto(
+            codigo=dados_projeto["codigo"],
+            nome=dados_projeto["nome"],
+            descricao=dados_projeto["descricao"],
+            status=dados_projeto["status"],
+            prioridade=dados_projeto["prioridade"],
+            data_inicio=dados_projeto["data_inicio"],
+            data_fim_prevista=dados_projeto["data_fim_prevista"],
+            data_fim_real=dados_projeto.get("data_fim_real"),
+            avanco_percentual=dados_projeto["avanco_percentual"],
+            criado_em=agora - timedelta(days=aleatorio.randint(30, 180)),
+            atualizado_em=agora - timedelta(days=aleatorio.randint(1, 30)),
+        )
+        await projetos_repo.criar(projeto)
+        contagem["projetos"] += 1
+
+        # Adiciona riscos ao projeto
+        for i in range(aleatorio.randint(2, 5)):
+            risco = Risco(
+                id=f"{PREFIXO}risco-{dados_projeto['codigo']}-{i}",
+                projeto_codigo=dados_projeto["codigo"],
+                descricao=f"Risco {i+1} do projeto",
+                categoria=aleatorio.choice(["financeiro", "tecnico", "operacional", "regulatorio"]),
+                probabilidade=aleatorio.randint(1, 5),
+                impacto=aleatorio.randint(1, 5),
+                status=aleatorio.choice([s.value for s in StatusRisco]),
+                criado_em=agora - timedelta(days=aleatorio.randint(15, 60)),
+                atualizado_em=agora - timedelta(days=aleatorio.randint(1, 15)),
+            )
+            await riscos_repo.criar(risco)
+            contagem["riscos"] += 1
+
+        # Adiciona marcos ao projeto
+        for i in range(aleatorio.randint(3, 7)):
+            marco = Marco(
+                id=f"{PREFIXO}marco-{dados_projeto['codigo']}-{i}",
+                projeto_codigo=dados_projeto["codigo"],
+                nome=f"Marco {i+1}",
+                descricao="Marco importante do projeto",
+                data_prevista=agora.date() + timedelta(days=aleatorio.randint(30, 365)),
+                status=aleatorio.choice([s.value for s in StatusMarco]),
+                criado_em=agora - timedelta(days=aleatorio.randint(15, 60)),
+                atualizado_em=agora - timedelta(days=aleatorio.randint(1, 15)),
+            )
+            await marcos_repo.criar(marco)
+            contagem["marcos"] += 1
+
+        # Adiciona indicadores ao projeto
+        for i in range(aleatorio.randint(2, 4)):
+            indicador = Indicador(
+                id=f"{PREFIXO}indicador-{dados_projeto['codigo']}-{i}",
+                projeto_codigo=dados_projeto["codigo"],
+                nome=f"Indicador {i+1}",
+                descricao="Indicador de desempenho",
+                valor_atual=round(aleatorio.uniform(50, 95), 2),
+                valor_meta=round(aleatorio.uniform(80, 100), 2),
+                unidade=aleatorio.choice(["%", "R$ mil", "dias", "unidades"]),
+                data_medicao=agora.date() - timedelta(days=aleatorio.randint(1, 30)),
+                criado_em=agora - timedelta(days=aleatorio.randint(15, 60)),
+                atualizado_em=agora - timedelta(days=aleatorio.randint(1, 15)),
+            )
+            await indicadores_repo.criar(indicador)
+            contagem["indicadores"] += 1
+
+    # --- Relação usuário-projeto -------------------------------------------
+    # Atribui projetos aos usuários conforme seus perfis
+    # Diretoria tem acesso a todos, líderes aos seus projetos, membros a alguns
+    projeto_codigos = [p["codigo"] for p in PROJETOS_DEMO]
+
+    for usuario_id, _, perfil, _ in USUARIOS:
+        if perfil == Perfil.DIRETORIA:
+            # Diretoria tem acesso a todos os projetos
+            for projeto_codigo in projeto_codigos:
+                await usuario_projeto_repo.adicionar(
+                    UsuarioProjeto(
+                        usuario_id=usuario_id,
+                        projeto_codigo=projeto_codigo,
+                        papel=PapelProjeto.OBSERVADOR.value,
+                        criado_em=agora - timedelta(days=aleatorio.randint(30, 180)),
+                    )
+                )
+                contagem["usuario_projetos"] += 1
+        elif perfil == Perfil.LIDER_PROJETO:
+            # Líder tem acesso a 2-3 projetos como líder
+            projetos_lider = aleatorio.sample(projeto_codigos, aleatorio.randint(2, 3))
+            for projeto_codigo in projetos_lider:
+                await usuario_projeto_repo.adicionar(
+                    UsuarioProjeto(
+                        usuario_id=usuario_id,
+                        projeto_codigo=projeto_codigo,
+                        papel=PapelProjeto.LIDER.value,
+                        criado_em=agora - timedelta(days=aleatorio.randint(30, 180)),
+                    )
+                )
+                contagem["usuario_projetos"] += 1
+        else:  # MEMBRO_EQUIPE
+            # Membro tem acesso a 1-2 projetos como membro
+            projetos_membro = aleatorio.sample(projeto_codigos, aleatorio.randint(1, 2))
+            for projeto_codigo in projetos_membro:
+                await usuario_projeto_repo.adicionar(
+                    UsuarioProjeto(
+                        usuario_id=usuario_id,
+                        projeto_codigo=projeto_codigo,
+                        papel=PapelProjeto.MEMBRO.value,
+                        criado_em=agora - timedelta(days=aleatorio.randint(30, 180)),
+                    )
+                )
+                contagem["usuario_projetos"] += 1
 
     return contagem
 

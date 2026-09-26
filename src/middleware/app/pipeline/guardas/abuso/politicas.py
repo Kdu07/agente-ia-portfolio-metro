@@ -58,8 +58,11 @@ class ViolacaoPolitica:
 #       pelo catálogo de intenções — mais barato e com confiança
 #       calibrada, mas exige conjunto rotulado.
 #
-# Enquanto não houver decisão, `avaliar` não tem implementação e a guarda
-# de abuso depende apenas das categorias do Content Safety.
+# Enquanto não houver decisão, `avaliar` não acusa nada e a guarda de
+# abuso depende apenas das categorias do Content Safety. Devolver lista
+# vazia é deliberado: inventar enunciados sem o parceiro produziria
+# recusa por política que ninguém aprovou, e uma recusa dessas é pior que
+# a ausência da camada — ela é nominal e tem tratamento disciplinar.
 
 ENUNCIADOS_SEMENTE: dict[Politica, tuple[str, ...]] = {
     Politica.COMUNICACAO_HOSTIL: (),
@@ -70,5 +73,12 @@ ENUNCIADOS_SEMENTE: dict[Politica, tuple[str, ...]] = {
 
 
 def avaliar(texto: str) -> list[ViolacaoPolitica]:
-    """Verifica o texto contra as políticas de uso corporativo."""
-    raise NotImplementedError("Políticas a definir com o parceiro (onda 2)")
+    """Verifica o texto contra as políticas de uso corporativo.
+
+    Sem enunciados definidos com o parceiro, nenhuma política acusa:
+    a lista vazia é o veredito honesto de uma camada ainda não
+    configurada, e o classificador a soma às categorias do Content
+    Safety sem caso especial. Quando os enunciados existirem, é esta
+    função que muda — a guarda e o orquestrador não.
+    """
+    return []

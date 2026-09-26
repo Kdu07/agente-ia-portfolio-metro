@@ -34,6 +34,7 @@ from enum import Enum as EnumPython
 
 from sqlalchemy import (
     ARRAY,
+    JSON,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -45,15 +46,18 @@ from sqlalchemy import (
     Text,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.persistence.models import (
     Canal,
     Conversa,
+    EstadoTranscricao,
     ExecucaoRotina,
     Interacao,
     Rotina,
     StatusExecucao,
+    TranscricaoAudio,
     Usuario,
 )
 from app.pipeline.desfechos import Desfecho
@@ -160,6 +164,10 @@ class SessaoUsuarioTabela(Base):
     `perfil` e `permissoes` são o retrato do login: valem até a sessão
     expirar, e uma mudança de grupo no tenant só chega no login seguinte.
     Nome e e-mail não se repetem aqui; vêm de `usuario` pela chave.
+
+    `projetos` é a lista de códigos de projetos aos quais o usuário tem
+    acesso, carregada no login para evitar consultas adicionais em cada
+    requisição.
     """
 
     __tablename__ = "sessao_usuario"
@@ -175,6 +183,9 @@ class SessaoUsuarioTabela(Base):
     perfil: Mapped[str] = mapped_column(Text, nullable=False)
     permissoes: Mapped[list[str]] = mapped_column(
         ARRAY(Text), nullable=False, server_default=text("'{}'")
+    )
+    projetos: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default=text("'{}'::text[]")
     )
     criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -342,6 +353,17 @@ class InteracaoTabela(Base):
     confianca_intencao: Mapped[float] = mapped_column(Float, nullable=False)
     desfecho: Mapped[str] = mapped_column(Text, nullable=False)
     latencia_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Tempo por etapa do pipeline, `{"injecao": 12, "executor": 1830}`.
+    # Documento, e não uma coluna por etapa, porque o conjunto de etapas
+    # acompanha o orquestrador: uma guarda nova não deve exigir migração
+    # para passar a ser medida. JSONB no PostgreSQL; JSON genérico no
+    # SQLite dos testes unitários. `none_as_null` grava a ausência como
+    # NULL de SQL, e não como o valor JSON `null`, para que o filtro
+    # `IS NOT NULL` das consultas do painel a reconheça.
+    latencia_etapas: Mapped[dict[str, int] | None] = mapped_column(
+        JSON(none_as_null=True).with_variant(JSONB(none_as_null=True), "postgresql"),
+        nullable=True,
+    )
     criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     # Preenchido quando `canal` é `rotina`. Responde "de qual rotina esta
     # mensagem nasceu"; a navegação oposta — "que interação este disparo
@@ -394,6 +416,7 @@ class InteracaoTabela(Base):
             latencia_ms=interacao.latencia_ms,
             criada_em=interacao.criada_em,
             rotina_id=interacao.rotina_id,
+            latencia_etapas=interacao.latencia_etapas,
         )
 
     def to_dominio(self) -> Interacao:
@@ -411,6 +434,87 @@ class InteracaoTabela(Base):
             latencia_ms=self.latencia_ms,
             criada_em=self.criada_em,
             rotina_id=self.rotina_id,
+            latencia_etapas=self.latencia_etapas,
+        )
+
+
+class TranscricaoAudioTabela(Base):
+    """Estado duravel do audio, separado do arquivo temporario."""
+
+    __tablename__ = "transcricao_audio"
+
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    usuario_id: Mapped[str] = mapped_column(
+        Text,
+        ForeignKey("usuario.id", onupdate="CASCADE", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    estado: Mapped[str] = mapped_column(Text, nullable=False)
+    formato: Mapped[str] = mapped_column(Text, nullable=False)
+    duracao_segundos: Mapped[float] = mapped_column(Float, nullable=False)
+    criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    conversa_id: Mapped[str | None] = mapped_column(
+        Text,
+        ForeignKey("conversa.id", onupdate="CASCADE", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    interacao_id: Mapped[str | None] = mapped_column(
+        Text,
+        ForeignKey("interacao.id", onupdate="CASCADE", ondelete="RESTRICT"),
+        nullable=True,
+        unique=True,
+    )
+    texto: Mapped[str | None] = mapped_column(Text, nullable=True)
+    idioma: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confianca: Mapped[float | None] = mapped_column(Float, nullable=True)
+    latencia_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    mensagem_erro: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            f"estado IN ({_valores(EstadoTranscricao)})",
+            name="estado",
+        ),
+        Index("ix_transcricao_audio_usuario_criada", "usuario_id", text("criada_em DESC")),
+        Index("ix_transcricao_audio_expira_em", "expira_em"),
+    )
+
+    @classmethod
+    def de_dominio(cls, audio: TranscricaoAudio) -> "TranscricaoAudioTabela":
+        return cls(
+            id=audio.id,
+            usuario_id=audio.usuario_id,
+            estado=audio.estado.value,
+            formato=audio.formato,
+            duracao_segundos=audio.duracao_segundos,
+            criada_em=audio.criada_em,
+            expira_em=audio.expira_em,
+            conversa_id=audio.conversa_id,
+            interacao_id=audio.interacao_id,
+            texto=audio.texto,
+            idioma=audio.idioma,
+            confianca=audio.confianca,
+            latencia_ms=audio.latencia_ms,
+            mensagem_erro=audio.mensagem_erro,
+        )
+
+    def to_dominio(self) -> TranscricaoAudio:
+        return TranscricaoAudio(
+            id=self.id,
+            usuario_id=self.usuario_id,
+            estado=EstadoTranscricao(self.estado),
+            formato=self.formato,
+            duracao_segundos=self.duracao_segundos,
+            criada_em=self.criada_em,
+            expira_em=self.expira_em,
+            conversa_id=self.conversa_id,
+            interacao_id=self.interacao_id,
+            texto=self.texto,
+            idioma=self.idioma,
+            confianca=self.confianca,
+            latencia_ms=self.latencia_ms,
+            mensagem_erro=self.mensagem_erro,
         )
 
 

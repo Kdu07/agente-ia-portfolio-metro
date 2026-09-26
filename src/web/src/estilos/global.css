@@ -1,182 +1,425 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
-/* Tokens de cor do texto.
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Tokens de cor, nomeados pelo papel e não pelo tom: trocar a paleta não
+ * exige mexer em quem os consome. Os nomes em inglês são os que o shadcn
+ * espera; os em português são do projeto.
  *
- * Nomeados pelo PAPEL na hierarquia de leitura, e nao pelo tom: trocar a
- * paleta nao exige mexer em nenhuma regra que os consome.
- *
- * Cada token foi verificado contra TODOS os fundos claros em que a
- * interface o utiliza (#fff, #f7f9fc, #f5f6f8, #f1f2f4, #f0f2f5), e nao
- * apenas contra o branco. Foi assim que apareceram as reprovacoes: o
- * cinza secundario passava sobre a pagina e reprovava sobre a bolha e
- * sobre a etiqueta de status. O pior caso de cada token esta em 9.2.5 do
- * Projeto.md. O minimo exigido e 4,5:1 para texto pequeno (WCAG 1.4.3) e
- * 3:1 para elemento grafico portador de informacao (WCAG 1.4.11).
- *
- * --texto-desabilitado fica abaixo de 4,5:1 por decisao, e nao por
- * descuido: a WCAG 1.4.3 isenta componente inativo, e escurecer o botao
- * desabilitado o faria parecer acionavel.
+ * Cada par texto/fundo tem o contraste conferido por
+ * src/testes/contraste.test.ts nos dois temas. Os valores são opacos de
+ * propósito, inclusive o item ativo da barra: o teste não compõe
+ * transparência, e um token translúcido seria contraste sem verificação.
  */
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --blue: #0875c9; --blue-dark: #0562aa; --line: #e2e7ef;
-  --texto-forte: #172033;
-  --texto-padrao: #344054;
-  --texto-suave: #646d82;
-  --texto-desabilitado: #98a2b3;
-  --indicador-neutro: #8691a5;
-  color: var(--texto-forte); background: #f7f9fc; font-synthesis: none;
+  --background: #F4F7FB;
+  --foreground: #0E1A2E;
+  --card: #FFFFFF;
+  --card-foreground: #0E1A2E;
+  --popover: #FFFFFF;
+  --popover-foreground: #0E1A2E;
+  --primary: #1D5BD6;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EEF2F8;
+  --secondary-foreground: #0E1A2E;
+  --muted: #EEF2F8;
+  --muted-foreground: #5A6A82;
+  --accent: #EEF2F8;
+  --accent-foreground: #0E1A2E;
+  --destructive: #C4322B;
+  --border: #DCE3EC;
+  --input: #DCE3EC;
+  --ring: #1D5BD6;
+
+  --texto: #2F3D55;
+  --borda-forte: #C5CFDC;
+  --controle-desligado: #76849A;
+  --primario-hover: #174BB3;
+  --primario-texto: #1A52C2;
+  --primario-suave: #E3EDFD;
+  --bolha-usuario: #14305C;
+  --marinho: #0B1A33;
+
+  /* Prata do avatar da pessoa, com as iniciais em marinho, igual nos dois temas. */
+  --prata-claro: #E4E9F0;
+  --prata-escuro: #9DA9BA;
+
+  /* Gravação de voz, igual nos dois temas. Só como fundo do botão, sob o ícone branco. */
+  --gravacao: #D23B3B;
+
+  /* Ícone de sucesso do aviso, que tem fundo invertido: o verde do tema oposto. */
+  --toast-icone: #4FCB8F;
+
+  /*
+   * Painel de marca do login: sempre marinho, nos dois temas. As linhas
+   * de metrô são decoração (aria-hidden) e não carregam informação.
+   */
+  --marca-brilho: #163766;
+  --marca-base: #07101F;
+  --linha-prata-1: #8E9BB0;
+  --linha-prata-2: #EEF1F6;
+  --linha-prata-3: #AEB8C6;
+  --linha-azul: #3D7BEA;
+  --linha-marinho-1: #1F3D6C;
+  --linha-marinho-2: #294A7A;
+
+  /*
+   * Botão "Entrar com a Microsoft" nas cores das diretrizes da Microsoft
+   * (tema claro: fundo branco, borda #8C8C8C, texto #5E5E5E; escuro: fundo
+   * #2F2F2F e texto branco). O logotipo de quatro quadrados não muda.
+   */
+  --ms-botao-fundo: #FFFFFF;
+  --ms-botao-borda: #8C8C8C;
+  --ms-botao-texto: #5E5E5E;
+  --ms-vermelho: #F25022;
+  --ms-verde: #7FBA00;
+  --ms-azul: #00A4EF;
+  --ms-amarelo: #FFB900;
+
+  /* Desfechos: os valores já auditados na 9.2.5 do Projeto.md. */
+  --desfecho-ok: #186B48;
+  --desfecho-injecao: #B4342A;
+  --desfecho-abuso: #8A5309;
+  --desfecho-recusa: #0B5EA8;
+  --desfecho-falha: #63488B;
+
+  /*
+   * Séries da linha de bloqueios do painel. Injeção e saída repetem o
+   * desfecho; abuso é um ocre mais claro porque #8A5309 fica a ΔE 2,9 do
+   * vermelho para deuteranopia, e as linhas se cruzam. Só para marca
+   * gráfica: #B98A00 dá 3,14:1 no branco, abaixo do mínimo de texto.
+   * Validado com o validate_palette.js da skill dataviz, todos os pares.
+   */
+  --serie-injecao: #B4342A;
+  --serie-abuso: #B98A00;
+  --serie-saida: #63488B;
+
+  /*
+   * Etapas do pipeline em "Onde o tempo vai". As três guardas usam as
+   * cores de série acima, para cada entidade ter uma cor só no painel;
+   * classificação e executor completam a barra. Validado na ordem da
+   * barra (injeção, abuso, classificação, executor, saída).
+   */
+  --etapa-classificacao: #00937F;
+  --etapa-executor: #2F6FE0;
+
+  /* Barra lateral marinho também no tema claro (decisão 1). */
+  --sidebar: #0B1A33;
+  --sidebar-topo: #0F2342;
+  --sidebar-foreground: #C9D4E5;
+  --sidebar-suave: #95A6C0;
+  --sidebar-primary: #1D5BD6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #233147;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #1B2A44;
+  --sidebar-ring: #6FA2FF;
+
+  /* Logo sobre fundo claro. `marca-prata` troca para a versão prata. */
+  --logo-tinta-1: #1D3355;
+  --logo-tinta-2: #0D1D36;
+  --logo-tinta-3: #253D62;
+  --logo-acento: #1F5FD1;
+
+  /* `--canvas-topo` é o pior fundo do degradê; o teste de contraste o usa. */
+  --canvas-topo: #E3EDFD;
+  --canvas: radial-gradient(120% 70% at 10% -10%, var(--canvas-topo) 0%, transparent 58%),
+    radial-gradient(80% 60% at 100% 0%, #E7EEFA 0%, transparent 60%),
+    linear-gradient(180deg, #F1F6FD 0%, #F6F8FB 58%, #F4F7FB 100%);
+  --grao: 0.045;
+  --brilho: rgb(118 160 236 / 0.95);
+
+  --sombra-1: 0 1px 2px rgb(14 26 46 / 0.06);
+  --sombra-2: 0 8px 24px -12px rgb(14 30 60 / 0.22), 0 1px 3px rgb(14 26 46 / 0.06);
+  --sombra-3: 0 28px 64px -24px rgb(12 32 70 / 0.38), 0 2px 6px rgb(14 26 46 / 0.08);
 }
-* { box-sizing: border-box; }
-html, body, #raiz { width: 100%; min-width: 320px; height: 100%; margin: 0; }
-button, input, textarea { font: inherit; }
-button, a { -webkit-tap-highlight-color: transparent; }
-button { cursor: pointer; }
-.app-shell { display: flex; height: 100dvh; overflow: hidden; background: #fff; }
-.sidebar { width: 260px; flex: 0 0 260px; display: flex; flex-direction: column; overflow-y: auto; padding: 18px 16px; background: #f5f6f8; border-right: 1px solid var(--line); z-index: 30; }
-.brand-row { display: flex; align-items: center; gap: 10px; min-height: 42px; font-size: 17px; }
-.brand-logo { display: block; width: 185px; height: 72px; object-fit: contain; object-position: left center; }
-.brand-mark, .message-avatar, .mini-mark { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: white; background: linear-gradient(145deg, #1687dc, #0066b3); }
-.brand-mark { font-size: 17px; }
-.brand-mark--letter { font-weight: 800; letter-spacing: -.04em; }
-.brand-mark--image { overflow: hidden; background: #063b8f; }
-.brand-mark--image img { display: block; width: auto; max-width: none; height: 100%; transform: translateX(-1px); }
-.new-chat { display: flex; align-items: center; gap: 10px; margin: 20px 0; padding: 13px 15px; border-radius: 9px; color: white; background: var(--blue); font-weight: 700; text-decoration: none; }
-.new-chat:hover { background: var(--blue-dark); }
-.new-chat svg, .nav-list svg, .microsoft-login svg, .icon-button svg, .floating-menu svg { width: 22px; height: 22px; flex: none; }
-.nav-label { margin: 2px 0 7px; color: #5d6676; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
-.nav-list { display: grid; gap: 6px; }
-.nav-list a { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 9px; color: var(--texto-padrao); text-decoration: none; font-weight: 600; }
-.nav-list a:hover { background: #e9edf3; }
-.nav-list a.active { color: #0567b5; background: #dcecff; }
-.history-section { margin-top: 24px; }
-.history-heading { display: flex; align-items: center; justify-content: space-between; }
-.history-heading button { border: 0; color: var(--texto-suave); background: transparent; font-weight: 800; letter-spacing: 1px; }
-.history-section > a { display: flex; align-items: center; gap: 10px; padding: 10px 9px; border-radius: 8px; color: var(--texto-padrao); text-decoration: none; }
-.history-section > a:hover, .history-section > a.active { background: #e9edf3; }
-.history-section > a > span:last-child { display: grid; min-width: 0; flex: 1; }
-.history-section strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.history-section small { color: var(--texto-suave); font-size: 10px; }
-.history-icon { color: #627085; font-size: 18px; }
-.sidebar-spacer { flex: 1; }
-.profile-card, .microsoft-login { display: flex; align-items: center; gap: 10px; padding-top: 15px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; }
-.profile-card > span:last-child, .microsoft-login > span:nth-child(2) { display: grid; min-width: 0; flex: 1; }
-.profile-card strong, .microsoft-login strong { font-size: 13px; }
-.profile-card small, .microsoft-login small { overflow: hidden; color: var(--texto-suave); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-.avatar { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; color: white; background: #7438ed; font-size: 12px; font-weight: 800; }
-.avatar--small { width: 30px; height: 30px; }
-.ms-grid { display: grid; grid-template-columns: 8px 8px; grid-template-rows: 8px 8px; gap: 2px; }
-.ms-grid i:nth-child(1) { background: #f25022; }.ms-grid i:nth-child(2) { background: #7fba00; }.ms-grid i:nth-child(3) { background: #00a4ef; }.ms-grid i:nth-child(4) { background: #ffb900; }
-.app-content { position: relative; display: flex; min-width: 0; height: 100%; flex: 1; flex-direction: column; overflow: hidden; }
-.page { height: 100%; overflow-y: auto; background: #fff; }
-.topbar { flex: none; min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 10px 24px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.96); }
-.assistant-title { display: flex; align-items: center; gap: 12px; }
-.assistant-title > span:last-child { display: grid; gap: 2px; }
-.assistant-title strong { font-size: 16px; }
-.assistant-title small { color: var(--texto-suave); font-size: 12px; }
-.assistant-title small i { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: #17b67a; }
-.outline-button, .secondary-button { padding: 8px 16px; border: 1px solid #cfd6e1; border-radius: 8px; color: var(--texto-padrao); background: white; font-weight: 700; }
-.outline-button { color: #0567b5; border-color: #1682d6; }
-.primary-button { padding: 9px 18px; border: 0; border-radius: 7px; color: white; background: var(--blue); font-weight: 700; }
-.primary-button:hover { background: var(--blue-dark); }
-.conversation-page { display: flex; min-height: 0; flex-direction: column; overflow: hidden; }
-.conversation-body { position: relative; display: flex; flex: 1; flex-direction: column; min-height: 0; padding: 24px 40px 14px; }
-.messages { width: min(720px, 100%); margin: 0 auto; flex: 1; min-height: 0; overflow-y: auto; scroll-behavior: smooth; }
-.message-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; }
-.message-row > div { max-width: min(600px, calc(100% - 44px)); }
-.message-row--usuario { justify-content: flex-end; }
-.message-row--usuario > div { order: 1; }.message-row--usuario .avatar { order: 2; }
-.message-bubble { padding: 17px 18px; border-radius: 0 18px 18px 18px; color: #252d3d; background: #f1f2f4; line-height: 1.5; }
-.message-row--usuario .message-bubble { color: white; background: var(--blue); border-radius: 18px 0 18px 18px; }
-.message-row time { display: block; margin-top: 7px; color: var(--texto-suave); font-size: 11px; }
-.message-row--usuario time { text-align: right; }
-.message-avatar { width: 30px; height: 30px; margin-top: 4px; font-size: 13px; }
-.notification-card { position: absolute; top: 16px; right: 24px; width: min(380px, calc(100% - 48px)); padding: 18px; border: 1px solid #dfe3ea; border-radius: 12px; background: white; box-shadow: 0 12px 35px rgba(16, 24, 40, .16); z-index: 4; }
-.notification-card > strong { display: flex; align-items: center; gap: 8px; }
-.mini-mark { width: 24px; height: 24px; font-size: 12px; }
-.notification-card p { color: var(--texto-suave); font-size: 13px; line-height: 1.45; }.notification-card em { color: #df2d2d; font-style: normal; font-weight: 800; }
-.notification-card > div { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.notification-close { position: absolute; top: 12px; right: 13px; border: 0; color: var(--texto-suave); background: none; font-size: 24px; }
-.composer { flex: none; width: min(760px, 100%); margin: 16px auto 0; padding: 14px; border: 1px solid #cfd6e1; border-radius: 16px; background: white; }
-.composer:focus-within { border-color: #5ca8e2; box-shadow: 0 0 0 3px #e1f1ff; }
-.composer textarea { width: 100%; min-height: 36px; resize: none; border: 0; outline: none; color: var(--texto-padrao); }
-.composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.composer-tools { display: flex; align-items: center; gap: 12px; color: #526174; }
-.composer-tools span { font-size: 22px; }.composer-tools b { padding: 6px 9px; border-radius: 7px; background: #f1f3f6; font-size: 12px; }
-.composer-submit { display: flex; align-items: center; gap: 8px; }
-.composer-submit button { display: grid; width: 38px; height: 38px; place-items: center; border: 0; border-radius: 9px; }
-.composer-submit svg { width: 20px; height: 20px; }
-.voice-button { color: #405269; background: #eef2f6; }
-.voice-button:hover { color: #0567b5; background: #e1f1ff; }
-.voice-button--active { color: white; background: #d63838; box-shadow: 0 0 0 4px #fbe3e3; }
-.send-button { color: white; background: var(--blue); font-size: 23px; }
-.send-button:disabled { color: var(--texto-desabilitado); background: #f0f2f5; cursor: default; }
-.disclaimer { flex: none; margin: 10px 0 0; color: var(--texto-suave); text-align: center; font-size: 11px; }
-.mobile-only { display: none; }.sidebar-backdrop { display: none; }
 
-/* Página de gestão de rotinas */
-.routines-page { min-height: 100dvh; background: #f8fafc; }
-.routines-topbar { position: sticky; top: 0; z-index: 10; }
-.routines-content { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 36px 0 64px; }
-.eyebrow { margin: 0 0 5px; color: var(--blue); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.routines-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin-bottom: 28px; }
-.routines-heading h1 { margin: 0; color: var(--texto-forte); font-size: clamp(25px, 3vw, 34px); letter-spacing: -.035em; }
-.routines-heading > div:first-child > p:last-child { margin: 9px 0 0; color: var(--texto-suave); }
-.routines-summary { display: grid; grid-template-columns: repeat(3, minmax(75px, 1fr)); min-width: 280px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; }
-.routines-summary span { display: grid; gap: 2px; padding: 13px 18px; text-align: center; }
-.routines-summary span + span { border-left: 1px solid var(--line); }
-.routines-summary strong { font-size: 20px; }.routines-summary small { color: var(--texto-suave); font-size: 10px; text-transform: uppercase; }
-.routines-toolbar { display: grid; grid-template-columns: minmax(260px, 1fr) 170px 210px; gap: 12px; margin-bottom: 18px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: white; }
-.routines-toolbar label { display: grid; gap: 5px; color: #526174; font-size: 11px; font-weight: 700; }
-.routines-toolbar input, .routines-toolbar select, .routine-modal input, .routine-modal select, .routine-modal textarea { width: 100%; border: 1px solid #ccd4df; border-radius: 8px; outline: none; color: var(--texto-forte); background: white; }
-.routines-toolbar input, .routines-toolbar select { min-height: 40px; padding: 8px 11px; }
-.routines-toolbar input:focus, .routines-toolbar select:focus, .routine-modal input:focus, .routine-modal select:focus, .routine-modal textarea:focus { border-color: #3d94d7; box-shadow: 0 0 0 3px #e2f2ff; }
-.search-field { position: relative; align-self: end; }.search-field > span { position: absolute; left: 12px; bottom: 8px; color: #65758b; font-size: 21px; }.search-field input { padding-left: 38px; }
-.routines-list { display: grid; gap: 12px; }
-.routine-card { display: flex; align-items: stretch; justify-content: space-between; gap: 20px; padding: 20px; border: 1px solid var(--line); border-radius: 13px; background: white; box-shadow: 0 2px 7px rgba(16, 24, 40, .035); }
-.routine-card-main { min-width: 0; flex: 1; }
-.routine-card-title { display: flex; align-items: flex-start; gap: 10px; }.routine-card-title > div { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
-.routine-card h2 { margin: 0; font-size: 16px; }.routine-card-main > p { max-width: 760px; margin: 9px 0 17px 18px; color: var(--texto-suave); font-size: 13px; line-height: 1.5; }
-.status-dot { width: 8px; height: 8px; margin-top: 6px; flex: none; border-radius: 50%; background: var(--indicador-neutro); }.status-dot--active { background: #17b67a; box-shadow: 0 0 0 3px #def7ec; }
-.status-badge { padding: 3px 8px; border-radius: 999px; color: var(--texto-suave); background: #f0f2f5; font-size: 10px; font-weight: 800; }.status-badge--active { color: #087a55; background: #e0f7ee; }
-.routine-card dl { display: grid; grid-template-columns: 1.1fr 1fr 1.3fr; gap: 18px; margin: 0 0 0 18px; }.routine-card dl div { display: grid; gap: 4px; }.routine-card dt { color: var(--texto-suave); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }.routine-card dd { margin: 0; color: var(--texto-padrao); font-size: 12px; font-weight: 600; }
-.routine-card-actions { display: flex; align-items: center; gap: 8px; flex: none; }.routine-card-actions button { padding: 8px 11px; }
-.text-button { border: 0; color: #0567b5; background: transparent; font-weight: 700; }.text-button:hover { background: #eaf5fd; border-radius: 7px; }
-.danger-button { padding: 8px 13px; border: 1px solid #edb5b5; border-radius: 8px; color: #b42318; background: white; font-weight: 700; }.danger-button:hover { background: #fff2f0; }.danger-button--solid { color: white; border-color: #c4322b; background: #c4322b; }.danger-button--solid:hover { background: #a92b25; }
-.routines-empty { display: grid; min-height: 310px; place-items: center; align-content: center; padding: 40px; border: 1px dashed #c9d2df; border-radius: 14px; color: var(--texto-suave); background: white; text-align: center; }.routines-empty > span { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 50%; color: var(--blue); background: #eaf5fd; font-size: 28px; }.routines-empty h2 { margin: 14px 0 5px; color: var(--texto-padrao); }.routines-empty p { margin: 0 0 17px; }
-.routines-loading { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; position: relative; }.routines-loading > span { height: 170px; border: 1px solid var(--line); border-radius: 13px; background: linear-gradient(100deg, #fff 20%, #f1f4f7 40%, #fff 60%); background-size: 300% 100%; animation: rotina-pulse 1.2s infinite; }.routines-loading p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-@keyframes rotina-pulse { to { background-position: -150% 0; } }
-.modal-backdrop { position: fixed; display: grid; inset: 0; place-items: center; padding: 24px; background: rgba(15, 23, 42, .52); backdrop-filter: blur(2px); z-index: 50; }
-.routine-modal { width: min(620px, 100%); max-height: calc(100dvh - 48px); overflow: auto; border-radius: 16px; background: white; box-shadow: 0 24px 70px rgba(15, 23, 42, .28); }
-.routine-modal > header { display: flex; align-items: flex-start; justify-content: space-between; padding: 22px 24px 16px; border-bottom: 1px solid var(--line); }.routine-modal h2, .confirm-dialog h2 { margin: 0; font-size: 21px; }.modal-close { border: 0; color: var(--texto-suave); background: transparent; font-size: 26px; }
-.routine-modal form { display: grid; gap: 17px; padding: 20px 24px 24px; }.routine-modal form > label, .form-grid label { display: grid; gap: 6px; color: var(--texto-padrao); font-size: 12px; font-weight: 700; }.routine-modal input, .routine-modal select, .routine-modal textarea { padding: 10px 12px; }.routine-modal textarea { resize: vertical; }.routine-modal label > small { color: #8390a2; font-weight: 400; }.routine-modal [aria-invalid="true"] { border-color: #d92d20; box-shadow: 0 0 0 3px #fee4e2; }.routine-modal label > .field-error { color: #b42318; font-weight: 600; }
-.form-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px; }.switch-field { display: flex !important; align-items: flex-start; gap: 10px !important; padding: 13px; border-radius: 9px; background: #f7f9fc; }.switch-field input { width: 17px; margin-top: 3px; }.switch-field > span { display: grid; gap: 2px; }.routine-modal footer { display: flex; justify-content: flex-end; gap: 9px; padding-top: 4px; }
-.confirm-dialog { width: min(430px, 100%); padding: 27px; border-radius: 15px; background: white; box-shadow: 0 24px 70px rgba(15, 23, 42, .28); text-align: center; }.danger-icon { display: grid; width: 46px; height: 46px; margin: 0 auto 14px; place-items: center; border-radius: 50%; color: #b42318; background: #fee4e2; font-size: 22px; font-weight: 900; }.confirm-dialog p { color: var(--texto-suave); line-height: 1.5; }.confirm-dialog > div { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
-.toast-success { position: fixed; display: flex; align-items: center; right: 22px; bottom: 22px; gap: 9px; padding: 13px 17px; border: 1px solid #a9e5cc; border-radius: 10px; color: #086645; background: #effbf6; box-shadow: 0 10px 30px rgba(16, 24, 40, .16); font-size: 13px; font-weight: 700; z-index: 70; }.toast-success span { display: grid; width: 21px; height: 21px; place-items: center; border-radius: 50%; color: white; background: #17a873; }
+.dark {
+  --background: #0A111D;
+  --foreground: #EDF2F9;
+  --card: #111B2C;
+  --card-foreground: #EDF2F9;
+  --popover: #111B2C;
+  --popover-foreground: #EDF2F9;
+  --primary: #2F6BE0;
+  --primary-foreground: #FFFFFF;
+  --secondary: #172338;
+  --secondary-foreground: #EDF2F9;
+  --muted: #172338;
+  --muted-foreground: #8D9AB0;
+  --accent: #172338;
+  --accent-foreground: #EDF2F9;
+  /* Claro o bastante para texto sobre card (7,6); o botão destrutivo do
+     shadcn usa dark:bg-destructive/60, que dá 4,94 com texto branco. */
+  --destructive: #FF8B7E;
+  --border: #22314A;
+  --input: #22314A;
+  --ring: #7EAAFF;
 
-/* Indicador de que o agente esta compondo a resposta. Os tres pontos
-   pulsam em sequencia; `prefers-reduced-motion` desliga a animacao e
-   mantem os pontos visiveis, porque a informacao esta na presenca do
-   indicador e nao no movimento. */
-.typing-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; }
-.typing-bubble { display: flex; align-items: center; gap: 5px; padding: 18px; border-radius: 0 18px 18px 18px; background: #f1f2f4; }
-.typing-bubble i { display: block; width: 7px; height: 7px; border-radius: 50%; background: #7a8493; animation: ponto-digitando 1.3s infinite ease-in-out; }
-.typing-bubble i:nth-child(2) { animation-delay: .18s; }
-.typing-bubble i:nth-child(3) { animation-delay: .36s; }
-@keyframes ponto-digitando { 0%, 60%, 100% { opacity: .28; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
-@media (prefers-reduced-motion: reduce) { .typing-bubble i { animation: none; opacity: .6; } .messages { scroll-behavior: auto; } }
+  --texto: #C3CDDC;
+  --borda-forte: #2E4060;
+  --controle-desligado: #6A7A95;
+  --primario-hover: #3F7AEE;
+  --primario-texto: #7EAAFF;
+  --primario-suave: #12294D;
+  --bolha-usuario: #244A86;
 
-/* Rotulo de contexto do compositor. Substitui o falso seletor que
-   parecia clicavel e nao era. */
-.composer-context { padding: 6px 9px; border-radius: 7px; background: #f1f3f6; color: #475569; font-size: 12px; font-weight: 600; }
+  --desfecho-ok: #4FCB8F;
+  --desfecho-injecao: #FF8B7E;
+  --desfecho-abuso: #E6B04E;
+  --desfecho-recusa: #7EB0FF;
+  --desfecho-falha: #BBA2FF;
 
-@media (max-width: 850px) {
-  .mobile-only { display: grid; }.sidebar { position: fixed; inset: 0 auto 0 0; transform: translateX(-102%); box-shadow: 8px 0 30px rgba(16,24,40,.18); transition: transform .2s ease; }.sidebar--open { transform: translateX(0); }.sidebar-backdrop { position: fixed; display: block; inset: 0; border: 0; background: rgba(15,23,42,.38); z-index: 20; }.icon-button, .floating-menu { place-items: center; border: 0; background: transparent; }.floating-menu { position: fixed; top: 17px; left: 14px; width: 34px; height: 34px; border-radius: 8px; background: white; z-index: 15; box-shadow: 0 3px 12px rgba(16,24,40,.12); }.topbar { padding-left: 58px; }.conversation-body { padding: 20px 16px 12px; }.notification-card { top: 14px; right: 16px; }
-  .routines-content { width: min(100% - 32px, 760px); padding-top: 26px; }.routines-heading { align-items: stretch; flex-direction: column; }.routines-summary { width: 100%; }.routines-toolbar { grid-template-columns: 1fr 1fr; }.routines-toolbar .search-field { grid-column: 1 / -1; }.routine-card { flex-direction: column; }.routine-card-actions { justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--line); }
+  --serie-injecao: #FF9A8E;
+  --serie-abuso: #C08A1E;
+  --serie-saida: #BBA2FF;
+  --etapa-classificacao: #22A99A;
+  --etapa-executor: #4A7FE8;
+
+  --sidebar: #070D18;
+  --sidebar-topo: #0A1424;
+  --sidebar-foreground: #C3CDDC;
+  --sidebar-suave: #8595AE;
+  --sidebar-primary: #2F6BE0;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1B202A;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #141C2A;
+  --sidebar-ring: #7EAAFF;
+
+  --logo-tinta-1: #F6F8FB;
+  --logo-tinta-2: #B7C0CD;
+  --logo-tinta-3: #E4E9F0;
+  --logo-acento: #4C8DFF;
+
+  --toast-icone: #186B48;
+
+  --ms-botao-fundo: #2F2F2F;
+  --ms-botao-borda: #2F2F2F;
+  --ms-botao-texto: #FFFFFF;
+
+  /* Topo do degradê já composto sobre o fundo: é contra ele que se mede. */
+  --canvas-topo: #152C55;
+  --canvas: radial-gradient(120% 70% at 10% -10%, rgb(38 86 176 / 0.34) 0%, transparent 56%),
+    radial-gradient(80% 60% at 100% 0%, rgb(30 60 118 / 0.26) 0%, transparent 60%),
+    linear-gradient(180deg, #0C1626 0%, #0A111D 70%);
+  --grao: 0.06;
+  --brilho: rgb(200 218 255 / 0.95);
+
+  --sombra-1: 0 1px 2px rgb(0 0 0 / 0.3);
+  --sombra-2: 0 10px 30px -12px rgb(0 0 0 / 0.55);
+  --sombra-3: 0 30px 70px -24px rgb(0 0 0 / 0.75);
 }
-@media (max-width: 520px) {
-  .assistant-title strong { font-size: 14px; }.assistant-title .brand-mark { display: none; }.topbar .outline-button { padding: 7px 10px; }.notification-card { width: calc(100% - 32px); }.composer-tools span:nth-child(2), .composer-tools span:nth-child(3) { display: none; }.composer-tools b { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .routines-topbar .primary-button { padding: 8px 10px; font-size: 12px; }.routines-topbar .assistant-title small { display: none; }.routines-content { width: calc(100% - 24px); padding-top: 21px; }.routines-heading { gap: 18px; margin-bottom: 19px; }.routines-heading h1 { font-size: 25px; }.routines-heading > div:first-child > p:last-child { font-size: 13px; }.routines-summary span { padding: 10px 7px; }.routines-toolbar { grid-template-columns: 1fr; }.routines-toolbar .search-field { grid-column: auto; }.routine-card { padding: 16px; }.routine-card-main > p, .routine-card dl { margin-left: 0; }.routine-card dl { grid-template-columns: 1fr; gap: 11px; }.routine-card-actions { display: grid; grid-template-columns: repeat(3, 1fr); }.routine-card-actions button { padding-inline: 6px; font-size: 12px; }.form-grid { grid-template-columns: 1fr; }.modal-backdrop { align-items: end; padding: 0; }.routine-modal { max-height: 92dvh; border-radius: 16px 16px 0 0; }.routine-modal > header, .routine-modal form { padding-inline: 18px; }.confirm-dialog { width: 100%; border-radius: 16px 16px 0 0; }.toast-success { right: 12px; bottom: 12px; left: 12px; justify-content: center; }
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-texto: var(--texto);
+  --color-borda-forte: var(--borda-forte);
+  --color-controle-desligado: var(--controle-desligado);
+  --color-primario-hover: var(--primario-hover);
+  --color-primario-texto: var(--primario-texto);
+  --color-primario-suave: var(--primario-suave);
+  --color-bolha-usuario: var(--bolha-usuario);
+  --color-marinho: var(--marinho);
+  --color-prata-claro: var(--prata-claro);
+  --color-prata-escuro: var(--prata-escuro);
+  --color-gravacao: var(--gravacao);
+  --color-toast-icone: var(--toast-icone);
+  --color-ms-botao-fundo: var(--ms-botao-fundo);
+  --color-ms-botao-borda: var(--ms-botao-borda);
+  --color-ms-botao-texto: var(--ms-botao-texto);
+  --color-desfecho-ok: var(--desfecho-ok);
+  --color-desfecho-injecao: var(--desfecho-injecao);
+  --color-desfecho-abuso: var(--desfecho-abuso);
+  --color-desfecho-recusa: var(--desfecho-recusa);
+  --color-desfecho-falha: var(--desfecho-falha);
+  --color-serie-injecao: var(--serie-injecao);
+  --color-serie-abuso: var(--serie-abuso);
+  --color-serie-saida: var(--serie-saida);
+  --color-etapa-classificacao: var(--etapa-classificacao);
+  --color-etapa-executor: var(--etapa-executor);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-topo: var(--sidebar-topo);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-suave: var(--sidebar-suave);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --shadow-1: var(--sombra-1);
+  --shadow-2: var(--sombra-2);
+  --shadow-3: var(--sombra-3);
+}
+
+@theme {
+  /* O Fontsource publica a família variável como "Mona Sans Variable". */
+  --font-sans: "Mona Sans Variable", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  /* Raio pelo papel: selo, controle, cartão, cartão grande, compositor e diálogo. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  --ease-saida: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-padrao: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-estacao: estacao 1.2s var(--ease-padrao) infinite;
+  --animate-tracar: tracar 1.9s var(--ease-saida) both;
+  --animate-brilho: brilho 1.05s var(--ease-padrao) 1;
+  --animate-pulso: pulso 1.4s infinite;
+  --animate-surge: surge 0.45s var(--ease-saida) both;
+
+  @keyframes estacao {
+    0%, 60%, 100% { background-color: var(--card); border-color: var(--borda-forte); transform: scale(1); }
+    20% { background-color: var(--primary); border-color: var(--primary); transform: scale(1.2); }
+  }
+  @keyframes tracar {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes pulso {
+    0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--gravacao) 45%, transparent); }
+    70% { box-shadow: 0 0 0 10px color-mix(in oklab, var(--gravacao) 0%, transparent); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  @keyframes surge {
+    from { opacity: 0; transform: scale(0.3); }
+  }
+  @keyframes brilho {
+    0% { opacity: 0; background-position: 100% 0; }
+    18% { opacity: 1; }
+    100% { opacity: 0; background-position: 0% 0; }
+  }
+}
+
+/* Títulos em largura expandida ecoam o lettering largo da logo. */
+@utility font-display {
+  font-weight: 650;
+  font-stretch: 116%;
+  letter-spacing: -0.022em;
+  line-height: 1.12;
+}
+
+@utility fundo-conversa {
+  background-color: var(--background);
+  background-image: var(--canvas);
+}
+
+/* Grão sutil sobre o degradê: evita faixas de cor em telas de 8 bits. */
+@utility grao {
+  position: relative;
+  isolation: isolate;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--grao);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45 0 0 0 0 .5 0 0 0 0 .62 0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+}
+
+/* Painel de marca do login: brilho azul no canto sobre o marinho. */
+@utility fundo-marca {
+  background-color: var(--marinho);
+  background-image: radial-gradient(110% 80% at 0% 0%, var(--marca-brilho) 0%, transparent 62%),
+    linear-gradient(160deg, var(--marinho), var(--marca-base));
+}
+
+/* Superfícies marinho (barra lateral, painel do login): logo em prata. */
+@utility marca-prata {
+  --logo-tinta-1: #F6F8FB;
+  --logo-tinta-2: #B7C0CD;
+  --logo-tinta-3: #E4E9F0;
+  --logo-acento: #4C8DFF;
+}
+
+@layer base {
+  /* No Tailwind 4 a borda sem cor usa currentColor. Os componentes do
+     shadcn escrevem só `border` e contam com a cor do token. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border);
+  }
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+  body { @apply bg-background text-texto font-sans antialiased; }
+  h1, h2, h3, h4 { @apply text-foreground; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  /* A moldura ocupa a janela inteira e rola por dentro; abaixo de 320 px
+     a interface deixa de caber. */
+  html, body, #raiz { width: 100%; min-width: 320px; height: 100%; }
+  html { font-synthesis: none; }
+  button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+  /* Com movimento reduzido, nada se move: animações e transições de CSS,
+     inclusive as dos menus e diálogos do shadcn, terminam no primeiro
+     quadro. Os componentes do Motion seguem o `MotionConfig` da raiz. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/*
+ * Brilho prateado que percorre a borda do campo de mensagem uma vez, a
+ * cada foco. A máscara deixa visível só o anel de 1,5 px da borda; o
+ * degradê desliza por baixo dela. Fica fora das utilidades porque precisa
+ * de pseudo-elemento com máscara composta.
+ */
+@layer components {
+  .caixa-mensagem { position: relative; }
+  .caixa-mensagem::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.5px;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(100deg, transparent 38%, var(--brilho) 50%, transparent 62%) 100% 0 / 300% 100% no-repeat;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .caixa-mensagem[data-brilho]::after { animation: var(--animate-brilho); }
+  }
 }

@@ -31,6 +31,7 @@ cruzada sobre o conjunto de treino, nunca sobre o de teste; ver o
 cabeçalho de avaliacao.py.
 """
 
+import threading
 from dataclasses import dataclass
 from typing import ClassVar, Literal
 
@@ -108,6 +109,11 @@ class EmbeddingsSentenca(BaseEstimator, TransformerMixin):
 
     _encoders: ClassVar[dict[str, object]] = {}
     _cache: ClassVar[dict[tuple[str, str], np.ndarray]] = {}
+    # Duas threads carregando o mesmo encoder ao mesmo tempo (o aquecimento
+    # da subida e a primeira mensagem, por exemplo) poriam 2 × 2 GB na
+    # memória, e a réplica de 4 GiB não comporta. Com o lock, a segunda
+    # espera e reusa o que a primeira carregou.
+    _lock_carga: ClassVar[threading.Lock] = threading.Lock()
 
     def __init__(self, nome_modelo: str = MODELO_EMBEDDINGS, prefixo: str = PREFIXO_E5):
         self.nome_modelo = nome_modelo
@@ -121,13 +127,17 @@ class EmbeddingsSentenca(BaseEstimator, TransformerMixin):
         classifica intenção e responde por RAG deve carregá-los uma vez.
         """
         if self.nome_modelo not in EmbeddingsSentenca._encoders:
-            # Import adiado: carregar torch custa segundos, e quem só usa
-            # a família tfidf não deve pagar por isso.
-            from sentence_transformers import SentenceTransformer
+            with EmbeddingsSentenca._lock_carga:
+                # Segunda checagem sob o lock: outra thread pode ter
+                # terminado a carga enquanto esta esperava.
+                if self.nome_modelo not in EmbeddingsSentenca._encoders:
+                    # Import adiado: carregar torch custa segundos, e quem
+                    # só usa a família tfidf não deve pagar por isso.
+                    from sentence_transformers import SentenceTransformer
 
-            EmbeddingsSentenca._encoders[self.nome_modelo] = SentenceTransformer(
-                self.nome_modelo
-            )
+                    EmbeddingsSentenca._encoders[self.nome_modelo] = SentenceTransformer(
+                        self.nome_modelo
+                    )
         return EmbeddingsSentenca._encoders[self.nome_modelo]
 
     def fit(self, X, y=None):

@@ -15,6 +15,9 @@ export type Permissao = "ver_intencoes" | "gerir_rotinas";
 
 export type Canal = "chat" | "voz" | "rotina";
 
+/** Periodos do painel de intencoes, como `Janela` em app/analytics/metricas.py. */
+export type Janela = "7d" | "30d" | "90d";
+
 /**
  * Vocabulário fechado de app/pipeline/desfechos.py. O frontend usa isto
  * para colorir a bolha e explicar o que aconteceu — nunca para decidir
@@ -83,7 +86,14 @@ export interface ConversaDetalhe {
   turnos: Turno[];
 }
 
-export type StatusExecucao = "sucesso" | "bloqueada" | "falha";
+/** Retorno de POST /rotinas/validar. */
+export interface ValidacaoRotina {
+  valida: boolean;
+  intencao_prevista: string | null;
+  erro: string | null;
+}
+
+export type StatusExecucao = "em_execucao" | "sucesso" | "bloqueada" | "falha";
 
 export interface Rotina {
   id: string;
@@ -93,6 +103,8 @@ export interface Rotina {
   timezone: string;
   ativa: boolean;
   intencao_prevista: string | null;
+  /** Nome legivel da intencao prevista, do catalogo do backend. */
+  intencao_prevista_rotulo?: string | null;
   proximo_disparo: string | null;
   criada_em: string;
   atualizada_em: string;
@@ -138,6 +150,22 @@ export interface ResumoSeguranca {
   bloqueios_abuso: number;
   bloqueios_saida: number;
   taxa_de_bloqueio: number;
+}
+
+/** Percentis de uma etapa do pipeline, em milissegundos. */
+export interface LatenciaEtapa {
+  etapa: string;
+  p50: number;
+  p95: number;
+  /** Zero indica etapa nao percorrida na janela, e nao etapa instantanea. */
+  amostras: number;
+}
+
+/** Percentis de latencia do pipeline, em milissegundos. */
+export interface Latencia {
+  p50: number;
+  p95: number;
+  etapas: LatenciaEtapa[];
 }
 
 export interface ResumoCatalogo {

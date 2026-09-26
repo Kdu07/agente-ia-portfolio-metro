@@ -4,8 +4,8 @@ info:
   title: API do Canal de Voz — Agente de Portfólio do Metrô de São Paulo
   description: |
     Contrato do canal de voz do agente de IA para a gestão do portfólio de
-    projetos. Transcreve os enunciados enviados pelo usuário e devolve o texto,
-    que é submetido ao endpoint de conversação como qualquer outra mensagem.
+    projetos. Transcreve os enunciados enviados pelo usuário e encaminha o
+    texto ao mesmo pipeline de conversação, com o canal identificado como voz.
 
     A especificação normativa deste contrato é a seção 5.7.3 do `Projeto.md`.
     Este arquivo é a sua expressão legível por máquina, e não uma fonte
@@ -299,6 +299,12 @@ components:
         mensagem:
           type: string
           description: Presente apenas em `falhou`. Orientação destinada à pessoa
+        conversa_id:
+          type: string
+          description: Conversa criada ou continuada pelo processamento do texto
+        interacao_id:
+          type: string
+          description: Interação persistida pelo pipeline para esta fala
 
     TokenVoz:
       type: object
@@ -327,6 +333,8 @@ components:
             - AUDIO_ILEGIVEL
             - AUDIO_NAO_ENCONTRADO
             - COTA_EXCEDIDA
+            - SERVICO_INDISPONIVEL
+            - FALHA_INTERNA
         mensagem:
           type: string
           description: |

@@ -2,24 +2,19 @@
 
 Único ponto do middleware que conhece o Copilot: envia o prompt já
 sanitizado (mascarado e com a intenção resolvida) e devolve a resposta.
-Se o executor mudar no futuro (outro agente, outra plataforma), apenas
-este módulo é substituído.
+É um dos adaptadores da porta `executor/base.py`; o orquestrador fala
+com a porta, e trocar de executor é `settings.executor`, não este módulo.
 
 Contrato com o Copilot: a entrada do usuário é enviada sempre como DADO
 rotulado (activity com metadados de intenção), nunca concatenada a
 instruções — parte da defesa contra prompt injection.
 """
 
-from dataclasses import dataclass
+from app.executor.base import RespostaExecutor, TurnoContexto
 
-
-@dataclass
-class RespostaCopilot:
-    """Resposta devolvida pelo Copilot Studio."""
-
-    texto: str
-    conversa_externa_id: str  # conversationId do Direct Line, para os próximos turnos
-    dados: dict | None = None  # anexos estruturados (cards, tabelas), se houver
+# Nome anterior à porta, mantido para quem já o importa. O Copilot sempre
+# preenche `conversa_externa_id` (o conversationId do Direct Line).
+RespostaCopilot = RespostaExecutor
 
 
 class CopilotClient:
@@ -31,7 +26,8 @@ class CopilotClient:
         intencao_id: str,
         exige_confirmacao: bool,
         conversa_externa_id: str | None = None,
-    ) -> RespostaCopilot:
+        historico: tuple[TurnoContexto, ...] = (),
+    ) -> RespostaExecutor:
         """Envia a mensagem sanitizada e aguarda a resposta do Copilot.
 
         `intencao_id` e `exige_confirmacao` viajam como METADADOS da

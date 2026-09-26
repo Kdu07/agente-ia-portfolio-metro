@@ -10,27 +10,50 @@
  * Com o parametro, os turnos gravados sao carregados e as mensagens novas
  * entram na sequencia. A remontagem entre uma conversa e outra e
  * garantida pela `key` em `rotas.tsx`.
+ *
+ * O cabecalho mostra o titulo da conversa e quantas perguntas ela tem. O
+ * "Projeto X" fixo que ficava ali parecia um seletor de projeto e nao era.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { AnimatePresence } from "motion/react";
 
+import { AvisoMarco } from "@/componentes/chat/AvisoMarco";
 import { BolhaMensagem } from "@/componentes/chat/BolhaMensagem";
 import { Composer } from "@/componentes/chat/Composer";
 import { ConversaVazia } from "@/componentes/chat/ConversaVazia";
 import { IndicadorDigitando } from "@/componentes/chat/IndicadorDigitando";
-import { useConversa } from "@/hooks/useConversa";
+import { BotaoIcone } from "@/componentes/ui/BotaoIcone";
+import { Button } from "@/componentes/ui/button";
+import { CabecalhoPagina } from "@/componentes/ui/CabecalhoPagina";
+import { IconeAviso, IconeEscreverNova } from "@/componentes/ui/icones";
+import { CHAVE_CONVERSA_ATIVA, useConversa } from "@/hooks/useConversa";
 import { useMicrofone } from "@/hooks/useMicrofone";
 
 export function Principal() {
   const { conversaId } = useParams<{ conversaId: string }>();
-  const { linhas, carregando, enviando, erro, enviar, reenviarUltima } = useConversa(conversaId);
+  const {
+    linhas,
+    titulo,
+    carregando,
+    enviando,
+    erro,
+    podeReenviar,
+    erroAoCarregar,
+    recarregar,
+    enviar,
+    reenviarUltima,
+    conversaIdAtual,
+  } = useConversa(conversaId);
+  const navegar = useNavigate();
 
   // O alerta proativo so faz sentido numa conversa nova: ele fala do
   // agora, e reaparecer ao abrir uma conversa de tres dias atras daria a
   // impressao de que o marco acabou de atrasar.
-  const [notificacao, setNotificacao] = useState(!conversaId);
+  const [notificacao, setNotificacao] = useState(!conversaIdAtual);
   const [texto, setTexto] = useState("");
+  const campo = useRef<HTMLTextAreaElement>(null);
 
   // A transcricao final chega ao campo em vez de ser enviada direto: a
   // pessoa precisa poder revisar antes, porque reconhecimento de fala
@@ -54,95 +77,133 @@ export function Principal() {
     setTexto("");
   }
 
+  function escolherSugestao(sugestao: string) {
+    setTexto(sugestao);
+    campo.current?.focus();
+  }
+
   function verDetalhes() {
     setNotificacao(false);
     enviar("Por que o marco “Entrega da Fase 2” está atrasado?");
   }
 
+  // Mesmo caminho do botao da barra lateral: sem a conversa ativa no
+  // `sessionStorage` e com o estado que troca a chave da pagina (#425).
+  function novaConversa() {
+    sessionStorage.removeItem(CHAVE_CONVERSA_ATIVA);
+    navegar("/", { state: { novaConversa: true } });
+  }
+
   const semMensagens = !carregando && linhas.length === 0;
+  const perguntas = linhas.filter((linha) => linha.autor === "usuario");
+  // Ate o servidor devolver o titulo, "Nova conversa": repetir a primeira
+  // pergunta no topo duplicaria na tela o texto que ja esta logo abaixo.
+  const tituloDaConversa = titulo ?? "Nova conversa";
+  const subtitulo =
+    perguntas.length === 0
+      ? "Ainda sem mensagens"
+      : `${perguntas.length} ${perguntas.length === 1 ? "pergunta" : "perguntas"}`;
 
   return (
-    <div className="page conversation-page">
-      <header className="topbar">
-        <div className="assistant-title">
-          <span className="brand-mark brand-mark--letter" aria-hidden="true">P</span>
-          <span>
-            <strong>Projeto X</strong>
-            <small><i /> Acompanhamento ativo no portfólio</small>
-          </span>
-        </div>
-      </header>
+    <div className="fundo-conversa grao flex h-full min-h-0 flex-col">
+      <CabecalhoPagina
+        tituloDaPagina
+        titulo={tituloDaConversa}
+        subtitulo={subtitulo}
+        className="border-border/70 bg-card/55 backdrop-blur-md"
+        acoes={<BotaoIcone rotulo="Nova conversa" icone={IconeEscreverNova} onClick={novaConversa} />}
+      />
 
-      <div className="conversation-body">
-        <div className="messages" aria-live="polite" aria-busy={enviando}>
-          {carregando ? (
-            <p className="text-sm text-slate-600">Carregando a conversa...</p>
+      <div className="min-h-0 flex-1 overflow-y-auto" aria-live="polite" aria-busy={enviando}>
+        <div className="mx-auto w-full max-w-190 px-3.5 pt-6.5 pb-4 md:px-6">
+          {carregando ? <p className="text-sm text-muted-foreground">Carregando a conversa...</p> : null}
+
+          {semMensagens ? (
+            <>
+              <AnimatePresence initial={false}>
+                {notificacao ? (
+                  <AvisoMarco key="aviso" onVerDetalhes={verDetalhes} onDispensar={() => setNotificacao(false)} />
+                ) : null}
+              </AnimatePresence>
+              <ConversaVazia onEscolher={escolherSugestao} />
+            </>
           ) : null}
 
-          {semMensagens ? <ConversaVazia onEscolher={setTexto} /> : null}
-
-          {linhas.map((linha) => (
-            <BolhaMensagem
-              key={linha.id}
-              autor={linha.autor}
-              texto={linha.texto}
-              horario={linha.horario}
-              desfecho={linha.desfecho}
-              iniciais="FE"
-            />
-          ))}
-
-          {enviando ? <IndicadorDigitando /> : null}
+          <div className="grid gap-5">
+            {linhas.map((linha) => (
+              <BolhaMensagem
+                key={linha.id}
+                autor={linha.autor}
+                texto={linha.texto}
+                horario={linha.horario}
+                desfecho={linha.desfecho}
+                canal={linha.canal}
+                local={linha.local}
+                intencaoId={linha.intencaoId}
+              />
+            ))}
+            {enviando ? <IndicadorDigitando /> : null}
+          </div>
 
           <div ref={fimDaLista} />
         </div>
+      </div>
 
-        {/* TODO (bloco de alertas): o cartao flutua sobre a conversa e
-            encobre a mensagem a que se refere. Deve empurrar o conteudo
-            ou entrar como primeira mensagem. */}
-        {notificacao ? (
-          <aside className="notification-card" role="dialog" aria-label="Notificação do assistente">
-            <button className="notification-close" onClick={() => setNotificacao(false)} aria-label="Fechar">×</button>
-            <strong><span className="mini-mark brand-mark--letter" aria-hidden="true">P</span> Alerta de marco</strong>
-            <p>O marco <b>“Entrega da Fase 2”</b> do Projeto X está com atraso de <em>3 dias</em>. Quer atualizar agora?</p>
-            <div>
-              <button className="primary-button" onClick={verDetalhes}>Ver detalhes</button>
-              <button className="secondary-button" onClick={() => setNotificacao(false)}>Ignorar</button>
-            </div>
-          </aside>
-        ) : null}
-
+      <div className="px-3 pt-2 pb-3.5 md:px-6">
         {voz.erro ? (
           <div
             role="alert"
-            className="mx-auto mb-2 w-[min(760px,100%)] rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900"
+            className="mx-auto mb-2 flex w-full max-w-190 items-center gap-2.5 rounded-lg border border-destructive/40 bg-card px-4 py-3 text-sm text-foreground"
           >
+            <IconeAviso aria-hidden="true" className="shrink-0 text-destructive" />
             {voz.erro}
+          </div>
+        ) : null}
+
+        {erroAoCarregar ? (
+          <div
+            role="alert"
+            className="mx-auto mb-2 flex w-full max-w-190 items-center justify-between gap-4 rounded-lg border border-destructive/40 bg-card px-4 py-3"
+          >
+            <span className="flex items-center gap-2.5 text-sm text-foreground">
+              <IconeAviso aria-hidden="true" className="shrink-0 text-destructive" />
+              {erroAoCarregar}
+            </span>
+            <Button type="button" variant="outline" size="sm" onClick={recarregar} className="shrink-0 bg-card">
+              Recarregar conversa
+            </Button>
           </div>
         ) : null}
 
         {erro ? (
           <div
             role="alert"
-            className="mx-auto mb-2 flex w-[min(760px,100%)] items-center justify-between gap-4 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3"
+            className="mx-auto mb-2 flex w-full max-w-190 items-center justify-between gap-4 rounded-lg border border-destructive/40 bg-card px-4 py-3"
           >
-            <span className="text-sm text-slate-900">{erro}</span>
-            <button type="button" className="outline-button" onClick={reenviarUltima}>
-              Tentar novamente
-            </button>
+            <span className="flex items-center gap-2.5 text-sm text-foreground">
+              <IconeAviso aria-hidden="true" className="shrink-0 text-destructive" />
+              {erro}
+            </span>
+            {podeReenviar ? (
+              <Button type="button" variant="outline" size="sm" onClick={reenviarUltima} className="shrink-0 bg-card">
+                Tentar novamente
+              </Button>
+            ) : null}
           </div>
         ) : null}
 
         <Composer
+          refCampo={campo}
           valor={texto}
           estadoVoz={voz.estado}
           parcial={voz.parcial}
-          contexto="Projeto X - PMO GPT"
           onAlterar={setTexto}
           onEnviar={submeter}
           onAlternarVoz={voz.alternar}
         />
-        <p className="disclaimer">Prata pode cometer erros. Verifique informações importantes.</p>
+        <p className="mx-auto mt-2 w-full max-w-190 text-center text-xs text-muted-foreground">
+          A Prata responde com base nos documentos dos projetos. Confira dados críticos antes de decidir.
+        </p>
       </div>
     </div>
   );

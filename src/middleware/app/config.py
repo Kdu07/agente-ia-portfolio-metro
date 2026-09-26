@@ -6,7 +6,10 @@ middleware documenta as variáveis esperadas.
 """
 
 from pathlib import Path
+from typing import Self
+from urllib.parse import quote
 
+from pydantic import AmqpDsn, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,6 +29,25 @@ class Settings(BaseSettings):
     # APScheduler. Um único PostgreSQL evita um broker separado só para a
     # agenda.
     database_url: str = "postgresql+asyncpg://middleware:middleware@localhost:5432/middleware"
+    # Intervalo em que o worker reconcilia a tabela `rotina` com o
+    # jobstore. A API e o worker são processos distintos; essa leitura
+    # periódica faz uma edição chegar ao agendador sem reiniciar o worker.
+    rotinas_reconciliacao_segundos: int = 30
+
+    # --- Mensageria ------------------------------------------------------
+    # Componentes usados quando RABBITMQ_URL nao foi fornecida.
+    # Os valores de acesso padrao sao exclusivos do ambiente local.
+    rabbitmq_host: str = "localhost"
+    rabbitmq_port: int = Field(default=5672, ge=1, le=65535)
+    rabbitmq_vhost: str = Field(default="prata", min_length=1)
+    rabbitmq_user: str = Field(default="prata", min_length=1)
+    rabbitmq_password: SecretStr = Field(default="prata-local", min_length=1, repr=False)
+    rabbitmq_url: SecretStr = Field(default="", repr=False)
+    rabbitmq_exchange: str = Field(default="prata.events", min_length=1)
+    rabbitmq_dead_letter_exchange: str = Field(default="prata.dead-letter", min_length=1)
+    rabbitmq_prefetch_count: int = Field(default=10, ge=1, le=65535)
+    # Tentativa inicial + duas retentativas = tres execucoes no maximo.
+    rabbitmq_max_retries: int = Field(default=2, ge=0)
 
     # --- Identidade (Microsoft Entra ID) --------------------------------
     # O tenant é o GUID (Directory/tenant ID), não o domínio: o Entra
@@ -57,6 +79,12 @@ class Settings(BaseSettings):
     # ambiente compartilhado o cookie precisa ser Secure.
     session_cookie_secure: bool = True
 
+    # Um turno e o par mensagem do usuario + resposta do agente. O limite
+    # controla quantos pares entram no proximo prompt; zero desliga o
+    # historico sem desligar a persistencia. O valor sera calibrado pela
+    # equipe depois de observar custo e qualidade das jornadas.
+    historico_max_turnos: int = Field(default=3, ge=0)
+
     # --- Guardas (Azure AI Content Safety) ------------------------------
     # Uma única dependência cobre as duas features de proteção: Prompt
     # Shields para injeção (direta e indireta) e categorias de conteúdo
@@ -64,9 +92,31 @@ class Settings(BaseSettings):
     content_safety_endpoint: str = ""
     content_safety_key: str = ""
     # Severidade a partir da qual a categoria de conteúdo bloqueia. A
-    # escala do serviço é 0-6; 2 é o padrão conservador e deve ser
-    # calibrado na bancada da onda 2.
+    # escala usada pelo serviço é 0, 2, 4 e 6. O valor 2 foi mantido pela
+    # bancada da issue #411: entre 2, 4 e 6, apresentou a menor passagem
+    # indevida sem bloquear os enunciados legítimos do conjunto.
     content_safety_limiar_severidade: int = 2
+    # Domínios que a resposta do executor pode citar em link. Fora deles, a
+    # guarda de saída trata a URL como possível exfiltração. Subdomínios
+    # valem (`contoso.sharepoint.com`). Os dois do Google cobrem o link das
+    # fontes do executor próprio, que lê o corpus do Drive.
+    saida_dominios_permitidos: list[str] = [
+        "metro.sp.gov.br",
+        "sharepoint.com",
+        "drive.google.com",
+        "docs.google.com",
+    ]
+
+    # --- Executor ---------------------------------------------------------
+    # A única chave que troca o caminho (seção 3.7 de
+    # docs/plano-executor-proprio.md): `copilot` é o Copilot Studio via
+    # Direct Line, o caminho oficial; `proprio` é o RAG sobre o corpus do
+    # Drive. Lida só em api/deps.py — o orquestrador conhece a porta, não a
+    # escolha.
+    executor: str = "copilot"
+    performance_mode: bool = False
+    performance_executor_delay_ms: int = 50
+    performance_executor_timeout_ms: int = 8000
 
     # --- Banco vetorial (executor próprio) ------------------------------
     # Caminho alternativo, seção 3.7 de docs/plano-executor-proprio.md. O
@@ -106,6 +156,27 @@ class Settings(BaseSettings):
     chunk_tokens: int = 350
     chunk_overlap: int = 40
 
+    # --- Autenticidade dos webhooks -------------------------------------
+    # Cadastro de chaves HMAC fora do repositorio, relido a cada recebimento.
+    webhook_portfolio_chaves_arquivo: str = ""
+
+    # --- Webhook do Google Drive (WH-01) --------------------------------
+    # Seção 9.1.2.7.1 do Projeto.md. URL HTTPS pública pela qual o Google
+    # chama `POST /webhooks/google-drive`: no Azure,
+    # https://<app-web>/api/webhooks/google-drive, porque o nginx remove
+    # `/api`; num túnel de teste apontado para o middleware, a URL do
+    # túnel seguida de /webhooks/google-drive.
+    drive_webhook_url: str = ""
+    # Identificador interno da fonte acompanhada; não é o ID da pasta.
+    drive_webhook_fonte: str = Field(default="corpus_metro_sintetico", min_length=1)
+    # Validade pedida ao Google. Ele pode conceder menos, e a renovação
+    # usa a validade efetivamente concedida. O teto de `changes.watch` é
+    # de uma semana.
+    drive_webhook_validade_horas: int = Field(default=24, ge=1, le=168)
+    # Intervalo do ciclo do worker que republica recebimentos sem
+    # confirmação e renova canais perto de expirar.
+    webhook_manutencao_segundos: int = Field(default=60, ge=5)
+
     # --- Recuperação (executor próprio) ---------------------------------
     # Seção 3.7 do plano. Trechos entregues ao modelo de geração por
     # consulta, e o corte de similaridade abaixo do qual um trecho não
@@ -129,6 +200,12 @@ class Settings(BaseSettings):
     # Teto por tentativa. O adaptador repete as falhas transitórias (cota
     # e indisponibilidade), então o pior caso de uma consulta é maior.
     gemini_timeout_seconds: float = 30.0
+    # `llm_backend=openrouter`: o mesmo papel pela API do OpenRouter, que
+    # cobra por uso em vez de cota gratuita. O modelo é o identificador do
+    # OpenRouter (`provedor/modelo`), e o padrão é o mesmo Gemini Flash.
+    openrouter_api_key: str = ""
+    openrouter_modelo: str = "google/gemini-3.5-flash"
+    openrouter_timeout_seconds: float = 30.0
 
     # --- Voz (Azure Speech) ---------------------------------------------
     speech_key: str = ""
@@ -137,6 +214,17 @@ class Settings(BaseSettings):
     speech_idioma: str = "pt-BR"
     speech_api_version: str = "2025-10-15"
     speech_timeout_seconds: float = 30.0
+    # O ffprobe confirma trilha de audio e duracao antes de chamar o Azure.
+    # O binario faz parte da imagem; o caminho e configuravel para Windows.
+    ffprobe_path: str = "ffprobe"
+    ffprobe_timeout_seconds: float = 10.0
+
+    # --- Implantação ----------------------------------------------------
+    # Carrega o classificador e o e5-large na subida da API, numa thread,
+    # em vez de na primeira mensagem. Ligado pela imagem (Dockerfile) e
+    # desligado por padrão, para que os testes e o uvicorn local não
+    # carreguem ~2 GB de pesos a cada subida.
+    aquecer_modelos: bool = False
 
     # NOTA: o limiar de confiança da classificação de intenção NÃO fica
     # aqui. Ele é definido por intenção em pipeline/intencao/catalogo.py,
@@ -144,7 +232,26 @@ class Settings(BaseSettings):
     # de errar uma consulta. Uma variável global não expressa essa
     # diferença.
 
-    model_config = SettingsConfigDict(env_file=".env")
+    @model_validator(mode="after")
+    def configurar_conexao_rabbitmq(self) -> Self:
+        try:
+            explicita = self.rabbitmq_url.get_secret_value()
+            url = AmqpDsn(explicita) if explicita else AmqpDsn.build(
+                scheme="amqp",
+                username=quote(self.rabbitmq_user, safe=""),
+                password=quote(self.rabbitmq_password.get_secret_value(), safe=""),
+                host=self.rabbitmq_host,
+                port=self.rabbitmq_port,
+                path=quote(self.rabbitmq_vhost, safe=""),
+            )
+            if not url.host:
+                raise ValueError("Host AMQP ausente")
+        except ValueError:
+            raise ValueError("Configuracao RabbitMQ invalida: usar amqp ou amqps com host") from None
+        self.rabbitmq_url = SecretStr(str(url))
+        return self
+
+    model_config = SettingsConfigDict(env_file=".env", hide_input_in_errors=True)
 
 
 settings = Settings()

@@ -1,6 +1,6 @@
 """Testes do contrato de eventos da mensageria."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -14,7 +14,7 @@ def criar_evento(**alteracoes) -> dict:
         "message_id": uuid4(),
         "event_type": "audio.transcription.requested",
         "schema_version": 1,
-        "occurred_at": datetime.now(timezone.utc),
+        "occurred_at": datetime.now(UTC),
         "correlation_id": uuid4(),
         "producer": "middleware",
         "payload": {"id_audio": "audio-1"},
@@ -28,7 +28,7 @@ def test_evento_valido_normaliza_data_para_utc():
         criar_evento(occurred_at="2026-01-01T09:00:00-03:00")
     )
 
-    assert evento.occurred_at == datetime(2026, 1, 1, 12, tzinfo=timezone.utc)
+    assert evento.occurred_at == datetime(2026, 1, 1, 12, tzinfo=UTC)
 
 
 def test_evento_rejeita_data_sem_fuso():

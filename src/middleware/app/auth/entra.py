@@ -28,7 +28,7 @@ import logging
 import secrets
 from dataclasses import dataclass
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import httpx
 import jwt
@@ -61,6 +61,14 @@ class FalhaAutenticacao(Exception):
     A mensagem é para o log, nunca para o usuário: detalhar ao navegador
     por que um token foi recusado ajudaria quem tenta forjá-lo.
     """
+
+
+class FalhaConsultaDiretorio(RuntimeError):
+    """O Microsoft Graph não pôde confirmar a identidade atual do dono."""
+
+
+class UsuarioEntraInativo(FalhaConsultaDiretorio):
+    """O dono da rotina não existe mais no tenant ou foi desativado."""
 
 
 @dataclass(frozen=True)
@@ -279,3 +287,115 @@ def _identidade(claims: dict[str, Any]) -> IdentidadeEntra:
         email=claims.get("email") or claims.get("preferred_username"),
         grupos=grupos,
     )
+
+
+async def consultar_usuario(
+    oid: str,
+    *,
+    http: httpx.AsyncClient | None = None,
+) -> IdentidadeEntra:
+    """Relê usuário e grupos no Microsoft Graph no momento do disparo.
+
+    Usa credenciais da aplicação, e não a sessão antiga do dono. Assim uma
+    rotina sem operador presente respeita uma conta desativada ou um grupo
+    removido desde o cadastro. O registro de aplicação precisa da permissão
+    de aplicativo ``User.Read.All`` com consentimento do administrador.
+    """
+    _exigir_configuracao()
+    if not oid:
+        raise UsuarioEntraInativo("Identificador do dono ausente")
+
+    if http is None:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SEGUNDOS) as cliente:
+            return await _consultar_usuario_com_cliente(oid, cliente)
+    return await _consultar_usuario_com_cliente(oid, http)
+
+
+async def _consultar_usuario_com_cliente(
+    oid: str,
+    http: httpx.AsyncClient,
+) -> IdentidadeEntra:
+    token = await _token_aplicacao(http)
+    headers = {"Authorization": f"Bearer {token}"}
+    oid_url = quote(oid, safe="")
+    usuario_url = (
+        f"https://graph.microsoft.com/v1.0/users/{oid_url}"
+        "?$select=id,displayName,mail,userPrincipalName,accountEnabled"
+    )
+
+    try:
+        resposta = await http.get(usuario_url, headers=headers)
+    except httpx.HTTPError as erro:
+        raise FalhaConsultaDiretorio("Microsoft Graph inacessível") from erro
+
+    if resposta.status_code == 404:
+        raise UsuarioEntraInativo("Dono não encontrado no Entra ID")
+    if resposta.status_code != 200:
+        raise FalhaConsultaDiretorio(
+            f"Consulta de usuário recusada pelo Microsoft Graph ({resposta.status_code})"
+        )
+
+    usuario = _json_ou_vazio(resposta)
+    if usuario.get("accountEnabled") is False:
+        raise UsuarioEntraInativo("Dono desativado no Entra ID")
+    if "accountEnabled" not in usuario or not usuario.get("id"):
+        raise FalhaConsultaDiretorio("Resposta de usuário incompleta do Microsoft Graph")
+
+    grupos: list[str] = []
+    proxima_url: str | None = (
+        f"https://graph.microsoft.com/v1.0/users/{oid_url}/"
+        "transitiveMemberOf/microsoft.graph.group?$select=id"
+    )
+    while proxima_url:
+        try:
+            resposta = await http.get(proxima_url, headers=headers)
+        except httpx.HTTPError as erro:
+            raise FalhaConsultaDiretorio("Microsoft Graph inacessível") from erro
+        if resposta.status_code != 200:
+            raise FalhaConsultaDiretorio(
+                f"Consulta de grupos recusada pelo Microsoft Graph ({resposta.status_code})"
+            )
+        corpo = _json_ou_vazio(resposta)
+        valores = corpo.get("value")
+        if not isinstance(valores, list):
+            raise FalhaConsultaDiretorio("Resposta de grupos incompleta do Microsoft Graph")
+        grupos.extend(
+            item["id"]
+            for item in valores
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        )
+        proxima = corpo.get("@odata.nextLink")
+        if proxima is not None and not (
+            isinstance(proxima, str) and proxima.startswith("https://graph.microsoft.com/")
+        ):
+            raise FalhaConsultaDiretorio("Paginação inválida devolvida pelo Microsoft Graph")
+        proxima_url = proxima
+
+    return IdentidadeEntra(
+        oid=str(usuario["id"]),
+        nome=usuario.get("displayName") or usuario.get("userPrincipalName") or str(usuario["id"]),
+        email=usuario.get("mail") or usuario.get("userPrincipalName"),
+        grupos=tuple(grupos),
+    )
+
+
+async def _token_aplicacao(http: httpx.AsyncClient) -> str:
+    """Obtém token app-only para o Graph pelo fluxo client credentials."""
+    dados = {
+        "client_id": settings.entra_client_id,
+        "client_secret": settings.entra_client_secret,
+        "grant_type": "client_credentials",
+        "scope": "https://graph.microsoft.com/.default",
+    }
+    try:
+        resposta = await http.post(f"{_url_tenant()}/oauth2/v2.0/token", data=dados)
+    except httpx.HTTPError as erro:
+        raise FalhaConsultaDiretorio("Endpoint de token do Entra ID inacessível") from erro
+
+    corpo = _json_ou_vazio(resposta)
+    token = corpo.get("access_token")
+    if resposta.status_code != 200 or not isinstance(token, str) or not token:
+        raise FalhaConsultaDiretorio(
+            f"Token de aplicação recusado pelo Entra ID ({resposta.status_code})"
+        )
+    return token

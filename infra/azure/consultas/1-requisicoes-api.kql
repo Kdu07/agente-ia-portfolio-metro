@@ -1,0 +1,28 @@
+// Disponibilidade, erro e latência das requisições /api, medidas no nginx do
+// web: cada linha do access log é um JSON (src/web/nginx.conf). O /api/chat
+// fica separado porque a resposta é dominada pelo modelo de geração.
+//
+// Disponibilidade: fração sem 502, 503 ou 504, os códigos do proxy quando o
+// middleware não responde. Erro: fração com qualquer 5xx, inclusive o 500
+// da própria aplicação. Latência: tempo total da requisição no proxy.
+//
+// Os `let` abaixo apontam para o dev; `provisionar.sh <estágio> metricas`
+// os troca pelos do estágio.
+let web = "ca-web-dev";
+let janela = 24h;
+ContainerAppConsoleLogs_CL
+| where TimeGenerated > ago(janela) and ContainerAppName_s == web
+| where Log_s startswith "{"
+| extend r = parse_json(Log_s)
+| extend uri = tostring(r.uri), status = toint(r.status), segundos = todouble(r.request_time)
+| where uri startswith "/api/"
+| extend rota = iff(uri startswith "/api/chat", "/api/chat", "/api (demais)")
+| summarize
+    requisicoes = count(),
+    disponibilidade_pct = round(100.0 * countif(status !in (502, 503, 504)) / count(), 2),
+    erro_5xx_pct = round(100.0 * countif(status >= 500) / count(), 2),
+    p50_ms = round(1000 * percentile(segundos, 50)),
+    p95_ms = round(1000 * percentile(segundos, 95)),
+    p99_ms = round(1000 * percentile(segundos, 99))
+    by rota
+| order by rota asc

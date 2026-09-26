@@ -1,0 +1,14 @@
+// Avisos da plataforma sobre os dois apps: sonda que falhou, contêiner que
+// reiniciou, réplica que não subiu. O `ProbeFailed` durante uma subida é
+// esperado enquanto o classificador aquece; fora dela, indica indisponibilidade.
+//
+// Os `let` abaixo apontam para o dev; `provisionar.sh <estágio> metricas`
+// os troca pelos do estágio.
+let web = "ca-web-dev";
+let middleware = "ca-middleware-dev";
+let janela = 24h;
+ContainerAppSystemLogs_CL
+| where TimeGenerated > ago(janela) and ContainerAppName_s in (web, middleware)
+| where Type_s == "Warning"
+| summarize eventos = count(), ultimo = max(TimeGenerated) by app = ContainerAppName_s, motivo = Reason_s
+| order by eventos desc

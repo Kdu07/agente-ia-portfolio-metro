@@ -2,16 +2,28 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// Só o eixo de largura (wdth): é ele que dá os títulos expandidos. A
+// fonte vem do pacote, e não do Google Fonts, para não depender de rede
+// externa numa rede corporativa.
+import "@fontsource-variable/mona-sans/wdth.css";
 
 import { Rotas } from "@/rotas";
+import { ProvedoresVisuais } from "@/componentes/ProvedoresVisuais";
 import { iniciarDubles } from "@/mocks/navegador";
+import { ErroApi } from "@/servicos/api";
 import "@/estilos/global.css";
 
-// retry: 1 e nao o padrao 3. Um 403 ou 422 nao melhora com repeticao, e
-// o usuario espera tres vezes mais para ver o mesmo erro.
+// Uma nova tentativa automatica, e so para falha de rede ou servidor fora
+// do ar. Um 403 ou 422 nao melhora com repeticao, e um tempo limite
+// esgotado repetido dobraria a espera antes de a tela mostrar o erro.
 const cliente = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false },
+    queries: {
+      retry: (tentativas, erro) =>
+        tentativas < 1 && erro instanceof ErroApi && erro.repetivel && erro.tipo !== "tempo",
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
   },
 });
 
@@ -21,15 +33,17 @@ const cliente = new QueryClient({
 function montar() {
   createRoot(document.getElementById("raiz")!).render(
     <StrictMode>
-      <QueryClientProvider client={cliente}>
-        {/* As duas flags ativam agora o comportamento que sera padrao
-            na versao 7 do React Router. Ativar cedo evita descobrir a
-            diferenca durante a migracao, e silencia o aviso que a
-            biblioteca emite em cada execucao. */}
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Rotas />
-        </BrowserRouter>
-      </QueryClientProvider>
+      <ProvedoresVisuais>
+        <QueryClientProvider client={cliente}>
+          {/* As duas flags ativam agora o comportamento que sera padrao
+              na versao 7 do React Router. Ativar cedo evita descobrir a
+              diferenca durante a migracao, e silencia o aviso que a
+              biblioteca emite em cada execucao. */}
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <Rotas />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ProvedoresVisuais>
     </StrictMode>,
   );
 }

@@ -1,0 +1,435 @@
+# Banco de Dados do Middleware
+
+Este documento descreve a estrutura completa do banco de dados PostgreSQL 16 utilizado pelo middleware, incluindo tabelas, índices, tipos de dados e restrições.
+
+## Visão Geral
+
+O banco de dados é dividido em três schemas:
+
+- **`public`**: Tabelas principais do middleware (usuários, conversas, interações, rotinas)
+- **`rag`**: Registro da ingestão do corpus RAG e texto dos trechos indexados
+- **`portfolio`**: Dados estruturados do portfólio de projetos (projetos, riscos, marcos, indicadores)
+
+## Schema `public`
+
+### Tabela `usuario`
+
+Projeção local da identidade federada do Entra ID.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador do provedor (oid do Entra) |
+| `nome` | TEXT | NOT NULL | Nome completo do usuário |
+| `email` | TEXT | UNIQUE, NULL | Endereço de e-mail (opcional) |
+| `perfil` | TEXT | NOT NULL, CHECK | Perfil do usuário (diretoria, lider_projeto, membro_equipe) |
+| `criado_em` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Data/hora de criação |
+| `visto_em` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Última atividade do usuário |
+
+**Índices:**
+- `pk_usuario`: Primary key em `id`
+- `uq_usuario_email`: Unique em `email`
+
+**Restrições:**
+- `ck_usuario_perfil`: `perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')`
+
+### Tabela `sessao_usuario`
+
+Sessão de login aberta, guardada no servidor.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | SHA-256 do token do cookie |
+| `usuario_id` | TEXT (FK) | NOT NULL, CASCADE | Referência para usuario.id |
+| `perfil` | TEXT | NOT NULL, CHECK | Perfil no momento do login |
+| `permissoes` | TEXT[] | NOT NULL, DEFAULT '{}' | Permissões concedidas |
+| `projetos` | TEXT[] | NOT NULL, DEFAULT '{}' | Códigos de projetos acessíveis |
+| `criada_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `expira_em` | TIMESTAMPTZ | NOT NULL | Data/hora de expiração |
+
+**Índices:**
+- `pk_sessao_usuario`: Primary key em `id`
+- `ix_sessao_usuario_usuario`: Index em `usuario_id`
+
+**Restrições:**
+- `ck_sessao_usuario_perfil`: `perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')`
+- `ck_sessao_usuario_permissoes`: `permissoes <@ ARRAY['ver_intencoes', 'gerir_rotinas']::text[]`
+- `fk_sessao_usuario_usuario_id_usuario`: FK para usuario.id (CASCADE)
+
+### Tabela `conversa`
+
+Sessão de conversa, na identidade do middleware.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador gerado pelo middleware |
+| `usuario_id` | TEXT (FK) | NOT NULL, RESTRICT | Referência para usuario.id |
+| `conversa_externa_id` | TEXT | NULL | conversationId do Direct Line |
+| `titulo` | TEXT | NULL | Título derivado do primeiro turno |
+| `criada_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `atualizada_em` | TIMESTAMPTZ | NOT NULL | Última atualização |
+| `arquivada_em` | TIMESTAMPTZ | NULL | Data/hora de arquivamento |
+
+**Índices:**
+- `pk_conversa`: Primary key em `id`
+- `ix_conversa_usuario_atualizada`: Index composto `(usuario_id, atualizada_em DESC)`
+
+**Restrições:**
+- `fk_conversa_usuario_id_usuario`: FK para usuario.id (CASCADE, RESTRICT)
+
+### Tabela `interacao`
+
+Uma interação usuário-agente, registrada para histórico e análise.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `conversa_id` | TEXT (FK) | NOT NULL, RESTRICT | Referência para conversa.id |
+| `usuario_id` | TEXT (FK) | NOT NULL, RESTRICT | Referência para usuario.id |
+| `perfil` | TEXT | NOT NULL, CHECK | Perfil no momento da interação |
+| `canal` | TEXT | NOT NULL, CHECK | Canal de entrada (chat, voz, rotina) |
+| `prompt` | TEXT | NOT NULL | Mensagem do usuário |
+| `resposta` | TEXT | NOT NULL | Resposta do agente |
+| `intencao_id` | TEXT | NULL | Intenção classificada |
+| `confianca_intencao` | FLOAT | NOT NULL | Confiança da classificação (0-1) |
+| `desfecho` | TEXT | NOT NULL, CHECK | Resultado do processamento |
+| `latencia_ms` | INTEGER | NOT NULL | Latência em milissegundos |
+| `latencia_etapas` | JSONB | NULL | Milissegundos de cada etapa percorrida (`injecao`, `abuso`, `intencao`, `executor`, `saida`); nulo nas interações anteriores à medição por etapa |
+| `criada_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `rotina_id` | TEXT (FK) | NULL, RESTRICT | Referência para rotina.id (se canal=rotina) |
+
+**Índices:**
+- `pk_interacao`: Primary key em `id`
+- `ix_interacao_conversa_criada`: Index composto `(conversa_id, criada_em)`
+- `ix_interacao_usuario_criada`: Index composto `(usuario_id, criada_em DESC)`
+- `ix_interacao_criada_em`: Index `(criada_em DESC)`
+- `ix_interacao_intencao_criada`: Index composto `(intencao_id, criada_em)`
+- `ix_interacao_desfecho_criada`: Index composto `(desfecho, criada_em)`
+- `ix_interacao_sem_intencao`: Index parcial `(criada_em DESC)` WHERE `intencao_id IS NULL`
+
+**Restrições:**
+- `ck_interacao_perfil`: `perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')`
+- `ck_interacao_canal`: `canal IN ('chat', 'voz', 'rotina')`
+- `ck_interacao_desfecho`: `desfecho IN ('encaminhada', 'bloqueada_injecao_regra', 'bloqueada_injecao_modelo', 'bloqueada_abuso', 'recusada_fora_escopo', 'recusada_baixa_confianca', 'bloqueada_saida', 'falha_executor')`
+- `fk_interacao_conversa_id_conversa`: FK para conversa.id (CASCADE, RESTRICT)
+- `fk_interacao_usuario_id_usuario`: FK para usuario.id (CASCADE, RESTRICT)
+- `fk_interacao_rotina_id_rotina`: FK para rotina.id (CASCADE, RESTRICT)
+
+### Tabela `rotina`
+
+Prompt pré-programado que dispara em datas planejadas.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `nome` | TEXT | NOT NULL | Nome da rotina |
+| `prompt` | TEXT | NOT NULL | Texto do prompt |
+| `agenda_cron` | TEXT | NOT NULL | Expressão cron |
+| `timezone` | TEXT | NOT NULL | Fuso horário (ex: America/Sao_Paulo) |
+| `dono_id` | TEXT (FK) | NOT NULL, RESTRICT | Referência para usuario.id |
+| `ativa` | BOOLEAN | NOT NULL, DEFAULT true | Se a rotina está ativa |
+| `criada_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `atualizada_em` | TIMESTAMPTZ | NOT NULL | Última atualização |
+| `intencao_prevista` | TEXT | NULL | Intenção esperada da validação |
+
+**Índices:**
+- `pk_rotina`: Primary key em `id`
+- `ix_rotina_dono`: Index em `dono_id`
+
+**Restrições:**
+- `fk_rotina_dono_id_usuario`: FK para usuario.id (CASCADE, RESTRICT)
+
+### Tabela `execucao_rotina`
+
+Um disparo de rotina e seu resultado.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `rotina_id` | TEXT (FK) | NOT NULL, RESTRICT | Referência para rotina.id |
+| `iniciada_em` | TIMESTAMPTZ | NOT NULL | Data/hora de início |
+| `concluida_em` | TIMESTAMPTZ | NULL | Data/hora de conclusão |
+| `status` | TEXT | NOT NULL, CHECK | Status (sucesso, bloqueada, falha) |
+| `interacao_id` | TEXT (FK) | NULL, RESTRICT | Referência para interacao.id |
+| `erro` | TEXT | NULL | Mensagem de erro (se houver) |
+
+**Índices:**
+- `pk_execucao_rotina`: Primary key em `id`
+- `ix_execucao_rotina_iniciada`: Index composto `(rotina_id, iniciada_em DESC)`
+
+**Restrições:**
+- `ck_execucao_rotina_status`: `status IN ('sucesso', 'bloqueada', 'falha')`
+- `fk_execucao_rotina_rotina_id_rotina`: FK para rotina.id (CASCADE, RESTRICT)
+- `fk_execucao_rotina_interacao_id_interacao`: FK para interacao.id (CASCADE, RESTRICT)
+
+## Schema `rag`
+
+### Tabela `rag.arquivo`
+
+Registro da ingestão do corpus RAG.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `origem_id` | TEXT (PK) | NOT NULL | Identificador no Drive |
+| `nome` | TEXT | NOT NULL | Nome do arquivo |
+| `mime` | TEXT | NOT NULL | Tipo MIME |
+| `md5` | TEXT | NULL | Hash MD5 do conteúdo |
+| `modificado_em` | TIMESTAMPTZ | NULL | Data/hora de modificação |
+| `link` | TEXT | NULL | Link do arquivo |
+| `documento_id` | TEXT | NULL | ID do documento (se aplicável) |
+| `codigo` | TEXT | NULL | Código do projeto |
+| `tipo` | TEXT | NULL | Tipo de documento |
+| `versao` | INTEGER | NULL | Versão do documento |
+| `periodo` | TEXT | NULL | Período de referência |
+| `data_referencia` | DATE | NULL | Data de referência |
+| `projeto` | TEXT | NULL | Projeto relacionado |
+| `classificacao` | TEXT | NULL | Classificação do documento |
+| `perfis` | TEXT[] | NULL, CHECK | Perfis com acesso |
+| `situacao` | TEXT | NOT NULL, CHECK | Situação da ingestão |
+| `motivo` | TEXT | NULL | Motivo da situação |
+| `observacoes` | TEXT[] | NOT NULL, DEFAULT '{}' | Observações |
+| `metadados` | JSONB | NOT NULL, DEFAULT '{}' | Metadados adicionais |
+| `assinatura` | TEXT | NULL | Assinatura do pipeline |
+| `total_trechos` | INTEGER | NOT NULL, DEFAULT 0 | Total de trechos |
+| `visto_em` | TIMESTAMPTZ | NOT NULL | Data/hora de visualização |
+| `indexado_em` | TIMESTAMPTZ | NULL | Data/hora de indexação |
+
+**Índices:**
+- `pk_arquivo`: Primary key em `origem_id`
+- `ix_arquivo_documento_indexado`: Index parcial em `documento_id` WHERE `situacao = 'indexado'`
+
+**Restrições:**
+- `ck_arquivo_situacao`: `situacao IN ('indexado', 'substituido', 'quarentena', 'nao_identificado', 'ignorado', 'removido')`
+- `ck_arquivo_perfis`: `perfis <@ ARRAY['diretoria', 'lider_projeto', 'membro_equipe']::text[]`
+
+### Tabela `rag.trecho`
+
+Texto dos trechos indexados.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `trecho_id` | TEXT (PK) | NOT NULL | Identificador único |
+| `documento_id` | TEXT | NOT NULL | ID do documento |
+| `origem_id` | TEXT (FK) | NOT NULL, RESTRICT | Referência para rag.arquivo.origem_id |
+| `ordinal` | INTEGER | NOT NULL | Ordem no documento |
+| `texto` | TEXT | NOT NULL | Conteúdo do trecho |
+| `tokens` | INTEGER | NOT NULL | Quantidade de tokens |
+| `localizador` | TEXT | NOT NULL | Localizador no documento |
+| `projeto` | TEXT | NULL | Projeto relacionado |
+| `perfis` | TEXT[] | NOT NULL, CHECK | Perfis com acesso |
+
+**Índices:**
+- `pk_trecho`: Primary key em `trecho_id`
+- `ix_trecho_documento`: Index em `documento_id`
+
+**Restrições:**
+- `ck_trecho_perfis`: `perfis <@ ARRAY['diretoria', 'lider_projeto', 'membro_equipe']::text[]`
+- `fk_trecho_origem_id_arquivo`: FK para rag.arquivo.origem_id (CASCADE, RESTRICT)
+
+## Schema `portfolio`
+
+### Tabela `portfolio.projeto`
+
+Projetos do portfólio do Metrô.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `codigo` | TEXT (PK) | NOT NULL | Código único do projeto |
+| `nome` | TEXT | NOT NULL | Nome do projeto |
+| `descricao` | TEXT | NULL | Descrição do projeto |
+| `status` | TEXT | NOT NULL, CHECK | Status do projeto |
+| `prioridade` | TEXT | NOT NULL, CHECK | Prioridade do projeto |
+| `data_inicio` | DATE | NULL | Data de início |
+| `data_fim_prevista` | DATE | NULL | Data fim prevista |
+| `data_fim_real` | DATE | NULL | Data fim real |
+| `orcamento_aprovado` | NUMERIC(15,2) | NULL | Orçamento aprovado |
+| `orcamento_atual` | NUMERIC(15,2) | NULL | Orçamento atual |
+| `avanco_percentual` | INTEGER | NOT NULL, CHECK | Avanço em % (0-100) |
+| `lider_id` | TEXT | NULL | ID do líder |
+| `criado_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `atualizado_em` | TIMESTAMPTZ | NOT NULL | Última atualização |
+
+**Índices:**
+- `pk_projeto`: Primary key em `codigo`
+- `ix_projeto_status`: Index em `status`
+- `ix_projeto_lider`: Index em `lider_id`
+
+**Restrições:**
+- `ck_projeto_status`: `status IN ('planejado', 'em_andamento', 'suspenso', 'concluido', 'cancelado')`
+- `ck_projeto_prioridade`: `prioridade IN ('baixa', 'media', 'alta', 'critica')`
+- `ck_projeto_avanco`: `avanco_percentual >= 0 AND avanco_percentual <= 100`
+
+### Tabela `portfolio.risco`
+
+Riscos associados a projetos.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `projeto_codigo` | TEXT (FK) | NOT NULL, RESTRICT | Referência para projeto.codigo |
+| `descricao` | TEXT | NOT NULL | Descrição do risco |
+| `categoria` | TEXT | NULL | Categoria do risco |
+| `probabilidade` | INTEGER | NOT NULL, CHECK | Probabilidade (1-5) |
+| `impacto` | INTEGER | NOT NULL, CHECK | Impacto (1-5) |
+| `status` | TEXT | NOT NULL, CHECK | Status do risco |
+| `plano_mitigacao` | TEXT | NULL | Plano de mitigação |
+| `criado_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `atualizado_em` | TIMESTAMPTZ | NOT NULL | Última atualização |
+
+**Índices:**
+- `pk_risco`: Primary key em `id`
+- `ix_risco_projeto`: Index em `projeto_codigo`
+- `ix_risco_status`: Index em `status`
+
+**Restrições:**
+- `ck_risco_probabilidade`: `probabilidade >= 1 AND probabilidade <= 5`
+- `ck_risco_impacto`: `impacto >= 1 AND impacto <= 5`
+- `ck_risco_status`: `status IN ('identificado', 'monitorado', 'mitigado', 'materializado')`
+- `fk_risco_projeto_codigo_projeto`: FK para portfolio.projeto.codigo (CASCADE, RESTRICT)
+
+### Tabela `portfolio.marco`
+
+Marcos (milestones) de projetos.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `projeto_codigo` | TEXT (FK) | NOT NULL, RESTRICT | Referência para projeto.codigo |
+| `nome` | TEXT | NOT NULL | Nome do marco |
+| `descricao` | TEXT | NULL | Descrição do marco |
+| `data_prevista` | DATE | NOT NULL | Data prevista |
+| `data_real` | DATE | NULL | Data real |
+| `status` | TEXT | NOT NULL, CHECK | Status do marco |
+| `criado_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `atualizado_em` | TIMESTAMPTZ | NOT NULL | Última atualização |
+
+**Índices:**
+- `pk_marco`: Primary key em `id`
+- `ix_marco_projeto`: Index em `projeto_codigo`
+- `ix_marco_data_prevista`: Index em `data_prevista`
+
+**Restrições:**
+- `ck_marco_status`: `status IN ('nao_iniciado', 'em_andamento', 'concluido', 'atrasado', 'cancelado')`
+- `fk_marco_projeto_codigo_projeto`: FK para portfolio.projeto.codigo (CASCADE, RESTRICT)
+
+### Tabela `portfolio.indicador`
+
+Indicadores de desempenho de projetos.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `projeto_codigo` | TEXT (FK) | NOT NULL, RESTRICT | Referência para projeto.codigo |
+| `nome` | TEXT | NOT NULL | Nome do indicador |
+| `descricao` | TEXT | NULL | Descrição do indicador |
+| `valor_atual` | NUMERIC(15,2) | NULL | Valor atual |
+| `valor_meta` | NUMERIC(15,2) | NULL | Valor meta |
+| `unidade` | TEXT | NULL | Unidade de medida |
+| `data_medicao` | DATE | NULL | Data da medição |
+| `criado_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `atualizado_em` | TIMESTAMPTZ | NOT NULL | Última atualização |
+
+**Índices:**
+- `pk_indicador`: Primary key em `id`
+- `ix_indicador_projeto`: Index em `projeto_codigo`
+
+**Restrições:**
+- `fk_indicador_projeto_codigo_projeto`: FK para portfolio.projeto.codigo (CASCADE, RESTRICT)
+
+### Tabela `portfolio.usuario_projeto`
+
+Relação entre usuários e projetos.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `usuario_id` | TEXT (PK, FK) | NOT NULL, CASCADE | Referência para usuario.id |
+| `projeto_codigo` | TEXT (PK, FK) | NOT NULL, CASCADE | Referência para projeto.codigo |
+| `papel` | TEXT | NOT NULL, CHECK | Papel no projeto |
+| `criado_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+
+**Índices:**
+- `pk_usuario_projeto`: Primary key composta `(usuario_id, projeto_codigo)`
+- `ix_usuario_projeto_usuario`: Index em `usuario_id`
+- `ix_usuario_projeto_projeto`: Index em `projeto_codigo`
+
+**Restrições:**
+- `ck_usuario_projeto_papel`: `papel IN ('lider', 'membro', 'observador')`
+- `fk_usuario_projeto_usuario_id_usuario`: FK para usuario.id (CASCADE)
+- `fk_usuario_projeto_projeto_codigo_projeto`: FK para portfolio.projeto.codigo (CASCADE)
+
+## Scripts de Criação e População
+
+### Criação do Banco
+
+O script `scripts/criar_banco.py` aplica as migrações até a última versão:
+
+```bash
+python -m scripts.criar_banco
+python -m scripts.criar_banco --conferir  # Apenas relata estado
+```
+
+### População do Banco
+
+O script `scripts/popular_banco.py` carrega dados sintéticos de demonstração:
+
+```bash
+python -m scripts.popular_banco
+python -m scripts.popular_banco --limpar  # Remove carga anterior
+```
+
+## Boas Práticas
+
+### Segurança
+
+- **Controle de acesso**: Todas as consultas filtram por `usuario_id` no SQL, não depois em Python
+- **Sessão httpOnly**: O cookie de sessão nunca é acessível via JavaScript
+- **Transações atômicas**: Operações de escrita são commitadas apenas no final da requisição
+- **Não exposição de dados**: Filtragem de projetos é aplicada na busca, não na recuperação
+
+### Performance
+
+- **Índices estratégicos**: Cada índice corresponde a uma consulta específica do dashboard
+- **Índices parciais**: Usados para casos específicos (ex: interações sem intenção)
+- **Pool de conexões**: Configurado com `pool_pre_ping` para evitar conexões mortas
+- **Consulta otimizada**: Limites aplicados no SQL, não depois em Python
+
+### Manutenção
+
+- **Migrações versionadas**: Todas as alterações são feitas via Alembic
+- **Convenção de nomes**: Constraints têm nomes explícitos para facilitar rollback
+- **Dados de auditoria**: Interações são registradas em todos os desfechos, inclusive bloqueios
+- **Retenção de dados**: Política de retenção a ser definida (seção 11 da Arquitetura)
+
+## Backup e Restore
+
+### Backup
+
+```bash
+pg_dump -h localhost -U middleware -d middleware > backup.sql
+```
+
+### Restore
+
+```bash
+psql -h localhost -U middleware -d middleware < backup.sql
+```
+
+## Considerações de Deploy
+
+### Variáveis de Ambiente
+
+- `DATABASE_URL`: String de conexão PostgreSQL
+- `DATABASE_SSL_MODE`: Modo SSL (require, prefer, disable)
+
+### Migrações em Produção
+
+- Testar migrações em ambiente de staging antes
+- Ter plano de rollback preparado
+- Monitorar tempo de execução de migrações grandes
+- Fazer backup antes de migrações destrutivas
+
+### Monitoramento
+
+- Monitorar conexões ativas no pool
+- Alertar para consultas lentas (> 1s)
+- Monitorar tamanho das tabelas de interações
+- Verificar integridade dos índices periodicamente

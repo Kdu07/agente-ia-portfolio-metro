@@ -1,0 +1,35 @@
+# Evidência de execução — 25/09/2026
+Branch: test/evidencias-backend-artefato
+Commit de código: 7637fa8d5c858b4c267f22abca1434d3b93badd2
+Ambiente: Windows, Python 3.14.2, ambiente virtual src/middleware/.venv; suíte via pytest 9.1.1.
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware\.venv\Scripts\python.exe
+benchmark: 5.3.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: C:\Users\MarianaReis\OneDrive\Documentos\GitLab\g02\src\middleware
+configfile: pyproject.toml
+plugins: anyio-4.15.1, locust-2.46.6, asyncio-1.4.0, benchmark-5.3.0, cov-7.1.0, recording-0.13.4
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 5 items
+
+tests/desempenho/test_micro_latencia.py::test_latencia_regra_injecao PASSED [ 20%]
+tests/desempenho/test_micro_latencia.py::test_latencia_preprocessamento PASSED [ 40%]
+tests/desempenho/test_micro_latencia.py::test_latencia_classificador_injecao PASSED [ 60%]
+tests/desempenho/test_micro_latencia.py::test_latencia_classificador_abuso PASSED [ 80%]
+tests/desempenho/test_micro_latencia.py::test_latencia_guarda_saida PASSED [100%]
+
+
+------------------------------------------------------------------------------------------------------- benchmark: 5 tests ------------------------------------------------------------------------------------------------------
+Name (time in us)                              Min                    Max                  Mean                StdDev                Median                   IQR            Outliers           OPS            Rounds  Iterations
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test_latencia_regra_injecao                 1.6000 (1.0)         996.4000 (4.33)         2.1070 (1.0)          5.2378 (1.26)         1.9000 (1.0)          0.2000 (1.0)     578;12773  474,619.4322 (1.0)      149254           1
+test_latencia_preprocessamento              8.1000 (5.06)        230.3000 (1.0)          9.7056 (4.61)         4.1657 (1.0)          9.3000 (4.89)         0.6000 (3.00)     608;1713  103,033.2718 (0.22)      23810           1
+test_latencia_classificador_injecao       598.4000 (374.00)   25,409.9000 (110.33)   3,067.4111 (>1000.0)  3,849.1646 (924.01)   2,050.1500 (>1000.0)  1,673.1000 (>1000.0)     54;54      326.0078 (0.00)        602           1
+test_latencia_classificador_abuso       1,263.6000 (789.75)   25,456.5000 (110.54)   3,031.6807 (>1000.0)  1,781.9563 (427.77)   2,752.3000 (>1000.0)    982.7250 (>1000.0)       8;8      329.8500 (0.00)        301           1
+test_latencia_guarda_saida              1,724.6000 (>1000.0)  15,621.7000 (67.83)    2,801.0935 (>1000.0)    923.7777 (221.76)   2,659.7500 (>1000.0)    454.5500 (>1000.0)     14;13      357.0034 (0.00)        248           1
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Legend:
+  Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
+  OPS: Operations Per Second, computed as 1 / Mean
+============================== 5 passed in 4.77s ==============================

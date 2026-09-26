@@ -5,6 +5,10 @@
 # Chave da conta de serviço do Drive (ingestão do executor próprio)
 credenciais/
 
+# Resíduo de testes: um MagicMock usado como caminho vira diretório real
+# quando o código sob teste escreve nele (uploads de áudio).
+MagicMock/
+
 # Python
 __pycache__/
 *.pyc
@@ -12,10 +16,14 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
+.coverage
+coverage.xml
+htmlcov/
 
 # Node / frontend
 node_modules/
 dist/
+coverage/
 *.tsbuildinfo
 *.local
 .eslintcache
@@ -26,4 +34,10 @@ dbdata/
 # Claude
 .claude
 
+# Agents
+.agents
+
 claude-gitlab/
+
+# Codex
+.codex

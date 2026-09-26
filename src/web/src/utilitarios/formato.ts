@@ -8,6 +8,7 @@
  */
 
 const FUSO = "America/Sao_Paulo";
+const UM_DIA = 86_400_000;
 
 export function horaCurta(iso: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -25,20 +26,61 @@ export function dataCurta(iso: string): string {
   }).format(new Date(iso));
 }
 
+// O dia do calendario em Sao Paulo, como meia-noite UTC. Comparar dias
+// assim, e nao pelo relogio da maquina, evita que uma conversa das 23h
+// caia em "Ontem" para quem esta com o fuso configurado em UTC.
+function diaEmSaoPaulo(momento: Date): number {
+  const [ano, mes, dia] = new Intl.DateTimeFormat("en-CA", { timeZone: FUSO })
+    .format(momento)
+    .split("-")
+    .map(Number);
+  return Date.UTC(ano, mes - 1, dia);
+}
+
+function diasAtras(iso: string, agora: Date): number {
+  return Math.round((diaEmSaoPaulo(agora) - diaEmSaoPaulo(new Date(iso))) / UM_DIA);
+}
+
 /**
  * Rotulo relativo para listas de historico. Trocar "08 set, 14:32" por
  * "Hoje" no caso recente e o que permite bater o olho e localizar a
  * conversa sem ler a data inteira.
  */
-export function quandoFoi(iso: string): string {
-  const momento = new Date(iso);
-  const agora = new Date();
-  const umDia = 86_400_000;
-  const diferenca = agora.getTime() - momento.getTime();
-
-  if (diferenca < umDia && agora.getDate() === momento.getDate()) {
-    return `Hoje, ${horaCurta(iso)}`;
-  }
-  if (diferenca < 2 * umDia) return `Ontem, ${horaCurta(iso)}`;
+export function quandoFoi(iso: string, agora = new Date()): string {
+  const dias = diasAtras(iso, agora);
+  if (dias <= 0) return `Hoje, ${horaCurta(iso)}`;
+  if (dias === 1) return `Ontem, ${horaCurta(iso)}`;
   return `${dataCurta(iso)}, ${horaCurta(iso)}`;
+}
+
+export type GrupoDeData = "Hoje" | "Ontem" | "Esta semana" | "Anteriores";
+
+/** Ordem em que os grupos aparecem nas listas, do mais recente ao mais antigo. */
+export const GRUPOS_DE_DATA: GrupoDeData[] = ["Hoje", "Ontem", "Esta semana", "Anteriores"];
+
+/**
+ * Grupo de uma data nas listas de conversa. "Esta semana" e a semana do
+ * calendario, de segunda-feira ate anteontem: um rotulo que diz "semana"
+ * e junta sete dias corridos faria a conversa de domingo passado aparecer
+ * como desta semana.
+ */
+export function grupoDeData(iso: string, agora = new Date()): GrupoDeData {
+  const dias = diasAtras(iso, agora);
+  if (dias <= 0) return "Hoje";
+  if (dias === 1) return "Ontem";
+  const diasDesdeSegunda = (new Date(diaEmSaoPaulo(agora)).getUTCDay() + 6) % 7;
+  return dias <= diasDesdeSegunda ? "Esta semana" : "Anteriores";
+}
+
+/** Separa uma lista ja ordenada nos grupos de data, sem grupo vazio. */
+export function agruparPorData<T>(itens: T[], dataDe: (item: T) => string, agora = new Date()) {
+  const grupos = new Map<GrupoDeData, T[]>();
+  for (const item of itens) {
+    const grupo = grupoDeData(dataDe(item), agora);
+    grupos.set(grupo, [...(grupos.get(grupo) ?? []), item]);
+  }
+  return GRUPOS_DE_DATA.filter((grupo) => grupos.has(grupo)).map((grupo) => ({
+    grupo,
+    itens: grupos.get(grupo)!,
+  }));
 }

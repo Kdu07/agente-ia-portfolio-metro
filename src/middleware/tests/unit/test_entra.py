@@ -179,3 +179,89 @@ async def test_overage_de_grupos_entra_sem_grupos() -> None:
     http = _cliente_token(httpx.Response(200, json={"id_token": token}))
     identidade = await entra.trocar_codigo("codigo", _fluxo(), http=http)
     assert identidade.grupos == ()
+
+
+# --- identidade atual para execução de rotinas -------------------------
+
+
+async def test_consulta_usuario_atual_e_grupos_paginados_no_graph() -> None:
+    recebidos: list[httpx.Request] = []
+
+    def tratar(pedido: httpx.Request) -> httpx.Response:
+        recebidos.append(pedido)
+        if pedido.method == "POST":
+            return httpx.Response(200, json={"access_token": "token-app"})
+        if pedido.url.path.endswith("/users/oid-fernanda"):
+            return httpx.Response(
+                200,
+                json={
+                    "id": "oid-fernanda",
+                    "displayName": "Fernanda Medina",
+                    "mail": "fernanda@metro.example",
+                    "userPrincipalName": "fernanda@metro.example",
+                    "accountEnabled": True,
+                },
+            )
+        if pedido.url.params.get("page") == "2":
+            return httpx.Response(200, json={"value": [{"id": "g-rotinas"}]})
+        return httpx.Response(
+            200,
+            json={
+                "value": [{"id": "g-lider"}],
+                "@odata.nextLink": (
+                    "https://graph.microsoft.com/v1.0/users/oid-fernanda/"
+                    "transitiveMemberOf/microsoft.graph.group?page=2"
+                ),
+            },
+        )
+
+    http = httpx.AsyncClient(transport=httpx.MockTransport(tratar))
+    identidade = await entra.consultar_usuario("oid-fernanda", http=http)
+
+    assert identidade == entra.IdentidadeEntra(
+        oid="oid-fernanda",
+        nome="Fernanda Medina",
+        email="fernanda@metro.example",
+        grupos=("g-lider", "g-rotinas"),
+    )
+    assert parse_qs(recebidos[0].content.decode())["scope"] == [
+        "https://graph.microsoft.com/.default"
+    ]
+    assert all(
+        pedido.headers["Authorization"] == "Bearer token-app"
+        for pedido in recebidos
+        if pedido.method == "GET"
+    )
+
+
+@pytest.mark.parametrize("status", [404, 200])
+async def test_usuario_ausente_ou_desativado_nao_executa_rotina(status: int) -> None:
+    def tratar(pedido: httpx.Request) -> httpx.Response:
+        if pedido.method == "POST":
+            return httpx.Response(200, json={"access_token": "token-app"})
+        if status == 404:
+            return httpx.Response(404, json={"error": {"code": "Request_ResourceNotFound"}})
+        return httpx.Response(
+            200,
+            json={
+                "id": "oid-fernanda",
+                "displayName": "Fernanda",
+                "accountEnabled": False,
+            },
+        )
+
+    http = httpx.AsyncClient(transport=httpx.MockTransport(tratar))
+    with pytest.raises(entra.UsuarioEntraInativo):
+        await entra.consultar_usuario("oid-fernanda", http=http)
+
+
+async def test_falha_do_graph_nao_e_confundida_com_usuario_inativo() -> None:
+    def tratar(pedido: httpx.Request) -> httpx.Response:
+        if pedido.method == "POST":
+            return httpx.Response(200, json={"access_token": "token-app"})
+        return httpx.Response(503, json={"error": {"code": "ServiceUnavailable"}})
+
+    http = httpx.AsyncClient(transport=httpx.MockTransport(tratar))
+    with pytest.raises(entra.FalhaConsultaDiretorio) as capturada:
+        await entra.consultar_usuario("oid-fernanda", http=http)
+    assert not isinstance(capturada.value, entra.UsuarioEntraInativo)

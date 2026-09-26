@@ -23,15 +23,17 @@ dado de outra pessoa, e basta um `return` mal colocado para vazá-lo.
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.persistence.models import (
     Conversa,
+    EstadoTranscricao,
     ExecucaoRotina,
     Interacao,
     Rotina,
+    TranscricaoAudio,
     Usuario,
 )
 from app.persistence.tabelas import (
@@ -39,6 +41,7 @@ from app.persistence.tabelas import (
     ExecucaoRotinaTabela,
     InteracaoTabela,
     RotinaTabela,
+    TranscricaoAudioTabela,
     UsuarioTabela,
 )
 
@@ -146,6 +149,44 @@ class ConversaRepository(_RepositorioBase):
         resultado = await self._sessao.execute(consulta)
         return [linha.to_dominio() for linha in resultado.scalars()]
 
+    async def listar_com_total_por_usuario(
+        self, usuario_id: str, *, incluir_arquivadas: bool = False
+    ) -> list[tuple[Conversa, int]]:
+        """Conversas e total de turnos em uma consulta, para o histórico.
+
+        A subconsulta correlacionada evita uma consulta de contagem por item
+        da lista. O filtro de usuário aparece também na contagem para que uma
+        inconsistência de dados nunca some interação de outra pessoa.
+        """
+        total_turnos = (
+            select(func.count(InteracaoTabela.id))
+            .where(
+                InteracaoTabela.conversa_id == ConversaTabela.id,
+                InteracaoTabela.usuario_id == usuario_id,
+            )
+            .correlate(ConversaTabela)
+            .scalar_subquery()
+        )
+        consulta = select(ConversaTabela, total_turnos.label("total_turnos")).where(
+            ConversaTabela.usuario_id == usuario_id
+        )
+        if not incluir_arquivadas:
+            consulta = consulta.where(ConversaTabela.arquivada_em.is_(None))
+        consulta = consulta.order_by(ConversaTabela.atualizada_em.desc())
+
+        resultado = await self._sessao.execute(consulta)
+        return [(linha.to_dominio(), int(total)) for linha, total in resultado.all()]
+
+    async def contar_interacoes(self, conversa_id: str, usuario_id: str) -> int:
+        """Conta os turnos de uma conversa pertencente ao usuário."""
+        resultado = await self._sessao.execute(
+            select(func.count(InteracaoTabela.id)).where(
+                InteracaoTabela.conversa_id == conversa_id,
+                InteracaoTabela.usuario_id == usuario_id,
+            )
+        )
+        return int(resultado.scalar_one())
+
     async def definir_titulo(self, conversa_id: str, titulo: str) -> None:
         """Grava o título derivado do primeiro turno da conversa."""
         await self._sessao.execute(
@@ -197,20 +238,25 @@ class InteracaoRepository(_RepositorioBase):
         )
         await self._sessao.flush()
 
-    async def listar_por_conversa(self, conversa_id: str, usuario_id: str) -> list[Interacao]:
+    async def listar_por_conversa(
+        self, conversa_id: str, usuario_id: str, *, limite: int | None = None
+    ) -> list[Interacao]:
         """Turnos de uma conversa, em ordem cronológica.
 
         Filtra por `usuario_id` pela mesma razão que `ConversaRepository.obter`.
         """
+        if limite == 0:
+            return []
         resultado = await self._sessao.execute(
             select(InteracaoTabela)
             .where(
                 InteracaoTabela.conversa_id == conversa_id,
                 InteracaoTabela.usuario_id == usuario_id,
             )
-            .order_by(InteracaoTabela.criada_em)
+            .order_by(InteracaoTabela.criada_em.desc())
+            .limit(limite)
         )
-        return [linha.to_dominio() for linha in resultado.scalars()]
+        return list(reversed([linha.to_dominio() for linha in resultado.scalars()]))
 
     async def listar_por_usuario(self, usuario_id: str, *, limite: int = 50) -> list[Interacao]:
         """Interações recentes de um usuário.
@@ -225,6 +271,58 @@ class InteracaoRepository(_RepositorioBase):
             .limit(limite)
         )
         return [linha.to_dominio() for linha in resultado.scalars()]
+
+
+class AudioRepository(_RepositorioBase):
+    """Persistencia e controle de propriedade das submissoes de voz."""
+
+    async def criar(self, audio: TranscricaoAudio) -> None:
+        self._sessao.add(TranscricaoAudioTabela.de_dominio(audio))
+        await self._sessao.flush()
+
+    async def obter(self, audio_id: str, usuario_id: str) -> TranscricaoAudio | None:
+        """Busca somente audio vigente pertencente ao usuario autenticado."""
+        resultado = await self._sessao.execute(
+            select(TranscricaoAudioTabela).where(
+                TranscricaoAudioTabela.id == audio_id,
+                TranscricaoAudioTabela.usuario_id == usuario_id,
+                TranscricaoAudioTabela.expira_em > datetime.now(UTC),
+            )
+        )
+        linha = resultado.scalar_one_or_none()
+        return linha.to_dominio() if linha else None
+
+    async def atualizar(
+        self,
+        audio_id: str,
+        *,
+        estado: EstadoTranscricao,
+        conversa_id: str | None = None,
+        interacao_id: str | None = None,
+        texto: str | None = None,
+        idioma: str | None = None,
+        confianca: float | None = None,
+        duracao_segundos: float | None = None,
+        latencia_ms: int | None = None,
+        mensagem_erro: str | None = None,
+    ) -> None:
+        valores = {
+            "estado": estado.value,
+            "conversa_id": conversa_id,
+            "interacao_id": interacao_id,
+            "texto": texto,
+            "idioma": idioma,
+            "confianca": confianca,
+            "latencia_ms": latencia_ms,
+            "mensagem_erro": mensagem_erro,
+        }
+        if duracao_segundos is not None:
+            valores["duracao_segundos"] = duracao_segundos
+        await self._sessao.execute(
+            update(TranscricaoAudioTabela)
+            .where(TranscricaoAudioTabela.id == audio_id)
+            .values(**valores)
+        )
 
 
 class RotinaRepository(_RepositorioBase):
@@ -352,3 +450,40 @@ class ExecucaoRepository(_RepositorioBase):
             .limit(limite)
         )
         return [linha.to_dominio() for linha in resultado.scalars()]
+
+    async def obter_com_interacao(
+        self, execucao_id: str
+    ) -> tuple[ExecucaoRotina, Interacao | None] | None:
+        """Recupera um disparo e, quando existente, seu resultado no pipeline."""
+        resultado = await self._sessao.execute(
+            select(ExecucaoRotinaTabela, InteracaoTabela)
+            .outerjoin(
+                InteracaoTabela,
+                ExecucaoRotinaTabela.interacao_id == InteracaoTabela.id,
+            )
+            .where(ExecucaoRotinaTabela.id == execucao_id)
+        )
+        linha = resultado.one_or_none()
+        if linha is None:
+            return None
+        execucao, interacao = linha
+        return execucao.to_dominio(), interacao.to_dominio() if interacao else None
+
+    async def listar_com_interacao_por_rotina(
+        self, rotina_id: str, *, limite: int = 20
+    ) -> list[tuple[ExecucaoRotina, Interacao | None]]:
+        """Histórico com a resposta, sem uma consulta adicional por disparo."""
+        resultado = await self._sessao.execute(
+            select(ExecucaoRotinaTabela, InteracaoTabela)
+            .outerjoin(
+                InteracaoTabela,
+                ExecucaoRotinaTabela.interacao_id == InteracaoTabela.id,
+            )
+            .where(ExecucaoRotinaTabela.rotina_id == rotina_id)
+            .order_by(ExecucaoRotinaTabela.iniciada_em.desc())
+            .limit(limite)
+        )
+        return [
+            (execucao.to_dominio(), interacao.to_dominio() if interacao else None)
+            for execucao, interacao in resultado.all()
+        ]

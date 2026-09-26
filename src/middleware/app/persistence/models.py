@@ -11,8 +11,9 @@ gravado em claro. Isso pede política de retenção declarada e cifra em
 repouso no nível do PostgreSQL — ver seção 11 da Arquitetura.
 """
 
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
 
 from app.pipeline.desfechos import Desfecho
@@ -33,11 +34,67 @@ class Canal(Enum):
 
 
 class StatusExecucao(Enum):
-    """Como terminou um disparo de rotina."""
+    """Estado atual ou resultado final de um disparo de rotina."""
 
+    EM_EXECUCAO = "em_execucao"
     SUCESSO = "sucesso"
     BLOQUEADA = "bloqueada"  # o pipeline barrou o prompt da rotina
     FALHA = "falha"  # erro de execução (executor fora, banco indisponível)
+
+
+class EstadoTranscricao(Enum):
+    """Ciclo de vida persistido de uma submissao de audio."""
+
+    RECEBIDO = "recebido"
+    TRANSCREVENDO = "transcrevendo"
+    CONCLUIDA = "concluida"
+    FALHOU = "falhou"
+
+
+class StatusProjeto(Enum):
+    """Status de um projeto no portfólio."""
+
+    PLANEJADO = "planejado"
+    EM_ANDAMENTO = "em_andamento"
+    SUSPENSO = "suspenso"
+    CONCLUIDO = "concluido"
+    CANCELADO = "cancelado"
+
+
+class Prioridade(Enum):
+    """Prioridade de um projeto ou risco."""
+
+    BAIXA = "baixa"
+    MEDIA = "media"
+    ALTA = "alta"
+    CRITICA = "critica"
+
+
+class StatusRisco(Enum):
+    """Status de um risco."""
+
+    IDENTIFICADO = "identificado"
+    MONITORADO = "monitorado"
+    MITIGADO = "mitigado"
+    MATERIALIZADO = "materializado"
+
+
+class StatusMarco(Enum):
+    """Status de um marco."""
+
+    NAO_INICIADO = "nao_iniciado"
+    EM_ANDAMENTO = "em_andamento"
+    CONCLUIDO = "concluido"
+    ATRASADO = "atrasado"
+    CANCELADO = "cancelado"
+
+
+class PapelProjeto(Enum):
+    """Papel de um usuário em um projeto."""
+
+    LIDER = "lider"
+    MEMBRO = "membro"
+    OBSERVADOR = "observador"
 
 
 @dataclass
@@ -109,11 +166,37 @@ class Interacao:
     latencia_ms: int
     criada_em: datetime
     rotina_id: str | None = None  # preenchido quando canal is Canal.ROTINA
+    # Milissegundos gastos em cada etapa percorrida, na ordem do
+    # orquestrador. Só as etapas efetivamente executadas aparecem: uma
+    # mensagem barrada na injeção não tem tempo de executor, e registrar
+    # zero ali puxaria para baixo o percentil de quem chegou ao executor.
+    # Nulo nas interações gravadas antes da medição por etapa existir.
+    latencia_etapas: dict[str, int] | None = None
 
     @property
     def bloqueada(self) -> bool:
         """True quando a resposta do executor não foi entregue."""
         return self.desfecho.bloqueada
+
+
+@dataclass
+class TranscricaoAudio:
+    """Submissao de voz persistida e vinculada ao seu proprietario."""
+
+    id: str
+    usuario_id: str
+    estado: EstadoTranscricao
+    formato: str
+    duracao_segundos: float
+    criada_em: datetime
+    expira_em: datetime
+    conversa_id: str | None = None
+    interacao_id: str | None = None
+    texto: str | None = None
+    idioma: str | None = None
+    confianca: float | None = None
+    latencia_ms: int | None = None
+    mensagem_erro: str | None = None
 
 
 @dataclass
@@ -162,3 +245,83 @@ class ExecucaoRotina:
     status: StatusExecucao
     interacao_id: str | None = None
     erro: str | None = None
+
+
+# === Modelos do schema portfolio ===
+
+
+@dataclass
+class Projeto:
+    """Um projeto do portfólio do Metrô."""
+
+    codigo: str
+    nome: str
+    descricao: str | None = None
+    status: str = StatusProjeto.EM_ANDAMENTO.value
+    prioridade: str = Prioridade.MEDIA.value
+    data_inicio: date | None = None
+    data_fim_prevista: date | None = None
+    data_fim_real: date | None = None
+    orcamento_aprovado: Decimal | None = None
+    orcamento_atual: Decimal | None = None
+    avanco_percentual: int = 0
+    lider_id: str | None = None
+    criado_em: datetime = field(default_factory=datetime.now)
+    atualizado_em: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class Risco:
+    """Um risco associado a um projeto."""
+
+    id: str
+    projeto_codigo: str
+    descricao: str
+    categoria: str | None = None
+    probabilidade: int = 3  # 1-5
+    impacto: int = 3  # 1-5
+    status: str = StatusRisco.IDENTIFICADO.value
+    plano_mitigacao: str | None = None
+    criado_em: datetime = field(default_factory=datetime.now)
+    atualizado_em: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class Marco:
+    """Um marco (milestone) de um projeto."""
+
+    id: str
+    projeto_codigo: str
+    nome: str
+    data_prevista: date
+    descricao: str | None = None
+    data_real: date | None = None
+    status: str = StatusMarco.NAO_INICIADO.value
+    criado_em: datetime = field(default_factory=datetime.now)
+    atualizado_em: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class Indicador:
+    """Um indicador de desempenho de um projeto."""
+
+    id: str
+    projeto_codigo: str
+    nome: str
+    descricao: str | None = None
+    valor_atual: Decimal | None = None
+    valor_meta: Decimal | None = None
+    unidade: str | None = None
+    data_medicao: date | None = None
+    criado_em: datetime = field(default_factory=datetime.now)
+    atualizado_em: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class UsuarioProjeto:
+    """Relação entre um usuário e um projeto."""
+
+    usuario_id: str
+    projeto_codigo: str
+    papel: str = PapelProjeto.MEMBRO.value
+    criado_em: datetime = field(default_factory=datetime.now)

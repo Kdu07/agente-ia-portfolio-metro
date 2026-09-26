@@ -19,6 +19,22 @@ ingestão caiu entre o `upsert` e o commit, ou uma classificação revista
 chegou a um e não ao outro —, e nesse caso descartar e registrar é o
 comportamento correto: na dúvida, menos gente lê.
 
+**Pergunta que cita um mês busca mais fundo.** Os balanços e relatórios
+mensais repetem os mesmos slides e seções mês a mês, com textos quase
+iguais, e o vetor da pergunta pesa pouco o nome do mês. "Quais os
+indicadores do portfólio em agosto?" trazia entre os `k` mais próximos
+os indicadores de março a julho e deixava o de agosto de fora — e o
+modelo, vendo pela data de referência que nenhum trecho era de agosto,
+se abstinha, corretamente. Quando a pergunta cita um mês, a busca pede
+mais candidatos ao índice, mas só mexe no resultado se nenhum dos `k`
+mais próximos for daquele mês: nesse caso, os últimos — no máximo
+metade de `k` — dão lugar aos trechos mais próximos do mês citado. Os
+mais próximos ficam sempre, porque a pergunta que cita um mês também
+pode precisar de um documento sem mês, como a norma que diz até quando
+o relatório de agosto deveria ter saído. O filtro de permissão é o
+mesmo: a ampliação só muda quantos trechos visíveis voltam, e não quais
+o escopo alcança.
+
 **O que se registra no log são identificadores, nunca texto.** Rastrear
 quais trechos sustentaram uma resposta é exigência de rastreabilidade;
 copiar o conteúdo deles para o log multiplicaria os lugares onde o
@@ -27,6 +43,8 @@ corpus vive.
 
 import asyncio
 import logging
+import re
+import unicodedata
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -62,6 +80,87 @@ class TrechoRecuperado:
     link: str | None
     projeto: str | None
     score: float
+    # Data de referência legível ("30/06/2026", ou "06/2026" quando só o
+    # mês é conhecido). `None` para documento sem data, como uma norma.
+    referencia: str | None = None
+    periodo: str | None = None  # "AAAA-MM" do documento, quando conhecido
+
+
+def referencia_de(lido: TrechoLido) -> str | None:
+    """A data de referência do documento, no formato em que o modelo a cita."""
+    if lido.data_referencia:
+        return f"{lido.data_referencia:%d/%m/%Y}"
+    if lido.periodo:
+        ano, _, mes = lido.periodo.partition("-")
+        return f"{mes}/{ano}" if mes else ano
+    return None
+
+
+def periodo_de(lido: TrechoLido) -> str | None:
+    """O mês de referência do documento, "AAAA-MM"."""
+    if lido.data_referencia:
+        return f"{lido.data_referencia:%Y-%m}"
+    return lido.periodo
+
+
+# Quantas vezes `k` a busca pede ao índice quando a pergunta cita um mês.
+AMPLIACAO_POR_PERIODO = 4
+
+# "março" só com cedilha: sem ela, "marco" é o marco do projeto, e "qual o
+# marco da Linha 6?" puxaria os documentos de março.
+_MESES = {
+    "janeiro": 1, "fevereiro": 2, "março": 3, "abril": 4, "maio": 5, "junho": 6,
+    "julho": 7, "agosto": 8, "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12,
+}  # fmt: skip
+_MES_POR_EXTENSO = re.compile(
+    r"\b(?P<mes>" + "|".join(_MESES) + r")\b(?:\s*(?:de|/)\s*(?P<ano>\d{4}))?"
+)
+_MES_NUMERICO = re.compile(r"\b(?P<mes>0?[1-9]|1[0-2])/(?P<ano>\d{4})\b")
+
+
+def periodos_citados(pergunta: str) -> frozenset[tuple[int, int | None]]:
+    """Os meses que a pergunta cita, como (mês, ano); ano `None` quando omitido."""
+    texto = unicodedata.normalize("NFC", pergunta.casefold())
+    citados = {
+        (_MESES[achado["mes"]], int(achado["ano"]) if achado["ano"] else None)
+        for achado in _MES_POR_EXTENSO.finditer(texto)
+    }
+    citados |= {
+        (int(achado["mes"]), int(achado["ano"])) for achado in _MES_NUMERICO.finditer(texto)
+    }
+    return frozenset(citados)
+
+
+def _do_periodo(trecho: TrechoRecuperado, citados: frozenset[tuple[int, int | None]]) -> bool:
+    if not trecho.periodo:
+        return False
+    ano, _, mes = trecho.periodo.partition("-")
+    if not mes:
+        return False
+    return any(
+        int(mes) == mes_citado and (ano_citado is None or int(ano) == ano_citado)
+        for mes_citado, ano_citado in citados
+    )
+
+
+def completar_com_periodo(
+    trechos: Sequence[TrechoRecuperado], k: int, citados: frozenset[tuple[int, int | None]]
+) -> list[TrechoRecuperado]:
+    """Os `k` mais próximos, com vaga para o mês citado se nenhum deles for dele.
+
+    `trechos` vem em ordem de similaridade, com mais de `k` candidatos. Se
+    algum dos `k` primeiros já é do mês citado, o resultado é o mesmo da
+    busca sem ampliação. Senão, até metade de `k` vagas do fim passam aos
+    trechos mais próximos do mês; os demais continuam os mais próximos.
+    """
+    base = list(trechos[:k])
+    if any(_do_periodo(trecho, citados) for trecho in base):
+        return base
+    vagas = k // 2
+    do_periodo = [trecho for trecho in trechos[k:] if _do_periodo(trecho, citados)][:vagas]
+    if not do_periodo:
+        return base
+    return base[: k - len(do_periodo)] + do_periodo
 
 
 @dataclass(frozen=True)
@@ -127,8 +226,10 @@ class Recuperador:
         # thread, congelaria o laço de eventos e todas as outras
         # requisições do processo — mesma razão do `to_thread` do Pinecone.
         vetor = await asyncio.to_thread(self._codificar, texto)
+        citados = periodos_citados(texto)
+        k_busca = self._k * AMPLIACAO_POR_PERIODO if citados else self._k
         acertos = await self._repositorio.buscar(
-            vetor, escopo=escopo, k=self._k, score_minimo=self._score_minimo
+            vetor, escopo=escopo, k=k_busca, score_minimo=self._score_minimo
         )
         lidos = await self._leitor.textos([acerto.trecho_id for acerto in acertos])
 
@@ -153,8 +254,13 @@ class Recuperador:
                     link=lido.link,
                     projeto=lido.projeto,
                     score=acerto.score,
+                    referencia=referencia_de(lido),
+                    periodo=periodo_de(lido),
                 )
             )
+
+        if citados:
+            trechos = completar_com_periodo(trechos, self._k, citados)
 
         if sem_texto:
             logger.warning(

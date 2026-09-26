@@ -1,0 +1,14 @@
+// Erros registrados pelo middleware: as linhas ERROR e CRITICAL do uvicorn e
+// do pacote `app` (formato em app/main.py), agrupadas pelo início da mensagem.
+// Nenhuma linha desses níveis carrega texto de pergunta, resposta ou corpus.
+//
+// Os `let` abaixo apontam para o dev; `provisionar.sh <estágio> metricas`
+// os troca pelos do estágio.
+let middleware = "ca-middleware-dev";
+let janela = 24h;
+ContainerAppConsoleLogs_CL
+| where TimeGenerated > ago(janela) and ContainerAppName_s == middleware
+| where Log_s startswith "ERROR:" or Log_s startswith "CRITICAL:"
+| summarize ocorrencias = count(), ultima = max(TimeGenerated)
+    by mensagem = substring(Log_s, 0, 120)
+| top 10 by ocorrencias

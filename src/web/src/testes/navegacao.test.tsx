@@ -1,7 +1,9 @@
-import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { HttpResponse, http } from "msw";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Rotas } from "@/rotas";
+import { servidor } from "./setup";
 import { renderizar } from "./utilitarios";
 
 afterEach(cleanup);
@@ -39,8 +41,35 @@ describe("Navegação entre conversas", () => {
 
     expect(await screen.findByText("Como posso ajudar?")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Quais marcos estão atrasados no portfólio?" }),
+      screen.getByRole("button", { name: "Quando termina o projeto Estação Morumbi?" }),
     ).toBeInTheDocument();
+  });
+
+  it("preserva a conversa ao passar pelo Histórico e voltar", async () => {
+    servidor.use(
+      http.post("/api/chat", () =>
+        HttpResponse.json({
+          resposta: "Resposta persistida",
+          conversa_id: "projeto-x",
+          intencao_id: "consultar_status_projeto",
+          desfecho: "encaminhada",
+          bloqueada: false,
+        }),
+      ),
+    );
+    renderizar(<Rotas />, "/");
+
+    const campo = screen.getByRole("textbox", { name: "Mensagem" });
+    fireEvent.change(campo, { target: { value: "Qual o status?" } });
+    fireEvent.keyDown(campo, { key: "Enter" });
+    expect(await screen.findByText("Resposta persistida")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("link", { name: "Histórico" }));
+    expect(await screen.findByText("Histórico de conversas")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Página principal" }));
+
+    expect(await screen.findByText(/62% de avanço físico/)).toBeInTheDocument();
+    expect(screen.queryByText("Como posso ajudar?")).not.toBeInTheDocument();
   });
 
   it("não repete o alerta de marco em uma conversa já gravada", async () => {
@@ -48,8 +77,51 @@ describe("Navegação entre conversas", () => {
     await screen.findByText(/62% de avanço físico/, {}, { timeout: 3000 });
 
     expect(
-      screen.queryByRole("dialog", { name: "Notificação do assistente" }),
+      screen.queryByRole("region", { name: "Alerta de marco" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("não duplica o primeiro turno quando a conversa persistida é carregada", async () => {
+    servidor.use(
+      http.post("/api/chat", () =>
+        HttpResponse.json({
+          resposta: "Resposta persistida",
+          conversa_id: "conversa-nova",
+          intencao_id: "consultar_status_projeto",
+          desfecho: "encaminhada",
+          bloqueada: false,
+        }),
+      ),
+      http.get("/api/conversas/conversa-nova", () =>
+        HttpResponse.json({
+          id: "conversa-nova",
+          titulo: "Status",
+          criada_em: new Date().toISOString(),
+          turnos: [
+            {
+              id: "turno-novo",
+              prompt: "Qual o status?",
+              resposta: "Resposta persistida",
+              canal: "chat",
+              intencao_id: "consultar_status_projeto",
+              desfecho: "encaminhada",
+              bloqueada: false,
+              criada_em: new Date().toISOString(),
+            },
+          ],
+        }),
+      ),
+    );
+    renderizar(<Rotas />, "/");
+
+    const campo = screen.getByRole("textbox", { name: "Mensagem" });
+    fireEvent.change(campo, { target: { value: "Qual o status?" } });
+    fireEvent.keyDown(campo, { key: "Enter" });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Resposta persistida")).toHaveLength(1);
+      expect(screen.getAllByText("Qual o status?")).toHaveLength(1);
+    });
   });
 
   it("leva a uma tela explícita quando a rota não existe", async () => {

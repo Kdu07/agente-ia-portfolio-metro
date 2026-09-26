@@ -15,9 +15,12 @@ Duas decisões:
 - **a triagem não substitui a guarda de saída.** Uma vê o documento, a
   outra vê a resposta; o que passar por esta ainda encontra aquela.
 
-O Prompt Shields (análise de documento do Content Safety) entra aqui
-quando o classificador da onda 2 existir — `injecao/classificador.py`
-ainda é `NotImplementedError`. Até lá, só as regras.
+O Prompt Shields (análise de documento do Content Safety) ainda não
+entra aqui, embora desde a onda 2 exista: `injecao/classificador.py` o
+chama para a entrada e `guardas/saida.py` para a resposta. O que falta é
+de forma, não de disponibilidade — `triar` é síncrona e roda na
+ingestão, fora do caminho da requisição. Até que isso se resolva, só as
+regras.
 """
 
 from collections.abc import Sequence

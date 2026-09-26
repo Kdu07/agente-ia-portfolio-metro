@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from "node:url";
 import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 /**
  * O `mockServiceWorker.js` precisa ficar em `public/` para que o MSW o
@@ -27,8 +28,12 @@ function removerWorkerDeDubles(): Plugin {
 // navegador e API compartilhem a origem também em desenvolvimento — sem
 // isso o cookie de sessão httpOnly não seria enviado e o login só
 // funcionaria no contêiner.
+//
+// O Tailwind 4 entra como plugin do Vite, e não mais pelo PostCSS: o plugin
+// lê o `global.css` direto e dispensa o `postcss.config.js` e o
+// autoprefixer, que o próprio Tailwind 4 já cobre.
 export default defineConfig({
-  plugins: [react(), removerWorkerDeDubles()],
+  plugins: [react(), tailwindcss(), removerWorkerDeDubles()],
   // O alias `@/` também está declarado em tsconfig.json. Os dois precisam
   // existir e concordar: o tsconfig serve ao editor e ao `tsc`, este aqui
   // serve ao bundler. Declarar só no tsconfig faz o type-check passar e o
@@ -51,5 +56,12 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/testes/setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "json-summary"],
+      reportsDirectory: "coverage",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.d.ts", "src/testes/**", "src/mocks/**"],
+    },
   },
 });

@@ -17,13 +17,15 @@
  * hook nao deve mudar com isso.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api, ErroApi } from "@/servicos/api";
+import { api, ErroApi, TEMPO_LIMITE_CHAT_MS } from "@/servicos/api";
 import { chaves } from "@/servicos/chaves";
 import { horaCurta } from "@/utilitarios/formato";
 import type { Canal, ChatResponse, ConversaDetalhe, Desfecho, Turno } from "@/tipos";
+
+export const CHAVE_CONVERSA_ATIVA = "prata.conversa.ativa";
 
 export interface Linha {
   id: string;
@@ -31,18 +33,27 @@ export interface Linha {
   texto: string;
   horario: string;
   desfecho?: Desfecho;
+  intencaoId?: string | null;
+  /** Por onde a pergunta chegou; so a pergunta carrega o canal do turno. */
+  canal?: Canal;
+  /**
+   * Linha criada nesta tela, e nao carregada do servidor. So estas entram
+   * com animacao: o historico que abre com a conversa aparece parado.
+   */
+  local?: boolean;
 }
 
 function turnoParaLinhas(turno: Turno): Linha[] {
   const horario = horaCurta(turno.criada_em);
   return [
-    { id: `${turno.id}-pergunta`, autor: "usuario", texto: turno.prompt, horario },
+    { id: `${turno.id}-pergunta`, autor: "usuario", texto: turno.prompt, horario, canal: turno.canal },
     {
       id: `${turno.id}-resposta`,
       autor: "agente",
       texto: turno.resposta,
       horario,
       desfecho: turno.desfecho,
+      intencaoId: turno.intencao_id,
     },
   ];
 }
@@ -51,21 +62,50 @@ export function useConversa(conversaId?: string) {
   const clienteQuery = useQueryClient();
   const [linhasLocais, setLinhasLocais] = useState<Linha[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  // Reenviar so ajuda quando a falha foi de rede, tempo ou servidor. Um
+  // 422 ou 403 repetido volta igual, e o botao so faria a pessoa insistir.
+  const [podeReenviar, setPodeReenviar] = useState(false);
+  const [sincronizandoPersistencia, setSincronizandoPersistencia] = useState(false);
+  // Numa conversa nova nao ha id na rota: quem cria a conversa e o
+  // backend, no primeiro turno. Sem guardar o id devolvido, cada mensagem
+  // seguinte iria com `conversa_id: null` e abriria outra conversa, e o
+  // executor perderia o contexto dos turnos anteriores.
+  const [conversaCriada, setConversaCriada] = useState<string | null>(() => {
+    if (conversaId) return conversaId;
+    return sessionStorage.getItem(CHAVE_CONVERSA_ATIVA);
+  });
+  const conversaAtual = conversaId ?? conversaCriada;
 
-  const { data: conversa, isLoading: carregando } = useQuery<ConversaDetalhe>({
-    queryKey: chaves.conversa(conversaId ?? ""),
-    queryFn: () => api.get<ConversaDetalhe>(`/conversas/${conversaId}`),
-    enabled: Boolean(conversaId),
+  useEffect(() => {
+    if (conversaAtual) sessionStorage.setItem(CHAVE_CONVERSA_ATIVA, conversaAtual);
+  }, [conversaAtual]);
+
+  const {
+    data: conversa,
+    isLoading: carregando,
+    error: falhaAoCarregar,
+    refetch: recarregar,
+  } = useQuery<ConversaDetalhe>({
+    queryKey: chaves.conversa(conversaAtual ?? ""),
+    queryFn: () => api.get<ConversaDetalhe>(`/conversas/${conversaAtual}`),
+    enabled: Boolean(conversaAtual),
   });
 
   const envio = useMutation({
     mutationFn: (dados: { mensagem: string; canal: Canal }) =>
-      api.post<ChatResponse>("/chat", {
-        mensagem: dados.mensagem,
-        conversa_id: conversaId ?? null,
-        canal: dados.canal,
-      }),
+      api.post<ChatResponse>(
+        "/chat",
+        {
+          mensagem: dados.mensagem,
+          conversa_id: conversaAtual,
+          canal: dados.canal,
+        },
+        TEMPO_LIMITE_CHAT_MS,
+      ),
     onSuccess: (resposta) => {
+      setSincronizandoPersistencia(true);
+      setConversaCriada(resposta.conversa_id);
+      sessionStorage.setItem(CHAVE_CONVERSA_ATIVA, resposta.conversa_id);
       setLinhasLocais((atuais) => [
         ...atuais,
         {
@@ -74,6 +114,8 @@ export function useConversa(conversaId?: string) {
           texto: resposta.resposta,
           horario: horaCurta(new Date().toISOString()),
           desfecho: resposta.desfecho,
+          intencaoId: resposta.intencao_id,
+          local: true,
         },
       ]);
       // O historico da barra lateral mostra a conversa mais recente no
@@ -82,11 +124,23 @@ export function useConversa(conversaId?: string) {
       void clienteQuery.invalidateQueries({ queryKey: chaves.conversas });
     },
     onError: (falha) => {
+      if (!(falha instanceof ErroApi)) {
+        setErro("Não foi possível enviar a mensagem. Verifique a conexão e tente novamente.");
+        setPodeReenviar(true);
+        return;
+      }
+      setPodeReenviar(falha.repetivel);
+      if (falha.tipo !== "tempo") {
+        setErro(falha.detalhe);
+        return;
+      }
+      // Sem resposta no prazo, o servidor pode ter processado a mensagem
+      // mesmo assim. Recarregar a conversa mostra o turno, se ele foi
+      // gravado, antes de a pessoa decidir reenviar e duplica-lo.
       setErro(
-        falha instanceof ErroApi
-          ? falha.detalhe
-          : "Não foi possível enviar a mensagem. Verifique a conexão e tente novamente.",
+        "A resposta demorou demais. Se a mensagem aparecer na conversa, não é preciso reenviar.",
       );
+      if (conversaAtual) void clienteQuery.invalidateQueries({ queryKey: chaves.conversa(conversaAtual) });
     },
   });
 
@@ -104,6 +158,8 @@ export function useConversa(conversaId?: string) {
         autor: "usuario",
         texto,
         horario: horaCurta(new Date().toISOString()),
+        canal,
+        local: true,
       },
     ]);
     envio.mutate({ mensagem: texto, canal });
@@ -117,12 +173,43 @@ export function useConversa(conversaId?: string) {
   }
 
   const linhasGravadas = (conversa?.turnos ?? []).flatMap(turnoParaLinhas);
+  const locaisJaPersistidos =
+    linhasLocais.length > 0 &&
+    linhasLocais.every((local) =>
+      linhasGravadas.some(
+        (gravada) => gravada.autor === local.autor && gravada.texto === local.texto,
+      ),
+    );
+
+  // Enquanto a consulta ainda nao refletiu o POST, os baloes otimistas
+  // continuam visiveis. Quando os mesmos textos aparecem persistidos, a
+  // versao do servidor vira a fonte unica e evita turnos duplicados.
+  useEffect(() => {
+    if (sincronizandoPersistencia && locaisJaPersistidos) {
+      setLinhasLocais([]);
+      setSincronizandoPersistencia(false);
+    }
+  }, [locaisJaPersistidos, sincronizandoPersistencia]);
 
   return {
-    linhas: [...linhasGravadas, ...linhasLocais],
+    linhas:
+      sincronizandoPersistencia && locaisJaPersistidos
+        ? linhasGravadas
+        : [...linhasGravadas, ...linhasLocais],
+    titulo: conversa?.titulo ?? null,
+    conversaIdAtual: conversaAtual,
     carregando,
     enviando: envio.isPending,
     erro,
+    podeReenviar,
+    // Falha ao abrir uma conversa gravada nao e conversa vazia: a tela
+    // mostra o motivo e oferece recarregar, em vez de um chat em branco.
+    erroAoCarregar: falhaAoCarregar
+      ? falhaAoCarregar instanceof ErroApi
+        ? falhaAoCarregar.detalhe
+        : "Não foi possível abrir a conversa. Tente novamente."
+      : null,
+    recarregar: () => void recarregar(),
     enviar,
     reenviarUltima,
     limparErro: () => setErro(null),

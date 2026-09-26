@@ -48,6 +48,18 @@ MENSAGENS: dict[Desfecho, str] = {
 }
 
 
+# Resposta à mensagem que só cumprimenta (`intencao/saudacao.py`). Não é
+# recusa, embora o desfecho registrado seja `recusada_fora_escopo`: a
+# pessoa não pediu nada fora do escopo, só ainda não pediu nada. O texto
+# apresenta o agente e sugere uma pergunta que funciona.
+SAUDACAO = (
+    "Olá! Sou a Prata, assistente de consulta ao portfólio de projetos. "
+    "Busco nos documentos dos projetos informações sobre status, riscos, marcos, "
+    "pendências e normas de gestão. Experimente perguntar, por exemplo: "
+    "\"quais são os principais riscos do portfólio?\""
+)
+
+
 def para(desfecho: Desfecho) -> str:
     """Texto correspondente a um desfecho que não entregou a resposta."""
     if desfecho is Desfecho.ENCAMINHADA:

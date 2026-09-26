@@ -14,6 +14,7 @@
 import type {
   Contagem,
   EnunciadoAgrupado,
+  Latencia,
   ResumoCatalogo,
   ResumoSeguranca,
   Serie,
@@ -23,15 +24,19 @@ function diaISO(diasAtras: number): string {
   return new Date(Date.now() - diasAtras * 86_400_000).toISOString().slice(0, 10);
 }
 
+// Chaves e rotulos iguais aos do catalogo (pipeline/intencao/catalogo.py)
+// e de ROTULO_DE_INTENCAO em analytics/metricas.py, para que o duble
+// mostre o que a rota real mostraria. O backend devolve as 26 intencoes;
+// o recorte aqui e menor so para manter o grafico legivel no desenvolvimento.
 export const VOLUME_POR_INTENCAO: Contagem[] = [
   { chave: "consultar_status_projeto", rotulo: "Consultar status de projeto", total: 184 },
-  { chave: "consultar_marcos_atrasados", rotulo: "Consultar marcos atrasados", total: 121 },
-  { chave: "registrar_motivo_atraso", rotulo: "Registrar motivo de atraso", total: 76 },
-  { chave: "consultar_riscos_projeto", rotulo: "Consultar riscos do projeto", total: 64 },
-  { chave: "gerar_resumo_executivo", rotulo: "Gerar resumo executivo", total: 38 },
+  { chave: "consultar_marcos", rotulo: "Consultar marcos", total: 121 },
+  { chave: "atualizar_avanco", rotulo: "Atualizar avanço", total: 76 },
+  { chave: "consultar_riscos", rotulo: "Consultar riscos", total: 64 },
+  { chave: "gerar_previa_diretoria", rotulo: "Gerar prévia para a diretoria", total: 38 },
   { chave: "comparar_projetos", rotulo: "Comparar projetos", total: 12 },
-  { chave: "consultar_orcamento_projeto", rotulo: "Consultar orçamento do projeto", total: 0 },
-  { chave: "consultar_norma_interna", rotulo: "Consultar norma interna", total: 0 },
+  { chave: "consultar_faturas_vencidas", rotulo: "Consultar faturas vencidas", total: 0 },
+  { chave: "consultar_aderencia_normativa", rotulo: "Consultar aderência normativa", total: 0 },
 ];
 
 export const DISTRIBUICAO_DESFECHOS: Contagem[] = [
@@ -76,6 +81,21 @@ export const SERIE_BLOQUEIOS: Serie[] = [
     })),
   },
 ];
+
+// Etapas na ordem do orquestrador (ETAPAS em pipeline/orquestrador.py). A
+// guarda de injecao roda em toda mensagem e por isso tem mais amostras;
+// o executor e a saida so contam as mensagens que chegaram ate eles.
+export const LATENCIA: Latencia = {
+  p50: 1350,
+  p95: 2900,
+  etapas: [
+    { etapa: "injecao", p50: 180, p95: 420, amostras: 596 },
+    { etapa: "abuso", p50: 95, p95: 240, amostras: 582 },
+    { etapa: "intencao", p50: 40, p95: 110, amostras: 575 },
+    { etapa: "executor", p50: 980, p95: 2250, amostras: 509 },
+    { etapa: "saida", p50: 120, p95: 310, amostras: 495 },
+  ],
+};
 
 export const RESUMO_CATALOGO: ResumoCatalogo = {
   intencoes_acionadas: 6,
