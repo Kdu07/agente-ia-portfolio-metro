@@ -1419,7 +1419,7 @@ A aderência aplica as quatro regras da seção 3 do `GestaoConfiguracao.md`: ti
 | Título acima de 72 caracteres | 23 |
 | Tipo fora do padrão | 5 |
 
-**Resíduo e reserva da Sprint 5.** Ficaram abertas duas issues, com 2,00 h: #401, com o merge request integrado (!167) e a issue por fechar à mão, como define a seção 2.7, e #402, com o merge request em revisão (!176). O resíduo ocupa 3% da reserva de 75,25 h que a seção [3.6](#36-sprint-5) separou para ele. A regra de corte da `AM20` não é acionada, e o restante da folga, 73,25 h, fica para as correções de usabilidade.
+**Resíduo e reserva da Sprint 5.** Ficaram abertas duas issues, com 2,00 h: #401, com o merge request integrado (!167) e a issue por fechar à mão, como define a seção 2.7, e #402, com o merge request em revisão (!176). O resíduo ocupa 16% da reserva de 12,50 h que a seção [3.6](#36-sprint-5) separou para ele. A regra de corte da `AM20` não é acionada, e o restante da folga, 10,50 h, fica disponível para as tasks da Sprint 5.
 
 **Leitura dos números**
 
@@ -1534,11 +1534,11 @@ Os cards da Sprint 4 que não fecharem até o último merge do ciclo continuam n
 | Medida | Valor |
 |---|---:|
 | Cards abertos na milestone `Sprint 04` em 23/09 às 14h24 | 59, com 82,25 h convertidas |
-| Cards abertos na milestone `Sprint 04` em 25/09 às 23h32 | 2, com 2,00 h convertidas |
-| Resíduo usado no planejamento | O medido no fechamento da Sprint 4, na reapuração de #503 |
+| Cards abertos na milestone `Sprint 04` em 25/09 às 23h26 | 2, com 2,00 h convertidas |
+| Resíduo usado no planejamento | 2,00 h, medidas na reapuração de #503 (seção 3.5.3), integrada em 26/09 |
 | Reserva disponível | 12,50 h |
 
-Em 25/09, último dia da Sprint 4, o resíduo de 2,00 h cabe na reserva. O número que vale é o do fechamento, medido em #503. Se ele passar de 12,50 h, a regra da `AM20` é aplicada no primeiro dia da Sprint 5: saem primeiro as tasks `P_MEDIA`, de baixo para cima nas tabelas abaixo, até cobrir o excesso, no limite das 13,50 h que elas somam. A task que dependia de uma task cortada segue sem aquele insumo, e o corte é registrado em comentário nas duas issues, com o que deixa de ser feito.
+O resíduo medido no fechamento cabe na reserva, e a regra de corte da `AM20` não é acionada no primeiro dia. Ela continua valendo para o estouro que surgir durante a Sprint 5: saem primeiro as tasks `P_MEDIA`, de baixo para cima nas tabelas abaixo, até cobrir o excesso, no limite das 13,50 h que elas somam. A task que dependia de uma task cortada segue sem aquele insumo, e o corte é registrado em comentário nas duas issues, com o que deixa de ser feito.
 
 ##### Cards da Sprint 4
 
@@ -1689,12 +1689,12 @@ flowchart LR
 
 | Ordem | Momento | Tasks | Por quê |
 |:---:|---|---|---|
-| 1 | Primeiro dia, 28/09 | #503, #504, #456, #458, #459, #485, #495, #497, #513 | Abrem as cadeias mais longas: a reapuração dimensiona o resíduo da Sprint 4 e decide a regra de corte; a medição do SLA abre o caminho crítico; a correção do `PERFORMANCE_MODE` vem antes dos testes de carga, a cobertura integral antes da meta de 80% e a triagem dos xfail antes da descrição das funcionalidades; a comparação da base alimenta a matriz de risco; o mapa de adoção vem antes dos incentivos; os feedbacks precisam ser levantados antes de corrigidos; a adequação do `copilot/solucao/` vem antes da demonstração |
+| 1 | Primeiro dia, 28/09 | #504, #456, #458, #459, #485, #495, #497, #513 | Abrem as cadeias mais longas: a medição do SLA abre o caminho crítico; a correção do `PERFORMANCE_MODE` vem antes dos testes de carga, a cobertura integral antes da meta de 80% e a triagem dos xfail antes da descrição das funcionalidades; a comparação da base alimenta a matriz de risco; o mapa de adoção vem antes dos incentivos; os feedbacks precisam ser levantados antes de corrigidos; a adequação do `copilot/solucao/` vem antes da demonstração |
 | 2 | De 29/09 a 05/10 | Demais tasks de desenvolvimento, testes e documentação, com #460, #461, #462, #481, #484, #487, #488, #492, #496, #498, #506, #507, #509 e #514 | A documentação técnica final e os testes complementares precisam estar integrados antes do corte, porque a revisão de coerência (#502) depende deles; a matriz de papéis (#509) começa depois da atribuição dos cards |
 | 3 | Véspera do fechamento, 06/10 | #505, #502 e #515, além dos valores da Sprint 5 em #506 e #507 | Fecha o que a revisão interna precisa ler antes do último dia |
 | 4 | Último dia, 07/10 | #510, #511, #512, #508 e a reapuração de #505 | A retrospectiva, o contrato e os dois post-mortems precisam do ciclo encerrado; a análise redigida na véspera é refeita sobre o último merge (`AM24`) |
 
-A apresentação final (#516) acontece na data marcada para ela, depois dos slides (#515).
+A #503 não entra na ordem: a reapuração foi integrada em 26/09 pelo !178, antes da abertura da sprint, e a issue aguarda só o fechamento. A apresentação final (#516) acontece na data marcada para ela, depois dos slides (#515).
 
 Em horas, a cadeia mais longa soma 7,00 h: a dos testes de carga (#456 → #461 → #462 → #475 → #502). Ela não depende do calendário e pode terminar na primeira semana. O caminho crítico é a cadeia de fechamento — #504 → #505 → #510 → #512, 6,00 h em série —, porque é a única presa ao calendário: #505 depende do corte de 06/10, e #510 e #512 só começam com o ciclo encerrado, o que deixa 5,00 h para os dois últimos dias. Qualquer atraso nela atrasa o fechamento do módulo. As correções apontadas no teste de usabilidade já estão integradas (seção 10.3.12.9 do Projeto.md); resta a reaplicação do roteiro (#484), que não bloqueia outras tasks.
 
@@ -1981,7 +1981,7 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 
 | ID | Ação | Responsável | Indicador de sucesso | Status |
 |---|---|---|---|---|
-| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | Planejada — o planejamento da seção 3.6 soma 20,75 h |
+| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | Planejada — o planejamento da seção 3.6 soma 83,50 h de 96,00 h, com folga de 12,50 h |
 | AM21 | Redistribuir carga no planejamento, e não durante a sprint | Scrum Master da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento | Planejada |
 | AM22 | Limitar a 40% a participação de cada integrante nos merges do ciclo | Tech Lead da Sprint 5 | Maior participação individual nos merges de até 40% | Planejada |
 | AM23 | Medir pela API o tempo até a primeira revisão de cada merge request | Responsável pela gestão de configuração | Mediana e maior espera publicadas no fechamento | Planejada |
