@@ -23,7 +23,6 @@ htmlcov/
 # Node / frontend
 node_modules/
 dist/
-coverage/
 *.tsbuildinfo
 *.local
 .eslintcache
