@@ -15,6 +15,7 @@ import { BotaoMicrofone } from "@/componentes/chat/BotaoMicrofone";
 import { Composer } from "@/componentes/chat/Composer";
 import { ConversaVazia } from "@/componentes/chat/ConversaVazia";
 import { IndicadorDigitando } from "@/componentes/chat/IndicadorDigitando";
+import type { EstadoVoz } from "@/hooks/useMicrofone";
 import { renderizar } from "./utilitarios";
 
 afterEach(cleanup);
@@ -249,7 +250,7 @@ describe("BotaoMicrofone", () => {
   });
 
   it("aria-label muda conforme estado", () => {
-    const rotulos: Record<string, string> = {
+    const rotulos: Record<EstadoVoz, string> = {
       ocioso: "Iniciar entrada por voz",
       solicitando: "Cancelar entrada por voz",
       gravando: "Parar entrada por voz",
@@ -259,7 +260,7 @@ describe("BotaoMicrofone", () => {
 
     for (const [estado, rotulo] of Object.entries(rotulos)) {
       cleanup();
-      renderizar(<BotaoMicrofone {...defaultProps} estado={estado as any} />);
+      renderizar(<BotaoMicrofone {...defaultProps} estado={estado as EstadoVoz} />);
       expect(screen.getByLabelText(rotulo)).toBeInTheDocument();
     }
   });
