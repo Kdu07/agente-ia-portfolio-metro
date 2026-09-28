@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Canvas de proposta de valor — Agente de Portfólio do Metrô</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #0a1a8a;
+    --azul-claro: #2438b8;
+    --texto: #1c1c24;
+    --suave: #6b6b78;
+    --painel: #f0f0f2;
+    --painel-perfil: #eef0fb;
+    --borda: #d6d6dc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 2000px; height: 1270px; background: #fff; }
+  body { font-family: "Inter", sans-serif; color: var(--texto); padding: 40px; font-size: 16.5px; line-height: 1.38; }
+  .sobre { font-family: "Barlow Condensed", sans-serif; font-weight: 600; letter-spacing: .28em; color: var(--suave); font-size: 20px; }
+  .topo { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 5px solid var(--azul); padding-bottom: 18px; margin-bottom: 22px; }
+  h1 { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 58px; line-height: 1; margin: 10px 0 8px; }
+  .subtitulo { color: #4a4a58; font-size: 21px; }
+  .legenda { font-size: 16px; color: var(--suave); text-align: right; line-height: 1.8; }
+  .legenda .tag { margin-left: 6px; }
+  .lados { display: grid; grid-template-columns: 1fr 70px 1fr; margin-bottom: 12px; }
+  .lado { display: flex; align-items: center; gap: 12px; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 25px; letter-spacing: .12em; color: var(--azul); }
+  .lado.perfil { justify-content: flex-end; color: var(--azul-claro); }
+  .quadrado { width: 22px; height: 22px; background: var(--azul); }
+  .circulo { width: 24px; height: 24px; border-radius: 50%; background: var(--azul-claro); }
+  .grade { display: grid; grid-template-columns: 1fr 1fr 70px 1fr 1fr; grid-template-rows: 375px 445px; gap: 15px 15px; }
+  .bloco { background: var(--painel); border: 1px solid var(--borda); border-top: 5px solid var(--azul); padding: 20px 20px 14px; overflow: hidden; }
+  .bloco.perfil { background: var(--painel-perfil); border-top-color: var(--azul-claro); }
+  .alto { grid-row: span 2; }
+  .titulo { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 28px; letter-spacing: .04em; color: var(--azul); margin-bottom: 14px; text-transform: uppercase; }
+  .perfil .titulo { color: var(--azul-claro); }
+  ul { list-style: none; }
+  li { position: relative; padding-left: 22px; margin-bottom: 12px; }
+  li::before { content: ""; position: absolute; left: 2px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--azul); }
+  .perfil li::before { background: var(--azul-claro); }
+  li.sem { color: var(--suave); }
+  li.sem::before, .perfil li.sem::before { background: transparent; border: 2px solid var(--suave); width: 10px; height: 10px; }
+  .tag { display: inline-block; min-width: 22px; padding: 0 5px; margin-left: 3px; border-radius: 5px; background: #fff; border: 1px solid #b9bfe6; color: var(--azul-claro); font-size: 13px; font-weight: 700; text-align: center; line-height: 20px; vertical-align: 1px; }
+  .encaixe { grid-row: span 2; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+  .seta { font-size: 44px; color: var(--azul); line-height: 1; }
+  .rotulo-encaixe { writing-mode: vertical-rl; transform: rotate(180deg); font-family: "Barlow Condensed", sans-serif; font-weight: 700; letter-spacing: .3em; color: var(--suave); font-size: 20px; }
+  .rodape { margin-top: 15px; background: var(--azul); color: #fff; padding: 18px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; font-size: 16.5px; }
+  .rodape b { font-family: "Barlow Condensed", sans-serif; font-size: 22px; letter-spacing: .06em; display: block; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+  <div class="topo">
+    <div>
+      <div class="sobre">METRÔ DE SÃO PAULO · PMO CORPORATIVO · INTELI T17 — GRUPO 02</div>
+      <h1>CANVAS DE PROPOSTA DE VALOR</h1>
+      <div class="subtitulo">Agente de portfólio × líderes de projeto, Diretoria, equipes e PMO do Metrô · versão final da prova de conceito (Sprint 5)</div>
+    </div>
+    <div class="legenda">
+      <span class="tag">L</span> líder de projeto <span class="tag">D</span> Diretoria <span class="tag">M</span> membro de equipe <span class="tag">P</span> PMO<br>
+      ○ sem encaixe na prova de conceito
+    </div>
+  </div>
+
+  <div class="lados">
+    <div class="lado"><span class="quadrado"></span>MAPA DE VALOR — O QUE A SOLUÇÃO ENTREGA</div>
+    <div></div>
+    <div class="lado perfil">PERFIL DO CLIENTE — O QUE O USUÁRIO VIVE<span class="circulo"></span></div>
+  </div>
+
+  <div class="grade">
+    <div class="bloco alto">
+      <div class="titulo">Produtos e serviços</div>
+      <ul>
+        <li>Chat em linguagem natural, por texto e por voz, na web (desktop e mobile)</li>
+        <li>Classificador de 26 intenções, com recusa do que está fora do escopo</li>
+        <li>Respostas do corpus documental com a fonte citada</li>
+        <li>Rotinas agendadas, com a agenda escrita em linguagem comum</li>
+        <li>Avisos de marco atrasado e de mudanças do portfólio, por adesão</li>
+        <li>Painel de intenções para o PMO</li>
+        <li>Histórico e retomada de conversas</li>
+      </ul>
+    </div>
+    <div class="bloco">
+      <div class="titulo">Criadores de ganho</div>
+      <ul>
+        <li>Fonte citada em cada resposta factual, verificável na hora</li>
+        <li>Filtro de permissão na consulta: cada perfil vê só o que pode</li>
+        <li>Relatório recorrente pronto, sem precisar pedir</li>
+        <li>Registro de cada interação: quem perguntou, quando e o quê</li>
+        <li>O painel mostra o que se pede e o agente não atende, e orienta a evolução do catálogo</li>
+      </ul>
+    </div>
+    <div class="encaixe">
+      <span class="seta">⇄</span>
+      <span class="rotulo-encaixe">ENCAIXE</span>
+      <span class="seta">⇄</span>
+    </div>
+    <div class="bloco perfil">
+      <div class="titulo">Ganhos</div>
+      <ul>
+        <li>Resposta rápida sem conhecer a estrutura dos sistemas <span class="tag">L</span><span class="tag">D</span><span class="tag">M</span><span class="tag">P</span></li>
+        <li>Origem da informação à vista <span class="tag">D</span><span class="tag">P</span></li>
+        <li>Saber do atraso antes da reunião de acompanhamento <span class="tag">L</span><span class="tag">P</span></li>
+        <li>Relatório pronto na data <span class="tag">D</span></li>
+        <li>Ver só o que diz respeito ao próprio projeto <span class="tag">M</span></li>
+      </ul>
+    </div>
+    <div class="bloco perfil alto">
+      <div class="titulo">Tarefas do cliente</div>
+      <ul>
+        <li>Acompanhar avanço, marcos e riscos dos projetos <span class="tag">L</span><span class="tag">D</span></li>
+        <li>Consultar normas e conceitos do processo de gestão <span class="tag">L</span><span class="tag">M</span></li>
+        <li>Preparar o relatório mensal e o de fechamento <span class="tag">L</span><span class="tag">P</span></li>
+        <li>Consolidar o portfólio e cobrar pendências <span class="tag">P</span></li>
+        <li>Decidir prioridades com visão consolidada <span class="tag">D</span></li>
+        <li class="sem">Manter os artefatos de gestão atualizados <span class="tag">L</span><span class="tag">M</span></li>
+      </ul>
+    </div>
+
+    <div class="bloco">
+      <div class="titulo">Aliviadores de dor</div>
+      <ul>
+        <li>Pergunta aberta interpretada, no lugar do fluxo pré-configurado</li>
+        <li>Uma resposta citada reúne o que está espalhado nos documentos</li>
+        <li>Recusa orientada: não inventa e não revela dado restrito</li>
+        <li>Guardas de entrada e de saída, dado sintético e perímetro declarado</li>
+        <li>Rotinas e avisos tiram do PMO parte da cobrança manual</li>
+        <li>Microfone para quem está em campo</li>
+      </ul>
+    </div>
+    <div class="bloco perfil">
+      <div class="titulo">Dores</div>
+      <ul>
+        <li>Informação espalhada entre SharePoint, planilhas e Power BI <span class="tag">D</span><span class="tag">L</span></li>
+        <li>O agente atual só responde a fluxos pré-configurados <span class="tag">L</span><span class="tag">D</span><span class="tag">M</span><span class="tag">P</span></li>
+        <li>Consolidação manual do portfólio todo mês <span class="tag">P</span></li>
+        <li>Inconsistências descobertas tarde, com retrabalho <span class="tag">P</span></li>
+        <li>Desconfiança em resposta de IA sem origem <span class="tag">D</span></li>
+        <li>Receio de expor dado sensível <span class="tag">P</span><span class="tag">D</span></li>
+        <li class="sem">Preenchimento manual e repetitivo dos artefatos <span class="tag">L</span><span class="tag">M</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rodape">
+    <div><b>ONDE HÁ ENCAIXE</b>Consulta, confiança e proatividade: pergunta aberta, fonte citada, recusa segura, filtro por perfil, rotinas e avisos respondem às dores de quem acompanha e consolida o portfólio.</div>
+    <div><b>ONDE NÃO HÁ</b>Escrita no portfólio: o chat não atualiza artefatos, porque a escrita dependia do ambiente do parceiro (R02). A atualização acontece na planilha e chega ao agente pelo webhook do portfólio.</div>
+  </div>
+</body>
+</html>
