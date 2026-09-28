@@ -7,7 +7,7 @@ probabilidades por classe. Todos passam antes pelo mascaramento de
 
 **Três famílias, porque a F22 exige comparar antes de escolher.**
 
-- `tfidf` — a linha de base clássica de 5.1.5, aqui na forma que mediu
+- `tfidf` — a linha de base clássica de 5.1.6, aqui na forma que mediu
   melhor: união de n-gramas de palavra com n-gramas de caractere. Os de
   caractere não são enfeite; o corpus de treino carrega erro de digitação
   deliberado (risco R03, transcrição de voz), e é o que sobrevive a
@@ -182,9 +182,9 @@ class ConfiguracaoModelo:
     estimador: Estimador = "logistica"
     ngram_palavra: tuple[int, int] = (1, 2)
     ngram_caractere: tuple[int, int] = (2, 5)
-    # Desligar o ramo de caractere reproduz a linha de base de 5.1.5, que
-    # só tinha n-gramas de palavra. Serve à comparação da F22, não à
-    # produção — é a diferença entre 0,72 e 0,77 de acurácia.
+    # Desligar o ramo de caractere deixa só os n-gramas de palavra, como em
+    # `tfidf-palavra-logistica`. Serve à comparação da F22, não à produção —
+    # é a diferença entre 0,680 e 0,773 de acurácia (Projeto.md 5.4.11.7).
     usar_caractere: bool = True
     min_df: int = 1
     # Regularização inversa dos modelos lineares; ignorada pelo naive bayes.
@@ -312,7 +312,7 @@ def construir(config: "ConfiguracaoModelo | None" = None) -> Pipeline:
 # Configuração de produção: a única família que atinge o RNF03.
 PRODUCAO = ConfiguracaoModelo(nome="ensemble-tfidf-e5-large", familia="ensemble")
 
-# Linha de base clássica de 5.1.5, preservada como referência da comparação.
+# Linha de base clássica de 5.1.6, preservada como referência da comparação.
 LINHA_DE_BASE = ConfiguracaoModelo(
     nome="tfidf-unigrama-logistica",
     familia="tfidf",

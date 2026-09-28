@@ -14,8 +14,9 @@ classificação de intenção, muito do que a limpeza textual clássica descarta
   no mesmo radical e apaga exatamente essa diferença — a mais crítica do
   sistema, porque uma transação exige confirmação e uma consulta não.
 - "?" é preditor forte de consulta. Pontuação não é removida.
-- Acentos carregam informação para um modelo pré-treinado em pt-BR
-  (BERTimbau é cased): "está" e "esta" são palavras diferentes. Em vez de
+- Acentos carregam informação para o modelo de sentença (o e5 usa o
+  tokenizador do XLM-RoBERTa, que preserva caixa e acento): "está" e
+  "esta" são palavras diferentes. Em vez de
   remover acentuação, `gerar_variante_sem_acento` produz uma variante
   adicional para aumento de dados de treino, sem substituir o texto
   original.
@@ -30,7 +31,7 @@ para um único "texto limpo": produz duas visões do mesmo enunciado.
 - `texto_extracao` — o mesmo texto normalizado, sem máscara, para quem
   precisa localizar e devolver o valor real (extração de entidades).
 
-`minusculas` é `False` por padrão porque o modelo de referência (BERTimbau)
+`minusculas` é `False` por padrão porque o modelo de referência (e5)
 é cased. Ative apenas para um eventual modelo uncased — e note que a
 detecção de entidades pressupõe o texto no padrão de caixa original
 (códigos e "Linha N" são convencionalmente maiúsculos).
@@ -84,7 +85,7 @@ def normalizar(texto: str) -> str:
 def gerar_variante_sem_acento(texto: str) -> str:
     """Devolve uma cópia sem diacríticos, para aumento de dados de treino.
 
-    Não é aplicada por `preprocessar`: BERTimbau é cased e sensível a
+    Não é aplicada por `preprocessar`: o e5 é sensível a caixa e a
     acento, então o texto original é o que vai para o modelo em produção.
     Esta função existe para a bancada de treino gerar exemplos adicionais
     a partir dos enunciados-semente do catálogo, não para limpar entrada.
@@ -245,7 +246,7 @@ def preprocessar(texto: str, *, minusculas: bool = False) -> TextoPreprocessado:
     """Executa a normalização, a tokenização e o mascaramento de entidades.
 
     `minusculas` só deve ser ativado para um modelo uncased — o padrão
-    preserva caixa porque BERTimbau é cased e "Linha 17"/"NOR-00-223"
+    preserva caixa porque o e5 é sensível a ela e "Linha 17"/"NOR-00-223"
     carregam informação na maiúscula. A detecção de entidades roda sempre
     sobre o texto com a caixa original, antes de `minusculas` ser aplicado
     às três visões de saída.

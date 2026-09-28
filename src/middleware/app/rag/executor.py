@@ -6,11 +6,13 @@ porta para `FluxoRag.responder` e a `RespostaRag` de volta para
 `RespostaExecutor`.
 
 **Roteamento da V1.** A tabela da seção 3.5 manda os registros para a
-base estruturada e só a prosa para o RAG. A base (`app/portfolio/`)
-ainda não existe, então toda intenção que passa pelas guardas vem para
-cá, transações inclusive. `intencao_id` e `exige_confirmacao` entram
-pela porta e passam a decidir o caminho quando a base existir; hoje
-`exige_confirmacao` só muda o texto da abstenção (ver abaixo).
+base estruturada e só a prosa para o RAG. O schema `portfolio` já existe
+(`persistence/tabelas_portfolio.py`, com rotas só de leitura em
+`api/routes/portfolio.py`), mas este executor ainda não o consulta: toda
+intenção que passa pelas guardas vem para cá, transações inclusive.
+`intencao_id` e `exige_confirmacao` entram pela porta e passam a decidir
+o caminho quando o executor ler a base; hoje `exige_confirmacao` só muda
+o texto da abstenção (ver abaixo).
 
 **Escopo fixo por instância.** A porta não recebe o usuário, e o escopo
 da recuperação é o dele. Por isso o executor é montado por requisição
