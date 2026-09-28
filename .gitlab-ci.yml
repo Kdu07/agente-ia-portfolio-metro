@@ -81,8 +81,9 @@ middleware:pytest:
     - pip install -e ".[dev,rag]"
     # O TF-RF03-01 classifica com o artefato treinado de verdade, que depende
     # do modelo de sentenças. Baixado aqui, como no Dockerfile, porque dentro
-    # do pytest o --block-network o impediria.
-    - python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large')"
+    # do pytest o --block-network o impediria. A revisão é a de
+    # REVISAO_EMBEDDINGS em app/pipeline/intencao/modelo.py.
+    - python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large', revision='3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3')"
     - alembic upgrade head
     # --block-network barra qualquer chamada real que escape das fitas VHS; os
     # dois serviços são as únicas exceções. A CI não tem credencial de

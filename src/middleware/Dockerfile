@@ -23,7 +23,9 @@ COPY pyproject.toml ./
 # os enormes wheels CUDA para uma imagem que não usa GPU.
 RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple "torch>=2.2"
 RUN pip install --no-cache-dir ".[rag]"
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large')"
+# A revisão é a de REVISAO_EMBEDDINGS em app/pipeline/intencao/modelo.py;
+# com HF_HUB_OFFLINE, outra revisão não é encontrada e a subida falha.
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large', revision='3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3')"
 
 # Daqui em diante o modelo é só leitura: a réplica não consulta o Hugging
 # Face ao subir, e fica pronta sem depender da rede nem do limite do hub.

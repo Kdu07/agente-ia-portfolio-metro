@@ -63,6 +63,13 @@ SEMENTE = 42
 # que já espera segundos pelo Copilot, o pedágio se paga.
 MODELO_EMBEDDINGS = "intfloat/multilingual-e5-large"
 
+# Revisão dos pesos no Hugging Face. Sem ela, um upload novo do autor
+# mudaria os vetores sem aviso: o classificador foi treinado sobre os
+# vetores desta revisão, e o índice vetorial do RAG também. O mesmo hash
+# está no Dockerfile e na CI, que baixam o modelo antes de rodarem
+# offline — divergir dele faz a carga falhar na subida.
+REVISAO_EMBEDDINGS = "3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3"
+
 # A família e5 foi treinada com prefixos de assimetria; um enunciado de
 # usuário é uma consulta, não um documento indexado.
 PREFIXO_E5 = "query: "
@@ -135,8 +142,11 @@ class EmbeddingsSentenca(BaseEstimator, TransformerMixin):
                     # só usa a família tfidf não deve pagar por isso.
                     from sentence_transformers import SentenceTransformer
 
+                    # A revisão fixada vale só para o modelo de produção; os
+                    # encoders da comparação da F22 seguem a versão corrente.
+                    revisao = REVISAO_EMBEDDINGS if self.nome_modelo == MODELO_EMBEDDINGS else None
                     EmbeddingsSentenca._encoders[self.nome_modelo] = SentenceTransformer(
-                        self.nome_modelo
+                        self.nome_modelo, revision=revisao
                     )
         return EmbeddingsSentenca._encoders[self.nome_modelo]
 
