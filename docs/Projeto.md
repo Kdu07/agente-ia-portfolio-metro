@@ -55,6 +55,7 @@
   - [2.8 Canvas do Projeto](#28-canvas-do-projeto)
   - [2.9 Objetivos de Desenvolvimento Sustentável](#29-objetivos-de-desenvolvimento-sustentável)
   - [2.10 Custos da Prova de Conceito e da Solução Final](#210-custos-da-prova-de-conceito-e-da-solução-final)
+  - [2.11 Análise Financeira para o Parceiro](#211-análise-financeira-para-o-parceiro)
 - [3. Requisitos do Projeto](#3-requisitos-do-projeto)
   - [3.1 Business Drivers](#31-business-drivers)
   - [3.2 Requisitos Funcionais (RFs)](#32-requisitos-funcionais-rfs)
@@ -1338,6 +1339,80 @@ O contrato inclui 16 h de treinamento e operação assistida além das 435,00 h 
 **O que muda da prova de conceito para a solução final.** Três diferenças explicam por que a solução final não é a prova de conceito com mais usuários. A primeira é o executor: a prova de conceito responde pelo executor próprio, sobre serviços que a equipe provisiona, enquanto a solução final usa o Copilot Studio, que sozinho responde por 77% do custo de operação. A segunda é o perímetro: o Content Safety e o Speech saem do nível gratuito, no tenant da equipe, para o nível pago, no tenant do Metrô, que é a condição para usar dado real (risco R12). A terceira é a disponibilidade: os apps deixam de escalar a zero e mantêm uma réplica mínima, para que nenhum usuário espere a partida a frio do classificador.
 
 A integração com o Copilot Studio por Direct Line está no escopo do contrato, mas não foi concluída na prova de conceito (5.1.3). As horas do módulo não a incluem, e o esforço para concluí-la é risco de escopo, coberto pela reserva de contingência de R$ 3.664,38, que leva o preço a R$ 65.712,18 (seção 7.9.3 do [GestaoProjeto.md](GestaoProjeto.md)). Manter o executor próprio em produção trocaria os créditos do Copilot Studio por cobrança por token, mas exigiria um modelo de geração dentro do perímetro homologado e uma proposta nova (seção 7.13.3 do [GestaoProjeto.md](GestaoProjeto.md)).
+
+## 2.11 Análise Financeira para o Parceiro
+
+Esta seção projeta, período a período, os custos e as receitas da solução final para o Metrô, separando pessoal e tecnologia. O Metrô é uma empresa pública e a solução é interna, de modo que não há receita de venda: a receita é o valor do tempo que os usuários deixam de gastar procurando e consolidando informação do portfólio. A projeção usa os custos da seção 2.10 e reproduz o payback e o ROI da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md).
+
+### 2.11.1 Premissas e cenários
+
+| Premissa | Valor | Origem |
+|---|---|---|
+| Receita para o Metrô | Horas de pessoal liberadas da busca e da consolidação manual, valoradas pelo custo da hora do usuário | Seção 7.12.1 do [GestaoProjeto.md](GestaoProjeto.md) |
+| Volume de uso | 11.340 interações de usuários por mês: 90 usuários ativos × 6 interações por dia útil × 21 dias úteis | Seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md) |
+| Valor da hora do usuário | R$ 50,00: salário de referência de R$ 8.000,00 mensais para profissional de PMO em São Paulo, dividido por 160 h, sem encargos | Glassdoor, consultado em 25/09/2026 |
+| Tempo poupado por interação | 1 minuto no cenário pessimista, 3 no base e 5 no otimista | Única premissa que varia entre os cenários, porque o tempo atual de cada consulta ainda não foi medido |
+| Custo de pessoal para o Metrô | Contrato de R$ 60.584,06, tratado como desembolso no início da operação | Seção 2.10.3; o contrato é pago em três marcos, e tratá-lo como desembolso único antecipa o custo e torna o payback conservador |
+| Custo de tecnologia para o Metrô | Operação de R$ 4.448,61 por mês | Seção 2.10.3 |
+| Receita de tecnologia | Nenhuma | A solução não substitui sistemas nem licenças: SharePoint e Power BI continuam, e o agente passa a consultá-los |
+| Horizonte | 36 meses, com volume e preços constantes, sem reajuste e sem desconto do valor do dinheiro no tempo | Mesmo horizonte do custo total de propriedade (seção 7.11 do [GestaoProjeto.md](GestaoProjeto.md)) |
+
+A premissa decisiva é a primeira. As horas liberadas são ganho de capacidade, e não entrada de caixa: o Metrô não reduz a folha porque cada gestor ganha alguns minutos por dia. O ganho existe se o tempo liberado for usado em análise, acompanhamento de riscos e decisões, que é o benefício de eficiência declarado no TAPI.
+
+### 2.11.2 Projeção por período
+
+**Custos para o Metrô**, iguais nos três cenários:
+
+| Período | Pessoal: contrato com o fornecedor | Tecnologia: operação em produção | Custo do período |
+|---|---:|---:|---:|
+| Ano 1 | R$ 60.584,06 | R$ 53.383,32 | R$ 113.967,38 |
+| Ano 2 | R$ 0,00 | R$ 53.383,32 | R$ 53.383,32 |
+| Ano 3 | R$ 0,00 | R$ 53.383,32 | R$ 53.383,32 |
+| **36 meses** | **R$ 60.584,06** | **R$ 160.149,96** | **R$ 220.734,02** |
+
+**Receitas para o Metrô**, por ano, iguais nos três anos de cada cenário:
+
+| Cenário | Tempo poupado por interação | Horas liberadas por ano | Receita de pessoal por ano |
+|---|---:|---:|---:|
+| Pessimista | 1 min | 2.268 h | R$ 113.400,00 |
+| Base | 3 min | 6.804 h | R$ 340.200,00 |
+| Otimista | 5 min | 11.340 h | R$ 567.000,00 |
+
+**Resultado**, receita menos custo, por período:
+
+| Cenário | Ano 1 | Ano 2 | Ano 3 | Acumulado em 36 meses | Payback | ROI em 12 meses | ROI em 36 meses |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Pessimista | −R$ 567,38 | R$ 60.016,68 | R$ 60.016,68 | R$ 119.465,98 | 12,1 meses | −0,5% | 54,1% |
+| **Base** | **R$ 226.232,62** | **R$ 286.816,68** | **R$ 286.816,68** | **R$ 799.865,98** | **2,5 meses** | **198,5%** | **362,4%** |
+| Otimista | R$ 453.032,62 | R$ 513.616,68 | R$ 513.616,68 | R$ 1.480.265,98 | 1,4 mês | 397,5% | 670,6% |
+
+Payback = contrato ÷ (receita mensal − operação mensal); ROI = resultado acumulado ÷ custo acumulado do período. O custo acumulado em 36 meses é o custo total de propriedade da seção 2.10.3, e os valores de payback e de ROI são os da seção 7.12.1 do [GestaoProjeto.md](GestaoProjeto.md).
+
+### 2.11.3 Ponto de equilíbrio e sensibilidade
+
+Dois números valem mais que os cenários. Cada interação precisa poupar **28 segundos** para cobrir a operação mensal e cerca de **60 segundos** para recuperar também o contrato em 12 meses (seção 7.12.2 do [GestaoProjeto.md](GestaoProjeto.md)). O cenário pessimista está exatamente nessa fronteira: com 1 minuto poupado, o contrato se paga em 12,1 meses, e o resultado passa a positivo no segundo ano.
+
+No cenário-base, variando uma premissa por vez:
+
+| Variação | Operação mensal | Payback |
+|---|---:|---:|
+| **Base** | **R$ 4.448,61** | **2,5 meses** |
+| Metade do volume de uso | R$ 3.249,84 | 5,5 meses |
+| Dobro do volume de uso | R$ 7.991,21 | 1,2 mês |
+| 2 créditos por interação, só resposta generativa | R$ 2.158,41 | 2,3 meses |
+| Créditos por pagamento conforme o uso | R$ 4.833,89 | 2,6 meses |
+| Usuários com licença Microsoft 365 Copilot | R$ 1.013,31 | 2,2 meses |
+| Com a sustentação Nível 3 opcional, de R$ 1.705,58 por mês | R$ 6.154,19 | 2,7 meses |
+
+Com a sustentação opcional, o cenário pessimista leva 18,4 meses para se pagar, e o acumulado em 36 meses do cenário-base cai para R$ 738.465,01. As seis primeiras linhas são as da seção 7.13.2 do [GestaoProjeto.md](GestaoProjeto.md); a última soma à operação o preço anual da sustentação, dividido por 12.
+
+### 2.11.4 Leitura para o parceiro
+
+A solução se paga no primeiro ano nos cenários base e otimista e no começo do segundo ano no pessimista. A diferença entre eles é um único dado ainda não medido, o tempo que cada consulta poupa, e por isso a primeira decisão financeira do Metrô não é aprovar o contrato, mas medir: cronometrar uma amostra de consultas típicas pelo caminho manual e repeti-las pelo agente durante a operação assistida, como recomenda a seção 7.12.3 do [GestaoProjeto.md](GestaoProjeto.md). Com o tempo medido, os três cenários viram um número só.
+
+O custo que decide é o de tecnologia, e não o de pessoal. A operação responde por 47% do custo do primeiro ano e por 73% do custo em três anos, e o Copilot Studio responde por 77% da operação. As licenças Microsoft 365 Copilot que o Metrô já tenha, ou venha a ter, para os gestores do portfólio são a maior alavanca de custo, mas a sua aplicação ao canal Direct Line precisa ser confirmada com o licenciamento da Microsoft antes de virar premissa.
+
+Ficaram fora da conta, nos dois sentidos, os valores que não foram monetizados: de um lado, os benefícios de rastreabilidade, confidencialidade, padronização e relatórios recorrentes; de outro, o tempo que o PMO passa a dedicar à curadoria do catálogo e do corpus e ao acompanhamento da adoção.
 
 # 3. Requisitos do Projeto
 
