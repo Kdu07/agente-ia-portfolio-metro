@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Business Model Canvas — Agente de Portfólio do Metrô</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #0a1a8a;
+    --azul-claro: #2438b8;
+    --texto: #1c1c24;
+    --suave: #6b6b78;
+    --painel: #f0f0f2;
+    --borda: #d6d6dc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 2000px; height: 1680px; background: #fff; }
+  body { font-family: "Inter", sans-serif; color: var(--texto); padding: 40px; font-size: 16.5px; line-height: 1.38; }
+  .sobre { font-family: "Barlow Condensed", sans-serif; font-weight: 600; letter-spacing: .28em; color: var(--suave); font-size: 20px; }
+  .topo { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 5px solid var(--azul); padding-bottom: 18px; margin-bottom: 26px; }
+  h1 { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 58px; line-height: 1; margin: 10px 0 8px; }
+  .subtitulo { color: #4a4a58; font-size: 21px; }
+  .nota { font-family: "Barlow Condensed", sans-serif; font-weight: 600; letter-spacing: .08em; color: var(--suave); font-size: 19px; text-align: right; line-height: 1.5; }
+  .grade { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 1130px 270px; gap: 15px; }
+  .bloco { background: var(--painel); border: 1px solid var(--borda); border-top: 5px solid var(--azul); padding: 20px 20px 16px; overflow: hidden; }
+  .pilha { display: flex; flex-direction: column; gap: 15px; }
+  .pilha .bloco { flex: 1; }
+  .pilha .bloco:first-child { flex: none; }
+  .titulo { display: flex; align-items: center; gap: 12px; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 29px; letter-spacing: .04em; color: var(--azul); margin-bottom: 16px; text-transform: uppercase; }
+  .num { width: 30px; height: 30px; border-radius: 50%; background: var(--azul); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 19px; font-family: "Inter", sans-serif; font-weight: 700; flex: none; }
+  .bloco p { margin-bottom: 13px; }
+  .bloco b { font-weight: 700; }
+  .mudo { color: var(--suave); border-top: 1px dashed #bdbdc6; padding-top: 12px; }
+  .valor { background: var(--azul); border-top-color: var(--azul-claro); color: #fff; }
+  .valor .titulo { color: #fff; }
+  .valor .num { background: #fff; color: var(--azul); }
+  .valor .destaque { font-size: 20.5px; font-weight: 700; line-height: 1.34; margin-bottom: 16px; }
+  .valor hr { border: 0; border-top: 1px solid rgba(255,255,255,.35); margin: 14px 0; }
+  .valor .linha { margin-bottom: 4px; }
+  .rodape { grid-column: span 5; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; }
+</style>
+</head>
+<body>
+  <div class="topo">
+    <div>
+      <div class="sobre">METRÔ DE SÃO PAULO · PMO CORPORATIVO · INTELI T17 — GRUPO 02</div>
+      <h1>BUSINESS MODEL CANVAS</h1>
+      <div class="subtitulo">Agente conversacional com pipeline de PLN próprio para o portfólio de projetos · versão final da prova de conceito (Sprint 5)</div>
+    </div>
+    <div class="nota">A NUMERAÇÃO 1-9 INDICA<br>A ORDEM DE PREENCHIMENTO</div>
+  </div>
+
+  <div class="grade">
+    <div class="bloco">
+      <div class="titulo"><span class="num">8</span>Parcerias-chave</div>
+      <p><b>PMO Corporativo do Metrô</b> — processo de gestão de portfólio, modelos de documento, critérios de qualidade e validação dos resultados</p>
+      <p><b>TI e tecnologia da automação</b> — recursos e ambiente homologado, cujo acesso segue pendente (R02)</p>
+      <p><b>Programa de IA e Transformação Digital</b> — alinhamento às diretrizes corporativas</p>
+      <p><b>Setores técnicos e de compliance</b> — instâncias autorizadoras do processamento de dado real</p>
+      <p><b>Microsoft Azure</b> — Container Apps, PostgreSQL, Key Vault, Content Safety e Speech</p>
+      <p><b>Provedores do executor próprio</b> — Google Drive, Pinecone e o modelo Gemini, usados só com dado sintético (R19 e R20)</p>
+      <p><b>Inteli</b> — orientação e alinhamento aos objetivos de aprendizagem</p>
+    </div>
+
+    <div class="pilha">
+      <div class="bloco">
+        <div class="titulo"><span class="num">7</span>Atividades-chave</div>
+        <p><b>Construir e avaliar o pipeline de PLN:</b> guardas de injeção e de abuso, classificador de 26 intenções (acurácia 0,856) e guarda de saída</p>
+        <p>Gerar e curar os <b>dados sintéticos</b> e o corpus documental — atividade estruturante</p>
+        <p><b>Recuperar com citação (RAG)</b> sobre o corpus, com abstenção quando falta evidência</p>
+        <p>Integrar fala ↔ texto com o vocabulário da companhia</p>
+        <p>Interface de conversa, rotinas, avisos e painel de intenções; controle de acesso e auditoria</p>
+        <p>Testar e implantar na Azure com integração contínua</p>
+        <p class="mudo">Contínuas — revisão do catálogo, retreinamento, reindexação do corpus e monitoramento das respostas</p>
+      </div>
+      <div class="bloco">
+        <div class="titulo"><span class="num">6</span>Recursos-chave</div>
+        <p><b>Dados sintéticos representativos</b> — recurso mais crítico; toda a validade da avaliação depende deles (R01)</p>
+        <p>Corpus documental no Google Drive e catálogo de 26 intenções</p>
+        <p>Classificador próprio, embeddings locais e modelo de geração</p>
+        <p>Azure em dois estágios, com teto de R$ 300 por ano; equipe de seis integrantes</p>
+        <p class="mudo">Acesso ao ambiente homologado e às licenças Microsoft (R02) — ainda pendente</p>
+      </div>
+    </div>
+
+    <div class="bloco valor">
+      <div class="titulo"><span class="num">2</span>Proposta de valor</div>
+      <div class="destaque">Agente conversacional em português, por texto e por voz, para consultar o portfólio sem formulários nem conhecimento da estrutura dos sistemas</div>
+      <p><b>Pipeline de PLN próprio</b>, avaliado pela equipe: barra injeção e abuso, identifica a intenção e recusa o que está fora do portfólio ou do perfil autenticado</p>
+      <p><b>Respostas com a fonte citada</b>, e abstenção quando o corpus não sustenta a resposta</p>
+      <hr>
+      <p class="linha"><b>Eficiência</b> — consulta em linguagem natural no lugar da busca manual</p>
+      <p class="linha"><b>Confidencialidade</b> — só dados sintéticos, guardas de entrada e de saída e perímetro declarado</p>
+      <p class="linha"><b>Rastreabilidade</b> — registro de cada interação e fonte em cada resposta</p>
+      <p class="linha"><b>Proatividade</b> — rotinas agendadas e avisos de marcos e riscos</p>
+      <hr>
+      <p><b>Hipóteses:</b> O5 atingido (0,856 ≥ 0,85); O3 e O4 atendidos na bancada do RAG; O1 e O2 ainda sem medição com usuários</p>
+    </div>
+
+    <div class="pilha">
+      <div class="bloco">
+        <div class="titulo"><span class="num">4</span>Relação com o cliente</div>
+        <p><b>Autoatendimento assistido:</b> perguntas sugeridas mostram o que o agente responde</p>
+        <p><b>Transparência:</b> fonte indicada nas respostas factuais (O3)</p>
+        <p><b>Recusa orientada</b>, em linguagem compreensível, sem inventar resposta nem revelar dado restrito</p>
+        <p>Histórico e retomada de conversas; consistência tratada como mecanismo de retenção</p>
+        <p class="mudo">Preenchimento guiado do TAP e do Mapa de Benefícios ficou fora: o chat não escreve no portfólio</p>
+      </div>
+      <div class="bloco">
+        <div class="titulo"><span class="num">3</span>Canais</div>
+        <p><b>Interface web própria</b>, desktop e mobile — texto, microfone com transcrição em tempo real e envio de áudio</p>
+        <p><b>Rotinas agendadas</b> — relatório recorrente entregue na própria aplicação</p>
+        <p><b>Avisos por adesão</b> — marco atrasado e mudanças de status e de risco, na aplicação</p>
+        <p class="mudo">Teams, e-mail e o Copilot Studio como executor dependem do ambiente homologado (R02)</p>
+      </div>
+    </div>
+
+    <div class="bloco">
+      <div class="titulo"><span class="num">1</span>Segmentos de clientes</div>
+      <p><b>Cliente institucional — PMO Corporativo do Metrô:</b> governança de estratégia, portfólio, programas, projetos e indicadores estratégicos</p>
+      <p><b>Fernanda Medina · líder de projeto</b><br>Perfil prioritário: consulta e acompanhamento dos projetos sob sua responsabilidade</p>
+      <p><b>Roberto Nogueira · Diretoria</b><br>Visão consolidada do portfólio e relatórios recorrentes</p>
+      <p><b>Carlos Mendes · equipe de projeto</b><br>Escopo restrito ao projeto em que atua</p>
+      <p class="mudo">Perfis de acesso DIRETORIA, LIDER_PROJETO e MEMBRO_EQUIPE; permissões VER_INTENCOES e GERIR_ROTINAS para o PMO e a curadoria</p>
+    </div>
+
+    <div class="rodape">
+      <div class="bloco">
+        <div class="titulo"><span class="num">9</span>Estrutura de custos</div>
+        <div class="colunas">
+          <p><b>Custo de construção — fixo e delimitado no tempo</b><br>Cinco sprints (05/08 a 07/10/2026) e equipe de seis integrantes: o trabalho da equipe é a maior parcela</p>
+          <p><b>Custo de operação — majoritariamente variável</b><br>Fala em texto e geração são tarifadas por uso; os apps escalam a zero quando ociosos</p>
+          <p><b>Efeito favorável da arquitetura</b><br>Classificação e embeddings rodam em modelos próprios, sem tarifa por requisição</p>
+          <p><b>Quantificação</b><br>Orçamento, operação e custo total de propriedade na seção 7 do GestaoProjeto.md</p>
+        </div>
+      </div>
+      <div class="bloco">
+        <div class="titulo"><span class="num">5</span>Fontes de receita</div>
+        <div class="colunas">
+          <p><b>Empresa pública: sem receita direta</b><br>O retorno se manifesta como valor capturado pela companhia</p>
+          <p><b>Valor capturado</b><br>Horas liberadas da busca e da consolidação manual, em três cenários, com payback e ROI (seção 7.12 do GestaoProjeto.md)</p>
+        </div>
+        <p class="mudo">Não monetizados: rastreabilidade, confidencialidade, padronização e relatórios recorrentes</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

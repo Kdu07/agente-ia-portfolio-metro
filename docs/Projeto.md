@@ -1192,6 +1192,40 @@ Cabe registrar, nesse ponto, um efeito favorável da arquitetura adotada. A clas
 
 A quantificação monetária desta estrutura não é apresentada nesta versão. Sua elaboração depende da definição, pelo grupo, dos valores de referência a serem adotados para hora de trabalho por função, e do levantamento do volume esperado de interações, que determina a parcela variável. Ambos serão estabelecidos na análise de viabilidade financeira prevista para a Sprint 4, ocasião em que o orçamento completo, contemplando despesas operacionais, carga tributária e margem, será desenvolvido.
 
+### 2.8.10 Revisão do canvas na versão final
+
+O canvas foi revisitado ao fim da construção, bloco a bloco, contra o que a prova de conceito entrega e contra as medições registradas neste documento. A revisão tem duas partes: o que mudou em relação à Sprint 1, com o motivo de cada mudança, e o canvas de proposta de valor, que abre o bloco 2 em perfil do cliente e mapa de valor.
+
+#### 2.8.10.1 O que mudou em relação à Sprint 1
+
+| Bloco | Sprint 1 | Versão final | Motivo da mudança |
+|---|---|---|---|
+| Proposta de valor | Consultar e atualizar o portfólio em linguagem natural | Consultar o portfólio em linguagem natural, com a fonte citada. Um pedido de alteração é tratado como consulta aos documentos e, sem resposta neles, recebe a orientação de que o canal não altera o portfólio | A escrita dependia do Copilot Studio e do Power Automate no tenant do parceiro, ainda não liberado (risco R02). A atualização acontece na planilha do portfólio e chega ao agente pelo webhook WH-02 (9.1.2.7) |
+| Proposta de valor — hipótese verificável | Redução de 80% da execução manual das consultas (O1), cobertura de 100% das categorias (O2) e acurácia de 85% (O5) | O5 atingido, com 0,856 (5.4.11). O3 e O4 atendidos na bancada do RAG, com nenhuma resposta sem citação válida e 0,95 de acerto de conteúdo (9.4.6). O1 e O2 continuam como hipótese | O1 depende do tempo que cada consulta leva hoje, que não foi medido, e a seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md) trata essa lacuna em três cenários. O2 aparece nos casos funcionais de consulta (TF-RF04-01), sem indicador de cobertura por categoria |
+| Proposta de valor — confidencialidade | Só dados sintéticos, sem trânsito por serviço não homologado | Só dados sintéticos, com serviços fora do perímetro homologado: Content Safety e Speech no tenant da equipe (R12) e, no executor próprio, índice vetorial e modelo de geração de terceiros (R19 e R20) | Sem acesso ao tenant do parceiro, a equipe provisionou as alternativas. O uso exclusivo de dado sintético contém as três exposições (3.3.1.1) |
+| Proposta de valor — proatividade | Pendência sinalizada ao responsável antes que a informação se torne inconsistente | Rotinas agendadas, alerta de marco atrasado no início da conversa e avisos por adesão a projetos e eventos, todos dentro da aplicação | A notificação por Teams ou por e-mail exige ambiente homologado e ficou como evolução (*feature* F57) |
+| Canais | Copilot Studio como executor das ações, acionado por Direct Line | Executor próprio: recuperação sobre o corpus documental e geração com citação (9.4). O cliente Direct Line permaneceu como esqueleto atrás da porta `Executor` | O Direct Line depende de habilitação no tenant do parceiro ([Arquitetura.md](Arquitetura.md), seção 12.2) |
+| Relação com o cliente | Preenchimento guiado do TAP e do Mapa de Benefícios por perguntas sequenciais, com rascunhos salvos | Perguntas sugeridas, recusa orientada e fonte citada, com histórico e retomada de conversas | Sem escrita no portfólio, o preenchimento guiado não teria onde gravar |
+| Recursos-chave e parcerias-chave | Provedores de nuvem e de conversão entre fala e texto; acesso ao ambiente homologado | Microsoft Azure em dois estágios, com teto de R$ 300 por ano, e os provedores do executor próprio: Google Drive, Pinecone e Gemini. O acesso ao ambiente homologado continua pendente | Na prova de conceito, os recursos do executor próprio ocuparam o lugar dos recursos do ecossistema Microsoft |
+| Estrutura de custos e fontes de receita | Quantificação adiada para a análise de viabilidade | Orçamento, operação, custo total de propriedade e benefício para o Metrô em três cenários, com payback e ROI (seção 7 do [GestaoProjeto.md](GestaoProjeto.md)) | A análise de viabilidade definiu o custo-hora e o volume de uso que faltavam na Sprint 1 |
+| Segmentos de clientes | PMO Corporativo e as três personas, com o gestor de portfólio tratado de forma transversal | Mantidos. Os perfis de acesso `DIRETORIA`, `LIDER_PROJETO` e `MEMBRO_EQUIPE` e as permissões `VER_INTENCOES` e `GERIR_ROTINAS` materializam a segmentação ([Arquitetura.md](Arquitetura.md), seção 6) | A segmentação da Sprint 1 se confirmou na implementação |
+
+A mudança de maior consequência é a da primeira linha. A proposta da Sprint 1 prometia consultar e atualizar o portfólio pela conversa; a versão final consulta, e a atualização acontece na fonte. As demais mudanças são de meio, com outro executor, outros provedores e avisos dentro da aplicação, e preservam o que a proposta tinha de central: a interpretação de perguntas abertas por um pipeline de PLN próprio, com controle sobre o que pode ou não ser respondido.
+
+#### 2.8.10.2 Canvas de proposta de valor
+
+O canvas de proposta de valor (Figura 15) detalha o bloco 2 da Figura 14. À direita, o perfil do cliente reúne as tarefas, as dores e os ganhos das personas da seção 2.4 e do PMO, cada item marcado com os perfis a que se aplica. À esquerda, o mapa de valor lista o que a prova de conceito entrega. Todo aliviador de dor e todo criador de ganho corresponde a uma funcionalidade implementada, e os itens do perfil sem correspondência aparecem vazados.
+
+<div align="center">
+  <img src="imagens/canvas-proposta-valor.png" width="90%" alt="Canvas de proposta de valor da versão final, com o mapa de valor à esquerda e o perfil do cliente à direita">
+  <br>
+  <sub>Figura 15 — Canvas de proposta de valor da versão final.</sub>
+</div>
+
+O encaixe é forte onde o problema do usuário é encontrar a informação e confiar nela. A pergunta aberta interpretada substitui o fluxo pré-configurado do agente atual (2.2.3); a resposta citada reúne o que hoje está espalhado entre documentos; a recusa orientada e a abstenção evitam a resposta inventada, que a seção 2.8.4 aponta como o principal risco de abandono; e as rotinas e os avisos antecipam o atraso que o PMO hoje descobre na consolidação mensal.
+
+O encaixe falta onde o problema é registrar a informação. Manter os artefatos de gestão atualizados continua sendo tarefa manual, feita na fonte, e essa é a maior distância entre a proposta da Sprint 1 e a versão final. A arquitetura não fecha essa distância sozinha, mas deixa o caminho aberto: trocar o executor não altera guardas, catálogo de intenções, registro, rotinas nem interface (9.4.1), de modo que um executor com escrita no portfólio entra pela mesma porta. O ganho de tempo de O1 também segue como hipótese, e a forma de verificá-lo é medir, num piloto com líderes de projeto, o tempo de uma mesma consulta feita pelo agente e pela busca manual.
+
 # 3. Requisitos do Projeto
 
 ## 3.1 Business Drivers
@@ -1427,7 +1461,7 @@ classDiagram
     PreviaMaterialGerencial -- Projeto : utiliza informações de
 ```
 
-*Figura 15 — Diagrama de classes conceitual do domínio do agente.*
+*Figura 16 — Diagrama de classes conceitual do domínio do agente.*
 
 #### 3.2.2.1 Classes do domínio
 
@@ -1667,7 +1701,7 @@ flowchart LR
     UC05 --- CS
 ```
 
-*Figura 16 — Casos de uso do Agente de Portfólio.*
+*Figura 17 — Casos de uso do Agente de Portfólio.*
 
 A leitura importante do diagrama está nas relações `«include»`. **UC10 e UC11 são incluídos por UC02**, e não casos alternativos ao lado dele: toda solicitação passa pelas barreiras e toda solicitação é registrada, qualquer que seja seu desfecho. Pela mesma razão, **UC08 inclui UC02**: a rotina agendada não é um caminho paralelo ao chat, é a mesma solicitação com outro gatilho. Fosse modelada como caso de uso independente, o diagrama admitiria uma rotina que contorna as barreiras — exatamente o que a arquitetura impede.
 
@@ -1849,7 +1883,7 @@ A distinção é a decisão estruturante desta seção. Um modelo que tentasse e
 O modelo conceitual define as entidades do middleware, seus papéis e as associações que garantem a rastreabilidade das solicitações e das rotinas.
 
 ![Modelagem conceitual do domínio do middleware](/docs/imagens/Modelagem%20Conceitual.png)
-*Figura 17 — Modelagem Conceitual.*
+*Figura 18 — Modelagem Conceitual.*
 
 > A imagem é gerada a partir de [`docs/diagramas/modelagem-conceitual.mmd`](diagramas/modelagem-conceitual.mmd). As três modelagens deste capítulo têm fonte versionada em texto; o [README do diretório](diagramas/README.md) traz o comando de regeração. Antes desta revisão as figuras existiam apenas como PNG, e corrigir um relacionamento significava redesenhar o diagrama inteiro.
 
@@ -1879,7 +1913,7 @@ O modelo conceitual define as entidades do middleware, seus papéis e as associa
 O modelo lógico traduz o domínio em estrutura relacional, com chaves, tipos, restrições de integridade e a validação da normalização.
 
 ![Modelagem lógica do middleware](/docs/imagens/Modelagem%20Lógica.png)
-*Figura 18 — Modelagem Lógica.*
+*Figura 19 — Modelagem Lógica.*
 
 > Fonte: [`docs/diagramas/modelagem-logica.mmd`](diagramas/modelagem-logica.mmd).
 
@@ -2000,7 +2034,7 @@ Um disparo e seu resultado. Não existia na modelagem da Sprint 2.
 O modelo físico implementa o esquema para **PostgreSQL 16**, com as restrições de integridade e os índices que sustentam o histórico e as agregações do painel.
 
 ![Modelagem física do middleware](/docs/imagens/Modelagem%20Física.png)
-*Figura 19 — Modelagem Física.*
+*Figura 20 — Modelagem Física.*
 
 > Fonte: [`docs/diagramas/modelagem-fisica.mmd`](diagramas/modelagem-fisica.mmd). O diagrama traz os tipos e os índices como estão no banco criado pela migração inicial; o DDL completo está em 4.4.1.
 
@@ -2426,7 +2460,7 @@ O diagrama a seguir foi construído com base nos Business Drivers e nos Requisit
 <div align="center">
   <img src="imagens/diagrama_componentes.png" width="85%" alt="Diagrama de Componentes UML">
   <br>
-  <sub>Figura 20 — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
+  <sub>Figura 21 — Diagrama de componentes da solução. Fonte: Material produzido pelos autores (2026).</sub>
 </div>
 
 ---
@@ -2621,7 +2655,7 @@ flowchart TB
   class SAFE,SPEECH extEquipe;
 ```
 
-*Figura 21 — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
+*Figura 22 — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
 Fonte: Material produzido pelos autores (2026).
 
 #### 5.2.3.1 Responsabilidades dos componentes
@@ -2865,7 +2899,7 @@ Os cenários de análise comparativa (RF07) e de geração de prévias de relat�
 <div align="center">
   <img src="imagens/ds01-classificacao-intencao.png" width="95%" alt="Diagrama de sequência DS01: o usuário envia uma solicitação pelo canal Teams ou web; o Copilot Studio autentica o usuário no Entra ID e chama a API de PLN, que pré-processa o enunciado, classifica a intenção, rotula o tipo, extrai e normaliza entidades; conforme a confiança e a aderência ao catálogo, o fluxo segue para o roteamento, para um pedido de reformulação ou para uma recusa orientativa, sempre com registro na trilha de auditoria">
   <br>
-  <sub>Figura 22 — DS01: classificação de intenção e controle de escopo.</sub>
+  <sub>Figura 23 — DS01: classificação de intenção e controle de escopo.</sub>
 </div>
 
 <details>
@@ -2960,7 +2994,7 @@ O registro na trilha de auditoria (23) está **fora** do fragmento `alt`, e essa
 <div align="center">
   <img src="imagens/ds02-consulta-status.png" width="95%" alt="Diagrama de sequência DS02: após a classificação da intenção referenciada de DS01, o Copilot Studio verifica se o projeto está no escopo autorizado do perfil; se não estiver, recusa sem revelar a existência do projeto; se estiver, o Power Automate consulta as listas do SharePoint, a API de PLN realiza busca semântica nos documentos quando necessário e compõe a resposta com referência de origem">
   <br>
-  <sub>Figura 23 — DS02: consulta de status de projeto.</sub>
+  <sub>Figura 24 — DS02: consulta de status de projeto.</sub>
 </div>
 
 <details>
@@ -3050,7 +3084,7 @@ sequenceDiagram
 <div align="center">
   <img src="imagens/ds03-atualizacao-avanco.png" width="95%" alt="Diagrama de sequência DS03: após a classificação referenciada de DS01, o Copilot Studio verifica a permissão de escrita do perfil; completa os parâmetros ausentes em ciclo de perguntas; lê o valor atual no SharePoint via Power Automate; apresenta a prévia da alteração ao usuário e só efetiva a gravação após confirmação explícita, registrando origem, autoria e momento, com tratamento de falha de gravação e de cancelamento pelo usuário">
   <br>
-  <sub>Figura 24 — DS03: atualização de avanço com confirmação do usuário.</sub>
+  <sub>Figura 25 — DS03: atualização de avanço com confirmação do usuário.</sub>
 </div>
 
 <details>
@@ -3166,7 +3200,7 @@ sequenceDiagram
 <div align="center">
   <img src="imagens/ds04-alerta-proativo.png" width="95%" alt="Diagrama de sequência DS04: um fluxo agendado do Power Automate varre as listas do SharePoint, aplica as regras de pendência projeto a projeto e, ao identificar uma pendência, aciona o Copilot Studio para compor a mensagem e entrega a notificação ao responsável pelo canal; caso o usuário responda ao alerta, a atualização segue o fluxo transacional de DS03">
   <br>
-  <sub>Figura 25 — DS04: alerta proativo de pendência, iniciado pelo sistema.</sub>
+  <sub>Figura 26 — DS04: alerta proativo de pendência, iniciado pelo sistema.</sub>
 </div>
 
 <details>
@@ -3978,7 +4012,7 @@ A arquitetura de integração organiza-se em seis camadas. Diferentemente da ver
 <div align="center">
   <img src="imagens/integracoes-microsoft.png" width="70%" alt="Diagrama das integrações entre a solução e o ecossistema Microsoft do Metrô de São Paulo, organizado em camadas de canal, orquestração e segurança, execução, automação, fontes de dados e identidade">
   <br>
-  <sub>Figura 26 — Visão das integrações entre a solução e os serviços externos.</sub>
+  <sub>Figura 27 — Visão das integrações entre a solução e os serviços externos.</sub>
 </div>
 
 > **Pendência de artefato.** A figura reflete a topologia anterior, em que o Copilot Studio ocupava a camada de orquestração. Precisa ser regerada conforme a tabela de camadas acima e o quadro-resumo de 5.5.5.1.
@@ -4361,7 +4395,7 @@ flowchart TB
     class F1,F2,F3,F4,F5 base
 ```
 
-*Figura 27 — Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
+*Figura 28 — Visão preliminar da arquitetura em blocos conectados. Em roxo, os blocos do Pilar 1 (PLN próprio da equipe); em amarelo, os blocos do Pilar 2 (ecossistema Microsoft); em azul, as fontes de dados e serviços.*
 
 A correspondência com a Figura 01 do TAPI é direta: a camada 3 equivale à caixa "Processo PLN", as camadas 4 e 5 equivalem ao núcleo de transação, consulta, alertas e IA, e a camada 6 equivale ao bloco "Portfólio de Projetos". No MVP, a camada 6 é atendida por dados sintéticos, e o bloco F5 permanece previsto como evolução do tipo "Ir Além".
 
@@ -5568,7 +5602,7 @@ classDiagram
     OrquestradorPipeline ..> Interacao : 6. persiste auditoria
 ```
 
-*Figura 28 — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
+*Figura 29 — Diagrama de classes técnico do middleware e da integração com o Copilot Studio. Fonte: Material produzido pelos autores (2026).*
 
 ### 5.8.1 Classes e responsabilidades
 
@@ -5669,7 +5703,7 @@ flowchart TB
     NAV -.->|"áudio"| SPEECH
 ```
 
-*Figura 29 — Diagrama de implantação da solução.*
+*Figura 30 — Diagrama de implantação da solução.*
 
 Dois pontos do diagrama merecem leitura atenta.
 
@@ -5935,7 +5969,7 @@ Gerado com apoio de inteligência artificial, o protótipo tem caráter explorat
 
 ![Storyboard do fluxo de chat do Prata AI Agent — demonstração de fluxo conversacional proativo focado em resolução de atraso de marcos com o usuário.](imagens/storyboard-fluxo-prata.png)
 
-*Figura 30 — Storyboard do fluxo de chat do Prata AI Agent.*
+*Figura 31 — Storyboard do fluxo de chat do Prata AI Agent.*
 
 </div>
 
@@ -5947,7 +5981,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 1 — Notificação proativa do agente Prata sobre atraso no marco "Entrega da Fase 2" do Projeto X, com opções para "Ver detalhes" ou "Ignorar".](imagens/tela-1-notificacao.png)
 
-*Figura 31 — Tela de notificação proativa do agente Prata.*
+*Figura 32 — Tela de notificação proativa do agente Prata.*
 
 </div>
 
@@ -5957,7 +5991,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 2 — Mensagem inicial do agente informando que o marco "Entrega da Fase 2" está atrasado, oferecendo botões "Contar o motivo" e "Ver histórico".](imagens/tela-2-mensagem-inicial.png)
 
-*Figura 32 — Mensagem inicial do agente sobre o atraso.*
+*Figura 33 — Mensagem inicial do agente sobre o atraso.*
 
 </div>
 
@@ -5967,7 +6001,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 3 - Resposta da usuária informando o motivo do atraso e confirmação do agente perguntando se deve registrar e notificar o responsável.](imagens/tela-3-resposta-usuaria.png)
 
-*Figura 33 — Resposta da usuária e confirmação do agente.*
+*Figura 34 — Resposta da usuária e confirmação do agente.*
 
 </div>
 
@@ -5977,7 +6011,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 4 - Cartão adaptável de confirmação mostrando a pendência atualizada com marco, motivo registrado e notificação enviada ao Roberto.](imagens/tela-4-cartao-confirmacao.png)
 
-*Figura 34 — Cartão adaptável de confirmação da pendência atualizada.*
+*Figura 35 — Cartão adaptável de confirmação da pendência atualizada.*
 
 </div>
 
@@ -5987,7 +6021,7 @@ O integrante representando a persona Fernanda navegou pelas telas simuladas do T
 
 ![Tela 5 — Ponto de ruptura: a usuária tenta mudar de assunto perguntando sobre o Projeto Y enquanto a conversa sobre o Projeto X ainda está ativa.](imagens/tela-5-ponto-ruptura.png)
 
-*Figura 35 — Ponto de ruptura: mudança de assunto durante a conversa.*
+*Figura 36 — Ponto de ruptura: mudança de assunto durante a conversa.*
 
 </div>
 
@@ -5997,7 +6031,7 @@ A tela a seguir ilustra como essa lacuna se manifestaria em uma interface real: 
 
 ![Tela 5b — Tela de fluxo não mapeado com anotação de UX indicando lacuna no comportamento do agente para mudanças de assunto fora do escopo planejado.](imagens/tela-5b-fluxo-nao-mapeado.png)
 
-*Figura 36 — Tela de fluxo não mapeado identificada durante a execução do protótipo.*
+*Figura 37 — Tela de fluxo não mapeado identificada durante a execução do protótipo.*
 
 </div>
 
@@ -6091,7 +6125,7 @@ O registro fotográfico abaixo foi realizado durante o teste inicial com testers
 
 ![Registro fotográfico bruto do Protótipo A em uso durante o teste inicial de usabilidade com colegas do Inteli.](imagens/prototipoa.jpeg)
 
-*Figura 37 — Protótipo A apresentado a testers externos durante o teste inicial de usabilidade.*
+*Figura 38 — Protótipo A apresentado a testers externos durante o teste inicial de usabilidade.*
 
 | Arquivo | Descrição |
 |---|---|
@@ -6111,13 +6145,13 @@ Além do registro audiovisual, a fotografia a seguir documenta o protótipo fís
 
 ![Registro fotográfico bruto do Protótipo B, representado pelo crachá físico, durante o teste inicial de usabilidade com colegas do Inteli.](imagens/prototipob.jpeg)
 
-*Figura 38 — Protótipo B físico apresentado a testers externos durante o teste inicial de usabilidade.*
+*Figura 39 — Protótipo B físico apresentado a testers externos durante o teste inicial de usabilidade.*
 
 <div align="center">
 
 ![Representação conceitual dos personagens e do crachá inteligente utilizados na simulação do Protótipo B.](imagens/personagens-video.png)
 
-*Figura 39 — Representação conceitual gerada por IA utilizada como referência visual para o vídeo do Protótipo B. A imagem não representa um dispositivo funcional.*
+*Figura 40 — Representação conceitual gerada por IA utilizada como referência visual para o vídeo do Protótipo B. A imagem não representa um dispositivo funcional.*
 
 </div>
 
@@ -6149,7 +6183,7 @@ Na versão desktop, a barra lateral permanece visível e concentra a criação d
 
 ![Wireframe desktop da página principal](./imagens/wireframe-principal-desktop.png)
 
-*Figura 40 — Wireframe desktop da página principal do Prata Agent.*
+*Figura 41 — Wireframe desktop da página principal do Prata Agent.*
 
 ### 8.1.2 Wireframe Mobile
 
@@ -6157,7 +6191,7 @@ Na versão mobile, a barra lateral persistente é substituída por um botão de 
 
 ![Wireframe mobile da página principal](./imagens/wireframe-principal-mobile.png)
 
-*Figura 41 — Wireframe mobile da página principal do Prata Agent.*
+*Figura 42 — Wireframe mobile da página principal do Prata Agent.*
 
 ### 8.1.3 Wireframe Desktop da Página de Rotinas
 
@@ -6165,7 +6199,7 @@ O wireframe desktop da página de Rotinas preserva a barra lateral e o cabeçalh
 
 ![Wireframe desktop da página de Rotinas](./imagens/wireframe-rotinas-desktop.svg)
 
-*Figura 42 — Wireframe desktop da página de gerenciamento de Rotinas.*
+*Figura 43 — Wireframe desktop da página de gerenciamento de Rotinas.*
 
 ### 8.1.4 Wireframe Mobile da Página de Rotinas
 
@@ -6173,7 +6207,7 @@ No wireframe mobile, a navegação é recolhida e os filtros passam a ocupar lin
 
 ![Wireframe mobile da página de Rotinas](./imagens/wireframe-rotinas-mobile.svg)
 
-*Figura 43 — Wireframe mobile da página de gerenciamento de Rotinas.*
+*Figura 44 — Wireframe mobile da página de gerenciamento de Rotinas.*
 
 ## 8.2 Desenvolvimento de Mockups
 
@@ -6213,7 +6247,7 @@ Antes de salvar, os campos obrigatórios recebem validação local de formato. A
 
 ![Mockup do fluxo de gerenciamento de Rotinas](./imagens/mockup-fluxo-rotinas.svg)
 
-*Figura 44 — Board dos estados de listagem, formulário, validação, exclusão, sucesso e estado vazio da página de Rotinas.*
+*Figura 45 — Board dos estados de listagem, formulário, validação, exclusão, sucesso e estado vazio da página de Rotinas.*
 
 Os estados de feedback previstos são:
 
@@ -7913,7 +7947,7 @@ flowchart LR
     RC -->|"texto pelo id"| REG
 ```
 
-*Figura 45 — Trajetos de ingestão e de consulta do executor próprio.*
+*Figura 46 — Trajetos de ingestão e de consulta do executor próprio.*
 Fonte: Material produzido pelos autores (2026).
 
 O detalhe que não é cosmético está nas duas setas que chegam ao Pinecone:
@@ -8297,7 +8331,7 @@ sequenceDiagram
     F-->>C: ResultadoRag e linha de log com identificadores
 ```
 
-*Figura 46 — Sequência de uma consulta ao RAG do executor próprio.*
+*Figura 47 — Sequência de uma consulta ao RAG do executor próprio.*
 Fonte: Material produzido pelos autores (2026).
 
 #### 9.4.5.1 Recuperação
@@ -11489,7 +11523,7 @@ flowchart LR
     CI -->|"implantar.sh"| CAE
 ```
 
-*Figura 47 — Recursos de um estágio na Azure e o caminho da entrega contínua.*
+*Figura 48 — Recursos de um estágio na Azure e o caminho da entrega contínua.*
 
 O teto de gasto é de R$ 300 por ano para os dois estágios juntos. Essa
 restrição explica três escolhas que aparecem ao longo do capítulo: os apps
@@ -11552,7 +11586,7 @@ variáveis e segredos está na seção 8.1 do
 
 ![Lista de segredos do cofre kv-prata-prd-g02t17, apenas com os nomes](./imagens/implantacao/03-segredos-cofre.jpg)
 
-*Figura 48 — Segredos do cofre do `prd`: só os nomes aparecem, e o valor nunca sai do Key Vault.*
+*Figura 49 — Segredos do cofre do `prd`: só os nomes aparecem, e o valor nunca sai do Key Vault.*
 
 O servidor exige TLS 1.2 ou superior (`require_secure_transport` ligado) e
 aceita conexão apenas pela regra de serviços da Azure. A justificativa dessa
@@ -11563,7 +11597,7 @@ remove ao final.
 
 ![Rede do servidor psql-prata-g02t17, com acesso dos serviços do Azure e nenhuma regra de IP](./imagens/implantacao/04-rede-banco.jpg)
 
-*Figura 49 — Rede do servidor PostgreSQL: TLS imposto, acesso só pela regra de serviços da Azure e nenhuma regra de firewall por IP.*
+*Figura 50 — Rede do servidor PostgreSQL: TLS imposto, acesso só pela regra de serviços da Azure e nenhuma regra de firewall por IP.*
 
 ### 11.1.4 Migrações de esquema
 
@@ -11716,7 +11750,7 @@ entrou no ambiente `cae-prata-dev`.
 
 ![Recursos do grupo rg-prata-agent no portal da Azure](./imagens/implantacao/01-grupo-recursos.jpg)
 
-*Figura 50 — Recursos do grupo `rg-prata-agent`, com os dois estágios, as identidades do pipeline e os alertas.*
+*Figura 51 — Recursos do grupo `rg-prata-agent`, com os dois estágios, as identidades do pipeline e os alertas.*
 
 ### 11.2.3 Entrega contínua
 
@@ -11739,11 +11773,11 @@ estágio nunca correm ao mesmo tempo.
 
 ![Pipeline 80209 com os estágios lint, teste, imagens e implantar concluídos](./imagens/implantacao/07-pipeline.jpg)
 
-*Figura 51 — Pipeline 80209: verificação, publicação das imagens e implantação no `dev`.*
+*Figura 52 — Pipeline 80209: verificação, publicação das imagens e implantação no `dev`.*
 
 ![Ambiente dev no GitLab com a última implantação](./imagens/implantacao/08-ambientes.jpg)
 
-*Figura 52 — Ambiente `dev` no GitLab (Operate › Environments), com a implantação em vigor e o acesso ao estágio.*
+*Figura 53 — Ambiente `dev` no GitLab (Operate › Environments), com a implantação em vigor e o acesso ao estágio.*
 
 O disparo manual do `prd` é deliberado. A semana de entrega é curta, e um
 deploy automático a cada merge na `main` arriscaria derrubar o ambiente das
@@ -11829,7 +11863,7 @@ Depois de cada implantação, a equipe confere três pontos:
 
 ![Revisão ativa do ca-middleware-dev com todo o tráfego](./imagens/implantacao/02-revisoes-middleware.jpg)
 
-*Figura 53 — Revisão ativa do middleware do `dev` depois do deploy: em execução, com 100% do tráfego e uma réplica.*
+*Figura 54 — Revisão ativa do middleware do `dev` depois do deploy: em execução, com 100% do tráfego e uma réplica.*
 
 As três primeiras execuções, em 25/09/2026, foram disparadas a partir da branch
 deste capítulo pelo procedimento de teste de 11.2.3, e cada uma deixou uma
@@ -11919,9 +11953,9 @@ JANELA=24h bash infra/azure/provisionar.sh dev metricas
 
 ![Consulta de disponibilidade, erro e latência no Log Analytics](./imagens/implantacao/05-consulta-latencia.jpg)
 
-*Figura 54 — Consulta `1-requisicoes-api.kql` no `log-prata`, com as métricas do `/api` do `dev`.*
+*Figura 55 — Consulta `1-requisicoes-api.kql` no `log-prata`, com as métricas do `/api` do `dev`.*
 
-Na execução da Figura 54, em 25/09/2026 e com janela de 24 horas, as demais
+Na execução da Figura 55, em 25/09/2026 e com janela de 24 horas, as demais
 rotas do `/api` tiveram 61 requisições, 100% de disponibilidade, nenhum 5xx,
 p50 de 8 ms e p95 de 62 ms. O `/api/chat` teve 3 requisições, com p50 de
 16,7 s, tempo quase todo gasto na recuperação e na geração da resposta.
@@ -11939,7 +11973,7 @@ administra a assinatura:
 
 ![Regras de alerta do grupo rg-prata-agent](./imagens/implantacao/06-regras-alerta.jpg)
 
-*Figura 55 — Regras de alerta de indisponibilidade e de reinício dos dois estágios, todas habilitadas.*
+*Figura 56 — Regras de alerta de indisponibilidade e de reinício dos dois estágios, todas habilitadas.*
 
 O alerta de indisponibilidade observa o tráfego real, e não um teste
 sintético. Com os apps escalados a zero, um teste de disponibilidade a cada
