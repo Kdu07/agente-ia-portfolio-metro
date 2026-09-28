@@ -66,7 +66,7 @@
   - [4.3 Modelo Lógico de Dados](#43-modelo-lógico-de-dados)
   - [4.4 Modelo Físico de Dados](#44-modelo-físico-de-dados)
 - [5. Solução Técnica](#5-solução-técnica)
-  - [5.1 Visão inicial: tecnologias e ferramentas](#51-visão-inicial-tecnologias-e-ferramentas)
+  - [5.1 Componentes e tecnologias da solução](#51-componentes-e-tecnologias-da-solução)
   - [5.2 Diagrama de Componentes da UML](#52-diagrama-de-componentes-da-uml)
   - [5.3 Diagramas de Sequência da UML](#53-diagramas-de-sequência-da-uml)
   - [5.4 Catálogo de Intenções do Agente](#54-catálogo-de-intenções-do-agente)
@@ -2166,25 +2166,28 @@ CREATE INDEX ix_execucao_rotina_iniciada ON execucao_rotina (rotina_id, iniciada
 
 # 5. Solução Técnica
 
-## 5.1 Visão inicial: tecnologias e ferramentas
+## 5.1 Componentes e tecnologias da solução
 
-Esta seção apresenta a especificação consolidada da pilha de tecnologias para a implementação da solução, alinhada à evolução arquitetural do projeto. O escopo posiciona o **Middleware de PLN próprio (Pilar 1)** como o produto central da aplicação, integrando interface web responsiva, módulo analítico de intenções, guardas de segurança em profundidade e um agendador de rotinas autônomas, o qual se conecta ao **Copilot Studio / Ecossistema Microsoft (Pilar 2)** como executor de ações e consultas corporativas sobre a base de dados do portfólio.
+Esta seção registra os componentes e as tecnologias da versão final da solução e a justificativa de cada escolha. Ela nasceu na Sprint 2 como a visão inicial da pilha, que posicionava o **Middleware de PLN próprio (Pilar 1)** como o produto central da aplicação, integrando interface web responsiva, módulo analítico de intenções, guardas de segurança em profundidade e um agendador de rotinas autônomas, conectado ao **Copilot Studio / Ecossistema Microsoft (Pilar 2)** como executor de ações e consultas corporativas sobre a base de dados do portfólio.
+
+O Pilar 1 foi construído como previsto e ganhou mensageria, webhooks, implantação na Azure e integração contínua. O Pilar 2 não chegou a ser integrado, porque depende de habilitação no tenant do parceiro, e a execução passou ao executor próprio, construído sobre serviços que a equipe provisiona (9.4). As subseções 5.1.1 a 5.1.4 descrevem a pilha por pilar, a 5.1.5 consolida a versão, o papel, a justificativa e a situação de cada tecnologia, e a 5.1.7 analisa a confiabilidade e a escalabilidade da pilha escolhida.
 
 ### 5.1.1 Plataformas de Execução (Solução Integrada Web e Mobile)
 
 A plataforma de acesso foi desenhada em arquitetura de Single Page Application (SPA) responsiva, eliminando a fragmentação de código e garantindo operação uniforme em qualquer dispositivo:
 
 - **Interface Web Própria (Desktop e Mobile Web):** Desenvolvida como aplicação web responsiva servida por Nginx, acessível via navegadores em estações de trabalho (Desktop) e dispositivos móveis.
-- **Design Adaptativo e Acessibilidade:** Construída com Tailwind CSS e primitivos de interface acessíveis, com quebras de layout dinâmicas que organizam o chat conversacional, a barra de histórico, a gestão de rotinas e os gráficos analíticos em telas de qualquer dimensão sem exigir bases de código mobile dedicadas.
-- **Canal de Voz Unificado:** Entrada multimodal por áudio diretamente pelo navegador via Azure Speech SDK, com transcrição em tempo real consumida pelo mesmo endpoint conversacional.
+- **Design Adaptativo e Acessibilidade:** Construída com Tailwind CSS e componentes shadcn/ui sobre os primitivos acessíveis do Radix UI, com quebras de layout dinâmicas que organizam o chat conversacional, a barra de histórico, a gestão de rotinas e os gráficos analíticos em telas de qualquer dimensão sem exigir bases de código mobile dedicadas.
+- **Canal de Voz Unificado:** Entrada por voz de duas formas, ambas pelo Azure Speech e processadas pelo mesmo pipeline das mensagens de texto: o microfone do navegador, com o Speech SDK e transcrição parcial em tempo real, e o envio de arquivo de áudio, transcrito no backend (5.7 e 9.1.3).
 
 ### 5.1.2 Tecnologias do Pilar 1 — Middleware Próprio, Frontend e Serviços Locais
 
 Composto pelo frontend estático, pela API backend assíncrona, pelo worker agendador de rotinas e pela persistência local:
 
 - **Frontend / Camada de Apresentação (`src/web/`):**
-  - *Core & Build:* **React 18**, **TypeScript** e **Vite**, gerando artefatos estáticos leves sem dependência de runtime Node.js em produção.
-  - *Estilização & UI:* **Tailwind CSS** para design responsivo e componentes acessíveis.
+  - *Core & Build:* **React 19**, **TypeScript** e **Vite**, gerando artefatos estáticos leves sem dependência de runtime Node.js em produção.
+  - *Estilização & UI:* **Tailwind CSS 4** para design responsivo e componentes **shadcn/ui** sobre os primitivos acessíveis do **Radix UI**.
+  - *Roteamento:* **React Router**, com rotas aninhadas que deixam a tela de entrada fora da moldura da aplicação.
   - *Gerenciamento de Estado de Servidor:* **TanStack Query** para controle de cache, sincronização e revalidação do histórico de conversas e execuções de rotinas.
   - *Visualização de Dados:* **Recharts** para exibição do dashboard de telemetria, análise de distribuição de intenções e monitoramento das guardas de segurança.
 - **Backend, API e Orquestração (`src/middleware/`):**
@@ -2194,58 +2197,119 @@ Composto pelo frontend estático, pela API backend assíncrona, pelo worker agen
 - **Pipeline de Segurança e Processamento de Linguagem Natural (`pipeline/`):**
   - *Guarda de Injeção (`guardas/injecao/`):* Regras determinísticas de regex e heurísticas combinadas ao **Azure AI Content Safety (Prompt Shields)** para barrar tentativas de manipulação direta de instruções.
   - *Guarda de Abuso (`guardas/abuso/`):* Políticas corporativas e classificação de conteúdo indevido via Azure AI Content Safety.
-  - *Guarda de Saída (`guardas/saida.py`):* Avaliação da resposta devolvida pelo Copilot Studio antes da entrega ao usuário, mitigando injeções indiretas originadas de documentos do SharePoint.
+  - *Guarda de Saída (`guardas/saida.py`):* Avaliação da resposta devolvida pelo executor antes da entrega ao usuário, mitigando injeções indiretas originadas dos documentos consultados.
   - *Classificador de Intenções (`intencao/`):* Vetorização por embeddings semânticos e classificador supervisionado leve, aplicando limiares de confiança calibrados por intenção sobre o catálogo fechado do portfólio.
-  - *Entrada por Voz (`voz/`):* **Azure Speech Services**, consumido pelo navegador por meio de emissão de tokens de acesso efêmeros de curta duração pelo backend, preservando as chaves do tenant.
+  - *Entrada por Voz (`voz/`):* **Azure Speech Services**, consumido pelo navegador por meio de emissão de tokens de acesso efêmeros de curta duração pelo backend, preservando as chaves do tenant. Os arquivos de áudio enviados são validados com o **ffprobe**, do pacote FFmpeg, e transcritos no backend pela Fast Transcription.
 - **Rotinas Agendadas e Processamento em Segundo Plano (`rotinas/`):**
   - *Agendador:* **APScheduler 3** com persistência de jobs no banco relacional, executando disparos temporais recorrentes (ex.: fechamentos mensais) no contêiner dedicado `worker`, passando pelo mesmo orquestrador de segurança com fuso horário `America/Sao_Paulo`.
+- **Mensageria e Webhooks (`mensageria/`, `webhooks/`):**
+  - *Intermediário de mensagens:* **RabbitMQ 4.3** com o cliente assíncrono **aio-pika**, em fila durável com confirmação de publicação, novas tentativas com espera crescente e fila de falhas (9.1.2.6). O `worker` consome os eventos.
+  - *Webhooks:* rotas FastAPI para as notificações de mudança do **Google Drive** (WH-01) e para os eventos do portfólio assinados com HMAC-SHA256 por um emissor em **Google Apps Script** (WH-02), descritos em 9.1.2.7.
+- **Executor Próprio (`executor/`, `rag/`):**
+  - *Recuperação e geração:* ingestão do corpus sintético do **Google Drive**, embeddings locais com o `multilingual-e5-large`, índice vetorial no **Pinecone** e geração pelo **Gemini**, com o índice e o modelo de geração atrás de portas próprias (9.4). A porta `Executor` escolhe entre este caminho e o Copilot Studio pela variável `EXECUTOR`.
 - **Persistência, Auditoria e Migrações (`persistence/`):**
-  - *Banco de Dados Relacional:* **PostgreSQL 16**, armazenando conversas, interações auditadas (com prompt, resposta, intenção, desfecho e latência) e definições de rotinas.
+  - *Banco de Dados Relacional:* **PostgreSQL 16**, armazenando conversas, interações auditadas (com prompt, resposta, intenção, desfecho e latência), definições de rotinas, os dados estruturados do portfólio e o texto dos trechos do corpus.
   - *ORM & Migrações:* **SQLAlchemy 2 (Async)** com driver **asyncpg** e controle de versionamento de esquema via **Alembic**.
 - **Testes e Qualidade:**
-  - *Backend:* **pytest**, **pytest-asyncio** e **pytest-cov** para testes unitários das guardas e testes de integração com os serviços de tenant mockados.
-  - *Frontend:* **Vitest** e **Testing Library** para testes unitários de componentes e hooks de interface.
+  - *Backend:* **pytest**, **pytest-asyncio** e **pytest-cov** para testes unitários das guardas e testes de integração com os serviços de tenant mockados, com **pytest-benchmark** e **Locust** para desempenho, **pytest-recording** para gravar as respostas dos serviços externos e **ruff** para análise estática.
+  - *Frontend:* **Vitest** e **Testing Library** para testes unitários de componentes e hooks de interface, com **MSW** como dublê da API e **ESLint** para análise estática.
 
 ### 5.1.3 Tecnologias do Pilar 2 — Ecossistema Microsoft e Execução Corporativa
 
-Serviços homologados no tenant do parceiro que recebem requisições validadas pelo middleware e operam as fontes de dados corporativas:
+Serviços previstos no tenant do parceiro para receber as requisições validadas pelo middleware e operar as fontes de dados corporativas:
 
 - **Microsoft Copilot Studio:** Plataforma de execução corporativa acionada via **Direct Line API** (`copilot/client.py`), recebendo prompts já rotulados e sanitizados com a intenção resolvida em metadados.
 - **Microsoft Power Platform (Power Automate):** Execução de fluxos automatizados de atualização, leitura e conectores disparados pelos tópicos do agente.
 - **Fontes de Dados Corporativas:** Conectores operando sob menor privilégio para **SharePoint Online (Listas e Documentos)** e conjuntos de dados do **Power BI**.
 
+**Situação na versão final.** Nenhum desses serviços chegou a ser usado. O Copilot Studio com Direct Line depende de habilitação no tenant do parceiro, ainda pendente ([Arquitetura.md](Arquitetura.md), seção 12.2), e o `copilot/client.py` permaneceu como esqueleto atrás da porta `Executor`. Sem o Copilot Studio, os fluxos do Power Automate e os conjuntos do Power BI, que seriam acionados pelos tópicos do agente, também ficaram sem uso. A prova de conceito responde pelo executor próprio (9.4): o Google Drive faz o papel do SharePoint como repositório documental, e o esquema `portfolio` do PostgreSQL guarda os dados estruturados que caberiam ao Power BI. A porta preserva o caminho original, e ligá-lo depois de implementado o cliente e liberado o acesso é uma troca da variável `EXECUTOR`.
+
 ### 5.1.4 Confiabilidade e Escalabilidade
 
-- **Containerização e Isolamento de Serviços:** Toda a pilha de desenvolvimento e produção é isolada em contêineres gerenciados por `Dockerfile` e `docker-compose.yml`, separando `web` (Nginx), `middleware` (FastAPI), `worker` (APScheduler) e `db` (PostgreSQL). A separação do `worker` mantém a API *stateless*, viabilizando escalabilidade horizontal sem duplicação de rotinas agendadas.
+- **Containerização e Isolamento de Serviços:** Toda a pilha de desenvolvimento e produção é isolada em contêineres gerenciados por `Dockerfile` e `docker-compose.yml`, separando `web` (Nginx), `middleware` (FastAPI), `worker` (APScheduler e consumo dos eventos), `db` (PostgreSQL) e `rabbitmq` (RabbitMQ). A separação do `worker` mantém a API *stateless*, viabilizando escalabilidade horizontal sem duplicação de rotinas agendadas. Na Azure, rodam o `web`, o `middleware` e o job de migração, sobre um PostgreSQL gerenciado; o `worker` fica fora da nuvem pelo teto de custo (11.2.1), e o RabbitMQ existe apenas no Compose (seção 8.1 do [GestaoConfiguracao.md](GestaoConfiguracao.md)).
 - **Confiabilidade por Defesa em Profundidade e Perímetro Seguro:**
   - Pipeline executado em ordem estrita invariável (`Sessão → Injeção → Abuso → Intenção → Execução → Saída → Registro`).
   - Mitigação de injeção indireta via inspeção da saída gerada a partir de documentos.
-  - Perímetro de serviços externos declarado e verificável por inspeção de configuração (3.3.1.1): Entra ID e Copilot Studio residem no tenant homologado do parceiro; Content Safety e Speech foram provisionados no tenant da equipe, exposição registrada como risco R12 e contida no MVP pelo uso exclusivo de dados sintéticos.
+  - Perímetro de serviços externos declarado e verificável por inspeção de configuração (3.3.1.1): Content Safety e Speech foram provisionados no tenant da equipe, exposição registrada como risco R12, e o executor próprio acrescenta o índice vetorial e o modelo de geração de terceiros, registrados como R19 e R20. As três exposições são contidas no MVP pelo uso exclusivo de dados sintéticos.
 - **Auditoria Universal e Rastreabilidade:** Cada mensagem processada, independentemente de ter sido aprovada, bloqueada por injeção, barrada por abuso ou recusada por baixa confiança, grava um registro imutável em banco, viabilizando o monitoramento contínuo da saúde do sistema e a evolução do catálogo de intenções.
 
 ### 5.1.5 Matriz Consolidada da Pilha de Tecnologias
 
-| Camada | Tecnologia / Ferramenta | Papel na Solução | Critério / Justificativa |
-|---|---|---|---|
-| **Interface / Frontend** | React 18 / TypeScript / Vite / Tailwind CSS | Interface Web Unificada (Desktop e Mobile) | SPA leve, responsiva, estática e sem runtime Node.js em produção. |
-| **Servidor Web / Proxy** | Nginx | Servir estáticos da SPA e proxy reverso para `/api` | Elimina problemas de CORS e gerencia rotas estáticas em mesma origem. |
-| **Backend & API (BFF)** | Python 3.12 / FastAPI / Pydantic v2 | API REST assíncrona, orquestrador e controle de sessão | Alta performance Input/Output, tipagem forte e controle centralizado em `deps.py`. |
-| **Autenticação** | Microsoft Entra ID (OAuth PKCE) | Gestão de identidade, perfis e permissões | Autenticação corporativa com sessão segura em cookies `httpOnly`. |
-| **Segurança (Injeção/Abuso)** | Regras Regex + Azure AI Content Safety | Guardas de injeção direta/indireta e abuso | Análise adversarial em profundidade dentro do tenant homologado. |
-| **PLN / Intenções** | Ensemble: TF-IDF (n-gramas de palavra e de caractere) + embeddings `multilingual-e5-large`, ambos com regressão logística | Reconhecimento do catálogo e extração de entidades | Erram diferente: o TF-IDF pega o literal e absorve erro de digitação, o embedding pega a paráfrase. É a única família que atinge o RNF03 (5.4.11). Devolve probabilidade calibrada, requisito do limiar por intenção. |
-| **Canal de Voz** | Azure Speech Services SDK | Transcrição de áudio em tempo real na interface web | Áudio processado no tenant; tokens de curta duração gerados no backend. |
-| **Agendador de Rotinas** | APScheduler 3 (Worker em contêiner) | Disparo autônomo de rotinas pré-programadas | Execução desassistida passando pelo mesmo orquestrador de segurança. |
-| **Integração Copilot** | Direct Line API (`copilot/client.py`) | Comunicação assíncrona com o Copilot Studio | Desacoplamento entre o produto analítico/guardas e as ações no portfólio. |
-| **Banco de Dados & ORM** | PostgreSQL 16 + SQLAlchemy 2 + Alembic | Persistência de auditoria, rotinas e conversas | Modelo relacional assíncrono robusto e versionamento de esquema. |
-| **Executor Corporativo** | Copilot Studio / Power Platform | Execução de tópicos, conectores e fluxos | Plataforma oficial do parceiro para ações sobre SharePoint e Power BI. |
-| **Executor próprio — repositório documental** | Google Drive, pasta controlada lida por conta de serviço (`drive.readonly`) | Origem do corpus sintético lido pela ingestão | Provisionamento imediato pela equipe; a ingestão nunca escreve na fonte (9.4.3). |
-| **Executor próprio — embeddings** | `multilingual-e5-large`, local, com os prefixos `query:` e `passage:` | Vetorização dos trechos e da pergunta, em 1024 posições | Reusa o encoder do classificador de intenções: custo zero, e o corpus não sai da máquina para ser indexado (9.4.3.5). |
-| **Executor próprio — banco vetorial** | Pinecone *serverless* (`us-east-1`), atrás da porta `RepositorioVetorial`; pgvector como reserva | Busca por similaridade com o filtro de permissão aplicado na consulta | O índice guarda vetor, identificador e campos de filtro, nunca o texto; trocar de *backend* é mudança de `.env` (9.4.4). |
-| **Executor próprio — geração** | Gemini (`gemini-3.5-flash`) pelo SDK `google-genai`, atrás da porta `ModeloLinguagem` | Resposta com citação verificada a partir dos trechos recuperados | Provisionamento imediato e camada gratuita; trocar de provedor é um adaptador novo e uma variável (9.4.5). A exposição ao provedor é o risco R19. |
-| **Ambiente & Deploy** | Docker / Docker Compose | Empacotamento dos 4 serviços (`web`, `api`, `worker`, `db`) | Reprodutibilidade total do ambiente e separação de processos. |
-| **Testes** | Pytest / pytest-cov / pytest-benchmark / Locust / Vitest / Testing Library / `@vitest/coverage-v8` | Testes unitários, de integração, cobertura, micro-latência e carga | A mesma pilha automatiza backend e frontend; Locust gera concorrência em Python, enquanto os provedores de cobertura reportam separadamente as duas camadas. |
+A matriz reúne, por componente, as tecnologias da versão final. A versão vem do arquivo que a fixa: no frontend, a versão travada no `package-lock.json`; no backend, a faixa declarada no `pyproject.toml`, que a construção da imagem respeita; nos serviços, a tag da imagem no `docker-compose.yml` e nos Dockerfiles. A justificativa registra a alternativa descartada, quando houve, e a coluna *Situação* distingue o que está em uso do que ficou como reserva.
 
-As quatro linhas do executor próprio só participam do caminho de uma mensagem quando esse caminho alternativo está selecionado ([Arquitetura.md](Arquitetura.md), seção 13). O perímetro correspondente está declarado em 3.3.1.1, e a implementação está descrita em 9.4.
+**Interface (`web`)**
+
+| Tecnologia | Versão | Papel | Justificativa | Situação |
+|---|---|---|---|---|
+| React e TypeScript | 19.3 e 5.9 | Interface do chat, do painel de intenções, das rotinas e dos avisos | Composição por componentes, com os contratos da API verificados como tipos na compilação. O Next.js foi descartado porque exigiria um segundo servidor de aplicação, em Node, e o fluxo OAuth executado pelo FastAPI já mantém o token fora do navegador ([Arquitetura.md](Arquitetura.md), seção 7) | Em uso |
+| Vite | 5.4 | Construção e servidor de desenvolvimento | Gera os estáticos servidos pelo Nginx. O Node 20 existe apenas no estágio de construção da imagem, e a imagem final não tem runtime JavaScript | Em uso |
+| React Router | 6.30 | Roteamento | Rotas aninhadas deixam a tela de entrada fora da moldura da aplicação (9.2.6) | Em uso |
+| TanStack Query | 5.102 | Estado de servidor | Cache, invalidação e repetição do histórico, das rotinas e do painel sem código manual de sincronização | Em uso |
+| Tailwind CSS, shadcn/ui e Radix UI | 4.3; componentes versionados em `componentes/ui`; 1.6 | Estilo e componentes | Os breakpoints atendem desktop e mobile com uma única base de código. Os primitivos do Radix trazem teclado, foco e papéis acessíveis, e os componentes do shadcn/ui ficam no repositório, ajustáveis ao guia visual (8.3) | Em uso |
+| Recharts | 3.8 | Gráficos do painel de intenções | Componentes React declarativos, com contêiner responsivo | Em uso |
+| Motion, Sonner, Vaul e Phosphor Icons | 13.4, 2.0, 1.1 e 2.1 | Animação, notificações, gaveta no mobile e ícones | Atendem padrões de interação do guia visual sem código próprio | Em uso |
+| Azure Speech SDK para navegador | 1.51 | Microfone com transcrição parcial em tempo real | Recebe do backend um token efêmero, nunca a chave. A Web Speech API do navegador foi descartada porque envia o áudio a servidores fora do perímetro ([Arquitetura.md](Arquitetura.md), seção 7) | Em uso |
+| Nginx | 1.27 | Servidor dos estáticos e proxy de `/api` | Interface e API na mesma origem: o cookie de sessão `httpOnly` viaja sem CORS e sem exceção de `SameSite` (6.2) | Em uso |
+
+**Middleware e worker (`middleware`, `worker`)**
+
+| Tecnologia | Versão | Papel | Justificativa | Situação |
+|---|---|---|---|---|
+| Python, FastAPI, Uvicorn e Pydantic | 3.12, ≥ 0.115, ≥ 0.30 e ≥ 2.7 | API assíncrona, BFF e orquestrador do pipeline | Python é a linguagem do ecossistema de PLN do classificador, e o FastAPI oferece I/O assíncrono e validação de contrato. Um único servidor de aplicação dispensa um segundo runtime ([Arquitetura.md](Arquitetura.md), seção 7) | Em uso |
+| Microsoft Entra ID, com httpx, PyJWT e itsdangerous | ≥ 0.27, ≥ 2.8 e ≥ 2.2 | Autenticação por Authorization Code + PKCE, perfis pelo Microsoft Graph e cookie de sessão assinado | O token fica fora do navegador. O MSAL foi descartado por ser síncrono, fazer descoberta de rede no construtor e não conferir a assinatura do `id_token` (`auth/entra.py`) | Em uso, com o registro de aplicação no tenant da equipe; no tenant do parceiro, depende de consentimento administrativo ([Arquitetura.md](Arquitetura.md), seção 12.2) |
+| Regras determinísticas e Azure AI Content Safety | Serviço gerenciado | Guardas de injeção, de abuso e de saída | Uma única API cobre injeção direta e indireta (Prompt Shields) e abuso (categorias de conteúdo), e as regras barram o padrão conhecido antes da chamada | Em uso, no tenant da equipe e no nível gratuito (risco R12) |
+| scikit-learn e sentence-transformers (`multilingual-e5-large`) | ≥ 1.4 e ≥ 3.0 | Classificador de intenções: ensemble de TF-IDF (palavra e caractere) e embeddings, ambos com regressão logística | Escolhido por medição: 0,856 de acurácia, contra 0,661 da linha de base TF-IDF de 5.1.6, e única família que atinge o RNF03. Os dois ramos erram diferente: o TF-IDF pega o literal e absorve erro de digitação, e o embedding pega a paráfrase. A regressão logística devolve a probabilidade calibrada que o limiar por intenção exige (5.4.11) | Em uso |
+| Azure Speech no backend, com ffprobe | ≥ 1.51 | Emissão do token efêmero do microfone e transcrição dos arquivos de áudio | A chave fica só no servidor. A Fast Transcription devolve o resultado de forma síncrona, o que dispensou a Batch Transcription e o seu callback (9.1.3), e o ffprobe confirma a trilha de áudio e a duração antes de consumir a franquia | Em uso, no tenant da equipe e no nível gratuito (risco R12) |
+| PostgreSQL, SQLAlchemy (async), asyncpg e Alembic | 16, 2.x, ≥ 0.29 e ≥ 1.13 | Registro das interações, conversas, rotinas, avisos, dados estruturados do portfólio e texto dos trechos do corpus | Um único banco atende auditoria, agenda, dados estruturados e corpus. As migrações versionadas e reversíveis sustentam o retorno a uma versão anterior (11.4) | Em uso |
+| APScheduler, com jobstore SQLAlchemy sobre psycopg | 3.x (≥ 3.10) e ≥ 3.2 | Disparo das rotinas agendadas | A agenda fica no PostgreSQL que já existe, sem Redis nem broker só para ela, e um único agendador no `worker` evita disparo duplicado quando a API escala (6.2) | Em uso; na Azure, o `worker` é criado apenas sob demanda, pelo teto de custo (11.2.1) |
+| RabbitMQ e aio-pika | 4.3.6 e 9.x (≥ 9.4) | Fila durável dos eventos dos webhooks, com novas tentativas e fila de falhas | A rota responde `202` somente com o evento garantido, e o processamento demorado sai do caminho da requisição. Uma tabela do banco como fila foi descartada porque exigiria reimplementar consulta periódica, trava, espera crescente e descarte (9.1.2.6) | Em uso no Compose; não provisionado na Azure |
+| Rotas FastAPI e Google Apps Script | Runtime V8 do Apps Script | Webhooks WH-01, do Google Drive, e WH-02, dos eventos do portfólio | O Drive faz o papel do SharePoint na prova de conceito, e o Apps Script é o emissor que reage à edição humana na planilha. Um webhook de conclusão de transcrição foi descartado porque o trajeto de áudio não tem emissor de callback (9.1.2.7) | Rotas em uso. O emissor do Apps Script foi validado fora do Apps Script, com os serviços do Google substituídos por dublês, e o gatilho instalável na planilha ainda não foi exercitado (9.1.2.7.3) |
+
+**Executor próprio (`rag/`)**
+
+| Tecnologia | Versão | Papel | Justificativa | Situação |
+|---|---|---|---|---|
+| Google Drive, pela API com conta de serviço | Cliente ≥ 2.100 | Repositório documental do corpus sintético, lido pela ingestão | Provisionamento imediato pela equipe, com escopo `drive.readonly`: a ingestão nunca escreve na fonte (9.4.3) | Em uso |
+| python-docx, openpyxl e python-pptx | ≥ 1.1, ≥ 3.1 e ≥ 1.0 | Extração do texto do corpus | Leem os três formatos do corpus (DOCX, XLSX e PPTX) sem serviço externo | Em uso |
+| `multilingual-e5-large`, local | Baixado na construção da imagem | Embeddings da pergunta e dos trechos, em 1024 dimensões | Reusa o encoder do classificador. Um modelo de embeddings por API foi descartado: com o modelo local, o custo é zero e o corpus não sai da máquina para ser indexado (9.4.1, decisão D5) | Em uso |
+| Pinecone *serverless* (`us-east-1`) | SDK 10.x | Índice vetorial com filtro de permissão na consulta | Fica atrás da porta `RepositorioVetorial` e recebe vetor, identificador e campos de filtro, nunca o texto. Chamar o Pinecone diretamente foi descartado para que trocar de índice seja mudança de configuração (9.4.1, decisão D4) | Em uso (risco R20) |
+| pgvector | Extensão do PostgreSQL | Adaptador de reserva do índice vetorial | Cumpre o mesmo contrato da porta e é exercitado pelos mesmos testes. Entra se a camada gratuita esgotar ou se o envio de vetores para fora deixar de ser aceitável | Reserva, sem uso ativo |
+| Gemini 3.5 Flash, pelo OpenRouter ou pelo SDK `google-genai` | `gemini-3.5-flash`; SDK 2.x | Resposta com citação verificada a partir dos trechos recuperados | Fica atrás da porta `ModeloLinguagem`. O Azure OpenAI no tenant da equipe foi preterido pelo prazo de liberação (9.4.1, decisão D3), e o OpenRouter cobra por uso, sem depender da cota gratuita | Em uso (risco R19) |
+
+**Infraestrutura e entrega**
+
+| Tecnologia | Versão | Papel | Justificativa | Situação |
+|---|---|---|---|---|
+| Docker e Docker Compose | Cinco serviços no `docker-compose.yml` | Ambiente local completo | Um comando sobe a solução, e a mesma imagem serve à nuvem, o que reduz a diferença entre desenvolvimento e execução hospedada (6.2) | Em uso |
+| Azure Container Apps | Perfil Consumption | Execução do `web`, do `middleware` e do job de migração | A Azure mantém a coerência com o ecossistema do parceiro, e o que se implanta são contêineres e um PostgreSQL padrão, o que preserva a portabilidade (6.2). A escala a zero mantém o gasto dentro do teto de R$ 300 por ano (11.2.6) | Em uso, nos estágios `dev` e `prd` |
+| Azure Container Registry | Standard | Imagens do `web` e do `middleware`, com a tag do commit | As imagens anteriores continuam no registro, e o retorno a uma versão entregue é reimplantar a tag (11.4) | Em uso |
+| Azure Database for PostgreSQL Flexible Server | 16, B1MS | Banco gerenciado dos dois estágios | Mesmo PostgreSQL do Compose, com TLS 1.2 obrigatório e na cota gratuita de 12 meses (11.1 e 11.2.6) | Em uso |
+| Azure Key Vault e identidade gerenciada | Autorização por RBAC | Segredos dos apps e do job de migração | Os apps recebem a referência ao cofre, nunca o valor, e a identidade tem permissão apenas de leitura (seção 6 do [GestaoConfiguracao.md](GestaoConfiguracao.md)) | Em uso |
+| Log Analytics e Azure Monitor | Serviço gerenciado | Logs, métricas, alertas e orçamento | Alertas de indisponibilidade, de reinício e de gasto. O teste sintético foi descartado porque acordaria os apps a cada poucos minutos (11.3.3) | Em uso |
+| GitLab CI com OIDC | Estágios `lint`, `teste`, `imagens` e `implantar` | Verificação de cada merge request e entrega contínua | O pipeline entra na Azure por federação de identidade, sem segredo guardado no GitLab (seção 5 do [GestaoConfiguracao.md](GestaoConfiguracao.md)) | Em uso |
+
+**Qualidade e testes**
+
+| Tecnologia | Versão | Papel | Justificativa | Situação |
+|---|---|---|---|---|
+| pytest, pytest-asyncio, pytest-cov e aiosqlite | ≥ 8.0, ≥ 0.23, ≥ 5.0 e ≥ 0.20 | Testes unitários e de integração do backend, com cobertura | Executam os casos assíncronos da API, e o SQLite em memória exercita as agregações do painel sem um PostgreSQL de pé | Em uso |
+| pytest-benchmark e Locust | ≥ 5.1 e ≥ 2.32 | Micro-latência e carga | O Locust é Python, no mesmo repositório do middleware. O k6 e o JMeter foram descartados porque exigiriam runtime JavaScript ou Java só para gerar carga (10.2.2) | Em uso |
+| pytest-recording e vcrpy | ≥ 0.13 e ≥ 6.0 | Gravação das respostas reais dos serviços externos | Grava uma vez a resposta real e a reproduz nas execuções seguintes, sem rede (10.5.4) | Em uso |
+| ruff | 0.16.x | Análise estática do backend | A faixa travada faz a CI e a máquina local aplicarem o mesmo conjunto de regras | Em uso |
+| Vitest, Testing Library, MSW, `@vitest/coverage-v8` e ESLint | 2.1, 16.3, 2.15, 2.1 e 8.57 | Testes, dublês de API, cobertura e análise estática da interface | O Vitest compartilha a configuração do Vite, a Testing Library consulta por papel acessível, e o MSW intercepta na rede sem alterar o código de produção (9.2.9) | Em uso |
+
+**Previstas e não usadas**
+
+| Tecnologia | Papel previsto | Situação | Motivo |
+|---|---|---|---|
+| Microsoft Copilot Studio via Direct Line | Executor corporativo das ações sobre o portfólio | Prevista, não implementada | O Direct Line depende de habilitação no tenant do parceiro, ainda pendente, e o `copilot/client.py` ficou como esqueleto atrás da porta `Executor` (5.1.3) |
+| Power Automate | Fluxos de atualização disparados pelos tópicos do agente | Não usada | Dependia do Copilot Studio. As intenções de transação passaram ao esquema `portfolio` do PostgreSQL ([Arquitetura.md](Arquitetura.md), seção 13.3) |
+| Power BI | Conjuntos de dados das consultas analíticas do portfólio | Não usada | As agregações que caberiam a ele passaram ao esquema `portfolio` do PostgreSQL ([Arquitetura.md](Arquitetura.md), seção 13.3) |
+| SharePoint Online | Repositório documental do portfólio | Substituída na prova de conceito | O Google Drive faz o seu papel (9.1.2.7). A equivalência é de negócio, e não de protocolo |
+
+**O que mudou desde a visão inicial.** Entraram o RabbitMQ e os webhooks; o executor próprio, com Google Drive, Pinecone e Gemini; a implantação na Azure, com Container Apps, Container Registry, PostgreSQL gerenciado, Key Vault e Log Analytics; a integração contínua no GitLab; e, na interface, o React Router e os componentes shadcn/ui sobre o Radix UI. Subiram de versão o React, de 18 para 19, o Tailwind CSS, de 3 para 4, e o Recharts, de 2 para 3. Saíram o Copilot Studio, o Power Automate e o Power BI, pelos motivos da tabela anterior, e o SharePoint foi substituído pelo Google Drive. O núcleo do Pilar 1 se manteve: FastAPI, PostgreSQL, APScheduler, Content Safety, Speech e o classificador de intenções.
+
+As tecnologias do executor próprio participam do caminho de uma mensagem com `EXECUTOR=proprio`, a configuração da prova de conceito ([Arquitetura.md](Arquitetura.md), seção 13). O perímetro correspondente está declarado em 3.3.1.1, e a implementação está descrita em 9.4.
 
 ### 5.1.6 Vetorização de texto: Bag of Words e TF-IDF (linha de base clássica)
 
@@ -2343,15 +2407,15 @@ ensemble adotado.
 
 ### 5.1.7 Análise de Confiabilidade e Escalabilidade da Pilha Escolhida
 
-Esta seção formaliza a análise técnica não funcional da arquitetura implementada (FastAPI, React+Vite, PostgreSQL 16, APScheduler, Azure AI Content Safety, Azure Speech e Copilot Studio via Direct Line), considerando os requisitos levantados (RNF01 a RNF07), o volume de usuários e dados do PMO do Metrô, tempos de resposta no canal de voz e estratégias de evolução/desacoplamento.
+Esta seção formaliza a análise técnica não funcional da arquitetura implementada (FastAPI, React+Vite, PostgreSQL 16, APScheduler, RabbitMQ, Azure AI Content Safety, Azure Speech e o executor atrás da porta `Executor`), considerando os requisitos levantados (RNF01 a RNF07), o volume de usuários e dados do PMO do Metrô, tempos de resposta no canal de voz e estratégias de evolução/desacoplamento.
 
 #### 5.1.7.1 Análise de Confiabilidade (Reliability)
 
 A confiabilidade da solução é sustentada por **defesa em profundidade**, **isolamento de processos** e **auditoria universal imutável**:
 
 1. **Invariante de Ordem e Pipeline Determinado:**
-   - O orquestrador (`pipeline/orquestrador.py`) executa o fluxo estrito: `Sessão/Identidade → Guarda de Injeção → Guarda de Abuso → Classificação de Intenção → Execução (Copilot) → Guarda de Saída → Registro`.
-   - Nenhuma etapa é ignorada ou reordenada, garantindo que mesmo entradas hostis ou respostas indiretamente contaminadas por documentos do SharePoint sejam interceptadas antes do usuário final (RNF06 e RF09).
+   - O orquestrador (`pipeline/orquestrador.py`) executa o fluxo estrito: `Sessão/Identidade → Guarda de Injeção → Guarda de Abuso → Classificação de Intenção → Execução → Guarda de Saída → Registro`.
+   - Nenhuma etapa é ignorada ou reordenada, garantindo que mesmo entradas hostis ou respostas indiretamente contaminadas por documentos do corpus sejam interceptadas antes do usuário final (RNF06 e RF09).
 2. **Auditoria Universal e Rastreabilidade Completa (RNF02, RNF07):**
    - Toda solicitação processada grava **exatamente uma linha** na tabela `interacao` no PostgreSQL, inclusive nos casos de bloqueio (`BLOQUEADA_INJECAO`, `BLOQUEADA_ABUSO`, `BLOQUEADA_SAIDA`, `RECUSADA_FORA_ESCOPO`, `RECUSADA_BAIXA_CONFIANCA` e `FALHA_EXECUTOR`).
    - Garante rastreabilidade integral de autoria, canal, momento, confiança e latência sem perda de trilha de auditoria.
@@ -2368,9 +2432,9 @@ A avaliação da capacidade de crescimento da solução considerou quatro dimens
 | Dimensão de Carga | Cenário Operacional / Volume | Ponto de Gargalo Potencial | Estratégia de Mitigação Implementada / Arquitetada |
 |---|---|---|---|
 | **Volume de Usuários do PMO** | Diretoria, ~30 Líderes de Projeto e Membros de Equipe (concorrência baixa a média, picos em fechamento mensal). | Bloqueio de I/O em requisições concorrentes ou retenção de estado em memória. | **Backend *Stateless*:** FastAPI assíncrono com `asyncpg` + SQLAlchemy 2 Async; pool de conexões otimizado; sessões seguras em cookies `httpOnly` delegando estado ao cookie. O contêiner de API pode escalar horizontalmente sem impacto no agendador. |
-| **Crescimento da Base de Documentos** | Dezenas de projetos, TAP, cronogramas, matrizes de risco e relatórios acumulados no SharePoint. | *Injeção indireta* vinda de documentos recuperados e degradação de busca semântica no Copilot. | **Guarda de Saída (`saida.py`):** Inspeção da resposta do executor via Content Safety. Índices de metadados no SharePoint mantidos com menor privilégio por pasta/projeto. |
+| **Crescimento da Base de Documentos** | Dezenas de projetos, TAP, cronogramas, matrizes de risco e relatórios acumulados no repositório documental. | *Injeção indireta* vinda de documentos recuperados e degradação da busca semântica. | **Guarda de Saída (`saida.py`):** Inspeção da resposta do executor via Content Safety. Triagem dos trechos na ingestão e filtro de permissão aplicado na própria consulta ao índice vetorial (9.4.3.6 e 9.4.4.3). |
 | **Crescimento da Tabela de Interações** | Acúmulo contínuo de logs de chat, voz e rotinas analíticas (milhares de registros/mês). | Degradação de desempenho no dashboard de intenções (`/api/analytics`). | **Indexação Otimizada:** Índices compostos `(criada_em DESC)`, `(intencao_id, criada_em)`, `(desfecho, criada_em)` e índice parcial condicional sobre `desfecho = 'RECUSADA_FORA_ESCOPO'`. Expurgo automatizado pós-prazo de retenção via rotina do APScheduler (RNF07). |
-| **Interação por Voz (Tempo de Resposta)** | Usuários em mobilidade ou campo ditando consultas ao agente. | Latência perceptível acumulada (áudio → STT → pipeline → Copilot → UI). | **Topologia Híbrida e Streaming:** Transcrição parcial em tempo real no frontend via Azure Speech SDK usando tokens efêmeros emitidos pelo backend; classificação em ensemble leve (TF-IDF + embeddings) com inferência sub-100ms. |
+| **Interação por Voz (Tempo de Resposta)** | Usuários em mobilidade ou campo ditando consultas ao agente. | Latência perceptível acumulada (áudio → STT → pipeline → executor → UI). | **Topologia Híbrida e Streaming:** Transcrição parcial em tempo real no frontend via Azure Speech SDK usando tokens efêmeros emitidos pelo backend; classificação em ensemble leve (TF-IDF + embeddings) com inferência sub-100ms. |
 
 #### 5.1.7.3 Tempo de Resposta no Canal de Voz e Orçamento de Latência
 
@@ -2388,6 +2452,8 @@ flowchart LR
 - **Latência Total Estimada (P95):** ~1.25s a 2.40s.
 - **Otimização de Voz:** A transcrição parcial durante a fala reduz a latência percebida para quase zero no envio; o processamento do middleware opera em paralelo com a persistência assíncrona.
 
+O orçamento foi estimado na Sprint 2, com o Copilot Studio como executor. No executor próprio, o salto correspondente é a recuperação dos trechos e a geração pelo modelo de linguagem, e a leitura deste orçamento como alvo arquitetural, ao lado do limite de aceitação de 9.1.8, está em 10.2.1.
+
 #### 5.1.7.4 Estratégia de Desacoplamento e Evolução da Plataforma de Portfólio
 
 Conforme premissa do **TAPI**, a plataforma de gestão do Metrô pode evoluir ou ser substituída (ex.: migração do SharePoint para *Dynamics 365 Project Operations* ou ferramenta interna):
@@ -2398,17 +2464,21 @@ flowchart TB
     BFF --> ORQ["pipeline/orquestrador.py"]
     
     subgraph ISOLAMENTO["Camada de Desacoplamento"]
-        ORQ --> CLIENT["copilot/client.py (Cliente Direct Line)"]
+        ORQ --> PORTA["executor/base.py (porta Executor)"]
+        PORTA --> CLIENT["copilot/client.py (Cliente Direct Line)"]
+        PORTA --> RAG["rag/executor.py (executor próprio)"]
     end
     
-    CLIENT -.->|Hoje: Conectores M365| P1["Copilot Studio + SharePoint / Power BI"]
+    CLIENT -.->|Previsto: Conectores M365| P1["Copilot Studio + SharePoint / Power BI"]
     CLIENT -.->|Evolução: API Rest / Dataverse| P2["Dynamics 365 Project Operations / Novo ERP"]
+    RAG -->|Em uso na prova de conceito| P3["Google Drive + Pinecone + Gemini"]
 ```
 
 1. **Ponto Único de Acoplamento:** O módulo `copilot/client.py` é o **único** ponto do middleware que conhece a API Direct Line e o Copilot Studio.
 2. **Preservação dos Ativos de PLN e Segurança:** Se a plataforma de portfólio mudar:
    - Todo o frontend, guardas de injeção/abuso, banco de dados, motor de agendamento de rotinas e o classificador de intenções permanecem **100% inalterados**.
    - Apenas o cliente executor (`client.py`) e a tabela de mapeamento de contratos (`copilot/topicos.md`) são reescritos para dialogar com a nova API do ERP/Dynamics.
+3. **Desacoplamento Comprovado pelo Executor Próprio:** Desde a Sprint 4, o orquestrador conhece apenas a porta `Executor` (`executor/base.py`), e a fábrica `executor/fabrica.py` escolhe o adaptador pela variável `EXECUTOR`. O executor próprio entrou por essa porta sem alterar guardas, classificador, registro, rotinas nem interface (9.4.1), que é a mesma troca prevista nesta seção para uma nova plataforma de portfólio.
 
 ## 5.2 Diagrama de Componentes da UML
 
@@ -2525,7 +2595,7 @@ flowchart TB
 
   subgraph CLIENT["Navegador / Cliente"]
     direction TB
-    SPA["src/web (React 18 + Vite + Tailwind)<br/><i>Chat · Histórico · Intenções · Rotinas</i>"]
+    SPA["src/web (React 19 + Vite + Tailwind 4)<br/><i>Chat · Histórico · Intenções · Rotinas</i>"]
   end
 
   subgraph DOCKER["Ambiente Local / Docker Compose"]
@@ -5364,7 +5434,7 @@ Esta subseção registra a pilha efetivamente usada na implementação do canal 
 | Biblioteca, modelo ou serviço | Versão ou referência adotada | Finalidade na solução | Limitações e cuidados conhecidos |
 |---|---|---|---|
 | **Azure AI Speech — Fast Transcription REST API** | API `2025-10-15`, configurável por `SPEECH_API_VERSION` | Converte os arquivos aceitos pela rota de áudio em texto e devolve idioma, confiança, duração e latência normalizados para o restante do middleware | É um serviço externo: depende de rede, credenciais, disponibilidade e cota. O áudio sai do ambiente da aplicação e, por conter dado potencialmente sensível, o uso com dados reais depende da homologação do parceiro. Não existe mecanismo local de contingência implementado. |
-| **Azure Cognitive Services Speech SDK para Python** (`azure-cognitiveservices-speech`) | `>=1.51,<2` | Sustenta a verificação isolada de reconhecimento de arquivos WAV e prepara a integração do modo contínuo pelo navegador | No estado atual, o teste direto pelo SDK está limitado a WAV. A emissão de token efêmero em `/voz/token` e o trajeto contínuo ainda não estão implementados; portanto, a presença da biblioteca não significa que esse modo já esteja disponível. |
+| **Azure Cognitive Services Speech SDK para Python** (`azure-cognitiveservices-speech`) | `>=1.51,<2` | Sustenta a verificação isolada de reconhecimento de arquivos WAV | O uso do SDK para Python está limitado a essa verificação, com arquivos WAV. O modo contínuo não depende dele: o token efêmero de `GET /voz/token` é emitido pela API REST de emissão de token do Azure Speech, e o reconhecimento em tempo real roda no navegador com o Speech SDK para JavaScript (5.1.5). |
 | **HTTPX** (`httpx`) | `>=0.27` | Realiza de forma assíncrona o envio `multipart/form-data` do áudio à API de transcrição e permite substituir o cliente nos testes | Continua sujeito a falhas de rede, tempo limite e respostas do provedor. O arquivo é lido para a chamada externa, de modo que o limite de 25 MB da API também protege o consumo de memória do processo. |
 | **scikit-learn** (`scikit-learn`) | `>=1.4` | Implementa os vetorizadores TF-IDF de palavras e caracteres, os estimadores lineares, a calibração de probabilidades e o ensemble usado para classificar a intenção | O ramo TF-IDF depende do vocabulário observado e perde desempenho em formulações muito distantes do corpus. Mudanças no catálogo ou nos exemplos exigem novo treino e nova avaliação. O artefato serializado também deve ser carregado com versões compatíveis da biblioteca. |
 | **Sentence Transformers** (`sentence-transformers`) | `>=3.0` | Carrega e executa o encoder de sentenças do ramo semântico, mantendo-o em cache no processo | A primeira execução pode precisar baixar os pesos e exige mais memória e tempo de inferência que o TF-IDF. O uso local depois do download reduz o envio de texto a terceiros, mas o cache e a origem dos pesos precisam ser controlados no ambiente de implantação. |
@@ -5631,66 +5701,76 @@ O modelo complementa, e não substitui, o diagrama de componentes da seção 5.2
 
 ## 6.1 Diagrama de Implantação da UML
 
-A solução implanta **quatro processos** e alcança **quatro serviços externos**. O desenho abaixo distingue o que a equipe hospeda do que ela apenas consome, e em qual tenant cada serviço consumido reside — a distinção que sustenta o perímetro declarado no RNF01 (3.3.1.1).
+A solução implanta **cinco serviços** no ambiente local e alcança **sete serviços externos**. O desenho abaixo distingue o que a equipe hospeda do que ela apenas consome, e onde cada serviço consumido reside — a distinção que sustenta o perímetro declarado no RNF01 (3.3.1.1). Ele representa a configuração da prova de conceito, com `EXECUTOR=proprio`. O Copilot Studio, previsto no tenant do parceiro, não foi integrado e fica fora do desenho (5.1.3).
 
 ```mermaid
 flowchart TB
-    NAV["«device» Navegador do usuário<br/>SPA React · captura de áudio"]
+    NAV["«device» Navegador do usuário<br/>SPA React · Speech SDK"]
 
-    subgraph AMB["«environment» Ambiente de execução da equipe"]
+    subgraph AMB["«environment» Ambiente da equipe (Docker Compose)"]
         WEB["«container» web<br/>Nginx: estáticos + proxy /api"]
         API["«container» middleware<br/>FastAPI · Uvicorn"]
-        WRK["«container» worker<br/>APScheduler"]
+        WRK["«container» worker<br/>APScheduler · consumo dos eventos"]
+        MQ["«container» rabbitmq<br/>RabbitMQ 4.3"]
         DB[("«container» db<br/>PostgreSQL 16")]
     end
 
-    subgraph TP["«environment» Tenant do parceiro (Metrô)"]
+    subgraph TE["«environment» Tenant Azure da equipe"]
         EID["Microsoft Entra ID"]
-        CS["Copilot Studio<br/>canal Direct Line"]
-        CN["SharePoint · Power BI<br/>Power Automate"]
-    end
-
-    subgraph TE["«environment» Tenant da equipe"]
         SAFE["Azure AI Content Safety"]
         SPEECH["Azure Speech"]
+    end
+
+    subgraph TER["«environment» Serviços de terceiros"]
+        GD["Google Drive"]
+        GAS["Google Apps Script<br/>planilha do portfólio"]
+        PC["Pinecone"]
+        LLM["Gemini<br/>OpenRouter ou google-genai"]
     end
 
     NAV -->|"HTTPS"| WEB
     WEB -->|"/api"| API
     API --> DB
     WRK --> DB
+    API -->|"publica eventos"| MQ
+    MQ -->|"consome"| WRK
     API -->|"OAuth PKCE"| EID
-    API -->|"Direct Line"| CS
-    WRK -->|"Direct Line"| CS
     API -->|"avaliação"| SAFE
     WRK -->|"avaliação"| SAFE
-    CS --> CN
-    API -.->|"token efêmero"| SPEECH
-    NAV -.->|"áudio"| SPEECH
+    API -->|"consulta vetorial"| PC
+    API -->|"geração"| LLM
+    WRK -->|"canais e leitura"| GD
+    GD -.->|"WH-01"| API
+    GAS -.->|"WH-02 · HMAC"| API
+    API -->|"token efêmero · Fast Transcription"| SPEECH
+    NAV -.->|"áudio contínuo"| SPEECH
 ```
 
 *Figura 29 — Diagrama de implantação da solução.*
 
-Dois pontos do diagrama merecem leitura atenta.
+Três pontos do diagrama merecem leitura atenta.
 
-O **`worker` alcança os mesmos serviços que a `api`**, e não a `api` em si. Ele não chama a API por HTTP: importa o mesmo orquestrador em processo. É o mesmo código, acionado por um gatilho diferente, e é essa decisão que impede que uma rotina agendada contorne as barreiras de segurança.
+O **`worker` alcança os mesmos serviços que a `api`**, e não a `api` em si. Ele não chama a API por HTTP: importa o mesmo orquestrador em processo. É o mesmo código, acionado por um gatilho diferente, e é essa decisão que impede que uma rotina agendada contorne as barreiras de segurança. As setas do `worker` para o Pinecone e o Gemini foram omitidas para não repetir as da `api`.
 
-O **áudio não passa pelo `middleware` no trajeto de transmissão contínua**: o navegador fala diretamente com o Azure Speech, usando um token de curta duração que o backend emite. A chave do recurso nunca chega ao cliente. O trajeto de ingestão, decidido em 5.7.1.3, é o que passa pela API — e é por isso que ele existe, conforme a linha tracejada dupla no diagrama.
+O **áudio não passa pelo `middleware` no trajeto de transmissão contínua**: o navegador fala diretamente com o Azure Speech, usando um token de curta duração que o backend emite. A chave do recurso nunca chega ao cliente. O trajeto de ingestão, decidido em 5.7.1.3, é o que passa pela API, que envia o arquivo à Fast Transcription depois de validá-lo (9.1.3).
+
+Os **webhooks entram pela `api` e são processados pelo `worker`**. A rota confere a origem, publica o evento no RabbitMQ e responde `202`; o `worker` consome a fila, relê o Drive quando a notificação é do WH-01 e mantém os canais de notificação renovados (9.1.2.6 e 9.1.2.7).
 
 ## 6.2 Justificativa das Escolhas de Implantação
 
-**Quatro processos, e não um.** A separação decorre de propriedades que a solução precisa ter, e não de preferência arquitetural:
+**Cinco serviços, e não um.** A separação decorre de propriedades que a solução precisa ter, e não de preferência arquitetural:
 
-| Processo | Por que é separado |
+| Serviço | Por que é separado |
 |---|---|
 | `web` | Serve arquivos estáticos e faz proxy de `/api` na mesma origem. É o que permite ao cookie de sessão viajar sem CORS e sem exceção de `SameSite` — propriedade de segurança, não de conveniência |
 | `middleware` | Concentra a decisão sobre o que entra e o que sai. Mantém-se **sem estado**, o que o torna escalável horizontalmente |
-| `worker` | Separado da `api` por duas razões: preserva a API sem estado, e evita disparo duplicado de rotinas quando a API reinicia ou escala. Se o agendador vivesse dentro da API, duas réplicas produziriam dois relatórios |
-| `db` | Registro das interações, agenda persistida das rotinas e agregações do dashboard |
+| `worker` | Separado da `api` por duas razões: preserva a API sem estado, e evita disparo duplicado de rotinas quando a API reinicia ou escala. Se o agendador vivesse dentro da API, duas réplicas produziriam dois relatórios. É também o consumidor dos eventos dos webhooks |
+| `rabbitmq` | Garante o evento antes de a rota responder `202` e tira do caminho da requisição o processamento demorado, com novas tentativas e fila de falhas (9.1.2.6) |
+| `db` | Registro das interações, agenda persistida das rotinas, agregações do dashboard, dados estruturados do portfólio e texto dos trechos do corpus |
 
-**Contêineres para os quatro.** O `docker-compose.yml` sobe o conjunto com um comando, permitindo que qualquer integrante execute a solução localmente apenas com Docker instalado. A mesma definição de imagem serve ao ambiente de nuvem, o que reduz a diferença entre desenvolvimento e execução hospedada.
+**Contêineres para os cinco.** O `docker-compose.yml` sobe o conjunto com um comando, permitindo que qualquer integrante execute a solução localmente apenas com Docker instalado. As mesmas imagens do `web` e do `middleware` servem ao ambiente de nuvem, o que reduz a diferença entre desenvolvimento e execução hospedada.
 
-**Azure como plataforma.** A escolha preserva a coerência com o ecossistema que o parceiro opera e facilita o handover. Nenhum dos quatro processos depende de recurso exclusivo do Azure: a portabilidade é preservada porque o que se implanta são contêineres e um PostgreSQL padrão.
+**Azure como plataforma.** A escolha preserva a coerência com o ecossistema que o parceiro opera e facilita o handover. Nenhum dos serviços depende de recurso exclusivo do Azure: a portabilidade é preservada porque o que se implanta são contêineres e um PostgreSQL padrão. Na nuvem rodam o `web`, o `middleware` e o job de migração; o `worker` é criado apenas sob demanda, pelo teto de custo (11.2.1), e o RabbitMQ existe apenas no Compose (seção 8.1 do [GestaoConfiguracao.md](GestaoConfiguracao.md)).
 
 ## 6.3 Considerações sobre Desempenho e Segurança
 
@@ -5698,38 +5778,45 @@ O **áudio não passa pelo `middleware` no trajeto de transmissão contínua**: 
 
 **Segurança.** As decisões relevantes à implantação são estas:
 
-- **Comunicação por HTTPS** em toda fronteira externa, inclusive nas chamadas ao Direct Line e ao serviço de avaliação de conteúdo.
+- **Comunicação por HTTPS** em toda fronteira externa, inclusive nas chamadas ao serviço de avaliação de conteúdo, ao índice vetorial e ao modelo de geração.
 - **Token OAuth fora do navegador.** O fluxo Authorization Code + PKCE é executado pelo backend, e a sessão vive em cookie `httpOnly` + `SameSite=Strict`. O React nunca vê um `access_token`.
 - **Autorização no servidor.** O frontend esconde rotas por conveniência; quem barra é o backend. Uma rota escondida no React é decoração de interface, não controle de acesso.
-- **Menor privilégio nos conectores** do Copilot Studio, limitando o raio de dano de qualquer ataque que ultrapasse as barreiras do middleware.
+- **Menor privilégio nas fontes.** A conta de serviço do Drive tem escopo `drive.readonly`, o índice vetorial recebe vetor, identificador e campos de filtro, nunca o texto, e os eventos do portfólio só entram com assinatura HMAC válida (9.4.3 e 9.1.2.7.2).
 - **Cifra em repouso e retenção declarada** no PostgreSQL, conforme o RNF07. Sem a camada de mascaramento removida na revisão de escopo, o banco passou a conter o prompt em claro, incluindo o das tentativas de ataque.
 - **Segredos fora do código e da imagem**, injetados como variáveis de ambiente a partir dos mecanismos de segredo da plataforma. O `.env` não é versionado; o `.env.example` documenta as chaves esperadas.
 
-**A consequência de perímetro que a implantação torna visível.** Content Safety e Speech são alcançados no tenant da equipe, e não no do parceiro. Prompt e áudio deixam o perímetro homologado por desenho. A exposição está declarada em 3.3.1.1, registrada como risco R12, e contida no MVP pelo uso exclusivo de dados sintéticos. Os dois serviços ficam isolados atrás de módulos próprios, de modo que reprovisioná-los no tenant do parceiro seja mudança de configuração e não de código.
+**A consequência de perímetro que a implantação torna visível.** Content Safety e Speech são alcançados no tenant da equipe, e não no do parceiro. Prompt e áudio deixam o perímetro homologado por desenho. A exposição está declarada em 3.3.1.1, registrada como risco R12, e contida no MVP pelo uso exclusivo de dados sintéticos. O executor próprio acrescenta o índice vetorial e o modelo de geração de terceiros, registrados como R20 e R19, com a mesma contenção. Esses serviços ficam isolados atrás de módulos e portas próprios, de modo que reprovisioná-los ou trocá-los seja mudança de configuração e não de código.
 
 ## 6.4 Diagrama de Implantação de Infraestrutura
 
 ```text
 Azure Subscription
-└── Resource Group: METROSP
-    ├── Container Apps Environment
-    │   ├── Container App: web ......... Nginx, ingress público HTTPS
-    │   ├── Container App: middleware .. FastAPI, ingress interno
-    │   └── Container App: worker ...... APScheduler, sem ingress, réplica única
-    ├── Azure Database for PostgreSQL Flexible Server
-    │   └── cifra em repouso habilitada; acesso restrito à rede do ambiente
-    ├── Azure Container Registry ....... imagens dos três contêineres
-    ├── Azure Key Vault ................ segredos referenciados pelos Container Apps
-    └── Azure Cost Management .......... orçamento e alerta de gasto
+└── Resource Group da solução, região brazilsouth
+    ├── Compartilhados pelos estágios dev e prd
+    │   ├── Log Analytics ................ logs dos apps e consultas de disponibilidade, erro e latência
+    │   ├── Azure Container Registry ..... imagens do web e do middleware, com a tag do commit
+    │   ├── Azure Database for PostgreSQL Flexible Server
+    │   │   └── um banco por estágio; TLS 1.2 obrigatório
+    │   ├── Content Safety e Speech ...... nível gratuito
+    │   └── Container Apps Environment
+    │       ├── Container App: web ......... Nginx, ingress público HTTPS, um por estágio
+    │       ├── Container App: middleware .. FastAPI, ingress interno, um por estágio
+    │       ├── Container Apps Job: migração  Alembic, um por estágio
+    │       └── Container App: worker ...... só sob demanda; sem ingress, réplica única
+    └── Próprios de cada estágio
+        ├── Azure Key Vault .............. segredos referenciados pelos apps e pelo job
+        └── Identidade gerenciada ........ leitura do cofre e das imagens
 
 Serviços consumidos, fora do Resource Group:
-    ├── Tenant do parceiro ... Entra ID · Copilot Studio (Direct Line) · SharePoint · Power BI · Power Automate
-    └── Tenant da equipe ..... Azure AI Content Safety · Azure Speech
+    ├── Tenant da equipe ... Microsoft Entra ID (registro de aplicação)
+    └── Terceiros .......... Google Drive · Google Apps Script · Pinecone · Gemini (OpenRouter ou google-genai)
+
+Apenas no Docker Compose: rabbitmq
 ```
 
 Três decisões de dimensionamento são consequência direta do desenho:
 
-- **O `worker` roda com réplica única e sem *ingress*.** Escalar o agendador duplicaria disparos, e expô-lo à rede não teria propósito: ele não atende requisições.
+- **O `worker` roda com réplica única e sem *ingress*, e na nuvem só existe sob demanda.** Escalar o agendador duplicaria disparos, e expô-lo à rede não teria propósito: ele não atende requisições. Uma réplica sempre ligada consome crédito o tempo todo, por isso ele fica fora do teto de custo (11.2.1).
 - **O `middleware` tem *ingress* interno.** Só o `web` é alcançável publicamente, e é ele que faz o proxy — o que preserva a mesma origem exigida pelo cookie de sessão.
 - **O banco é gerenciado, e não um contêiner.** Em desenvolvimento, o PostgreSQL do `docker-compose` é suficiente. Em nuvem, o registro de interações exige *backup*, cifra em repouso e retenção — três propriedades que um contêiner efêmero não oferece, e que o RNF07 exige.
 
@@ -7115,6 +7202,8 @@ A funcionalidade de voz não depende de nenhuma onda específica e nenhuma onda 
 - Transcrição é enviada ao endpoint `/chat` como texto
 - Interface mostra feedback visual de gravação
 
+**Estado na versão final.** Os dois trajetos de 5.7.1.3 estão implementados. No microfone, `GET /voz/token` emite o token efêmero pela API REST do Azure Speech, sem expor `SPEECH_KEY`, e o navegador transcreve com o Speech SDK. No envio de arquivo, `POST /voz/audios` confere os magic bytes, e o `ffprobe` confirma a trilha de áudio e a duração antes da transcrição pela Fast Transcription. Como a Fast Transcription devolve o texto de forma síncrona, a Batch Transcription e o seu callback foram dispensados (9.1.2.7). O áudio é processado no tenant da equipe, exposição registrada como risco R12 (3.3.1.1).
+
 ### 9.1.4 Estratégia de Testes
 
 A qualidade é garantida através de uma pirâmide de testes bem definida:
@@ -7260,17 +7349,18 @@ que o navegador nunca manipula token de acesso.
 
 | Tecnologia | Versão | Papel | Justificativa |
 | --- | --- | --- | --- |
-| React | 18.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
-| TypeScript | 5.5 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
+| React | 19.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
+| TypeScript | 5.9 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
 | Vite | 5.4 | Empacotador e servidor de desenvolvimento | Recarga rápida durante o desenvolvimento e divisão automática de pacote na construção |
-| React Router | 6.26 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
-| TanStack Query | 5.51 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
-| Tailwind CSS | 3.4 | Estilização | Vocabulário visual declarado em configuração única, com breakpoints responsivos prontos |
-| Recharts | 2.12 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
-| Azure Speech SDK | 1.38 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
+| React Router | 6.30 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
+| TanStack Query | 5.102 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
+| Tailwind CSS | 4.3 | Estilização | Vocabulário visual declarado em configuração única, com breakpoints responsivos prontos |
+| shadcn/ui e Radix UI | Componentes versionados em `componentes/ui`; 1.6 | Componentes de interface | Primitivos com teclado, foco e papéis acessíveis, e componentes mantidos no repositório, ajustáveis ao guia visual (8.3) |
+| Recharts | 3.8 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
+| Azure Speech SDK | 1.51 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
 | MSW | 2.15 | Dublês de API | Interceptação na camada de rede, o que permite exercitar a interface sem alterar o código de produção |
-| Vitest | 2.0 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
-| Testing Library | 16.0 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
+| Vitest | 2.1 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
+| Testing Library | 16.3 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
 | ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações |
 
 ### 9.2.3 Estrutura de diretórios da interface
@@ -9315,7 +9405,7 @@ Três escolhas nesta tabela precisam de justificativa explícita.
 
 **A guarda que não responde não é cenário de desempenho.** A indisponibilidade do serviço de avaliação de conteúdo já é verificada como comportamento funcional em `TF-RF09-06`, com a regra de UC10 de que a falha de uma barreira não pode resultar em passagem livre. Repeti-la aqui mediria a mesma coisa com instrumento pior. O que `TNF-DES-06` acrescenta é diferente: o executor que **demora** em vez de falhar, situação em que o sistema precisa decidir por conta própria quando desistir.
 
-**Execução.** Os cenários de carga rodam com **Locust**, no arquivo planejado `src/middleware/tests/desempenho/locustfile.py`. A escolha é justificada por três razões concretas: Locust é Python, roda no mesmo repositório e na mesma linguagem do middleware, e permite reutilizar as *fixtures* de sessão e de dados já construídas para os testes funcionais. As alternativas usuais introduziriam custo sem ganho — k6 exigiria runtime JavaScript e JMeter, ambiente Java, ambos apenas para gerar carga contra uma API HTTP que qualquer um dos três alcança igualmente. A micro-latência de `TNF-DES-02` roda com **`pytest-benchmark`** em `src/middleware/tests/desempenho/test_micro_latencia.py`, que mede função isolada com repetição e descarte de aquecimento, coisa que um cronômetro em torno de uma requisição não faz. Ambas as ferramentas são adições declaradas em 10.1.1 e ausentes da matriz de 5.1.5, a tratar em *issue* própria.
+**Execução.** Os cenários de carga rodam com **Locust**, no arquivo planejado `src/middleware/tests/desempenho/locustfile.py`. A escolha é justificada por três razões concretas: Locust é Python, roda no mesmo repositório e na mesma linguagem do middleware, e permite reutilizar as *fixtures* de sessão e de dados já construídas para os testes funcionais. As alternativas usuais introduziriam custo sem ganho — k6 exigiria runtime JavaScript e JMeter, ambiente Java, ambos apenas para gerar carga contra uma API HTTP que qualquer um dos três alcança igualmente. A micro-latência de `TNF-DES-02` roda com **`pytest-benchmark`** em `src/middleware/tests/desempenho/test_micro_latencia.py`, que mede função isolada com repetição e descarte de aquecimento, coisa que um cronômetro em torno de uma requisição não faz. Ambas as ferramentas são adições declaradas em 10.1.1 e constam da matriz de 5.1.5.
 
 O Copilot Studio é **dublado com latência sintética controlada** em todos os cenários. A razão é a que abre esta subseção, e tem consequência prática: com o dublê fixado, por exemplo, em 1000 ms, qualquer variação medida acima disso pertence ao middleware, e a medição vira um número atribuível a código que a equipe controla. Medir o serviço real produziria um número que muda sozinho entre duas execuções e que nenhuma alteração no repositório melhoraria.
 

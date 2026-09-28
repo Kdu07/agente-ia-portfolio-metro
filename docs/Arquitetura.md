@@ -280,22 +280,31 @@ controle de acesso.
 
 ## 7. Tecnologias
 
+A tabela resume as escolhas da versão final. A matriz completa, com a versão,
+a justificativa e a situação de cada tecnologia, inclusive das previstas e não
+usadas, está em 5.1.5 de [Projeto.md](Projeto.md).
+
 | Camada | Escolha | Por quê |
 |---|---|---|
-| Interface | React 19 + TypeScript + Vite (SPA estática) | Nenhum runtime JS em produção; o Python segue sendo o único servidor de aplicação da equipe |
-| Estilo e componentes | Tailwind CSS + shadcn/ui sobre os primitivos acessíveis do Radix | Responsivo por breakpoint, exigência de mobile e desktop; tema claro e escuro por tokens |
-| Estado de servidor | TanStack Query | Cache e revalidação do histórico e das execuções de rotina |
-| Gráficos | Recharts | Dashboard de intenções |
+| Interface | React 19 + TypeScript 5.9 + Vite 5.4 (SPA estática) | Nenhum runtime JS em produção; o Python segue sendo o único servidor de aplicação da equipe |
+| Estilo e componentes | Tailwind CSS 4 + shadcn/ui sobre os primitivos acessíveis do Radix | Responsivo por breakpoint, exigência de mobile e desktop; tema claro e escuro por tokens |
+| Roteamento | React Router 6 | Rotas aninhadas deixam a tela de entrada fora da moldura da aplicação |
+| Estado de servidor | TanStack Query 5 | Cache e revalidação do histórico e das execuções de rotina |
+| Gráficos | Recharts 3 | Dashboard de intenções |
 | API | FastAPI (Python 3.12) + Pydantic v2 | Base já existente do middleware |
-| Autenticação | Entra ID, Authorization Code + PKCE no FastAPI | Token fora do navegador sem o custo de um segundo runtime |
+| Autenticação | Entra ID, Authorization Code + PKCE no FastAPI, com httpx e PyJWT | Token fora do navegador sem o custo de um segundo runtime; o MSAL foi descartado por ser síncrono e não conferir a assinatura do `id_token` |
 | Persistência | SQLAlchemy 2 (async) + asyncpg + Alembic | O esquema passa a mudar em várias frentes; versionar é o que permite reverter |
-| Banco | PostgreSQL 16 | Registro de interações e agregações do dashboard |
-| Agendador | APScheduler 3, jobstore SQLAlchemy | Agenda persistida no banco que já existe; sem Redis, sem broker |
-| Guardas (modelo) | Azure AI Content Safety | Prompt Shields cobre injeção direta e indireta; as categorias de conteúdo cobrem abuso. Uma API para as duas features, dentro do tenant homologado |
+| Banco | PostgreSQL 16, gerenciado na Azure pelo Flexible Server | Registro de interações, agregações do dashboard, dados estruturados do portfólio e texto do corpus |
+| Agendador | APScheduler 3, jobstore SQLAlchemy | Agenda persistida no banco que já existe; sem Redis nem broker para a agenda |
+| Mensageria | RabbitMQ 4.3 + aio-pika 9 | Fila durável dos eventos dos webhooks, com novas tentativas e fila de falhas; existe apenas no Compose (9.1.2.6 de [Projeto.md](Projeto.md)) |
+| Webhooks | Rotas FastAPI + emissor em Google Apps Script | Notificações do Google Drive (WH-01) e eventos do portfólio assinados com HMAC (WH-02), descritos em 9.1.2.7 de [Projeto.md](Projeto.md) |
+| Guardas (modelo) | Azure AI Content Safety | Prompt Shields cobre injeção direta e indireta; as categorias de conteúdo cobrem abuso. Uma API para as duas features, provisionada no tenant da equipe (risco R12) |
 | Classificação de intenção | Ensemble: TF-IDF (palavra + caractere) e embeddings `multilingual-e5-large`, ambos com regressão logística | Devolve probabilidade *calibrada*, requisito do limiar por intenção já previsto no catálogo. Escolhido por medição, não por preferência — ver 5.4.11 de [Projeto.md](Projeto.md) |
-| Voz | Azure Speech, token efêmero emitido pelo backend | Transcrição parcial em tempo real, chave nunca exposta, áudio dentro do perímetro do parceiro |
-| Executor | Copilot Studio via Direct Line | Inalterado em relação ao escopo anterior |
-| Testes | pytest, pytest-asyncio, Vitest, Testing Library | Espelham a separação backend/frontend |
+| Voz | Azure Speech: token efêmero emitido pelo backend para o microfone e transcrição dos arquivos de áudio no backend | Transcrição parcial em tempo real e chave nunca exposta; o serviço fica no tenant da equipe e é reprovisionável no do parceiro por configuração (seção 12.2) |
+| Executor | Executor próprio (Google Drive, Pinecone e Gemini) atrás da porta `Executor`; Copilot Studio via Direct Line previsto | O Direct Line depende de habilitação no tenant do parceiro, ainda pendente (seção 12.2); a porta mantém os dois caminhos, trocados pela variável `EXECUTOR` (seção 13) |
+| Nuvem | Azure Container Apps, Container Registry, Key Vault e Log Analytics | Contêineres e um PostgreSQL padrão preservam a portabilidade; a escala a zero cabe no teto de R$ 300 por ano (11.2.6 de [Projeto.md](Projeto.md)) |
+| Integração contínua | GitLab CI com OIDC | Verificação de cada merge request e implantação sem segredo guardado no GitLab |
+| Testes | pytest, pytest-asyncio, pytest-cov, Locust, pytest-recording, Vitest, Testing Library e MSW | Espelham a separação backend/frontend |
 
 Duas escolhas merecem justificativa mais longa, porque a alternativa óbvia foi
 descartada.
@@ -410,8 +419,9 @@ Cada pasta responde a uma pergunta distinta:
   Separado de `persistence/` porque as perguntas do dashboard mudam com muito
   mais frequência que o esquema.
 - **`voz/`** — *como transcrevo áudio?* Emite o token de curta duração que o
-  navegador usa para falar com o Azure Speech. A chave do recurso não sai
-  daqui.
+  navegador usa para falar com o Azure Speech e transcreve os arquivos
+  enviados pela Fast Transcription, depois de o `ffprobe` confirmar a trilha
+  de áudio e a duração. A chave do recurso não sai daqui.
 - **`copilot/`** — *como executo a ação?* O `client.py` é o único ponto do
   middleware que conhece o Copilot (via API Direct Line). Trocar o executor no
   futuro significa substituir apenas este módulo.
@@ -454,10 +464,12 @@ código da equipe.
 
 ### 8.4 `infra/` — ambiente de desenvolvimento
 
-O `docker-compose.yml` sobe os quatro serviços com um comando, permitindo que
-qualquer integrante rode a solução localmente apenas com Docker instalado. O
-`worker` é contêiner separado da `api` por duas razões: mantém a API sem estado
-e evita disparo duplicado de rotinas quando ela reinicia ou escala.
+O `docker-compose.yml` sobe os cinco serviços (`web`, `middleware`, `worker`,
+`db` e `rabbitmq`) com um comando, permitindo que qualquer integrante rode a
+solução localmente apenas com Docker instalado. O `worker` é contêiner separado
+da `api` por duas razões: mantém a API sem estado e evita disparo duplicado de
+rotinas quando ela reinicia ou escala. A implantação na Azure está na seção 6
+de [Projeto.md](Projeto.md).
 
 ## 9. Modelo de dados
 
@@ -734,7 +746,7 @@ mensagem, para que a recusa não revele se a informação não existe ou apenas 
 | Repositório documental | Google Drive, pasta controlada por conta de serviço | Provisionamento imediato pela equipe; a ingestão é um job no `worker` que já existe, sem serviço novo no compose |
 | Embeddings | `intfloat/multilingual-e5-large`, local | Já carregado pelo ramo de embeddings do classificador, com os prefixos de assimetria da família e5 já tratados. Custo zero e, sobretudo, o corpus não sai da máquina para ser indexado |
 | Banco vetorial | Pinecone, atrás de uma porta `RepositorioVetorial` | O adaptador pgvector sobre o PostgreSQL existente fica como reserva: esgotar a camada gratuita ou desistir de enviar vetores para fora vira mudança de `.env`, não refatoração |
-| Geração | Gemini, atrás de uma porta `ModeloLinguagem` | Provisionamento imediato e camada gratuita suficiente para dado sintético. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação; se chegar, a troca é um adaptador em `rag/linguagem/` e uma linha no `.env` |
+| Geração | Gemini, atrás de uma porta `ModeloLinguagem`, pelo SDK do Google ou pelo OpenRouter | Provisionamento imediato e camada gratuita suficiente para dado sintético; o OpenRouter serve o mesmo modelo cobrando por uso, sem depender da cota gratuita. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação; se chegar, a troca é um adaptador em `rag/linguagem/` e uma linha no `.env` |
 | Base estruturada | PostgreSQL, *schema* `portfolio`, por migração Alembic | Dá destino às 10 intenções de transação e às agregações que caberiam ao Power BI, sem banco novo |
 
 ### 13.4 Perímetro e limites
