@@ -1512,37 +1512,45 @@ Os pontos de atenção descrevem o processo, e não o desempenho individual. A c
 
 #### 3.6.1 Planejamento da Sprint 5
 
-O planejamento preliminar da Sprint 5, registrado em 22/09 com 17 tasks e 20,75 h, partia do que restava do escopo antecipado para a Sprint 4: as correções apontadas nos testes de usabilidade e o fechamento do projeto. Ele foi refeito a partir dos três artefatos da sprint — desenvolvimento e documentação técnica do projeto, documentação técnica final e gestão de projetos evolutiva com a apresentação final —, confrontando cada item pedido com o que o repositório já entrega. O que já está atendido não gerou task nova: a API de áudios, os dois webhooks, a mensageria e a consolidação do teste de usabilidade, com as correções que ele apontou. O que falta gerou 60 tasks, que somam 83,50 h, e cada uma registra, no contexto, o item do artefato que atende.
+O planejamento preliminar da Sprint 5, registrado em 22/09 com 17 tasks e 20,75 h, partia do que restava do escopo antecipado para a Sprint 4. Ele foi refeito a partir dos três artefatos da sprint — desenvolvimento e documentação técnica do projeto, documentação técnica final e gestão de projetos evolutiva com a apresentação final —, confrontando cada item pedido com o que o repositório já entrega, e fechado na Sprint Planning de 28/09. A planning acrescentou as tasks de exploração do ambiente de teste do parceiro, liberado em 04/09, e as de alinhamento com os critérios de validação do Escritório de Projetos, atribuiu os responsáveis e moveu as tasks para `Backlog` na ordem do cronograma. O que já estava atendido não gerou task nova: a API de áudios, os dois webhooks, a mensageria e a consolidação do teste de usabilidade, com as correções que ele apontou.
 
-As tasks estão registradas como issues na milestone `Sprint 05` do [Kanban do GitLab](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/boards), abertas e ainda fora das colunas do quadro, que é a situação prevista na seção 2.7 para o card criado e não comprometido. Os responsáveis são atribuídos na abertura da sprint, em 28/09. O objetivo, o contexto, o DoR e o DoD de cada task estão na própria issue, na estrutura da seção 2.5.1.
+As tasks estão registradas como issues na milestone `Sprint 05` do [Kanban do GitLab](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/boards). O objetivo, o contexto, o DoR e o DoD de cada uma estão na própria issue, na estrutura da seção 2.5.1, e o contexto de cada issue começa pelo item do artefato que ela atende.
+
+##### Calendário
+
+| Data | Situação |
+|---|---|
+| 28/09 (segunda) | Sprint Planning |
+| 29/09, 30/09 e 01/10 | Desenvolvimento |
+| 02/10 (sexta) | Prova do módulo: dia leve, com tasks que não exigem dedicação contínua |
+| 03/10 (sábado) | Dia extra de trabalho |
+| 04/10 (domingo) | Eleições: sem trabalho |
+| 05/10 (segunda) | Desenvolvimento e corte das métricas no fim do dia |
+| 06/10 (terça) | Retrospectiva final e último merge da sprint |
+| 07/10 (quarta) | Apresentação final |
 
 ##### Capacidade
 
 | Medida | Valor |
 |---|---:|
 | Capacidade declarada | 6 integrantes × 16 h = **96,00 h** |
-| Tasks planejadas | **83,50 h** (60 tasks) |
-| Folga em relação à capacidade | **12,50 h** |
-| Destino da folga | Resíduo da Sprint 4 |
+| Tasks planejadas | **90,25 h** (70 tasks) |
+| Folga em relação à capacidade | **5,75 h** |
 
-A Sprint 5 é planejada dentro da capacidade, como pede a `AM20`, mas com folga pequena. Os artefatos da sprint pedem itens que o planejamento preliminar não cobria, como a documentação técnica final, o plano de adoção, a análise dos ODS, os notebooks de teste e o post-mortem de riscos, e a folga caiu de 75,25 h para 12,50 h. A última sprint do módulo não tem ciclo seguinte para absorver estouro, por isso a regra de corte do item seguinte vale desde o primeiro dia.
+| Responsável | Tasks | Horas |
+|---|---:|---:|
+| Celso | 13 | 15,75 |
+| Mirela | 13 | 15,50 |
+| Mariana | 12 | 15,00 |
+| Carlos Eduardo | 13 | 15,00 |
+| Alexsander | 9 | 15,00 |
+| Eduardo | 10 | 14,00 |
 
-##### Reserva para o resíduo da Sprint 4
+A Sprint 5 é planejada dentro da capacidade, como pede a `AM20`, e a carga fica entre 14,00 h e 15,75 h por integrante, abaixo das 16 h declaradas. A folga é pequena porque os artefatos pedem itens que o planejamento preliminar não cobria, como a documentação técnica final, o plano de adoção, a análise dos ODS e os notebooks de teste, e porque a planning acrescentou o ambiente do parceiro e o Escritório de Projetos.
 
-Os cards da Sprint 4 que não fecharem até o último merge do ciclo continuam na milestone `Sprint 04`, como registra o item seguinte, mas as horas para concluí-los saem da capacidade da Sprint 5.
+##### Resíduo da Sprint 4
 
-| Medida | Valor |
-|---|---:|
-| Cards abertos na milestone `Sprint 04` em 23/09 às 14h24 | 59, com 82,25 h convertidas |
-| Cards abertos na milestone `Sprint 04` em 25/09 às 23h26 | 2, com 2,00 h convertidas |
-| Resíduo usado no planejamento | 2,00 h, medidas na reapuração de #503 (seção 3.5.3), integrada em 26/09 |
-| Reserva disponível | 12,50 h |
-
-O resíduo medido no fechamento cabe na reserva, e a regra de corte da `AM20` não é acionada no primeiro dia. Ela continua valendo para o estouro que surgir durante a Sprint 5: saem primeiro as tasks `P_MEDIA`, de baixo para cima nas tabelas abaixo, até cobrir o excesso, no limite das 13,50 h que elas somam. A task que dependia de uma task cortada segue sem aquele insumo, e o corte é registrado em comentário nas duas issues, com o que deixa de ser feito.
-
-##### Cards da Sprint 4
-
-Os cards da milestone `Sprint 04` permanecem nela até a conclusão: a Sprint 5 não herda cards da Sprint 4. É esse o destino explícito de todos eles, inclusive dos dois de prioridade baixa ainda abertos no corte de 22/09 — #383, do pipeline de entrega contínua, e o das tags SemVer das Sprints 3 e 4 —. O #383 foi concluído na própria Sprint 4, e o card das tags, antes #362, foi removido do GitLab sem substituto, como registra a lista de tasks abaixo.
+A Sprint 4 fechou sem card aberto: em 28/09 a milestone `Sprint 04` não tinha nenhuma issue aberta, e a folga não precisa ser reservada para ela. A reapuração de #503 confirma o número sobre o commit de fechamento. Se a folga não bastar durante a sprint, a regra da `AM20` se aplica: saem primeiro as tasks `P_MEDIA`, de baixo para cima nas tabelas abaixo, e a task que dependia de uma task cortada segue sem aquele insumo, com o corte registrado em comentário nas duas issues.
 
 ##### Lista de tasks, estimativa e prioridade
 
@@ -1551,104 +1559,126 @@ As tasks estão agrupadas por frente, e cada frente responde a um dos artefatos 
 | Frente | Artefato de origem | Tasks | Horas |
 |---|---|---:|---:|
 | Desenvolvimento, testes e documentação técnica | Desenvolvimento e documentação técnica do projeto | 27 | 33,50 |
-| Usabilidade e dados do parceiro | Desenvolvimento e documentação técnica do projeto | 2 | 3,00 |
-| Documentação técnica final | Documentação técnica final | 17 | 26,00 |
-| Gestão do projeto | Gestão de projetos evolutiva e apresentação final | 10 | 15,50 |
+| Usabilidade e ambiente do parceiro | Desenvolvimento e documentação técnica do projeto; Gestão de projetos evolutiva e apresentação final | 4 | 5,00 |
+| Documentação técnica final e Escritório de Projetos | Documentação técnica final | 24 | 30,25 |
+| Gestão do projeto | Gestão de projetos evolutiva e apresentação final | 11 | 16,00 |
 | Apresentação final | Gestão de projetos evolutiva e apresentação final | 4 | 5,50 |
-| **Total** | | **60** | **83,50** |
+| **Total** | | **70** | **90,25** |
 
 **Desenvolvimento, testes e documentação técnica**
 
-| Issue | Task | Labels | *Size* | Horas | Prioridade | Depende de |
-|---|---|---|---|---:|---|---|
-| #456 | Corrigir o `PERFORMANCE_MODE` para substituir apenas o executor | `CODE` `BUG` | M | 1,00 | `P_ALTA` | — |
-| #457 | Corrigir a guarda de injeção para falhar de modo seguro | `CODE` `BUG` | M | 1,00 | `P_ALTA` | — |
-| #458 | Triar os casos xfail da suíte funcional | `TEST` | M | 1,00 | `P_ALTA` | — |
-| #459 | Medir a cobertura integral do middleware com a suíte de integração | `TEST` | M | 1,00 | `P_ALTA` | — |
-| #460 | Ampliar a cobertura de testes do middleware até a meta de 80% | `TEST` | G | 2,00 | `P_ALTA` | #459 |
-| #461 | Reexecutar os testes de carga nominal e de pico com a API ativa | `TEST` | G | 2,00 | `P_ALTA` | #456 |
-| #462 | Executar o teste de disparo concorrente de rotinas com tráfego de chat | `TEST` | M | 1,00 | `P_ALTA` | #461 |
-| #463 | Medir a disponibilidade do agente no ambiente implantado | `TEST` | M | 1,00 | `P_MEDIA` | #377, #384 |
-| #464 | Implementar os testes unitários dos componentes do chat | `TEST` | G | 2,00 | `P_ALTA` | — |
-| #465 | Implementar os testes unitários dos componentes da moldura e da base visual | `TEST` | G | 2,00 | `P_MEDIA` | — |
-| #466 | Implementar os testes unitários dos componentes da página de Rotinas | `TEST` | M | 1,00 | `P_MEDIA` | — |
-| #467 | Medir a cobertura dos testes da interface na integração contínua | `TEST` | M | 1,00 | `P_ALTA` | — |
-| #481 | Ampliar a cobertura de testes da interface até a meta de 80% | `TEST` | M | 1,00 | `P_ALTA` | #464, #465, #466, #467 |
-| #468 | Auditar a acessibilidade da interface com ferramenta automatizada | `TEST` | M | 1,00 | `P_ALTA` | — |
-| #469 | Corrigir as falhas de acessibilidade apontadas na auditoria | `CODE` `BUG` | G | 2,00 | `P_ALTA` | #468 |
-| #470 | Validar o layout responsivo das telas nas larguras de referência | `TEST` | M | 1,00 | `P_ALTA` | — |
-| #471 | Ampliar os testes de integração entre a interface e o middleware | `TEST` | G | 2,00 | `P_ALTA` | — |
-| #482 | Documentar as rotas do middleware com exemplos de requisição e resposta | `DOCS` | M | 1,00 | `P_ALTA` | — |
-| #472 | Documentar a navegabilidade entre as telas da interface | `DESIGN` `DOCS` | M | 1,00 | `P_ALTA` | — |
-| #473 | Atualizar a estratégia de construção do código-fonte da interface | `DOCS` | P | 0,50 | `P_MEDIA` | — |
-| #474 | Atualizar a documentação dos testes da interface com casos, resultados e cobertura | `TEST` `DOCS` | M | 1,00 | `P_ALTA` | #464, #465, #466, #467, #471, #481 |
-| #475 | Registrar no `Projeto.md` os resultados dos testes complementares do middleware | `TEST` `DOCS` | M | 1,00 | `P_ALTA` | #457, #458, #459, #460, #461, #462 |
-| #476 | Atualizar a discussão da escolha do algoritmo de NLP | `DOCS` | M | 1,00 | `P_ALTA` | — |
-| #477 | Documentar exemplos de entrada e saída do NLP com casos de sucesso e de falha | `DOCS` | M | 1,00 | `P_ALTA` | — |
-| #478 | Documentar no `banco-de-dados.md` as tabelas criadas na Sprint 4 | `DOCS` | M | 1,00 | `P_MEDIA` | — |
-| #479 | Atualizar os modelos conceitual, lógico e físico com o schema atual | `DOCS` | M | 1,00 | `P_MEDIA` | #478 |
-| #480 | Escrever o manual de implantação e uso da prova de conceito | `DEPLOY` `DOCS` | G | 2,00 | `P_ALTA` | #376, #377 |
+| Issue | Task | Responsável | Labels | *Size* | Horas | Prioridade | Depende de |
+|---|---|---|---|---|---:|---|---|
+| #456 | Corrigir o `PERFORMANCE_MODE` para substituir apenas o executor | Mariana | `BUG` `CODE` | M | 1,00 | `P_ALTA` | — |
+| #457 | Corrigir a guarda de injeção para falhar de modo seguro | Mariana | `BUG` `CODE` | M | 1,00 | `P_ALTA` | — |
+| #458 | Triar os casos xfail da suíte funcional | Mariana | `TEST` | M | 1,00 | `P_ALTA` | — |
+| #459 | Medir a cobertura integral do middleware com a suíte de integração | Mariana | `TEST` | M | 1,00 | `P_ALTA` | — |
+| #460 | Ampliar a cobertura de testes do middleware até a meta de 80% | Mariana | `TEST` | G | 2,00 | `P_ALTA` | #459 |
+| #461 | Reexecutar os testes de carga nominal e de pico com a API ativa | Mariana | `TEST` | G | 2,00 | `P_ALTA` | #456 |
+| #462 | Executar o teste de disparo concorrente de rotinas com tráfego de chat | Mariana | `TEST` | M | 1,00 | `P_ALTA` | #461 |
+| #463 | Medir a disponibilidade do agente no ambiente implantado | Mariana | `TEST` | M | 1,00 | `P_MEDIA` | #377, #384 |
+| #464 | Implementar os testes unitários dos componentes do chat | Mirela | `TEST` | G | 2,00 | `P_ALTA` | — |
+| #465 | Implementar os testes unitários dos componentes da moldura e da base visual | Mirela | `TEST` | G | 2,00 | `P_MEDIA` | — |
+| #466 | Implementar os testes unitários dos componentes da página de Rotinas | Mirela | `TEST` | M | 1,00 | `P_MEDIA` | — |
+| #467 | Medir a cobertura dos testes da interface na integração contínua | Mirela | `TEST` | M | 1,00 | `P_ALTA` | — |
+| #468 | Auditar a acessibilidade da interface com ferramenta automatizada | Mirela | `TEST` | M | 1,00 | `P_ALTA` | — |
+| #469 | Corrigir as falhas de acessibilidade apontadas na auditoria | Mirela | `BUG` `CODE` | G | 2,00 | `P_ALTA` | #468 |
+| #470 | Validar o layout responsivo das telas nas larguras de referência | Mirela | `TEST` | M | 1,00 | `P_ALTA` | — |
+| #471 | Ampliar os testes de integração entre a interface e o middleware | Carlos Eduardo | `TEST` | G | 2,00 | `P_ALTA` | — |
+| #472 | Documentar a navegabilidade entre as telas da interface | Mirela | `DESIGN` `DOCS` | M | 1,00 | `P_ALTA` | — |
+| #473 | Atualizar a estratégia de construção do código-fonte da interface | Mirela | `DOCS` | P | 0,50 | `P_MEDIA` | — |
+| #474 | Atualizar a documentação dos testes da interface com casos, resultados e cobertura | Mirela | `DOCS` `TEST` | M | 1,00 | `P_ALTA` | #464, #465, #466, #467, #471, #481 |
+| #475 | Registrar no `Projeto.md` os resultados dos testes complementares do middleware | Mariana | `DOCS` `TEST` | M | 1,00 | `P_ALTA` | #457, #458, #459, #460, #461, #462 |
+| #476 | Atualizar a discussão da escolha do algoritmo de NLP | Carlos Eduardo | `DOCS` | M | 1,00 | `P_ALTA` | — |
+| #477 | Documentar exemplos de entrada e saída do NLP com casos de sucesso e de falha | Carlos Eduardo | `DOCS` | M | 1,00 | `P_ALTA` | — |
+| #478 | Documentar no `banco-de-dados.md` as tabelas criadas na Sprint 4 | Carlos Eduardo | `DOCS` | M | 1,00 | `P_MEDIA` | — |
+| #479 | Atualizar os modelos conceitual, lógico e físico com o schema atual | Carlos Eduardo | `DOCS` | M | 1,00 | `P_MEDIA` | #478 |
+| #480 | Escrever o manual de implantação e uso da prova de conceito | Carlos Eduardo | `DEPLOY` `DOCS` | G | 2,00 | `P_ALTA` | #376, #377 |
+| #481 | Ampliar a cobertura de testes da interface até a meta de 80% | Mirela | `TEST` | M | 1,00 | `P_ALTA` | #464, #465, #466, #467 |
+| #482 | Documentar as rotas do middleware com exemplos de requisição e resposta | Carlos Eduardo | `DOCS` | M | 1,00 | `P_ALTA` | — |
 
-**Usabilidade e dados do parceiro**
+**Usabilidade e ambiente do parceiro**
 
-| Issue | Task | Labels | *Size* | Horas | Prioridade | Depende de |
-|---|---|---|---|---:|---|---|
-| #484 | Reaplicar o roteiro de usabilidade nas telas corrigidas | `TEST` `OFFSITE` | M | 1,00 | `P_MEDIA` | — |
-| #485 | Comparar a base sintética aos dados de exemplo do SharePoint de teste | `TEST` `DOCS` | G | 2,00 | `P_MEDIA` | — |
+| Issue | Task | Responsável | Labels | *Size* | Horas | Prioridade | Depende de |
+|---|---|---|---|---|---:|---|---|
+| #484 | Reaplicar o roteiro de usabilidade nas telas corrigidas | Celso | `OFFSITE` `TEST` | M | 1,00 | `P_MEDIA` | — |
+| #485 | Documentar o de-para entre os dados do parceiro e a base sintética | Alexsander | `DOCS` `TEST` | G | 2,00 | `P_ALTA` | #520 |
+| #519 | Explorar os acessos ao ambiente de teste do parceiro | Alexsander | `DEPLOY` `OFFSITE` | M | 1,00 | `P_ALTA` | — |
+| #520 | Revisar os requisitos do projeto com os dados do ambiente do parceiro | Alexsander | `DOCS` | M | 1,00 | `P_ALTA` | #519 |
 
-**Documentação técnica final**
+**Documentação técnica final e Escritório de Projetos**
 
-| Issue | Task | Labels | *Size* | Horas | Prioridade | Depende de |
-|---|---|---|---|---:|---|---|
-| #486 | Atualizar os componentes e as tecnologias da solução com a justificativa das escolhas | `DOCS` | M | 1,00 | `P_ALTA` | — |
-| #487 | Revisar a visão geral da arquitetura com os componentes implementados | `DOCS` | G | 2,00 | `P_ALTA` | #486 |
-| #488 | Descrever as funcionalidades implementadas na prova de conceito | `DOCS` | M | 1,00 | `P_ALTA` | #458 |
-| #489 | Atualizar os benefícios entregues pelo projeto | `DOCS` | M | 1,00 | `P_MEDIA` | #488 |
-| #490 | Descrever os aperfeiçoamentos futuros da solução | `DOCS` | M | 1,00 | `P_MEDIA` | #488 |
-| #491 | Detalhar os custos de pessoal e de tecnologia da prova de conceito e da solução final | `DOCS` | G | 2,00 | `P_ALTA` | Planejamento da seção 3.6.1 integrado |
-| #492 | Projetar os custos e as receitas da solução para o parceiro | `DOCS` | M | 1,00 | `P_ALTA` | #491 |
-| #493 | Atualizar o Canvas de proposta de valor da Sprint 1 | `DOCS` | M | 1,00 | `P_ALTA` | — |
-| #494 | Analisar os ODS atendidos e ameaçados pelo projeto | `DOCS` | G | 2,00 | `P_ALTA` | — |
-| #495 | Mapear o público-alvo, as barreiras e o onboarding da adoção do agente | `DOCS` | G | 2,00 | `P_ALTA` | — |
-| #496 | Estruturar os mecanismos de incentivo e engajamento dos usuários | `DOCS` | G | 2,00 | `P_ALTA` | #495 |
-| #497 | Consolidar os feedbacks das Sprints 1 a 4 no documento de revisão | `DOCS` | G | 2,00 | `P_ALTA` | — |
-| #498 | Aplicar as correções pendentes apontadas nos feedbacks | `DOCS` `BUG` | G | 2,00 | `P_ALTA` | #497 |
-| #499 | Criar o notebook de avaliação do classificador de intenções | `CODE` | M | 1,00 | `P_ALTA` | — |
-| #500 | Criar o notebook de teste da vetorização e da recuperação do RAG | `CODE` | M | 1,00 | `P_MEDIA` | — |
-| #501 | Adequar o repositório aos critérios do Escritório de Projetos | `DOCS` | G | 2,00 | `P_ALTA` | #363 |
-| #502 | Revisar a coerência do `Projeto.md` com a implementação final | `DOCS` | G | 2,00 | `P_ALTA` | #474, #475, #476, #477, #479, #480, #482, #487, #489, #490, #492, #493, #494, #496, #498 |
+| Issue | Task | Responsável | Labels | *Size* | Horas | Prioridade | Depende de |
+|---|---|---|---|---|---:|---|---|
+| #486 | Atualizar os componentes e as tecnologias da solução com a justificativa das escolhas | Celso | `DOCS` | M | 1,00 | `P_ALTA` | — |
+| #487 | Revisar a visão geral da arquitetura com os componentes implementados | Mariana | `DOCS` | G | 2,00 | `P_ALTA` | #486 |
+| #488 | Descrever as funcionalidades implementadas na prova de conceito | Mariana | `DOCS` | M | 1,00 | `P_ALTA` | #458 |
+| #489 | Atualizar os benefícios entregues pelo projeto | Celso | `DOCS` | M | 1,00 | `P_MEDIA` | #488 |
+| #490 | Descrever os aperfeiçoamentos futuros da solução | Celso | `DOCS` | M | 1,00 | `P_MEDIA` | #488 |
+| #491 | Detalhar os custos de pessoal e de tecnologia da prova de conceito e da solução final | Celso | `DOCS` | G | 2,00 | `P_ALTA` | — |
+| #492 | Projetar os custos e as receitas da solução para o parceiro | Celso | `DOCS` | M | 1,00 | `P_ALTA` | #491 |
+| #493 | Atualizar o Canvas de proposta de valor da Sprint 1 | Celso | `DOCS` | M | 1,00 | `P_ALTA` | — |
+| #494 | Analisar os ODS atendidos e ameaçados pelo projeto | Celso | `DOCS` | G | 2,00 | `P_ALTA` | — |
+| #495 | Mapear o público-alvo, as barreiras e o onboarding da adoção do agente | Celso | `DOCS` | G | 2,00 | `P_ALTA` | — |
+| #496 | Estruturar os mecanismos de incentivo e engajamento dos usuários | Celso | `DOCS` | G | 2,00 | `P_ALTA` | #495 |
+| #497 | Consolidar os feedbacks das Sprints 1 a 4 no documento de revisão | Alexsander | `DOCS` | G | 2,00 | `P_ALTA` | — |
+| #498 | Aplicar as correções pendentes apontadas nos feedbacks | Alexsander | `BUG` `DOCS` | G | 2,00 | `P_ALTA` | #497 |
+| #499 | Criar o notebook de avaliação do classificador de intenções | Carlos Eduardo | `CODE` | M | 1,00 | `P_ALTA` | — |
+| #500 | Criar o notebook de teste da vetorização e da recuperação do RAG | Carlos Eduardo | `CODE` | M | 1,00 | `P_MEDIA` | — |
+| #501 | Conferir o repositório contra os critérios do Escritório de Projetos | Eduardo | `DOCS` | M | 1,00 | `P_ALTA` | #521, #522, #523, #524, #525, #526, #527 |
+| #502 | Revisar a coerência do `Projeto.md` com a implementação final | Alexsander | `DOCS` | G | 2,00 | `P_ALTA` | #474, #475, #476, #477, #479, #480, #482, #487, #489, #490, #492, #493, #494, #496, #498 |
+| #521 | Adequar o `README` aos critérios do Escritório de Projetos | Celso | `DOCS` | M | 1,00 | `P_ALTA` | — |
+| #522 | Alinhar o histórico de lançamentos do `README` às tags do repositório | Eduardo | `DEPLOY` | P | 0,50 | `P_ALTA` | — |
+| #523 | Escrever o `Index.md` indexando todos os documentos da pasta docs | Carlos Eduardo | `DOCS` | P | 0,50 | `P_ALTA` | — |
+| #524 | Preencher o `GuiaPadroesDesenvolvimento.md` com os padrões adotados no projeto | Mirela | `DOCS` | M | 1,00 | `P_ALTA` | — |
+| #525 | Acrescentar sumário navegável aos documentos da pasta docs | Mariana | `DOCS` | M | 1,00 | `P_ALTA` | — |
+| #526 | Liberar o acesso ao vídeo do Protótipo B citado no `Projeto.md` | Celso | `DOCS` | PP | 0,25 | `P_ALTA` | — |
+| #527 | Criar o `README` da pasta `src` com instalação, execução e guia rápido de uso | Mirela | `DOCS` | M | 1,00 | `P_ALTA` | — |
 
 **Gestão do projeto**
 
-| Issue | Task | Labels | *Size* | Horas | Prioridade | Depende de |
-|---|---|---|---|---:|---|---|
-| #503 | Reapurar os indicadores da Sprint 4 depois do último merge | `DOCS` | P | 0,50 | `P_ALTA` | Último merge da Sprint 4 |
-| #504 | Medir o SLA de primeira revisão dos merge requests | `DOCS` | M | 1,00 | `P_MEDIA` | — |
-| #505 | Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria | `DOCS` | G | 2,00 | `P_ALTA` | #504, corte de 06/10 |
-| #506 | Analisar a evolução das métricas das cinco sprints | `DOCS` | G | 2,00 | `P_ALTA` | #503, #504 |
-| #507 | Consolidar a matriz de risco do projeto com o status final de cada item | `DOCS` | G | 2,00 | `P_ALTA` | #485 |
-| #508 | Escrever o post-mortem de riscos do projeto | `DOCS` | G | 2,00 | `P_ALTA` | #507 |
-| #509 | Consolidar a matriz de papéis das cinco sprints | `DOCS` | G | 2,00 | `P_ALTA` | Atribuição dos cards da Sprint 5 |
-| #510 | Conduzir a retrospectiva final do módulo com a equipe | `MEET` | M | 1,00 | `P_ALTA` | #505 |
-| #511 | Avaliar o contrato de convivência no fechamento do módulo | `DOCS` | M | 1,00 | `P_ALTA` | #510 |
-| #512 | Escrever a análise post-mortem do projeto | `DOCS` | G | 2,00 | `P_ALTA` | #506, #510 |
+| Issue | Task | Responsável | Labels | *Size* | Horas | Prioridade | Depende de |
+|---|---|---|---|---|---:|---|---|
+| #503 | Reapurar os indicadores da Sprint 4 depois do último merge | Eduardo | `DOCS` | P | 0,50 | `P_ALTA` | Último merge da Sprint 4 |
+| #504 | Medir o SLA de primeira revisão dos merge requests | Eduardo | `DOCS` | M | 1,00 | `P_MEDIA` | — |
+| #505 | Analisar a Sprint 5 com pontos fortes, fracos e ações de melhoria | Eduardo | `DOCS` | G | 2,00 | `P_ALTA` | #504, corte de 05/10 |
+| #506 | Analisar a evolução das métricas das cinco sprints | Eduardo | `DOCS` | G | 2,00 | `P_ALTA` | #503, #504 |
+| #507 | Consolidar a matriz de risco do projeto com o status final de cada item | Alexsander | `DOCS` | G | 2,00 | `P_ALTA` | #485 |
+| #508 | Escrever o post-mortem de riscos do projeto | Alexsander | `DOCS` | G | 2,00 | `P_ALTA` | #507 |
+| #509 | Consolidar a matriz de papéis das cinco sprints | Eduardo | `DOCS` | G | 2,00 | `P_ALTA` | — |
+| #510 | Conduzir a retrospectiva final do módulo com a equipe | Eduardo | `MEET` | M | 1,00 | `P_ALTA` | #505 |
+| #511 | Avaliar o contrato de convivência no fechamento do módulo | Alexsander | `DOCS` | M | 1,00 | `P_ALTA` | #510 |
+| #512 | Escrever a análise post-mortem do projeto | Eduardo | `DOCS` | G | 2,00 | `P_ALTA` | #506, #510 |
+| #528 | Atualizar o planejamento da Sprint 5 com o cronograma aprovado na planning | Celso | `DOCS` | P | 0,50 | `P_ALTA` | — |
 
 **Apresentação final**
 
-| Issue | Task | Labels | *Size* | Horas | Prioridade | Depende de |
-|---|---|---|---|---:|---|---|
-| #513 | Adequar o `copilot/solucao/` à restrição de não exportar agentes | `DOCS` | P | 0,50 | `P_ALTA` | — |
-| #514 | Preparar a demonstração final no ambiente do parceiro | `DEPLOY` `OFFSITE` | G | 2,00 | `P_ALTA` | #513, #374 |
-| #515 | Criar os slides da apresentação final | `OFFSITE` | G | 2,00 | `P_ALTA` | #506, #514 |
-| #516 | Conduzir a apresentação final para os stakeholders e o parceiro | `OFFSITE` | M | 1,00 | `P_ALTA` | #515 |
+| Issue | Task | Responsável | Labels | *Size* | Horas | Prioridade | Depende de |
+|---|---|---|---|---|---:|---|---|
+| #513 | Adequar o `copilot/solucao/` à restrição de não exportar agentes | Carlos Eduardo | `DOCS` | P | 0,50 | `P_ALTA` | — |
+| #514 | Preparar a demonstração final no ambiente do parceiro | Carlos Eduardo | `DEPLOY` `OFFSITE` | G | 2,00 | `P_ALTA` | #513 |
+| #515 | Criar os slides da apresentação final | Eduardo | `OFFSITE` | G | 2,00 | `P_ALTA` | #506, #514 |
+| #516 | Conduzir a apresentação final para os stakeholders e o parceiro | Carlos Eduardo | `OFFSITE` | M | 1,00 | `P_ALTA` | #515 |
 
-As labels seguem a seção 2.5.3. Como `BUSINESS`, `ARCHITECTURE`, `PROCESS` e `CHORE` ainda não existem no projeto, as tasks de negócio, arquitetura, gestão e manutenção do repositório levam `DOCS` com o esforço e a prioridade; a retrospectiva final, os slides e a apresentação, que não produzem markdown, levam só `MEET` ou `OFFSITE`. As duas práticas estão registradas naquela seção. Quarenta e oito das 60 tasks são `P_ALTA` (70,00 h), porque quase tudo o que resta é item exigido pelos artefatos ou condição para fechar o módulo. As doze `P_MEDIA` (13,50 h) são as primeiras a sair se a folga não bastar.
+As labels seguem a seção 2.5.3. Como `BUSINESS`, `ARCHITECTURE`, `PROCESS` e `CHORE` ainda não existem no projeto, as tasks de negócio, arquitetura, gestão e manutenção do repositório levam `DOCS` com o esforço e a prioridade; as que não produzem markdown levam só `MEET` ou `OFFSITE`. São 59 tasks `P_ALTA` (78,75 h) e 11 `P_MEDIA` (11,50 h).
 
-A tag SemVer da versão final, prevista no planejamento preliminar como S5-17, não virou task. A seção 2.5 do `GestaoConfiguracao.md` trata a tag de entrega como opcional, e o repositório não recebe tag desde `release-sprint-2`: o card das tags das Sprints 3 e 4, antes #362, foi removido do GitLab sem substituto. A #518, integração da Sprint 4 na `main`, está na milestone `Sprint 05`, mas fica fora das tabelas: foi criada depois deste planejamento, é trabalho da Sprint 4 e já está fechada.
+##### Cronograma
+
+| Data | Tasks |
+|---|---|
+| Segunda, 28/09 | #528 |
+| Terça, 29/09 | #456, #457, #458, #459, #464, #467, #468, #476, #478, #482, #486, #493, #495, #497, #526, #503, #504, #519, #513 |
+| Quarta, 30/09 | #460, #461, #465, #469, #471, #477, #479, #491, #494, #498, #506, #509, #507, #520 |
+| Quinta, 01/10 | #462, #466, #470, #472, #473, #524, #480, #487, #488, #499, #492, #496, #514, #485 |
+| Sexta, 02/10 | #463, #484, #521, #527 |
+| Sábado, 03/10 | #481, #474, #475, #489, #490, #500, #508, #515, #522, #523, #525, #501 |
+| Segunda, 05/10 | #502, #505, #506, #507 |
+| Terça, 06/10 | #510, #511, #512, #515 |
+| Quarta, 07/10 | #516 |
+
+Algumas tasks aparecem em dois dias porque têm duas etapas: #506 analisa a série das Sprints 1 a 4 em 30/09 e acrescenta a Sprint 5 no corte de 05/10; #507 consolida a matriz em 30/09 e confere o status final no corte, depois do de-para de #485; #515 tem a primeira versão dos slides em 03/10 e o ensaio em 06/10.
 
 ##### Sequenciamento
-
-As tasks sem dependência começam em paralelo desde o primeiro dia. A figura mostra as cadeias, isto é, as tasks que dependem de outra ou das quais outra depende; a coluna *Depende de* das tabelas é a referência completa.
 
 **Figura — Dependências entre as tasks da Sprint 5**
 
@@ -1658,14 +1688,13 @@ flowchart LR
     classDef externo stroke-dasharray:4 3
     F4["Último merge da Sprint 4"] --> I503["#503 Reapurar a Sprint 4"]
     I504["#504 SLA de revisão"] --> I505["#505 Analisar a Sprint 5"]
-    CORTE["Corte de 06/10"] --> I505
+    CORTE["Corte de 05/10"] --> I505
     I503 & I504 --> I506["#506 Evolução das métricas"]
     I505 --> I510["#510 Retrospectiva final"]
     I510 --> I511["#511 Contrato de convivência"]
     I510 & I506 --> I512["#512 Post-mortem"]
-    I485["#485 Base sintética e SharePoint"] --> I507["#507 Matriz de risco final"] --> I508["#508 Post-mortem de riscos"]
+    I519["#519 Acessos do parceiro"] --> I520["#520 Requisitos do parceiro"] --> I485["#485 De-para"] --> I507["#507 Matriz de risco final"] --> I508["#508 Post-mortem de riscos"]
     I513["#513 Adequar copilot/solucao"] --> I514["#514 Demonstração"]
-    DL["#374 Cliente Direct Line"] --> I514
     I514 & I506 --> I515["#515 Slides"] --> I516["#516 Apresentação final"]
     I495["#495 Mapa de adoção"] --> I496["#496 Incentivos e engajamento"]
     I456["#456 PERFORMANCE_MODE"] --> I461["#461 Carga nominal e pico"] --> I462["#462 Disparo concorrente"]
@@ -1679,30 +1708,22 @@ flowchart LR
     I486["#486 Componentes e tecnologias"] --> I487["#487 Visão geral da arquitetura"]
     I491["#491 Custos"] --> I492["#492 Custos e receitas"]
     I497["#497 Feedbacks"] --> I498["#498 Correções dos feedbacks"]
+    EP["#521 a #527 Critérios do Escritório de Projetos"] --> I501["#501 Conferência da planilha"]
     AMB["#376, #377 Ambientes de nuvem"] --> I480["#480 Manual de implantação"]
     I474 & I475 & I479 & I480 & I487 & I489 & I490 & I492 & I496 & I498 --> I502["#502 Coerência do Projeto.md"]
-    I502 & I508 & I511 & I512 --> FIM["Último merge da Sprint 5"]
+    I501 & I502 & I508 & I511 & I512 --> FIM["Último merge da Sprint 5 (06/10)"]
     I505 -. "reapuração após o último merge" .-> FIM
     class I504,I505,I510,I512 critico
-    class F4,CORTE,DL,AMB,FIM externo
+    class F4,CORTE,AMB,FIM externo
 ```
 
-*Legenda:* cada nó é uma task da Sprint 5, identificada pelo número da issue; os nós tracejados são marcos ou cards de fora dela, dos quais uma task depende. Seta contínua indica que a task de destino só começa com a de origem concluída. A seta pontilhada indica a reapuração de #505 sobre o último merge da sprint. As bordas em destaque marcam o caminho crítico. Para não sobrecarregar a figura, ficam de fora as tasks sem cadeia, as dependências de #502 em #476, #477, #482, #493 e #494 e as dependências externas que não abrem cadeia (#363 e #384).
+*Legenda:* cada nó é uma task da Sprint 5, identificada pelo número da issue; os nós tracejados são marcos ou cards de fora dela, dos quais uma task depende. Seta contínua indica que a task de destino só começa com a de origem concluída. A seta pontilhada indica a reapuração de #505 sobre o último merge da sprint. As bordas em destaque marcam o caminho crítico. Para não sobrecarregar a figura, ficam de fora as tasks sem cadeia, as dependências de #502 em #476, #477, #482, #493 e #494 e as dependências externas que não abrem cadeia (#377 e #384).
 
-| Ordem | Momento | Tasks | Por quê |
-|:---:|---|---|---|
-| 1 | Primeiro dia, 28/09 | #504, #456, #458, #459, #485, #495, #497, #513 | Abrem as cadeias mais longas: a medição do SLA abre o caminho crítico; a correção do `PERFORMANCE_MODE` vem antes dos testes de carga, a cobertura integral antes da meta de 80% e a triagem dos xfail antes da descrição das funcionalidades; a comparação da base alimenta a matriz de risco; o mapa de adoção vem antes dos incentivos; os feedbacks precisam ser levantados antes de corrigidos; a adequação do `copilot/solucao/` vem antes da demonstração |
-| 2 | De 29/09 a 05/10 | Demais tasks de desenvolvimento, testes e documentação, com #460, #461, #462, #481, #484, #487, #488, #492, #496, #498, #506, #507, #509 e #514 | A documentação técnica final e os testes complementares precisam estar integrados antes do corte, porque a revisão de coerência (#502) depende deles; a matriz de papéis (#509) começa depois da atribuição dos cards |
-| 3 | Véspera do fechamento, 06/10 | #505, #502 e #515, além dos valores da Sprint 5 em #506 e #507 | Fecha o que a revisão interna precisa ler antes do último dia |
-| 4 | Último dia, 07/10 | #510, #511, #512, #508 e a reapuração de #505 | A retrospectiva, o contrato e os dois post-mortems precisam do ciclo encerrado; a análise redigida na véspera é refeita sobre o último merge (`AM24`) |
-
-A #503 não entra na ordem: a reapuração foi integrada em 26/09 pelo !178, antes da abertura da sprint, e a issue aguarda só o fechamento. A apresentação final (#516) acontece na data marcada para ela, depois dos slides (#515).
-
-Em horas, a cadeia mais longa soma 7,00 h: a dos testes de carga (#456 → #461 → #462 → #475 → #502). Ela não depende do calendário e pode terminar na primeira semana. O caminho crítico é a cadeia de fechamento — #504 → #505 → #510 → #512, 6,00 h em série —, porque é a única presa ao calendário: #505 depende do corte de 06/10, e #510 e #512 só começam com o ciclo encerrado, o que deixa 5,00 h para os dois últimos dias. Qualquer atraso nela atrasa o fechamento do módulo. As correções apontadas no teste de usabilidade já estão integradas (seção 10.3.12.9 do Projeto.md); resta a reaplicação do roteiro (#484), que não bloqueia outras tasks.
+Em horas, a cadeia mais longa soma 7,00 h: a dos testes de carga (#456 → #461 → #462 → #475 → #502). Ela não depende do calendário e termina até o sábado, 03/10. O caminho crítico é a cadeia de fechamento — #504 → #505 → #510 → #512, 6,00 h em série —, porque é a única presa ao calendário: #505 depende do corte de 05/10, e #510 e #512 acontecem em 06/10, véspera da apresentação. Qualquer atraso nela atrasa o fechamento do módulo. Todas as tasks de documentação do `Projeto.md` precisam estar integradas até 03/10, porque a revisão de coerência (#502) acontece em 05/10.
 
 #### 3.6.2 Retrospectiva da Sprint 5
 
-Seção redigida em duas etapas, pelas tasks #505 e #510. A Sprint 5 vai de 28/09 a 07/10. A primeira versão sai do corte de 06/10, véspera do fechamento, e serve à revisão interna. A versão final é refeita depois do último merge da Sprint 5, em 07/10, conforme a `AM24`, e acrescenta o que a retrospectiva final com a equipe levantar.
+Seção redigida em duas etapas, pelas tasks #505 e #510. A Sprint 5 vai de 28/09 a 07/10, dia da apresentação final. A primeira versão sai do corte de 05/10 e serve à revisão interna. A versão final é refeita depois do último merge da Sprint 5, em 06/10, conforme a `AM24`, e acrescenta o que a retrospectiva final com a equipe levantar.
 
 ## 4. Gestão de riscos e oportunidades
 
