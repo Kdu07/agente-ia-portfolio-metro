@@ -28,7 +28,6 @@ import threading
 import time
 from dataclasses import dataclass
 
-from app.config import settings
 from app.pipeline.intencao import treino
 from app.pipeline.intencao.treino import ArtefatoTreinado
 
@@ -69,8 +68,6 @@ def limiar_de(intencao_id: str) -> float | None:
     Devolve None quando o modelo foi treinado sem calibração — nesse caso
     quem chama deve cair no `Intencao.limiar_confianca` do catálogo.
     """
-    if settings.performance_mode:
-        return None
     return obter_artefato().limiares.get(intencao_id)
 
 
@@ -111,6 +108,4 @@ async def classificar(texto: str) -> ResultadoIntencao:
     """
     if not texto or not texto.strip():
         return ResultadoIntencao(intencao_id=None, confianca=0.0)
-    if settings.performance_mode:
-        return ResultadoIntencao(intencao_id="consultar_status_projeto", confianca=0.99)
     return await asyncio.to_thread(_classificar_sincrono, texto)

@@ -111,8 +111,10 @@ class Settings(BaseSettings):
     # A única chave que troca o caminho (seção 3.7 de
     # docs/plano-executor-proprio.md): `copilot` é o Copilot Studio via
     # Direct Line, o caminho oficial; `proprio` é o RAG sobre o corpus do
-    # Drive. Lida só em api/deps.py — o orquestrador conhece a porta, não a
-    # escolha.
+    # Drive. A fábrica compartilhada de executor lê estas chaves; o
+    # orquestrador conhece a porta, não a escolha. `performance_mode` troca
+    # somente essa porta pelo executor sintético, sem desativar guardas nem
+    # classificação.
     executor: str = "copilot"
     performance_mode: bool = False
     performance_executor_delay_ms: int = 50
@@ -236,18 +238,24 @@ class Settings(BaseSettings):
     def configurar_conexao_rabbitmq(self) -> Self:
         try:
             explicita = self.rabbitmq_url.get_secret_value()
-            url = AmqpDsn(explicita) if explicita else AmqpDsn.build(
-                scheme="amqp",
-                username=quote(self.rabbitmq_user, safe=""),
-                password=quote(self.rabbitmq_password.get_secret_value(), safe=""),
-                host=self.rabbitmq_host,
-                port=self.rabbitmq_port,
-                path=quote(self.rabbitmq_vhost, safe=""),
+            url = (
+                AmqpDsn(explicita)
+                if explicita
+                else AmqpDsn.build(
+                    scheme="amqp",
+                    username=quote(self.rabbitmq_user, safe=""),
+                    password=quote(self.rabbitmq_password.get_secret_value(), safe=""),
+                    host=self.rabbitmq_host,
+                    port=self.rabbitmq_port,
+                    path=quote(self.rabbitmq_vhost, safe=""),
+                )
             )
             if not url.host:
                 raise ValueError("Host AMQP ausente")
         except ValueError:
-            raise ValueError("Configuracao RabbitMQ invalida: usar amqp ou amqps com host") from None
+            raise ValueError(
+                "Configuracao RabbitMQ invalida: usar amqp ou amqps com host"
+            ) from None
         self.rabbitmq_url = SecretStr(str(url))
         return self
 
