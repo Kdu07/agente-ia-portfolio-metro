@@ -112,6 +112,8 @@
   - [11.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento](#112-implantação-do-protótipo-para-uso-pela-equipe-de-desenvolvimento)
   - [11.3 Monitoramento e Manutenção](#113-monitoramento-e-manutenção)
   - [11.4 Retorno a uma Versão Anterior](#114-retorno-a-uma-versão-anterior)
+- [12. Plano de Adoção e Mobilização do Ecossistema](#12-plano-de-adoção-e-mobilização-do-ecossistema)
+  - [12.1 Mapa de Adoção e Aculturamento Organizacional](#121-mapa-de-adoção-e-aculturamento-organizacional)
 - [Referências](#referências)
 
 # 1. Introdução
@@ -12048,6 +12050,84 @@ um destes casos:
 No `prd`, o retorno vem antes do diagnóstico, porque o ambiente é o das
 demonstrações. A correção segue depois pelo fluxo normal: branch `fix/` a
 partir da `develop` e merge request.
+
+# 12. Plano de Adoção e Mobilização do Ecossistema
+
+Um agente de IA só gera valor se as pessoas o usarem na rotina da gestão do portfólio, e as barreiras de entrada em ambiente corporativo são conhecidas: desconfiança no conteúdo gerado, receio quanto à confidencialidade, atrito de uso e resistência a trocar um hábito que já funciona. Este capítulo descreve como a solução será introduzida no Metrô e o que sustenta o uso depois da introdução, começando pelo mapa de adoção e aculturamento (12.1).
+
+O plano parte da prova de conceito como ela é: consulta ao portfólio em linguagem natural, com a fonte citada, rotinas agendadas e avisos dentro da aplicação, sem escrita no portfólio pela conversa. Parte também da condição para usar dado real: o ambiente homologado do parceiro (risco R02) e o reprovisionamento do Content Safety e do Speech no tenant do Metrô ([Arquitetura.md](Arquitetura.md), seção 12.2). Por isso a introdução é feita em fases, e nenhuma pessoa usa o agente com dado real antes que essa condição esteja cumprida.
+
+| Fase | Quando | O que acontece | Quem decide a passagem para a fase seguinte |
+|---|---|---|---|
+| Preparação | Antes do piloto | Homologação do uso com dado real, curadoria inicial do corpus e das perguntas sugeridas e escolha do subportfólio piloto | TI do Metrô, com os setores técnicos e de compliance |
+| Piloto | Quatro semanas | Um dos seis subportfólios, com seus líderes, as equipes, um diretor patrocinador e o PMO | PMO Corporativo, ao fim da quarta semana |
+| Expansão | Segundo e terceiro meses | Os demais subportfólios, um por vez, e depois os membros das equipes | PMO Corporativo, a cada subportfólio |
+| Sustentação | Contínuo | Curadoria, novos usuários e atualização do corpus a cada revisão dos normativos | PMO Corporativo, com a TI responsável pela sustentação |
+
+## 12.1 Mapa de Adoção e Aculturamento Organizacional
+
+### 12.1.1 Público-alvo principal
+
+O público é definido pelos perfis e permissões que a solução já implementa ([Arquitetura.md](Arquitetura.md), seção 6), e não por categorias genéricas: o perfil determina o que cada pessoa vê e como o agente responde, e a permissão determina se ela acessa o painel de intenções e a gestão de rotinas. Cada público corresponde a uma persona da seção 2.4. O dimensionamento segue o da análise de viabilidade, que conta 90 usuários ativos: os responsáveis pelas 86 frentes do portfólio e 4 integrantes do PMO (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)).
+
+| Público | Perfil e permissões na solução | Quantos | O que faz com o agente | Papel na adoção |
+|---|---|---|---|---|
+| Líderes de projeto e de programa (Fernanda Medina, 2.4.2) | `LIDER_PROJETO`, com `GERIR_ROTINAS` | 86, um por frente do portfólio | Consulta avanço, marcos, riscos, decisões pendentes e normas dos projetos sob sua responsabilidade; agenda o relatório do fechamento mensal; recebe o aviso de marco atrasado | Público prioritário: concentra o uso e o ganho de tempo, e é o segmento em que a proposta de valor se apoia (2.8.2) |
+| Analistas do PMO Corporativo, na atuação transversal do gestor de portfólio (2.4) | Perfil de visão ampla, com `VER_INTENCOES` e `GERIR_ROTINAS` | 4 | Consolida o portfólio, varre pendências, lê o painel de intenções e faz a curadoria do catálogo e do corpus | Dono da adoção: conduz o onboarding, acompanha o uso e decide o que muda |
+| Diretoria e assessores (Roberto Nogueira, 2.4.1) | `DIRETORIA` | Fora da base de 90 usuários | Consulta a visão consolidada e as criticidades e recebe o relatório recorrente na aplicação | Patrocinador: o uso visível pela diretoria legitima a mudança para os líderes |
+| Membros das equipes de projeto (Carlos Mendes, 2.4.3) | `MEMBRO_EQUIPE` | Fora da base de 90 usuários | Consulta o próprio projeto e as normas e recebe os avisos do projeto em que atua | Público de expansão: entra depois que os líderes do seu projeto já usam o agente |
+
+A Diretoria e os membros das equipes ficam fora da base de 90 usuários porque a premissa de volume da análise de viabilidade conta apenas os responsáveis pelas frentes e o PMO, o que a torna conservadora quanto ao custo de operação. O agente é interno: fornecedores, outras áreas do Metrô e o público externo não fazem parte do público, e a extensão a outros processos da companhia está fora do escopo (seção 7.1.2 do [GestaoProjeto.md](GestaoProjeto.md)).
+
+### 12.1.2 Barreiras culturais e técnicas esperadas
+
+As barreiras foram levantadas a partir das personas (2.4), da matriz de riscos (2.6) e do teste de usabilidade (10.3.12). Para cada uma, a tabela indica o público mais exposto, a evidência que o projeto já tem e o que a própria solução faz a respeito. O que depende de ação das pessoas, e não do produto, está em 12.1.3.
+
+| # | Barreira | Tipo | Mais expostos | Evidência no projeto | Resposta da solução |
+|---|---|---|---|---|---|
+| B1 | Desconfiança na resposta gerada por IA: o medo de uma resposta inventada chegar a uma decisão | Cultural | Diretoria e PMO | É o principal risco de abandono apontado em 2.8.4 e a consequência do risco R04 | Fonte citada em cada resposta factual e abstenção quando o corpus não sustenta a resposta; na bancada do RAG, abstenção correta de 1,00 e nenhuma resposta sem citação válida (9.4.6) |
+| B2 | Receio quanto à confidencialidade: não saber para onde vai o que se pergunta | Cultural | PMO e Diretoria | Perímetro declarado em 3.3.1.1, com as exposições registradas como riscos R12, R19 e R20 | Guardas de entrada e de saída, filtro de permissão na consulta e registro de cada interação; com dado real, os serviços passam ao tenant do Metrô antes do piloto |
+| B3 | Receio de perder o controle da informação ou o próprio papel: "o agente decide", "o agente substitui o PMO" | Cultural | PMO | O escopo exclui a tomada autônoma de decisões (seção 1) | O agente consulta, cita e recusa, mas não altera o portfólio pela conversa nem decide; a curadoria do catálogo e do corpus fica com o PMO |
+| B4 | Hábito: a planilha, o SharePoint e a consulta direta ao PMO já funcionam | Cultural | Líderes e membros | O agente atual só responde a fluxos pré-configurados (2.2.3), o que reforçou o hábito de buscar a informação por conta própria | Perguntas sugeridas no primeiro acesso, todas com resposta no corpus, e aviso de marco atrasado ao abrir a conversa, que mostra valor antes de qualquer pergunta |
+| B5 | Não saber o que perguntar nem onde estão as funções | Técnica | Líderes | Sucesso de 62,5% na criação de rotina, de 75% na exploração das páginas e de 75% na nova conversa (10.3.12.6) | Correções UX01 a UX05, com a agenda de rotina em linguagem comum e a barra lateral com rótulos (10.3.12.9) |
+| B6 | Atrito no acesso corporativo | Técnica | Todos | Login com 87,5% de sucesso e tempo entre 11,7 s e 114 s (10.3.12.4 e 10.3.12.6) | Entrada única pelo Entra ID, com a orientação sobre a conta corporativa na tela de entrada (UX01) |
+| B7 | Recusa lida como defeito: "o agente não sabe nada" | Cultural e técnica | Membros e líderes | Pedidos fora do catálogo ou do perfil são recusados por desenho (RF01 e RF03) | Recusa orientada, que explica o limite e sugere o que perguntar; as recusas que se repetem aparecem no painel de intenções, para o PMO decidir se viram curadoria |
+| B8 | Expectativa de atualizar o portfólio pela conversa | Técnica | Líderes | A prova de conceito não escreve no portfólio | O pedido de alteração recebe a orientação de consultar, e a atualização continua na fonte, de onde chega ao agente pelo webhook do portfólio (9.1.2.7) |
+| B9 | Voz no ambiente de trabalho: ruído, jargão e constrangimento de falar em voz alta | Técnica e cultural | Líderes em campo | Risco R03, de baixa acurácia no jargão do Metrô | A voz é opcional e o texto está sempre disponível; o texto transcrito aparece no campo e só é enviado quando a pessoa confirma (9.1.2.7) |
+
+As barreiras culturais pesam mais que as técnicas. As técnicas já têm resposta no produto e foram medidas; as culturais dependem de confiança, que se constrói com uso bem-sucedido e com transparência sobre o que o agente não faz, e é para elas que as ações de 12.1.3 foram desenhadas.
+
+### 12.1.3 Ações de onboarding e educação
+
+A solução educa no próprio uso, sem manual:
+
+- **Perguntas sugeridas.** A conversa vazia oferece perguntas que correspondem a intenções reais do catálogo e que têm resposta no corpus, de modo que o primeiro contato termina numa resposta útil, e não numa recusa.
+- **Fonte citada.** Cada resposta factual mostra de onde veio, e o usuário aprende onde a informação está e como conferi-la.
+- **Recusa orientada.** Quando o pedido está fora do catálogo ou do perfil, a resposta explica o limite em linguagem comum, sem revelar dado restrito, e ensina o escopo pelo uso.
+- **Aviso de marco atrasado.** Ao abrir uma conversa, o líder vê o marco atrasado dos seus projetos antes de perguntar qualquer coisa.
+- **Agenda em linguagem comum.** A rotina é criada por frequência, horário e resumo em prosa antes de salvar, sem expressão cron.
+- **Histórico e retomada.** Quem interrompe uma consulta retoma de onde parou.
+
+As ações organizacionais completam o que o produto faz. Cada uma tem momento e responsável:
+
+| Fase e momento | Ação | Responsável | Público |
+|---|---|---|---|
+| Preparação | Homologar o uso com dado real: reprovisionar o Content Safety e o Speech no tenant do Metrô, ligar o corpus aos documentos do subportfólio piloto e verificar o perímetro de 3.3.1.1 | TI do Metrô, com os setores técnicos e de compliance | Condição para todos |
+| Preparação | Revisar com o PMO os documentos indexados e trocar as perguntas sugeridas por perguntas reais do subportfólio piloto | PMO Corporativo, com a TI responsável pela sustentação | PMO |
+| Preparação | Escolher o subportfólio piloto e o diretor patrocinador | PMO Corporativo | Diretoria |
+| Piloto, semana 1 | Sessão de lançamento de 30 minutos no subportfólio: três perguntas reais com a fonte aberta na tela e uma recusa demonstrada de propósito, para mostrar também o que o agente não faz | PMO, com o líder do subportfólio | Líderes e membros |
+| Piloto, semana 1 | Guia de uma página: o que o agente faz e o que não faz, perguntas por perfil e para onde vai o que se pergunta | PMO | Todos |
+| Piloto, semana 2 | Configurar com cada líder a primeira rotina, o relatório do fechamento mensal | PMO | Líderes |
+| Piloto, semana 2 | Entregar ao diretor patrocinador o relatório recorrente na aplicação, com 15 minutos de apresentação | PMO | Diretoria |
+| Piloto, semanas 1 a 4 | Plantão de dúvidas de 30 minutos, a cada quinze dias | PMO, com a TI responsável pela sustentação | Todos |
+| Piloto, a cada quinze dias | Ler o painel de intenções: as recusas e as perguntas fora do escopo que se repetem viram item do guia ou pedido de curadoria | PMO | PMO |
+| Piloto, semana 4 | Reaplicar o roteiro de usabilidade com usuários do subportfólio e comparar com o SUS de 71,9 da rodada de setembro de 2026 (10.3.12.5) | PMO, com a TI responsável pela sustentação | Líderes e membros |
+| Expansão, meses 2 e 3 | Repetir a sessão de lançamento em cada subportfólio, com um líder do piloto apresentando o próprio uso | PMO, com um líder do piloto | Líderes e membros |
+| Expansão, meses 2 e 3 | Incluir os membros de cada projeto depois que o líder já usa o agente | Líderes de projeto | Membros |
+| Sustentação, contínuo | Incluir o agente no onboarding de novos líderes e membros | PMO | Novos usuários |
+| Sustentação, a cada revisão do NOR-00-223 ou dos modelos de documento | Atualizar o corpus e as perguntas sugeridas | PMO, com a TI responsável pela sustentação | Todos |
+
+As ações usam o que a solução já tem e o que o PMO já faz, e nenhuma exige ferramenta nova. Duas escolhas merecem registro. A recusa demonstrada na sessão de lançamento é deliberada: quem vê o agente dizer que não sabe passa a confiar mais no que ele afirma, o que ataca a barreira B1 por onde ela nasce. E a entrada dos membros das equipes só depois dos líderes segue a hierarquia do próprio projeto: o membro adota o que o líder já usa, e não o contrário.
 
 # Referências
 
