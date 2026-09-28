@@ -132,11 +132,17 @@ web:vitest:
   extends: .web
   stage: teste
   script:
-    - npm run test -- --reporter=default --reporter=junit --outputFile.junit=relatorio-vitest.xml
+    - npm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=relatorio-vitest.xml
   artifacts:
     when: always
     reports:
       junit: src/web/relatorio-vitest.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: src/web/coverage/cobertura-coverage.xml
+    paths:
+      - src/web/coverage/
+    expire_in: 30 days
 
 # === Entrega contínua (Azure) ===
 #
