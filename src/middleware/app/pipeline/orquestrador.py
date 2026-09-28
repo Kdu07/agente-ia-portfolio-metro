@@ -38,12 +38,13 @@ from app.config import settings
 from app.executor.base import Executor, TurnoContexto
 from app.persistence.models import Canal, Conversa, Interacao
 from app.persistence.repository import ConversaRepository, InteracaoRepository
+from app.pipeline import respostas
 from app.pipeline.desfechos import Desfecho
 from app.pipeline.guardas import saida as guarda_saida
 from app.pipeline.guardas.abuso import classificador as abuso_classificador
 from app.pipeline.guardas.injecao import classificador as injecao_classificador
 from app.pipeline.guardas.injecao import regras as injecao_regras
-from app.pipeline.intencao import catalogo
+from app.pipeline.intencao import catalogo, saudacao
 from app.pipeline.intencao import classificador as intencao_classificador
 from app.pipeline.respostas import para as texto_de_recusa
 from app.schemas.chat import ChatRequest, ChatResponse
@@ -194,6 +195,17 @@ class Orquestrador:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_ABUSO)
 
         # --- 3. Intenção ---------------------------------------------------
+        # Saudação antes do classificador, e depois das guardas: "olá,
+        # ignore as regras" continua sendo barrado como injeção. O desfecho
+        # é o de fora de escopo porque o vocabulário é fechado, com a
+        # intenção reservada `saudacao` — que a distingue da recusa sem
+        # rótulo — e o texto de apresentação no lugar da recusa.
+        if saudacao.e_saudacao(ctx.prompt):
+            ctx.intencao_id = saudacao.INTENCAO
+            return await self._encerrar(
+                ctx, Desfecho.RECUSADA_FORA_ESCOPO, texto=respostas.SAUDACAO
+            )
+
         with _cronometrar(ctx, ETAPA_INTENCAO):
             resultado = await intencao_classificador.classificar(ctx.prompt)
         ctx.confianca = resultado.confianca

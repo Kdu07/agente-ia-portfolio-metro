@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 import { m } from "motion/react";
 
 import { AvatarDaPrata } from "@/componentes/chat/AvatarDaPrata";
-import { APARENCIA } from "@/componentes/chat/desfechos";
+import { APARENCIA, exibeEtiqueta } from "@/componentes/chat/desfechos";
 import { ENTRADA_PERGUNTA, ENTRADA_RESPOSTA } from "@/componentes/movimento/transicoes";
 import { BotaoIcone } from "@/componentes/ui/BotaoIcone";
 import { IconeCopiado, IconeCopiar, IconeRotina, IconeVoz } from "@/componentes/ui/icones";
@@ -35,13 +35,29 @@ interface Props {
   canal?: Canal;
   /** Mensagem criada nesta tela: entra com animacao. */
   local?: boolean;
+  /** Intencao do turno; `null` quando o classificador nao foi chamado (saudacao). */
+  intencaoId?: string | null;
 }
 
-export function BolhaMensagem({ autor, texto, horario, desfecho, canal, local = false }: Props) {
+export function BolhaMensagem({
+  autor,
+  texto,
+  horario,
+  desfecho,
+  canal,
+  local = false,
+  intencaoId,
+}: Props) {
   return autor === "usuario" ? (
     <Pergunta texto={texto} horario={horario} canal={canal} local={local} />
   ) : (
-    <Resposta texto={texto} horario={horario} desfecho={desfecho} local={local} />
+    <Resposta
+      texto={texto}
+      horario={horario}
+      desfecho={desfecho}
+      local={local}
+      intencaoId={intencaoId}
+    />
   );
 }
 
@@ -73,9 +89,9 @@ function Pergunta({ texto, horario, canal, local }: Omit<Props, "autor" | "desfe
   );
 }
 
-function Resposta({ texto, horario, desfecho, local }: Omit<Props, "autor" | "canal">) {
+function Resposta({ texto, horario, desfecho, local, intencaoId }: Omit<Props, "autor" | "canal">) {
   const aparencia = desfecho ? APARENCIA[desfecho] : undefined;
-  const destacada = Boolean(aparencia?.rotulo);
+  const destacada = desfecho ? exibeEtiqueta(desfecho, intencaoId) : false;
   const Desenho = aparencia?.icone;
 
   return (

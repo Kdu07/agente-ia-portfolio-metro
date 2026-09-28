@@ -194,6 +194,8 @@ O board e o repositório constituem as fontes oficiais de acompanhamento do proj
 - Integrantes devem colaborar na revisão de merge requests e no esclarecimento de dúvidas que bloqueiem o trabalho da equipe.
 - Revisões de merge requests devem ser realizadas em até 24 horas úteis, conforme SLA estabelecido.
 - Quando possível, as revisões devem ser distribuídas entre os integrantes para evitar concentração em uma única pessoa.
+- Quem revisa também integra: nenhum integrante executa mais de 40% dos merges do ciclo, conforme a revisão registrada na seção 2.9.3.
+- O SLA de 24 horas úteis é aferido no fechamento de cada sprint pela mediana do tempo entre a abertura do merge request e a primeira revisão.
 - O repositório não deve ser mantido dentro de pasta sincronizada com serviço de nuvem, conforme a revisão registrada na seção 2.9.2. Quem não puder mover o repositório deve pausar a sincronização enquanto trabalha com Git.
 
 ### 2.2 Comunicação e rituais
@@ -216,7 +218,7 @@ O Kanban do GitLab apoia esse acompanhamento ao tornar visíveis o estado das ta
 
 **Acompanhamento de carga e dependências (revisão da Sprint 2).** Para tornar verificável a regra registrada na seção [2.9.1](#291-revisão-sprint-2), a daily passa a incluir três verificações objetivas, conduzidas pelo Scrum Master da sprint:
 
-1. **Carga.** Comparação da quantidade e do *size* das issues em `Doing` por integrante. Diferença superior a 2:1 entre a maior e a menor carga atribuída deve ser discutida na própria daily e resolvida por redistribuição ou por registro da justificativa no card.
+1. **Carga.** Comparação da quantidade e do *size* das issues em `Doing` por integrante. Diferença superior a 2:1 entre a maior e a menor carga atribuída deve ser discutida na própria daily e resolvida por redistribuição ou por registro da justificativa no card. A mesma comparação é feita na abertura da sprint, sobre as horas atribuídas no planejamento, para que o desequilíbrio seja corrigido antes de o ciclo começar (seção 2.9.3).
 2. **Dependências.** Verificação das issues que bloqueiam outras atividades. Toda issue impeditiva deve receber a label `BLOCKED`, indicar o que a bloqueia e ter um próximo passo definido com responsável.
 3. **Fila de revisão.** Verificação das issues em `Waiting Review` e `Review`. Itens que ultrapassem o SLA de 24 horas úteis devem receber um revisor nomeado ainda na daily, priorizando os merge requests que bloqueiam outras entregas.
 
@@ -245,6 +247,8 @@ Conflitos interpessoais devem ser tratados de forma reservada e respeitosa, com 
 
 - Cards, merge requests e artefatos de documentação devem ser disponibilizados para revisão interna até **quinta-feira às 23h59**, independentemente do prazo formal da sprint.
 - A pessoa responsável deve comunicar antecipadamente quando identificar risco de não cumprimento do prazo.
+- Na daily de quarta-feira, cada card em `Backlog` ou `Doing` recebe a data prevista de conclusão dentro da própria sprint; o que não couber até quinta é replanejado nesse momento, e não no fim da semana.
+- O planejamento deve caber na capacidade declarada da sprint. Excesso pontual de até 10% é aceito quando registrado na milestone com o motivo, e trabalho no fim de semana só acontece por acordo registrado. O limite existe para absorver imprevistos, e não para ser planejado (seção 2.9.3).
 - Cards não concluídos devem permanecer atualizados no board, com o impedimento e o próximo passo registrados.
 - A conclusão de uma entrega depende do atendimento ao DoD do card e da aprovação do merge request, quando aplicável.
 
@@ -401,7 +405,7 @@ Exemplos do ciclo da Sprint 4, retirados do histórico da `develop`:
 | `6eae97c` | 23/09 | `docs: registra resultado da implementação dos testes do RNF01(#441)` | Inválida: terceira pessoa e referência colada à descrição, sem espaço |
 | `400b986` | 23/09 | `feat: atualiza secao de testes de integracao (#446)` | Inválida: terceira pessoa e tipo errado; alteração de documentação usa `docs` |
 
-**Integração contínua e merge request.** Na Sprint 4 o repositório não possui pipeline de integração contínua (não há `.gitlab-ci.yml` na `develop`), e nada bloqueia o merge automaticamente. O que barra um merge request é a revisão: ele só é integrado depois da aprovação de outro integrante, e quem o abre deve executar antes as suítes da parte alterada (`python -m pytest` no middleware e `npm run test` na interface) e registrar o resultado em *Como testar* ou no DoD. A partir do primeiro merge request aberto depois que um `.gitlab-ci.yml` for integrado à `develop`, a regra passa a ser não integrar merge request com pipeline falhando.
+**Integração contínua e merge request.** A pipeline do `.gitlab-ci.yml`, integrada à `develop` pelo !171, roda em cada merge request e em cada push na `develop` e na `main`. Ela executa o lint (`ruff` no middleware, `eslint` e checagem de tipos na interface) e os testes (`pytest` com PostgreSQL e RabbitMQ, e `vitest`), e na `develop` e na `main` também constrói as imagens e implanta. Merge request com pipeline falhando não é integrado; a aprovação de outro integrante continua obrigatória, e quem o abre registra em *Como testar* como verificar a mudança.
 
 **Movimentação do quadro.** O quadro é a fonte oficial do estado das atividades. Movimentar o card é responsabilidade da pessoa designada nele, e não do revisor ou do Scrum Master. A correspondência entre coluna e etapa do fluxo é a seguinte.
 
@@ -418,6 +422,7 @@ Regras de uso:
 
 - O card muda de coluna no momento em que o fato ocorre, e não no fechamento do dia. Quadro atualizado em lote deixa de informar durante a daily e inviabiliza as três verificações da seção [2.2.2](#222-dailies).
 - Card impedido permanece na coluna em que está, recebe a label `BLOCKED` e registra em comentário o que o bloqueia e qual é o próximo passo.
+- Card nunca volta de coluna. Um card movido para frente antes da hora fica onde está, com comentário explicando, porque o histórico do card registra cada movimento e um retorno aparece como regressão do trabalho (seção 2.9.3).
 - Cada integrante deve manter no máximo duas atividades em `doing` simultaneamente. Acima disso, a verificação de carga perde precisão e o trabalho em curso deixa de refletir o que está efetivamente sendo feito.
 - O fechamento da issue é feito pela pessoa responsável logo após o merge na `develop`, depois de conferir o DoD. `Closes #<issue>` na descrição do merge request registra o vínculo, mas o GitLab só fecha a issue automaticamente no merge para a branch padrão, que é a `main`: em 24/09/2026, #389 (!160), #391 (!156), #395 (!159) e #399 (!158) continuaram abertas depois de integradas na `develop`. Issue encerrada sem merge request associado deve registrar em comentário a razão do encerramento.
 - Atividade sem evidência no repositório, como reunião ou sessão com usuário externo, recebe a label `MEET` ou `OFFSITE` e é encerrada com registro em comentário descrevendo o resultado.
@@ -430,9 +435,9 @@ Regras de uso:
 > | Label de impedimento | `BLOCK` | `BLOCKED` | `BLOCK` não existe no projeto; `BLOCKED` é a label disponível no quadro |
 > | Colunas do quadro | Nomes em minúsculas | `Backlog`, `Doing`, `Waiting Review` e `Review` | Nomes reais das labels do quadro |
 > | Fechamento da issue | Automático por `Closes #N` | Manual, logo após o merge na `develop`, com o DoD conferido | O GitLab só fecha automaticamente no merge para a `main` |
-> | Integração contínua | Não registrada | Sem pipeline: o merge é barrado pela revisão, e o autor executa as suítes antes | Não há `.gitlab-ci.yml` na `develop` |
+> | Integração contínua | Não registrada | Pipeline em cada merge request; merge request com pipeline falhando não é integrado | A pipeline entrou na `develop` pelo !171, no fim do ciclo (revisão da seção 2.9.3) |
 >
-> Regras revisadas e mantidas: a daily presencial de 15 minutos conduzida pelo Scrum Master, com as três verificações de carga, dependências e fila de revisão, porque são elas que alimentam o acompanhamento da retrospectiva, onde o funcionamento no ciclo é avaliado; o SLA de 24 horas úteis para a primeira revisão, porque 23 dos 24 merge requests do período tiveram revisor nomeado; a estrutura das issues com DoR, DoD, milestone, prioridade e tamanho, porque todas as 99 issues da milestone `Sprint 04` têm prioridade e tamanho; e o fluxo da seção 2.6, que continua sendo o praticado. A coerência com o contrato de convivência será conferida na revisão da Sprint 4 da seção 2.9 (#402).
+> Regras revisadas e mantidas: a daily presencial de 15 minutos conduzida pelo Scrum Master, com as três verificações de carga, dependências e fila de revisão, porque são elas que alimentam o acompanhamento da retrospectiva, onde o funcionamento no ciclo é avaliado; o SLA de 24 horas úteis para a primeira revisão, porque 23 dos 24 merge requests do período tiveram revisor nomeado; a estrutura das issues com DoR, DoD, milestone, prioridade e tamanho, porque todas as 99 issues da milestone `Sprint 04` têm prioridade e tamanho; e o fluxo da seção 2.6, que continua sendo o praticado. A coerência com o contrato de convivência foi conferida na revisão da Sprint 4, na seção 2.9.3.
 
 ### 2.8 Fechamento da sprint
 
@@ -519,6 +524,56 @@ A ação AM13, que previa repriorizar o quadro no penúltimo dia da sprint, depe
 **Impacto esperado**
 
 Espera-se redução do tempo perdido com incidentes de ambiente local, que na Sprint 3 consumiram horas de trabalho sem produzir entrega. A abertura de issue para defeito encontrado deve tornar visível no board um tipo de trabalho que antes ficava embutido em outras entregas. A adequação da taxonomia de labels alinha o board aos critérios pelos quais o grupo é avaliado. A condução nomeada e o registro no quadro devem sustentar as três verificações da daily sem alongar o encontro. A convenção unificada de merge request elimina a divergência entre documento e prática e permite ler o título do card, o commit e o merge request como uma sequência única. A exceção da branch-base elimina a escolha entre cumprir a regra e documentar código existente, situação que a regra anterior não previa.
+
+#### 2.9.3 Revisão Sprint 4
+
+**Data:** 2026-09-25
+
+A revisão foi discutida com os seis integrantes e percorreu o contrato inteiro, a partir dos fatos registrados na seção [3.5](#35-sprint-4).
+
+**Regras revisadas e mantidas**
+
+| Regra | Seção | Razão da manutenção |
+|---|---|---|
+| Regra de ouro | 2.1.1 | Nenhum conflito ou episódio de exposição individual no ciclo. A regra continua descrevendo a prática do grupo |
+| Board e repositório como fontes oficiais | 2.1.1 | 97 de 97 issues da milestone com responsável, *size* e prioridade, sem regularização em bloco, e 23 dos 24 merge requests do período com revisor nomeado desde a abertura (seção 3.5.5) |
+| Repositório fora de pasta sincronizada com nuvem | 2.1.2 | `AM19` efetiva: nenhum incidente de ambiente local com o Git no ciclo, contra quatro na Sprint 3 |
+| Comunicação oficial em dois canais | 2.2.1 | A separação entre WhatsApp informal e Slack formal funcionou sem ambiguidade |
+| Dailies presenciais às 14h, com 15 minutos, conduzidas pelo Scrum Master | 2.2.2 | Formato mantido. A condução nomeada, criada na revisão anterior, foi exercida no ciclo |
+| Resolução de impasses e conflitos | 2.3 | A progressão não precisou ser acionada |
+| SLA de entrega até quinta às 23h59 | 2.4 | Mantido, e **não cumprido pela segunda sprint seguida**. A entrega final do projeto se estendeu até o último momento do prazo formal. O grupo atribui o resultado ao planejamento acima da capacidade e à demora para engrenar no início do ciclo. O prazo é preservado pela mesma razão da revisão anterior, organizar a semana e antecipar o esforço, e passa a contar com o *checkpoint* da daily de quarta de `AM25` |
+| Estrutura das issues, *T-shirt sizing* e labels | 2.5 | Mantidas com a conferência da Sprint 4 registrada na seção 2.5.3 (#401), que adotou a prática real do quadro enquanto as labels oficiais ausentes não são criadas |
+| Fluxo e rastreabilidade | 2.6 | O fluxo issue, branch, commit, merge request e merge continua sendo o praticado |
+| Fechamento da sprint | 2.8 | Mantido; a reapuração das métricas depois do último merge já é exigida por `AM24` |
+
+**Regras alteradas no ciclo e já registradas**
+
+As alterações abaixo foram feitas durante a Sprint 4 e estão descritas nas seções indicadas. Entram nesta revisão para que o contrato registre o motivo em um só lugar.
+
+| Regra | Seção | Alteração | Motivo |
+|---|---|---|---|
+| Referência ao card no commit e no título de merge request | 2.7 | `(#N)` ou `#N`, a partir da Sprint 5 | 34 dos 58 commits integrados da Sprint 4 usaram `#N`, e as duas formas geram o mesmo vínculo no GitLab |
+| Fechamento da issue | 2.7 | Manual, logo após o merge na `develop`, com o DoD conferido | O GitLab só fecha a issue no merge para a `main`, que é a branch padrão |
+| Label de impedimento e colunas do quadro | 2.5.3 e 2.7 | `BLOCKED` e os nomes reais das colunas | `BLOCK` e as colunas em minúsculas não existem no projeto |
+| Integração da `develop` na `main` | `GestaoConfiguracao.md` 2.2 | Merge request da `develop` ao fim de cada sprint; release opcional | O histórico mostra a `develop` integrada diretamente desde a Sprint 3 (!88 e !110) |
+
+**Justificativa das alterações**
+
+As alterações desta revisão respondem ao que a Sprint 4 mostrou de forma repetida: o ciclo atribuiu 135,50 h contra 96,00 h declaradas (141%), com quatro de seis integrantes acima de 16 h e commits no sábado e no domingo, 19 e 20/09; a razão de carga ficou em 2,25:1, pelo segundo ciclo acima do teto de 2:1; 14 dos 17 merges (82%) foram executados por duas pessoas; e o SLA de revisão não é medido desde a Sprint 2 (seções 3.5.3 e 3.5.5). No mesmo ciclo, a pipeline de integração contínua entrou na `develop` pelo !171, o que tornou desatualizado o registro que descrevia a ausência de pipeline.
+
+**Alterações aprovadas**
+
+- **Operação acima da capacidade declarada.** Fica aceito excesso pontual de até 10% sobre a capacidade declarada, registrado na milestone com o motivo, e trabalho no fim de semana só por acordo registrado. A regra foi escolhida porque a Sprint 4 foi excepcionalmente pesada, com a entrega final do projeto concentrada no ciclo. O objetivo do grupo continua sendo não operar acima da capacidade: o planejamento deve caber nas horas declaradas, e o limite de 10% existe para absorver imprevistos, e não para ser planejado. A regra está na seção 2.4.
+- **Verificação de carga no planejamento.** A verificação de carga, antes feita só na daily, passa a acontecer também na abertura da sprint, antes de o ciclo começar, conforme `AM21`. A regra está na seção 2.2.2.
+- **Integração distribuída.** Quem revisa também integra, e nenhum integrante executa mais de 40% dos merges do ciclo, conforme `AM22`. A regra está na seção 2.1.2.
+- **SLA de revisão medido.** O prazo de 24 horas úteis é mantido e passa a ser aferido no fechamento pela mediana do tempo até a primeira revisão, conforme `AM23`. A regra está na seção 2.1.2.
+- **Integração contínua no fluxo de merge.** Merge request com pipeline falhando não é integrado, e o registro da ausência de pipeline é substituído pela descrição do que a pipeline verifica. A regra está na seção 2.7.
+- **Conferência da política de commits.** `AM26` confere as mensagens pelas regras vigentes da seção 3 do `GestaoConfiguracao.md`, que a partir da Sprint 5 aceitam `(#N)` e `#N`.
+- **Movimentação do quadro.** Card nunca volta de coluna; um card movido para frente por engano fica onde está, com comentário explicando. A regra está na seção 2.7.
+
+**Impacto esperado**
+
+Com a carga verificada antes do ciclo e o excesso limitado e declarado, o planejamento deixa de contar com fim de semana e a conclusão deixa de se acumular no último dia. A integração distribuída reduz o gargalo de merge nos dias de maior volume, e a medição do SLA tira a revisão do campo da impressão. A pipeline e a conferência das mensagens na revisão dão ao fluxo de merge um critério verificável, em vez de depender da atenção de cada revisor. A regra do quadro mantém o histórico dos cards coerente com o andamento real do trabalho.
 
 ## 3. Avaliação das sprints
 
@@ -1217,7 +1272,7 @@ A contribuição medida no repositório — commits integrados e em branch, merg
 
 A Sprint 4 foi o ciclo em que a solução deixou de ser contrato e esqueleto e passou a código integrado e testado: autenticação pelo Entra ID, persistência, executor próprio com recuperação aumentada por geração, webhooks, rotinas agendadas e painel de intenções chegaram à `develop` ou a merge requests em revisão. O ciclo teve uma condição que o distingue dos anteriores: o escopo previsto para a Sprint 5 foi antecipado para a Sprint 4, e a equipe operou acima da capacidade declarada de dezesseis horas por integrante. A seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4) quantifica essa diferença, e ela é a chave de leitura dos demais indicadores: volume alto de trabalho iniciado, conclusão que se acumula para o fim da semana e carga desigual entre as frentes.
 
-A retrospectiva também corrige o método da anterior. Os indicadores da Sprint 3 haviam sido tirados de um corte parcial, e uma conclusão foi sustentada sobre ele. A seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3) refaz aquela conta depois do último merge do ciclo, com o board extraído pela API do GitLab, e reavalia as ações que tinham ficado sem evidência.
+Os números do fechamento, reapurados depois do último merge do período, estão em [Reapuração no fechamento da Sprint 4](#reapuração-no-fechamento-da-sprint-4), na seção 3.5.3. A retrospectiva também corrige o método da anterior. Os indicadores da Sprint 3 haviam sido tirados de um corte parcial, e uma conclusão foi sustentada sobre ele. A seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3) refaz aquela conta depois do último merge do ciclo, com o board extraído pela API do GitLab, e reavalia as ações que tinham ficado sem evidência.
 
 #### 3.5.3 Indicadores quantitativos da Sprint 4
 
@@ -1314,6 +1369,67 @@ Todos os 58 commits referenciam um card, então a rastreabilidade entre commit e
 As colunas medem coisas distintas e não se somam entre si. A leitura que a Sprint 3 ensinou está na diferença entre as duas colunas de commits: *commits na `develop`* é o trabalho já integrado; *commits em todas as branches* inclui o que está em merge request aguardando revisão. No corte, 34 commits de Celso Rocha estão nas MRs !127 e !128, do painel de intenções, e por isso ele aparece com zero na `develop`. Ler só a primeira coluna repetiria o erro apontado na avaliação anterior, em que um integrante com o segundo maior volume do ciclo aparecia sem nenhum commit integrado. Alexsander Barbosa responde por cards `OFFSITE` — sessões de usabilidade e a apresentação da Sprint Review —, trabalho que acontece fora do repositório e não deixa commit.
 
 A razão entre a maior e a menor carga atribuída é de **2,25:1** (29,75 h contra 13,25 h). A integração segue concentrada: 14 dos 17 merges, ou 82%, foram executados por duas integrantes.
+
+##### Reapuração no fechamento da Sprint 4
+
+> **Nota metodológica.** Corte de **25/09/2026 às 23h26 (UTC−03:00)**, mesmo horário do relatório de contribuições gerado pelo GitLab. Commit de fechamento na `develop`: `1858598`, merge do !148 às 23h12, o último antes do corte. É a reapuração exigida por `AM24` (#503), com as mesmas regras do corte de 22/09 e três fontes:
+>
+> 1. **Board**, milestone `Sprint 04`, pela API do GitLab: issue concluída é a fechada até o corte, atribuída ao primeiro responsável, com a mesma conversão de *size*.
+> 2. **Repositório**: commits autorais (sem os de merge) com data de autoria entre 14/09 às 00h00 e o corte, identidade reconciliada pelo `.mailmap` (`AM10`). *Na `develop`* conta o que está integrado; *em todas as branches* conta hashes únicos nas branches publicadas no GitLab, incluindo o que ainda não entrou.
+> 3. **Merge requests** para a `develop` criados no período, pela API: *revisão nomeada* é o revisor atribuído, e *merge executado* é quem integrou.
+>
+> O período começa em 14/09, e não no último merge da Sprint 3, como no corte de 22/09; por isso os totais do repositório não são a soma do corte anterior com o que veio depois. O relatório de contribuições foi conferido contra essas fontes. Ele coincide nos merge requests criados e nos commits de três integrantes, mas não substitui as fontes: deixa de fora 32 commits já integrados na `develop`, de três integrantes, com a mesma identidade dos que ele conta; marca como fora da `develop` o commit do !148, integrado às 23h12; lista 39 das 96 issues da milestone; e registra 34 dos 64 merges executados.
+
+**Distribuição por integrante no fechamento**
+
+| Integrante | Issues | Horas atribuídas | Concluídas | Horas concluídas | Commits na `develop` | Commits em todas as branches | MRs abertos | Revisões nomeadas | Merges executados |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Mirela Bianchi | 23 | 30,00 h | 23 | 30,00 h | 39 | 45 | 12 | 21 | 21 |
+| Mariana Reis | 20 | 31,00 h | 20 | 31,00 h | 55 | 55 | 18 | 27 | 26 |
+| Carlos Eduardo Serrano Quaglia | 18 | 25,00 h | 18 | 25,00 h | 18 | 31 | 10 | 7 | 6 |
+| Eduardo Casarini | 18 | 23,50 h | 16 | 21,50 h | 61 | 70 | 19 | 6 | 6 |
+| Celso Rocha | 10 | 16,00 h | 10 | 16,00 h | 61 | 64 | 5 | 4 | 4 |
+| Alexsander Barbosa | 7 | 10,00 h | 7 | 10,00 h | 8 | 8 | 2 | 1 | 1 |
+| **Total** | **96** | **135,50 h** | **94** | **133,50 h** | **242** | **273** | **66** | **66** | **64** |
+
+As horas atribuídas por integrante mudaram em relação a 22/09 porque issues foram redistribuídas ao longo do ciclo; o total de 135,50 h se manteve. A milestone passou de 97 para 96 issues.
+
+**Do corte de 22/09 ao fechamento**
+
+| Indicador | Corte de 22/09 | Fechamento de 25/09 |
+|---|---:|---:|
+| Issues concluídas | 28 de 97 (29%) | **94 de 96 (98%)** |
+| Horas concluídas | 38,25 h de 135,50 h (28%) | **133,50 h de 135,50 h (99%)** |
+| Commits autorais na `develop` / em todas as branches | 58 / 123 (47% integrados) | **242 / 273 (89% integrados)** |
+| Merge requests para a `develop` | 24 — 17 integrados, 6 em revisão, 1 fechado | **66 — 64 integrados, 1 em revisão, 1 fechado sem merge** |
+| Merge requests com revisor nomeado | 23 de 24 | **66 de 66** |
+| Merges executados por duas pessoas | 14 de 17 (82%) | **47 de 64 (73%)** |
+| Maior participação individual nos merges | — | **41%** (26 de 64) |
+| Razão entre a maior e a menor carga atribuída | 2,25:1 | **3,10:1** (31,00 h contra 10,00 h) |
+| Commits na `develop` aderentes à política de commits vigente na Sprint 4 | 0 de 58 (0%) | **72 de 242 (30%)** |
+| Mesmos commits pela regra da Sprint 5, que aceita `(#N)` e `#N` | — | **139 de 242 (57%)** |
+
+A aderência aplica as quatro regras da seção 3 do `GestaoConfiguracao.md`: tipo do Conventional Commits no início, verbo no infinitivo (conferido pela terminação em *-ar*, *-er*, *-ir* ou *-or*), referência ao card no fim, separada por espaço, e título de até 72 caracteres. As falhas se sobrepõem:
+
+| Regra descumprida, nos 242 commits | Commits |
+|---|---:|
+| Card sem parênteses (regra da Sprint 4) | 133 |
+| Verbo fora do infinitivo | 84 |
+| Card ausente no fim ou colado à descrição, sem espaço (regra da Sprint 5) | 24 |
+| Título acima de 72 caracteres | 23 |
+| Tipo fora do padrão | 5 |
+
+**Resíduo e reserva da Sprint 5.** Ficaram abertas duas issues, com 2,00 h: #401, com o merge request integrado (!167) e a issue por fechar à mão, como define a seção 2.7, e #402, com o merge request em revisão (!176). O resíduo ocupa 3% da reserva de 75,25 h que a seção [3.6](#36-sprint-5) separou para ele. A regra de corte da `AM20` não é acionada, e o restante da folga, 73,25 h, fica para as correções de usabilidade.
+
+**Leitura dos números**
+
+- **A conclusão se concentrou nos últimos três dias.** Entre 22/09 e o fechamento, 66 issues e 95,25 h foram concluídas, 70% do que a sprint concluiu, em um quarto do tempo, e 109 dos 242 commits integrados foram escritos nesse intervalo. O resultado final é alto (98%), mas repete o padrão que `AM13` e `AM25` tentam corrigir, e confirma o ponto de atenção sobre a operação acima da capacidade.
+- **A integração alcançou o trabalho.** A parte dos commits já na `develop` subiu de 47% para 89%, e nenhum merge request do período ficou sem revisor. Os 31 commits fora da `develop` são versões anteriores de trabalho que entrou reescrito por outro merge request, a automação experimental do quadro, trabalho de interface ainda não integrado (#397 e #448) e a revisão do contrato (#402), em revisão.
+- **A integração segue concentrada, mas diminuiu.** Duas pessoas executaram 73% dos merges, contra 82% no corte, e a maior participação individual ficou em 41%, um ponto acima do teto de 40% que `AM22` fixa para a Sprint 5. Na prática, quem revisa é quem integra: as colunas de revisões nomeadas e merges executados são quase iguais.
+- **A razão de carga piorou com a redistribuição.** Passou de 2,25:1 para 3,10:1 porque issues mudaram de responsável ao longo do ciclo, e não porque o total mudou. Reforça `AM21`, que leva a verificação de carga para o planejamento.
+- **A política de commits avançou, mas pela forma nova.** Com a regra da Sprint 4, a aderência foi de 0% a 30%; com a regra da Sprint 5, que aceita a referência sem parênteses, chega a 57%. O que falta é principalmente o verbo no infinitivo (84 commits), que é o alvo da conferência na revisão de `AM26`.
+
+Os números descrevem o processo, e não o desempenho individual: horas vêm do *size* estimado de cada card, e commits variam de tamanho e natureza entre integrantes e tipos de entrega.
 
 #### 3.5.4 Reconciliação com o fechamento da Sprint 3
 

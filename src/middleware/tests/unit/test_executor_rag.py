@@ -192,3 +192,46 @@ def test_executor_desconhecido_e_recusado(monkeypatch: pytest.MonkeyPatch) -> No
 
     with pytest.raises(ValueError, match="outro"):
         deps.obter_executor(object(), LIDER)
+
+
+def test_historico_vai_ao_modelo_sem_o_bloco_de_fontes() -> None:
+    """Os números das fontes antigas são de outra consulta, e o modelo imita o que lê."""
+    fonte = FonteExecutor(
+        documento="balanco.pptx", link=None, trecho="...", score=0.9, localizador="slide 8"
+    )
+    anterior = com_fontes("Dois marcos atrasados [1].", [fonte])
+
+    prompt = rag_executor.compor_prompt(
+        PERGUNTA,
+        (TurnoContexto(mensagem_usuario="Marcos atrasados?", resposta_agente=anterior),),
+    )
+
+    assert "<resposta_agente>Dois marcos atrasados [1].</resposta_agente>" in prompt
+    assert "balanco.pptx" not in prompt
+
+
+async def test_pedido_de_alteracao_sem_resposta_explica_que_nao_altera() -> None:
+    """Sem isso, "muda a data de conclusão" voltava como "não encontrei informação"."""
+    fluxo = FluxoFalso(abstencao(Situacao.SEM_EVIDENCIA))
+
+    resposta = await ExecutorRag(fluxo, ESCOPO).enviar(
+        "Muda a data de conclusão do Monotrilho Ouro para dezembro de 2027",
+        "atualizar_cronograma",
+        True,
+    )
+
+    assert resposta.texto == rag_executor.TEXTO_TRANSACAO
+    assert resposta.fontes == ()
+
+
+async def test_pergunta_classificada_como_transacao_mantem_a_resposta_do_rag() -> None:
+    """Caso real da bancada: "qual é o custo total no termo de abertura?" sai como
+    `atualizar_termo_abertura`, e a resposta do RAG não pode ser trocada pela recusa."""
+    fluxo = FluxoFalso()
+    pergunta = "Qual é o custo total estimado no termo de abertura da Modernização do Trecho Sul?"
+
+    resposta = await ExecutorRag(fluxo, ESCOPO).enviar(pergunta, "atualizar_termo_abertura", True)
+
+    assert fluxo.perguntas == [(pergunta, ESCOPO)]
+    assert resposta.texto.startswith(RESPONDIDA.texto)
+    assert len(resposta.fontes) == 1

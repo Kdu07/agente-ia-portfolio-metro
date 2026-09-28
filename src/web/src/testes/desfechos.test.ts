@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { APARENCIA } from "@/componentes/chat/desfechos";
+import { APARENCIA, INTENCAO_SAUDACAO, exibeEtiqueta } from "@/componentes/chat/desfechos";
 import type { Desfecho } from "@/tipos";
 
 const TODOS: Desfecho[] = [
@@ -46,5 +46,22 @@ describe("Aparência dos desfechos", () => {
       const tem = APARENCIA[desfecho].barra.length > 0;
       expect(tem, `filete inconsistente em ${desfecho}`).toBe(desfecho !== "encaminhada");
     }
+  });
+});
+
+describe("Etiqueta da bolha", () => {
+  it("não etiqueta a apresentação que responde a uma saudação", () => {
+    expect(exibeEtiqueta("recusada_fora_escopo", INTENCAO_SAUDACAO)).toBe(false);
+  });
+
+  it("mantém a etiqueta na recusa por escopo sem intenção reconhecida", () => {
+    // O classificador pode devolver um rótulo fora do catálogo: a recusa é
+    // real e chega com intenção nula, como a saudação chegava antes.
+    expect(exibeEtiqueta("recusada_fora_escopo", null)).toBe(true);
+    expect(exibeEtiqueta("recusada_fora_escopo", "fora_de_escopo")).toBe(true);
+  });
+
+  it("não etiqueta a resposta atendida", () => {
+    expect(exibeEtiqueta("encaminhada", "consultar_status_projeto")).toBe(false);
   });
 });

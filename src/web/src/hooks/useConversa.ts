@@ -33,6 +33,7 @@ export interface Linha {
   texto: string;
   horario: string;
   desfecho?: Desfecho;
+  intencaoId?: string | null;
   /** Por onde a pergunta chegou; so a pergunta carrega o canal do turno. */
   canal?: Canal;
   /**
@@ -52,6 +53,7 @@ function turnoParaLinhas(turno: Turno): Linha[] {
       texto: turno.resposta,
       horario,
       desfecho: turno.desfecho,
+      intencaoId: turno.intencao_id,
     },
   ];
 }
@@ -112,6 +114,7 @@ export function useConversa(conversaId?: string) {
           texto: resposta.resposta,
           horario: horaCurta(new Date().toISOString()),
           desfecho: resposta.desfecho,
+          intencaoId: resposta.intencao_id,
           local: true,
         },
       ]);
