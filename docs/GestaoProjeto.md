@@ -351,7 +351,7 @@ Toda issue da sprint corrente deve possuir a milestone no formato `Sprint 0X`. S
 | Fora do GitLab | `MEET` e `OFFSITE` existem | `OFFSITE` em 6 issues |
 | Situação | As colunas do quadro são as labels `Backlog`, `Doing`, `Waiting Review` e `Review`, com inicial maiúscula. `open` e `closed` são os estados da issue no GitLab, e não labels. A label de impedimento existente é `BLOCKED`, da nomenclatura anterior; `BLOCK` não existe | Todas as issues abertas estão em uma coluna |
 
-Enquanto as labels ausentes não forem criadas no projeto, vale a prática registrada na tabela: documentação de gestão, processo e arquitetura recebe `DOCS` com a prioridade e o esforço, e impedimento é marcado com `BLOCKED`. Criar as quatro labels de entrega e `BLOCK` alinha o quadro à taxonomia oficial e é decisão da equipe.
+Enquanto as labels ausentes não forem criadas no projeto, vale a prática registrada na tabela: documentação de gestão, processo e arquitetura recebe `DOCS` com a prioridade e o esforço, e impedimento é marcado com `BLOCKED`. Atividade cuja evidência não é commit nem markdown, como reunião, slides ou apresentação, recebe só `MEET` ou `OFFSITE`, com a prioridade e o esforço, enquanto `PROCESS` e `BUSINESS` não existirem; é o caso de #510, #515 e #516 na Sprint 5. Criar as quatro labels de entrega e `BLOCK` alinha o quadro à taxonomia oficial e é decisão da equipe.
 
 **Correspondência com a nomenclatura anterior**
 
@@ -1542,7 +1542,7 @@ O resíduo medido no fechamento cabe na reserva, e a regra de corte da `AM20` n�
 
 ##### Cards da Sprint 4
 
-Os cards da milestone `Sprint 04` permanecem nela até a conclusão: a Sprint 5 não herda cards da Sprint 4. É esse o destino explícito de todos eles, inclusive dos dois de prioridade baixa ainda abertos no corte de 22/09 — #383, do pipeline de entrega contínua, e #362, das tags SemVer das Sprints 3 e 4 —, que seguem na Sprint 4 com a mesma prioridade.
+Os cards da milestone `Sprint 04` permanecem nela até a conclusão: a Sprint 5 não herda cards da Sprint 4. É esse o destino explícito de todos eles, inclusive dos dois de prioridade baixa ainda abertos no corte de 22/09 — #383, do pipeline de entrega contínua, e o das tags SemVer das Sprints 3 e 4 —. O #383 foi concluído na própria Sprint 4, e o card das tags, antes #362, foi removido do GitLab sem substituto, como registra a lista de tasks abaixo.
 
 ##### Lista de tasks, estimativa e prioridade
 
@@ -1554,7 +1554,7 @@ As tasks estão agrupadas por frente, e cada frente responde a um dos artefatos 
 | Usabilidade e dados do parceiro | Desenvolvimento e documentação técnica do projeto | 2 | 3,00 |
 | Documentação técnica final | Documentação técnica final | 17 | 26,00 |
 | Gestão do projeto | Gestão de projetos evolutiva e apresentação final | 10 | 15,50 |
-| Apresentação e versão final | Gestão de projetos evolutiva e apresentação final | 4 | 5,50 |
+| Apresentação final | Gestão de projetos evolutiva e apresentação final | 4 | 5,50 |
 | **Total** | | **60** | **83,50** |
 
 **Desenvolvimento, testes e documentação técnica**
@@ -1633,7 +1633,7 @@ As tasks estão agrupadas por frente, e cada frente responde a um dos artefatos 
 | #511 | Avaliar o contrato de convivência no fechamento do módulo | `DOCS` | M | 1,00 | `P_ALTA` | #510 |
 | #512 | Escrever a análise post-mortem do projeto | `DOCS` | G | 2,00 | `P_ALTA` | #506, #510 |
 
-**Apresentação e versão final**
+**Apresentação final**
 
 | Issue | Task | Labels | *Size* | Horas | Prioridade | Depende de |
 |---|---|---|---|---:|---|---|
@@ -1642,7 +1642,9 @@ As tasks estão agrupadas por frente, e cada frente responde a um dos artefatos 
 | #515 | Criar os slides da apresentação final | `OFFSITE` | G | 2,00 | `P_ALTA` | #506, #514 |
 | #516 | Conduzir a apresentação final para os stakeholders e o parceiro | `OFFSITE` | M | 1,00 | `P_ALTA` | #515 |
 
-As labels seguem a seção 2.5.3. Como `BUSINESS`, `ARCHITECTURE`, `PROCESS` e `CHORE` ainda não existem no projeto, as tasks de negócio, arquitetura, gestão e manutenção do repositório levam `DOCS` com o esforço e a prioridade, que é a prática registrada naquela seção; a retrospectiva final, os slides e a apresentação, que não produzem markdown, levam só `MEET` ou `OFFSITE`. Quarenta e oito das 60 tasks são `P_ALTA` (70,00 h), porque quase tudo o que resta é item exigido pelos artefatos ou condição para fechar o módulo. As doze `P_MEDIA` (13,50 h) são as primeiras a sair se a folga não bastar.
+As labels seguem a seção 2.5.3. Como `BUSINESS`, `ARCHITECTURE`, `PROCESS` e `CHORE` ainda não existem no projeto, as tasks de negócio, arquitetura, gestão e manutenção do repositório levam `DOCS` com o esforço e a prioridade; a retrospectiva final, os slides e a apresentação, que não produzem markdown, levam só `MEET` ou `OFFSITE`. As duas práticas estão registradas naquela seção. Quarenta e oito das 60 tasks são `P_ALTA` (70,00 h), porque quase tudo o que resta é item exigido pelos artefatos ou condição para fechar o módulo. As doze `P_MEDIA` (13,50 h) são as primeiras a sair se a folga não bastar.
+
+A tag SemVer da versão final, prevista no planejamento preliminar como S5-17, não virou task. A seção 2.5 do `GestaoConfiguracao.md` trata a tag de entrega como opcional, e o repositório não recebe tag desde `release-sprint-2`: o card das tags das Sprints 3 e 4, antes #362, foi removido do GitLab sem substituto. A #518, integração da Sprint 4 na `main`, está na milestone `Sprint 05`, mas fica fora das tabelas: foi criada depois deste planejamento, é trabalho da Sprint 4 e já está fechada.
 
 ##### Sequenciamento
 
@@ -1685,7 +1687,7 @@ flowchart LR
     class F4,CORTE,DL,AMB,FIM externo
 ```
 
-*Legenda:* cada nó é uma task da Sprint 5, identificada pelo número da issue; os nós tracejados são marcos ou cards de fora dela, dos quais uma task depende. Seta contínua indica que a task de destino só começa com a de origem concluída. A seta pontilhada indica a reapuração de #505 sobre o último merge da sprint. As bordas em destaque marcam o caminho crítico. Para não sobrecarregar a figura, ficam de fora as tasks sem cadeia, as dependências de #502 em #476, #477, #482, #493 e #494 e as dependências externas que não abrem cadeia (#363, #377 e #384).
+*Legenda:* cada nó é uma task da Sprint 5, identificada pelo número da issue; os nós tracejados são marcos ou cards de fora dela, dos quais uma task depende. Seta contínua indica que a task de destino só começa com a de origem concluída. A seta pontilhada indica a reapuração de #505 sobre o último merge da sprint. As bordas em destaque marcam o caminho crítico. Para não sobrecarregar a figura, ficam de fora as tasks sem cadeia, as dependências de #502 em #476, #477, #482, #493 e #494 e as dependências externas que não abrem cadeia (#363 e #384).
 
 | Ordem | Momento | Tasks | Por quê |
 |:---:|---|---|---|
