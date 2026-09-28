@@ -14,6 +14,8 @@ from app.config import Settings, settings
 from app.copilot.client import CopilotClient
 from app.executor.base import Executor, TurnoContexto
 from app.executor.base import Fonte as FonteExecutor
+from app.executor.desempenho import ExecutorDesempenho
+from app.executor.fabrica import montar_executor
 from app.rag import executor as rag_executor
 from app.rag.executor import ExecutorRag, com_fontes
 from app.rag.fluxo import ResultadoRag
@@ -155,7 +157,9 @@ def test_os_dois_adaptadores_implementam_a_porta() -> None:
     assert isinstance(CopilotClient(), Executor)
 
 
-async def test_montar_executor_recupera_no_perfil_do_usuario(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_montar_executor_recupera_no_perfil_do_usuario(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fluxo = FluxoFalso()
     monkeypatch.setattr(rag_executor, "montar_fluxo", lambda sessao: fluxo)
 
@@ -172,6 +176,17 @@ async def test_montar_executor_recupera_no_perfil_do_usuario(monkeypatch: pytest
 def test_o_padrao_e_o_copilot() -> None:
     """Quem não configura nada fica no caminho oficial."""
     assert Settings.model_fields["executor"].default == "copilot"
+
+
+def test_modo_desempenho_substitui_o_executor_em_todos_os_canais(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A fábrica comum atende HTTP, áudio e rotinas com a mesma decisão."""
+    monkeypatch.setattr(settings, "performance_mode", True)
+    monkeypatch.setattr(settings, "executor", "valor-que-nao-deve-ser-lido")
+
+    assert isinstance(montar_executor(object(), LIDER), ExecutorDesempenho)
+    assert isinstance(deps.obter_executor(object(), LIDER), ExecutorDesempenho)
 
 
 def test_copilot_devolve_o_cliente_do_direct_line(monkeypatch: pytest.MonkeyPatch) -> None:
