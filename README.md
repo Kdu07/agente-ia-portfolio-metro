@@ -91,17 +91,28 @@
 
 # Agente de IA para Gestão do Portfólio de Projetos do Metrô
 
-Este repositório reúne os artefatos do projeto do Módulo 7 de Engenharia de Software do Inteli, desenvolvido em parceria com o Metrô de São Paulo. O projeto tem como objetivo desenvolver uma solução de Inteligência Artificial aplicada à gestão do portfólio de projetos, tendo o Processamento de Linguagem Natural (PLN) como núcleo para a interação dos usuários com as informações do portfólio.
+Este repositório reúne os artefatos do projeto do grupo **Prata** no Módulo 7 de Engenharia de Software do Inteli, desenvolvido em parceria com o Metrô de São Paulo. O projeto tem como objetivo desenvolver uma solução de Inteligência Artificial aplicada à gestão do portfólio de projetos, tendo o Processamento de Linguagem Natural (PLN) como núcleo para a interação dos usuários com as informações do portfólio.
 
 A proposta explora capacidades de interação em linguagem natural, identificação e classificação de intenções, consulta e análise de informações de projetos e apoio à gestão do portfólio. As interações são previstas por texto e, dentro do escopo definido, por voz.
 
 Além da documentação, o repositório contém o código da solução. Parte dela já está implementada, enquanto outras frentes ainda estão em construção — o quadro por frente está em [Estado atual](#estado-atual).
 
+## Grupo Prata
+
+Turma 17, grupo 02 do Inteli. Integrantes:
+
+- [Alexsander Barbosa](https://www.linkedin.com/in/alexsander-dsbarbosa/)
+- [Carlos Eduardo Serrano Quaglia](https://github.com/CaduQuaglia)
+- [Celso Rocha](https://www.linkedin.com/in/celsojwnior/)
+- [Eduardo Casarini](https://www.linkedin.com/in/eduardo-casarini/)
+- [Mariana Reis](https://www.linkedin.com/in/marianalacerdareis/)
+- [Mirela Bianchi](https://www.linkedin.com/in/mirela-bianchi-608601254/)
+
 ## A solução
 
 A solução é um agente de IA capaz de interpretar solicitações em linguagem natural e auxiliar na obtenção e na análise de informações relacionadas aos projetos. O agente apoia usuários com diferentes responsabilidades na gestão do portfólio, adequando suas respostas ao contexto de uso e às permissões de acesso.
 
-O produto é um middleware próprio, posicionado entre o usuário e o Copilot Studio. O usuário nunca fala diretamente com o Copilot: toda entrada passa antes pelo middleware, que protege o agente contra tentativas de manipulação, barra o uso indevido, registra e analisa as intenções de cada mensagem e executa rotinas agendadas. Ao Copilot Studio cabe o papel de executor: ele recebe a solicitação já validada e realiza a ação correspondente no ambiente Microsoft do Metrô.
+O produto é um middleware próprio, posicionado entre o usuário e o executor que responde às solicitações. O usuário nunca fala diretamente com o executor: toda entrada passa antes pelo middleware, que protege o agente contra tentativas de manipulação, barra o uso indevido, registra e analisa as intenções de cada mensagem e executa rotinas agendadas. O executor fica atrás de uma porta com dois adaptadores. Na prova de conceito, responde o executor próprio, que recupera trechos de um corpus documental sintético e gera a resposta com a fonte citada. O Copilot Studio, previsto para realizar as ações no ambiente Microsoft do Metrô, depende da habilitação do Direct Line no tenant do parceiro (seção 5.1.3 do [Projeto.md](docs/Projeto.md)).
 
 Conforme os requisitos levantados, o projeto prevê:
 
@@ -123,11 +134,19 @@ A arquitetura da solução, as tecnologias adotadas e as decisões que as susten
 ```text
 g02/
 ├── src/
-│   ├── middleware/      # Backend: API, pipeline de PLN, guardas, rotinas e persistência
-│   └── web/             # Frontend: chat, histórico, intenções e rotinas
-├── copilot/             # Configuração versionada do Copilot Studio
-├── infra/               # Ambiente de desenvolvimento local
-├── docs/                # Documentação do projeto e imagens de apoio
+│   ├── middleware/          # Backend: API, pipeline de PLN, guardas, executor próprio (RAG), rotinas, webhooks, mensageria e persistência
+│   ├── web/                 # Frontend: chat, histórico, intenções, rotinas e avisos
+│   └── emissor-portfolio/   # Google Apps Script que envia os eventos do portfólio ao webhook do middleware
+├── copilot/                 # Configuração versionada do Copilot Studio: tópicos, conectores e solução
+├── infra/
+│   ├── docker-compose.yml   # Ambiente local completo: web, middleware, worker, banco e RabbitMQ
+│   └── azure/               # Provisionamento, implantação e consultas de monitoramento na Azure
+├── docs/                    # Documentação do projeto
+│   ├── api/                 # Especificação OpenAPI da API de voz
+│   ├── diagramas/           # Fontes dos canvas e dos modelos de dados
+│   ├── evidencias/          # Registros datados da execução dos testes
+│   └── imagens/             # Figuras e imagens dos documentos
+├── .gitlab-ci.yml           # Integração e entrega contínuas
 └── README.md
 ```
 
@@ -175,6 +194,8 @@ npm run test:coverage  # suíte com relatório em src/web/coverage/
 | Webhooks para integrações externas | Implementados |
 | Sistema de mensageria assíncrona (RabbitMQ) | Implementado |
 | Implantação em nuvem (Azure Container Apps, PostgreSQL, CI/CD) | Implementada |
+| Executor próprio (recuperação com citação sobre corpus sintético) | Implementado |
+| Integração com o Copilot Studio (Direct Line) | Prevista; depende do tenant do parceiro |
 
 ## 📝 Documentação
 
@@ -183,8 +204,12 @@ npm run test:coverage  # suíte com relatório em src/web/coverage/
 - [Middleware — guia de execução](src/middleware/README.md): preparação do ambiente, treino e avaliação do classificador, testes e execução da API.
 - [Gestão do projeto](docs/GestaoProjeto.md): organização da equipe, rituais, SLA, avaliação e retrospectiva de cada sprint, gestão de riscos e indicadores de processo.
 - [Gestão de configuração](docs/GestaoConfiguracao.md): política de branches, commits, merge requests, arquivos sensíveis, rollback e variáveis de ambiente.
-
-Três arquivos de `docs/` ainda são templates não preenchidos, mantidos no repositório para uso nas próximas sprints: `Index.md`, `GuiaPadroesDesenvolvimento.md` e `Manual-instalacao.md`. Até que sejam escritos, a instalação está descrita em [Como executar](#como-executar) e no [guia do middleware](src/middleware/README.md).
+- [Índice da documentação](docs/Index.md): mapa dos documentos da pasta `docs` e do que cada um contém.
+- [Manual de implantação e uso](docs/Manual-instalacao.md): instalação, implantação e uso da prova de conceito.
+- [Guia de padrões de desenvolvimento](docs/GuiaPadroesDesenvolvimento.md): padrões de código, de testes e de revisão adotados pela equipe.
+- [Banco de dados](docs/banco-de-dados.md): estrutura do banco PostgreSQL do middleware, com schemas, tabelas, índices e restrições.
+- [Glossário do domínio](docs/glossario-dominio.md): vocabulário do portfólio do Metrô usado no reconhecimento de fala.
+- [Plano do executor próprio](docs/plano-executor-proprio.md): plano de construção do executor com recuperação e geração, com as decisões e as alternativas descartadas.
 
 ## 🚀 Versionamento
 
