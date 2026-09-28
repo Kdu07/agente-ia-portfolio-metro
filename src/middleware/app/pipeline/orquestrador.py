@@ -175,8 +175,23 @@ class Orquestrador:
         if suspeita_por_regra:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_REGRA)
 
-        with _cronometrar(ctx, ETAPA_INJECAO):
-            veredito = await injecao_classificador.classificar(ctx.prompt)
+        try:
+            with _cronometrar(ctx, ETAPA_INJECAO):
+                veredito = await injecao_classificador.classificar(ctx.prompt)
+        except Exception:  # noqa: BLE001 - guarda de injeção deve falhar fechada
+            # O adaptador converte as falhas conhecidas do Content Safety em
+            # veredito suspeito. Esta contenção é a última barreira caso a
+            # própria guarda falhe antes de produzir esse veredito: uma
+            # exceção inesperada não pode virar janela de ataque nem 500.
+            # Não registrar a exceção evita que clientes HTTP incluam o
+            # prompt ou dados do provedor no log.
+            logger.warning(
+                "Falha inesperada na guarda de injeção; bloqueando a mensagem "
+                "(interacao=%s, usuario=%s)",
+                ctx.interacao_id,
+                ctx.usuario.id,
+            )
+            return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
         if veredito.suspeita:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
 
