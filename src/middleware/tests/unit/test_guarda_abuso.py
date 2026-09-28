@@ -86,6 +86,20 @@ async def test_categoria_acima_do_limiar_recusa() -> None:
 
 
 @pytest.mark.usefixtures("com_content_safety")
+async def test_modo_desempenho_nao_desativa_a_guarda_de_abuso(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "performance_mode", True)
+    transporte, chamadas = servico(veredito(Violence=4))
+
+    resultado = await classificador.classificar("mensagem violenta", transporte=transporte)
+
+    assert resultado.abusiva
+    assert resultado.categoria == "Violence"
+    assert len(chamadas) == 1
+
+
+@pytest.mark.usefixtures("com_content_safety")
 async def test_categoria_mais_severa_prevalece() -> None:
     """Com duas acusando, o registro mostra a mais grave."""
     transporte, _ = servico(veredito(Hate=2, Violence=6))

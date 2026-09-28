@@ -1,8 +1,9 @@
 """Montagem do executor fora da camada HTTP.
 
-API e worker usam esta mesma fábrica. Isso evita que a execução agendada
-importe dependências do FastAPI e garante que ``settings.executor`` tenha um
-único ponto de decisão.
+API, processamento de áudio e worker usam esta mesma fábrica. Isso evita
+que os canais interpretem a configuração de formas diferentes e garante
+um único ponto de decisão para ``settings.executor`` e para o executor
+sintético dos testes de desempenho.
 """
 
 from typing import Any
@@ -10,13 +11,17 @@ from typing import Any
 from app.config import settings
 from app.copilot.client import CopilotClient
 from app.executor.base import Executor
+from app.executor.desempenho import ExecutorDesempenho
 from app.schemas.usuario import UsuarioAutenticado
 
 EXECUTORES = ("copilot", "proprio")
 
 
 def montar_executor(banco: Any, usuario: UsuarioAutenticado) -> Executor:
-    """Monta o adaptador configurado no escopo atual do usuário."""
+    """Monta somente o executor; o restante do pipeline não muda em carga."""
+    if settings.performance_mode:
+        return ExecutorDesempenho()
+
     escolhido = settings.executor.strip().lower()
     if escolhido == "copilot":
         return CopilotClient()

@@ -25,9 +25,7 @@ from fastapi import Cookie, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.auth import sessao as auth_sessao
-from app.config import settings
 from app.executor.base import Executor
-from app.executor.desempenho import ExecutorDesempenho
 from app.executor.fabrica import montar_executor
 from app.mensageria.produtor import ProdutorEventos
 from app.persistence.repository import (
@@ -149,11 +147,10 @@ def obter_executor(banco: SessaoBanco, usuario: UsuarioAtual) -> Executor:
     deduzido em nenhum lugar adiante. O `usuario` é o mesmo da rota — o
     FastAPI resolve a dependência uma vez por requisição.
 
-    A decisão por `settings.executor` fica em `executor/fabrica.py`, também
-    usada pelo worker. Assim API e rotinas não criam caminhos divergentes.
+    As decisões por `settings.executor` e pelo executor sintético ficam em
+    `executor/fabrica.py`, também usada por áudio e worker. Assim os canais
+    não criam caminhos divergentes.
     """
-    if settings.performance_mode:
-        return ExecutorDesempenho()
     return montar_executor(banco, usuario)
 
 

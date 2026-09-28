@@ -102,6 +102,20 @@ async def test_prompt_shields_bloqueia_ataque_direto() -> None:
 
 
 @pytest.mark.usefixtures("com_content_safety")
+async def test_modo_desempenho_nao_desativa_prompt_shields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "performance_mode", True)
+    transporte, chamadas = servico(veredito(ataque=True))
+
+    resultado = await classificador.classificar(ATAQUE, transporte=transporte)
+
+    assert resultado.suspeita
+    assert resultado.motivo == "prompt_shields_usuario"
+    assert len(chamadas) == 1
+
+
+@pytest.mark.usefixtures("com_content_safety")
 async def test_prompt_shields_libera_mensagem_limpa_como_prompt() -> None:
     transporte, chamadas = servico(veredito(ataque=False))
 
@@ -153,8 +167,14 @@ async def test_falha_do_servico_bloqueia_a_mensagem(responder) -> None:
 @pytest.mark.usefixtures("com_content_safety")
 @pytest.mark.parametrize(
     "analise",
-    [{}, {"attackDetected": None}, {"attackDetected": "true"},
-     {"attackDetected": "false"}, {"attackDetected": 0}, {"attackDetected": 1}],
+    [
+        {},
+        {"attackDetected": None},
+        {"attackDetected": "true"},
+        {"attackDetected": "false"},
+        {"attackDetected": 0},
+        {"attackDetected": 1},
+    ],
     ids=["ausente", "nulo", "texto-true", "texto-false", "zero", "um"],
 )
 @pytest.mark.parametrize("apos_parte_limpa", [False, True])

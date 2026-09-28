@@ -79,9 +79,6 @@ async def classificar(
     if not texto.strip():
         return ResultadoAbuso(abusiva=False, confianca=0.0)
 
-    if settings.performance_mode:
-        return ResultadoAbuso(abusiva=False, confianca=0.0)
-
     if not content_safety.configurado():
         logger.warning("Guarda de abuso sem Content Safety configurado; só as políticas valem")
         return _veredito(None, 0.0, violacoes)

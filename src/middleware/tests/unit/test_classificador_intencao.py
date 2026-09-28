@@ -9,6 +9,7 @@ por asserção em teste unitário.
 import numpy as np
 import pytest
 
+from app.config import settings
 from app.pipeline.intencao import classificador
 from app.pipeline.intencao.treino import ArtefatoTreinado
 
@@ -59,10 +60,22 @@ async def test_texto_recebido_e_o_do_usuario(artefato: ArtefatoTreinado) -> None
     assert artefato.pipeline.chamadas == [["Qual o status do XPTO?"]]
 
 
-@pytest.mark.parametrize("vazio", ["", "   ", "\n\t"])
-async def test_mensagem_vazia_nao_e_classificada(
-    artefato: ArtefatoTreinado, vazio: str
+async def test_modo_desempenho_nao_substitui_o_classificador(
+    artefato: ArtefatoTreinado, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A carga mede a inferência real; apenas o executor externo é sintético."""
+    monkeypatch.setattr(settings, "performance_mode", True)
+
+    resultado = await classificador.classificar("Qual o status do projeto XPTO?")
+
+    assert resultado.intencao_id == "consultar_status_projeto"
+    assert resultado.confianca == pytest.approx(0.8)
+    assert artefato.pipeline.chamadas == [["Qual o status do projeto XPTO?"]]
+    assert classificador.limiar_de("atualizar_avanco") == 0.85
+
+
+@pytest.mark.parametrize("vazio", ["", "   ", "\n\t"])
+async def test_mensagem_vazia_nao_e_classificada(artefato: ArtefatoTreinado, vazio: str) -> None:
     """Classificar string vazia produziria uma classe arbitrária com
     confiança alta, que o orquestrador encaminharia ao Copilot."""
     resultado = await classificador.classificar(vazio)
@@ -86,9 +99,7 @@ def test_limiar_calibrado_sobrepoe_o_provisorio(artefato: ArtefatoTreinado) -> N
     assert classificador.limiar_de("intencao_sem_limiar") is None
 
 
-def test_modelo_ausente_diz_como_gera_lo(
-    monkeypatch: pytest.MonkeyPatch, tmp_path
-) -> None:
+def test_modelo_ausente_diz_como_gera_lo(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     """Quem clona o repositório encontra este erro antes de qualquer outro."""
     from app.pipeline.intencao import treino
 

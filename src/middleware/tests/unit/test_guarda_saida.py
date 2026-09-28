@@ -148,6 +148,20 @@ async def test_prompt_shields_retem_ataque_indireto() -> None:
 
 
 @pytest.mark.usefixtures("com_content_safety")
+async def test_modo_desempenho_nao_desativa_a_guarda_de_saida(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "performance_mode", True)
+    transporte, chamadas = servico(veredito(ataque=True))
+
+    resultado = await saida.verificar(LIMPA, INTENCAO, transporte=transporte)
+
+    assert resultado.suspeita
+    assert resultado.motivo == f"prompt_shields_documento@{INTENCAO}"
+    assert len(chamadas) == 1
+
+
+@pytest.mark.usefixtures("com_content_safety")
 async def test_prompt_shields_libera_resposta_limpa_como_documento() -> None:
     transporte, chamadas = servico(veredito(ataque=False))
 
@@ -197,11 +211,28 @@ async def test_falha_do_servico_retem_a_resposta(responder) -> None:
 @pytest.mark.usefixtures("com_content_safety")
 @pytest.mark.parametrize(
     "analises",
-    [[], [{}], [{"attackDetected": None}], [{"attackDetected": "true"}],
-     [{"attackDetected": "false"}], [{"attackDetected": 0}], [{"attackDetected": 1}],
-     [{"attackDetected": False}, {"attackDetected": False}], [None]],
-    ids=["vazia", "ausente", "nulo", "texto-true", "texto-false", "zero", "um",
-         "analise-excedente", "item-invalido"],
+    [
+        [],
+        [{}],
+        [{"attackDetected": None}],
+        [{"attackDetected": "true"}],
+        [{"attackDetected": "false"}],
+        [{"attackDetected": 0}],
+        [{"attackDetected": 1}],
+        [{"attackDetected": False}, {"attackDetected": False}],
+        [None],
+    ],
+    ids=[
+        "vazia",
+        "ausente",
+        "nulo",
+        "texto-true",
+        "texto-false",
+        "zero",
+        "um",
+        "analise-excedente",
+        "item-invalido",
+    ],
 )
 @pytest.mark.parametrize("apos_parte_limpa", [False, True])
 async def test_veredito_invalido_retem_a_resposta(analises, apos_parte_limpa) -> None:
