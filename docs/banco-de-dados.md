@@ -4,11 +4,12 @@ Este documento descreve a estrutura completa do banco de dados PostgreSQL 16 uti
 
 ## Visão Geral
 
-O banco de dados é dividido em três schemas:
+O banco de dados é dividido em quatro schemas:
 
-- **`public`**: Tabelas principais do middleware (usuários, conversas, interações, rotinas)
+- **`public`**: Tabelas principais do middleware (usuários, conversas, interações, rotinas, avisos do portfólio e transcrições de áudio)
 - **`rag`**: Registro da ingestão do corpus RAG e texto dos trechos indexados
 - **`portfolio`**: Dados estruturados do portfólio de projetos (projetos, riscos, marcos, indicadores)
+- **`webhook`**: Notificações recebidas das fontes externas, versões aplicadas e trilha de auditoria do portfólio
 
 ## Schema `public`
 
@@ -160,6 +161,88 @@ Um disparo de rotina e seu resultado.
 - `ck_execucao_rotina_status`: `status IN ('sucesso', 'bloqueada', 'falha')`
 - `fk_execucao_rotina_rotina_id_rotina`: FK para rotina.id (CASCADE, RESTRICT)
 - `fk_execucao_rotina_interacao_id_interacao`: FK para interacao.id (CASCADE, RESTRICT)
+
+### Tabela `preferencia_aviso`
+
+Adesão de um usuário aos avisos de um tipo de evento em um projeto.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `usuario_id` | TEXT (PK, FK) | NOT NULL, CASCADE | Referência para usuario.id |
+| `projeto_codigo` | TEXT (PK) | NOT NULL | Código do projeto; sem chave estrangeira porque o portfólio tem metadata próprio |
+| `event_type` | TEXT (PK) | NOT NULL, CHECK | Tipo de evento assinado |
+| `ativa` | BOOLEAN | NOT NULL, DEFAULT false | Se a assinatura está ligada |
+| `severidade_minima` | INTEGER | NULL, CHECK | Severidade a partir da qual o risco gera aviso |
+| `atualizada_em` | TIMESTAMPTZ | NOT NULL | Data/hora da última alteração |
+
+**Índices:**
+- `pk_preferencia_aviso`: Primary key composta `(usuario_id, projeto_codigo, event_type)`
+- `ix_preferencia_aviso_candidatas`: Index composto `(projeto_codigo, event_type)`
+
+**Restrições:**
+- `ck_preferencia_aviso_event_type`: `event_type IN ('projeto.status_alterado', 'marco.alterado', 'risco.alterado')`
+- `ck_preferencia_aviso_severidade_minima`: `severidade_minima IS NULL OR (event_type = 'risco.alterado' AND severidade_minima BETWEEN 1 AND 25)`
+- `fk_preferencia_aviso_usuario_id_usuario`: FK para usuario.id (CASCADE)
+
+### Tabela `aviso`
+
+Um aviso entregue ao usuário a partir de um evento aplicado ao portfólio.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `usuario_id` | TEXT (FK) | NOT NULL, CASCADE | Referência para usuario.id |
+| `projeto_codigo` | TEXT | NOT NULL | Código do projeto; sem chave estrangeira porque o portfólio tem metadata próprio |
+| `source_id` | TEXT | NOT NULL | Fonte que originou o evento |
+| `event_id` | TEXT | NOT NULL | Identificador do evento na fonte |
+| `event_type` | TEXT | NOT NULL, CHECK | Tipo de evento |
+| `entity_id` | TEXT | NOT NULL | Entidade alterada |
+| `versao` | BIGINT | NOT NULL | Versão da entidade que gerou o aviso |
+| `diferencas` | JSONB | NOT NULL | Campos alterados, com o valor anterior e o novo |
+| `criado_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `lido_em` | TIMESTAMPTZ | NULL | Data/hora da leitura |
+
+**Índices:**
+- `pk_aviso`: Primary key em `id`
+- `uq_aviso_evento_usuario`: Unique em `(source_id, event_id, usuario_id)`
+- `ix_aviso_usuario_criado`: Index composto `(usuario_id, criado_em DESC)`
+
+**Restrições:**
+- `ck_aviso_event_type`: `event_type IN ('projeto.status_alterado', 'marco.alterado', 'risco.alterado')`
+- `fk_aviso_usuario_id_usuario`: FK para usuario.id (CASCADE)
+
+### Tabela `transcricao_audio`
+
+Um áudio recebido e o resultado da sua transcrição.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `usuario_id` | TEXT (FK) | NOT NULL, RESTRICT | Referência para usuario.id |
+| `estado` | TEXT | NOT NULL, CHECK | Estado da transcrição |
+| `formato` | TEXT | NOT NULL | Formato do áudio recebido |
+| `duracao_segundos` | FLOAT | NOT NULL | Duração do áudio em segundos |
+| `criada_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `expira_em` | TIMESTAMPTZ | NOT NULL | Data/hora a partir da qual o registro deixa de ser servido |
+| `conversa_id` | TEXT (FK) | NULL, RESTRICT | Referência para conversa.id |
+| `interacao_id` | TEXT (FK) | NULL, RESTRICT, UNIQUE | Referência para interacao.id; uma transcrição por interação |
+| `texto` | TEXT | NULL | Texto reconhecido |
+| `idioma` | TEXT | NULL | Idioma reconhecido |
+| `confianca` | FLOAT | NULL | Confiança do reconhecimento (0-1) |
+| `latencia_ms` | INTEGER | NULL | Latência da transcrição em milissegundos |
+| `mensagem_erro` | TEXT | NULL | Mensagem de erro (se houver) |
+
+**Índices:**
+- `pk_transcricao_audio`: Primary key em `id`
+- `uq_transcricao_audio_interacao_id`: Unique em `interacao_id`
+- `ix_transcricao_audio_usuario_criada`: Index composto `(usuario_id, criada_em DESC)`
+- `ix_transcricao_audio_expira_em`: Index em `expira_em`
+
+**Restrições:**
+- `ck_transcricao_audio_estado`: `estado IN ('recebido', 'transcrevendo', 'concluida', 'falhou')`
+- `fk_transcricao_audio_usuario_id_usuario`: FK para usuario.id (CASCADE, RESTRICT)
+- `fk_transcricao_audio_conversa_id_conversa`: FK para conversa.id (CASCADE, RESTRICT)
+- `fk_transcricao_audio_interacao_id_interacao`: FK para interacao.id (CASCADE, RESTRICT)
 
 ## Schema `rag`
 
@@ -356,6 +439,150 @@ Relação entre usuários e projetos.
 - `fk_usuario_projeto_usuario_id_usuario`: FK para usuario.id (CASCADE)
 - `fk_usuario_projeto_projeto_codigo_projeto`: FK para portfolio.projeto.codigo (CASCADE)
 
+## Schema `webhook`
+
+### Tabela `webhook.canal_drive`
+
+Canal de notificação registrado no Google Drive para uma fonte.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `canal_id` | TEXT (PK) | NOT NULL | Identificador do canal |
+| `fonte_id` | TEXT | NOT NULL | Fonte observada pelo canal |
+| `token_sha256` | BYTEA | NOT NULL, CHECK | Resumo do token do canal, em 32 bytes |
+| `recurso_id` | TEXT | NULL | Recurso confirmado pelo Drive |
+| `recurso_uri` | TEXT | NULL | URI do recurso confirmado |
+| `expira_em` | TIMESTAMPTZ | NOT NULL | Data/hora de expiração do canal |
+| `estado` | TEXT | NOT NULL, CHECK | Estado do canal |
+| `criado_em` | TIMESTAMPTZ | NOT NULL | Data/hora do registro |
+| `ativado_em` | TIMESTAMPTZ | NULL | Data/hora da confirmação pelo Drive |
+| `encerrado_em` | TIMESTAMPTZ | NULL | Data/hora do encerramento |
+
+**Índices:**
+- `pk_canal_drive`: Primary key em `canal_id`
+- `ix_canal_drive_fonte_estado`: Index composto `(fonte_id, estado)`
+
+**Restrições:**
+- `ck_canal_drive_estado`: `estado IN ('pendente', 'ativo', 'encerrado')`
+- `ck_canal_drive_token_sha256`: `octet_length(token_sha256) = 32`
+- `ck_canal_drive_recurso_confirmado`: `estado <> 'ativo' OR (recurso_id IS NOT NULL AND recurso_uri IS NOT NULL)`
+
+### Tabela `webhook.recebimento`
+
+Uma notificação recebida, desde a chegada até o processamento.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `message_id` | TEXT (PK) | NOT NULL | Identificador da mensagem |
+| `correlation_id` | TEXT | NOT NULL | Identificador de correlação do fluxo |
+| `provedor` | TEXT | NOT NULL, CHECK | Origem da notificação |
+| `chave_externa` | TEXT | NOT NULL | Chave da notificação no provedor |
+| `fonte_id` | TEXT | NOT NULL | Fonte que originou a notificação |
+| `canal_id` | TEXT (FK) | NULL, RESTRICT | Referência para webhook.canal_drive.canal_id |
+| `evento` | JSONB | NOT NULL | Corpo do evento recebido |
+| `recebido_em` | TIMESTAMPTZ | NOT NULL | Data/hora da chegada |
+| `publicado_em` | TIMESTAMPTZ | NULL | Data/hora da publicação na fila |
+| `processado_em` | TIMESTAMPTZ | NULL | Data/hora do processamento |
+| `tentativas` | INTEGER | NOT NULL, DEFAULT 0, CHECK | Quantidade de tentativas de entrega |
+| `erro_codigo` | TEXT | NULL | Código do erro (se houver) |
+| `corpo_sha256` | BYTEA | NULL, CHECK | Resumo do corpo recebido, em 32 bytes |
+
+**Índices:**
+- `pk_recebimento`: Primary key em `message_id`
+- `uq_recebimento_chave_externa`: Unique em `(provedor, chave_externa)`
+- `ix_recebimento_pendente`: Index parcial `(recebido_em)` WHERE `publicado_em IS NULL`
+
+**Restrições:**
+- `ck_recebimento_provedor`: `provedor IN ('google_drive', 'apps_script')`
+- `ck_recebimento_tentativas`: `tentativas >= 0`
+- `ck_recebimento_corpo_sha256`: `corpo_sha256 IS NULL OR octet_length(corpo_sha256) = 32`
+- `fk_recebimento_canal_id_canal_drive`: FK para webhook.canal_drive.canal_id (RESTRICT)
+
+### Tabela `webhook.sincronizacao_fonte`
+
+Posição da varredura de cada fonte entre duas notificações.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `fonte_id` | TEXT (PK) | NOT NULL | Fonte sincronizada |
+| `cursor` | TEXT | NULL | Cursor devolvido pelo provedor |
+| `estado` | TEXT | NOT NULL, CHECK | Estado da sincronização |
+| `concluida_em` | TIMESTAMPTZ | NULL | Data/hora da última conclusão |
+| `atualizado_em` | TIMESTAMPTZ | NOT NULL | Data/hora da última alteração |
+
+**Índices:**
+- `pk_sincronizacao_fonte`: Primary key em `fonte_id`
+
+**Restrições:**
+- `ck_sincronizacao_fonte_estado`: `estado IN ('ociosa', 'em_andamento', 'falha')`
+
+### Tabela `webhook.fonte_portfolio`
+
+Planilha cadastrada como fonte de eventos do portfólio.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `source_id` | TEXT (PK) | NOT NULL, CHECK | Identificador da fonte |
+| `planilha_id` | TEXT | NOT NULL | Planilha de origem no Drive |
+| `projetos` | TEXT[] | NOT NULL | Projetos que a fonte pode alterar |
+| `tipos` | TEXT[] | NOT NULL, CHECK | Tipos de evento que a fonte pode emitir |
+| `ativa` | BOOLEAN | NOT NULL, DEFAULT true | Se a fonte está habilitada |
+| `criada_em` | TIMESTAMPTZ | NOT NULL | Data/hora do cadastro |
+| `atualizada_em` | TIMESTAMPTZ | NOT NULL | Data/hora da última alteração |
+
+**Índices:**
+- `pk_fonte_portfolio`: Primary key em `source_id`
+
+**Restrições:**
+- `ck_fonte_portfolio_source_id`: `source_id ~ '^[A-Za-z0-9_-]{1,64}$'`
+- `ck_fonte_portfolio_tipos`: `tipos <@ ARRAY['projeto.status_alterado', 'marco.alterado', 'risco.alterado']::text[]`
+
+### Tabela `webhook.versao_entidade`
+
+Última versão aplicada de cada entidade, por fonte e tipo de evento.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `source_id` | TEXT (PK) | NOT NULL | Fonte do evento |
+| `event_type` | TEXT (PK) | NOT NULL, CHECK | Tipo de evento |
+| `entity_id` | TEXT (PK) | NOT NULL | Entidade alterada |
+| `versao` | BIGINT | NOT NULL, CHECK | Versão aplicada |
+| `dados_sha256` | BYTEA | NOT NULL | Resumo dos dados aplicados, em 32 bytes |
+| `atualizada_em` | TIMESTAMPTZ | NOT NULL | Data/hora da última aplicação |
+
+**Índices:**
+- `pk_versao_entidade`: Primary key composta `(source_id, event_type, entity_id)`
+
+**Restrições:**
+- `ck_versao_entidade_event_type`: `event_type IN ('projeto.status_alterado', 'marco.alterado', 'risco.alterado')`
+- `ck_versao_entidade_versao`: `versao >= 0`
+
+### Tabela `webhook.auditoria_portfolio`
+
+Trilha do que cada evento alterou no portfólio, e com que desfecho.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `message_id` | TEXT | NOT NULL | Recebimento que originou o evento; sem chave estrangeira, para que a trilha sobreviva ao expurgo dos recebimentos |
+| `source_id` | TEXT | NOT NULL | Fonte do evento |
+| `event_id` | TEXT | NOT NULL | Identificador do evento na fonte |
+| `event_type` | TEXT | NOT NULL | Tipo de evento |
+| `projeto_codigo` | TEXT | NOT NULL | Projeto alterado |
+| `entity_id` | TEXT | NOT NULL | Entidade alterada |
+| `versao` | BIGINT | NOT NULL | Versão do evento |
+| `anteriores` | JSONB | NOT NULL | Valores antes da aplicação |
+| `novos` | JSONB | NOT NULL | Valores depois da aplicação |
+| `resultado` | TEXT | NOT NULL, CHECK | Desfecho da aplicação |
+| `registrado_em` | TIMESTAMPTZ | NOT NULL | Data/hora do registro |
+
+**Índices:**
+- `pk_auditoria_portfolio`: Primary key em `id`
+- `ix_auditoria_portfolio_entidade`: Index composto `(projeto_codigo, entity_id)`
+
+**Restrições:**
+- `ck_auditoria_portfolio_resultado`: `resultado IN ('aplicado', 'sem_diferenca', 'repetido', 'ignorado_antigo')`
+
 ## Scripts de Criação e População
 
 ### Criação do Banco
@@ -367,6 +594,8 @@ python -m scripts.criar_banco
 python -m scripts.criar_banco --conferir  # Apenas relata estado
 ```
 
+As revisões formam uma cadeia linear, sem ramificações, e o relatório do script informa qual delas está aplicada. A última revisão da Sprint 4 é `20260925_audio_persistente`, que cria a `transcricao_audio`.
+
 ### População do Banco
 
 O script `scripts/popular_banco.py` carrega dados sintéticos de demonstração:
@@ -375,6 +604,8 @@ O script `scripts/popular_banco.py` carrega dados sintéticos de demonstração:
 python -m scripts.popular_banco
 python -m scripts.popular_banco --limpar  # Remove carga anterior
 ```
+
+A carga cobre as tabelas dos schemas `public`, `portfolio` e `webhook.fonte_portfolio`, que é cadastro. As tabelas de trilha do `webhook` — `canal_drive`, `recebimento`, `sincronizacao_fonte`, `versao_entidade` e `auditoria_portfolio` — nascem vazias de propósito: são escritas pelo fluxo de notificações em execução, e semeá-las com linha sintética tornaria indistinguível o que foi carga do que foi uso, justamente numa trilha de auditoria.
 
 ## Boas Práticas
 
@@ -396,6 +627,7 @@ python -m scripts.popular_banco --limpar  # Remove carga anterior
 
 - **Migrações versionadas**: Todas as alterações são feitas via Alembic
 - **Convenção de nomes**: Constraints têm nomes explícitos para facilitar rollback
+- **Domínios fechados**: Conjuntos de valores são TEXT com CHECK gerado a partir dos enums Python, sem tipo ENUM do PostgreSQL, para que acrescentar um valor seja migração de constraint e não alteração de tipo
 - **Dados de auditoria**: Interações são registradas em todos os desfechos, inclusive bloqueios
 - **Retenção de dados**: Política de retenção a ser definida (seção 11 da Arquitetura)
 
