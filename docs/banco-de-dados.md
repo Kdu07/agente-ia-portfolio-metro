@@ -594,6 +594,8 @@ python -m scripts.criar_banco
 python -m scripts.criar_banco --conferir  # Apenas relata estado
 ```
 
+As revisões formam uma cadeia linear, sem ramificações, e o relatório do script informa qual delas está aplicada. A última revisão da Sprint 4 é `20260925_audio_persistente`, que cria a `transcricao_audio`.
+
 ### População do Banco
 
 O script `scripts/popular_banco.py` carrega dados sintéticos de demonstração:
@@ -602,6 +604,8 @@ O script `scripts/popular_banco.py` carrega dados sintéticos de demonstração:
 python -m scripts.popular_banco
 python -m scripts.popular_banco --limpar  # Remove carga anterior
 ```
+
+A carga cobre as tabelas dos schemas `public`, `portfolio` e `webhook.fonte_portfolio`, que é cadastro. As tabelas de trilha do `webhook` — `canal_drive`, `recebimento`, `sincronizacao_fonte`, `versao_entidade` e `auditoria_portfolio` — nascem vazias de propósito: são escritas pelo fluxo de notificações em execução, e semeá-las com linha sintética tornaria indistinguível o que foi carga do que foi uso, justamente numa trilha de auditoria.
 
 ## Boas Práticas
 
@@ -623,6 +627,7 @@ python -m scripts.popular_banco --limpar  # Remove carga anterior
 
 - **Migrações versionadas**: Todas as alterações são feitas via Alembic
 - **Convenção de nomes**: Constraints têm nomes explícitos para facilitar rollback
+- **Domínios fechados**: Conjuntos de valores são TEXT com CHECK gerado a partir dos enums Python, sem tipo ENUM do PostgreSQL, para que acrescentar um valor seja migração de constraint e não alteração de tipo
 - **Dados de auditoria**: Interações são registradas em todos os desfechos, inclusive bloqueios
 - **Retenção de dados**: Política de retenção a ser definida (seção 11 da Arquitetura)
 
