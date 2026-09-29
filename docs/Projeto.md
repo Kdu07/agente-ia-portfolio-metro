@@ -54,6 +54,7 @@
   - [2.7 Ideação](#27-ideação)
   - [2.8 Canvas do Projeto](#28-canvas-do-projeto)
   - [2.9 Objetivos de Desenvolvimento Sustentável](#29-objetivos-de-desenvolvimento-sustentável)
+  - [2.10 Custos da Prova de Conceito e da Solução Final](#210-custos-da-prova-de-conceito-e-da-solução-final)
 - [3. Requisitos do Projeto](#3-requisitos-do-projeto)
   - [3.1 Business Drivers](#31-business-drivers)
   - [3.2 Requisitos Funcionais (RFs)](#32-requisitos-funcionais-rfs)
@@ -1256,6 +1257,87 @@ A contribuição mais sólida é a do ODS 16: ela decorre de propriedades já im
 O balanço é favorável, mas não automático. As contribuições dos ODS 16 e 9 já estão no que foi construído; as dos ODS 8 e 11 dependem de uso. Entre as ameaças, a da meta 16.10 é a que exige decisão antes do uso com dado real, porque o mesmo registro que sustenta a transparência da meta 16.6 pode servir ao monitoramento de pessoas. A finalidade do registro, quem o consulta e por quanto tempo ele existe precisam ser definidos pelo Metrô junto com a homologação, e não depois dela.
 
 Fonte das metas: NAÇÕES UNIDAS BRASIL. *Objetivos de Desenvolvimento Sustentável*: ODS 8, 9, 10, 11, 12 e 16. Disponível em: https://brasil.un.org/pt-br/sdgs. Acesso em: 28 set. 2026.
+
+## 2.10 Custos da Prova de Conceito e da Solução Final
+
+Esta seção detalha os custos de pessoal e de tecnologia de dois objetos distintos: a prova de conceito, construída pela equipe nas cinco sprints do módulo, e a solução final, que o Metrô contrataria para ter o agente em produção no próprio tenant. Os números vêm da análise de viabilidade da seção 7 do [GestaoProjeto.md](GestaoProjeto.md), que mostra cada cálculo, e são organizados aqui pela separação que a seção 2.8.9 propôs na Sprint 1: o custo de construção, fixo e delimitado no tempo, e o custo de operação, majoritariamente variável.
+
+### 2.10.1 Premissas e fontes de preço
+
+| Premissa | Valor adotado | Fonte e data de consulta |
+|---|---|---|
+| Custo-hora de pessoal | R$ 81,25, único para todas as funções | Salário de referência de R$ 13.000,00 mensais para Desenvolvedor Pleno contratado como PJ em São Paulo, dividido por 160 h (Glassdoor, 25/09/2026) |
+| Horas de trabalho | Estimativa de cada card pela régua de tamanho: PP 0,25 h, P 0,5 h, M 1 h e G 2 h | Kanban do GitLab, com a Sprint 5 pelo planejamento fechado em 28/09/2026 (seções 7.2 e 3.6.1 do [GestaoProjeto.md](GestaoProjeto.md)) |
+| Câmbio | PTAX de venda de R$ 5,1991, com IOF de 3,5% sobre compras internacionais com cartão | Banco Central do Brasil, 25/09/2026 |
+| Serviços de nuvem da Azure | Tabela oficial em reais, região `brazilsouth` | Microsoft, 25/09/2026 |
+| Microsoft Copilot Studio | Pacote de 25.000 créditos por R$ 1.145,10 ao mês | Microsoft, 25/09/2026 |
+| Modelo de geração do executor próprio | US$ 1,50 por milhão de tokens de entrada e US$ 9,00 por milhão de tokens de saída, no modelo `google/gemini-3.5-flash` | OpenRouter, 28/09/2026 |
+| Índice vetorial do executor próprio | Plano Starter, gratuito; o plano pago mais próximo, Standard, tem mínimo de US$ 50 por mês | Pinecone, 28/09/2026 |
+
+As fontes de 25/09/2026 estão listadas na seção 7.15 do [GestaoProjeto.md](GestaoProjeto.md), e as de 28/09/2026, nas Referências deste documento.
+
+### 2.10.2 Prova de conceito
+
+**Pessoal.** A prova de conceito consumiu 435,00 h de trabalho, somadas as cinco sprints: 55,00 h na Sprint 1, 90,50 h na Sprint 2, 55,50 h na Sprint 3, 143,75 h na Sprint 4 e 90,25 h planejadas para a Sprint 5. A equipe é de estudantes, e o custo abaixo valora esse trabalho a preço de mercado, ou seja, o que ele custaria num contrato.
+
+| Função | Horas | Custo |
+|---|---:|---:|
+| Gestão de projeto e processos | 51,25 h | R$ 4.164,06 |
+| Negócio, requisitos e viabilidade | 66,75 h | R$ 5.423,44 |
+| Arquitetura, dados e nuvem | 78,00 h | R$ 6.337,50 |
+| Desenvolvimento de software e PLN | 134,25 h | R$ 10.907,81 |
+| UX/UI e frontend | 39,50 h | R$ 3.209,38 |
+| Qualidade e testes | 65,25 h | R$ 5.301,56 |
+| **Total de pessoal** | **435,00 h** | **R$ 35.343,75** |
+
+A regra que associa as horas de cada sprint a uma função está na seção 7.2.2 do [GestaoProjeto.md](GestaoProjeto.md).
+
+**Tecnologia.** No módulo, parte das ferramentas saiu sem custo, em planos acadêmicos, contas gratuitas ou no ambiente do Inteli, e a nuvem operou sob o teto de R$ 300 por ano, com alerta de orçamento (11.2.6). A tabela registra o equivalente comercial de cada item, que é o custo de reproduzir a prova de conceito fora do ambiente acadêmico.
+
+| Item | Uso na prova de conceito | Custo | Base do cálculo |
+|---|---|---:|---|
+| GitLab Premium | Repositório, board, merge requests e integração contínua | R$ 2.808,92 | 6 usuários por 3 meses, a US$ 29 por usuário |
+| Figma Professional | Protótipos, mockups e correções de interface | R$ 516,58 | 2 assentos por 3 meses, a US$ 16 por assento |
+| Maze Starter | Teste de usabilidade com gravação | R$ 532,73 | 1 mês, a US$ 99 |
+| Azure: PostgreSQL, Container Registry e Key Vault | Banco, imagens e segredos dos estágios de desenvolvimento e homologação | R$ 389,28 | 2 meses a R$ 194,64 |
+| Azure Container Apps | Execução do `web` e do `middleware` | R$ 0,00 | Escala a zero, dentro da franquia mensal gratuita |
+| Azure AI Content Safety e Azure AI Speech | Guardas e transcrição | R$ 0,00 | Nível gratuito F0 |
+| Google Drive | Corpus sintético lido pela ingestão | R$ 0,00 | Pasta controlada, lida por conta de serviço |
+| Pinecone | Índice vetorial do corpus | R$ 0,00 | Plano Starter, suficiente para os 76 documentos e 1.883 trechos indexados (9.4.6) |
+| Embeddings e classificador | Vetorização e classificação de intenções | R$ 0,00 | Modelos locais, sem tarifa por requisição |
+| **Total fixo de tecnologia** | | **R$ 4.247,51** | |
+| Modelo de geração | Resposta com citação a cada consulta ao executor próprio | Cerca de R$ 0,05 por consulta | Cerca de 3.500 tokens de entrada (cinco trechos de até 350 tokens, as instruções fixas, a pergunta e até três turnos de histórico) e até 400 de saída: US$ 0,00885 por consulta, convertidos pela PTAX com IOF |
+
+Somados pessoal e tecnologia fixa, a prova de conceito custa **R$ 39.591,26** a preço de mercado, e a geração acrescenta centavos por consulta. O pessoal responde por 89% desse valor, o que confirma a leitura da seção 2.8.9: o valor da prova de conceito está no trabalho de construir e avaliar o pipeline, e não em infraestrutura.
+
+### 2.10.3 Solução final
+
+A solução final é a que o Metrô contrataria: construção e implantação no tenant do Metrô, treinamento, operação assistida e, depois, a operação mensal. Na análise de viabilidade, o executor em produção é o Copilot Studio no tenant do Metrô, preferência do parceiro registrada no TAPI (seção 7.1.3 do [GestaoProjeto.md](GestaoProjeto.md)), e não o executor próprio da prova de conceito.
+
+| Componente | Natureza | Valor | Premissas |
+|---|---|---:|---|
+| Contrato de construção, implantação e transferência | Pessoal, insumos, despesas, imposto e margem | R$ 60.584,06, em três marcos | 451,00 h × R$ 81,25 = R$ 36.643,75 de pessoal, 60,48% do preço; insumos de R$ 4.247,51; despesas de R$ 2.400,00; Simples Nacional de 15,5%; margem de 15% sobre custos, despesas e impostos (seções 7.2 a 7.9) |
+| Operação em produção | Tecnologia | R$ 4.448,61 por mês; R$ 53.383,32 por ano | Detalhada na tabela seguinte (seção 7.5) |
+| Sustentação Nível 3, opcional | Pessoal | R$ 20.466,99 por ano | 15 h por mês, 180 h por ano, com o mesmo custo-hora, imposto e margem (seção 7.11) |
+| **Custo total de propriedade** | | **R$ 113.967,38 no primeiro ano; R$ 220.734,02 em três anos** | Sem a sustentação opcional; com ela, R$ 134.434,37 e R$ 282.134,99 |
+
+O contrato inclui 16 h de treinamento e operação assistida além das 435,00 h de construção. A operação é dimensionada para 90 usuários ativos, os responsáveis pelas 86 frentes do portfólio e 4 integrantes do PMO, com 6 interações por usuário por dia útil, o que dá 11.340 interações de usuários e 390 disparos de rotinas por mês (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)).
+
+| Serviço de operação | Custo mensal | Premissa |
+|---|---:|---|
+| Microsoft Copilot Studio | R$ 3.435,30 | 73.899 créditos por mês, em 3 pacotes de 25.000 |
+| Azure Container Apps | R$ 711,35 | Uma réplica mínima de `web`, `middleware` e `worker`, sem partida a frio no expediente |
+| Azure Database for PostgreSQL | R$ 168,28 | Instância B1ms contínua, com 32 GB |
+| Azure AI Content Safety | R$ 68,23 | Três avaliações por interação, no nível pago S0 |
+| Azure AI Speech | R$ 39,09 | 20% das interações por voz, 7,56 h de áudio por mês, no nível pago S0 |
+| Azure Container Registry | R$ 26,20 | Plano Basic |
+| Azure Key Vault | R$ 0,16 | 10.000 operações |
+| Log Analytics | R$ 0,00 | Até 5 GB de ingestão, dentro da franquia |
+| **Total** | **R$ 4.448,61** | |
+
+**O que muda da prova de conceito para a solução final.** Três diferenças explicam por que a solução final não é a prova de conceito com mais usuários. A primeira é o executor: a prova de conceito responde pelo executor próprio, sobre serviços que a equipe provisiona, enquanto a solução final usa o Copilot Studio, que sozinho responde por 77% do custo de operação. A segunda é o perímetro: o Content Safety e o Speech saem do nível gratuito, no tenant da equipe, para o nível pago, no tenant do Metrô, que é a condição para usar dado real (risco R12). A terceira é a disponibilidade: os apps deixam de escalar a zero e mantêm uma réplica mínima, para que nenhum usuário espere a partida a frio do classificador.
+
+A integração com o Copilot Studio por Direct Line está no escopo do contrato, mas não foi concluída na prova de conceito (5.1.3). As horas do módulo não a incluem, e o esforço para concluí-la é risco de escopo, coberto pela reserva de contingência de R$ 3.664,38, que leva o preço a R$ 65.712,18 (seção 7.9.3 do [GestaoProjeto.md](GestaoProjeto.md)). Manter o executor próprio em produção trocaria os créditos do Copilot Studio por cobrança por token, mas exigiria um modelo de geração dentro do perímetro homologado e uma proposta nova (seção 7.13.3 do [GestaoProjeto.md](GestaoProjeto.md)).
 
 # 3. Requisitos do Projeto
 
@@ -12273,6 +12355,8 @@ partir da `develop` e merge request.
 - MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
 - MOCK SERVICE WORKER. *Documentação do MSW*. Disponível em: https://mswjs.io/docs/. Acesso em: 2 set. 2026.
 - NAÇÕES UNIDAS BRASIL. *Objetivos de Desenvolvimento Sustentável*. Disponível em: https://brasil.un.org/pt-br/sdgs. Acesso em: 28 set. 2026.
+- OPENROUTER. *google/gemini-3.5-flash: preços por token*. Disponível em: https://openrouter.ai/google/gemini-3.5-flash. Acesso em: 28 set. 2026.
+- PINECONE. *Pricing*. Disponível em: https://www.pinecone.io/pricing/. Acesso em: 28 set. 2026.
 - PYTEST-RECORDING. *Plugin de gravação e reprodução para pytest*. Disponível em: https://github.com/kiwicom/pytest-recording. Acesso em: 2 set. 2026.
 - SCHEMATHESIS. *Property-based testing para APIs descritas em OpenAPI*. Disponível em: https://schemathesis.readthedocs.io/. Acesso em: 2 set. 2026.
 - SCIKIT-LEARN. *Metrics and scoring: quantifying the quality of predictions*. Disponível em: https://scikit-learn.org/stable/modules/model_evaluation.html
