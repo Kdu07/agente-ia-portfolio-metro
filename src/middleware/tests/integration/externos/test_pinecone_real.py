@@ -7,22 +7,27 @@ Pinecone aceita id inexistente **sem erro** — a remoção relatava
 sucesso e não apagava nada (#285). Um dublê responde o que combinamos
 com ele; o que estava em dúvida era se o provedor concorda.
 
-**Pulado por padrão.** Sem `PINECONE_API_KEY` no ambiente, nada aqui
-roda — o CI não tem credencial de nenhum provedor, e essa é uma
-propriedade a preservar (§10.5.8 do Projeto.md).
-
-O marcador `externo` da §10.5.7.2 ainda não existe no `pyproject.toml`:
-ele entra com o módulo de VHS (#255), que está em outra branch. Quando
-aquilo mergear, este arquivo troca o `skipif` pelo marcador.
+**Pulado por padrão.** Só roda com `TESTES_EXTERNOS_REAIS=1` e
+`PINECONE_API_KEY` no ambiente — o CI não tem credencial de nenhum provedor,
+e essa é uma propriedade a preservar (§10.5.8 do Projeto.md).
 
 Escreve num namespace próprio, separado do `_validacao` que o
 `provisionar --validar` usa, para que os dois possam rodar ao mesmo
 tempo sem se ver.
 """
 
+import os
+
 import pytest
 
 from app.config import settings
+
+if os.getenv("TESTES_EXTERNOS_REAIS") != "1" or not settings.pinecone_api_key:
+    pytest.skip(
+        "exige TESTES_EXTERNOS_REAIS=1 e PINECONE_API_KEY: toca o serviço real",
+        allow_module_level=True,
+    )
+
 from app.rag.vetorial.base import Escopo
 from app.rag.vetorial.pinecone import RepositorioPinecone
 from app.rag.vetorial.provisionar import (
@@ -35,11 +40,6 @@ from app.rag.vetorial.provisionar import (
     _trechos_de_validacao,
 )
 from app.schemas.usuario import Perfil
-
-pytestmark = pytest.mark.skipif(
-    not settings.pinecone_api_key,
-    reason="exige PINECONE_API_KEY: toca o serviço real",
-)
 
 NAMESPACE = "_teste-integracao"
 
