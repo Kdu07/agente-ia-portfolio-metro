@@ -37,7 +37,7 @@ export function Login() {
 
   return (
     <main className="grid min-h-dvh grid-rows-[auto_1fr] bg-background lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1">
-      <section className="marca-prata fundo-marca relative flex min-h-50 flex-col justify-between gap-6 overflow-hidden p-5.5 lg:p-8.5">
+      <section aria-label="Marca do Metrô" className="marca-prata fundo-marca relative flex min-h-50 flex-col justify-between gap-6 overflow-hidden p-5.5 lg:p-8.5">
         {/* Na faixa estreita do celular o traçado passa atrás da frase: mais apagado ali. */}
         <LinhasMetro className="absolute inset-0 size-full opacity-55 lg:opacity-100" />
         <LogoPrata className="relative h-11 w-42.5 lg:h-13.5 lg:w-52.5" />

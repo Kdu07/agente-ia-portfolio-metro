@@ -29,7 +29,12 @@ export function TabelaEnunciados({
       {enunciados.length === 0 ? (
         <p className="px-4 pt-1 pb-4 text-sm text-muted-foreground">{mensagemVazia}</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div
+          role="group"
+          aria-label={`Tabela rolável: ${titulo}`}
+          tabIndex={0}
+          className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+        >
           <table className="w-full min-w-130 text-left text-[13px]">
             <caption className="sr-only">{titulo}</caption>
             <thead className="bg-secondary text-[12.5px] text-foreground">
