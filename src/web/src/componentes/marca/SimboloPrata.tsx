@@ -23,7 +23,9 @@ export function SimboloPrata({ className, titulo = "Prata", decorativa = false }
     <svg
       viewBox="102 150 488 440"
       className={className}
-      {...(decorativa ? { "aria-hidden": true } : { role: "img", "aria-label": titulo })}
+      role={decorativa ? "none" : "img"}
+      aria-label={decorativa ? undefined : titulo}
+      aria-hidden={decorativa}
     >
       <defs>
         <DegradeDaLogo id={id} />
