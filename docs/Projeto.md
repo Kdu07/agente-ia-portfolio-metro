@@ -114,6 +114,7 @@
   - [11.4 Retorno a uma Versão Anterior](#114-retorno-a-uma-versão-anterior)
 - [12. Plano de Adoção e Mobilização do Ecossistema](#12-plano-de-adoção-e-mobilização-do-ecossistema)
   - [12.1 Mapa de Adoção e Aculturamento Organizacional](#121-mapa-de-adoção-e-aculturamento-organizacional)
+  - [12.2 Mecanismos de Incentivo e Engajamento](#122-mecanismos-de-incentivo-e-engajamento)
 - [Referências](#referências)
 
 # 1. Introdução
@@ -12053,9 +12054,9 @@ partir da `develop` e merge request.
 
 # 12. Plano de Adoção e Mobilização do Ecossistema
 
-Um agente de IA só gera valor se as pessoas o usarem na rotina da gestão do portfólio, e as barreiras de entrada em ambiente corporativo são conhecidas: desconfiança no conteúdo gerado, receio quanto à confidencialidade, atrito de uso e resistência a trocar um hábito que já funciona. Este capítulo descreve como a solução será introduzida no Metrô e o que sustenta o uso depois da introdução, começando pelo mapa de adoção e aculturamento (12.1).
+Um agente de IA só gera valor se as pessoas o usarem na rotina da gestão do portfólio, e as barreiras de entrada em ambiente corporativo são conhecidas: desconfiança no conteúdo gerado, receio quanto à confidencialidade, atrito de uso e resistência a trocar um hábito que já funciona. Este capítulo descreve como a solução será introduzida no Metrô e o que sustenta o uso depois da introdução: o mapa de adoção e aculturamento (12.1) e os mecanismos de incentivo e engajamento (12.2).
 
-O plano parte da prova de conceito como ela é: consulta ao portfólio em linguagem natural, com a fonte citada, rotinas agendadas e avisos dentro da aplicação, sem escrita no portfólio pela conversa. Parte também da condição para usar dado real: o ambiente homologado do parceiro (risco R02) e o reprovisionamento do Content Safety e do Speech no tenant do Metrô ([Arquitetura.md](Arquitetura.md), seção 12.2). Por isso a introdução é feita em fases, e nenhuma pessoa usa o agente com dado real antes que essa condição esteja cumprida.
+O plano parte da prova de conceito como ela é: consulta ao portfólio em linguagem natural, com a fonte citada, rotinas agendadas e avisos gerados no middleware a partir dos eventos do portfólio, sem escrita no portfólio pela conversa. Parte também da condição para usar dado real: o ambiente homologado do parceiro (risco R02) e o reprovisionamento do Content Safety e do Speech no tenant do Metrô ([Arquitetura.md](Arquitetura.md), seção 12.2). Por isso a introdução é feita em fases, e nenhuma pessoa usa o agente com dado real antes que essa condição esteja cumprida.
 
 | Fase | Quando | O que acontece | Quem decide a passagem para a fase seguinte |
 |---|---|---|---|
@@ -12072,7 +12073,7 @@ O público é definido pelos perfis e permissões que a solução já implementa
 
 | Público | Perfil e permissões na solução | Quantos | O que faz com o agente | Papel na adoção |
 |---|---|---|---|---|
-| Líderes de projeto e de programa (Fernanda Medina, 2.4.2) | `LIDER_PROJETO`, com `GERIR_ROTINAS` | 86, um por frente do portfólio | Consulta avanço, marcos, riscos, decisões pendentes e normas dos projetos sob sua responsabilidade; agenda o relatório do fechamento mensal; recebe o aviso de marco atrasado | Público prioritário: concentra o uso e o ganho de tempo, e é o segmento em que a proposta de valor se apoia (2.8.2) |
+| Líderes de projeto e de programa (Fernanda Medina, 2.4.2) | `LIDER_PROJETO`, com `GERIR_ROTINAS` | 86, um por frente do portfólio | Consulta avanço, marcos, riscos, decisões pendentes e normas dos projetos sob sua responsabilidade; agenda o relatório do fechamento mensal; recebe o aviso de marco atrasado, depois que a tela for ligada às rotas de avisos (12.1.3) | Público prioritário: concentra o uso e o ganho de tempo, e é o segmento em que a proposta de valor se apoia (2.8.2) |
 | Analistas do PMO Corporativo, na atuação transversal do gestor de portfólio (2.4) | Perfil de visão ampla, com `VER_INTENCOES` e `GERIR_ROTINAS` | 4 | Consolida o portfólio, varre pendências, lê o painel de intenções e faz a curadoria do catálogo e do corpus | Dono da adoção: conduz o onboarding, acompanha o uso e decide o que muda |
 | Diretoria e assessores (Roberto Nogueira, 2.4.1) | `DIRETORIA` | Fora da base de 90 usuários | Consulta a visão consolidada e as criticidades e recebe o relatório recorrente na aplicação | Patrocinador: o uso visível pela diretoria legitima a mudança para os líderes |
 | Membros das equipes de projeto (Carlos Mendes, 2.4.3) | `MEMBRO_EQUIPE` | Fora da base de 90 usuários | Consulta o próprio projeto e as normas e recebe os avisos do projeto em que atua | Público de expansão: entra depois que os líderes do seu projeto já usam o agente |
@@ -12088,7 +12089,7 @@ As barreiras foram levantadas a partir das personas (2.4), da matriz de riscos (
 | B1 | Desconfiança na resposta gerada por IA: o medo de uma resposta inventada chegar a uma decisão | Cultural | Diretoria e PMO | É o principal risco de abandono apontado em 2.8.4 e a consequência do risco R04 | Fonte citada em cada resposta factual e abstenção quando o corpus não sustenta a resposta; na bancada do RAG, abstenção correta de 1,00 e nenhuma resposta sem citação válida (9.4.6) |
 | B2 | Receio quanto à confidencialidade: não saber para onde vai o que se pergunta | Cultural | PMO e Diretoria | Perímetro declarado em 3.3.1.1, com as exposições registradas como riscos R12, R19 e R20 | Guardas de entrada e de saída, filtro de permissão na consulta e registro de cada interação; com dado real, os serviços passam ao tenant do Metrô antes do piloto |
 | B3 | Receio de perder o controle da informação ou o próprio papel: "o agente decide", "o agente substitui o PMO" | Cultural | PMO | O escopo exclui a tomada autônoma de decisões (seção 1) | O agente consulta, cita e recusa, mas não altera o portfólio pela conversa nem decide; a curadoria do catálogo e do corpus fica com o PMO |
-| B4 | Hábito: a planilha, o SharePoint e a consulta direta ao PMO já funcionam | Cultural | Líderes e membros | O agente atual só responde a fluxos pré-configurados (2.2.3), o que reforçou o hábito de buscar a informação por conta própria | Perguntas sugeridas no primeiro acesso, todas com resposta no corpus, e aviso de marco atrasado ao abrir a conversa, que mostra valor antes de qualquer pergunta |
+| B4 | Hábito: a planilha, o SharePoint e a consulta direta ao PMO já funcionam | Cultural | Líderes e membros | O agente atual só responde a fluxos pré-configurados (2.2.3), o que reforçou o hábito de buscar a informação por conta própria | Perguntas sugeridas no primeiro acesso, todas com resposta no corpus, e aviso de marco atrasado ao abrir a conversa, que mostra valor antes de qualquer pergunta, depois que a tela for ligada às rotas de avisos (12.1.3) |
 | B5 | Não saber o que perguntar nem onde estão as funções | Técnica | Líderes | Sucesso de 62,5% na criação de rotina, de 75% na exploração das páginas e de 75% na nova conversa (10.3.12.6) | Correções UX01 a UX05, com a agenda de rotina em linguagem comum e a barra lateral com rótulos (10.3.12.9) |
 | B6 | Atrito no acesso corporativo | Técnica | Todos | Login com 87,5% de sucesso e tempo entre 11,7 s e 114 s (10.3.12.4 e 10.3.12.6) | Entrada única pelo Entra ID, com a orientação sobre a conta corporativa na tela de entrada (UX01) |
 | B7 | Recusa lida como defeito: "o agente não sabe nada" | Cultural e técnica | Membros e líderes | Pedidos fora do catálogo ou do perfil são recusados por desenho (RF01 e RF03) | Recusa orientada, que explica o limite e sugere o que perguntar; as recusas que se repetem aparecem no painel de intenções, para o PMO decidir se viram curadoria |
@@ -12104,7 +12105,7 @@ A solução educa no próprio uso, sem manual:
 - **Perguntas sugeridas.** A conversa vazia oferece perguntas que correspondem a intenções reais do catálogo e que têm resposta no corpus, de modo que o primeiro contato termina numa resposta útil, e não numa recusa.
 - **Fonte citada.** Cada resposta factual mostra de onde veio, e o usuário aprende onde a informação está e como conferi-la.
 - **Recusa orientada.** Quando o pedido está fora do catálogo ou do perfil, a resposta explica o limite em linguagem comum, sem revelar dado restrito, e ensina o escopo pelo uso.
-- **Aviso de marco atrasado.** Ao abrir uma conversa, o líder vê o marco atrasado dos seus projetos antes de perguntar qualquer coisa.
+- **Aviso de marco atrasado.** Ao abrir uma conversa nova, o líder vê o marco atrasado dos seus projetos antes de perguntar qualquer coisa. Na prova de conceito, esse cartão é uma demonstração visual: o conteúdo está fixo no frontend e ainda não vem das rotas de avisos do middleware (`GET /avisos`), que já geram avisos por adesão a partir dos eventos do portfólio (9.1.2.7.2). A integração da tela com essas rotas é uma ação da preparação.
 - **Agenda em linguagem comum.** A rotina é criada por frequência, horário e resumo em prosa antes de salvar, sem expressão cron.
 - **Histórico e retomada.** Quem interrompe uma consulta retoma de onde parou.
 
@@ -12115,6 +12116,7 @@ As ações organizacionais completam o que o produto faz. Cada uma tem momento e
 | Preparação | Homologar o uso com dado real: reprovisionar o Content Safety e o Speech no tenant do Metrô, ligar o corpus aos documentos do subportfólio piloto e verificar o perímetro de 3.3.1.1 | TI do Metrô, com os setores técnicos e de compliance | Condição para todos |
 | Preparação | Revisar com o PMO os documentos indexados e trocar as perguntas sugeridas por perguntas reais do subportfólio piloto | PMO Corporativo, com a TI responsável pela sustentação | PMO |
 | Preparação | Escolher o subportfólio piloto e o diretor patrocinador | PMO Corporativo | Diretoria |
+| Preparação | Ligar o aviso de marco da tela inicial às rotas de avisos do middleware e cadastrar a adesão dos líderes do subportfólio piloto aos eventos de marco dos seus projetos | TI responsável pela sustentação | Líderes |
 | Piloto, semana 1 | Sessão de lançamento de 30 minutos no subportfólio: três perguntas reais com a fonte aberta na tela e uma recusa demonstrada de propósito, para mostrar também o que o agente não faz | PMO, com o líder do subportfólio | Líderes e membros |
 | Piloto, semana 1 | Guia de uma página: o que o agente faz e o que não faz, perguntas por perfil e para onde vai o que se pergunta | PMO | Todos |
 | Piloto, semana 2 | Configurar com cada líder a primeira rotina, o relatório do fechamento mensal | PMO | Líderes |
@@ -12128,6 +12130,65 @@ As ações organizacionais completam o que o produto faz. Cada uma tem momento e
 | Sustentação, a cada revisão do NOR-00-223 ou dos modelos de documento | Atualizar o corpus e as perguntas sugeridas | PMO, com a TI responsável pela sustentação | Todos |
 
 As ações usam o que a solução já tem e o que o PMO já faz, e nenhuma exige ferramenta nova. Duas escolhas merecem registro. A recusa demonstrada na sessão de lançamento é deliberada: quem vê o agente dizer que não sabe passa a confiar mais no que ele afirma, o que ataca a barreira B1 por onde ela nasce. E a entrada dos membros das equipes só depois dos líderes segue a hierarquia do próprio projeto: o membro adota o que o líder já usa, e não o contrário.
+
+## 12.2 Mecanismos de Incentivo e Engajamento
+
+A adoção contínua depende do que cada pessoa ganha ao mudar a forma de trabalhar. As três dimensões de incentivo analisadas aqui, utilidade, governança e comunidade, aplicam-se ao projeto, com uma exceção registrada em 12.2.3. Os indicadores de 12.2.4 fecham o ciclo: mostram ao PMO se os incentivos estão funcionando e sustentam a decisão de expandir, tomada ao fim do piloto.
+
+### 12.2.1 Utilidade e ganho de produtividade
+
+O incentivo mais forte é o ganho no dia a dia, e ele é diferente para cada perfil. A tabela descreve o que muda na rotina e o ganho concreto, com a base de cada número.
+
+| Perfil | Como é hoje | Como fica com o agente | Ganho concreto | Base |
+|---|---|---|---|---|
+| Líder de projeto | Procura avanço, marcos, riscos e decisões pendentes entre SharePoint, planilhas e Power BI; monta o relatório do fechamento mensal; descobre o marco atrasado na reunião de acompanhamento | Pergunta em linguagem natural e recebe a resposta com a fonte; agenda o relatório do fechamento como rotina; vê o aviso de marco atrasado ao abrir a conversa, depois que a tela for ligada às rotas de avisos (12.1.3) | 18 minutos por dia útil no cenário base, entre 6 e 30 minutos nos cenários pessimista e otimista, e o atraso conhecido antes da reunião | Seção 7.12.1 do [GestaoProjeto.md](GestaoProjeto.md), a verificar pelo indicador I8 |
+| PMO Corporativo | Consolida o portfólio, cobra pendências e responde às mesmas dúvidas de processo de vários líderes | Rotinas e avisos fazem parte da cobrança; as dúvidas de norma e de conceito são respondidas pelo agente com a fonte; o painel mostra o que se pergunta e não se encontra | Menos cobrança manual e menos dúvidas repetidas, e uma atribuição nova: a curadoria do que o agente sabe | Painel de intenções ([Arquitetura.md](Arquitetura.md), seção 5) |
+| Diretoria | Depende da consolidação feita por terceiros para ter a visão atualizada do portfólio (2.4.1) | Recebe o relatório recorrente na data e consulta diretamente a visão consolidada e as criticidades | Autonomia: a informação chega sem pedido e sem espera pela consolidação | Persona de 2.4.1 |
+| Membro de equipe | Pergunta ao líder ou ao PMO o que diz a norma, como classificar um risco ou qual é o próximo marco do projeto | Consulta o próprio projeto e as normas com resposta citada, restrita ao que o perfil pode ver | Resposta imediata para as dúvidas de processo, sem depender da disponibilidade do líder | Perguntas sugeridas sobre normas e conceitos (12.1.3) |
+
+O ganho é de consulta, e não de registro: quem precisa atualizar um artefato continua fazendo isso na fonte, como explica a barreira B8. Por isso o incentivo de utilidade é mais forte para quem consulta muito, o líder e o PMO, e é para eles que o piloto foi desenhado. O tempo poupado da primeira linha é estimativa da análise de viabilidade, e não medição; ele só vira argumento de adoção depois de medido no piloto.
+
+### 12.2.2 Governança e voz ativa
+
+O usuário tem voz na evolução da solução por cinco mecanismos. Dois já existem na prova de conceito; os demais são práticas do PMO ou evoluções propostas, e a tabela diz qual é qual.
+
+| Mecanismo | Como funciona | Situação | Frequência | Responsável |
+|---|---|---|---|---|
+| Escuta pelo painel de intenções | O painel agrupa o que os usuários pedem e o agente não faz e as perguntas em que o classificador hesita. Cada grupo recorrente vira decisão: nova intenção, novos exemplos de treino, documento a incluir no corpus ou item do guia | Existe: recortes de evolução do catálogo do painel, com a permissão `VER_INTENCOES` | Quinzenal no piloto, mensal depois | PMO |
+| Curadoria das bases de conhecimento | Revisão do corpus (documentos a incluir, retirar ou substituir por versão nova), do catálogo de intenções e das perguntas sugeridas. A mudança de um documento na pasta acompanhada já dispara a reindexação pelo webhook do Google Drive (9.1.2.7) | Existe a reindexação automática; a revisão periódica é prática do PMO | Mensal, e a cada revisão do NOR-00-223 ou dos modelos de documento | PMO, com a TI responsável pela sustentação |
+| Avaliação da resposta pelo usuário | Botão de resposta útil ou não útil, com motivo opcional, gravado junto da interação, para que a curadoria veja não só o que o agente recusou, mas também o que respondeu mal | Proposta de evolução: a prova de conceito não tem avaliação por resposta. Até lá, o retorno vem pelo plantão de dúvidas de 12.1.3 | A cada resposta | Equipe de produto, na evolução |
+| Grupo de usuários-chave | Um líder por subportfólio, o PMO e a TI priorizam as melhorias a partir do painel, das avaliações e do retorno das sessões | Prática do PMO | Mensal na expansão, trimestral na sustentação | PMO |
+| Transparência dos resultados | Os indicadores de 12.2.4 e a lista do que mudou a partir das sugestões são publicados para todos os usuários | Prática do PMO | Mensal | PMO |
+
+O último mecanismo é o que dá sentido aos outros: quem sugere e vê a sugestão virar mudança volta a sugerir, e quem sugere e não recebe resposta desiste. Publicar "o que mudou a partir do que vocês pediram" custa pouco e é o que transforma a escuta em voz ativa.
+
+### 12.2.3 Comunidade e reconhecimento
+
+| Mecanismo | Como funciona | Aplicação ao projeto |
+|---|---|---|
+| Rede de multiplicadores | Um líder por subportfólio, escolhido entre os que adotaram primeiro, apresenta o próprio uso nas sessões de lançamento da expansão (12.1.3), é o primeiro ponto de dúvida no subportfólio e representa os colegas no grupo de usuários-chave, com cerca de uma hora por semana durante a expansão | Aplicável: a estrutura em seis subportfólios dá o recorte natural da rede, e o líder é o perfil prioritário da adoção |
+| Reconhecimento dos primeiros adotantes | Menção no relatório mensal do PMO e convite para o grupo de usuários-chave, pelo uso e pelas sugestões que viraram melhoria | Aplicável, com uma regra: reconhecer contribuição, e não volume de perguntas, que incentivaria perguntas artificiais e distorceria os indicadores |
+| Troca de boas práticas | As perguntas que funcionam para cada perfil viram perguntas sugeridas e itens do guia, e são compartilhadas no canal de comunicação que o PMO já usa com os líderes | Aplicável, sem ferramenta nova |
+| Destaque às equipes com melhor qualidade e completude de dados | Reconhecimento das equipes cujos dados de projeto estão mais completos e consistentes | Não aplicável nesta versão: a prova de conceito não mede a completude dos dados por equipe, porque o registro acontece na fonte, e um ranking assim premiaria a planilha, e não o uso do agente. Passa a fazer sentido quando o agente identificar dados ausentes ou inconsistentes, como prevê o RF06 |
+
+Uma forma de reconhecimento foi deliberadamente descartada: pontuação ou ranking individual de uso. O registro de interações existe para melhorar a solução e para rastrear o que foi respondido, e usá-lo para comparar pessoas somaria às barreiras B2 e B3 um receio novo, o de ser monitorado.
+
+### 12.2.4 Indicadores de adoção
+
+Os indicadores saem do registro de interações, que já guarda usuário, perfil, canal, intenção, desfecho e latência de cada mensagem, e de duas medições feitas no piloto. Todos são agregados e nunca expõem o uso de uma pessoa. O registro e as consultas do painel permitem hoje o recorte por perfil, mas não guardam nem filtram projeto ou subportfólio. O recorte por subportfólio, usado para acompanhar o piloto e cada etapa da expansão, sai da lista de usuários habilitados em cada etapa, cruzada com o usuário da interação.
+
+| # | Indicador | Fórmula | Fonte | Frequência | Referência para a decisão |
+|---|---|---|---|---|---|
+| I1 | Usuários ativos por perfil | Usuários com ao menos uma interação na semana ÷ usuários habilitados no perfil | Registro de interações | Semanal | No piloto, a maioria dos líderes do subportfólio ativa na quarta semana |
+| I2 | Intensidade de uso | Interações de usuários ÷ usuários ativos ÷ dias úteis | Registro de interações | Mensal | A premissa de 6 interações por usuário por dia útil da análise de viabilidade (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)); abaixo dela, o benefício calculado precisa ser revisto |
+| I3 | Retenção | Usuários ativos na semana 1 que continuam ativos na semana 4 ÷ usuários ativos na semana 1 | Registro de interações | Ao fim do piloto e de cada subportfólio | Queda forte indica uso por curiosidade, e não por utilidade |
+| I4 | Consultas encaminhadas | Interações com desfecho `ENCAMINHADA` ÷ total de interações | Desfechos do painel de intenções | Semanal | Tendência de alta com a curadoria, à medida que o catálogo passa a cobrir o que se pede |
+| I5 | Pedidos fora de escopo e de baixa confiança | Interações com esses desfechos ÷ total de interações | Recortes de evolução do catálogo do painel | Quinzenal | Tendência de queda com a curadoria; grupos recorrentes viram decisão (12.2.2) |
+| I6 | Proatividade | Líderes com ao menos uma rotina ativa ÷ líderes ativos | Tabela de rotinas | Mensal | Mede se a funcionalidade de pior resultado no teste de usabilidade (62,5% em T4) passou a ser usada |
+| I7 | Satisfação | SUS médio | Reaplicação do roteiro de usabilidade (12.1.3) | Ao fim do piloto | O SUS de 71,9 da rodada de setembro de 2026 (10.3.12.5) |
+| I8 | Tempo poupado por consulta | Tempo da busca manual − tempo da consulta ao agente, para as mesmas perguntas | Medição no piloto com líderes | Uma vez no piloto | O ponto de equilíbrio da seção 7.12.2 do [GestaoProjeto.md](GestaoProjeto.md) e o objetivo O1 (2.3.4) |
+
+Os indicadores I1 a I5 podem ser calculados desde o primeiro dia do piloto, porque dependem apenas do registro que a solução já mantém; o painel de intenções mostra hoje os desfechos e os recortes do catálogo, e I1 a I3 exigem uma consulta nova sobre o mesmo registro, cruzada com a lista de usuários habilitados, sem coleta de dado adicional. I6 usa a tabela de rotinas, e I7 e I8 exigem as medições com usuários previstas no piloto. Ao fim do piloto, o PMO decide a expansão com base em I1, I3, I7 e I8; I2 e I8 também dizem se a análise de viabilidade se confirma.
 
 # Referências
 
