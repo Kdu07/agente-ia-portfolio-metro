@@ -11517,17 +11517,68 @@ evidência textual e a lacuna remanescente. “Parcial” significa que existem
 comportamentos aprovados, mas algum critério ou cenário continua pendente; não é
 uma declaração de conformidade integral.
 
+### 10.7.1 Triagem dos casos `xfail` da suíte funcional
+
+A execução de 25/09/2026 registrou 22 falhas esperadas. A triagem foi refeita em
+28/09/2026 sobre a `develop` no commit `773874b`: o recorte dos sete arquivos que
+continham esses casos terminou com **22 aprovados e 21 `xfail`**, em 349,18 s.
+A diferença é o `TF-RF09-06`, corrigido pela issue #457. Não houve `XPASS`, isto
+é, nenhum dos outros casos passou silenciosamente depois da evidência original.
+
+Nesta tabela, **defeito do produto** é uma divergência entre um requisito do MVP
+e o comportamento implementado; **defeito do teste** é uma expectativa que ficou
+incompatível com o contrato ou com uma decisão de segurança vigente; **pendência
+aceita** é uma limitação consciente que preserva a segurança e não viola o
+critério de aceite do requisito; e **fora do MVP** segue a priorização da seção
+2.7.5. O estado “resolvido” aparece somente para manter a rastreabilidade dos 22
+casos históricos.
+
+| Caso | Classificação | Justificativa e encaminhamento |
+|---|---|---|
+| `TF-RF01-04` | Defeito do teste | A política vigente aplica `MEMBRO_EQUIPE`, o perfil mais restritivo, a uma identidade sem grupo mapeado. Sem projetos associados, ela alcança somente conteúdo transversal. O teste deve verificar esse confinamento, em vez de esperar `None`. |
+| `TF-RF03-05` | Pendência aceita | A consulta não recebe dado de projeto fora do escopo porque o executor RAG é montado com o escopo do usuário. Não distinguir “projeto alheio” de “não encontrado” evita enumeração; permanece pendente tornar a recusa mais orientativa sem revelar a existência do projeto. A exposição de expectativas e escopo já é acompanhada pelo risco `R08`. |
+| `TF-RF03-06` | Defeito do produto | A extração/validação de entidade obrigatória integra o MVP, mas uma consulta ambígua ainda chega ao executor. Requer card BUG para pedir o projeto ausente antes da execução. |
+| `TF-RF04-01` | Defeito do teste | O catálogo possui as sete intenções (`consultar_avanco`, `consultar_cronograma`, `consultar_status_projeto`, `consultar_marcos`, `consultar_riscos`, `consultar_problemas` e `consultar_aderencia_normativa`); o teste compara esses IDs com nomes de dimensão sem o prefixo. |
+| `TF-RF04-02` | Defeito do teste | O contrato atual materializa a referência em `RespostaExecutor.fontes`, e o RAG devolve as fontes usadas. O teste ainda procura o campo antigo/inexistente `referencias`. |
+| `TF-RF04-04` | Defeito do produto | `GET /portfolio/projetos/{codigo}` ainda devolve 403 para projeto alheio e 404 para inexistente, permitindo enumeração. Requer card BUG para uniformizar a resposta sem enfraquecer a autorização. |
+| `TF-RF04-05` | Defeito do teste | A ausência de evidência é representada por `TEXTO_SEM_EVIDENCIA` e pela resposta RAG sem fontes; o teste procura um campo `dado_ausente` que não pertence ao contrato vigente. |
+| `TF-RF05-01` | Defeito do produto | O RF05 é MVP e o fluxo de alteração ainda não exige confirmação efetiva antes da escrita. Requer o card consolidado do fluxo transacional. |
+| `TF-RF05-02` | Defeito do produto | A negação ainda não percorre um fluxo transacional capaz de comprovar que o valor anterior foi preservado. Mesmo card de RF05. |
+| `TF-RF05-03` | Defeito do produto | A permissão de escrita ainda não é verificada antes da leitura e da proposta de alteração. Mesmo card de RF05. |
+| `TF-RF05-04` | Defeito do produto | Não há alteração efetivada com origem, autoria e momento, embora o RF05 e o RNF02 a exijam. Mesmo card de RF05. |
+| `TF-RF05-05` | Defeito do produto | A escrita atômica e a preservação do estado anterior em falha ainda não existem. Mesmo card de RF05. |
+| `TF-RF05-06` | Defeito do produto | O pipeline não conduz o diálogo para completar parâmetros ausentes antes de propor a alteração. Mesmo card de RF05. |
+| `TF-RF06-01` | Defeito do produto | A rotina e os avisos existem, mas não há sonda que identifique periodicamente pendências e gere o aviso dirigido. Requer card BUG consolidado de proatividade. |
+| `TF-RF06-02` | Fora do MVP | O contato fora da aplicação por Teams ou correio corresponde à feature F57, explicitamente retirada do MVP na seção 2.7.6. O aviso interno continua no escopo. |
+| `TF-RF06-03` | Defeito do produto | Sem a sonda de pendências, o sistema também não comprova que um projeto completo deixa de gerar alerta. Mesmo card de RF06. |
+| `TF-RF06-04` | Defeito do produto | A entrega do alerta somente ao responsável não é exercitável enquanto a sonda não produzir avisos a partir das pendências. Mesmo card de RF06. |
+| `TF-RF06-05` | Defeito do produto | Responder ao alerta deveria retornar ao fluxo de alteração com confirmação; depende das correções consolidadas de RF05 e RF06. |
+| `TF-RF08-02` | Fora do MVP | Adequação de material gerencial por perfil pertence ao RF08/US08, classificados como desejáveis e fora do MVP na seção 2.7.5. |
+| `TF-RF08-03` | Fora do MVP | A regra de suficiência para gerar material é parte do RF08 desejável e não compõe a prova de conceito. |
+| `TF-RF08-04` | Fora do MVP | O material gerencial com fontes filtradas também pertence ao RF08. A proteção de fontes nas consultas do MVP continua coberta pelo escopo do RAG. |
+| `TF-RF09-06` | Resolvido pela #457 | A exceção inesperada da guarda de injeção agora vira `BLOQUEADA_INJECAO_MODELO`, não chama o executor e registra uma interação. O `xfail` foi removido e o caso passou na execução atual. |
+
+**Consolidação.** Dos 22 casos históricos, 12 identificam defeitos do produto,
+quatro identificam testes desatualizados, quatro estão fora do MVP, um é uma
+pendência aceita sob o risco `R08` e um foi resolvido pela #457. Essas categorias
+são mutuamente exclusivas e somam os 22 casos. Os defeitos devem ser abertos em
+cinco cards, agrupados por causa raiz: correção dos testes funcionais
+desatualizados; validação de entidades obrigatórias; indistinguibilidade entre
+recurso alheio e inexistente; implementação do fluxo transacional do RF05; e
+implementação da proatividade interna do RF06. A integração externa por Teams ou
+correio não entra no card de RF06 porque permanece fora do MVP.
+
 | Requisito | Script / seção | Resultado | Evidência | Lacuna |
 |---|---|---|---|---|
-| RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | Parcial: 4 aprovados, 1 `xfail` | `docs/evidencias/2026-09-25-testes-funcionais.txt` | Claim sem perfil correspondente |
+| RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | Funcionalidade coberta; 1 `xfail` decorre de teste desatualizado | `docs/evidencias/2026-09-25-testes-funcionais.txt`; triagem 10.7.1 | Corrigir a expectativa do teste para o perfil seguro padrão |
 | RF02 — canais | `tests/funcionais/test_rf02_canais.py` | Aprovado: 7 aprovados | mesma evidência | Limites desta bateria: dublês; integrações reais são cobertas em 10.5 |
-| RF03 — intenções | `tests/funcionais/test_rf03_intencoes.py` | Parcial: ver tabela 10.1.7 | mesma evidência | Casos `xfail` de permissão/entidade |
-| RF04 — consulta | `tests/funcionais/test_rf04_consulta.py` | Parcial: 1 aprovado, 4 `xfail` | mesma evidência | Dimensões, fontes, autorização indistinguível e ausência de dados |
-| RF05 — transações | `tests/funcionais/test_rf05_transacoes.py` | Reprovado/pendente: 6 `xfail` | mesma evidência | Fluxo de alteração com confirmação ainda não existe |
-| RF06 — pendências | `tests/funcionais/test_rf06_pendencias.py` | Fora do MVP nesta entrega: 5 `xfail` | mesma evidência | Varredura e aviso proativo planejados para onda posterior |
+| RF03 — intenções | `tests/funcionais/test_rf03_intencoes.py` | Parcial: 5 aprovados, 1 defeito e 1 pendência aceita | mesma evidência; triagem 10.7.1 | Solicitar entidade obrigatória; acompanhar resposta orientativa sob `R08` |
+| RF04 — consulta | `tests/funcionais/test_rf04_consulta.py` | Parcial: 1 aprovado, 3 testes desatualizados e 1 defeito | mesma evidência; triagem 10.7.1 | Corrigir testes de catálogo/contrato e uniformizar 403/404 |
+| RF05 — transações | `tests/funcionais/test_rf05_transacoes.py` | Não implementado: 6 defeitos do produto | mesma evidência; triagem 10.7.1 | Alteração, confirmação, autorização, trilha e atomicidade |
+| RF06 — pendências | `tests/funcionais/test_rf06_pendencias.py` | Parcial: 4 defeitos do produto e 1 cenário fora do MVP | mesma evidência; triagem 10.7.1 | Implementar sonda e aviso interno; Teams/correio permanece fora do MVP |
 | RF07 — análise documental | `tests/funcionais/test_rf07_analise.py` | Fora do MVP: 3 `skip` | mesma evidência | Escopo explicitamente excluído do MVP |
-| RF08 — relatórios | `tests/funcionais/test_rf08_relatorios.py` | Parcial: ver tabela 10.1.7 | mesma evidência | Perfil, suficiência e filtro de fontes |
-| RF09 — guardas | `tests/funcionais/test_rf09_guardas.py` | Parcial: ver tabela 10.1.7 | mesma evidência; RNF em `2026-09-25-testes-rnf-perimetro.txt` | Falha fechada da guarda de injeção; RNF06 abaixo da meta |
+| RF08 — relatórios | `tests/funcionais/test_rf08_relatorios.py` | Fora do MVP: 1 cenário-base aprovado e 3 `xfail` desejáveis | mesma evidência; triagem 10.7.1 | Retomar perfil, suficiência e filtro de fontes após o MVP |
+| RF09 — guardas | `tests/funcionais/test_rf09_guardas.py` | Casos funcionais aprovados após #457 | evidência original e reexecução da triagem em 28/09; RNF em `2026-09-25-testes-rnf-perimetro.txt` | RNF06 permanece abaixo da meta; a correção funcional não altera a eficácia medida das guardas |
 | RF10 — registro | `tests/funcionais/test_rf10_registro.py` | Aprovado na bateria funcional | evidência funcional | Persistência real verificada separadamente por integração |
 | RF11 — rotinas | `tests/funcionais/test_rf11_rotinas.py` | Aprovado na bateria funcional | evidência funcional | Worker real e corrida concorrente ainda não demonstrados |
 | RF12 — histórico | `tests/funcionais/test_rf12_historico.py` | Aprovado na bateria funcional | evidência funcional | Integração implantada fora desta execução |
@@ -11546,8 +11597,8 @@ uma declaração de conformidade integral.
 
 `python -m pytest --cov=app --cov-report=term-missing` iniciou a suíte completa de 1.187 itens, mas ficou sem progresso durante teste de integração externa e foi interrompido. A medição concluída excluiu `tests/integration`, portanto não é cobertura integral de integração e serviços. As métricas também são limitadas pelos `xfail`, `skip`, dependências dubladas, funcionalidades fora do MVP e módulos não carregados na execução. Para aproximar a meta sem testes artificiais, priorizar webhooks reais, provisionamento vetorial, persistência/worker e ramos de falha; repetir após validar as integrações externas.
 **Riscos para liberação.** RF05 ainda não efetiva alterações com confirmação;
-RF06 e RF07 estão fora do MVP; RF04/RF08 permanecem parciais; a guarda de injeção
-não falha de modo seguro em uma indisponibilidade; o RNF06 reprova parcialmente;
+RF06 permanece parcial e RF07 está fora do MVP; RF04/RF08 permanecem parciais;
+o RNF06 reprova parcialmente;
 a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
 contínua, persistência PostgreSQL e carga Locust implantada seguem pendentes.
 
