@@ -15,6 +15,9 @@ O que se afirma, na ordem em que dói se quebrar:
    nomeando a divergência**, em vez de seguir e quebrar longe daqui.
 """
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
 import pytest
 
 from app.config import settings
@@ -146,3 +149,105 @@ def test_indice_ausente_falha_nomeando_a_causa(monkeypatch) -> None:
         provisionar._cliente()
 
     assert "PINECONE_INDEX" in str(erro.value)
+
+
+# --- Verificação e convergência ------------------------------------------
+
+
+class _IndiceFalso:
+    def __init__(self, estatisticas: dict) -> None:
+        self._estatisticas = estatisticas
+
+    def describe_index_stats(self) -> dict:
+        return self._estatisticas
+
+
+def test_verificar_informa_quando_indice_nao_existe(cliente, capsys) -> None:
+    cliente(ClienteFalso(descricao=None))
+
+    assert provisionar.comando_verificar() == 1
+
+    saida = capsys.readouterr().out
+    assert "NÃO EXISTE" in saida
+    assert "--criar" in saida
+
+
+def test_verificar_exibe_contagem_por_namespace(monkeypatch, configurado, capsys) -> None:
+    descricao = DescricaoFalsa()
+    indice = _IndiceFalso(
+        {
+            "total_vector_count": 7,
+            "namespaces": {"producao": {"vector_count": 5}, "": {"vector_count": 2}},
+        }
+    )
+    cliente = ClienteFalso(descricao)
+    cliente.Index = lambda nome: indice
+    monkeypatch.setattr(provisionar, "_cliente", lambda: cliente)
+
+    assert provisionar.comando_verificar() == 0
+
+    saida = capsys.readouterr().out
+    assert "vetores         7" in saida
+    assert "(padrão)" in saida
+    assert "producao" in saida
+    assert "compatível" in saida
+
+
+def test_trechos_de_validacao_preservam_escopos() -> None:
+    trechos = provisionar._trechos_de_validacao()
+
+    assert len(trechos) == 3
+    assert all(len(trecho.vetor) == DIMENSAO for trecho in trechos)
+    assert [trecho.metadados.projeto for trecho in trechos].count(provisionar.PROJETO) == 2
+    transversal = next(t for t in trechos if t.metadados.projeto is None)
+    assert transversal.metadados.perfis == {
+        provisionar.Perfil.DIRETORIA,
+        provisionar.Perfil.LIDER_PROJETO,
+        provisionar.Perfil.MEMBRO_EQUIPE,
+    }
+
+
+@pytest.mark.asyncio
+async def test_esperar_repete_ate_o_indice_convergir(monkeypatch) -> None:
+    repositorio = SimpleNamespace(
+        buscar=AsyncMock(side_effect=[(), (SimpleNamespace(trecho_id="trecho-1"),)])
+    )
+    dormir = AsyncMock()
+    monkeypatch.setattr(provisionar.asyncio, "sleep", dormir)
+
+    resultado = await provisionar._esperar(
+        repositorio,
+        provisionar.Escopo(perfil=provisionar.Perfil.DIRETORIA),
+        1,
+    )
+
+    assert [item.trecho_id for item in resultado] == ["trecho-1"]
+    assert repositorio.buscar.await_count == 2
+    dormir.assert_awaited_once_with(provisionar.INTERVALO_VISIBILIDADE)
+
+
+@pytest.mark.asyncio
+async def test_esperar_falha_quando_indice_nao_converge(monkeypatch) -> None:
+    repositorio = SimpleNamespace(buscar=AsyncMock(return_value=()))
+    monkeypatch.setattr(provisionar, "TENTATIVAS_VISIBILIDADE", 2)
+    monkeypatch.setattr(provisionar, "INTERVALO_VISIBILIDADE", 0.0)
+    monkeypatch.setattr(provisionar.asyncio, "sleep", AsyncMock())
+
+    with pytest.raises(provisionar.ErroProvisionamento, match="não convergiu"):
+        await provisionar._esperar(
+            repositorio,
+            provisionar.Escopo(perfil=provisionar.Perfil.DIRETORIA),
+            1,
+        )
+
+    assert repositorio.buscar.await_count == 2
+
+
+def test_main_converte_erro_de_provisionamento_em_codigo_um(monkeypatch, capsys) -> None:
+    def falhar() -> int:
+        raise provisionar.ErroProvisionamento("configuração inválida")
+
+    monkeypatch.setattr(provisionar, "comando_verificar", falhar)
+
+    assert provisionar.main([]) == 1
+    assert "configuração inválida" in capsys.readouterr().err

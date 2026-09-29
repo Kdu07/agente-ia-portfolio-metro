@@ -213,3 +213,147 @@ def test_injecao_tem_limiar_mais_baixo_que_as_demais() -> None:
     assert injecao is not None and consulta is not None
     assert injecao.limiar_confianca < consulta.limiar_confianca
     assert injecao.categoria is Categoria.CLASSE_NEGATIVA
+
+
+class ModeloProbabilidadesFalso:
+    """Modelo mínimo para tornar os ramos de rejeição determinísticos."""
+
+    classes_ = np.array(["classe_a", "classe_b"])
+
+    def predict_proba(self, textos) -> np.ndarray:
+        assert len(textos) == 2
+        return np.array([[0.6, 0.4], [0.3, 0.7]])
+
+
+def test_curva_sem_mensagem_aceita_mantem_acuracia_neutra() -> None:
+    enunciados = [
+        Enunciado("um", "classe_a", Origem.CATALOGO),
+        Enunciado("dois", "classe_b", Origem.CATALOGO),
+    ]
+
+    (ponto,) = avaliacao.curva_de_rejeicao(ModeloProbabilidadesFalso(), enunciados, (0.9,))
+
+    assert ponto.cobertura == 0.0
+    assert ponto.acuracia_aceitos == 1.0
+
+
+def test_avaliacao_com_limiares_explicita_rejeicao_total() -> None:
+    enunciados = [
+        Enunciado("um", "classe_a", Origem.CATALOGO),
+        Enunciado("dois", "classe_b", Origem.CATALOGO),
+    ]
+
+    resultado = avaliacao.avaliar_com_limiares(
+        ModeloProbabilidadesFalso(),
+        enunciados,
+        {"classe_a": 0.9, "classe_b": 0.9},
+    )
+
+    assert resultado.rejeitados == 2
+    assert resultado.cobertura == 0.0
+    assert resultado.acuracia_aceitos == 0.0
+    assert resultado.precisao_por_intencao == {"classe_a": 1.0, "classe_b": 1.0}
+
+
+def test_confusoes_descarta_diagonal_e_ordena_por_frequencia() -> None:
+    resultado = avaliacao.Resultado(
+        nome="teste",
+        acuracia=0.5,
+        macro_f1=0.5,
+        por_intencao={},
+        rotulos=["a", "b", "c"],
+        matriz=np.array([[3, 2, 0], [1, 4, 3], [0, 0, 5]]),
+    )
+
+    assert avaliacao.confusoes_mais_frequentes(resultado, minimo=2) == [
+        ("b", "c", 3),
+        ("a", "b", 2),
+    ]
+    resultado.matriz = None
+    assert avaliacao.confusoes_mais_frequentes(resultado) == []
+
+
+def test_avaliacao_separa_texto_canonico_e_ruidoso(ajustado) -> None:
+    enunciados = [
+        Enunciado("Qual o status do projeto?", "consultar_status_projeto", Origem.CATALOGO),
+        Enunciado("Quais são os riscos?", "consultar_riscos", Origem.CATALOGO),
+        Enunciado(
+            "qual statu projet",
+            "consultar_status_projeto",
+            Origem.SINTETICO,
+            variacao="erro_digitacao",
+        ),
+        Enunciado(
+            "quais sao risco",
+            "consultar_riscos",
+            Origem.SINTETICO,
+            variacao="sem_acentos",
+        ),
+    ]
+
+    recortes = avaliacao.por_ruido(ajustado, enunciados)
+
+    assert set(recortes) == {"canonico", "ruidoso"}
+    assert recortes["canonico"].total == recortes["ruidoso"].total == 2
+
+
+def test_meta_indica_se_o_valor_alcancou_o_alvo() -> None:
+    assert avaliacao.Meta("atingida", 0.8, 0.8).atingida is True
+    assert avaliacao.Meta("abaixo", 0.8, 0.79).atingida is False
+
+
+def test_classe_desconhecida_usa_f1_sem_meta() -> None:
+    assert avaliacao._alvo_da_classe("nao_catalogada") == ("f1", 0.0)
+
+
+def test_resultado_sem_classe_devolve_metricas_neutras() -> None:
+    resultado = avaliacao.Resultado("vazio", 0.0, 0.0, {})
+    assert resultado.recall_de("ausente") == 0.0
+    assert resultado.precisao_media(Categoria.TRANSACAO) == 0.0
+
+    com_rejeicao = avaliacao.ResultadoComRejeicao(
+        "parcial",
+        cobertura=0.5,
+        acuracia_aceitos=1.0,
+        precisao_por_intencao={"atualizar_avanco": 0.8},
+        rejeitados=1,
+        total=2,
+    )
+    assert com_rejeicao.precisao_media(Categoria.TRANSACAO) == 0.8
+
+
+class ModeloPrevisaoFalso:
+    def __init__(self, previstos: list[str]) -> None:
+        self._previstos = previstos
+        self.ajuste: tuple[list[str], list[str]] | None = None
+
+    def fit(self, textos: list[str], rotulos: list[str]) -> None:
+        self.ajuste = (textos, rotulos)
+
+    def predict(self, textos: list[str]) -> list[str]:
+        return self._previstos[: len(textos)]
+
+
+def test_comparacao_ordena_configuracoes_pelo_macro_f1(monkeypatch) -> None:
+    treino = [
+        Enunciado("treino a", "a", Origem.CATALOGO),
+        Enunciado("treino b", "b", Origem.CATALOGO),
+    ]
+    teste = [
+        Enunciado("teste a", "a", Origem.CATALOGO),
+        Enunciado("teste b", "b", Origem.CATALOGO),
+    ]
+    modelos = {
+        "correto": ModeloPrevisaoFalso(["a", "b"]),
+        "impreciso": ModeloPrevisaoFalso(["a", "a"]),
+    }
+    monkeypatch.setattr(avaliacao, "construir", lambda config: modelos[config.nome])
+    configuracoes = (
+        ConfiguracaoModelo("impreciso", familia="tfidf"),
+        ConfiguracaoModelo("correto", familia="tfidf"),
+    )
+
+    resultados = avaliacao.comparar_configuracoes(treino, teste, configuracoes)
+
+    assert [resultado.nome for resultado in resultados] == ["correto", "impreciso"]
+    assert modelos["correto"].ajuste == (["treino a", "treino b"], ["a", "b"])
