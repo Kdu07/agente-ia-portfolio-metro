@@ -26,6 +26,8 @@ export function EstadoVazio({
 }) {
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={cn(
         "grid max-w-135 justify-items-start gap-2 rounded-xl border border-dashed border-borda-forte bg-card/70 p-6.5",
         className,
