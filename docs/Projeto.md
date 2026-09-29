@@ -74,6 +74,7 @@
   - [5.6 Visão preliminar da arquitetura em blocos conectados](#56-visão-preliminar-da-arquitetura-em-blocos-conectados)
   - [5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto](#57-canal-de-voz-ingestão-de-áudio-e-conversão-entre-fala-e-texto)
   - [5.8 Diagrama de Classes da Solução — Sprint 2](#58-diagrama-de-classes-da-solução--sprint-2)
+  - [5.9 Algoritmos de PLN: escolha, bibliotecas e frameworks](#59-algoritmos-de-pln-escolha-bibliotecas-e-frameworks)
 - [6. Mapeamento Técnico de Infraestrutura e Implantação](#6-mapeamento-técnico-de-infraestrutura-e-implantação)
   - [6.1 Diagrama de Implantação da UML](#61-diagrama-de-implantação-da-uml)
   - [6.2 Justificativa das Escolhas de Implantação](#62-justificativa-das-escolhas-de-implantação)
@@ -5730,6 +5731,152 @@ O modelo complementa, e não substitui, o diagrama de componentes da seção 5.2
 - **Execução assíncrona.** O modelo não detalha filas, workers, retentativas ou concorrência das `ExecucaoRotina`. Esses elementos pertencem ao desenho de implantação e podem exigir estados adicionais.
 - **Políticas.** As categorias de abuso, regras de injeção e critérios da guarda de saída são abstraídos como operações. Seus catálogos, limiares e versões devem ser governados fora do diagrama e registrados para auditoria.
 - **Evolução do catálogo.** `IntencaoCatalogo` admite versionamento e limiar próprio, mas o modelo ainda não define histórico de versões, aprovação ou publicação. Esses pontos dependem da governança do catálogo descrita em 5.4.9.
+
+## 5.9 Algoritmos de PLN: escolha, bibliotecas e frameworks
+
+Duas técnicas de PLN respondem por uma mensagem, e o executor próprio mudou a
+divisão de trabalho entre elas. O **classificador de intenções** deixou de ser
+o roteador que 5.4.1 descreve: ele barra `fora_de_escopo`, `tentativa_injecao`
+e a baixa confiança antes de a pergunta sair para o provedor de geração, dá o
+rótulo que alimenta o painel de intenções e troca o texto da abstenção nas
+transações. A **geração aumentada por recuperação** responde a tudo o que passa
+pelas guardas, a partir dos documentos do corpus. Esta seção reúne as
+características, as vantagens, as limitações, as bibliotecas e o custo das
+duas; a matriz da pilha completa está em 5.1.5, e os números medidos, em 5.4.11
+e em 9.4.
+
+Três limitações do classificador estão medidas e não corrigidas, e ficam aqui
+como registro:
+
+- **Vinte dos 28 limiares calibrados estão no piso de 0,05**, e o maior é 0,30.
+  Nas consultas o alvo de `calibrar_limiares` é maximizar F1, e a varredura
+  ascendente premia o menor candidato em caso de empate, porque rejeitar menos
+  eleva o recall. Fora das transações e das classes negativas, o limiar quase
+  não filtra.
+- **A máscara de entidades não cobre o formato `PRJ-AAAA-NNN`.** O padrão de
+  `preprocessamento.py` exige um segmento contínuo de maiúsculas e dígitos, e
+  os hífens do código o quebram em pedaços que nenhum ramo reconhece. São 76
+  enunciados de treino que levam o código cru, e "Qual o status do projeto
+  PRJ-2024-018?" é recusada por baixa confiança — 0,181 contra o limiar de 0,20
+  de `consultar_status_projeto`.
+- **Nas 26 perguntas de [bancada-rag.csv](../src/middleware/dados/bancada-rag.csv)
+  a intenção prevista coincide com o rótulo em apenas 5.** É indício, e não
+  métrica: aqueles rótulos foram escritos para a bancada do RAG, com perguntas
+  mais longas e específicas que os enunciados de treino, e a coincidência nunca
+  foi critério dela.
+
+### 5.9.1 Classificador de intenções
+
+**Características.** O enunciado passa pelo mesmo pré-processamento nos dois
+ramos, com códigos de projeto e datas mascarados, e o modelo é uma votação
+suave entre eles, com pesos de 0,4 e 0,6. O ramo léxico une dois TF-IDF:
+n-gramas de palavra de 1 a 2, com tokenizador próprio e sem redução de caixa, e
+n-gramas de caractere de 2 a 5 em `char_wb` — ambos com `sublinear_tf` e
+`min_df=1`. O ramo semântico usa o `intfloat/multilingual-e5-large` congelado,
+em revisão fixa, com o prefixo `query: ` e vetores normalizados: nenhum peso do
+encoder é treinado. Cada ramo termina em regressão logística com `C=10` e
+classes balanceadas, e o limiar de aceitação é um por intenção, calibrado por
+validação cruzada de cinco dobras sobre o treino, com alvo que depende da
+categoria — precisão na transação, recall na classe negativa, F1 na consulta.
+
+**Vantagens.** Os dois ramos erram em lugares diferentes: o léxico sustenta o
+enunciado telegráfico e o termo grafado errado, o semântico sustenta a
+paráfrase. A inferência é integral no middleware, sem chamada externa, e a
+logística devolve a probabilidade calibrada que o limiar por intenção exige. O
+ramo TF-IDF permanece inspecionável, o que dá diagnóstico quando o ensemble
+erra.
+
+**Limitações.** São cerca de 2 GB de pesos, com o custo de memória e de
+latência registrado adiante, e mais artefatos com versão e procedência a
+controlar. O corpus de treino é sintético e o conjunto de teste é pequeno para
+as classes menores, ressalvas detalhadas em 5.4.11.8, e as três limitações de
+abertura desta seção seguem em aberto.
+
+**Escolha.** O ensemble foi a única família a atingir simultaneamente as metas
+de acurácia e de macro-F1, com 0,856 contra 0,661 da linha de base clássica de
+5.1.6. A comparação entre as sete configurações está em 5.4.11.7, o efeito dos
+limiares em 5.4.11.4 e a decisão normativa em 5.4.11.9.
+
+**Custo.** Medido em 28/09/2026 sobre as 26 perguntas da bancada do RAG, com o
+artefato da `develop` e em CPU: cerca de 0,47 s por frase e 71 s de carga a
+frio. O comentário de `modelo.py` registra a origem desse pedágio — p95 de
+304 ms do `large` contra 107 ms do `base` —, e a implantação reserva 2 vCPU e
+4 GiB por réplica, com cerca de um minuto de aquecimento antes da primeira
+mensagem (11.2.1 e 11.2.4).
+
+### 5.9.2 Geração aumentada por recuperação
+
+**Características.** A ingestão divide cada documento em trechos de até 350
+tokens com 40 de sobreposição, contados pelo tokenizador do próprio e5, e grava
+o vetor no Pinecone e o texto no PostgreSQL. Na consulta, a pergunta é
+vetorizada localmente e o índice denso é buscado por cosseno em 1024 dimensões:
+o filtro de perfil e de projeto vai na **própria consulta**, e não depois dela,
+e o corte de similaridade de 0,75 é aplicado sobre os cinco trechos
+recuperados. O prompt leva dez regras numeradas que proíbem conhecimento
+próprio, cálculo e escolha entre documentos divergentes; a resposta vem do
+Gemini 3.5 Flash, pelo SDK `google-genai` ou pelo OpenRouter, e só é entregue
+se cada citação apontar um trecho que o modelo de fato recebeu. Quando não
+aponta, ou quando nada passou do corte, a resposta é uma abstenção com texto
+único.
+
+**Vantagens.** A resposta é rastreável até o trecho que a sustenta, o que a F13
+pede, e a permissão é aplicada na recuperação, de modo que o modelo nunca vê
+documento fora do escopo de quem pergunta. Atualizar o corpus é reindexar, não
+retreinar, e a vigência do documento entra como dado. Os embeddings são locais:
+o corpus inteiro não sai da máquina para ser indexado.
+
+**Limitações.** A pergunta cuja resposta depende de dois documentos ainda falha
+— é o caso R19 da 9.4.6, em que o trecho da norma não entrou entre os cinco
+recuperados. O corte de *score* não separa os casos que esperam resposta dos
+que esperam abstenção, e por isso quem abstém é o modelo, pela regra do prompt,
+e não o limiar. A pergunta e os trechos recuperados saem para o provedor de
+geração, e os vetores para o provedor do índice: exposições registradas como
+R19 e R20. O caminho só lê — não agrega valor nem grava dado —, de modo que
+transação e indicador do portfólio não têm destino nele. A bancada tem 26
+perguntas, o que dá indicação e não intervalo de confiança, e a fidelidade
+continua sem medição automática, dependente de revisão humana.
+
+**Alternativas descartadas.** Modelo de linguagem sem recuperação: responderia
+de memória, sem citação verificável e sem escopo por perfil. Ajuste fino do
+modelo de geração sobre o corpus: obrigaria a retreinar a cada documento novo e
+não respeitaria a vigência. Busca lexical ou híbrida: endereçaria o R19, mas
+exigiria um segundo índice na pilha, e ficou como encaminhamento da 9.4.6. Só a
+base estruturada: não responde sobre a prosa dos documentos, que é o que o
+corpus do parceiro traz. Azure OpenAI no tenant da equipe: manteria o perímetro
+intacto e foi preterido pelo prazo de liberação do recurso. As decisões D3, D4 e
+D5, com os custos que assumem, estão em 9.4.1, e a implementação, em 9.4.
+
+### 5.9.3 Bibliotecas e frameworks
+
+As faixas vêm do `src/middleware/pyproject.toml` — dependências base, mais o
+extra `rag`, que existe para que quem roda só o caminho oficial não arraste o
+SDK do provedor. As três últimas linhas não estão declaradas lá, e é por isso
+que constam aqui.
+
+| Biblioteca ou modelo | Versão declarada | Onde entra |
+|---|---|---|
+| `scikit-learn` | `>=1.9,<1.10` | TF-IDF de palavra e de caractere, regressão logística, votação e calibração dos limiares |
+| `sentence-transformers` | `>=3.0` | Carrega e executa o encoder de sentenças nos dois usos do e5 |
+| `intfloat/multilingual-e5-large` | Revisão `3d7cfbd`, fixada no código | Embeddings do classificador e dos trechos e perguntas do RAG |
+| `joblib` | `>=1.4` | Serializa o classificador, seus limiares e os metadados de treino |
+| `pinecone` | `>=10,<11` (extra `rag`) | Adaptador padrão do índice vetorial |
+| `google-genai` | `>=2.23,<3` (extra `rag`) | Adaptador de geração pelo SDK do Gemini |
+| `google-api-python-client`, `google-auth` | `>=2.100`, `>=2.23` (extra `rag`) | Leitura da pasta do Drive pela conta de serviço |
+| `python-docx`, `openpyxl`, `python-pptx` | `>=1.1`, `>=3.1`, `>=1.0` (extra `rag`) | Extração do texto dos DOCX, XLSX e PPTX do corpus |
+| `torch` | `>=2.2`, variante CPU | Não está no `pyproject.toml`: chega como dependência do `sentence-transformers`, e o `Dockerfile` o instala antes, pelo índice `whl/cpu`, para não baixar os pacotes CUDA |
+| OpenRouter | — | Não tem SDK: é um POST com o `httpx` que já está nas dependências base |
+| pgvector | Extensão do PostgreSQL | Reserva do índice vetorial, falada apenas em SQL pelo SQLAlchemy; não há biblioteca Python dedicada |
+
+Duas fixações sustentam a reprodutibilidade. A faixa do scikit-learn está
+travada na *minor* que gravou o `classificador.joblib`, porque o artefato é um
+*pickle*; e a revisão dos pesos do e5 está fixada no código, no `Dockerfile` e
+na CI, porque um envio novo pelo autor mudaria de uma vez os vetores do
+classificador e os do índice. Reproduzir um resultado de PLN exige ainda o
+commit do código, a versão do corpus, o próprio `classificador.joblib`, os
+limiares e as versões efetivamente instaladas: a faixa declarada define
+compatibilidade, não identidade. Um arquivo de dependências travadas, gerado a
+partir do ambiente validado, continua recomendado antes da implantação
+homologada.
 
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
@@ -12176,6 +12323,7 @@ partir da `develop` e merge request.
 # Referências
 
 - DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot
+- LEWIS, P. et al. *Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*. In: Advances in Neural Information Processing Systems (NeurIPS), v. 33, p. 9459-9474, 2020. Disponível em: https://arxiv.org/abs/2005.11401. Acesso em: 28 set. 2026.
 - JURAFSKY, D.; MARTIN, J. H. *Speech and Language Processing*. 3. ed. (rascunho). Cap. 4 (avaliação de classificadores: precisão, recall e F1) e Cap. 16 (reconhecimento automático de fala e *Word Error Rate*). Disponível em: https://web.stanford.edu/~jurafsky/slp3/
 - MICROSOFT. *Azure AI Content Safety — detecção de ataques por prompt (Prompt Shields)*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/content-safety/concepts/jailbreak-detection
 - MICROSOFT. *Azure AI Speech — documentação do serviço de fala*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/speech-service/
@@ -12188,9 +12336,13 @@ partir da `develop` e merge request.
 - MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
 - MICROSOFT. *Microsoft identity platform — fluxo de código de autorização com PKCE*. Disponível em: https://learn.microsoft.com/pt-br/entra/identity-platform/v2-oauth2-auth-code-flow. Acesso em: 2 set. 2026.
 - MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
+- PEDREGOSA, F. et al. *Scikit-learn: Machine Learning in Python*. Journal of Machine Learning Research, v. 12, p. 2825-2830, 2011. Disponível em: https://www.jmlr.org/papers/v12/pedregosa11a.html. Acesso em: 28 set. 2026.
 - MOCK SERVICE WORKER. *Documentação do MSW*. Disponível em: https://mswjs.io/docs/. Acesso em: 2 set. 2026.
+- REIMERS, N.; GUREVYCH, I. *Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks*. In: Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP-IJCNLP), p. 3982-3992, 2019. Disponível em: https://arxiv.org/abs/1908.10084. Acesso em: 28 set. 2026.
 - PYTEST-RECORDING. *Plugin de gravação e reprodução para pytest*. Disponível em: https://github.com/kiwicom/pytest-recording. Acesso em: 2 set. 2026.
 - SCHEMATHESIS. *Property-based testing para APIs descritas em OpenAPI*. Disponível em: https://schemathesis.readthedocs.io/. Acesso em: 2 set. 2026.
+- SALTON, G.; BUCKLEY, C. *Term-weighting approaches in automatic text retrieval*. Information Processing & Management, v. 24, n. 5, p. 513-523, 1988. Disponível em: https://doi.org/10.1016/0306-4573(88)90021-0. Acesso em: 28 set. 2026.
 - SCIKIT-LEARN. *Metrics and scoring: quantifying the quality of predictions*. Disponível em: https://scikit-learn.org/stable/modules/model_evaluation.html
 - TESTCONTAINERS. *Testcontainers para Python*. Disponível em: https://testcontainers-python.readthedocs.io/. Acesso em: 2 set. 2026.
+- WANG, L. et al. *Multilingual E5 Text Embeddings: A Technical Report*. 2024. Disponível em: https://arxiv.org/abs/2402.05672. Acesso em: 28 set. 2026.
 - VCR.PY. *Gravação e reprodução de interações HTTP em fitas*. Disponível em: https://vcrpy.readthedocs.io/. Acesso em: 2 set. 2026.
