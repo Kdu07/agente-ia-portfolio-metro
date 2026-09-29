@@ -286,6 +286,7 @@ describe("DialogoResponsivo", () => {
 
   it("chama onFechar ao fechar", async () => {
     const onFechar = vi.fn();
+    const usuario = userEvent.setup();
     renderizar(
       <DialogoResponsivo
         aberto={true}
@@ -297,11 +298,9 @@ describe("DialogoResponsivo", () => {
       </DialogoResponsivo>,
     );
 
-    const overlay = document.querySelector('[class*="dialog-overlay"]');
-    if (overlay) {
-      await userEvent.click(overlay);
-      expect(onFechar).toHaveBeenCalled();
-    }
+    await usuario.keyboard("{Escape}");
+
+    expect(onFechar).toHaveBeenCalledTimes(1);
   });
 
   it("esconde descrição quando descricaoOculta é true", () => {
@@ -334,9 +333,8 @@ describe("DialogoResponsivo", () => {
       </DialogoResponsivo>,
     );
 
-    // Verifica que o diálogo renderiza sem erro
     const dialog = screen.getByRole("dialog");
-    expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveClass("sm:max-w-140");
   });
 });
 

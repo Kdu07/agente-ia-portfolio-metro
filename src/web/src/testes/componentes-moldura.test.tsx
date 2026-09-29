@@ -9,11 +9,14 @@ import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import React from "react";
+import { http, HttpResponse } from "msw";
 
 import { BarraLateral } from "@/componentes/moldura/BarraLateral";
 import { ConversasRecentes } from "@/componentes/moldura/ConversasRecentes";
 import { MenuDoPerfil } from "@/componentes/moldura/MenuDoPerfil";
 import { SidebarProvider } from "@/componentes/ui/sidebar";
+import { USUARIO } from "@/mocks/dados/usuario";
+import { servidor } from "./setup";
 import { renderizar } from "./utilitarios";
 
 afterEach(cleanup);
@@ -76,24 +79,36 @@ describe("BarraLateral", () => {
     expect(recentes).toBeInTheDocument();
   });
 
-  it("renderiza rodapé com menu do perfil", () => {
+  it("renderiza rodapé com menu do perfil", async () => {
     renderizarComSidebar(<BarraLateral />);
 
-    // Verifica que o componente renderiza sem erro
-    const sidebar = document.querySelector('[class*="sidebar"]');
-    expect(sidebar).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /Fernanda Silva/ }),
+    ).toBeInTheDocument();
   });
 
-  it("não renderiza item de Intenções quando usuário não tem permissão", () => {
+  it("não renderiza item de Intenções quando usuário não tem permissão", async () => {
+    servidor.use(
+      http.get("/api/auth/eu", () =>
+        HttpResponse.json({ ...USUARIO, permissoes: [] }),
+      ),
+    );
     renderizarComSidebar(<BarraLateral />);
 
+    await screen.findByRole("button", { name: /Fernanda Silva/ });
     const intencoes = screen.queryByText("Intenções");
     expect(intencoes).not.toBeInTheDocument();
   });
 
-  it("não renderiza item de Rotinas quando usuário não tem permissão", () => {
+  it("não renderiza item de Rotinas quando usuário não tem permissão", async () => {
+    servidor.use(
+      http.get("/api/auth/eu", () =>
+        HttpResponse.json({ ...USUARIO, permissoes: [] }),
+      ),
+    );
     renderizarComSidebar(<BarraLateral />);
 
+    await screen.findByRole("button", { name: /Fernanda Silva/ });
     const rotinas = screen.queryByText("Rotinas");
     expect(rotinas).not.toBeInTheDocument();
   });
@@ -117,9 +132,9 @@ describe("ConversasRecentes", () => {
   it("renderiza skeletons durante carregamento", () => {
     renderizarComSidebar(<ConversasRecentes aoNavegar={vi.fn()} />);
 
-    // Verifica que o componente renderiza sem erro
-    const titulo = screen.getByText("Recentes");
-    expect(titulo).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Carregando conversas...",
+    );
   });
 
   it("chama aoNavegar ao clicar em ver todas", async () => {
@@ -142,11 +157,11 @@ describe("ConversasRecentes", () => {
 });
 
 describe("MenuDoPerfil", () => {
-  it("renderiza sem erro quando dentro do SidebarProvider", () => {
+  it("renderiza os dados da pessoa quando dentro do SidebarProvider", async () => {
     renderizarComSidebar(<MenuDoPerfil />);
 
-    // Verifica que o componente renderiza sem erro - não deve lançar exceção
-    const sidebar = document.querySelector('[class*="sidebar"]');
-    expect(sidebar).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /Fernanda Silva/ }),
+    ).toBeInTheDocument();
   });
 });
