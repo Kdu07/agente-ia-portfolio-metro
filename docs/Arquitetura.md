@@ -651,11 +651,12 @@ um **segundo executor**, construído sobre serviços que a equipe provisiona
 sozinha.
 
 Ele não substitui esta arquitetura. A coexistência atrás de uma porta comum e a
-seleção por configuração são **planejadas**: o fluxo RAG existe em `app/rag/` e
-nos scripts de bancada, mas `executor/base.py`, `rag/executor.py` e a seleção
-`EXECUTOR` mostrados abaixo ainda não estão implementados no `/chat`.
-O diagrama da seção 13.1 representa essa integração prevista, não um segundo
-fluxo já conectado à API. O plano de construção, com as decisões e suas alternativas descartadas, está em
+seleção por configuração estão **implementadas**: `executor/base.py` define a
+porta, `executor/fabrica.py` escolhe entre os dois executores pelo valor de
+`EXECUTOR` e `rag/executor.py` atende o `/chat` quando esse valor é `proprio`.
+O diagrama da seção 13.1 representa a integração vigente nessa configuração;
+com o valor padrão `copilot`, o executor é o cliente do Direct Line, que segue
+sendo um esqueleto. O plano de construção, com as decisões e suas alternativas descartadas, está em
 [plano-executor-proprio.md](plano-executor-proprio.md).
 
 ### 13.1 A porta e os dois adaptadores

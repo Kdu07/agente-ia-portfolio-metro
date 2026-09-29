@@ -2338,8 +2338,8 @@ A matriz reúne, por componente, as tecnologias da versão final. A versão vem 
 | Tecnologia | Papel previsto | Situação | Motivo |
 |---|---|---|---|
 | Microsoft Copilot Studio via Direct Line | Executor corporativo das ações sobre o portfólio | Prevista, não implementada | O Direct Line depende de habilitação no tenant do parceiro, ainda pendente, e o `copilot/client.py` ficou como esqueleto atrás da porta `Executor` (5.1.3) |
-| Power Automate | Fluxos de atualização disparados pelos tópicos do agente | Não usada | Dependia do Copilot Studio. As intenções de transação passaram ao esquema `portfolio` do PostgreSQL ([Arquitetura.md](Arquitetura.md), seção 13.3) |
-| Power BI | Conjuntos de dados das consultas analíticas do portfólio | Não usada | As agregações que caberiam a ele passaram ao esquema `portfolio` do PostgreSQL ([Arquitetura.md](Arquitetura.md), seção 13.3) |
+| Power Automate | Fluxos de atualização disparados pelos tópicos do agente | Não usada | Dependia do Copilot Studio. O esquema `portfolio` do PostgreSQL é o destino previsto das transações ([Arquitetura.md](Arquitetura.md), seção 13.3), mas nenhuma intenção escreve nele: o executor próprio manda toda intenção ao RAG, que só lê (9.4.8) |
+| Power BI | Conjuntos de dados das consultas analíticas do portfólio | Não usada | As agregações que caberiam a ele estão previstas no esquema `portfolio` do PostgreSQL ([Arquitetura.md](Arquitetura.md), seção 13.3), e o executor próprio ainda não as calcula (9.4.8) |
 | SharePoint Online | Repositório documental do portfólio | Substituída na prova de conceito | O Google Drive faz o seu papel (9.1.2.7). A equivalência é de negócio, e não de protocolo |
 
 **O que mudou desde a visão inicial.** Entraram o RabbitMQ e os webhooks; o executor próprio, com Google Drive, Pinecone e Gemini; a implantação na Azure, com Container Apps, Container Registry, PostgreSQL gerenciado, Key Vault e Log Analytics; a integração contínua no GitLab; e, na interface, o React Router e os componentes shadcn/ui sobre o Radix UI. Subiram de versão o React, de 18 para 19, o Tailwind CSS, de 3 para 4, e o Recharts, de 2 para 3. Saíram o Copilot Studio, o Power Automate e o Power BI, pelos motivos da tabela anterior, e o SharePoint foi substituído pelo Google Drive. O núcleo do Pilar 1 se manteve: FastAPI, PostgreSQL, APScheduler, Content Safety, Speech e o classificador de intenções.
@@ -3979,14 +3979,14 @@ aplicação e ao RNF01, e não ao algoritmo de classificação isolado.
 | `tfidf-palavra+caractere-logistica` | TF-IDF, palavra e caractere | Logística | 0,773 | 0,764 |
 | `tfidf-palavra+caractere-svm` | TF-IDF, palavra e caractere | SVM linear calibrado | 0,756 | 0,747 |
 | `tfidf-palavra-logistica` | TF-IDF, só palavra (1-2 gramas) | Logística | 0,680 | 0,670 |
-| `tfidf-unigrama-logistica` | TF-IDF, unigrama — linha de base de 5.1.6 | Logística | 0,661 | 0,658 |
+| `tfidf-unigrama-logistica` | TF-IDF, unigrama — família da linha de base de 5.1.6 | Logística | 0,661 | 0,658 |
 | `tfidf-palavra+caractere-naive-bayes` | TF-IDF, palavra e caractere | Complement NB | 0,661 | 0,650 |
 
 Quatro leituras, em ordem de importância.
 
 **Só o ensemble atinge a meta.** A diferença entre 0,856 e 0,842 é pequena em valor absoluto, mas é a diferença entre cumprir e não cumprir o RNF03 — e o ganho não é ruído: as duas famílias erram em lugares diferentes, e é a combinação que recupera parte dos dois conjuntos de erro. O TF-IDF acerta o literal, incluindo o enunciado telegráfico e o termo grafado errado; o embedding acerta a paráfrase, que é o caso real do PMO. O peso de 0,6 para o ramo de embeddings foi escolhido por validação cruzada sobre o conjunto de treino, nunca sobre o de teste.
 
-**A linha de base clássica fica 19,5 pontos atrás.** A configuração `tfidf-unigrama-logistica` é exatamente a documentada em 5.1.6, e sua distância para o topo é o que justifica o custo do modelo de sentença: cerca de 2 GB de pesos e uma inferência mais lenta, em troca de quase vinte pontos de acurácia. Sem essa medição, adotar embeddings seria preferência; com ela, é decisão.
+**A linha de base clássica fica 19,5 pontos atrás.** A configuração `tfidf-unigrama-logistica` é a mesma família da documentada em 5.1.6, com dois parâmetros diferentes: a `LINHA_DE_BASE` de `modelo.py` usa `min_df=1` e `C=1`, enquanto a `CONFIGURACAO_PADRAO` de `vetorizacao.py` usa `min_df=2`. Sua distância para o topo é o que justifica o custo do modelo de sentença: cerca de 2 GB de pesos e uma inferência mais lenta, em troca de quase vinte pontos de acurácia. Sem essa medição, adotar embeddings seria preferência; com ela, é decisão.
 
 **O ramo de n-gramas de caractere vale 9,3 pontos** (0,680 → 0,773), o maior ganho isolado dentro da família TF-IDF. Ele existe porque o corpus de treino carrega erro de digitação deliberado — exigência do risco R03 — e é o que sobrevive a "atualizar" escrito "atualzar". A escolha não é enfeite: é o componente que sustenta a robustez a ruído medida em 5.4.11.3.
 
@@ -8094,12 +8094,13 @@ de linguagem.
 | Camada de vetorização e porta do banco vetorial | #284 | `rag/embeddings.py`, `rag/vetorial/` | F12 | Implementada e testada |
 | Provisionamento do índice e ingestão do corpus do Drive | #285 | `rag/vetorial/provisionar.py`, `rag/ingestao/`, `rag/tabelas.py` | F12, F20 | Implementada e testada; primeira carga completa no Pinecone não registrada (9.4.3.7) |
 | Recuperação, geração com citações e bancada do RAG | #291 | `rag/recuperacao.py`, `rag/geracao.py`, `rag/linguagem/`, `rag/fluxo.py`, `rag/bancada.py` | F12, F13; F51, F52 e F54 na parte documental | Implementada e testada; bancada medida (9.4.6) |
-| Ligação do RAG ao orquestrador e ao `/chat` | — | `rag/executor.py`, seleção por configuração em `api/deps.py` | — | **Não implementada** (9.4.8) |
+| Ligação do RAG ao orquestrador e ao `/chat` | — | `executor/base.py`, `executor/fabrica.py`, `rag/executor.py`, seleção em `api/deps.py` | — | Implementada; o caminho fica ativo com `EXECUTOR=proprio` |
 
-A última linha é a que delimita o que esta seção afirma. O fluxo de RAG
-funciona ponta a ponta **por linha de comando e pela bancada**, sem o
-orquestrador na frente. Nenhuma mensagem enviada pela interface chega a ele
-enquanto a porta `Executor` e a seleção do executor não existirem no código.
+A última linha delimita o alcance do que esta seção afirma. O fluxo de RAG
+responde pelo `/chat`, atrás do orquestrador e das guardas, quando
+`EXECUTOR=proprio`; com o valor padrão `copilot`, a mensagem segue para o
+cliente do Direct Line, que continua sendo um esqueleto. A linha de comando e a
+bancada permanecem como caminho de investigação e de medição (9.4.7).
 
 ### 9.4.1 Enquadramento: por que um executor próprio
 
@@ -8811,8 +8812,9 @@ oficial não precise delas. As variáveis vivem em `app/config.py`:
 | `DRIVE_PASTA_ID` | — | Pasta controlada de onde a ingestão lê |
 | `CHUNK_TOKENS`, `CHUNK_OVERLAP` | `350`, `40` | Orçamento do trecho e sobreposição da prosa |
 | `RAG_TOP_K`, `RAG_SCORE_MINIMO` | `5`, `0.75` | Recuperação; provisórios até a bancada |
-| `LLM_BACKEND` | `gemini` | Adaptador de geração; `gemini` é o único hoje |
-| `GEMINI_API_KEY`, `GEMINI_MODELO`, `GEMINI_TIMEOUT_SECONDS` | —, `gemini-3.5-flash`, `30` | Geração |
+| `LLM_BACKEND` | `gemini` | Adaptador de geração: `gemini`, pelo SDK, ou `openrouter`, por HTTP |
+| `GEMINI_API_KEY`, `GEMINI_MODELO`, `GEMINI_TIMEOUT_SECONDS` | —, `gemini-3.5-flash`, `30` | Geração pelo SDK `google-genai` |
+| `OPENROUTER_API_KEY`, `OPENROUTER_MODELO`, `OPENROUTER_TIMEOUT_SECONDS` | —, `google/gemini-3.5-flash`, `30` | Geração pelo OpenRouter, que cobra por uso em vez de depender da cota gratuita, e foi o backend da medição de 9.4.6 |
 
 A dimensão do vetor (1024) e o teto de tokens do e5 (512) não são variáveis de
 ambiente. São propriedades do modelo, e mudá-las sem trocar o modelo produziria
@@ -8854,16 +8856,12 @@ que a afirmação contrária não se sustente. A condição declarada continua s
 (representações vetoriais no provedor do índice) na matriz vigente
 ([GestaoProjeto.md](GestaoProjeto.md), seção 4).
 
-**O que falta**, na ordem em que bloqueia a demonstração pela interface:
+**O que falta** depois de o RAG passar a responder pelo `/chat`:
 
 | Pendência | Situação no código | Efeito |
 |---|---|---|
-| Porta `Executor` e `rag/executor.py` | Não existem; o orquestrador chama `CopilotClient` diretamente | O RAG não é alcançável pelo `/chat`; roda só por linha de comando e pela bancada |
-| Seleção do executor por configuração | Não existe variável `EXECUTOR` em `app/config.py` | Não há como trocar de caminho sem mudar código |
-| Guarda de saída | `pipeline/guardas/saida.py` levanta `NotImplementedError` | Pré-requisito para entregar texto gerado pelo pipeline, inclusive o do RAG |
-| Projetos do usuário na sessão | `UsuarioAutenticado` carrega perfil e permissões, e não a lista de projetos | Pelo `/chat`, líder e membro de equipe só alcançariam documentos transversais |
-| Ingestão periódica | `worker.py` levanta `NotImplementedError` | A ingestão roda só sob demanda, pelo comando de 9.4.7 |
-| Prompt Shields na triagem | O classificador de injeção por modelo levanta `NotImplementedError` | A triagem de ingestão usa só as regras determinísticas |
+| Ingestão periódica | Não há rotina agendada para ela no `worker.py` | A ingestão roda sob demanda, pelo comando de 9.4.7, e por evento do WH-01 (`webhooks/tratadores.py`) |
+| Prompt Shields na triagem | O serviço já é chamado na entrada e na saída, mas `triagem.triar` é síncrona e roda fora do caminho da requisição | A triagem de ingestão usa só as regras determinísticas |
 | Tabela do pgvector | Não migrada; a imagem do banco não tem a extensão `vector` | A reserva existe no código e nos testes, e não no banco |
 | Base estruturada sintética (onda C do plano) | Não iniciada | Transações e agregações não têm destino no executor próprio; o RAG responde só por documentos |
 
