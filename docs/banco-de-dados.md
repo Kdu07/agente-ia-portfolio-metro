@@ -6,7 +6,7 @@ Este documento descreve a estrutura completa do banco de dados PostgreSQL 16 uti
 
 O banco de dados é dividido em três schemas:
 
-- **`public`**: Tabelas principais do middleware (usuários, conversas, interações, rotinas)
+- **`public`**: Tabelas principais do middleware (usuários, conversas, interações, rotinas, avisos do portfólio e transcrições de áudio)
 - **`rag`**: Registro da ingestão do corpus RAG e texto dos trechos indexados
 - **`portfolio`**: Dados estruturados do portfólio de projetos (projetos, riscos, marcos, indicadores)
 
@@ -160,6 +160,88 @@ Um disparo de rotina e seu resultado.
 - `ck_execucao_rotina_status`: `status IN ('sucesso', 'bloqueada', 'falha')`
 - `fk_execucao_rotina_rotina_id_rotina`: FK para rotina.id (CASCADE, RESTRICT)
 - `fk_execucao_rotina_interacao_id_interacao`: FK para interacao.id (CASCADE, RESTRICT)
+
+### Tabela `preferencia_aviso`
+
+Adesão de um usuário aos avisos de um tipo de evento em um projeto.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `usuario_id` | TEXT (PK, FK) | NOT NULL, CASCADE | Referência para usuario.id |
+| `projeto_codigo` | TEXT (PK) | NOT NULL | Código do projeto; sem chave estrangeira porque o portfólio tem metadata próprio |
+| `event_type` | TEXT (PK) | NOT NULL, CHECK | Tipo de evento assinado |
+| `ativa` | BOOLEAN | NOT NULL, DEFAULT false | Se a assinatura está ligada |
+| `severidade_minima` | INTEGER | NULL, CHECK | Severidade a partir da qual o risco gera aviso |
+| `atualizada_em` | TIMESTAMPTZ | NOT NULL | Data/hora da última alteração |
+
+**Índices:**
+- `pk_preferencia_aviso`: Primary key composta `(usuario_id, projeto_codigo, event_type)`
+- `ix_preferencia_aviso_candidatas`: Index composto `(projeto_codigo, event_type)`
+
+**Restrições:**
+- `ck_preferencia_aviso_event_type`: `event_type IN ('projeto.status_alterado', 'marco.alterado', 'risco.alterado')`
+- `ck_preferencia_aviso_severidade_minima`: `severidade_minima IS NULL OR (event_type = 'risco.alterado' AND severidade_minima BETWEEN 1 AND 25)`
+- `fk_preferencia_aviso_usuario_id_usuario`: FK para usuario.id (CASCADE)
+
+### Tabela `aviso`
+
+Um aviso entregue ao usuário a partir de um evento aplicado ao portfólio.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `usuario_id` | TEXT (FK) | NOT NULL, CASCADE | Referência para usuario.id |
+| `projeto_codigo` | TEXT | NOT NULL | Código do projeto; sem chave estrangeira porque o portfólio tem metadata próprio |
+| `source_id` | TEXT | NOT NULL | Fonte que originou o evento |
+| `event_id` | TEXT | NOT NULL | Identificador do evento na fonte |
+| `event_type` | TEXT | NOT NULL, CHECK | Tipo de evento |
+| `entity_id` | TEXT | NOT NULL | Entidade alterada |
+| `versao` | BIGINT | NOT NULL | Versão da entidade que gerou o aviso |
+| `diferencas` | JSONB | NOT NULL | Campos alterados, com o valor anterior e o novo |
+| `criado_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `lido_em` | TIMESTAMPTZ | NULL | Data/hora da leitura |
+
+**Índices:**
+- `pk_aviso`: Primary key em `id`
+- `uq_aviso_evento_usuario`: Unique em `(source_id, event_id, usuario_id)`
+- `ix_aviso_usuario_criado`: Index composto `(usuario_id, criado_em DESC)`
+
+**Restrições:**
+- `ck_aviso_event_type`: `event_type IN ('projeto.status_alterado', 'marco.alterado', 'risco.alterado')`
+- `fk_aviso_usuario_id_usuario`: FK para usuario.id (CASCADE)
+
+### Tabela `transcricao_audio`
+
+Um áudio recebido e o resultado da sua transcrição.
+
+| Coluna | Tipo | Restrições | Descrição |
+|--------|------|------------|-----------|
+| `id` | TEXT (PK) | NOT NULL | Identificador único |
+| `usuario_id` | TEXT (FK) | NOT NULL, RESTRICT | Referência para usuario.id |
+| `estado` | TEXT | NOT NULL, CHECK | Estado da transcrição |
+| `formato` | TEXT | NOT NULL | Formato do áudio recebido |
+| `duracao_segundos` | FLOAT | NOT NULL | Duração do áudio em segundos |
+| `criada_em` | TIMESTAMPTZ | NOT NULL | Data/hora de criação |
+| `expira_em` | TIMESTAMPTZ | NOT NULL | Data/hora a partir da qual o registro deixa de ser servido |
+| `conversa_id` | TEXT (FK) | NULL, RESTRICT | Referência para conversa.id |
+| `interacao_id` | TEXT (FK) | NULL, RESTRICT, UNIQUE | Referência para interacao.id; uma transcrição por interação |
+| `texto` | TEXT | NULL | Texto reconhecido |
+| `idioma` | TEXT | NULL | Idioma reconhecido |
+| `confianca` | FLOAT | NULL | Confiança do reconhecimento (0-1) |
+| `latencia_ms` | INTEGER | NULL | Latência da transcrição em milissegundos |
+| `mensagem_erro` | TEXT | NULL | Mensagem de erro (se houver) |
+
+**Índices:**
+- `pk_transcricao_audio`: Primary key em `id`
+- `uq_transcricao_audio_interacao_id`: Unique em `interacao_id`
+- `ix_transcricao_audio_usuario_criada`: Index composto `(usuario_id, criada_em DESC)`
+- `ix_transcricao_audio_expira_em`: Index em `expira_em`
+
+**Restrições:**
+- `ck_transcricao_audio_estado`: `estado IN ('recebido', 'transcrevendo', 'concluida', 'falhou')`
+- `fk_transcricao_audio_usuario_id_usuario`: FK para usuario.id (CASCADE, RESTRICT)
+- `fk_transcricao_audio_conversa_id_conversa`: FK para conversa.id (CASCADE, RESTRICT)
+- `fk_transcricao_audio_interacao_id_interacao`: FK para interacao.id (CASCADE, RESTRICT)
 
 ## Schema `rag`
 
