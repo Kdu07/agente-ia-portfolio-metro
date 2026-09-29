@@ -3606,6 +3606,8 @@ O catálogo cumpre três funções distintas na arquitetura descrita em 5.6, e �
 2. **Critério de descarte (bloco C4).** A guarda de escopo compara a intenção prevista com o catálogo. Solicitações genéricas, sem contexto de portfólio ou que tentem alterar o comportamento do agente são recusadas de forma orientativa e registradas, conforme exigido pelo apêndice do TAPI e pelo RNF02.
 3. **Chave de roteamento (bloco D1).** O roteador de intenções mapeia cada intenção para o serviço de negócio correspondente. É por essa razão que a granularidade do catálogo não é uma escolha estética: uma intenção que não permita determinar qual serviço acionar obriga o sistema a introduzir um segundo mecanismo de decisão fora do pipeline de PLN, o que contraria o desenho do Pilar 1.
 
+**Nota sobre a terceira função, no executor próprio.** O roteamento do item 3 não acontece hoje: com `EXECUTOR=proprio`, toda intenção aprovada pelas guardas vai ao RAG, e `intencao_id` apenas troca o texto da recusa quando a intenção é de transação (9.4). Isso inverte a assimetria de custo que 5.4.8 previu. Confundir consulta com transação quase não custa, porque o RAG só lê e não altera dado; o erro caro passou a ser barrar uma pergunta que o RAG responderia. Mesmo assim, a pergunta do domínio classificada com confiança abaixo do limiar continua recusada, com desfecho `RECUSADA_BAIXA_CONFIANCA`, e não segue para o RAG: é escolha, e seu custo é o das perguntas legítimas que ela barra. O que a escolha pesa com os limiares atuais está em 5.9.
+
 Esta seção define as intenções individuais do catálogo, o critério que as separa, a fronteira do que fica fora do catálogo e a validação de cobertura contra os casos de uso citados pelo parceiro.
 
 ### 5.4.2 Critério de granularidade
@@ -4019,20 +4021,12 @@ meio dos n-gramas de caracteres, enquanto o E5 reconhece paráfrases e
 proximidade semântica. A regressão logística fornece `predict_proba`, necessário
 para aplicar os limiares de aceitação calibrados por intenção.
 
-**Vantagens assumidas.** A configuração combina robustez lexical e semântica,
-permite inferência integral no middleware e conserva o ramo TF-IDF como uma
-referência inspecionável para diagnóstico. O encoder E5 permanece congelado;
-somente os classificadores lineares são treinados, reduzindo o risco de ajustar
-um modelo de linguagem de grande porte ao corpus sintético e pequeno do MVP.
-
-**Limitações aceitas.** A decisão incorpora aproximadamente 2 GB de pesos,
-maior uso de memória e latência superior às alternativas exclusivamente
-clássicas. Também aumenta o número de artefatos que precisam ter versão e
-procedência controladas. Esses custos foram aceitos porque a linha de base
-TF-IDF ficou abaixo das metas, mas devem ser medidos novamente no ambiente de
-implantação. A acurácia observada não elimina o risco de generalização: o
-corpus continua predominantemente sintético, e a degradação causada por
-Speech-to-Text ainda depende de avaliação com áudios reais de referência.
+**Vantagens e limitações assumidas.** Estão em 5.9.1, ao lado dos
+hiperparâmetros vigentes e do custo medido de execução. Os cerca de 2 GB de
+pesos e a latência acima das alternativas clássicas foram aceitos porque a linha
+de base TF-IDF ficou abaixo das metas; a acurácia observada não elimina o risco
+de generalização, e a degradação causada por Speech-to-Text ainda depende de
+avaliação com áudios reais de referência.
 
 **Condições de revisão.** A decisão deve ser reavaliada se a validação com
 especialistas do Metrô ou com o corpus de voz fizer a acurácia cair abaixo de
@@ -5460,9 +5454,9 @@ Estabelece essas cinco coisas sob uma condição que prefere declarar a omitir: 
 
 A seção 5.7 optou por dizer isso onde a afirmação é feita, em 5.7.4.8, em 5.7.5.5 e aqui, em vez de apresentar como resultado o que ainda é expectativa. É a mesma escolha que a subseção 8.3 do glossário fez ao delimitar o alcance de sua própria verificação, e ela tem um custo: a seção entrega menos certeza do que poderia aparentar entregar. O que ela ganha em troca é que cada certeza que entrega pode ser conferida.
 
-### 5.7.8 Bibliotecas e frameworks utilizados no Speech-to-Text e no NLP
+### 5.7.8 Bibliotecas e frameworks utilizados no canal de voz
 
-Esta subseção registra a pilha efetivamente usada na implementação do canal de voz e do classificador de intenções. As versões abaixo são as **faixas de compatibilidade declaradas** em `src/middleware/pyproject.toml`; elas não representam, por si só, uma versão exata instalada. Como o projeto ainda não mantém um arquivo de *lock* para as dependências Python, duas instalações realizadas em datas diferentes podem resolver versões distintas dentro dessas faixas. As exceções são a versão da API REST do Azure, fixada pela configuração da aplicação, a faixa do scikit-learn, travada na *minor* que gravou o artefato do classificador, e a revisão dos pesos do `intfloat/multilingual-e5-large`, fixada no código.
+Esta subseção registra a pilha efetivamente usada na implementação do canal de voz. As bibliotecas do classificador de intenções e do executor próprio, com as duas fixações que sustentam a reprodutibilidade do PLN, estão em 5.9.3. As versões abaixo são as **faixas de compatibilidade declaradas** em `src/middleware/pyproject.toml`; elas não representam, por si só, uma versão exata instalada. Como o projeto ainda não mantém um arquivo de *lock* para as dependências Python, duas instalações realizadas em datas diferentes podem resolver versões distintas dentro dessas faixas. A exceção é a versão da API REST do Azure, fixada pela configuração da aplicação.
 
 #### 5.7.8.1 Componentes centrais
 
@@ -5471,12 +5465,6 @@ Esta subseção registra a pilha efetivamente usada na implementação do canal 
 | **Azure AI Speech — Fast Transcription REST API** | API `2025-10-15`, configurável por `SPEECH_API_VERSION` | Converte os arquivos aceitos pela rota de áudio em texto e devolve idioma, confiança, duração e latência normalizados para o restante do middleware | É um serviço externo: depende de rede, credenciais, disponibilidade e cota. O áudio sai do ambiente da aplicação e, por conter dado potencialmente sensível, o uso com dados reais depende da homologação do parceiro. Não existe mecanismo local de contingência implementado. |
 | **Azure Cognitive Services Speech SDK para Python** (`azure-cognitiveservices-speech`) | `>=1.51,<2` | Sustenta a verificação isolada de reconhecimento de arquivos WAV | O uso do SDK para Python está limitado a essa verificação, com arquivos WAV. O modo contínuo não depende dele: o token efêmero de `GET /voz/token` é emitido pela API REST de emissão de token do Azure Speech, e o reconhecimento em tempo real roda no navegador com o Speech SDK para JavaScript (5.1.5). |
 | **HTTPX** (`httpx`) | `>=0.27` | Realiza de forma assíncrona o envio `multipart/form-data` do áudio à API de transcrição e permite substituir o cliente nos testes | Continua sujeito a falhas de rede, tempo limite e respostas do provedor. O arquivo é lido para a chamada externa, de modo que o limite de 25 MB da API também protege o consumo de memória do processo. |
-| **scikit-learn** (`scikit-learn`) | `>=1.9,<1.10` | Implementa os vetorizadores TF-IDF de palavras e caracteres, os estimadores lineares, a calibração de probabilidades e o ensemble usado para classificar a intenção | O ramo TF-IDF depende do vocabulário observado e perde desempenho em formulações muito distantes do corpus. Mudanças no catálogo ou nos exemplos exigem novo treino e nova avaliação. O artefato serializado é um *pickle* gravado com a 1.9: a faixa fica travada nessa *minor*, e trocá-la exige retreino e nova avaliação. |
-| **Sentence Transformers** (`sentence-transformers`) | `>=3.0` | Carrega e executa o encoder de sentenças do ramo semântico, mantendo-o em cache no processo | A primeira execução pode precisar baixar os pesos e exige mais memória e tempo de inferência que o TF-IDF. O uso local depois do download reduz o envio de texto a terceiros, mas o cache e a origem dos pesos precisam ser controlados no ambiente de implantação. |
-| **`intfloat/multilingual-e5-large`** | Identificador do modelo no Hugging Face, na revisão `3d7cfbd` (`REVISAO_EMBEDDINGS` em `modelo.py`, repetida no `Dockerfile` e na CI) | Produz embeddings multilíngues normalizados para reconhecer paráfrases em português; o classificador usa o prefixo `query: ` recomendado para consultas | Os pesos ocupam aproximadamente 2 GB e aumentam a latência em CPU. O modelo é menos explicável que o TF-IDF. A revisão fixada impede que um novo envio de pesos pelo autor mude os vetores sem aviso, o que desalinharia o classificador treinado e o índice vetorial do RAG; trocá-la exige retreino e reindexação. |
-| **joblib** (`joblib`) | `>=1.4` | Serializa e recupera o classificador treinado, seus limiares e metadados em `dados/classificador.joblib` | O formato depende do ecossistema Python e não deve ser tratado como contrato portátil entre versões arbitrárias. O artefato deve ter acesso restrito e ser regenerado a partir do corpus versionado, não recebido de origem não confiável. |
-
-O classificador de produção combina dois ramos complementares: TF-IDF captura termos literais, códigos e pequenos erros de digitação; o `multilingual-e5-large` captura proximidade semântica e paráfrases. As probabilidades são combinadas com peso `0,6` para embeddings e `0,4` para TF-IDF. Esse ensemble é executado localmente; somente o áudio destinado à transcrição é enviado ao Azure.
 
 #### 5.7.8.2 Bibliotecas de integração
 
@@ -5496,18 +5484,9 @@ O classificador de produção combina dois ramos complementares: TF-IDF captura 
 | Verificação isolada pelo SDK e contrato futuro de token | `src/middleware/app/voz/speech.py` |
 | Validação de formato e limite do áudio | `src/middleware/app/utils/validadores.py` |
 | Rotas HTTP do canal de voz | `src/middleware/app/api/routes/voz.py` |
-| Construção dos ramos TF-IDF, embeddings e ensemble | `src/middleware/app/pipeline/intencao/modelo.py` |
-| Treino e serialização do artefato | `src/middleware/app/pipeline/intencao/treino.py` |
-| Classificação usada pelo pipeline | `src/middleware/app/pipeline/intencao/classificador.py` |
 | Persistência assíncrona dos resultados | `src/middleware/app/persistence/repository.py` e `src/middleware/app/persistence/sessao.py` |
 
-O fluxo implementado pode ser resumido assim: a rota recebe e valida o arquivo; o serviço de transcrição o envia ao Azure e normaliza o texto retornado; o cliente confirma ou utiliza esse texto na chamada de conversa; o pipeline aplica pré-processamento, classifica a intenção pelo ensemble e executa as guardas; por fim, a interação e o resultado do NLP são gravados no PostgreSQL. A integração de persistência não retém o áudio bruto.
-
-#### 5.7.8.4 Reprodutibilidade e evolução
-
-Para reproduzir um resultado de NLP não basta registrar o nome das bibliotecas. Devem acompanhar a evidência: o commit do código, a versão do corpus, o arquivo `classificador.joblib`, o identificador e a revisão dos pesos E5, as versões efetivamente instaladas e os limiares do catálogo de intenções. A faixa registrada em `pyproject.toml` define compatibilidade mínima, mas não substitui esse inventário.
-
-A revisão do `intfloat/multilingual-e5-large` e a *minor* do scikit-learn já estão fixadas. Antes da implantação homologada, recomenda-se ainda gerar um arquivo de dependências travadas a partir do ambiente validado. Essa medida reduz variações entre desenvolvimento, CI e produção sem alterar a escolha arquitetural já avaliada nas seções 5.4.11 e 5.7.2.
+O fluxo implementado pode ser resumido assim: a rota recebe e valida o arquivo; o serviço de transcrição o envia ao Azure e normaliza o texto retornado; o cliente confirma ou utiliza esse texto na chamada de conversa; e o pipeline segue a ordem invariante de 5.2.3.4 — injeção, abuso, intenção, executor e saída —, com o registro da interação como sexta e última etapa, qualquer que tenha sido o desfecho. A integração de persistência não retém o áudio bruto. As bibliotecas que implementam a classificação de intenção estão em 5.9.3.
 
 ## 5.8 Diagrama de Classes da Solução — Sprint 2
 
