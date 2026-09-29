@@ -24,7 +24,7 @@
 
 # Sumário
 
-
+- [Revisão dos feedbacks das Sprints 1 a 4](RevisaoFeedbacks.md)
 
 # 1. Introdução
 _conteúdo_
