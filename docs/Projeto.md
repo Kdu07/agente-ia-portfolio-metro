@@ -103,6 +103,7 @@
   - [9.4 Desenvolvimento de Features](#94-desenvolvimento-de-features)
   - [9.5 Testes Unitários e de Integração](#95-testes-unitários-e-de-integração)
   - [9.6 Funcionalidades Implementadas na Prova de Conceito](#96-funcionalidades-implementadas-na-prova-de-conceito)
+  - [9.7 Benefícios Entregues pela Prova de Conceito](#97-benefícios-entregues-pela-prova-de-conceito)
 - [10. Planejamento e Execução de Testes](#10-planejamento-e-execução-de-testes)
   - [10.1 Testes Funcionais](#101-testes-funcionais)
   - [10.2 Testes de RNFs](#102-testes-de-rnfs)
@@ -350,6 +351,8 @@ O produto não altera registros no SharePoint nem atualiza diretamente os dados 
 * **[O4] Transparência:** alcançar **pelo menos 90% de respostas consideradas adequadas** em uma bateria de casos de teste definida pelo grupo, considerando a correspondência entre as informações disponíveis na base de conhecimento e as respostas apresentadas pelo agente.
 
 * **[O5] Precisão e confiabilidade:** alcançar **acurácia mínima de 85% na classificação das intenções** das consultas previstas no escopo, até a conclusão do MVP, permitindo direcionar corretamente as solicitações dos usuários e reduzir a necessidade de tratamento manual.
+
+O resultado de cada objetivo na prova de conceito está na seção 9.7.1, e o dos benefícios da proposta de valor, na 9.7.2.
 
 ## 2.4 Personas e Jornadas do Usuário
 
@@ -9409,6 +9412,52 @@ Essa leitura deve ser atualizada junto da matriz 10.7 sempre que um `xfail`
 mudar de estado. Ela descreve funcionalidades do produto; requisitos não
 funcionais, integrações com serviços comerciais e resultados de desempenho
 continuam avaliados nas seções 10.2, 10.4 e 10.5.
+
+## 9.7 Benefícios Entregues pela Prova de Conceito
+
+Os benefícios do projeto foram formulados na Sprint 1 como hipótese: os objetivos do produto (2.3.4), as quatro dimensões da proposta de valor (2.8.1) e o valor capturado pela companhia, que substitui a noção de receita (2.8.5). Esta seção confronta cada um deles com as funcionalidades da seção 9.6 e com os resultados medidos nos capítulos 5, 9 e 10. A classificação usa três estados:
+
+- **entregue:** existe funcionalidade completa ou resultado medido que atinge a meta;
+- **parcial:** parte do benefício existe na prova de conceito, e o limite está declarado;
+- **hipótese:** a prova de conceito não comprova o benefício, e a última coluna diz como verificá-lo.
+
+Os resultados vêm de bancadas com dados sintéticos e de execuções locais. Nenhum benefício foi medido com usuários do Metrô em operação, e por isso a forma de verificação da maior parte deles é o piloto descrito no capítulo 12.
+
+### 9.7.1 Objetivos do produto
+
+| Objetivo (2.3.4) | Meta | Resultado na prova de conceito | Situação | Evidência ou forma de verificar |
+|---|---|---|---|---|
+| **O1 — Eficiência** | Reduzir em 80% a execução manual das consultas contempladas | Não medido. O tempo que cada consulta leva hoje não é conhecido, e o benefício monetizado é apresentado em três cenários na seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md) | Hipótese | Indicador I8 (12.2.4): cronometrar, no piloto com líderes de projeto, as mesmas consultas feitas pelo agente e pela busca manual |
+| **O2 — Capacidade analítica** | Consultas sobre 100% das categorias de informação do escopo | As sete intenções de consulta do catálogo (avanço, cronograma, status, marcos, riscos, problemas e aderência normativa) chegam ao executor, com os casos funcionais de RF04 aprovados, exceto a uniformização da resposta 403/404. Não há indicador de cobertura por categoria, e a análise comparativa entre projetos (RF07) ficou fora do MVP | Hipótese | Acrescentar à bancada do RAG (9.4.6) ao menos uma pergunta por categoria e medir o acerto por categoria |
+| **O3 — Rastreabilidade** | 100% das respostas factuais relacionadas à base de conhecimento | Na bancada do RAG, nenhuma resposta sem citação válida nas 26 perguntas; por construção, toda resposta entregue cita documentos que o modelo recebeu | Entregue | 9.4.6. A fidelidade de cada afirmação ao trecho citado (meta de 0,95) depende de revisão humana e não é medida automaticamente |
+| **O4 — Transparência** | Pelo menos 90% de respostas adequadas | Acerto de conteúdo de 0,95 (19 de 20), recall@5 de 0,975, abstenção correta de 1,00 (6 de 6) e nenhum vazamento de trecho de projeto proibido | Entregue | 9.4.6, execução de 25/09/2026 sobre o corpus sintético |
+| **O5 — Precisão** | Acurácia mínima de 85% na classificação das intenções | Acurácia de 0,856 e macro-F1 de 0,851 em 431 casos que não participaram do ajuste | Entregue | 5.4.11.2 e 10.2.3.3 (RNF03) |
+
+### 9.7.2 Benefícios da proposta de valor
+
+| Benefício prometido | Origem | O que a prova de conceito entrega | Situação | Evidência ou forma de verificar |
+|---|---|---|---|---|
+| Pergunta aberta interpretada no lugar do fluxo pré-configurado do agente atual | 2.2.3 e 2.8.1 | Mensagem por texto ou voz classificada pelo catálogo de intenções, com limiar de confiança, pedido de reformulação quando a classificação é incerta e recusa fora de escopo | Entregue | RF02 completo e RF03 parcial (9.6.1); recall de 0,905 em `fora_de_escopo` (5.4.11.2). Falta pedir a entidade obrigatória ausente antes da execução (`TF-RF03-06`) |
+| Liberação de capacidade técnica hoje gasta em procurar e consolidar informação | 2.8.5 | Consulta em linguagem natural com a fonte citada; o tempo poupado não foi medido | Hipótese | Indicadores I2 e I8 (12.2.4). O benefício da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md) e o ponto de equilíbrio dependem dessa medição |
+| Confidencialidade: só dados sintéticos, sem trânsito por serviço não homologado | 2.8.1 | Só dados sintéticos; perímetro de serviços declarado e verificado a cada entrega; filtro de projetos por perfil aplicado à recuperação, sem vazamento na bancada do RAG | Parcial | `TNF-RNF01-01` a `TNF-RNF01-04` aprovados (10.2.3.1). Content Safety e Speech estão no tenant da equipe (R12), e o índice vetorial e o modelo de geração são de terceiros (R19 e R20); o prompt fica em claro no banco, sem cifra em repouso (RNF07, 10.2.3.7) |
+| Rastreabilidade: origem, autoria e momento de cada consulta e atualização | 2.8.1 e 2.3.2.6 | Toda interação, inclusive as bloqueadas, é registrada com autoria, canal, momento, intenção e desfecho, e o painel de intenções analisa esse registro | Parcial | RF10 completo (9.6.1) e casos de RNF02 aprovados (10.2.3.2). A parte das atualizações não se aplica, porque a prova de conceito não altera o portfólio (RF05 não implementado) |
+| Proatividade: pendência sinalizada ao responsável antes que a informação se torne inconsistente | 2.8.1 e 2.3.2.3 | Rotinas agendadas executam consultas sem ninguém na tela, com histórico de execuções. O backend gera avisos por adesão a partir dos eventos do portfólio e os expõe em `GET /avisos` (9.1.2.7.2), mas a interface ainda não os exibe: o cartão de marco atrasado da tela principal é uma demonstração com conteúdo fixo. Não há sonda que identifique pendências de preenchimento | Parcial | RF11 completo e RF06 parcial (9.6.1); `TF-RF06-01` em `xfail` (10.7.1). Indicador I6 (12.2.4) depois de a tela ser ligada às rotas de avisos (12.1.3) |
+| Acesso condicionado ao perfil do usuário | 2.3.2.6 | Entrada com a conta Microsoft, perfil resolvido na sessão e escopo de projetos aplicado antes de qualquer recurso protegido e da recuperação de trechos | Entregue | RF01 completo (9.6.1); RNF05 aprovado na bancada sintética (10.2.3.5). A validação no tenant definitivo do parceiro continua pendente |
+| Recusa segura diante de pedido abusivo ou tentativa de manipulação | 2.8.4 e 2.3.2.6 | Guardas de injeção, de abuso e de saída aplicadas em ordem antes da entrega da resposta | Parcial | RF09 aprovado no contrato funcional; na medição sistêmica, a guarda de saída detectou 20 de 20 e nenhuma barreira bloqueou pedido legítimo (0 de 100), mas a detecção ficou em 8,3% na injeção e 0% no abuso, abaixo da meta de 90% (10.2.3.6) |
+| Menor dependência de consolidações manuais para os relatórios mensais e de fechamento | 2.8.5 e 2.3.2.5 | A consulta do fechamento pode ser agendada como rotina, e a resposta fica no histórico da rotina. A geração de relatório ou de apresentação (RF08) ficou fora do MVP | Parcial | 9.6.1 (RF08 e RF11). Verificar no piloto quantos líderes mantêm rotina ativa (I6) |
+| Redução do retrabalho por inconsistência identificada tarde | 2.8.5 | Nada que sinalize a inconsistência na origem: não há escrita com confirmação (RF05) nem sonda de pendências (RF06) | Hipótese | Só verificável depois dessas duas funcionalidades, comparando as correções feitas no fechamento mensal antes e depois do uso |
+| Ampliação da conformidade com os normativos de gestão | 2.8.5 | Perguntas sobre os normativos respondidas com o documento citado; a intenção de aderência normativa chega ao executor | Hipótese | A bancada do RAG inclui perguntas sobre normativos (9.4.6), o que mede a consulta, e não a conformidade. Verificar no piloto com o PMO se as dúvidas de norma passam pelo agente (I4 e I5) |
+| Sustentação e evolução pela própria equipe do Metrô | 2.8.5 e 2.8.7 | Núcleo de PLN próprio com bancada reproduzível; bancada do RAG; painel de intenções com os recortes de evolução do catálogo; procedimentos de implantação, monitoramento e retorno a uma versão anterior (capítulo 11). A manutenção do catálogo pelo GPM sem desenvolvedor (F94) ficou fora do MVP (2.7.6) | Parcial | 5.4.11.1, 9.4.6, RF10 e capítulo 11. Verificar na transferência se a equipe do parceiro reproduz as bancadas e publica uma versão sem apoio da equipe do projeto |
+| Custo marginal próximo de zero na operação mais frequente | 2.8.9 | A classificação de intenções roda no próprio middleware, com modelos locais, sem tarifa por requisição | Entregue | 5.4.11.9. Cada mensagem ainda consulta o Content Safety, e a cota desse serviço participou da saturação na carga (10.2.2.2) |
+| Uso sem treinamento extenso, com o agente apresentando as próprias capacidades | 2.8.3 | Perguntas sugeridas na conversa vazia, barra lateral com rótulos e fluxo de rotinas por frequência legível | Parcial | SUS de 71,9, acima da média de 68, com sucesso de 62,5% a 100% por tarefa (10.3.12). As cinco correções do teste foram implementadas, e a reaplicação que mede o efeito delas continua pendente (10.3.12.9) |
+
+### 9.7.3 Leitura consolidada
+
+A prova de conceito comprova o benefício de **encontrar a informação e confiar nela**. Os três objetivos medíveis em bancada foram atingidos: a classificação das intenções (O5), a citação da fonte (O3) e a adequação das respostas (O4). O acesso por perfil e o registro de toda interação também estão entregues. É a mesma conclusão do encaixe do canvas na versão final (2.8.10.2).
+
+Os benefícios parciais têm a base construída e um limite conhecido. A proatividade depende de ligar a tela às rotas de avisos e de criar a sonda de pendências; a confidencialidade, de cifrar o registro em repouso e de levar os serviços para o tenant do parceiro; a recusa segura, de subir a detecção das guardas de injeção e de abuso; e a sustentação pelo Metrô, da transferência.
+
+Os benefícios de **tempo e de retrabalho** continuam como hipótese, e são eles que sustentam o retorno financeiro da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md). O payback calculado ali herda essa condição até que o piloto meça o tempo poupado por consulta (I8). A escala também não foi demonstrada: na bancada local, a resposta atende aos limites de latência com um usuário (p50 de 2,6 s e p95 de 4,2 s) e os ultrapassa a partir de cinco usuários simultâneos (10.2.2.2), o que precisa ser medido de novo no ambiente implantado antes de um piloto com vários líderes.
 
 # 10. Planejamento e Execução de Testes
 
