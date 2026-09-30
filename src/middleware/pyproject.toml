@@ -43,7 +43,11 @@ dependencies = [
     # (BoW/TF-IDF) e os estimadores; sentence-transformers traz o modelo
     # de sentença multilíngue do ramo de embeddings; joblib serializa o
     # artefato treinado. Ver pipeline/intencao/modelo.py.
-    "scikit-learn>=1.4",
+    # Faixa travada na minor que gravou `dados/classificador.joblib`: o
+    # artefato é um pickle, e um build novo com outra minor pode não
+    # carregá-lo ou carregá-lo com resultado diferente. Trocar de minor
+    # pede retreino e nova bancada (Projeto.md 5.4.11).
+    "scikit-learn>=1.9,<1.10",
     "sentence-transformers>=3.0",
     "joblib>=1.4",
     # Reconhecimento de fala no backend. A integração isolada aceita WAV;
