@@ -119,6 +119,12 @@
 - [12. Plano de Adoção e Mobilização do Ecossistema](#12-plano-de-adoção-e-mobilização-do-ecossistema)
   - [12.1 Mapa de Adoção e Aculturamento Organizacional](#121-mapa-de-adoção-e-aculturamento-organizacional)
   - [12.2 Mecanismos de Incentivo e Engajamento](#122-mecanismos-de-incentivo-e-engajamento)
+- [13. Aperfeiçoamentos Futuros](#13-aperfeiçoamentos-futuros)
+  - [13.1 Critérios de prioridade e de esforço](#131-critérios-de-prioridade-e-de-esforço)
+  - [13.2 Completar os requisitos do MVP](#132-completar-os-requisitos-do-mvp)
+  - [13.3 Segurança, perímetro e operação](#133-segurança-perímetro-e-operação)
+  - [13.4 Evolução do produto](#134-evolução-do-produto)
+  - [13.5 Sequência sugerida](#135-sequência-sugerida)
 - [Referências](#referências)
 
 # 1. Introdução
@@ -1082,7 +1088,7 @@ As demais *features* não correspondem a requisitos funcionais por descreverem p
 
 ### 2.7.6 Desejos do parceiro registrados fora do MVP
 
-Esta seção preserva as solicitações manifestadas pelo Metrô que não integrarão a prova de conceito. Todos os itens permanecem documentados como insumo para as próximas etapas do projeto e para eventual continuidade em módulos posteriores.
+Esta seção preserva as solicitações manifestadas pelo Metrô que não integrarão a prova de conceito. Todos os itens permanecem documentados como insumo para as próximas etapas do projeto e para eventual continuidade em módulos posteriores. A prioridade e o esforço de cada um, ao lado das demais melhorias, estão no capítulo 13.
 
 | *Features* | Desejo | Motivo da exclusão |
 |---|---|---|
@@ -12784,6 +12790,75 @@ Os indicadores saem do registro de interações, que já guarda usuário, perfil
 | I8 | Tempo poupado por consulta | Tempo da busca manual − tempo da consulta ao agente, para as mesmas perguntas | Medição no piloto com líderes | Uma vez no piloto | O ponto de equilíbrio da seção 7.12.2 do [GestaoProjeto.md](GestaoProjeto.md) e o objetivo O1 (2.3.4) |
 
 Os indicadores I1 a I5 podem ser calculados desde o primeiro dia do piloto, porque dependem apenas do registro que a solução já mantém; o painel de intenções mostra hoje os desfechos e os recortes do catálogo, e I1 a I3 exigem uma consulta nova sobre o mesmo registro, cruzada com a lista de usuários habilitados, sem coleta de dado adicional. I6 usa a tabela de rotinas, e I7 e I8 exigem as medições com usuários previstas no piloto. Ao fim do piloto, o PMO decide a expansão com base em I1, I3, I7 e I8; I2 e I8 também dizem se a análise de viabilidade se confirma.
+
+# 13. Aperfeiçoamentos Futuros
+
+Este capítulo reúne as melhorias possíveis para a solução, que até aqui estavam espalhadas pelo documento: os requisitos que a prova de conceito entrega em parte ou não entrega (9.6), os casos `xfail` da triagem de testes (10.7.1), as pendências de usabilidade (10.3.12.9), o ponto que o [Arquitetura.md](Arquitetura.md) mantém em aberto (seção 11) e os desejos do parceiro registrados fora do MVP (2.7.6). Cada aperfeiçoamento aparece uma vez, com a lacuna de onde veio. Nenhum item já implementado aparece como futuro: a lista foi conferida contra a situação por requisito da seção 9.6.1, no estado de 30/09/2026.
+
+## 13.1 Critérios de prioridade e de esforço
+
+A prioridade segue o que o item bloqueia:
+
+- **alta:** defeito de um requisito do MVP ou pré-condição para um piloto com usuários do Metrô e dado real;
+- **média:** completa um benefício que a prova de conceito entrega em parte, ou prepara a escala depois do piloto;
+- **baixa:** desejo do parceiro fora do MVP, que depende de decisão dele ou de ambiente que o projeto não tem.
+
+O esforço é relativo entre os itens da lista, e não uma estimativa em horas:
+
+- **P:** mudança localizada em um módulo, com os contratos e os testes que já existem;
+- **M:** novo componente ou mudança em mais de uma camada, com testes novos;
+- **G:** fluxo novo de ponta a ponta, ou dependência de serviço ou ambiente do parceiro.
+
+## 13.2 Completar os requisitos do MVP
+
+| ID | Aperfeiçoamento | Lacuna de origem | Prioridade | Esforço |
+|---|---|---|---|---|
+| AF01 | Ligar o aviso de marco atrasado da tela principal às rotas de avisos (`GET /avisos`), no lugar do conteúdo fixo de demonstração, e cadastrar a adesão dos líderes aos eventos de marco dos seus projetos | Avisos gerados no backend e não exibidos pela interface (9.6.1, RF06; 12.1.3) | Alta | P |
+| AF02 | Criar a sonda que identifica pendências de preenchimento e gera o aviso dirigido só ao responsável, sem alerta para projeto completo | RF06 parcial; `TF-RF06-01`, `TF-RF06-03` e `TF-RF06-04` em `xfail` (10.7.1) | Alta | M |
+| AF03 | Pedir ao usuário a entidade obrigatória ausente, como o projeto, antes de encaminhar a intenção ao executor | RF03 parcial; `TF-RF03-06` em `xfail` (10.7.1) | Alta | M |
+| AF04 | Devolver a mesma resposta para projeto alheio e projeto inexistente em `GET /portfolio/projetos/{codigo}`, sem enfraquecer a autorização | RF04 parcial; `TF-RF04-04` em `xfail`, que permite enumerar projetos (10.7.1) | Alta | P |
+| AF05 | Implementar a alteração do portfólio pela conversa: prévia, confirmação, permissão de escrita verificada antes da proposta, gravação atômica e trilha com autoria, origem e momento | RF05 não implementado; `TF-RF05-01` a `TF-RF05-06` em `xfail` (10.7.1); RNF02 sem alteração a medir (10.2.3.2); maior distância entre a proposta da Sprint 1 e a versão final (2.8.10.2) | Alta | G |
+| AF06 | Tornar a recusa de projeto fora do escopo mais orientativa, sem revelar que o projeto existe | Pendência aceita `TF-RF03-05`, sob o risco R08 (10.7.1) | Média | P |
+| AF07 | Levar a resposta a um alerta de pendência direto ao fluxo de alteração com confirmação | `TF-RF06-05` em `xfail`; depende de AF02 e AF05 (10.7.1) | Média | M |
+| AF08 | Retomar os assistentes de preenchimento guiado do Termo de Abertura e do Mapa de Benefícios, com rascunho salvo | F25 classificada como MVP e não entregue; preenchimento guiado retirado por não ter onde gravar (2.8.10.1); depende de AF05 | Média | G |
+
+## 13.3 Segurança, perímetro e operação
+
+| ID | Aperfeiçoamento | Lacuna de origem | Prioridade | Esforço |
+|---|---|---|---|---|
+| AF09 | Reprovisionar o Content Safety e o Speech no tenant do parceiro | Único ponto em aberto do [Arquitetura.md](Arquitetura.md) (seção 11); risco R12; pré-condição para qualquer uso com dado real | Alta | P |
+| AF10 | Trocar o índice vetorial e o modelo de geração do executor próprio por serviços homologados pelo Metrô, atrás da mesma porta `Executor` | Riscos R19 e R20; perímetro do caminho alternativo ([Arquitetura.md](Arquitetura.md), seção 13.4); desejo F91 (2.7.6) | Alta | M |
+| AF11 | Validar perfis e permissões no tenant definitivo, com o registro da aplicação no Entra ID e a permissão `User.Read.All` consentida pelo administrador | Limite de RF01 (9.6.1); dependência externa ([Arquitetura.md](Arquitetura.md), seção 12.2) | Alta | P |
+| AF12 | Subir a detecção das guardas de injeção e de abuso para 90%, com regras corporativas e o conjunto adversarial, mantendo o falso positivo em até 5% | RNF06 reprovado por detecção: 8,3% na injeção e 0% no abuso (10.2.3.6) | Alta | M |
+| AF13 | Cifrar em repouso o registro de interações e fixar o prazo definitivo de retenção com o parceiro | RNF07 parcial: prompt em claro e prazo provisório (10.2.3.7); risco R13 | Alta | M |
+| AF14 | Tratar a saturação sob concorrência, com cota do Content Safety e pool de conexões dimensionados, e medir a carga de novo no ambiente implantado | Limites de latência ultrapassados a partir de cinco usuários, com respostas 429 do Content Safety e esgotamento do pool do banco (10.2.2.2) | Alta | M |
+| AF15 | Medir o worker de rotinas sob carga concorrente com o chat e a disponibilidade contínua no ambiente implantado | `TNF-DES-05` pendente e RNF04 parcial (10.7) | Média | M |
+| AF16 | Implementar o cliente Direct Line e ligar o Copilot Studio como executor; até lá, deixar o executor próprio como padrão da configuração, que hoje aponta para o cliente não implementado | Direct Line com `NotImplementedError` ([Arquitetura.md](Arquitetura.md), seções 12.2 e 13.4); padrão `executor = "copilot"` em `config.py`; risco R02 | Média | G |
+| AF17 | Revisar por amostra humana a fidelidade das respostas do RAG ao trecho citado | Meta de fidelidade de 0,95 sem medição automática (9.4.6) | Média | P |
+| AF18 | Medir a cobertura das consultas por categoria de informação, com ao menos uma pergunta por categoria na bancada do RAG | Objetivo O2 sem indicador de cobertura por categoria (2.8.10.1) | Média | P |
+
+## 13.4 Evolução do produto
+
+| ID | Aperfeiçoamento | Lacuna de origem | Prioridade | Esforço |
+|---|---|---|---|---|
+| AF19 | Notificar o responsável por Teams ou por correio eletrônico e publicar o agente no Teams | F57 e F86 fora do MVP (2.7.6); `TF-RF06-02` fora do MVP (10.7.1); canal externo excluído do MVP (2.8.3) | Média | M |
+| AF20 | Permitir que o GPM administre o catálogo de intenções sem desenvolvedor, com retreino e bancada disparados pela própria equipe | F94 fora do MVP (2.7.6); sustentação pela equipe do Metrô (2.8.5 e 2.8.7) | Média | M |
+| AF21 | Oferecer a análise comparativa entre projetos do portfólio | RF07 fora do MVP; três casos em `skip` (9.6.1) | Média | M |
+| AF22 | Gerar relatórios e materiais gerenciais adequados ao perfil, com regra de suficiência dos dados e fontes filtradas, incluindo o relatório anual e os modelos oficiais | RF08 fora do MVP; `TF-RF08-02` a `TF-RF08-04` em `xfail` (10.7.1); F65, F67 e F69 (2.7.6) | Média | G |
+| AF23 | Refinar o canal de voz: robustez a ruído e a sotaque, ditado longo com retomada e resposta falada, medidos sobre um corpus de áudio | F78, F79 e F80 fora do MVP (2.7.6); risco R03; corpus de áudio de 5.7.6 ainda não construído | Baixa | M |
+| AF24 | Integrar SharePoint, Power Automate e Power BI e exportar para Excel, MS Project, Miro e SharePoint | F83, F84, F85 e F40 fora do MVP (2.7.6) | Baixa | G |
+| AF25 | Criar os assistentes de cronograma com pesos e dependências, de mudanças e de encerramento | F27, F30 e F31 fora do MVP (2.7.6); dependem de AF05 | Baixa | G |
+| AF26 | Extrair informação de documentos e atas reais | F41 e F18 fora do MVP (2.7.6); validação restrita a dados sintéticos | Baixa | G |
+| AF27 | Atender aos demais desejos: transações contra o legado, indicadores estratégicos e portfólios anteriores, atribuições das áreas, termo de confidencialidade e atendimento multilíngue | F88, F89, F90, F49, F50, F55, F75 e F96 fora do MVP (2.7.6) | Baixa | G |
+
+## 13.5 Sequência sugerida
+
+A ordem abaixo segue as dependências entre os itens, e não só a prioridade.
+
+1. **Antes do piloto com dado real:** AF09, AF10, AF11, AF12 e AF13, que fecham o perímetro, as permissões e as guardas; AF01, que coloca na tela o aviso de que o plano de adoção depende (12.1.3); e AF04, que fecha a enumeração de projetos. Sem os cinco primeiros, a solução continua restrita a dados sintéticos, como declara a seção 3.3.1.1.
+2. **Durante o piloto:** AF14 e AF15, que medem a solução na escala de vários líderes; AF02, AF03 e AF06, que completam a proatividade e a interpretação; e AF17 e AF18, que dão número aos objetivos O3 e O2 com o conteúdo do parceiro.
+3. **Depois do piloto:** AF05 e o que depende dele (AF07, AF08 e AF25), que devolvem à solução a atualização do portfólio pela conversa; AF16, se o parceiro mantiver o Copilot Studio como executor; e AF19 a AF22, conforme a prioridade que o PMO der a cada desejo.
+4. **Sob demanda do parceiro:** AF23, AF24, AF26 e AF27.
 
 # Referências
 
