@@ -101,6 +101,7 @@
   - [9.3 Modelo de Recomendação](#93-modelo-de-recomendação)
   - [9.4 Desenvolvimento de Features](#94-desenvolvimento-de-features)
   - [9.5 Testes Unitários e de Integração](#95-testes-unitários-e-de-integração)
+  - [9.6 Funcionalidades Implementadas na Prova de Conceito](#96-funcionalidades-implementadas-na-prova-de-conceito)
 - [10. Planejamento e Execução de Testes](#10-planejamento-e-execução-de-testes)
   - [10.1 Testes Funcionais](#101-testes-funcionais)
   - [10.2 Testes de RNFs](#102-testes-de-rnfs)
@@ -9079,6 +9080,61 @@ que é o papel do grupo IT-RAG, e este ainda não tem execução registrada com 
 serviços presentes. A qualidade da recuperação e da resposta não é objeto de
 teste, e sim da bancada de 9.4.6. E nenhum caso exercita o
 RAG pelo `/chat`, porque essa ligação não existe no código (9.4.8).
+
+## 9.6 Funcionalidades Implementadas na Prova de Conceito
+
+Esta seção apresenta, em um único ponto, o que a prova de conceito entrega no
+estado verificado em 30/09/2026, a partir da `develop` no commit `df9f919`. A
+classificação não deriva apenas da existência de uma intenção no catálogo ou de
+uma tela: exige um caminho observável no código e uma evidência executável. Os
+resultados detalhados permanecem na matriz da seção 10.7; aqui eles são
+traduzidos para a visão funcional que uma pessoa usuária ou avaliadora encontra
+na solução.
+
+São usados quatro estados:
+
+- **completa:** o comportamento principal do requisito existe na interface ou
+  na API e seus casos funcionais estão aprovados;
+- **parcial:** existe um fluxo utilizável, mas pelo menos um critério do
+  requisito continua sem implementação ou com defeito conhecido;
+- **não implementada:** o requisito pertence ao MVP, porém ainda não existe um
+  fluxo de usuário que entregue seu resultado principal;
+- **fora do MVP:** o requisito foi classificado como desejável na priorização e
+  não é apresentado como entrega da prova de conceito.
+
+Essa distinção evita dois falsos positivos. Uma rota isolada não torna um
+requisito completo se a jornada não chega a ela, e um teste marcado como
+`xfail` documenta uma lacuna, não uma funcionalidade aprovada.
+
+### 9.6.1 Situação por requisito funcional
+
+| RF | Situação | Funcionalidade observável | Tela ou rota que entrega | Evidência de implementação e teste | Limite atual |
+|---|---|---|---|---|---|
+| **RF01 — acesso, permissões e perfil** | **Completa** | Entrada com Microsoft, resolução da sessão, perfil seguro e escopo de projetos antes do acesso aos recursos protegidos | Página `Login`; `GET /auth/login`, `GET /auth/callback`, `GET /auth/eu` e `POST /auth/logout` | `app/api/routes/auth.py`, `app/api/deps.py`, `src/web/src/rotas.tsx` e `tests/funcionais/test_rf01_acesso.py` | A aprovação funcional local não substitui a validação das permissões no *tenant* definitivo do parceiro |
+| **RF02 — interação por texto e voz** | **Completa** | Envio de texto pelo chat e entrada por voz, tanto pelo token de reconhecimento no navegador quanto pelo processamento assíncrono de arquivo de áudio | Página `Principal`; `POST /chat`, `GET /voz/token`, `POST /voz/audios` e `GET /voz/audios/{audio_id}` | `app/api/routes/chat.py`, `app/api/routes/voz.py`, `src/web/src/hooks/useConversa.ts`, `src/web/src/hooks/useMicrofone.ts` e `tests/funcionais/test_rf02_canais.py` | Azure Speech depende de credencial e conectividade no ambiente em que o fluxo é executado |
+| **RF03 — identificação e controle de intenções** | **Parcial** | Classificação pelo catálogo, aplicação do limiar de confiança, recusa fora de escopo e encaminhamento da intenção aprovada ao executor | Página `Principal`; `POST /chat` | `app/pipeline/intencao/`, `app/pipeline/orquestrador.py` e `tests/funcionais/test_rf03_intencoes.py` | O pipeline ainda não solicita toda entidade obrigatória ausente antes da execução e mantém uma recusa conservadora para projeto fora do escopo |
+| **RF04 — consulta e análise do portfólio** | **Parcial** | Consultas estruturadas de projetos, riscos, marcos e indicadores e consultas documentais pelo executor RAG, respeitando o escopo resolvido do usuário | Chat na página `Principal`; rotas `GET /portfolio/projetos`, `GET /portfolio/projetos/{codigo}` e seus sub-recursos | `app/api/routes/portfolio.py`, `app/rag/executor.py`, `app/executor/fabrica.py` e `tests/funcionais/test_rf04_consulta.py` | A rota de detalhe ainda diferencia projeto alheio (`403`) de projeto inexistente (`404`), permitindo inferência de existência |
+| **RF05 — criação e atualização de projetos** | **Não implementada** | As intenções transacionais são reconhecidas, mas a prova de conceito não apresenta prévia, confirmação e escrita efetiva no portfólio | Não há tela ou rota de transação disponível ao usuário; o chat devolve orientação quando o executor próprio não pode efetivar a alteração | `app/pipeline/intencao/catalogo.py`, `app/rag/executor.py` e os seis casos estritos em `tests/funcionais/test_rf05_transacoes.py` | Permanecem ausentes confirmação, autorização de escrita, atomicidade e trilha da alteração; os casos continuam `xfail` |
+| **RF06 — identificação e alerta de pendências** | **Parcial** | Cadastro de rotinas e consulta de avisos existem como infraestrutura para ações proativas | Página `Rotinas`; rotas `/rotinas` e `/avisos` | `app/api/routes/rotinas.py`, `app/api/routes/avisos.py`, `app/avisos/` e `tests/funcionais/test_rf06_pendencias.py` | Não existe a sonda específica que identifica pendências e gera o aviso dirigido; contato por Teams ou correio está fora do MVP |
+| **RF07 — análise comparativa do portfólio** | **Fora do MVP** | Não é oferecida como funcionalidade da prova de conceito | Nenhuma tela ou rota dedicada | Decisão de escopo da seção 2.7 e `tests/funcionais/test_rf07_analise.py` | Os três casos permanecem `skip` por decisão explícita de priorização |
+| **RF08 — relatórios e informações gerenciais** | **Fora do MVP** | O catálogo consegue encaminhar tipos de material ao executor, mas não há geração de relatório apresentada como entrega | Nenhuma tela de geração; o encaminhamento básico ocorre por `POST /chat` | `app/pipeline/intencao/catalogo.py` e `tests/funcionais/test_rf08_relatorios.py` | Adequação por perfil, suficiência dos dados e filtragem das fontes não compõem o MVP atual |
+| **RF09 — proteção da interação** | **Completa no escopo funcional** | Guardas de injeção, abuso e saída são aplicadas em ordem antes da entrega da resposta, com bloqueio e recusa apropriados | Transparente ao usuário em `POST /chat`, áudio e execução de rotina; a página `Principal` apresenta o desfecho sem revelar a barreira | `app/pipeline/guardas/`, `app/pipeline/orquestrador.py` e `tests/funcionais/test_rf09_guardas.py` | A eficácia sistêmica do RNF06 permanece abaixo da meta para injeção e abuso, conforme 10.2.3.6; isso não invalida a aprovação do contrato funcional |
+| **RF10 — registro e análise das intenções** | **Completa** | Uma interação é registrada por solicitação e o painel permite analisar volume, desfechos, segurança, catálogo e latência | Página `Intenções`; oito rotas sob `/intencoes` | `app/api/routes/intencoes.py`, `app/analytics/`, `src/web/src/hooks/usePainelIntencoes.ts` e `tests/funcionais/test_rf10_registro.py` | Provedores externos reais e o ambiente implantado possuem evidências próprias e não são inferidos apenas pela bateria funcional |
+| **RF11 — rotinas agendadas** | **Completa no escopo funcional** | Criar, validar, editar, pausar, excluir e executar rotinas, com agenda persistida e histórico de execuções | Página `Rotinas`; rotas `GET/POST/PUT/DELETE /rotinas`, `POST /rotinas/{id}/executar` e `GET /rotinas/{id}/execucoes` | `app/api/routes/rotinas.py`, `app/rotinas/`, `app/worker.py`, `src/web/src/paginas/Rotinas/` e `tests/funcionais/test_rf11_rotinas.py` | O disparo concorrente com tráfego de chat é uma evidência não funcional ainda pendente em `TNF-DES-05`, não uma operação simulada da tela |
+| **RF12 — histórico de conversas** | **Completa** | Listagem, retomada, detalhamento e exclusão do histórico persistido do usuário | Página `Histórico`; `GET /conversas`, `GET /conversas/{conversa_id}` e `DELETE /conversas/{conversa_id}` | `app/api/routes/conversas.py`, `src/web/src/paginas/Historico/`, `src/web/src/hooks/useConversas.ts` e `tests/funcionais/test_rf12_historico.py` | O usuário só acessa as próprias conversas; a validação implantada é tratada separadamente dos testes funcionais |
+
+### 9.6.2 Leitura consolidada da prova de conceito
+
+No recorte funcional, a prova de conceito entrega integralmente **RF01, RF02,
+RF09, RF10, RF11 e RF12**. **RF03, RF04 e RF06** possuem partes utilizáveis,
+mas mantêm lacunas explícitas. **RF05** pertence ao MVP e continua não
+implementado como jornada transacional. **RF07 e RF08** permanecem fora do MVP,
+conforme a priorização registrada na seção 2.7.
+
+Essa leitura deve ser atualizada junto da matriz 10.7 sempre que um `xfail`
+mudar de estado. Ela descreve funcionalidades do produto; requisitos não
+funcionais, integrações com serviços comerciais e resultados de desempenho
+continuam avaliados nas seções 10.2, 10.4 e 10.5.
 
 # 10. Planejamento e Execução de Testes
 
