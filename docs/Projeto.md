@@ -9350,7 +9350,7 @@ requisito completo se a jornada não chega a ela, e um teste marcado como
 | **RF08 — relatórios e informações gerenciais** | **Fora do MVP** | O catálogo consegue encaminhar tipos de material ao executor, mas não há geração de relatório apresentada como entrega | Nenhuma tela de geração; o encaminhamento básico ocorre por `POST /chat` | `app/pipeline/intencao/catalogo.py` e `tests/funcionais/test_rf08_relatorios.py` | Adequação por perfil, suficiência dos dados e filtragem das fontes não compõem o MVP atual |
 | **RF09 — proteção da interação** | **Completa no escopo funcional** | Guardas de injeção, abuso e saída são aplicadas em ordem antes da entrega da resposta, com bloqueio e recusa apropriados | Transparente ao usuário em `POST /chat`, áudio e execução de rotina; a página `Principal` apresenta o desfecho sem revelar a barreira | `app/pipeline/guardas/`, `app/pipeline/orquestrador.py` e `tests/funcionais/test_rf09_guardas.py` | A eficácia sistêmica do RNF06 permanece abaixo da meta para injeção e abuso, conforme 10.2.3.6; isso não invalida a aprovação do contrato funcional |
 | **RF10 — registro e análise das intenções** | **Completa** | Uma interação é registrada por solicitação e o painel permite analisar volume, desfechos, segurança, catálogo e latência | Página `Intenções`; oito rotas sob `/intencoes` | `app/api/routes/intencoes.py`, `app/analytics/`, `src/web/src/hooks/usePainelIntencoes.ts` e `tests/funcionais/test_rf10_registro.py` | Provedores externos reais e o ambiente implantado possuem evidências próprias e não são inferidos apenas pela bateria funcional |
-| **RF11 — rotinas agendadas** | **Completa no escopo funcional** | Criar, validar, editar, pausar, excluir e executar rotinas, com agenda persistida e histórico de execuções | Página `Rotinas`; rotas `GET/POST/PUT/DELETE /rotinas`, `POST /rotinas/{id}/executar` e `GET /rotinas/{id}/execucoes` | `app/api/routes/rotinas.py`, `app/rotinas/`, `app/worker.py`, `src/web/src/paginas/Rotinas/` e `tests/funcionais/test_rf11_rotinas.py` | O disparo concorrente com tráfego de chat é uma evidência não funcional ainda pendente em `TNF-DES-05`, não uma operação simulada da tela |
+| **RF11 — rotinas agendadas** | **Completa no escopo funcional** | Criar, validar, editar, pausar, excluir e executar rotinas, com agenda persistida e histórico de execuções | Página `Rotinas`; rotas `GET/POST/PUT/DELETE /rotinas`, `POST /rotinas/{id}/executar` e `GET /rotinas/{id}/execucoes` | `app/api/routes/rotinas.py`, `app/rotinas/`, `app/worker.py`, `src/web/src/paginas/Rotinas/` e `tests/funcionais/test_rf11_rotinas.py` | O disparo concorrente foi exercitado em `TNF-DES-05`: cinco rotinas geraram uma execução cada com chat ativo; duas foram bloqueadas pelas guardas, conforme 10.2.2.3 |
 | **RF12 — histórico de conversas** | **Completa** | Listagem, retomada, detalhamento e exclusão do histórico persistido do usuário | Página `Histórico`; `GET /conversas`, `GET /conversas/{conversa_id}` e `DELETE /conversas/{conversa_id}` | `app/api/routes/conversas.py`, `src/web/src/paginas/Historico/`, `src/web/src/hooks/useConversas.ts` e `tests/funcionais/test_rf12_historico.py` | O usuário só acessa as próprias conversas; a validação implantada é tratada separadamente dos testes funcionais |
 
 ### 9.6.2 Leitura consolidada da prova de conceito
@@ -9878,7 +9878,20 @@ O baseline de um usuário atende aos dois limites, enquanto o primeiro ponto con
 
 Na rodada de pico, o Locust contabilizou 159 respostas, sendo 18 falhas e 141 sucessos. A contagem anterior de 154 interações `encaminhada` era uma consulta absoluta da identidade sintética, reutilizada em controles e diagnósticos, e não um delta isolado da janela do pico; por isso, ela foi retirada como evidência daquela rodada. Como a base anterior não preserva a separação necessária para atribuir individualmente as 13 linhas excedentes, não se afirma se decorreram de controles anteriores ou de persistência concluída antes de resposta HTTP 500. Para o resultado de carga da janela, prevalece a estatística do Locust.
 
-O resultado caracteriza a configuração local, não a capacidade do Azure: gerador e alvo compartilharam os recursos do Docker Desktop, a quota externa do Content Safety participou da saturação e não houve busca fina entre dois e quatro usuários. Além disso, a rodada nominal original precisou de `SIGINT` com requisições em voo; portanto, seus p95 e p99 são limites inferiores da cauda observável, não estimativas completas das solicitações ainda pendentes. As rodadas complementares usaram `--stop-timeout 180` e terminaram sem interrupção manual. A evidência completa, incluindo ambiente, comandos, falhas e limitações, está em [`docs/evidencias/2026-09-30-locust-api-ativa.txt`](evidencias/2026-09-30-locust-api-ativa.txt). `TNF-DES-05` continua reservado ao teste concorrente com o worker, e `TNF-DES-06` não faz parte deste card.
+O resultado caracteriza a configuração local, não a capacidade do Azure: gerador e alvo compartilharam os recursos do Docker Desktop, a quota externa do Content Safety participou da saturação e não houve busca fina entre dois e quatro usuários. Além disso, a rodada nominal original precisou de `SIGINT` com requisições em voo; portanto, seus p95 e p99 são limites inferiores da cauda observável, não estimativas completas das solicitações ainda pendentes. As rodadas complementares usaram `--stop-timeout 180` e terminaram sem interrupção manual. A evidência completa, incluindo ambiente, comandos, falhas e limitações, está em [`docs/evidencias/2026-09-30-locust-api-ativa.txt`](evidencias/2026-09-30-locust-api-ativa.txt). `TNF-DES-06` não fez parte desse card; a execução posterior de `TNF-DES-05` está registrada a seguir.
+
+#### 10.2.2.3 Rotinas concorrentes com tráfego de chat — 30/09/2026
+
+`TNF-DES-05` foi executado sobre o commit `9b2555d`, com PostgreSQL 16, API e worker em contêineres separados e `PERFORMANCE_MODE=true` nos dois processos. Cinco rotinas com o mesmo prompt canônico e o mesmo vencimento, 19:26 em `America/Sao_Paulo`, foram reconciliadas pelo worker. Em paralelo, um usuário Locust enviou mensagens de chat durante 159 segundos, com espera de 1 a 2 segundos. O executor final foi sintético, com atraso de 50 ms; sessão, Entra ID, Content Safety, classificação, agenda e persistência permaneceram reais.
+
+| Recorte | Amostras de chat | p50 (limite < 3 s) | p95 (limite < 8 s) | p99 observado | Resultado temporal |
+|---|---:|---:|---:|---:|---|
+| Janela completa de 159 s | 42 | 1,498 s — **aprovado** | 2,827 s — **aprovado** | 3,140 s | **Aprovado** |
+| Intervalo dos cinco disparos, 22,19 s | 2 | 0,125 s — **aprovado** | 1,274 s — **aprovado** | 1,274 s | **Aprovado, com amostra pequena** |
+
+As cinco rotinas começaram no mesmo minuto, concluíram e produziram exatamente uma linha cada em `execucao_rotina`; não houve perda, duplicidade nem status de falha. Três foram encaminhadas e duas receberam `bloqueada_injecao_modelo`. No chat, 31 das 42 solicitações foram encaminhadas, uma foi bloqueada na injeção e dez na saída. Como todas eram mensagens legítimas iguais, a taxa de bloqueio indevido foi **26,19%**, acima do limite de 5% de 9.1.8. Assim, a promessa arquitetural de separação, unicidade e latência foi comprovada, mas o cenário é **parcial para liberação** devido à eficácia instável das guardas sob concorrência.
+
+Os percentis foram recalculados de `interacao.latencia_ms` na janela exata; medem o pipeline no servidor e não o pequeno salto de rede local. A janela dos disparos contém somente duas conclusões de chat e não sustenta, sozinha, uma afirmação de capacidade. A evidência auditável, com ambiente, comando, contagens, limitações e desativação posterior das rotinas de bancada, está em [`docs/evidencias/2026-09-30-tnf-des-05-rotinas-chat.txt`](evidencias/2026-09-30-tnf-des-05-rotinas-chat.txt).
 
 ### 10.2.3 Testes dos requisitos não funcionais
 
@@ -10160,7 +10173,7 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | RNF05 | 10.2.3.5 | 2 | 2 | `tests/rnf/test_rnf05_perfil.py` | Executado: 6 aprovados na bancada sintética; validação humana ainda pendente |
 | RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
 | RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
-| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Microbenchmarks executados; Locust sem API disponível, sem resultado válido de carga |
+| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Executado: baseline e `TNF-DES-05` aprovados nos limites temporais; cargas de 5, 10 e 30 usuários reprovadas; guardas instáveis sob concorrência |
 | **Total** | — | **21** | **16** | — | — |
 
 A linha de desempenho é a única sem requisito de origem, e o identificador `TNF-DES` registra isso em vez de escondê-lo. A ancoragem está em 10.2.1: os parâmetros vêm do orçamento arquitetural de 5.1.7.3 e do limite operacional de 9.1.8, que divergem entre si, e a reconciliação adotada reporta contra os dois e declara falha apenas no segundo. Enquanto um RNF de desempenho não for formalizado, essa linha permanece sustentada por uma decisão desta seção, e não pela especificação de requisitos.
@@ -11929,7 +11942,7 @@ integral estão em 10.1.7; os testes de retenção e disponibilidade estão em 1
 | Confirmação antes de alterações | `tests/funcionais/test_rf05_transacoes.py` | Casos presentes, mas marcados `xfail` | Fluxo de alteração com prévia e confirmação não implementado |
 | Idempotência | `tests/funcionais/test_rf10_registro.py`; `tests/funcionais/test_rf11_rotinas.py`; verificações de integração `tests/integration/test_agendador_persistencia.py` | Os testes funcionais de RF10/RF11 passaram | Os testes de integração com armazenamento/agendador real não fazem parte das suítes executadas nesta rodada |
 | Guardas e invariantes da ordem do pipeline | `tests/funcionais/test_rf09_guardas.py`; `tests/rnf/test_rnf06_barreiras.py` | Ordem/invariantes funcionais aprovadas; TNF-RNF06 manteve reprovação parcial conforme 10.2.3.6 | Falha da guarda de injeção ainda é `xfail`; eficácia real de injeção e abuso abaixo da meta |
-| Agendamento e execução de rotinas | `tests/funcionais/test_rf11_rotinas.py`; `tests/unit/test_agendador_rotinas.py`; `tests/unit/test_worker.py` | Cadastro, agenda/fuso, execução e histórico cobertos e aprovados nas suítes correspondentes | Corrida com PostgreSQL/worker separado e concorrência com chat ainda dependem de integração; TNF-DES-05 sem aprovação |
+| Agendamento e execução de rotinas | `tests/funcionais/test_rf11_rotinas.py`; `tests/unit/test_agendador_rotinas.py`; `tests/unit/test_worker.py`; `TNF-DES-05` | Cadastro, agenda/fuso, execução e histórico cobertos; na bancada real, cinco rotinas concorrentes produziram exatamente uma execução cada | `TNF-DES-05` aprovou separação, unicidade e latência, mas duas rotinas legítimas foram bloqueadas pelas guardas; ver 10.2.2.3 |
 | Retenção e expurgo | `tests/rnf/test_rnf02_07_auditoria.py` | Quatro casos de RNF07 aprovados, incluindo acesso e limites de expurgo | Cifra em repouso não comprovada; prazo segue provisório e depende de validação com o parceiro |
 
 ## 10.7 Cobertura Consolidada do Artefato de Testes
@@ -12002,7 +12015,7 @@ interna ainda pendente no RF06.
 | RF08 — relatórios | `tests/funcionais/test_rf08_relatorios.py` | Fora do MVP: 1 cenário-base aprovado e 3 `xfail` desejáveis | mesma evidência; triagem 10.7.1 | Retomar perfil, suficiência e filtro de fontes após o MVP |
 | RF09 — guardas | `tests/funcionais/test_rf09_guardas.py` | Casos funcionais aprovados após #457 | evidência original e reexecução da triagem em 28/09; RNF em `2026-09-25-testes-rnf-perimetro.txt` | RNF06 permanece abaixo da meta; a correção funcional não altera a eficácia medida das guardas |
 | RF10 — registro | `tests/funcionais/test_rf10_registro.py` | Aprovado na bateria funcional | evidência funcional | Persistência real verificada separadamente por integração |
-| RF11 — rotinas | `tests/funcionais/test_rf11_rotinas.py` | Aprovado na bateria funcional | evidência funcional | Worker real e corrida concorrente ainda não demonstrados |
+| RF11 — rotinas | `tests/funcionais/test_rf11_rotinas.py`; `TNF-DES-05` | Aprovado no recorte funcional e na unicidade concorrente: cinco execuções para cinco rotinas | evidência funcional; `2026-09-30-tnf-des-05-rotinas-chat.txt` | Duas das cinco rotinas legítimas foram bloqueadas pelas guardas, sem falha ou duplicidade do worker |
 | RF12 — histórico | `tests/funcionais/test_rf12_historico.py` | Aprovado na bateria funcional | evidência funcional | Integração implantada fora desta execução |
 | RNF01 — perímetro | `tests/perimetro/test_perimetro_declarado.py` | Aprovado: 5 casos | `2026-09-25-testes-rnf-perimetro.txt` | Inspeção do perímetro não comprova configuração implantada |
 | RNF02 — rastreabilidade | `tests/rnf/test_rnf02_07_auditoria.py` | Aprovado nos casos executados, inclusive na bateria integral com PostgreSQL | `2026-09-25-testes-rnf-perimetro.txt`; `2026-09-29-cobertura-integral-middleware.txt` | A execução local não substitui validação no ambiente implantado |
@@ -12011,7 +12024,7 @@ interna ainda pendente no RF06.
 | RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
 | RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
-| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Baseline de 1 usuário aprovado (p50 2,6 s; p95 4,2 s); 5, 10 e 30 usuários reprovados nos limites de p50/p95; `TNF-DES-07` reprovado | `2026-09-30-locust-api-ativa.txt`; seção 10.2.2.2 | Transição para saturação delimitada entre 1 e 5 usuários, sem busca fina entre 2 e 4; investigar quota do Content Safety e pool do banco; TNF-DES-05 pendente |
+| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Baseline de 1 usuário aprovado; 5, 10 e 30 usuários reprovados; `TNF-DES-05` aprovou p50/p95 e unicidade com cinco rotinas, mas teve 26,19% de bloqueios indevidos | `2026-09-30-locust-api-ativa.txt`; `2026-09-30-tnf-des-05-rotinas-chat.txt`; seção 10.2.2 | Transição para saturação delimitada entre 1 e 5 usuários; investigar quota/estabilidade do Content Safety, guardas de saída e pool do banco |
 | Cobertura de código | `python -m pytest ... --cov=app --cov-report=term-missing` | 84,06% na execução única das suítes unitária, funcional, RNF, perímetro e integração; meta de 80% atingida | `2026-09-29-cobertura-integral-middleware.txt` | Provedores comerciais reais permaneceram isolados e os `xfail` continuam visíveis |
 | Integração | matriz 10.5.9 e scripts `tests/integration/` | Incluída na bateria integral: PostgreSQL e RabbitMQ reais locais; serviços comerciais reais explicitamente ignorados | `2026-09-29-cobertura-integral-middleware.txt`; seção 10.5 | Não confundir infraestrutura local real com validação no ambiente implantado |
 
@@ -12022,14 +12035,15 @@ O travamento anterior vinha da habilitação implícita dos testes reais de Gemi
 RF06 permanece parcial e RF07 está fora do MVP; RF04/RF08 permanecem parciais;
 o RNF06 reprova parcialmente;
 a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
-contínua, validação no ambiente implantado e carga Locust implantada seguem
-pendentes.
+contínua e validação no ambiente implantado seguem pendentes. A carga local
+também revelou bloqueios indevidos das guardas e saturação a partir do primeiro
+ponto concorrente medido.
 
 **Conclusão crítica.** Os resultados comprovam uma base automatizada executável e
 algumas regras centrais cobertas, mas não sustentam declaração de conformidade
 integral do artefato nem prontidão de liberação. RFs parciais, RNF06, proteção em
-repouso, observabilidade/worker e a carga real exigem resolução ou aceitação
-explícita de risco antes da liberação.
+repouso, observabilidade implantada, estabilidade das guardas e capacidade sob
+carga exigem resolução ou aceitação explícita de risco antes da liberação.
 
 # 11. Procedimentos de Implantação
 
