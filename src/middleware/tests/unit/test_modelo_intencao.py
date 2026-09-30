@@ -252,7 +252,41 @@ def test_avaliacao_com_limiares_explicita_rejeicao_total() -> None:
     assert resultado.rejeitados == 2
     assert resultado.cobertura == 0.0
     assert resultado.acuracia_aceitos == 0.0
-    assert resultado.precisao_por_intencao == {"classe_a": 1.0, "classe_b": 1.0}
+    assert resultado.precisao_por_intencao == {"classe_a": 0.0, "classe_b": 0.0}
+
+
+class ModeloTransacaoRejeitadaFalso:
+    """Modelo com uma transacao real, mas sem previsoes aceitas."""
+
+    classes_ = np.array(["atualizar_avanco", "consultar_status_projeto"])
+
+    def predict_proba(self, textos) -> np.ndarray:
+        assert len(textos) == 2
+        return np.array([[0.6, 0.4], [0.3, 0.7]])
+
+
+def test_rejeicao_total_nao_satisfaz_meta_de_precisao_transacional() -> None:
+    enunciados = [
+        Enunciado("Atualize o avanco", "atualizar_avanco", Origem.CATALOGO),
+        Enunciado(
+            "Qual o status do projeto?",
+            "consultar_status_projeto",
+            Origem.CATALOGO,
+        ),
+    ]
+
+    resultado = avaliacao.avaliar_com_limiares(
+        ModeloTransacaoRejeitadaFalso(),
+        enunciados,
+        {"atualizar_avanco": 0.9, "consultar_status_projeto": 0.9},
+    )
+
+    assert resultado.cobertura == 0.0
+    assert resultado.precisao_media(Categoria.TRANSACAO) == 0.0
+    assert (
+        resultado.precisao_media(Categoria.TRANSACAO)
+        < avaliacao.META_PRECISAO_TRANSACAO
+    )
 
 
 def test_confusoes_descarta_diagonal_e_ordena_por_frequencia() -> None:

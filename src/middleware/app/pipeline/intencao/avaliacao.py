@@ -310,7 +310,7 @@ def avaliar_com_limiares(
     for classe in sorted(set(map(str, previstos)) | set(map(str, verdadeiros))):
         marcados = aceitos & (previstos == classe)
         precisao[classe] = (
-            float((verdadeiros[marcados] == classe).mean()) if marcados.any() else 1.0
+            float((verdadeiros[marcados] == classe).mean()) if marcados.any() else 0.0
         )
 
     return ResultadoComRejeicao(
