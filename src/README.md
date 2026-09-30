@@ -6,8 +6,8 @@ Este diretório contém os componentes principais da aplicação do Agente de In
 
 - **`middleware/`**: Backend da aplicação. Contém a API em FastAPI (que orquestra o classificador e guardas), o pipeline de PLN, e o Worker assíncrono.
 - **`web/`**: Frontend da aplicação. A interface de interação com o agente construída em React com Vite.
-- **`emissor-portfolio/`**: Utilitário isolado para geração de artefatos, documentação e relatórios.
-- **`uploads/`**: Diretório temporário para armazenamento local de arquivos submetidos pelo usuário.
+- **`emissor-portfolio/`**: Script Google Apps Script que observa a planilha do portfólio e envia ao middleware os eventos de status, marcos e riscos, assinados com HMAC, via `POST /webhooks/portfolio` (WH-02).
+- **`uploads/`**: Criado em tempo de execução pela aplicação e não versionado (consta no `.gitignore`). Não está presente no repositório.
 
 ## Instalação e Execução
 
@@ -29,7 +29,8 @@ A aplicação estará disponível em `http://localhost:5173`.
 
 ### Opção 2: Execução Local Nativa
 
-Para desenvolver nos componentes, execute-os nativamente fora do Docker. 
+Para desenvolver nos componentes, execute-os nativamente fora do Docker.  
+*Os comandos a seguir partem da pasta `src/` (um nível abaixo da raiz do repositório).*  
 *Aviso: Você precisará de uma instância do PostgreSQL e do RabbitMQ rodando (podem ser subidos via Docker na pasta `infra`).*
 
 **1. Middleware (API FastAPI)**
@@ -48,21 +49,23 @@ python -m pip install -e ".[dev]"
 # Crie o .env
 cp .env.example .env
 
-# Antes de iniciar a API pela primeira vez, treine o classificador
+# (Opcional) Regenerar o classificador — o dados/classificador.joblib já está
+# versionado no repositório. Execute só se quiser substituí-lo.
+# Atenção: baixa ~2 GB do modelo e5; pode demorar.
 python -m app.pipeline.intencao.treino
 
 # Rode as migrações (com o PostgreSQL ativo)
 alembic upgrade head
 
 # Inicie o servidor
-fastapi dev app/main.py
+uvicorn app.main:app --reload
 ```
 
 **2. Worker (Tarefas Assíncronas)**
 Em um novo terminal, com o mesmo ambiente virtual ativado na pasta `middleware` (e com o RabbitMQ ativo):
 
 ```powershell
-celery -A app.worker worker --loglevel=info
+python -m app.worker
 ```
 
 **3. Frontend Web**
@@ -77,8 +80,8 @@ npm run dev
 ## Guia Rápido de Uso
 
 1. **Acesso**: Abra `http://localhost:5173` no seu navegador.
-2. **Login**: Faça login com uma conta registrada ou utilizando os mocks de dublês de acesso em ambiente de desenvolvimento (ex: selecionando o acesso como *Fernanda Silva* - Líder de Projeto).
-3. **Conversa (Página Principal)**: Ao acessar, você estará no ambiente de chat. Você pode escolher uma das sugestões ou enviar uma intenção como "Qual o status do Projeto X?". 
+2. **Login**: O login é feito via Microsoft Entra ID (Azure AD). Certifique-se de que as variáveis `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` e `ENTRA_REDIRECT_URI` estão preenchidas no `.env`. Use um usuário real do tenant; para ver as telas protegidas, o usuário precisa das permissões `ver_intencoes` (painel Intenções) e `gerir_rotinas` (painel Rotinas).
+3. **Conversa (Página Principal)**: Ao acessar, você estará no ambiente de chat. Você pode escolher uma das sugestões ou enviar uma intenção como "Qual o status do projeto XPTO?". 
 4. **Verificando o Histórico**: Clique na barra lateral em **Histórico** para visualizar conversas e simular retomada de contextos gravados.
 5. **Painéis Avançados**: A depender da sua permissão, acesse o painel **Intenções** para analisar recortes de intenções não atendidas (necessita `ver_intencoes`) ou **Rotinas** para visualizar o fluxo de rotinas e alertas (necessita `gerir_rotinas`).
 
