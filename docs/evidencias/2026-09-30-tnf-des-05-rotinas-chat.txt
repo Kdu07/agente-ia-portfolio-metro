@@ -1,0 +1,102 @@
+EVIDÊNCIA — TNF-DES-05: ROTINAS CONCORRENTES COM TRÁFEGO DE CHAT
+Issue: #462
+Execução: 30/09/2026
+Commit de base: 9b2555d
+
+OBJETIVO
+
+Verificar a promessa arquitetural de que o worker de agenda, separado da
+API, dispara várias rotinas com o mesmo vencimento sem perder ou duplicar
+execuções e sem fazer a latência do chat ultrapassar os limites da seção
+9.1.8: p50 < 3 s e p95 < 8 s.
+
+AMBIENTE
+
+- Host Windows 11 e Docker Desktop 29.2.1.
+- PostgreSQL 16, middleware, worker e RabbitMQ em contêineres separados.
+- Proxy web local usado apenas para encaminhar /api/chat ao middleware.
+- Locust 2.46.6 no host, com um usuário contínuo, rampa de 1 usuário/s,
+  espera de 1 a 2 s e duração de 159 s.
+- PERFORMANCE_MODE=true na API e no worker. Somente o executor final foi
+  substituído pelo ExecutorDesempenho, com atraso de 50 ms. Sessão,
+  Microsoft Entra ID, guardas, classificador e PostgreSQL permaneceram no
+  caminho real.
+- A aplicação do Entra ID possuía User.Read.All do tipo Application, com
+  consentimento administrativo. Nenhum identificador, cookie, token ou
+  segredo integra esta evidência.
+
+PREPARAÇÃO E EXECUÇÃO
+
+Foram persistidas cinco rotinas identificadas pelo prefixo TNF-DES-05,
+todas com o prompt canônico "Qual o status do projeto XPTO?", fuso
+America/Sao_Paulo e o mesmo cron para 30/09/2026 às 19:26. O worker
+reconciliou as cinco entradas antes do vencimento. O Locust começou às
+19:24:56 e permaneceu ativo antes, durante e depois dos disparos.
+
+Comando de carga, depois da criação de uma sessão sintética no banco:
+
+  python -m locust -f tests/desempenho/locustfile.py \
+    --headless -u 1 -r 1 -t 159s --stop-timeout 60 --only-summary
+
+O alvo foi http://localhost:5173/api/chat, com espera de 1 a 2 segundos,
+mensagem canônica do catálogo e oráculo exigindo desfecho=encaminhada. O
+cookie da sessão foi fornecido apenas por variável de ambiente no processo.
+
+O console do worker confirmou que as cinco rotinas começaram no mesmo
+instante e que os cinco jobs terminaram sem exceção do agendador. Depois da
+janela, uma consulta ao PostgreSQL contou as execuções e calculou os
+percentis a partir de interacao.latencia_ms. Esse campo mede o tempo do
+pipeline no servidor; não inclui o pequeno salto de rede local entre o
+Locust, o proxy e a API.
+
+RESULTADOS DE CHAT
+
+| Recorte | Amostras | p50 | p95 | p99 | Máximo | Comparação com 9.1.8 |
+|---|---:|---:|---:|---:|---:|---|
+| Janela completa de 159 s | 42 | 1.498 ms | 2.827 ms | 3.140 ms | 3.140 ms | p50 e p95 aprovados |
+| Intervalo das rotinas, 22,19 s | 2 | 125 ms | 1.274 ms | 1.274 ms | 1.274 ms | p50 e p95 aprovados; amostra pequena |
+
+Na janela completa, 31 mensagens foram encaminhadas, uma foi bloqueada
+pela guarda de injeção e dez pela guarda de saída. Como as 42 entradas eram
+legítimas e iguais, os 11 bloqueios são indevidos para esta bancada:
+26,19%, acima do limite de falsos positivos < 5% da seção 9.1.8. Portanto,
+o desempenho temporal aprovou, mas a qualidade funcional das guardas
+reprovou durante a mesma execução.
+
+RESULTADOS DAS ROTINAS
+
+- Rotinas cadastradas: 5.
+- Linhas em execucao_rotina: 5.
+- Rotinas com exatamente uma linha: 5 de 5.
+- Execuções concluídas: 5 de 5.
+- Status sucesso: 3.
+- Status bloqueada: 2.
+- Status falha: 0.
+- Menor duração individual: 20,878 s.
+- Maior duração individual: 22,186 s.
+
+As duas rotinas bloqueadas receberam bloqueada_injecao_modelo; as outras
+três foram encaminhadas. O status bloqueada representa decisão do pipeline,
+não falha do worker. As cinco rotinas de teste foram desativadas depois da
+consulta, preservando o histórico local usado nesta evidência.
+
+CONCLUSÃO
+
+TNF-DES-05 aprova a separação operacional e a unicidade: API, worker e
+PostgreSQL rodaram separados, o chat permaneceu abaixo dos limites de p50 e
+p95, e cada uma das cinco rotinas produziu exatamente uma execução
+concluída. O cenário é parcial como critério de liberação porque as guardas
+barraram 26,19% das mensagens legítimas e duas rotinas legítimas. O defeito
+não é duplicidade ou perda do agendador; é a instabilidade semântica das
+guardas externas já observada nos demais ensaios de carga.
+
+LIMITAÇÕES
+
+- A bancada local não mede a capacidade do Azure Container Apps.
+- Um usuário contínuo comprova concorrência com o worker, mas não substitui
+  os cenários de 5, 10 e 30 usuários registrados na evidência de carga.
+- O intervalo exato das rotinas contém apenas duas respostas de chat; por
+  isso a conclusão temporal principal usa também a janela completa, que
+  inclui o vencimento e possui 42 amostras.
+- O executor foi sintético; Entra ID, Content Safety, classificação,
+  persistência e agenda foram reais.
