@@ -8129,6 +8129,50 @@ contextual ponto a ponto. A API foi mockada no Playwright; o percurso não
 exercita o middleware real. Gráficos em SVG podem gerar itens *incomplete* do
 axe sem constituir falha registrada acima.
 
+### 9.2.19 Verificação do layout responsivo (#470)
+
+**Objetivo.** Confirmar que as seis telas da interface se comportam corretamente
+nas três larguras de referência, registrando as capturas como evidência.
+
+**Metodologia.** O script `src/web/scripts/captura-responsiva.mjs` sobe o
+`vite preview` (build de produção), intercepta `GET /api/auth/eu` com um
+dublê da usuária *Fernanda Silva* (perfil `lider_projeto`, permissões
+`ver_intencoes` e `gerir_rotinas`) e captura cada tela em modo headless com
+o Playwright. As capturas são salvas em `docs/evidencias/responsivo/`.
+
+**Larguras verificadas.**
+
+| Dispositivo | Largura | Altura |
+| --- | --- | --- |
+| Celular | 375 px | 812 px |
+| Tablet | 768 px | 1024 px |
+| Desktop | 1280 px | 800 px |
+
+**Resultado por tela (30/09/2026).**
+
+| Tela | Celular | Tablet | Desktop | Observação |
+| --- | --- | --- | --- | --- |
+| Login (`/entrar`) | ✓ | ✓ | ✓ | Layout de duas colunas (ilustração + formulário) no tablet e desktop; coluna única no celular |
+| Principal (`/`) | ✓ | ✓ | ✓ | Barra lateral recolhida no celular (menu hamburger); expandida no tablet e desktop |
+| Histórico (`/historico`) | ✓ | ✓ | ✓ | Lista de conversas em coluna única; barra lateral recolhida no celular |
+| Intenções (`/intencoes`) | ✓ | ✓ | ✓ | Filtros de período e perfil empilhados no celular; em linha no tablet/desktop |
+| Rotinas (`/rotinas`) | ✓ | ✓ | ✓ | Sem problemas visuais identificados nas três larguras |
+| Não encontrada (`/*`) | ✓ | ✓ | ✓ | CTA de retorno centralizado; sem quebra de layout |
+
+**Nenhum BUG visual foi identificado** nas 18 capturas. O comportamento
+da barra lateral recolhível e dos diálogos que viram gaveta no celular,
+introduzidos na reforma visual da Sprint 4, está funcionando conforme
+especificado em 9.2.6 e no guia visual (8.3).
+
+**Evidências.** Dezoito capturas PNG em `docs/evidencias/responsivo/`, no
+formato `<tela>-<dispositivo>.png`, geradas em 30/09/2026 com Playwright
+(Chromium headless) e Vite 6 em modo preview.
+
+**Limitações.** A captura usa API mockada; o comportamento dinâmico
+(abertura de gavetas, diálogos, microfone) não é verificado por este script.
+A verificação com leitor de tela e navegação por teclado em cada largura
+permanece manual.
+
 ## 9.3 Modelo de Recomendação
 
 [Preencher]

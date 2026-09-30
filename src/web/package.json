@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
-    "audit:a11y": "node scripts/auditoria-a11y.mjs"
+    "audit:a11y": "node scripts/auditoria-a11y.mjs",
+    "captura:responsivo": "node scripts/captura-responsiva.mjs"
   },
   "dependencies": {
     "@fontsource-variable/mona-sans": "^5.3.0",
