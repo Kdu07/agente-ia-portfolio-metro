@@ -8082,12 +8082,14 @@ de linguagem.
 | Camada de vetorização e porta do banco vetorial | #284 | `rag/embeddings.py`, `rag/vetorial/` | F12 | Implementada e testada |
 | Provisionamento do índice e ingestão do corpus do Drive | #285 | `rag/vetorial/provisionar.py`, `rag/ingestao/`, `rag/tabelas.py` | F12, F20 | Implementada e testada; primeira carga completa no Pinecone não registrada (9.4.3.7) |
 | Recuperação, geração com citações e bancada do RAG | #291 | `rag/recuperacao.py`, `rag/geracao.py`, `rag/linguagem/`, `rag/fluxo.py`, `rag/bancada.py` | F12, F13; F51, F52 e F54 na parte documental | Implementada e testada; bancada medida (9.4.6) |
-| Ligação do RAG ao orquestrador e ao `/chat` | — | `rag/executor.py`, seleção por configuração em `api/deps.py` | — | **Não implementada** (9.4.8) |
+| Ligação do RAG ao orquestrador e ao `/chat` | #350 | `rag/executor.py`, `executor/fabrica.py`, seleção por configuração em `api/deps.py` | F12, F13 | Implementada e testada; ativa quando `EXECUTOR=proprio` |
 
-A última linha é a que delimita o que esta seção afirma. O fluxo de RAG
-funciona ponta a ponta **por linha de comando e pela bancada**, sem o
-orquestrador na frente. Nenhuma mensagem enviada pela interface chega a ele
-enquanto a porta `Executor` e a seleção do executor não existirem no código.
+A última linha delimita o caminho entregue pela prova de conceito. O fluxo de
+RAG pode ser exercitado isoladamente por linha de comando e pela bancada, mas
+também implementa a porta `Executor` usada pelo orquestrador. Com
+`EXECUTOR=proprio`, uma mensagem enviada pela interface percorre o `/chat`, as
+guardas, a classificação de intenção e o executor RAG antes de voltar com as
+fontes validadas.
 
 ### 9.4.1 Enquadramento: por que um executor próprio
 
@@ -8842,18 +8844,17 @@ que a afirmação contrária não se sustente. A condição declarada continua s
 (representações vetoriais no provedor do índice) na matriz vigente
 ([GestaoProjeto.md](GestaoProjeto.md), seção 4).
 
-**O que falta**, na ordem em que bloqueia a demonstração pela interface:
+**Estado da integração e limites remanescentes:**
 
-| Pendência | Situação no código | Efeito |
+| Elemento | Situação no código | Efeito |
 |---|---|---|
-| Porta `Executor` e `rag/executor.py` | Não existem; o orquestrador chama `CopilotClient` diretamente | O RAG não é alcançável pelo `/chat`; roda só por linha de comando e pela bancada |
-| Seleção do executor por configuração | Não existe variável `EXECUTOR` em `app/config.py` | Não há como trocar de caminho sem mudar código |
-| Guarda de saída | `pipeline/guardas/saida.py` levanta `NotImplementedError` | Pré-requisito para entregar texto gerado pelo pipeline, inclusive o do RAG |
-| Projetos do usuário na sessão | `UsuarioAutenticado` carrega perfil e permissões, e não a lista de projetos | Pelo `/chat`, líder e membro de equipe só alcançariam documentos transversais |
-| Ingestão periódica | `worker.py` levanta `NotImplementedError` | A ingestão roda só sob demanda, pelo comando de 9.4.7 |
-| Prompt Shields na triagem | O classificador de injeção por modelo levanta `NotImplementedError` | A triagem de ingestão usa só as regras determinísticas |
-| Tabela do pgvector | Não migrada; a imagem do banco não tem a extensão `vector` | A reserva existe no código e nos testes, e não no banco |
-| Base estruturada sintética (onda C do plano) | Não iniciada | Transações e agregações não têm destino no executor próprio; o RAG responde só por documentos |
+| Porta `Executor` e ligação ao `/chat` | Implementadas em `rag/executor.py`, `executor/fabrica.py` e `api/deps.py` | O RAG é alcançável pelo chat quando `EXECUTOR=proprio` |
+| Seleção do executor | `EXECUTOR` é lida por `app/config.py`; `copilot` e `proprio` usam a mesma porta | O caminho muda por configuração, sem alteração do orquestrador |
+| Guardas de entrada e saída | Implementadas antes e depois do executor; Prompt Shields complementa as regras determinísticas | Texto gerado só é entregue após a guarda de saída; ausência ou indisponibilidade seguem as políticas documentadas em 9.1.2.2 |
+| Escopo de projetos | `UsuarioAutenticado.projetos` é preenchido na resolução da sessão e convertido em `Escopo` pelo executor | O filtro de perfil e projeto chega à busca vetorial antes da recuperação |
+| Atualização do corpus | O webhook do Drive publica o evento e o consumidor do worker aciona a ingestão incremental | A atualização deixa de depender apenas do comando manual, mas requer conta, canal e broker configurados |
+| Tabela do pgvector | Não migrada; a imagem do banco não tem a extensão `vector` | O adaptador permanece uma reserva testada em isolamento, não disponível no Compose atual |
+| Base estruturada | Consultas de projetos, riscos, marcos e indicadores existem em `api/routes/portfolio.py` e `persistence/repository_portfolio.py`; escritas transacionais do RF05 não existem | Consultas estruturadas são possíveis, mas prévia, confirmação e alteração de dados continuam fora do executor próprio |
 
 O que este caminho não resolve, e por isso não encerra nada, está em
 [Arquitetura.md](Arquitetura.md), seção 13.4: não valida a integração Direct
@@ -9078,8 +9079,9 @@ foram pulados por falta de PostgreSQL e das chaves do Pinecone e do Gemini
 **Limites.** A suíte unitária não comprova o comportamento dos serviços reais,
 que é o papel do grupo IT-RAG, e este ainda não tem execução registrada com os
 serviços presentes. A qualidade da recuperação e da resposta não é objeto de
-teste, e sim da bancada de 9.4.6. E nenhum caso exercita o
-RAG pelo `/chat`, porque essa ligação não existe no código (9.4.8).
+teste, e sim da bancada de 9.4.6. A ligação do RAG ao `/chat` existe pela porta
+`Executor`; a evidência unitária desta seção não substitui o teste de integração
+desse caminho com PostgreSQL, Pinecone e Gemini reais.
 
 ## 9.6 Funcionalidades Implementadas na Prova de Conceito
 
