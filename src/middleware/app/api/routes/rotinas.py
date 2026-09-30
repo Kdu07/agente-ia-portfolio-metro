@@ -27,6 +27,13 @@ from app.persistence.repository import ExecucaoRepository, RotinaRepository
 from app.rotinas import execucao as execucao_rotina
 from app.rotinas.execucao import ExecucaoNaoAutorizada, PermissaoRotinaRevogada, RotinaNaoEncontrada
 from app.rotinas.validacao import ResultadoValidacao, validar_agenda, validar_prompt
+from app.schemas.erro import (
+    RESPOSTA_401,
+    RESPOSTA_403,
+    RESPOSTA_404_ROTINA,
+    RESPOSTA_409_ROTINA,
+    RESPOSTA_503_ENTRA,
+)
 from app.schemas.rotina import (
     ExecucaoResposta,
     RotinaRequest,
@@ -38,6 +45,7 @@ from app.schemas.usuario import Permissao
 router = APIRouter(
     prefix="/rotinas",
     dependencies=[Depends(exige_permissao(Permissao.GERIR_ROTINAS))],
+    responses={**RESPOSTA_401, **RESPOSTA_403},
 )
 
 
@@ -100,7 +108,7 @@ async def criar(
     return _resposta_rotina(rotina)
 
 
-@router.put("/{rotina_id}", response_model=RotinaResposta)
+@router.put("/{rotina_id}", response_model=RotinaResposta, responses=RESPOSTA_404_ROTINA)
 async def atualizar(
     rotina_id: str,
     pedido: RotinaRequest,
@@ -132,7 +140,11 @@ async def atualizar(
     return _resposta_rotina(atualizada)
 
 
-@router.delete("/{rotina_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{rotina_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={**RESPOSTA_404_ROTINA, **RESPOSTA_409_ROTINA},
+)
 async def remover(
     rotina_id: str,
     usuario: UsuarioAtual,
@@ -150,7 +162,11 @@ async def remover(
         raise HTTPException(status.HTTP_409_CONFLICT, str(erro)) from erro
 
 
-@router.post("/{rotina_id}/executar", response_model=ExecucaoResposta)
+@router.post(
+    "/{rotina_id}/executar",
+    response_model=ExecucaoResposta,
+    responses={**RESPOSTA_404_ROTINA, **RESPOSTA_503_ENTRA},
+)
 async def executar_agora(
     rotina_id: str,
     usuario: UsuarioAtual,
@@ -187,7 +203,11 @@ async def executar_agora(
     return _resposta_execucao(*registro)
 
 
-@router.get("/{rotina_id}/execucoes", response_model=list[ExecucaoResposta])
+@router.get(
+    "/{rotina_id}/execucoes",
+    response_model=list[ExecucaoResposta],
+    responses=RESPOSTA_404_ROTINA,
+)
 async def listar_execucoes(
     rotina_id: str,
     usuario: UsuarioAtual,

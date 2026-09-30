@@ -16,8 +16,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.deps import UsuarioAtual, obter_conversas, obter_interacoes
 from app.persistence.repository import ConversaRepository, InteracaoRepository
 from app.schemas.conversa import ConversaDetalhe, ConversaResumo
+from app.schemas.erro import RESPOSTA_401, RESPOSTA_404_CONVERSA
 
-router = APIRouter(prefix="/conversas")
+router = APIRouter(prefix="/conversas", responses=RESPOSTA_401)
 
 
 @router.get("", response_model=list[ConversaResumo])
@@ -42,7 +43,7 @@ async def listar(
     ]
 
 
-@router.get("/{conversa_id}", response_model=ConversaDetalhe)
+@router.get("/{conversa_id}", response_model=ConversaDetalhe, responses=RESPOSTA_404_CONVERSA)
 async def detalhar(
     conversa_id: str,
     usuario: UsuarioAtual,
@@ -80,7 +81,11 @@ async def detalhar(
     )
 
 
-@router.delete("/{conversa_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{conversa_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=RESPOSTA_404_CONVERSA,
+)
 async def arquivar(
     conversa_id: str,
     usuario: UsuarioAtual,
