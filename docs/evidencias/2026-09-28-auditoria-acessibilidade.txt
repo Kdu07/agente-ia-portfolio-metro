@@ -1,0 +1,239 @@
+# Evidência — Auditoria de acessibilidade WCAG 2.1 Nível A/AA
+Branch: feat/acessibilidade-ferramenta
+Commit: b1b439a077b68825f90a756b04e7e82a341a1851
+Commit curto: b1b439a
+Ambiente: Windows, Node v24.16.0, Playwright + @axe-core/playwright; frontend Vite preview em http://127.0.0.1:4173; API mockada via page.route (sem backend).
+Data: 2026-09-28
+Issue: #468 (DoD: 6 telas × 2 temas)
+Ferramenta: axe-core via @axe-core/playwright; tags wcag2a, wcag2aa, wcag21a, wcag21aa
+
+## Escopo
+Telas: Login (/entrar), Principal (/), Histórico (/historico), Intenções (/intencoes), Rotinas (/rotinas), Não encontrada (/pagina-inexistente).
+Temas: claro e escuro (localStorage prata:tema = "claro"|"escuro"; classe dark em <html>).
+Autenticação: GET /api/auth/eu mockado com usuário Fernanda Silva (ver_intencoes + gerir_rotinas).
+
+## Resumo executivo
+Combinações auditadas: 12 (6 telas × 2 temas).
+Combinações com pelo menos uma falha: 2.
+Total de violações reportadas (somas por combinação): 2.
+
+Tabela rápida (tela | tema | falhas | critical | serious | moderate | minor):
+  Login            | claro  |  0 | c=0 s=0 m=0 n=0
+  Principal        | claro  |  0 | c=0 s=0 m=0 n=0
+  Histórico        | claro  |  0 | c=0 s=0 m=0 n=0
+  Intenções        | claro  |  1 | c=0 s=1 m=0 n=0
+  Rotinas          | claro  |  0 | c=0 s=0 m=0 n=0
+  Não encontrada   | claro  |  0 | c=0 s=0 m=0 n=0
+  Login            | escuro |  0 | c=0 s=0 m=0 n=0
+  Principal        | escuro |  0 | c=0 s=0 m=0 n=0
+  Histórico        | escuro |  0 | c=0 s=0 m=0 n=0
+  Intenções        | escuro |  1 | c=0 s=1 m=0 n=0
+  Rotinas          | escuro |  0 | c=0 s=0 m=0 n=0
+  Não encontrada   | escuro |  0 | c=0 s=0 m=0 n=0
+
+## Falhas por tela / tema / critério / severidade
+
+### Login — tema claro
+URL final: http://127.0.0.1:4173/entrar
+Passes axe (regras OK): 19; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Principal — tema claro
+URL final: http://127.0.0.1:4173/
+Passes axe (regras OK): 26; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Histórico — tema claro
+URL final: http://127.0.0.1:4173/historico
+Passes axe (regras OK): 26; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Intenções — tema claro
+URL final: http://127.0.0.1:4173/intencoes
+Passes axe (regras OK): 31; incompletos: 1
+Violações (1):
+  - id: scrollable-region-focusable
+    impacto: serious
+    critérios/tags: wcag2a, wcag211, wcag213
+    descrição: Ensure elements that have scrollable content are accessible by keyboard in Safari
+    ajuda: Scrollable region must have keyboard access
+    nós afetados (2):
+      nó 1: section[aria-label="Pedidos fora do escopo"] > .overflow-x-auto
+        Fix any of the following: Element should have focusable content Element should be focusable
+      nó 2: section[aria-label="Pedidos com baixa confiança"] > .overflow-x-auto
+        Fix any of the following: Element should have focusable content Element should be focusable
+
+### Rotinas — tema claro
+URL final: http://127.0.0.1:4173/rotinas
+Passes axe (regras OK): 30; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Não encontrada — tema claro
+URL final: http://127.0.0.1:4173/pagina-inexistente
+Passes axe (regras OK): 24; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Login — tema escuro
+URL final: http://127.0.0.1:4173/entrar
+Passes axe (regras OK): 19; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Principal — tema escuro
+URL final: http://127.0.0.1:4173/
+Passes axe (regras OK): 26; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Histórico — tema escuro
+URL final: http://127.0.0.1:4173/historico
+Passes axe (regras OK): 26; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Intenções — tema escuro
+URL final: http://127.0.0.1:4173/intencoes
+Passes axe (regras OK): 31; incompletos: 1
+Violações (1):
+  - id: scrollable-region-focusable
+    impacto: serious
+    critérios/tags: wcag2a, wcag211, wcag213
+    descrição: Ensure elements that have scrollable content are accessible by keyboard in Safari
+    ajuda: Scrollable region must have keyboard access
+    nós afetados (2):
+      nó 1: section[aria-label="Pedidos fora do escopo"] > .overflow-x-auto
+        Fix any of the following: Element should have focusable content Element should be focusable
+      nó 2: section[aria-label="Pedidos com baixa confiança"] > .overflow-x-auto
+        Fix any of the following: Element should have focusable content Element should be focusable
+
+### Rotinas — tema escuro
+URL final: http://127.0.0.1:4173/rotinas
+Passes axe (regras OK): 30; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+### Não encontrada — tema escuro
+URL final: http://127.0.0.1:4173/pagina-inexistente
+Passes axe (regras OK): 24; incompletos: 1
+Nenhuma violação WCAG 2.1 A/AA detectada pelo axe nesta combinação.
+
+## Verificação manual / teclado e foco (apoio automatizado)
+Checklist DoD: ordem de Tab, foco visível, Escape em diálogos. Abaixo, amostragem automatizada no tema claro (DOM order dos focáveis) e presença de regras :focus-visible no CSS carregado.
+
+### Login (/entrar)
+- Elementos focáveis visíveis: 1
+- Landmark main / role=main: sim
+- Heading h1: sim
+- Regra CSS :focus-visible detectada nas folhas: sim
+- Diálogos abertos no momento da captura: 0
+- Amostra da ordem de foco (DOM / Tab natural, até 12):
+  1. <button> Entrar com a Microsoft
+- Escape em diálogos: nenhum diálogo modal aberto no carregamento estático das telas auditadas; fluxo de Escape deve ser revalidado manualmente ao abrir Menu do perfil, barra lateral móvel ou formulário de rotina.
+
+### Principal (/)
+- Elementos focáveis visíveis: 19
+- Landmark main / role=main: não
+- Heading h1: sim
+- Regra CSS :focus-visible detectada nas folhas: sim
+- Diálogos abertos no momento da captura: 0
+- Amostra da ordem de foco (DOM / Tab natural, até 12):
+  1. <a> Nova conversa
+  2. <a> Página principal
+  3. <a> Histórico
+  4. <a> Intenções
+  5. <a> Rotinas
+  6. <a> Ver todas
+  7. <a> Status do Projeto X
+  8. <button> FSFernanda Silvafernanda@empresa.com.br
+  9. <button> Alternar barra lateral
+  10. <button> Recolher barra lateral
+  11. <button> Nova conversa
+  12. <button> Ver detalhes
+- Escape em diálogos: nenhum diálogo modal aberto no carregamento estático das telas auditadas; fluxo de Escape deve ser revalidado manualmente ao abrir Menu do perfil, barra lateral móvel ou formulário de rotina.
+
+### Histórico (/historico)
+- Elementos focáveis visíveis: 13
+- Landmark main / role=main: não
+- Heading h1: sim
+- Regra CSS :focus-visible detectada nas folhas: sim
+- Diálogos abertos no momento da captura: 0
+- Amostra da ordem de foco (DOM / Tab natural, até 12):
+  1. <a> Nova conversa
+  2. <a> Página principal
+  3. <a> Histórico
+  4. <a> Intenções
+  5. <a> Rotinas
+  6. <a> Ver todas
+  7. <a> Status do Projeto X
+  8. <button> FSFernanda Silvafernanda@empresa.com.br
+  9. <button> Alternar barra lateral
+  10. <button> Recolher barra lateral
+  11. <input> Buscar conversas
+  12. <a> Status do Projeto XHoje, 07:06 · 3 turnos
+- Escape em diálogos: nenhum diálogo modal aberto no carregamento estático das telas auditadas; fluxo de Escape deve ser revalidado manualmente ao abrir Menu do perfil, barra lateral móvel ou formulário de rotina.
+
+### Intenções (/intencoes)
+- Elementos focáveis visíveis: 12
+- Landmark main / role=main: não
+- Heading h1: sim
+- Regra CSS :focus-visible detectada nas folhas: sim
+- Diálogos abertos no momento da captura: 0
+- Amostra da ordem de foco (DOM / Tab natural, até 12):
+  1. <a> Nova conversa
+  2. <a> Página principal
+  3. <a> Histórico
+  4. <a> Intenções
+  5. <a> Rotinas
+  6. <a> Ver todas
+  7. <a> Status do Projeto X
+  8. <button> FSFernanda Silvafernanda@empresa.com.br
+  9. <button> Alternar barra lateral
+  10. <button> Recolher barra lateral
+  11. <select> Últimos 7 diasÚltimos 30 diasÚltimos 90 dias
+  12. <select> Todos os perfisDiretoriaLíder de projetoMembro de equipe
+- Escape em diálogos: nenhum diálogo modal aberto no carregamento estático das telas auditadas; fluxo de Escape deve ser revalidado manualmente ao abrir Menu do perfil, barra lateral móvel ou formulário de rotina.
+
+### Rotinas (/rotinas)
+- Elementos focáveis visíveis: 20
+- Landmark main / role=main: não
+- Heading h1: sim
+- Regra CSS :focus-visible detectada nas folhas: sim
+- Diálogos abertos no momento da captura: 0
+- Amostra da ordem de foco (DOM / Tab natural, até 12):
+  1. <a> Nova conversa
+  2. <a> Página principal
+  3. <a> Histórico
+  4. <a> Intenções
+  5. <a> Rotinas
+  6. <a> Ver todas
+  7. <a> Status do Projeto X
+  8. <button> FSFernanda Silvafernanda@empresa.com.br
+  9. <button> Alternar barra lateral
+  10. <button> Recolher barra lateral
+  11. <button> Nova rotina
+  12. <button> Todas1
+- Escape em diálogos: nenhum diálogo modal aberto no carregamento estático das telas auditadas; fluxo de Escape deve ser revalidado manualmente ao abrir Menu do perfil, barra lateral móvel ou formulário de rotina.
+
+### Não encontrada (/pagina-inexistente)
+- Elementos focáveis visíveis: 11
+- Landmark main / role=main: não
+- Heading h1: não
+- Regra CSS :focus-visible detectada nas folhas: sim
+- Diálogos abertos no momento da captura: 0
+- Amostra da ordem de foco (DOM / Tab natural, até 12):
+  1. <a> Nova conversa
+  2. <a> Página principal
+  3. <a> Histórico
+  4. <a> Intenções
+  5. <a> Rotinas
+  6. <a> Ver todas
+  7. <a> Status do Projeto X
+  8. <button> FSFernanda Silvafernanda@empresa.com.br
+  9. <button> Alternar barra lateral
+  10. <button> Recolher barra lateral
+  11. <a> Voltar para a página principal
+- Escape em diálogos: nenhum diálogo modal aberto no carregamento estático das telas auditadas; fluxo de Escape deve ser revalidado manualmente ao abrir Menu do perfil, barra lateral móvel ou formulário de rotina.
+
+## Observações e limitações
+- API mockada no Playwright (page.route); não exercita o middleware real nem o MSW do navegador.
+- axe não substitui revisão humana completa (contraste contextual, leitores de tela, gestos).
+- Telas com gráficos (Intenções) podem gerar incompletos axe em nós SVG/canvas.
+- Script: src/web/scripts/auditoria-a11y.mjs (npm run audit:a11y).
+
+EXIT_CODE: 0

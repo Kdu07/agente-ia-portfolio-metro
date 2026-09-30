@@ -176,10 +176,19 @@ O frontend, a partir de `src/web/`:
 
 ```powershell
 npm install
-npm run dev     # interface em http://localhost:5173
-npm run test    # suíte de testes
+npm run dev            # interface em http://localhost:5173
+npm run test           # suíte de testes
 npm run test:coverage  # suíte com relatório em src/web/coverage/
 ```
+
+Para auditar a acessibilidade das telas (WCAG 2.1 A/AA):
+
+```powershell
+npx playwright install chromium
+npm run audit:a11y
+```
+
+> **Nota:** O comando é informativo e retorna sucesso mesmo se violações forem encontradas. Uma verificação bloqueante será implementada futuramente após a correção de pendências estruturais de componentes.
 
 ## Estado atual
 

@@ -102,6 +102,7 @@
   - [9.3 Modelo de Recomendação](#93-modelo-de-recomendação)
   - [9.4 Desenvolvimento de Features](#94-desenvolvimento-de-features)
   - [9.5 Testes Unitários e de Integração](#95-testes-unitários-e-de-integração)
+  - [9.6 Funcionalidades Implementadas na Prova de Conceito](#96-funcionalidades-implementadas-na-prova-de-conceito)
 - [10. Planejamento e Execução de Testes](#10-planejamento-e-execução-de-testes)
   - [10.1 Testes Funcionais](#101-testes-funcionais)
   - [10.2 Testes de RNFs](#102-testes-de-rnfs)
@@ -115,6 +116,9 @@
   - [11.2 Implantação do Protótipo para Uso pela Equipe de Desenvolvimento](#112-implantação-do-protótipo-para-uso-pela-equipe-de-desenvolvimento)
   - [11.3 Monitoramento e Manutenção](#113-monitoramento-e-manutenção)
   - [11.4 Retorno a uma Versão Anterior](#114-retorno-a-uma-versão-anterior)
+- [12. Plano de Adoção e Mobilização do Ecossistema](#12-plano-de-adoção-e-mobilização-do-ecossistema)
+  - [12.1 Mapa de Adoção e Aculturamento Organizacional](#121-mapa-de-adoção-e-aculturamento-organizacional)
+  - [12.2 Mecanismos de Incentivo e Engajamento](#122-mecanismos-de-incentivo-e-engajamento)
 - [Referências](#referências)
 
 # 1. Introdução
@@ -8034,6 +8038,7 @@ individualmente ou em sequência:
 | `npm run typecheck` | Verificação de tipos do código da aplicação e dos arquivos de build |
 | `npm run test` | Execução das suítes automatizadas |
 | `npm run build` | Construção do pacote de produção, precedida da verificação de tipos |
+| `npm run audit:a11y` | Auditoria WCAG 2.1 A/AA com axe-core nas seis telas, temas claro e escuro (9.2.18) |
 
 As suítes cobrem dezessete casos distribuídos em três arquivos:
 
@@ -8189,6 +8194,67 @@ elas produz duas leituras erradas em direções opostas: a de que a solução j�
 consulta o portfólio real, e a de que a interface não funciona quando o avaliador
 percebe que o dado é fixo.
 
+### 9.2.18 Auditoria automatizada de acessibilidade (WCAG 2.1 A/AA)
+
+A interface já tratava contraste (9.2.5), tabela acessível nos gráficos e
+informação que não depende só da cor, mas até a Sprint 5 não havia passado por
+auditoria completa com ferramenta automatizada. Esta subseção registra a
+auditoria da issue `#468`: escopo, ferramenta, resultado por tela e tema, e o
+que ficou para correção (`#469`).
+
+**Ferramenta e execução.** A verificação usa **axe-core** via
+`@axe-core/playwright`, com as tags `wcag2a`, `wcag2aa`, `wcag21a` e
+`wcag21aa`. O script `src/web/scripts/auditoria-a11y.mjs` sobe o *build* em
+`vite preview`, autentica as telas protegidas mockando a API com
+`page.route` (usuário com `ver_intencoes` e `gerir_rotinas`) e percorre as
+seis rotas nos temas claro e escuro (`localStorage` `prata:tema`). O comando
+é `npm run audit:a11y`, a partir de `src/web`.
+
+**Escopo.** Doze combinações (seis telas × dois temas): Login (`/entrar`),
+Principal (`/`), Histórico (`/historico`), Intenções (`/intencoes`), Rotinas
+(`/rotinas`) e Não encontrada (`/pagina-inexistente`).
+
+**Resultado do axe (28/09/2026).** Dez combinações sem violação A/AA. Duas
+com falha, ambas na tela Intenções:
+
+| Tela | Tema claro | Tema escuro |
+| --- | --- | --- |
+| Login | 0 | 0 |
+| Principal | 0 | 0 |
+| Histórico | 0 | 0 |
+| Intenções | 1 *serious* | 1 *serious* |
+| Rotinas | 0 | 0 |
+| Não encontrada | 0 | 0 |
+
+A falha única é `scrollable-region-focusable` (impacto *serious*; critérios
+WCAG **2.1.1** / **2.1.3**): nas seções “Pedidos fora do escopo” e “Pedidos
+com baixa confiança”, o contêiner `.overflow-x-auto` é rolável e não possui
+conteúdo focável nem recebe foco por teclado. A correção cabe à `#469`
+(tornar a região focável ou garantir foco interno).
+
+**Teclado e foco.** Amostragem na ordem natural de Tab e nas folhas CSS
+carregadas:
+
+- regras `:focus-visible` presentes em todas as telas amostradas;
+- na moldura autenticada, a barra lateral precede o conteúdo da página;
+- Login concentra um único focável (botão Microsoft);
+- nenhum diálogo modal aberto no estado inicial das telas; Escape em menu do
+  perfil, barra móvel e formulário de rotina deve ser revalidado ao abrir
+  esses componentes.
+
+Achados manuais além do axe (não bloqueiam o critério A/AA detectado pela
+ferramenta, mas entram no backlog de melhoria):
+
+- a página Não encontrada renderiza o título sem `<h1>`
+  (`tituloDaPagina=false` no cabeçalho);
+- as telas autenticadas não expõem landmark `<main>` / `role="main"`; a
+  estrutura depende de *headings* e da barra lateral.
+
+**Limitações.** O axe não substitui revisão com leitor de tela nem contraste
+contextual ponto a ponto. A API foi mockada no Playwright; o percurso não
+exercita o middleware real. Gráficos em SVG podem gerar itens *incomplete* do
+axe sem constituir falha registrada acima.
+
 ## 9.3 Modelo de Recomendação
 
 [Preencher]
@@ -8207,13 +8273,15 @@ de linguagem.
 | Camada de vetorização e porta do banco vetorial | #284 | `rag/embeddings.py`, `rag/vetorial/` | F12 | Implementada e testada |
 | Provisionamento do índice e ingestão do corpus do Drive | #285 | `rag/vetorial/provisionar.py`, `rag/ingestao/`, `rag/tabelas.py` | F12, F20 | Implementada e testada; primeira carga completa no Pinecone não registrada (9.4.3.7) |
 | Recuperação, geração com citações e bancada do RAG | #291 | `rag/recuperacao.py`, `rag/geracao.py`, `rag/linguagem/`, `rag/fluxo.py`, `rag/bancada.py` | F12, F13; F51, F52 e F54 na parte documental | Implementada e testada; bancada medida (9.4.6) |
-| Ligação do RAG ao orquestrador e ao `/chat` | — | `executor/base.py`, `executor/fabrica.py`, `rag/executor.py`, seleção em `api/deps.py` | — | Implementada; o caminho fica ativo com `EXECUTOR=proprio` |
+| Ligação do RAG ao orquestrador e ao `/chat` | #350 | `rag/executor.py`, `executor/fabrica.py`, seleção por configuração em `api/deps.py` | F12, F13 | Implementada e testada; ativa quando `EXECUTOR=proprio` |
 
-A última linha delimita o alcance do que esta seção afirma. O fluxo de RAG
-responde pelo `/chat`, atrás do orquestrador e das guardas, quando
-`EXECUTOR=proprio`; com o valor padrão `copilot`, a mensagem segue para o
-cliente do Direct Line, que continua sendo um esqueleto. A linha de comando e a
-bancada permanecem como caminho de investigação e de medição (9.4.7).
+A última linha delimita o caminho entregue pela prova de conceito. O fluxo de
+RAG pode ser exercitado isoladamente por linha de comando e pela bancada, mas
+também implementa a porta `Executor` usada pelo orquestrador. Com
+`EXECUTOR=proprio`, uma mensagem enviada pela interface percorre o `/chat`, as
+guardas, a classificação de intenção e o executor RAG antes de voltar com as
+fontes validadas. Com o valor padrão `copilot`, a mensagem segue para o cliente
+do Direct Line, que continua sendo um esqueleto.
 
 ### 9.4.1 Enquadramento: por que um executor próprio
 
@@ -8969,14 +9037,19 @@ que a afirmação contrária não se sustente. A condição declarada continua s
 (representações vetoriais no provedor do índice) na matriz vigente
 ([GestaoProjeto.md](GestaoProjeto.md), seção 4).
 
-**O que falta** depois de o RAG passar a responder pelo `/chat`:
+**Estado da integração e limites remanescentes:**
 
-| Pendência | Situação no código | Efeito |
+| Elemento | Situação no código | Efeito |
 |---|---|---|
+| Porta `Executor` e ligação ao `/chat` | Implementadas em `rag/executor.py`, `executor/fabrica.py` e `api/deps.py` | O RAG é alcançável pelo chat quando `EXECUTOR=proprio` |
+| Seleção do executor | `EXECUTOR` é lida por `app/config.py`; `copilot` e `proprio` usam a mesma porta | O caminho muda por configuração, sem alteração do orquestrador |
+| Guardas de entrada e saída | Implementadas antes e depois do executor; Prompt Shields complementa as regras determinísticas | Texto gerado só é entregue após a guarda de saída; ausência ou indisponibilidade seguem as políticas documentadas em 9.1.2.2 |
+| Prompt Shields na triagem de ingestão | O serviço já é chamado na entrada e na saída, mas `triagem.triar` é síncrona e roda fora do caminho da requisição | A triagem de ingestão usa só as regras determinísticas |
+| Escopo de projetos | `UsuarioAutenticado.projetos` é preenchido na resolução da sessão e convertido em `Escopo` pelo executor | O filtro de perfil e projeto chega à busca vetorial antes da recuperação |
+| Atualização do corpus | O webhook do Drive publica o evento e o consumidor do worker aciona a ingestão incremental | A atualização deixa de depender apenas do comando manual, mas requer conta, canal e broker configurados |
 | Ingestão periódica | Não há rotina agendada para ela no `worker.py` | A ingestão roda sob demanda, pelo comando de 9.4.7, e por evento do WH-01 (`webhooks/tratadores.py`) |
-| Prompt Shields na triagem | O serviço já é chamado na entrada e na saída, mas `triagem.triar` é síncrona e roda fora do caminho da requisição | A triagem de ingestão usa só as regras determinísticas |
-| Tabela do pgvector | Não migrada; a imagem do banco não tem a extensão `vector` | A reserva existe no código e nos testes, e não no banco |
-| Base estruturada sintética (onda C do plano) | Não iniciada | Transações e agregações não têm destino no executor próprio; o RAG responde só por documentos |
+| Tabela do pgvector | Não migrada; a imagem do banco não tem a extensão `vector` | O adaptador permanece uma reserva testada em isolamento, não disponível no Compose atual |
+| Base estruturada | Consultas de projetos, riscos, marcos e indicadores existem em `api/routes/portfolio.py` e `persistence/repository_portfolio.py`; escritas transacionais do RF05 não existem | Consultas estruturadas são possíveis, mas prévia, confirmação e alteração de dados continuam fora do executor próprio |
 
 O que este caminho não resolve, e por isso não encerra nada, está em
 [Arquitetura.md](Arquitetura.md), seção 13.4: não valida a integração Direct
@@ -9201,8 +9274,64 @@ foram pulados por falta de PostgreSQL e das chaves do Pinecone e do Gemini
 **Limites.** A suíte unitária não comprova o comportamento dos serviços reais,
 que é o papel do grupo IT-RAG, e este ainda não tem execução registrada com os
 serviços presentes. A qualidade da recuperação e da resposta não é objeto de
-teste, e sim da bancada de 9.4.6. E nenhum caso exercita o
-RAG pelo `/chat`, porque essa ligação não existe no código (9.4.8).
+teste, e sim da bancada de 9.4.6. A ligação do RAG ao `/chat` existe pela porta
+`Executor`; a evidência unitária desta seção não substitui o teste de integração
+desse caminho com PostgreSQL, Pinecone e Gemini reais.
+
+## 9.6 Funcionalidades Implementadas na Prova de Conceito
+
+Esta seção apresenta, em um único ponto, o que a prova de conceito entrega no
+estado verificado em 30/09/2026, a partir da `develop` no commit `df9f919`. A
+classificação não deriva apenas da existência de uma intenção no catálogo ou de
+uma tela: exige um caminho observável no código e uma evidência executável. Os
+resultados detalhados permanecem na matriz da seção 10.7; aqui eles são
+traduzidos para a visão funcional que uma pessoa usuária ou avaliadora encontra
+na solução.
+
+São usados quatro estados:
+
+- **completa:** o comportamento principal do requisito existe na interface ou
+  na API e seus casos funcionais estão aprovados;
+- **parcial:** existe um fluxo utilizável, mas pelo menos um critério do
+  requisito continua sem implementação ou com defeito conhecido;
+- **não implementada:** o requisito pertence ao MVP, porém ainda não existe um
+  fluxo de usuário que entregue seu resultado principal;
+- **fora do MVP:** o requisito foi classificado como desejável na priorização e
+  não é apresentado como entrega da prova de conceito.
+
+Essa distinção evita dois falsos positivos. Uma rota isolada não torna um
+requisito completo se a jornada não chega a ela, e um teste marcado como
+`xfail` documenta uma lacuna, não uma funcionalidade aprovada.
+
+### 9.6.1 Situação por requisito funcional
+
+| RF | Situação | Funcionalidade observável | Tela ou rota que entrega | Evidência de implementação e teste | Limite atual |
+|---|---|---|---|---|---|
+| **RF01 — acesso, permissões e perfil** | **Completa** | Entrada com Microsoft, resolução da sessão, perfil seguro e escopo de projetos antes do acesso aos recursos protegidos | Página `Login`; `GET /auth/login`, `GET /auth/callback`, `GET /auth/eu` e `POST /auth/logout` | `app/api/routes/auth.py`, `app/api/deps.py`, `src/web/src/rotas.tsx` e `tests/funcionais/test_rf01_acesso.py` | A aprovação funcional local não substitui a validação das permissões no *tenant* definitivo do parceiro |
+| **RF02 — interação por texto e voz** | **Completa** | Envio de texto pelo chat e entrada por voz, tanto pelo token de reconhecimento no navegador quanto pelo processamento assíncrono de arquivo de áudio | Página `Principal`; `POST /chat`, `GET /voz/token`, `POST /voz/audios` e `GET /voz/audios/{audio_id}` | `app/api/routes/chat.py`, `app/api/routes/voz.py`, `src/web/src/hooks/useConversa.ts`, `src/web/src/hooks/useMicrofone.ts` e `tests/funcionais/test_rf02_canais.py` | Azure Speech depende de credencial e conectividade no ambiente em que o fluxo é executado |
+| **RF03 — identificação e controle de intenções** | **Parcial** | Classificação pelo catálogo, aplicação do limiar de confiança, recusa fora de escopo e encaminhamento da intenção aprovada ao executor | Página `Principal`; `POST /chat` | `app/pipeline/intencao/`, `app/pipeline/orquestrador.py` e `tests/funcionais/test_rf03_intencoes.py` | O pipeline ainda não solicita toda entidade obrigatória ausente antes da execução e mantém uma recusa conservadora para projeto fora do escopo |
+| **RF04 — consulta e análise do portfólio** | **Parcial** | Consultas estruturadas de projetos, riscos, marcos e indicadores e consultas documentais pelo executor RAG, respeitando o escopo resolvido do usuário | Chat na página `Principal`; rotas `GET /portfolio/projetos`, `GET /portfolio/projetos/{codigo}` e seus sub-recursos | `app/api/routes/portfolio.py`, `app/rag/executor.py`, `app/executor/fabrica.py` e `tests/funcionais/test_rf04_consulta.py` | A rota de detalhe ainda diferencia projeto alheio (`403`) de projeto inexistente (`404`), permitindo inferência de existência |
+| **RF05 — criação e atualização de projetos** | **Não implementada** | As intenções transacionais são reconhecidas, mas a prova de conceito não apresenta prévia, confirmação e escrita efetiva no portfólio | Não há tela ou rota de transação disponível ao usuário; o chat devolve orientação quando o executor próprio não pode efetivar a alteração | `app/pipeline/intencao/catalogo.py`, `app/rag/executor.py` e os seis casos estritos em `tests/funcionais/test_rf05_transacoes.py` | Permanecem ausentes confirmação, autorização de escrita, atomicidade e trilha da alteração; os casos continuam `xfail` |
+| **RF06 — identificação e alerta de pendências** | **Parcial** | Cadastro de rotinas e consulta de avisos existem como infraestrutura para ações proativas | Página `Rotinas`; rotas `/rotinas` e `/avisos` | `app/api/routes/rotinas.py`, `app/api/routes/avisos.py`, `app/avisos/` e `tests/funcionais/test_rf06_pendencias.py` | Não existe a sonda específica que identifica pendências e gera o aviso dirigido; contato por Teams ou correio está fora do MVP |
+| **RF07 — análise comparativa do portfólio** | **Fora do MVP** | Não é oferecida como funcionalidade da prova de conceito | Nenhuma tela ou rota dedicada | Decisão de escopo da seção 2.7 e `tests/funcionais/test_rf07_analise.py` | Os três casos permanecem `skip` por decisão explícita de priorização |
+| **RF08 — relatórios e informações gerenciais** | **Fora do MVP** | O catálogo consegue encaminhar tipos de material ao executor, mas não há geração de relatório apresentada como entrega | Nenhuma tela de geração; o encaminhamento básico ocorre por `POST /chat` | `app/pipeline/intencao/catalogo.py` e `tests/funcionais/test_rf08_relatorios.py` | Adequação por perfil, suficiência dos dados e filtragem das fontes não compõem o MVP atual |
+| **RF09 — proteção da interação** | **Completa no escopo funcional** | Guardas de injeção, abuso e saída são aplicadas em ordem antes da entrega da resposta, com bloqueio e recusa apropriados | Transparente ao usuário em `POST /chat`, áudio e execução de rotina; a página `Principal` apresenta o desfecho sem revelar a barreira | `app/pipeline/guardas/`, `app/pipeline/orquestrador.py` e `tests/funcionais/test_rf09_guardas.py` | A eficácia sistêmica do RNF06 permanece abaixo da meta para injeção e abuso, conforme 10.2.3.6; isso não invalida a aprovação do contrato funcional |
+| **RF10 — registro e análise das intenções** | **Completa** | Uma interação é registrada por solicitação e o painel permite analisar volume, desfechos, segurança, catálogo e latência | Página `Intenções`; oito rotas sob `/intencoes` | `app/api/routes/intencoes.py`, `app/analytics/`, `src/web/src/hooks/usePainelIntencoes.ts` e `tests/funcionais/test_rf10_registro.py` | Provedores externos reais e o ambiente implantado possuem evidências próprias e não são inferidos apenas pela bateria funcional |
+| **RF11 — rotinas agendadas** | **Completa no escopo funcional** | Criar, validar, editar, pausar, excluir e executar rotinas, com agenda persistida e histórico de execuções | Página `Rotinas`; rotas `GET/POST/PUT/DELETE /rotinas`, `POST /rotinas/{id}/executar` e `GET /rotinas/{id}/execucoes` | `app/api/routes/rotinas.py`, `app/rotinas/`, `app/worker.py`, `src/web/src/paginas/Rotinas/` e `tests/funcionais/test_rf11_rotinas.py` | O disparo concorrente com tráfego de chat é uma evidência não funcional ainda pendente em `TNF-DES-05`, não uma operação simulada da tela |
+| **RF12 — histórico de conversas** | **Completa** | Listagem, retomada, detalhamento e exclusão do histórico persistido do usuário | Página `Histórico`; `GET /conversas`, `GET /conversas/{conversa_id}` e `DELETE /conversas/{conversa_id}` | `app/api/routes/conversas.py`, `src/web/src/paginas/Historico/`, `src/web/src/hooks/useConversas.ts` e `tests/funcionais/test_rf12_historico.py` | O usuário só acessa as próprias conversas; a validação implantada é tratada separadamente dos testes funcionais |
+
+### 9.6.2 Leitura consolidada da prova de conceito
+
+No recorte funcional, a prova de conceito entrega integralmente **RF01, RF02,
+RF09, RF10, RF11 e RF12**. **RF03, RF04 e RF06** possuem partes utilizáveis,
+mas mantêm lacunas explícitas. **RF05** pertence ao MVP e continua não
+implementado como jornada transacional. **RF07 e RF08** permanecem fora do MVP,
+conforme a priorização registrada na seção 2.7.
+
+Essa leitura deve ser atualizada junto da matriz 10.7 sempre que um `xfail`
+mudar de estado. Ela descreve funcionalidades do produto; requisitos não
+funcionais, integrações com serviços comerciais e resultados de desempenho
+continuam avaliados nas seções 10.2, 10.4 e 10.5.
 
 # 10. Planejamento e Execução de Testes
 
@@ -12461,6 +12590,144 @@ um destes casos:
 No `prd`, o retorno vem antes do diagnóstico, porque o ambiente é o das
 demonstrações. A correção segue depois pelo fluxo normal: branch `fix/` a
 partir da `develop` e merge request.
+
+# 12. Plano de Adoção e Mobilização do Ecossistema
+
+Um agente de IA só gera valor se as pessoas o usarem na rotina da gestão do portfólio, e as barreiras de entrada em ambiente corporativo são conhecidas: desconfiança no conteúdo gerado, receio quanto à confidencialidade, atrito de uso e resistência a trocar um hábito que já funciona. Este capítulo descreve como a solução será introduzida no Metrô e o que sustenta o uso depois da introdução: o mapa de adoção e aculturamento (12.1) e os mecanismos de incentivo e engajamento (12.2).
+
+O plano parte da prova de conceito como ela é: consulta ao portfólio em linguagem natural, com a fonte citada, rotinas agendadas e avisos gerados no middleware a partir dos eventos do portfólio, sem escrita no portfólio pela conversa. Parte também da condição para usar dado real: o ambiente homologado do parceiro (risco R02) e o reprovisionamento do Content Safety e do Speech no tenant do Metrô ([Arquitetura.md](Arquitetura.md), seção 12.2). Por isso a introdução é feita em fases, e nenhuma pessoa usa o agente com dado real antes que essa condição esteja cumprida.
+
+| Fase | Quando | O que acontece | Quem decide a passagem para a fase seguinte |
+|---|---|---|---|
+| Preparação | Antes do piloto | Homologação do uso com dado real, curadoria inicial do corpus e das perguntas sugeridas e escolha do subportfólio piloto | TI do Metrô, com os setores técnicos e de compliance |
+| Piloto | Quatro semanas | Um dos seis subportfólios, com seus líderes, as equipes, um diretor patrocinador e o PMO | PMO Corporativo, ao fim da quarta semana |
+| Expansão | Segundo e terceiro meses | Os demais subportfólios, um por vez, e depois os membros das equipes | PMO Corporativo, a cada subportfólio |
+| Sustentação | Contínuo | Curadoria, novos usuários e atualização do corpus a cada revisão dos normativos | PMO Corporativo, com a TI responsável pela sustentação |
+
+## 12.1 Mapa de Adoção e Aculturamento Organizacional
+
+### 12.1.1 Público-alvo principal
+
+O público é definido pelos perfis e permissões que a solução já implementa ([Arquitetura.md](Arquitetura.md), seção 6), e não por categorias genéricas: o perfil determina o que cada pessoa vê e como o agente responde, e a permissão determina se ela acessa o painel de intenções e a gestão de rotinas. Cada público corresponde a uma persona da seção 2.4. O dimensionamento segue o da análise de viabilidade, que conta 90 usuários ativos: os responsáveis pelas 86 frentes do portfólio e 4 integrantes do PMO (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)).
+
+| Público | Perfil e permissões na solução | Quantos | O que faz com o agente | Papel na adoção |
+|---|---|---|---|---|
+| Líderes de projeto e de programa (Fernanda Medina, 2.4.2) | `LIDER_PROJETO`, com `GERIR_ROTINAS` | 86, um por frente do portfólio | Consulta avanço, marcos, riscos, decisões pendentes e normas dos projetos sob sua responsabilidade; agenda o relatório do fechamento mensal; recebe o aviso de marco atrasado, depois que a tela for ligada às rotas de avisos (12.1.3) | Público prioritário: concentra o uso e o ganho de tempo, e é o segmento em que a proposta de valor se apoia (2.8.2) |
+| Analistas do PMO Corporativo, na atuação transversal do gestor de portfólio (2.4) | Perfil de visão ampla, com `VER_INTENCOES` e `GERIR_ROTINAS` | 4 | Consolida o portfólio, varre pendências, lê o painel de intenções e faz a curadoria do catálogo e do corpus | Dono da adoção: conduz o onboarding, acompanha o uso e decide o que muda |
+| Diretoria e assessores (Roberto Nogueira, 2.4.1) | `DIRETORIA` | Fora da base de 90 usuários | Consulta a visão consolidada e as criticidades e recebe o relatório recorrente na aplicação | Patrocinador: o uso visível pela diretoria legitima a mudança para os líderes |
+| Membros das equipes de projeto (Carlos Mendes, 2.4.3) | `MEMBRO_EQUIPE` | Fora da base de 90 usuários | Consulta o próprio projeto e as normas e recebe os avisos do projeto em que atua | Público de expansão: entra depois que os líderes do seu projeto já usam o agente |
+
+A Diretoria e os membros das equipes ficam fora da base de 90 usuários porque a premissa de volume da análise de viabilidade conta apenas os responsáveis pelas frentes e o PMO, o que a torna conservadora quanto ao custo de operação. O agente é interno: fornecedores, outras áreas do Metrô e o público externo não fazem parte do público, e a extensão a outros processos da companhia está fora do escopo (seção 7.1.2 do [GestaoProjeto.md](GestaoProjeto.md)).
+
+### 12.1.2 Barreiras culturais e técnicas esperadas
+
+As barreiras foram levantadas a partir das personas (2.4), da matriz de riscos (2.6) e do teste de usabilidade (10.3.12). Para cada uma, a tabela indica o público mais exposto, a evidência que o projeto já tem e o que a própria solução faz a respeito. O que depende de ação das pessoas, e não do produto, está em 12.1.3.
+
+| # | Barreira | Tipo | Mais expostos | Evidência no projeto | Resposta da solução |
+|---|---|---|---|---|---|
+| B1 | Desconfiança na resposta gerada por IA: o medo de uma resposta inventada chegar a uma decisão | Cultural | Diretoria e PMO | É o principal risco de abandono apontado em 2.8.4 e a consequência do risco R04 | Fonte citada em cada resposta factual e abstenção quando o corpus não sustenta a resposta; na bancada do RAG, abstenção correta de 1,00 e nenhuma resposta sem citação válida (9.4.6) |
+| B2 | Receio quanto à confidencialidade: não saber para onde vai o que se pergunta | Cultural | PMO e Diretoria | Perímetro declarado em 3.3.1.1, com as exposições registradas como riscos R12, R19 e R20 | Guardas de entrada e de saída, filtro de permissão na consulta e registro de cada interação; com dado real, os serviços passam ao tenant do Metrô antes do piloto |
+| B3 | Receio de perder o controle da informação ou o próprio papel: "o agente decide", "o agente substitui o PMO" | Cultural | PMO | O escopo exclui a tomada autônoma de decisões (seção 1) | O agente consulta, cita e recusa, mas não altera o portfólio pela conversa nem decide; a curadoria do catálogo e do corpus fica com o PMO |
+| B4 | Hábito: a planilha, o SharePoint e a consulta direta ao PMO já funcionam | Cultural | Líderes e membros | O agente atual só responde a fluxos pré-configurados (2.2.3), o que reforçou o hábito de buscar a informação por conta própria | Perguntas sugeridas no primeiro acesso, todas com resposta no corpus, e aviso de marco atrasado ao abrir a conversa, que mostra valor antes de qualquer pergunta, depois que a tela for ligada às rotas de avisos (12.1.3) |
+| B5 | Não saber o que perguntar nem onde estão as funções | Técnica | Líderes | Sucesso de 62,5% na criação de rotina, de 75% na exploração das páginas e de 75% na nova conversa (10.3.12.6) | Correções UX01 a UX05, com a agenda de rotina em linguagem comum e a barra lateral com rótulos (10.3.12.9) |
+| B6 | Atrito no acesso corporativo | Técnica | Todos | Login com 87,5% de sucesso e tempo entre 11,7 s e 114 s (10.3.12.4 e 10.3.12.6) | Entrada única pelo Entra ID, com a orientação sobre a conta corporativa na tela de entrada (UX01) |
+| B7 | Recusa lida como defeito: "o agente não sabe nada" | Cultural e técnica | Membros e líderes | Pedidos fora do catálogo ou do perfil são recusados por desenho (RF01 e RF03) | Recusa orientada, que explica o limite e sugere o que perguntar; as recusas que se repetem aparecem no painel de intenções, para o PMO decidir se viram curadoria |
+| B8 | Expectativa de atualizar o portfólio pela conversa | Técnica | Líderes | A prova de conceito não escreve no portfólio | O pedido de alteração recebe a orientação de consultar, e a atualização continua na fonte, de onde chega ao agente pelo webhook do portfólio (9.1.2.7) |
+| B9 | Voz no ambiente de trabalho: ruído, jargão e constrangimento de falar em voz alta | Técnica e cultural | Líderes em campo | Risco R03, de baixa acurácia no jargão do Metrô | A voz é opcional e o texto está sempre disponível; o texto transcrito aparece no campo e só é enviado quando a pessoa confirma (9.1.2.7) |
+
+As barreiras culturais pesam mais que as técnicas. As técnicas já têm resposta no produto e foram medidas; as culturais dependem de confiança, que se constrói com uso bem-sucedido e com transparência sobre o que o agente não faz, e é para elas que as ações de 12.1.3 foram desenhadas.
+
+### 12.1.3 Ações de onboarding e educação
+
+A solução educa no próprio uso, sem manual:
+
+- **Perguntas sugeridas.** A conversa vazia oferece perguntas que correspondem a intenções reais do catálogo e que têm resposta no corpus, de modo que o primeiro contato termina numa resposta útil, e não numa recusa.
+- **Fonte citada.** Cada resposta factual mostra de onde veio, e o usuário aprende onde a informação está e como conferi-la.
+- **Recusa orientada.** Quando o pedido está fora do catálogo ou do perfil, a resposta explica o limite em linguagem comum, sem revelar dado restrito, e ensina o escopo pelo uso.
+- **Aviso de marco atrasado.** Ao abrir uma conversa nova, o líder vê o marco atrasado dos seus projetos antes de perguntar qualquer coisa. Na prova de conceito, esse cartão é uma demonstração visual: o conteúdo está fixo no frontend e ainda não vem das rotas de avisos do middleware (`GET /avisos`), que já geram avisos por adesão a partir dos eventos do portfólio (9.1.2.7.2). A integração da tela com essas rotas é uma ação da preparação.
+- **Agenda em linguagem comum.** A rotina é criada por frequência, horário e resumo em prosa antes de salvar, sem expressão cron.
+- **Histórico e retomada.** Quem interrompe uma consulta retoma de onde parou.
+
+As ações organizacionais completam o que o produto faz. Cada uma tem momento e responsável:
+
+| Fase e momento | Ação | Responsável | Público |
+|---|---|---|---|
+| Preparação | Homologar o uso com dado real: reprovisionar o Content Safety e o Speech no tenant do Metrô, ligar o corpus aos documentos do subportfólio piloto e verificar o perímetro de 3.3.1.1 | TI do Metrô, com os setores técnicos e de compliance | Condição para todos |
+| Preparação | Revisar com o PMO os documentos indexados e trocar as perguntas sugeridas por perguntas reais do subportfólio piloto | PMO Corporativo, com a TI responsável pela sustentação | PMO |
+| Preparação | Escolher o subportfólio piloto e o diretor patrocinador | PMO Corporativo | Diretoria |
+| Preparação | Ligar o aviso de marco da tela inicial às rotas de avisos do middleware e cadastrar a adesão dos líderes do subportfólio piloto aos eventos de marco dos seus projetos | TI responsável pela sustentação | Líderes |
+| Piloto, semana 1 | Sessão de lançamento de 30 minutos no subportfólio: três perguntas reais com a fonte aberta na tela e uma recusa demonstrada de propósito, para mostrar também o que o agente não faz | PMO, com o líder do subportfólio | Líderes e membros |
+| Piloto, semana 1 | Guia de uma página: o que o agente faz e o que não faz, perguntas por perfil e para onde vai o que se pergunta | PMO | Todos |
+| Piloto, semana 2 | Configurar com cada líder a primeira rotina, o relatório do fechamento mensal | PMO | Líderes |
+| Piloto, semana 2 | Entregar ao diretor patrocinador o relatório recorrente na aplicação, com 15 minutos de apresentação | PMO | Diretoria |
+| Piloto, semanas 1 a 4 | Plantão de dúvidas de 30 minutos, a cada quinze dias | PMO, com a TI responsável pela sustentação | Todos |
+| Piloto, a cada quinze dias | Ler o painel de intenções: as recusas e as perguntas fora do escopo que se repetem viram item do guia ou pedido de curadoria | PMO | PMO |
+| Piloto, semana 4 | Reaplicar o roteiro de usabilidade com usuários do subportfólio e comparar com o SUS de 71,9 da rodada de setembro de 2026 (10.3.12.5) | PMO, com a TI responsável pela sustentação | Líderes e membros |
+| Expansão, meses 2 e 3 | Repetir a sessão de lançamento em cada subportfólio, com um líder do piloto apresentando o próprio uso | PMO, com um líder do piloto | Líderes e membros |
+| Expansão, meses 2 e 3 | Incluir os membros de cada projeto depois que o líder já usa o agente | Líderes de projeto | Membros |
+| Sustentação, contínuo | Incluir o agente no onboarding de novos líderes e membros | PMO | Novos usuários |
+| Sustentação, a cada revisão do NOR-00-223 ou dos modelos de documento | Atualizar o corpus e as perguntas sugeridas | PMO, com a TI responsável pela sustentação | Todos |
+
+As ações usam o que a solução já tem e o que o PMO já faz, e nenhuma exige ferramenta nova. Duas escolhas merecem registro. A recusa demonstrada na sessão de lançamento é deliberada: quem vê o agente dizer que não sabe passa a confiar mais no que ele afirma, o que ataca a barreira B1 por onde ela nasce. E a entrada dos membros das equipes só depois dos líderes segue a hierarquia do próprio projeto: o membro adota o que o líder já usa, e não o contrário.
+
+## 12.2 Mecanismos de Incentivo e Engajamento
+
+A adoção contínua depende do que cada pessoa ganha ao mudar a forma de trabalhar. As três dimensões de incentivo analisadas aqui, utilidade, governança e comunidade, aplicam-se ao projeto, com uma exceção registrada em 12.2.3. Os indicadores de 12.2.4 fecham o ciclo: mostram ao PMO se os incentivos estão funcionando e sustentam a decisão de expandir, tomada ao fim do piloto.
+
+### 12.2.1 Utilidade e ganho de produtividade
+
+O incentivo mais forte é o ganho no dia a dia, e ele é diferente para cada perfil. A tabela descreve o que muda na rotina e o ganho concreto, com a base de cada número.
+
+| Perfil | Como é hoje | Como fica com o agente | Ganho concreto | Base |
+|---|---|---|---|---|
+| Líder de projeto | Procura avanço, marcos, riscos e decisões pendentes entre SharePoint, planilhas e Power BI; monta o relatório do fechamento mensal; descobre o marco atrasado na reunião de acompanhamento | Pergunta em linguagem natural e recebe a resposta com a fonte; agenda o relatório do fechamento como rotina; vê o aviso de marco atrasado ao abrir a conversa, depois que a tela for ligada às rotas de avisos (12.1.3) | 18 minutos por dia útil no cenário base, entre 6 e 30 minutos nos cenários pessimista e otimista, e o atraso conhecido antes da reunião | Seção 7.12.1 do [GestaoProjeto.md](GestaoProjeto.md), a verificar pelo indicador I8 |
+| PMO Corporativo | Consolida o portfólio, cobra pendências e responde às mesmas dúvidas de processo de vários líderes | Rotinas e avisos fazem parte da cobrança; as dúvidas de norma e de conceito são respondidas pelo agente com a fonte; o painel mostra o que se pergunta e não se encontra | Menos cobrança manual e menos dúvidas repetidas, e uma atribuição nova: a curadoria do que o agente sabe | Painel de intenções ([Arquitetura.md](Arquitetura.md), seção 5) |
+| Diretoria | Depende da consolidação feita por terceiros para ter a visão atualizada do portfólio (2.4.1) | Recebe o relatório recorrente na data e consulta diretamente a visão consolidada e as criticidades | Autonomia: a informação chega sem pedido e sem espera pela consolidação | Persona de 2.4.1 |
+| Membro de equipe | Pergunta ao líder ou ao PMO o que diz a norma, como classificar um risco ou qual é o próximo marco do projeto | Consulta o próprio projeto e as normas com resposta citada, restrita ao que o perfil pode ver | Resposta imediata para as dúvidas de processo, sem depender da disponibilidade do líder | Perguntas sugeridas sobre normas e conceitos (12.1.3) |
+
+O ganho é de consulta, e não de registro: quem precisa atualizar um artefato continua fazendo isso na fonte, como explica a barreira B8. Por isso o incentivo de utilidade é mais forte para quem consulta muito, o líder e o PMO, e é para eles que o piloto foi desenhado. O tempo poupado da primeira linha é estimativa da análise de viabilidade, e não medição; ele só vira argumento de adoção depois de medido no piloto.
+
+### 12.2.2 Governança e voz ativa
+
+O usuário tem voz na evolução da solução por cinco mecanismos. Dois já existem na prova de conceito; os demais são práticas do PMO ou evoluções propostas, e a tabela diz qual é qual.
+
+| Mecanismo | Como funciona | Situação | Frequência | Responsável |
+|---|---|---|---|---|
+| Escuta pelo painel de intenções | O painel agrupa o que os usuários pedem e o agente não faz e as perguntas em que o classificador hesita. Cada grupo recorrente vira decisão: nova intenção, novos exemplos de treino, documento a incluir no corpus ou item do guia | Existe: recortes de evolução do catálogo do painel, com a permissão `VER_INTENCOES` | Quinzenal no piloto, mensal depois | PMO |
+| Curadoria das bases de conhecimento | Revisão do corpus (documentos a incluir, retirar ou substituir por versão nova), do catálogo de intenções e das perguntas sugeridas. A mudança de um documento na pasta acompanhada já dispara a reindexação pelo webhook do Google Drive (9.1.2.7) | Existe a reindexação automática; a revisão periódica é prática do PMO | Mensal, e a cada revisão do NOR-00-223 ou dos modelos de documento | PMO, com a TI responsável pela sustentação |
+| Avaliação da resposta pelo usuário | Botão de resposta útil ou não útil, com motivo opcional, gravado junto da interação, para que a curadoria veja não só o que o agente recusou, mas também o que respondeu mal | Proposta de evolução: a prova de conceito não tem avaliação por resposta. Até lá, o retorno vem pelo plantão de dúvidas de 12.1.3 | A cada resposta | Equipe de produto, na evolução |
+| Grupo de usuários-chave | Um líder por subportfólio, o PMO e a TI priorizam as melhorias a partir do painel, das avaliações e do retorno das sessões | Prática do PMO | Mensal na expansão, trimestral na sustentação | PMO |
+| Transparência dos resultados | Os indicadores de 12.2.4 e a lista do que mudou a partir das sugestões são publicados para todos os usuários | Prática do PMO | Mensal | PMO |
+
+O último mecanismo é o que dá sentido aos outros: quem sugere e vê a sugestão virar mudança volta a sugerir, e quem sugere e não recebe resposta desiste. Publicar "o que mudou a partir do que vocês pediram" custa pouco e é o que transforma a escuta em voz ativa.
+
+### 12.2.3 Comunidade e reconhecimento
+
+| Mecanismo | Como funciona | Aplicação ao projeto |
+|---|---|---|
+| Rede de multiplicadores | Um líder por subportfólio, escolhido entre os que adotaram primeiro, apresenta o próprio uso nas sessões de lançamento da expansão (12.1.3), é o primeiro ponto de dúvida no subportfólio e representa os colegas no grupo de usuários-chave, com cerca de uma hora por semana durante a expansão | Aplicável: a estrutura em seis subportfólios dá o recorte natural da rede, e o líder é o perfil prioritário da adoção |
+| Reconhecimento dos primeiros adotantes | Menção no relatório mensal do PMO e convite para o grupo de usuários-chave, pelo uso e pelas sugestões que viraram melhoria | Aplicável, com uma regra: reconhecer contribuição, e não volume de perguntas, que incentivaria perguntas artificiais e distorceria os indicadores |
+| Troca de boas práticas | As perguntas que funcionam para cada perfil viram perguntas sugeridas e itens do guia, e são compartilhadas no canal de comunicação que o PMO já usa com os líderes | Aplicável, sem ferramenta nova |
+| Destaque às equipes com melhor qualidade e completude de dados | Reconhecimento das equipes cujos dados de projeto estão mais completos e consistentes | Não aplicável nesta versão: a prova de conceito não mede a completude dos dados por equipe, porque o registro acontece na fonte, e um ranking assim premiaria a planilha, e não o uso do agente. Passa a fazer sentido quando o agente identificar dados ausentes ou inconsistentes, como prevê o RF06 |
+
+Uma forma de reconhecimento foi deliberadamente descartada: pontuação ou ranking individual de uso. O registro de interações existe para melhorar a solução e para rastrear o que foi respondido, e usá-lo para comparar pessoas somaria às barreiras B2 e B3 um receio novo, o de ser monitorado.
+
+### 12.2.4 Indicadores de adoção
+
+Os indicadores saem do registro de interações, que já guarda usuário, perfil, canal, intenção, desfecho e latência de cada mensagem, e de duas medições feitas no piloto. Todos são agregados e nunca expõem o uso de uma pessoa. O registro e as consultas do painel permitem hoje o recorte por perfil, mas não guardam nem filtram projeto ou subportfólio. O recorte por subportfólio, usado para acompanhar o piloto e cada etapa da expansão, sai da lista de usuários habilitados em cada etapa, cruzada com o usuário da interação.
+
+| # | Indicador | Fórmula | Fonte | Frequência | Referência para a decisão |
+|---|---|---|---|---|---|
+| I1 | Usuários ativos por perfil | Usuários com ao menos uma interação na semana ÷ usuários habilitados no perfil | Registro de interações | Semanal | No piloto, a maioria dos líderes do subportfólio ativa na quarta semana |
+| I2 | Intensidade de uso | Interações de usuários ÷ usuários ativos ÷ dias úteis | Registro de interações | Mensal | A premissa de 6 interações por usuário por dia útil da análise de viabilidade (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)); abaixo dela, o benefício calculado precisa ser revisto |
+| I3 | Retenção | Usuários ativos na semana 1 que continuam ativos na semana 4 ÷ usuários ativos na semana 1 | Registro de interações | Ao fim do piloto e de cada subportfólio | Queda forte indica uso por curiosidade, e não por utilidade |
+| I4 | Consultas encaminhadas | Interações com desfecho `ENCAMINHADA` ÷ total de interações | Desfechos do painel de intenções | Semanal | Tendência de alta com a curadoria, à medida que o catálogo passa a cobrir o que se pede |
+| I5 | Pedidos fora de escopo e de baixa confiança | Interações com esses desfechos ÷ total de interações | Recortes de evolução do catálogo do painel | Quinzenal | Tendência de queda com a curadoria; grupos recorrentes viram decisão (12.2.2) |
+| I6 | Proatividade | Líderes com ao menos uma rotina ativa ÷ líderes ativos | Tabela de rotinas | Mensal | Mede se a funcionalidade de pior resultado no teste de usabilidade (62,5% em T4) passou a ser usada |
+| I7 | Satisfação | SUS médio | Reaplicação do roteiro de usabilidade (12.1.3) | Ao fim do piloto | O SUS de 71,9 da rodada de setembro de 2026 (10.3.12.5) |
+| I8 | Tempo poupado por consulta | Tempo da busca manual − tempo da consulta ao agente, para as mesmas perguntas | Medição no piloto com líderes | Uma vez no piloto | O ponto de equilíbrio da seção 7.12.2 do [GestaoProjeto.md](GestaoProjeto.md) e o objetivo O1 (2.3.4) |
+
+Os indicadores I1 a I5 podem ser calculados desde o primeiro dia do piloto, porque dependem apenas do registro que a solução já mantém; o painel de intenções mostra hoje os desfechos e os recortes do catálogo, e I1 a I3 exigem uma consulta nova sobre o mesmo registro, cruzada com a lista de usuários habilitados, sem coleta de dado adicional. I6 usa a tabela de rotinas, e I7 e I8 exigem as medições com usuários previstas no piloto. Ao fim do piloto, o PMO decide a expansão com base em I1, I3, I7 e I8; I2 e I8 também dizem se a análise de viabilidade se confirma.
 
 # Referências
 
