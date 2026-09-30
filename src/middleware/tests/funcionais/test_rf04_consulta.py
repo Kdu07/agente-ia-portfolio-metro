@@ -12,21 +12,29 @@ class ProjetosMemoria:
         return None
 
 
-@pytest.mark.xfail(strict=True, reason="consulta em linguagem natural ainda não retorna as sete dimensões")
 def test_tf_rf04_01_consulta_dimensoes_do_portfolio() -> None:
     from app.pipeline.intencao import catalogo
 
-    dimensoes = {"avanco", "cronograma", "status", "marcos", "riscos", "problemas", "normativos"}
+    dimensoes = {
+        "consultar_avanco",
+        "consultar_cronograma",
+        "consultar_status_projeto",
+        "consultar_marcos",
+        "consultar_riscos",
+        "consultar_problemas",
+        "consultar_aderencia_normativa",
+    }
     implementadas = {item.id for item in catalogo.CATALOGO.values()}
     assert dimensoes <= implementadas
 
 
-@pytest.mark.xfail(strict=True, reason="contrato do executor ainda não estrutura referência de origem")
 def test_tf_rf04_02_referencia_acompanha_o_conteudo() -> None:
+    from dataclasses import fields
+
     from app.executor.base import RespostaExecutor
 
-    campos = RespostaExecutor.model_fields
-    assert "referencias" in campos
+    campos = {campo.name for campo in fields(RespostaExecutor)}
+    assert "fontes" in campos
 
 
 async def test_tf_rf04_03_projeto_inexistente_retorna_404() -> None:
@@ -55,8 +63,10 @@ async def test_tf_rf04_04_projeto_alheio_e_inexistente_sao_indistinguiveis() -> 
     assert respostas[0] == respostas[1]
 
 
-@pytest.mark.xfail(strict=True, reason="resposta explícita para dado ausente ainda pertence ao executor futuro")
 def test_tf_rf04_05_dado_ausente_nao_e_inventado() -> None:
-    from app.executor.base import RespostaExecutor
+    from app.rag.geracao import TEXTO_SEM_EVIDENCIA, Situacao, abstencao
 
-    assert "dado_ausente" in RespostaExecutor.model_fields
+    resposta = abstencao(Situacao.SEM_EVIDENCIA)
+    assert resposta.texto == TEXTO_SEM_EVIDENCIA
+    assert resposta.fontes == ()
+    assert resposta.situacao is Situacao.SEM_EVIDENCIA

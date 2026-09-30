@@ -2056,7 +2056,7 @@ Esta seção responde à pergunta do artefato: quanto o grupo cobraria para entr
 
 Três convenções valem para toda a seção:
 
-* **Data-base:** 25/09/2026. Preços públicos, câmbio e dados do board foram consultados nessa data; as fontes estão na seção [7.15](#715-referências).
+* **Data-base:** 25/09/2026. Preços públicos, câmbio e dados do board foram consultados nessa data; as fontes estão na seção [7.15](#715-referências). A exceção são as horas da Sprint 5, que vêm do planejamento da seção 3.6.1, fechado na Sprint Planning de 28/09/2026.
 * **Arredondamento:** cada valor é calculado com a precisão da fonte e arredondado a duas casas decimais só no resultado. Quando uma distribuição por mês ou por parcela gera diferença de R$ 0,01, ela é absorvida na última linha e sinalizada.
 * **Separação de pagadores:** o preço do contrato (seções 7.1 a 7.9) é faturado pelo fornecedor. A infraestrutura de produção (seção 7.5) fica no tenant do Metrô e é paga por ele diretamente à Microsoft, sem margem nem imposto do fornecedor.
 
@@ -2106,16 +2106,16 @@ As horas são as estimadas nos cards do Kanban, convertidas pela régua da seç�
 | Sprint 2 | 90,50 h | Fechamento registrado na seção 3.3.4: 73,50 h com responsável e 17,00 h de cards coletivos sem responsável |
 | Sprint 3 | 55,50 h | Milestone `Sprint 03` extraída pela API do GitLab em 25/09/2026; o total e a razão de 2,50:1 conferem com a seção 3.5.4 |
 | Sprint 4 | 143,75 h | Milestone `Sprint 04` extraída pela API do GitLab em 25/09/2026, às 20h: 107,00 h em cards fechados e 36,75 h em cards abertos |
-| Sprint 5 | 20,75 h | Tasks S5-01 a S5-17 planejadas na seção 3.6.1 |
-| **Construção do MVP** | **365,50 h** | |
+| Sprint 5 | 90,25 h | As 70 tasks do planejamento da seção 3.6.1, fechado na Sprint Planning de 28/09/2026 |
+| **Construção do MVP** | **435,00 h** | |
 | Treinamento e operação assistida | 16,00 h | Premissa de orçamento: 8 h de treinamento e 8 h de operação assistida |
-| **Total orçado** | **381,50 h** | |
+| **Total orçado** | **451,00 h** | |
 
-Duas diferenças em relação a outras seções ficam registradas para que os números possam ser conferidos. A Sprint 4 aparece com 135,50 h na seção 5.2 porque aquele é o corte de 22/09; entre 22 e 25/09 entraram cards que somam 8,25 h, e o orçamento usa o valor mais recente. Nas Sprints 1 e 2, o board hoje soma 60,75 h e 93,50 h porque recebeu cards depois do fechamento; o orçamento mantém os valores de fechamento das seções 3.2.3 e 3.3.4, que são os usados em toda a análise das sprints. As 36,75 h ainda abertas na Sprint 4 não são somadas de novo na Sprint 5: pela regra da seção 3.6.1, elas consomem a folga de capacidade da Sprint 5 e continuam contadas uma única vez, na Sprint 4.
+Duas diferenças em relação a outras seções ficam registradas para que os números possam ser conferidos. A Sprint 4 aparece com 135,50 h na seção 5.2 porque aquele é o corte de 22/09; entre 22 e 25/09 entraram cards que somam 8,25 h, e o orçamento usa o valor mais recente. Nas Sprints 1 e 2, o board hoje soma 60,75 h e 93,50 h porque recebeu cards depois do fechamento; o orçamento mantém os valores de fechamento das seções 3.2.3 e 3.3.4, que são os usados em toda a análise das sprints. As 36,75 h que estavam abertas na Sprint 4 em 25/09 foram concluídas até 28/09, quando a milestone fechou sem card aberto (seção 3.6.1), e continuam contadas uma única vez, na Sprint 4.
 
 #### 7.2.2 Regra de atribuição de função
 
-Cada integrante assume uma função por sprint, derivada do papel principal na matriz de papéis daquela sprint (seções 3.2.1, 3.3.3, 3.4.1 e 3.5.1). Quando o papel junta a condução do processo, como Scrum Master, a uma frente técnica ou de negócio, prevalece a frente que concentra as entregas listadas na própria matriz, o mesmo critério que a seção 3.5.1 usa para definir o papel principal: é o caso de Mariana Reis na Sprint 1, de Carlos Eduardo na Sprint 2 e de Mirela Bianchi na Sprint 3. Na Sprint 4, os papéis de Mariana Reis e de Mirela Bianchi declaram duas frentes técnicas, e as horas foram separadas pelo label de entrega dos cards, com os cards `TEST` em Qualidade e os demais na primeira frente do papel. As horas de cards coletivos sem responsável, como cerimônias, planejamento e revisão do contrato, vão para Gestão de projeto e processos. Na Sprint 5, ainda sem responsável atribuído, cada task foi associada à função pela natureza da entrega.
+Cada integrante assume uma função por sprint, derivada do papel principal na matriz de papéis daquela sprint (seções 3.2.1, 3.3.3, 3.4.1 e 3.5.1). Quando o papel junta a condução do processo, como Scrum Master, a uma frente técnica ou de negócio, prevalece a frente que concentra as entregas listadas na própria matriz, o mesmo critério que a seção 3.5.1 usa para definir o papel principal: é o caso de Mariana Reis na Sprint 1, de Carlos Eduardo na Sprint 2 e de Mirela Bianchi na Sprint 3. Na Sprint 4, os papéis de Mariana Reis e de Mirela Bianchi declaram duas frentes técnicas, e as horas foram separadas pelo label de entrega dos cards, com os cards `TEST` em Qualidade e os demais na primeira frente do papel. As horas de cards coletivos sem responsável, como cerimônias, planejamento e revisão do contrato, vão para Gestão de projeto e processos. Na Sprint 5, cuja matriz de papéis só é consolidada no fechamento da sprint, cada task foi associada à função pela natureza da entrega; os responsáveis e as horas de cada task vêm da seção 3.6.1.
 
 As seis funções usadas no orçamento são:
 
@@ -2130,34 +2130,34 @@ As seis funções usadas no orçamento são:
 
 #### 7.2.3 Horas por integrante
 
-| Integrante | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Total |
-|---|---:|---:|---:|---:|---:|
-| Mirela Bianchi | 12,50 h (F2) | 13,50 h (F5) | 11,75 h (F4) | 30,00 h (15,00 F3 + 15,00 F6) | 67,75 h |
-| Eduardo Casarini | 9,00 h (F2) | 16,50 h (F4) | 12,50 h (F5) | 27,50 h (F4) | 65,50 h |
-| Carlos Eduardo Serrano Quaglia | 8,50 h (F3) | 19,00 h (F4) | 8,50 h (F3) | 27,00 h (F3) | 63,00 h |
-| Mariana Reis | 10,00 h (F2) | 10,00 h (F5) | 10,50 h (F4) | 31,00 h (15,00 F4 + 16,00 F6) | 61,50 h |
-| Celso Rocha | 7,00 h (F1) | 8,00 h (F4) | 7,25 h (F6) | 17,00 h (F4) | 39,25 h |
-| Alexsander Barbosa | 7,00 h (F2) | 6,50 h (F3) | 5,00 h (F6) | 11,25 h (F2) | 29,75 h |
-| Cards coletivos sem responsável | 1,00 h (F1) | 17,00 h (F1) | 0,00 h | 0,00 h | 18,00 h |
-| **Total** | **55,00 h** | **90,50 h** | **55,50 h** | **143,75 h** | **344,75 h** |
+| Integrante | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Sprint 5 | Total |
+|---|---:|---:|---:|---:|---:|---:|
+| Mirela Bianchi | 12,50 h (F2) | 13,50 h (F5) | 11,75 h (F4) | 30,00 h (15,00 F3 + 15,00 F6) | 15,50 h | 83,25 h |
+| Eduardo Casarini | 9,00 h (F2) | 16,50 h (F4) | 12,50 h (F5) | 27,50 h (F4) | 14,00 h | 79,50 h |
+| Carlos Eduardo Serrano Quaglia | 8,50 h (F3) | 19,00 h (F4) | 8,50 h (F3) | 27,00 h (F3) | 15,00 h | 78,00 h |
+| Mariana Reis | 10,00 h (F2) | 10,00 h (F5) | 10,50 h (F4) | 31,00 h (15,00 F4 + 16,00 F6) | 15,00 h | 76,50 h |
+| Celso Rocha | 7,00 h (F1) | 8,00 h (F4) | 7,25 h (F6) | 17,00 h (F4) | 15,75 h | 55,00 h |
+| Alexsander Barbosa | 7,00 h (F2) | 6,50 h (F3) | 5,00 h (F6) | 11,25 h (F2) | 15,00 h | 44,75 h |
+| Cards coletivos sem responsável | 1,00 h (F1) | 17,00 h (F1) | 0,00 h | 0,00 h | 0,00 h | 18,00 h |
+| **Total** | **55,00 h** | **90,50 h** | **55,50 h** | **143,75 h** | **90,25 h** | **435,00 h** |
 
-Somadas as 20,75 h da Sprint 5, ainda por atribuir, chega-se às 365,50 h de construção. A tabela mostra a rotação que a seção 3 documenta. Há duas permanências na mesma função em sprints consecutivas, ambas com papéis diferentes dentro dela: Carlos Eduardo fica em F3 nas Sprints 3 e 4, passando de dados e testes de integração para implantação em nuvem, e Mariana tem parte das horas em F4 nas duas sprints, passando de PLN e voz para rotinas agendadas. A diferença de carga entre integrantes, de 2,28:1 entre o maior e o menor total, é a mesma que as seções 3.3.4, 3.5.3 e 3.5.4 registram sprint a sprint.
+Na Sprint 5, as horas de cada integrante são as da seção 3.6.1, e a função fica na seção 7.2.4, porque é atribuída task a task. A tabela mostra a rotação que a seção 3 documenta. Há duas permanências na mesma função em sprints consecutivas, ambas com papéis diferentes dentro dela: Carlos Eduardo fica em F3 nas Sprints 3 e 4, passando de dados e testes de integração para implantação em nuvem, e Mariana tem parte das horas em F4 nas duas sprints, passando de PLN e voz para rotinas agendadas. Até a Sprint 4, a diferença de carga entre o maior e o menor total era de 2,28:1, a mesma que as seções 3.3.4, 3.5.3 e 3.5.4 registram sprint a sprint; com a Sprint 5, planejada com carga entre 14,00 h e 15,75 h por integrante, a diferença cai para 1,86:1.
 
 #### 7.2.4 Horas por função e por sprint
 
 | Função | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Sprint 5 | Total |
 |---|---:|---:|---:|---:|---:|---:|
-| F1 Gestão de projeto e processos | 8,00 | 17,00 | 0,00 | 0,00 | 8,50 | 33,50 |
-| F2 Negócio, requisitos e viabilidade | 38,50 | 0,00 | 0,00 | 11,25 | 2,00 | 51,75 |
-| F3 Arquitetura, dados e nuvem | 8,50 | 6,50 | 8,50 | 42,00 | 3,75 | 69,25 |
-| F4 Desenvolvimento de software e PLN | 0,00 | 43,50 | 22,25 | 59,50 | 0,00 | 125,25 |
-| F5 UX/UI e frontend | 0,00 | 23,50 | 12,50 | 0,00 | 2,50 | 38,50 |
-| F6 Qualidade e testes | 0,00 | 0,00 | 12,25 | 31,00 | 4,00 | 47,25 |
-| **Total** | **55,00** | **90,50** | **55,50** | **143,75** | **20,75** | **365,50** |
+| F1 Gestão de projeto e processos | 8,00 | 17,00 | 0,00 | 0,00 | 26,25 | 51,25 |
+| F2 Negócio, requisitos e viabilidade | 38,50 | 0,00 | 0,00 | 11,25 | 17,00 | 66,75 |
+| F3 Arquitetura, dados e nuvem | 8,50 | 6,50 | 8,50 | 42,00 | 12,50 | 78,00 |
+| F4 Desenvolvimento de software e PLN | 0,00 | 43,50 | 22,25 | 59,50 | 9,00 | 134,25 |
+| F5 UX/UI e frontend | 0,00 | 23,50 | 12,50 | 0,00 | 3,50 | 39,50 |
+| F6 Qualidade e testes | 0,00 | 0,00 | 12,25 | 31,00 | 22,00 | 65,25 |
+| **Total** | **55,00** | **90,50** | **55,50** | **143,75** | **90,25** | **435,00** |
 
-Valores em horas. Na Sprint 5, F1 reúne as tasks de apuração, análise, matriz de risco, matriz de papéis, retrospectiva e post-mortem (S5-01 e S5-09 a S5-14); F2, a apresentação final (S5-16); F3, a adequação do `copilot/solucao/`, a demonstração no ambiente do parceiro, o manual de instalação e a tag final (S5-02, S5-04, S5-15 e S5-17); F5, a priorização e a correção de usabilidade (S5-06 e S5-07); e F6, a comparação da base sintética, a consolidação e a reaplicação dos testes de usabilidade (S5-03, S5-05 e S5-08).
+Valores em horas. Na Sprint 5, F1 reúne a gestão do fechamento e da conformidade: reapuração e análise das sprints, evolução das métricas, matrizes de risco e de papéis, retrospectiva, post-mortems, contrato de convivência, consolidação e aplicação dos feedbacks, revisão de coerência do `Projeto.md`, planejamento da sprint e os critérios do Escritório de Projetos no repositório; F2, a documentação técnica final de negócio (funcionalidades, benefícios, aperfeiçoamentos, custos, análise financeira, canvas, ODS e plano de adoção), a revisão dos requisitos com os dados do parceiro e a apresentação final; F3, a visão geral da arquitetura, a pilha de tecnologias, os modelos de dados, o manual de implantação, o de-para com os dados do parceiro, os acessos ao ambiente do parceiro e a demonstração final; F4, as correções no middleware, a documentação do algoritmo de NLP e das rotas, os notebooks de teste e os guias de padrões e de instalação do código; F5, a correção de acessibilidade e a documentação da navegação e da construção da interface; e F6, os testes de cobertura, de carga, de disponibilidade, de integração, unitários, de acessibilidade e de layout e a reaplicação do teste de usabilidade.
 
-A distribuição acompanha a evolução do projeto: F2 concentra a Sprint 1, de negócio e requisitos; F4 e F5 dominam as Sprints 2 e 3, de especificação e construção; F3 e F6 crescem na Sprint 4, de implantação e testes; e F1 volta a pesar na Sprint 5, de fechamento.
+A distribuição acompanha a evolução do projeto: F2 concentra a Sprint 1, de negócio e requisitos; F4 e F5 dominam as Sprints 2 e 3, de especificação e construção; F3 e F6 crescem na Sprint 4, de implantação e testes; e F1 volta a pesar na Sprint 5, de fechamento, ao lado de F6, com os testes complementares, e de F2, com a documentação técnica final.
 
 ### 7.3 Custo de pessoal
 
@@ -2173,18 +2173,18 @@ Uma taxa única para as seis funções é coerente com a forma como a equipe tra
 
 | Função | Horas | Custo-hora | Custo |
 |---|---:|---:|---:|
-| F1 Gestão de projeto e processos | 33,50 h | R$ 81,25 | R$ 2.721,88 |
-| F2 Negócio, requisitos e viabilidade | 51,75 h | R$ 81,25 | R$ 4.204,69 |
-| F3 Arquitetura, dados e nuvem | 69,25 h | R$ 81,25 | R$ 5.626,56 |
-| F4 Desenvolvimento de software e PLN | 125,25 h | R$ 81,25 | R$ 10.176,56 |
-| F5 UX/UI e frontend | 38,50 h | R$ 81,25 | R$ 3.128,13 |
-| F6 Qualidade e testes | 47,25 h | R$ 81,25 | R$ 3.839,06 |
-| **Construção do MVP** | **365,50 h** | | **R$ 29.696,88** |
+| F1 Gestão de projeto e processos | 51,25 h | R$ 81,25 | R$ 4.164,06 |
+| F2 Negócio, requisitos e viabilidade | 66,75 h | R$ 81,25 | R$ 5.423,44 |
+| F3 Arquitetura, dados e nuvem | 78,00 h | R$ 81,25 | R$ 6.337,50 |
+| F4 Desenvolvimento de software e PLN | 134,25 h | R$ 81,25 | R$ 10.907,81 |
+| F5 UX/UI e frontend | 39,50 h | R$ 81,25 | R$ 3.209,38 |
+| F6 Qualidade e testes | 65,25 h | R$ 81,25 | R$ 5.301,56 |
+| **Construção do MVP** | **435,00 h** | | **R$ 35.343,75** |
 | Treinamento da equipe do Metrô | 8,00 h | R$ 81,25 | R$ 650,00 |
 | Operação assistida e repasse de conhecimento | 8,00 h | R$ 81,25 | R$ 650,00 |
-| **Total de pessoal** | **381,50 h** | | **R$ 30.996,88** |
+| **Total de pessoal** | **451,00 h** | | **R$ 36.643,75** |
 
-**Custo de pessoal = 381,50 h × R$ 81,25 = R$ 30.996,88**
+**Custo de pessoal = 451,00 h × R$ 81,25 = R$ 36.643,75**
 
 ### 7.4 Insumos, licenças e plataformas da construção
 
@@ -2212,7 +2212,7 @@ O ambiente de desenvolvimento repete o dimensionamento do `infra/azure/provision
 | Key Vault Standard, 10.000 operações | R$ 0,1551 por 10.000 operações | 1 × R$ 0,1551 | R$ 0,16 |
 | **Total mensal** | | | **R$ 194,64** |
 
-**Custo total da construção (C) = pessoal + insumos = R$ 30.996,88 + R$ 4.247,51 = R$ 35.244,39**
+**Custo total da construção (C) = pessoal + insumos = R$ 36.643,75 + R$ 4.247,51 = R$ 40.891,26**
 
 Os três serviços cotados em dólar são convertidos pela PTAX de venda de 25/09/2026, R$ 5,1991, com IOF de 3,5% sobre compras internacionais com cartão. O GitLab Premium é vendido em assinatura anual; o orçamento aloca ao contrato apenas os três meses de uso, e os outros nove ficam com a empresa para os contratos seguintes.
 
@@ -2355,14 +2355,14 @@ Onde C é o custo total da construção, D são as despesas operacionais, m é a
 
 | Etapa | Cálculo | Valor |
 |---|---|---:|
-| Custo total da construção (C) | Pessoal R$ 30.996,88 + insumos R$ 4.247,51 | R$ 35.244,39 |
+| Custo total da construção (C) | Pessoal R$ 36.643,75 + insumos R$ 4.247,51 | R$ 40.891,26 |
 | Despesas operacionais (D) | Seção 7.6 | R$ 2.400,00 |
-| Base (C + D) | R$ 35.244,39 + R$ 2.400,00 | R$ 37.644,39 |
+| Base (C + D) | R$ 40.891,26 + R$ 2.400,00 | R$ 43.291,26 |
 | Fator de preço | 1,15 / (1 − 0,155 × 1,15) = 1,15 / 0,82175 | 1,399452 |
-| **Preço final (P)** | R$ 37.644,39 × 1,15 / 0,82175 | **R$ 52.681,53** |
-| Imposto (I) | 15,5% × R$ 52.681,53 | R$ 8.165,64 |
-| Lucro (L) | P − C − D − I | R$ 6.871,50 |
-| Prova da margem | 15% × (C + D + I) = 15% × R$ 45.810,03 | R$ 6.871,50 |
+| **Preço final (P)** | R$ 43.291,26 × 1,15 / 0,82175 | **R$ 60.584,06** |
+| Imposto (I) | 15,5% × R$ 60.584,06 | R$ 9.390,53 |
+| Lucro (L) | P − C − D − I | R$ 7.902,27 |
+| Prova da margem | 15% × (C + D + I) = 15% × R$ 52.681,79 | R$ 7.902,27 |
 
 A prova confirma que o lucro é exatamente 15% da soma de custos, despesas e impostos, como pede o artefato.
 
@@ -2370,26 +2370,26 @@ A prova confirma que o lucro é exatamente 15% da soma de custos, despesas e imp
 
 | Componente | Valor | Participação no preço |
 |---|---:|---:|
-| Pessoal: 381,50 h de construção, treinamento e repasse | R$ 30.996,88 | 58,84% |
-| Insumos, licenças e plataformas da construção | R$ 4.247,51 | 8,06% |
-| Despesas operacionais | R$ 2.400,00 | 4,56% |
-| Imposto, Simples Nacional Anexo V | R$ 8.165,64 | 15,50% |
-| Lucro | R$ 6.871,50 | 13,04% |
-| **Preço final ao Metrô** | **R$ 52.681,53** | **100,00%** |
+| Pessoal: 451,00 h de construção, treinamento e repasse | R$ 36.643,75 | 60,48% |
+| Insumos, licenças e plataformas da construção | R$ 4.247,51 | 7,01% |
+| Despesas operacionais | R$ 2.400,00 | 3,96% |
+| Imposto, Simples Nacional Anexo V | R$ 9.390,53 | 15,50% |
+| Lucro | R$ 7.902,27 | 13,04% |
+| **Preço final ao Metrô** | **R$ 60.584,06** | **100,00%** |
 
-A margem de 15% sobre custos, despesas e impostos equivale a 13,04% do preço (0,15 / 1,15). O preço corresponde a R$ 138,09 por hora orçada, 1,70 vez o custo-hora de R$ 81,25.
+A margem de 15% sobre custos, despesas e impostos equivale a 13,04% do preço (0,15 / 1,15). O preço corresponde a R$ 134,33 por hora orçada, 1,65 vez o custo-hora de R$ 81,25. As participações arredondadas somam 99,99%; o centésimo que falta é de arredondamento.
 
 A demonstração de resultado do contrato, por competência, fecha no mesmo lucro:
 
 | Demonstração do resultado | Valor |
 |---|---:|
-| Receita bruta de serviços | R$ 52.681,53 |
-| (−) Simples Nacional | R$ 8.165,64 |
-| **Receita líquida** | **R$ 44.515,89** |
-| (−) Custo dos serviços: pessoal e insumos | R$ 35.244,39 |
-| **Lucro bruto** | **R$ 9.271,50** |
+| Receita bruta de serviços | R$ 60.584,06 |
+| (−) Simples Nacional | R$ 9.390,53 |
+| **Receita líquida** | **R$ 51.193,53** |
+| (−) Custo dos serviços: pessoal e insumos | R$ 40.891,26 |
+| **Lucro bruto** | **R$ 10.302,27** |
 | (−) Despesas operacionais | R$ 2.400,00 |
-| **Lucro do contrato** | **R$ 6.871,50** |
+| **Lucro do contrato** | **R$ 7.902,27** |
 
 #### 7.9.3 Reserva de contingência opcional
 
@@ -2397,9 +2397,9 @@ A seção 3.5.3 registra que a Sprint 4 operou com carga de 141% da capacidade (
 
 | Item | Cálculo | Valor |
 |---|---|---:|
-| Reserva de contingência | 10% × R$ 30.996,88 | R$ 3.099,69 |
-| Preço com reserva | (R$ 37.644,39 + R$ 3.099,69) × 1,399452 | R$ 57.019,40 |
-| Acréscimo ao preço | R$ 57.019,40 − R$ 52.681,53 | R$ 4.337,87 |
+| Reserva de contingência | 10% × R$ 36.643,75 | R$ 3.664,38 |
+| Preço com reserva | (R$ 43.291,26 + R$ 3.664,38) × 1,399452 | R$ 65.712,18 |
+| Acréscimo ao preço | R$ 65.712,18 − R$ 60.584,06 | R$ 5.128,12 |
 
 A reserva não é lucro: se não for usada, não é faturada.
 
@@ -2407,7 +2407,7 @@ A reserva não é lucro: se não for usada, não é faturada.
 
 | Condição | Proposta |
 |---|---|
-| Preço fixo | R$ 52.681,53, com NFS-e por marco |
+| Preço fixo | R$ 60.584,06, com NFS-e por marco |
 | Marcos de faturamento | 30% no aceite da Sprint 2 (especificação e protótipos), 30% no aceite da Sprint 4 (MVP funcional implantado) e 40% no aceite final, após treinamento e operação assistida |
 | Prazo de pagamento | 30 dias após o aceite de cada marco |
 | Validade da proposta | 30 dias, pelo risco de câmbio sobre as licenças cotadas em dólar |
@@ -2418,25 +2418,25 @@ A reserva não é lucro: se não for usada, não é faturada.
 O fluxo de caixa mostra quando o dinheiro entra e sai, o que o preço não mostra. As premissas são as dos marcos da seção 7.9.4:
 
 * **Entradas:** 30% em 27/09, 30 dias após o aceite da Sprint 2 (28/08); 30% em 25/10, após o aceite da Sprint 4 (25/09); 40% em 30/11, após o aceite final (31/10).
-* **Pessoal:** pago no mês em que as horas são executadas. Agosto recebe as Sprints 1 e 2 (145,50 h); setembro, a Sprint 3 e os cards já fechados da Sprint 4 (55,50 h + 107,00 h = 162,50 h); outubro, os cards abertos da Sprint 4, a Sprint 5 e o treinamento (36,75 h + 20,75 h + 16,00 h = 73,50 h). O centavo de arredondamento da distribuição foi absorvido em outubro.
+* **Pessoal:** pago no mês em que as horas são executadas. Agosto recebe as Sprints 1 e 2 (145,50 h); setembro, a Sprint 3, a Sprint 4 inteira, concluída até 28/09, e as tasks da Sprint 5 marcadas até 30/09 no cronograma da seção 3.6.1 (55,50 h + 143,75 h + 43,75 h = 243,00 h); outubro, as demais tasks da Sprint 5 e o treinamento (46,50 h + 16,00 h = 62,50 h). As tasks com duas etapas contam metade das horas em cada data. O centavo de arredondamento da distribuição foi absorvido em outubro.
 * **Insumos:** GitLab e Figma em três parcelas mensais, Maze em setembro, Azure de desenvolvimento em setembro e outubro.
 * **Despesas:** contabilidade, Workspace e deslocamentos todos os meses; domínio e proposta comercial em agosto.
 * **DAS:** o fornecedor opta pelo regime de caixa do Simples, e o imposto de cada recebimento vence no dia 20 do mês seguinte.
 
 | Mês | Saldo inicial | Entradas | Saídas: custos | Saídas: despesas | Saídas: DAS | Saldo final | Situação |
 |---|---:|---:|---:|---:|---:|---:|---|
-| Agosto | R$ 0,00 | R$ 0,00 | R$ 12.930,38 | R$ 1.260,00 | R$ 0,00 | **−R$ 14.190,38** | Estrangulamento: construção sem recebimento |
-| Setembro | −R$ 14.190,38 | R$ 15.804,46 | R$ 15.039,00 | R$ 570,00 | R$ 0,00 | **−R$ 13.994,92** | Primeiro marco cobre só o mês |
-| Outubro | −R$ 13.994,92 | R$ 15.804,46 | R$ 7.275,01 | R$ 570,00 | R$ 2.449,69 | **−R$ 8.485,16** | Saldo ainda negativo |
-| Novembro | −R$ 8.485,16 | R$ 21.072,61 | R$ 0,00 | R$ 0,00 | R$ 2.449,69 | **R$ 10.137,76** | Recuperação com o marco final |
-| Dezembro | R$ 10.137,76 | R$ 0,00 | R$ 0,00 | R$ 0,00 | R$ 3.266,26 | **R$ 6.871,50** | DAS do marco final quitado |
-| **Total** | | **R$ 52.681,53** | **R$ 35.244,39** | **R$ 2.400,00** | **R$ 8.165,64** | **R$ 6.871,50** | |
+| Agosto | R$ 0,00 | R$ 0,00 | R$ 12.930,38 | R$ 1.260,00 | R$ 0,00 | **−R$ 14.190,38** | Construção sem recebimento |
+| Setembro | −R$ 14.190,38 | R$ 18.175,22 | R$ 21.579,62 | R$ 570,00 | R$ 0,00 | **−R$ 18.164,78** | Estrangulamento: o primeiro marco não cobre o mês de maior custo |
+| Outubro | −R$ 18.164,78 | R$ 18.175,22 | R$ 6.381,26 | R$ 570,00 | R$ 2.817,16 | **−R$ 9.757,98** | Saldo ainda negativo |
+| Novembro | −R$ 9.757,98 | R$ 24.233,62 | R$ 0,00 | R$ 0,00 | R$ 2.817,16 | **R$ 11.658,48** | Recuperação com o marco final |
+| Dezembro | R$ 11.658,48 | R$ 0,00 | R$ 0,00 | R$ 0,00 | R$ 3.756,21 | **R$ 7.902,27** | DAS do marco final quitado |
+| **Total** | | **R$ 60.584,06** | **R$ 40.891,26** | **R$ 2.400,00** | **R$ 9.390,53** | **R$ 7.902,27** | |
 
-Composição das saídas de custo: agosto, pessoal R$ 11.821,88, GitLab R$ 936,31 e Figma R$ 172,19; setembro, pessoal R$ 13.203,13, GitLab R$ 936,31, Figma R$ 172,19, Maze R$ 532,73 e Azure R$ 194,64; outubro, pessoal R$ 5.971,87, GitLab R$ 936,30, Figma R$ 172,20 e Azure R$ 194,64.
+Composição das saídas de custo: agosto, pessoal R$ 11.821,88, GitLab R$ 936,31 e Figma R$ 172,19; setembro, pessoal R$ 19.743,75, GitLab R$ 936,31, Figma R$ 172,19, Maze R$ 532,73 e Azure R$ 194,64; outubro, pessoal R$ 5.078,12, GitLab R$ 936,30, Figma R$ 172,20 e Azure R$ 194,64.
 
-O saldo final de R$ 6.871,50 é o lucro da seção 7.9, o que confirma que o fluxo contém todas as entradas e saídas do orçamento: o regime de caixa muda o momento de cada valor, não o resultado. O **ponto de estrangulamento** é o fim de agosto, com necessidade de capital de giro de **R$ 14.190,38**, e o caixa só volta ao positivo em novembro. Em três dos cinco meses o fornecedor financia o cliente.
+O saldo final de R$ 7.902,27 é o lucro da seção 7.9, o que confirma que o fluxo contém todas as entradas e saídas do orçamento: o regime de caixa muda o momento de cada valor, não o resultado. O **ponto de estrangulamento** é o fim de setembro, com necessidade de capital de giro de **R$ 18.164,78**: é o mês em que se concentram a Sprint 4 inteira e o começo da Sprint 5, e o primeiro marco não cobre esse custo. O caixa só volta ao positivo em novembro, e em três dos cinco meses o fornecedor financia o cliente.
 
-Duas medidas reduzem o problema. A primeira é faturar por sprint, com 20% no aceite de cada uma: o saldo passa a −R$ 14.190,38 em agosto, −R$ 8.726,77 em setembro e R$ 1.234,58 em outubro, e o período negativo cai de três para dois meses. A segunda é pagar os prestadores PJ no quinto dia útil do mês seguinte, prática comum de mercado, o que desloca a saída de agosto para setembro, quando o primeiro recebimento já ocorreu. Como o pico de agosto não desaparece só com os marcos, o fornecedor precisa ter os R$ 14.190,38 em caixa antes de assinar o contrato.
+Duas medidas reduzem o problema. A primeira é faturar por sprint, com 20% no aceite de cada uma: o saldo passa a −R$ 14.190,38 em agosto, −R$ 12.106,38 em setembro e R$ 1.419,77 em outubro, o período negativo cai de três para dois meses e o pico volta a ser agosto. A segunda é pagar os prestadores PJ no quinto dia útil do mês seguinte, prática comum de mercado, o que leva cada saída de pessoal para depois do recebimento do mês, a começar pela de agosto, paga em setembro. Sem essas medidas, o fornecedor precisa ter R$ 18.164,78 em caixa antes de assinar o contrato; faturando por sprint, R$ 14.190,38.
 
 ### 7.11 Custo total de propriedade e sustentação opcional
 
@@ -2444,13 +2444,13 @@ O custo total de propriedade soma o que o Metrô paga ao fornecedor e o que paga
 
 | Componente | Primeiro ano | Três anos |
 |---|---:|---:|
-| Contrato de construção e implantação | R$ 52.681,53 | R$ 52.681,53 |
+| Contrato de construção e implantação | R$ 60.584,06 | R$ 60.584,06 |
 | Operação em produção (seção 7.5) | R$ 53.383,32 | R$ 160.149,96 |
-| **Custo total de propriedade** | **R$ 106.064,85** | **R$ 212.831,49** |
+| **Custo total de propriedade** | **R$ 113.967,38** | **R$ 220.734,02** |
 | Sustentação Nível 3 opcional | R$ 20.466,99 | R$ 61.400,97 |
-| **Custo total com sustentação** | **R$ 126.531,84** | **R$ 274.232,46** |
+| **Custo total com sustentação** | **R$ 134.434,37** | **R$ 282.134,99** |
 
-A projeção de três anos mantém volume e preços constantes. A operação responde por metade do custo do primeiro ano e por três quartos do custo em três anos: a decisão de adotar a solução é, sobretudo, a decisão de pagar a operação.
+A projeção de três anos mantém volume e preços constantes. A operação responde por quase metade do custo do primeiro ano (47%) e por quase três quartos do custo em três anos (73%): a decisão de adotar a solução é, sobretudo, a decisão de pagar a operação.
 
 **Sustentação Nível 3.** O TAPI prevê que a solução seja operada, mantida e evoluída pela equipe do Metrô, e por isso a sustentação não integra o preço. Se o Metrô quiser respaldo técnico após a operação assistida, oferece-se uma franquia de 15 h mensais, 180 h por ano, para correções e ajustes que a equipe interna não resolva. A franquia usa o mesmo custo-hora, a mesma alíquota e a mesma margem, sem despesa incremental, porque a estrutura administrativa da empresa já está coberta:
 
@@ -2474,13 +2474,13 @@ Não há medição do tempo que cada consulta leva hoje, e por isso o benefício
 | Benefício bruto mensal | R$ 9.450,00 | R$ 28.350,00 | R$ 47.250,00 |
 | (−) Operação em produção | R$ 4.448,61 | R$ 4.448,61 | R$ 4.448,61 |
 | **Benefício líquido mensal** | **R$ 5.001,39** | **R$ 23.901,39** | **R$ 42.801,39** |
-| **Payback do contrato** | **10,5 meses** | **2,2 meses** | **1,2 mês** |
-| Resultado em 12 meses | R$ 7.335,15 | R$ 234.135,15 | R$ 460.935,15 |
-| ROI em 12 meses | 6,9% | 220,8% | 434,6% |
-| Resultado em 36 meses | R$ 127.368,51 | R$ 807.768,51 | R$ 1.488.168,51 |
-| ROI em 36 meses | 59,8% | 379,5% | 699,2% |
+| **Payback do contrato** | **12,1 meses** | **2,5 meses** | **1,4 mês** |
+| Resultado em 12 meses | −R$ 567,38 | R$ 226.232,62 | R$ 453.032,62 |
+| ROI em 12 meses | −0,5% | 198,5% | 397,5% |
+| Resultado em 36 meses | R$ 119.465,98 | R$ 799.865,98 | R$ 1.480.265,98 |
+| ROI em 36 meses | 54,1% | 362,4% | 670,6% |
 
-Fórmulas: benefício bruto = 11.340 × minutos / 60 × R$ 50,00; payback = R$ 52.681,53 / benefício líquido mensal; resultado em n meses = n × benefício bruto − (R$ 52.681,53 + n × R$ 4.448,61); ROI = resultado / (R$ 52.681,53 + n × R$ 4.448,61).
+Fórmulas: benefício bruto = 11.340 × minutos / 60 × R$ 50,00; payback = R$ 60.584,06 / benefício líquido mensal; resultado em n meses = n × benefício bruto − (R$ 60.584,06 + n × R$ 4.448,61); ROI = resultado / (R$ 60.584,06 + n × R$ 4.448,61). No cenário pessimista, o contrato se paga em 12,1 meses, logo depois do primeiro ano, e o resultado em 12 meses fica praticamente nulo.
 
 #### 7.12.2 Ponto de equilíbrio
 
@@ -2489,9 +2489,9 @@ Mais útil que os três cenários é saber quanto tempo cada interação precisa
 | Objetivo | Tempo mínimo poupado por interação | Cálculo |
 |---|---:|---|
 | Cobrir a operação mensal | 28 s | R$ 4.448,61 / (11.340 × R$ 50,00 / 60) = 0,47 min |
-| Recuperar o contrato em 12 meses | 56 s | (R$ 52.681,53 / 12 + R$ 4.448,61) / (11.340 × R$ 50,00 / 60) = 0,94 min |
+| Recuperar o contrato em 12 meses | 60 s | (R$ 60.584,06 / 12 + R$ 4.448,61) / (11.340 × R$ 50,00 / 60) = 1,005 min |
 
-Se cada consulta ao agente evitar menos de um minuto de busca manual, a solução se paga no primeiro ano. É esse número, e não o ROI do cenário otimista, que deve orientar a decisão.
+Basta que cada consulta ao agente evite cerca de um minuto de busca manual para a solução se pagar no primeiro ano; no cenário pessimista, com exatamente um minuto, o retorno chega em 12,1 meses. É esse número, e não o ROI do cenário otimista, que deve orientar a decisão.
 
 #### 7.12.3 Leitura crítica
 
@@ -2505,15 +2505,15 @@ A lacuna principal é a ausência de medição do tempo atual. Antes da implanta
 
 | Variação | Preço final | Diferença para o preço-base | Lucro sobre o preço |
 |---|---:|---:|---:|
-| Margem de 10% | R$ 49.920,23 | −R$ 2.761,30 | 9,09% |
-| **Base: margem de 15%, Anexo V** | **R$ 52.681,53** | **R$ 0,00** | **13,04%** |
-| Margem de 20% | R$ 55.495,42 | R$ 2.813,89 | 16,67% |
-| Margem de 25% | R$ 58.363,40 | R$ 5.681,87 | 20,00% |
-| Fator R atingido, Anexo III com 6% | R$ 46.499,52 | −R$ 6.182,01 | 13,04% |
-| Com reserva de contingência | R$ 57.019,40 | R$ 4.337,87 | 13,04% |
-| Horas pela capacidade declarada: 6 × 16 h × 5 sprints + 16 h = 496 h | R$ 65.700,80 | R$ 13.019,27 | 13,04% |
+| Margem de 10% | R$ 57.408,54 | −R$ 3.175,52 | 9,09% |
+| **Base: margem de 15%, Anexo V** | **R$ 60.584,06** | **R$ 0,00** | **13,04%** |
+| Margem de 20% | R$ 63.820,04 | R$ 3.235,98 | 16,67% |
+| Margem de 25% | R$ 67.118,23 | R$ 6.534,17 | 20,00% |
+| Fator R atingido, Anexo III com 6% | R$ 53.474,70 | −R$ 7.109,36 | 13,04% |
+| Com reserva de contingência | R$ 65.712,18 | R$ 5.128,12 | 13,04% |
+| Horas pela capacidade declarada: 6 × 16 h × 5 sprints + 16 h = 496 h | R$ 65.700,80 | R$ 5.116,74 | 13,04% |
 
-A última linha testa a premissa mais sensível do orçamento. As horas dos cards medem o tamanho das tarefas pela régua da seção 2.5.2, e não a dedicação total da equipe; a própria Sprint 4 mostra carga atribuída acima da capacidade. Um fornecedor que precificasse a dedicação reservada, e não as tarefas, cobraria R$ 65.700,80. O orçamento mantém a base dos cards por ser a única rastreável card a card no Kanban.
+A última linha testa a premissa mais sensível do orçamento. As horas dos cards medem o tamanho das tarefas pela régua da seção 2.5.2, e não a dedicação total da equipe; a própria Sprint 4 mostra carga atribuída acima da capacidade. Um fornecedor que precificasse a dedicação reservada, e não as tarefas, cobraria R$ 65.700,80, R$ 5.116,74 a mais; a diferença é pequena porque a Sprint 5 foi planejada perto da capacidade, com 90,25 h de 96 h. O orçamento mantém a base dos cards por ser a única rastreável card a card no Kanban.
 
 #### 7.13.2 Sensibilidade da operação e do payback
 
@@ -2521,12 +2521,12 @@ Cenário-base de 3 minutos poupados por interação, variando uma premissa por v
 
 | Variação | Pacotes de créditos | Operação mensal | Payback |
 |---|---:|---:|---:|
-| **Base** | **3** | **R$ 4.448,61** | **2,2 meses** |
-| Metade do volume | 2 | R$ 3.249,84 | 4,8 meses |
-| Dobro do volume | 6 | R$ 7.991,21 | 1,1 mês |
-| 2 créditos por interação, só resposta generativa | 1 | R$ 2.158,41 | 2,0 meses |
-| Créditos por pagamento conforme o uso | Não se aplica | R$ 4.833,89 | 2,2 meses |
-| Usuários com licença Microsoft 365 Copilot | 0 | R$ 1.013,31 | 1,9 mês |
+| **Base** | **3** | **R$ 4.448,61** | **2,5 meses** |
+| Metade do volume | 2 | R$ 3.249,84 | 5,5 meses |
+| Dobro do volume | 6 | R$ 7.991,21 | 1,2 mês |
+| 2 créditos por interação, só resposta generativa | 1 | R$ 2.158,41 | 2,3 meses |
+| Créditos por pagamento conforme o uso | Não se aplica | R$ 4.833,89 | 2,6 meses |
+| Usuários com licença Microsoft 365 Copilot | 0 | R$ 1.013,31 | 2,2 meses |
 
 A tabela de cobrança da Microsoft não cobra créditos do Copilot Studio quando o usuário tem licença do Microsoft 365 Copilot. Se o Metrô já tiver essas licenças para os gestores do portfólio, a operação cai para R$ 1.013,31 por mês; a aplicação dessa regra ao canal Direct Line deve ser confirmada com o licenciamento da Microsoft antes de ser usada como premissa.
 
@@ -2536,10 +2536,10 @@ A tabela de cobrança da Microsoft não cobra créditos do Copilot Studio quando
 |---|---|---|
 | Câmbio sobre GitLab, Figma e Maze | Cada 10% de alta do dólar soma R$ 385,82 aos insumos | Validade de 30 dias da proposta |
 | Consumo de nuvem acima do previsto (`R10`) | O Copilot Studio sobe em degraus de R$ 1.145,10 | Orçamento no Azure Cost Management com alertas em 80% e 100% do valor mensal |
-| Escopo acima da capacidade (`R21`) | Horas além das 381,50 h orçadas | Reserva de contingência da seção 7.9.3 |
+| Escopo acima da capacidade (`R21`) | Horas além das 451,00 h orçadas | Reserva de contingência da seção 7.9.3 |
 | Serviços de IA no tenant da equipe (`R12`) | Reprovisionamento do Content Safety e do Speech no tenant do Metrô | Troca de configuração, e não de código (seção 6.3 do `Projeto.md`), feita na operação assistida |
 | Executor próprio fora do perímetro (`R19`, `R20`) | Nenhum no preço, porque não compõe o cenário comercial | Qualquer uso em produção exige nova proposta |
-| Atraso de pagamento do cliente | Estende o período de caixa negativo da seção 7.10 | Capital de giro de R$ 14.190,38 reservado antes da assinatura |
+| Atraso de pagamento do cliente | Estende o período de caixa negativo da seção 7.10 | Capital de giro de R$ 18.164,78 reservado antes da assinatura |
 
 #### 7.13.4 Lacunas declaradas
 
@@ -2554,22 +2554,22 @@ A tabela de cobrança da Microsoft não cobra créditos do Copilot Studio quando
 
 | Indicador | Valor |
 |---|---:|
-| Horas orçadas | 381,50 h |
-| Custo de pessoal | R$ 30.996,88 |
+| Horas orçadas | 451,00 h |
+| Custo de pessoal | R$ 36.643,75 |
 | Insumos, licenças e plataformas | R$ 4.247,51 |
-| **Custo total da construção (C)** | **R$ 35.244,39** |
+| **Custo total da construção (C)** | **R$ 40.891,26** |
 | **Despesas operacionais (D)** | **R$ 2.400,00** |
-| **Imposto (I), 15,5%** | **R$ 8.165,64** |
-| **Lucro (L), 15% sobre C + D + I** | **R$ 6.871,50** |
-| **Preço final ao Metrô (P)** | **R$ 52.681,53** |
-| Preço com reserva de contingência | R$ 57.019,40 |
+| **Imposto (I), 15,5%** | **R$ 9.390,53** |
+| **Lucro (L), 15% sobre C + D + I** | **R$ 7.902,27** |
+| **Preço final ao Metrô (P)** | **R$ 60.584,06** |
+| Preço com reserva de contingência | R$ 65.712,18 |
 | Operação em produção, paga pelo Metrô | R$ 4.448,61 por mês; R$ 53.383,32 por ano |
-| Custo total de propriedade no primeiro ano | R$ 106.064,85 |
-| Payback do contrato no cenário-base | 2,2 meses |
-| Tempo mínimo poupado para payback em 12 meses | 56 s por interação |
-| Capital de giro necessário ao fornecedor | R$ 14.190,38 |
+| Custo total de propriedade no primeiro ano | R$ 113.967,38 |
+| Payback do contrato no cenário-base | 2,5 meses |
+| Tempo mínimo poupado para payback em 12 meses | 60 s por interação |
+| Capital de giro necessário ao fornecedor | R$ 18.164,78 |
 
-O Metrô pagaria **R$ 52.681,53** pela construção, implantação e transferência do Prata Agent e cerca de **R$ 4.450,00 por mês** para mantê-lo em operação. O investimento se paga em menos de um ano desde que cada consulta poupe ao menos 56 segundos de busca manual.
+O Metrô pagaria **R$ 60.584,06** pela construção, implantação e transferência do Prata Agent e cerca de **R$ 4.450,00 por mês** para mantê-lo em operação. O investimento se paga no primeiro ano desde que cada consulta poupe cerca de um minuto de busca manual; com menos que isso, o retorno passa dos 12 meses.
 
 | Item do artefato | Onde está atendido |
 |---|---|

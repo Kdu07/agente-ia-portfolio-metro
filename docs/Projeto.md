@@ -53,6 +53,8 @@
   - [2.6 Matriz de Risco do Projeto](#26-matriz-de-risco-do-projeto)
   - [2.7 Ideação](#27-ideação)
   - [2.8 Canvas do Projeto](#28-canvas-do-projeto)
+  - [2.9 Objetivos de Desenvolvimento Sustentável](#29-objetivos-de-desenvolvimento-sustentável)
+  - [2.10 Custos da Prova de Conceito e da Solução Final](#210-custos-da-prova-de-conceito-e-da-solução-final)
 - [3. Requisitos do Projeto](#3-requisitos-do-projeto)
   - [3.1 Business Drivers](#31-business-drivers)
   - [3.2 Requisitos Funcionais (RFs)](#32-requisitos-funcionais-rfs)
@@ -1226,6 +1228,117 @@ O canvas de proposta de valor (Figura 15) detalha o bloco 2 da Figura 14. À dir
 O encaixe é forte onde o problema do usuário é encontrar a informação e confiar nela. A pergunta aberta interpretada substitui o fluxo pré-configurado do agente atual (2.2.3); a resposta citada reúne o que hoje está espalhado entre documentos; a recusa orientada e a abstenção evitam a resposta inventada, que a seção 2.8.4 aponta como o principal risco de abandono; e as rotinas e os avisos antecipam o atraso que o PMO hoje descobre na consolidação mensal.
 
 O encaixe falta onde o problema é registrar a informação. Manter os artefatos de gestão atualizados continua sendo tarefa manual, feita na fonte, e essa é a maior distância entre a proposta da Sprint 1 e a versão final. A arquitetura não fecha essa distância sozinha, mas deixa o caminho aberto: trocar o executor não altera guardas, catálogo de intenções, registro, rotinas nem interface (9.4.1), de modo que um executor com escrita no portfólio entra pela mesma porta. O ganho de tempo de O1 também segue como hipótese, e a forma de verificá-lo é medir, num piloto com líderes de projeto, o tempo de uma mesma consulta feita pelo agente e pela busca manual.
+
+## 2.9 Objetivos de Desenvolvimento Sustentável
+
+Esta seção identifica os Objetivos de Desenvolvimento Sustentável (ODS) da Agenda 2030 que o projeto atende e os que ele pode ameaçar. As metas são citadas na redação publicada pelas Nações Unidas no Brasil (brasil.un.org/pt-br/sdgs, consultada em 28/09/2026).
+
+O critério adotado é o mesmo nos dois sentidos. Um ODS é considerado atendido quando existe, no próprio projeto, um elemento que produz valor na dimensão da meta, seja funcionalidade entregue, decisão de arquitetura ou prática, e uma forma de verificar esse valor; a afinidade temática, sem um elemento que a sustente, não basta. Um ODS é considerado ameaçado quando algum elemento do projeto pode produzir dano na dimensão da meta, ainda que pequeno ou dependente de como a solução for usada. Como a prova de conceito opera com dados sintéticos e ainda não tem usuários do Metrô, as contribuições são potenciais: elas se realizam com a adoção, e as ameaças também.
+
+### 2.9.1 ODS atendidos
+
+| ODS e meta | Texto da meta | Elemento do projeto que gera valor | Como verificar | Alcance |
+|---|---|---|---|---|
+| **16** Paz, justiça e instituições eficazes — meta 16.6 | "Desenvolver instituições eficazes, responsáveis e transparentes em todos os níveis" | O Metrô é uma empresa pública, e a gestão do portfólio é a governança do seu investimento. Toda interação, inclusive as bloqueadas, é registrada com autoria, momento, intenção e desfecho (5.1.7.1), e toda resposta factual cita a fonte de onde veio (O3). As rotinas e os avisos tornam o acompanhamento menos dependente da cobrança manual | Registro de toda interação coberto pelos testes de integração IT-API-09 e IT-DB-02 (10.5); nenhuma resposta sem citação válida na bancada do RAG (9.4.6) | Direto |
+| **9** Indústria, inovação e infraestrutura — meta 9.5 | "Fortalecer a pesquisa científica, melhorar as capacidades tecnológicas de setores industriais em todos os países [...]" | O núcleo analítico foi construído, e não contratado como serviço: guardas, classificador de intenções e recuperação com citação ficam sob domínio da equipe (2.8.9), com a documentação de implantação, operação e retorno de versão para a sustentação pela TI do Metrô (capítulo 11) | Classificador medido com 0,856 de acurácia (5.4.11); implantação reproduzível pelos scripts e procedimentos do capítulo 11 | Direto |
+| **8** Trabalho decente e crescimento econômico — meta 8.2 | "Atingir níveis mais elevados de produtividade das economias por meio da diversificação, modernização tecnológica e inovação [...]" | A consulta em linguagem natural substitui a busca e a consolidação manual das informações do portfólio. A análise de viabilidade estima entre 189 e 945 horas liberadas por mês, nos três cenários da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md) | Objetivo O1, a medir num piloto, comparando o tempo de uma mesma consulta feita pelo agente e pela busca manual | Direto, condicionado à adoção |
+| **11** Cidades e comunidades sustentáveis — meta 11.2 | "[...] proporcionar o acesso a sistemas de transporte seguros, acessíveis, sustentáveis e a preço acessível para todos [...] por meio da expansão dos transportes públicos [...]" | O portfólio gerido pelo PMO é o dos programas e projetos de operação e expansão da rede metroviária (2.1). O aviso de marco atrasado, as rotinas e a consulta às decisões pendentes antecipam desvios de prazo nesses projetos | Tempo entre o atraso de um marco e a sua percepção pelo responsável, a medir no piloto | Indireto |
+
+A contribuição mais sólida é a do ODS 16: ela decorre de propriedades já implementadas e medidas, e não depende de escala. A do ODS 9 é direta, mas restrita à capacidade da própria companhia de manter a solução. A do ODS 8 depende de uso real, e o seu tamanho é a principal hipótese ainda não verificada do projeto. A do ODS 11 é a mais distante: o agente não constrói linhas, e o que ele pode fazer é encurtar o tempo até que um problema nos projetos que as constroem seja percebido, por isso ela é declarada como indireta e não deve ser superestimada.
+
+### 2.9.2 ODS ameaçados
+
+| ODS e meta | Texto da meta | Como o projeto pode ameaçar | Mitigação no projeto | Risco residual |
+|---|---|---|---|---|
+| **16** — meta 16.10 | "Assegurar o acesso público à informação e proteger as liberdades fundamentais, em conformidade com a legislação nacional e os acordos internacionais" | O registro de cada interação guarda quem perguntou o quê e quando, o que pode ser usado para monitorar pessoas. No executor próprio, a pergunta e os trechos recuperados passam por provedores externos (riscos R19 e R20) | Só dados sintéticos na prova de conceito; prazo de retenção com expurgo automático e cifra em repouso (RNF07); acesso ao painel restrito pela permissão `VER_INTENCOES`. Com dado real, os serviços passam ao tenant do Metrô e o uso depende da homologação pelos setores técnicos e de compliance | Médio: é a ameaça mais concreta, e a mitigação completa depende de decisões do parceiro sobre retenção, finalidade do registro e provedores |
+| **8** — meta 8.5 | "Até 2030, alcançar o emprego pleno e produtivo e trabalho decente para todas as mulheres e homens [...]" | A automação da busca e da consolidação pode ser lida como justificativa para reduzir postos no PMO e nas equipes de projeto | A análise de viabilidade trata as horas liberadas como ganho de capacidade, e não como economia de folha (seção 7.12.3 do [GestaoProjeto.md](GestaoProjeto.md)); o agente consulta e recusa, mas não decide nem escreve no portfólio; o PMO passa a ter a curadoria do catálogo e do corpus como atribuição nova | Baixo na prova de conceito; depende de como a companhia usar o tempo liberado |
+| **12** Consumo e produção responsáveis — meta 12.2 | "Até 2030, alcançar a gestão sustentável e o uso eficiente dos recursos naturais" | Modelos de linguagem consomem energia e infraestrutura a cada consulta, e o consumo cresce com a adoção | O classificador e os embeddings rodam localmente, em CPU, sem GPU; a geração usa um modelo da família Flash, e não um modelo maior do mesmo provedor; o pedido barrado pelas guardas ou recusado pelo classificador não chega ao modelo de geração; os apps escalam a zero quando ociosos, e o monitoramento dispensa o teste sintético que os acordaria a cada poucos minutos (11.2.6 e 11.3.3) | Baixo: o volume estimado é de cerca de 11,7 mil interações por mês (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)) |
+| **10** Redução das desigualdades — meta 10.2 | "Até 2030, empoderar e promover a inclusão social, econômica e política de todos, independentemente da idade, gênero, deficiência, raça, etnia, origem, religião, condição econômica ou outra" | Um agente em linguagem natural favorece quem já tem familiaridade digital. O teste de usabilidade usou participantes externos ao Metrô e dispositivos desktop (10.3.12.4), e a acessibilidade para pessoas com deficiência ainda não foi auditada | Interface responsiva sobre primitivos acessíveis, com testes que consultam os elementos pelo papel acessível (9.2.2); voz como alternativa à digitação, com o texto sempre disponível; perguntas sugeridas que mostram o que pedir sem exigir conhecimento prévio | Médio até a auditoria de acessibilidade e o teste com usuários do Metrô |
+
+O balanço é favorável, mas não automático. As contribuições dos ODS 16 e 9 já estão no que foi construído; as dos ODS 8 e 11 dependem de uso. Entre as ameaças, a da meta 16.10 é a que exige decisão antes do uso com dado real, porque o mesmo registro que sustenta a transparência da meta 16.6 pode servir ao monitoramento de pessoas. A finalidade do registro, quem o consulta e por quanto tempo ele existe precisam ser definidos pelo Metrô junto com a homologação, e não depois dela.
+
+Fonte das metas: NAÇÕES UNIDAS BRASIL. *Objetivos de Desenvolvimento Sustentável*: ODS 8, 9, 10, 11, 12 e 16. Disponível em: https://brasil.un.org/pt-br/sdgs. Acesso em: 28 set. 2026.
+
+## 2.10 Custos da Prova de Conceito e da Solução Final
+
+Esta seção detalha os custos de pessoal e de tecnologia de dois objetos distintos: a prova de conceito, construída pela equipe nas cinco sprints do módulo, e a solução final, que o Metrô contrataria para ter o agente em produção no próprio tenant. Os números vêm da análise de viabilidade da seção 7 do [GestaoProjeto.md](GestaoProjeto.md), que mostra cada cálculo, e são organizados aqui pela separação que a seção 2.8.9 propôs na Sprint 1: o custo de construção, fixo e delimitado no tempo, e o custo de operação, majoritariamente variável.
+
+### 2.10.1 Premissas e fontes de preço
+
+| Premissa | Valor adotado | Fonte e data de consulta |
+|---|---|---|
+| Custo-hora de pessoal | R$ 81,25, único para todas as funções | Salário de referência de R$ 13.000,00 mensais para Desenvolvedor Pleno contratado como PJ em São Paulo, dividido por 160 h (Glassdoor, 25/09/2026) |
+| Horas de trabalho | Estimativa de cada card pela régua de tamanho: PP 0,25 h, P 0,5 h, M 1 h e G 2 h | Kanban do GitLab, com a Sprint 5 pelo planejamento fechado em 28/09/2026 (seções 7.2 e 3.6.1 do [GestaoProjeto.md](GestaoProjeto.md)) |
+| Câmbio | PTAX de venda de R$ 5,1991, com IOF de 3,5% sobre compras internacionais com cartão | Banco Central do Brasil, 25/09/2026 |
+| Serviços de nuvem da Azure | Tabela oficial em reais, região `brazilsouth` | Microsoft, 25/09/2026 |
+| Microsoft Copilot Studio | Pacote de 25.000 créditos por R$ 1.145,10 ao mês | Microsoft, 25/09/2026 |
+| Modelo de geração do executor próprio | US$ 1,50 por milhão de tokens de entrada e US$ 9,00 por milhão de tokens de saída, no modelo `google/gemini-3.5-flash` | OpenRouter, 28/09/2026 |
+| Índice vetorial do executor próprio | Plano Starter, gratuito; o plano pago mais próximo, Standard, tem mínimo de US$ 50 por mês | Pinecone, 28/09/2026 |
+
+As fontes de 25/09/2026 estão listadas na seção 7.15 do [GestaoProjeto.md](GestaoProjeto.md), e as de 28/09/2026, nas Referências deste documento.
+
+### 2.10.2 Prova de conceito
+
+**Pessoal.** A prova de conceito consumiu 435,00 h de trabalho, somadas as cinco sprints: 55,00 h na Sprint 1, 90,50 h na Sprint 2, 55,50 h na Sprint 3, 143,75 h na Sprint 4 e 90,25 h planejadas para a Sprint 5. A equipe é de estudantes, e o custo abaixo valora esse trabalho a preço de mercado, ou seja, o que ele custaria num contrato.
+
+| Função | Horas | Custo |
+|---|---:|---:|
+| Gestão de projeto e processos | 51,25 h | R$ 4.164,06 |
+| Negócio, requisitos e viabilidade | 66,75 h | R$ 5.423,44 |
+| Arquitetura, dados e nuvem | 78,00 h | R$ 6.337,50 |
+| Desenvolvimento de software e PLN | 134,25 h | R$ 10.907,81 |
+| UX/UI e frontend | 39,50 h | R$ 3.209,38 |
+| Qualidade e testes | 65,25 h | R$ 5.301,56 |
+| **Total de pessoal** | **435,00 h** | **R$ 35.343,75** |
+
+A regra que associa as horas de cada sprint a uma função está na seção 7.2.2 do [GestaoProjeto.md](GestaoProjeto.md).
+
+**Tecnologia.** No módulo, parte das ferramentas saiu sem custo, em planos acadêmicos, contas gratuitas ou no ambiente do Inteli, e a nuvem operou sob o teto de R$ 300 por ano, com alerta de orçamento (11.2.6). A tabela registra o equivalente comercial de cada item, que é o custo de reproduzir a prova de conceito fora do ambiente acadêmico.
+
+| Item | Uso na prova de conceito | Custo | Base do cálculo |
+|---|---|---:|---|
+| GitLab Premium | Repositório, board, merge requests e integração contínua | R$ 2.808,92 | 6 usuários por 3 meses, a US$ 29 por usuário |
+| Figma Professional | Protótipos, mockups e correções de interface | R$ 516,58 | 2 assentos por 3 meses, a US$ 16 por assento |
+| Maze Starter | Teste de usabilidade com gravação | R$ 532,73 | 1 mês, a US$ 99 |
+| Azure: PostgreSQL, Container Registry e Key Vault | Banco, imagens e segredos dos estágios de desenvolvimento e homologação | R$ 389,28 | 2 meses a R$ 194,64 |
+| Azure Container Apps | Execução do `web` e do `middleware` | R$ 0,00 | Escala a zero, dentro da franquia mensal gratuita |
+| Azure AI Content Safety e Azure AI Speech | Guardas e transcrição | R$ 0,00 | Nível gratuito F0 |
+| Google Drive | Corpus sintético lido pela ingestão | R$ 0,00 | Pasta controlada, lida por conta de serviço |
+| Pinecone | Índice vetorial do corpus | R$ 0,00 | Plano Starter, suficiente para os 76 documentos e 1.883 trechos indexados (9.4.6) |
+| Embeddings e classificador | Vetorização e classificação de intenções | R$ 0,00 | Modelos locais, sem tarifa por requisição |
+| **Total fixo de tecnologia** | | **R$ 4.247,51** | |
+| Modelo de geração | Resposta com citação a cada consulta ao executor próprio | Cerca de R$ 0,05 por consulta | Cerca de 3.500 tokens de entrada (cinco trechos de até 350 tokens, as instruções fixas, a pergunta e até três turnos de histórico) e até 400 de saída: US$ 0,00885 por consulta, convertidos pela PTAX com IOF |
+
+Somados pessoal e tecnologia fixa, a prova de conceito custa **R$ 39.591,26** a preço de mercado, e a geração acrescenta centavos por consulta. O pessoal responde por 89% desse valor, o que confirma a leitura da seção 2.8.9: o valor da prova de conceito está no trabalho de construir e avaliar o pipeline, e não em infraestrutura.
+
+### 2.10.3 Solução final
+
+A solução final é a que o Metrô contrataria: construção e implantação no tenant do Metrô, treinamento, operação assistida e, depois, a operação mensal. Na análise de viabilidade, o executor em produção é o Copilot Studio no tenant do Metrô, preferência do parceiro registrada no TAPI (seção 7.1.3 do [GestaoProjeto.md](GestaoProjeto.md)), e não o executor próprio da prova de conceito.
+
+| Componente | Natureza | Valor | Premissas |
+|---|---|---:|---|
+| Contrato de construção, implantação e transferência | Pessoal, insumos, despesas, imposto e margem | R$ 60.584,06, em três marcos | 451,00 h × R$ 81,25 = R$ 36.643,75 de pessoal, 60,48% do preço; insumos de R$ 4.247,51; despesas de R$ 2.400,00; Simples Nacional de 15,5%; margem de 15% sobre custos, despesas e impostos (seções 7.2 a 7.9) |
+| Operação em produção | Tecnologia | R$ 4.448,61 por mês; R$ 53.383,32 por ano | Detalhada na tabela seguinte (seção 7.5) |
+| Sustentação Nível 3, opcional | Pessoal | R$ 20.466,99 por ano | 15 h por mês, 180 h por ano, com o mesmo custo-hora, imposto e margem (seção 7.11) |
+| **Custo total de propriedade** | | **R$ 113.967,38 no primeiro ano; R$ 220.734,02 em três anos** | Sem a sustentação opcional; com ela, R$ 134.434,37 e R$ 282.134,99 |
+
+O contrato inclui 16 h de treinamento e operação assistida além das 435,00 h de construção. A operação é dimensionada para 90 usuários ativos, os responsáveis pelas 86 frentes do portfólio e 4 integrantes do PMO, com 6 interações por usuário por dia útil, o que dá 11.340 interações de usuários e 390 disparos de rotinas por mês (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)).
+
+| Serviço de operação | Custo mensal | Premissa |
+|---|---:|---|
+| Microsoft Copilot Studio | R$ 3.435,30 | 73.899 créditos por mês, em 3 pacotes de 25.000 |
+| Azure Container Apps | R$ 711,35 | Uma réplica mínima de `web`, `middleware` e `worker`, sem partida a frio no expediente |
+| Azure Database for PostgreSQL | R$ 168,28 | Instância B1ms contínua, com 32 GB |
+| Azure AI Content Safety | R$ 68,23 | Três avaliações por interação, no nível pago S0 |
+| Azure AI Speech | R$ 39,09 | 20% das interações por voz, 7,56 h de áudio por mês, no nível pago S0 |
+| Azure Container Registry | R$ 26,20 | Plano Basic |
+| Azure Key Vault | R$ 0,16 | 10.000 operações |
+| Log Analytics | R$ 0,00 | Até 5 GB de ingestão, dentro da franquia |
+| **Total** | **R$ 4.448,61** | |
+
+**O que muda da prova de conceito para a solução final.** Três diferenças explicam por que a solução final não é a prova de conceito com mais usuários. A primeira é o executor: a prova de conceito responde pelo executor próprio, sobre serviços que a equipe provisiona, enquanto a solução final usa o Copilot Studio, que sozinho responde por 77% do custo de operação. A segunda é o perímetro: o Content Safety e o Speech saem do nível gratuito, no tenant da equipe, para o nível pago, no tenant do Metrô, que é a condição para usar dado real (risco R12). A terceira é a disponibilidade: os apps deixam de escalar a zero e mantêm uma réplica mínima, para que nenhum usuário espere a partida a frio do classificador.
+
+A integração com o Copilot Studio por Direct Line está no escopo do contrato, mas não foi concluída na prova de conceito (5.1.3). As horas do módulo não a incluem, e o esforço para concluí-la é risco de escopo, coberto pela reserva de contingência de R$ 3.664,38, que leva o preço a R$ 65.712,18 (seção 7.9.3 do [GestaoProjeto.md](GestaoProjeto.md)). Manter o executor próprio em produção trocaria os créditos do Copilot Studio por cobrança por token, mas exigiria um modelo de geração dentro do perímetro homologado e uma proposta nova (seção 7.13.3 do [GestaoProjeto.md](GestaoProjeto.md)).
 
 # 3. Requisitos do Projeto
 
@@ -11641,39 +11754,91 @@ evidência textual e a lacuna remanescente. “Parcial” significa que existem
 comportamentos aprovados, mas algum critério ou cenário continua pendente; não é
 uma declaração de conformidade integral.
 
+### 10.7.1 Triagem dos casos `xfail` da suíte funcional
+
+A execução de 25/09/2026 registrou 22 falhas esperadas. A triagem foi refeita em
+28/09/2026 sobre a `develop` no commit `773874b` e, depois das correções dos
+testes desatualizados nesta issue, o recorte dos sete arquivos terminou com
+**26 aprovados e 17 `xfail`**, em 234,87 s. A redução corresponde ao
+`TF-RF09-06`, corrigido pela #457, e a quatro expectativas atualizadas pela
+#458. Não houve `XPASS`: toda mudança de estado decorreu de correção identificada.
+
+Nesta tabela, **defeito do produto** é uma divergência entre um requisito do MVP
+e o comportamento implementado; **defeito do teste** é uma expectativa que ficou
+incompatível com o contrato ou com uma decisão de segurança vigente; **pendência
+aceita** é uma limitação consciente que preserva a segurança e não viola o
+critério de aceite do requisito; e **fora do MVP** segue a priorização da seção
+2.7.5. O estado “resolvido” aparece somente para manter a rastreabilidade dos 22
+casos históricos.
+
+| Caso | Classificação | Justificativa e encaminhamento |
+|---|---|---|
+| `TF-RF01-04` | Teste corrigido na #458 | A política vigente aplica `MEMBRO_EQUIPE`, o perfil mais restritivo, a uma identidade sem grupo mapeado. O teste passou a verificar perfil, ausência de projetos e ausência de permissões, em vez de esperar `None`. |
+| `TF-RF03-05` | Pendência aceita | A consulta não recebe dado de projeto fora do escopo porque o executor RAG é montado com o escopo do usuário. Não distinguir “projeto alheio” de “não encontrado” evita enumeração; permanece pendente tornar a recusa mais orientativa sem revelar a existência do projeto. A exposição de expectativas e escopo já é acompanhada pelo risco `R08`. |
+| `TF-RF03-06` | Defeito do produto | A extração/validação de entidade obrigatória integra o MVP, mas uma consulta ambígua ainda chega ao executor. Permanece pendente pedir o projeto ausente antes da execução. |
+| `TF-RF04-01` | Teste corrigido na #458 | O catálogo possui as sete intenções (`consultar_avanco`, `consultar_cronograma`, `consultar_status_projeto`, `consultar_marcos`, `consultar_riscos`, `consultar_problemas` e `consultar_aderencia_normativa`); o teste agora usa esses IDs reais. |
+| `TF-RF04-02` | Teste corrigido na #458 | O contrato atual materializa a referência em `RespostaExecutor.fontes`, e o teste agora inspeciona esse campo da `dataclass` em vez do antigo/inexistente `referencias`. |
+| `TF-RF04-04` | Defeito do produto | `GET /portfolio/projetos/{codigo}` ainda devolve 403 para projeto alheio e 404 para inexistente, permitindo enumeração. Permanece pendente uniformizar a resposta sem enfraquecer a autorização. |
+| `TF-RF04-05` | Teste corrigido na #458 | O teste agora verifica `TEXTO_SEM_EVIDENCIA`, situação `SEM_EVIDENCIA` e fontes vazias, que são o contrato vigente de abstenção do RAG. |
+| `TF-RF05-01` | Defeito do produto | O RF05 é MVP e o fluxo de alteração ainda não exige confirmação efetiva antes da escrita. Permanece pendente o fluxo transacional. |
+| `TF-RF05-02` | Defeito do produto | A negação ainda não percorre um fluxo transacional capaz de comprovar que o valor anterior foi preservado. Mesma pendência de RF05. |
+| `TF-RF05-03` | Defeito do produto | A permissão de escrita ainda não é verificada antes da leitura e da proposta de alteração. Mesma pendência de RF05. |
+| `TF-RF05-04` | Defeito do produto | Não há alteração efetivada com origem, autoria e momento, embora o RF05 e o RNF02 a exijam. Mesma pendência de RF05. |
+| `TF-RF05-05` | Defeito do produto | A escrita atômica e a preservação do estado anterior em falha ainda não existem. Mesma pendência de RF05. |
+| `TF-RF05-06` | Defeito do produto | O pipeline não conduz o diálogo para completar parâmetros ausentes antes de propor a alteração. Mesma pendência de RF05. |
+| `TF-RF06-01` | Defeito do produto | A rotina e os avisos existem, mas não há sonda que identifique periodicamente pendências e gere o aviso dirigido. Permanece pendente a proatividade interna. |
+| `TF-RF06-02` | Fora do MVP | O contato fora da aplicação por Teams ou correio corresponde à feature F57, explicitamente retirada do MVP na seção 2.7.6. O aviso interno continua no escopo. |
+| `TF-RF06-03` | Defeito do produto | Sem a sonda de pendências, o sistema também não comprova que um projeto completo deixa de gerar alerta. Mesma pendência de RF06. |
+| `TF-RF06-04` | Defeito do produto | A entrega do alerta somente ao responsável não é exercitável enquanto a sonda não produzir avisos a partir das pendências. Mesma pendência de RF06. |
+| `TF-RF06-05` | Defeito do produto | Responder ao alerta deveria retornar ao fluxo de alteração com confirmação; depende das correções consolidadas de RF05 e RF06. |
+| `TF-RF08-02` | Fora do MVP | Adequação de material gerencial por perfil pertence ao RF08/US08, classificados como desejáveis e fora do MVP na seção 2.7.5. |
+| `TF-RF08-03` | Fora do MVP | A regra de suficiência para gerar material é parte do RF08 desejável e não compõe a prova de conceito. |
+| `TF-RF08-04` | Fora do MVP | O material gerencial com fontes filtradas também pertence ao RF08. A proteção de fontes nas consultas do MVP continua coberta pelo escopo do RAG. |
+| `TF-RF09-06` | Resolvido pela #457 | A exceção inesperada da guarda de injeção agora vira `BLOQUEADA_INJECAO_MODELO`, não chama o executor e registra uma interação. O `xfail` foi removido e o caso passou na execução atual. |
+
+**Consolidação.** Dos 22 casos históricos, 12 identificam defeitos do produto,
+quatro eram testes desatualizados e foram corrigidos na #458, quatro estão fora
+do MVP, um é uma pendência aceita sob o risco `R08` e um foi resolvido pela #457.
+Essas categorias são mutuamente exclusivas e somam os 22 casos. Os 17 `xfail`
+remanescentes são, portanto, intencionais e visíveis: 12 defeitos ainda pendentes,
+quatro itens fora do MVP e uma pendência aceita. A integração externa por Teams
+ou correio permanece fora do MVP e não deve ser confundida com a proatividade
+interna ainda pendente no RF06.
+
 | Requisito | Script / seção | Resultado | Evidência | Lacuna |
 |---|---|---|---|---|
-| RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | Parcial: 4 aprovados, 1 `xfail` | `docs/evidencias/2026-09-25-testes-funcionais.txt` | Claim sem perfil correspondente |
+| RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | Aprovado: 5 casos no recorte reexecutado | evidência original; reexecução da #458 em 28/09 | Perfil seguro padrão, escopo e permissões verificados |
 | RF02 — canais | `tests/funcionais/test_rf02_canais.py` | Aprovado: 7 aprovados | mesma evidência | Limites desta bateria: dublês; integrações reais são cobertas em 10.5 |
-| RF03 — intenções | `tests/funcionais/test_rf03_intencoes.py` | Parcial: ver tabela 10.1.7 | mesma evidência | Casos `xfail` de permissão/entidade |
-| RF04 — consulta | `tests/funcionais/test_rf04_consulta.py` | Parcial: 1 aprovado, 4 `xfail` | mesma evidência | Dimensões, fontes, autorização indistinguível e ausência de dados |
-| RF05 — transações | `tests/funcionais/test_rf05_transacoes.py` | Reprovado/pendente: 6 `xfail` | mesma evidência | Fluxo de alteração com confirmação ainda não existe |
-| RF06 — pendências | `tests/funcionais/test_rf06_pendencias.py` | Fora do MVP nesta entrega: 5 `xfail` | mesma evidência | Varredura e aviso proativo planejados para onda posterior |
+| RF03 — intenções | `tests/funcionais/test_rf03_intencoes.py` | Parcial: 5 aprovados, 1 defeito e 1 pendência aceita | mesma evidência; triagem 10.7.1 | Solicitar entidade obrigatória; acompanhar resposta orientativa sob `R08` |
+| RF04 — consulta | `tests/funcionais/test_rf04_consulta.py` | Parcial: 4 aprovados e 1 defeito | mesma evidência; reexecução da #458; triagem 10.7.1 | Uniformizar a resposta 403/404 para impedir enumeração |
+| RF05 — transações | `tests/funcionais/test_rf05_transacoes.py` | Não implementado: 6 defeitos do produto | mesma evidência; triagem 10.7.1 | Alteração, confirmação, autorização, trilha e atomicidade |
+| RF06 — pendências | `tests/funcionais/test_rf06_pendencias.py` | Parcial: 4 defeitos do produto e 1 cenário fora do MVP | mesma evidência; triagem 10.7.1 | Implementar sonda e aviso interno; Teams/correio permanece fora do MVP |
 | RF07 — análise documental | `tests/funcionais/test_rf07_analise.py` | Fora do MVP: 3 `skip` | mesma evidência | Escopo explicitamente excluído do MVP |
-| RF08 — relatórios | `tests/funcionais/test_rf08_relatorios.py` | Parcial: ver tabela 10.1.7 | mesma evidência | Perfil, suficiência e filtro de fontes |
-| RF09 — guardas | `tests/funcionais/test_rf09_guardas.py` | Parcial: ver tabela 10.1.7 | mesma evidência; RNF em `2026-09-25-testes-rnf-perimetro.txt` | Falha fechada da guarda de injeção; RNF06 abaixo da meta |
+| RF08 — relatórios | `tests/funcionais/test_rf08_relatorios.py` | Fora do MVP: 1 cenário-base aprovado e 3 `xfail` desejáveis | mesma evidência; triagem 10.7.1 | Retomar perfil, suficiência e filtro de fontes após o MVP |
+| RF09 — guardas | `tests/funcionais/test_rf09_guardas.py` | Casos funcionais aprovados após #457 | evidência original e reexecução da triagem em 28/09; RNF em `2026-09-25-testes-rnf-perimetro.txt` | RNF06 permanece abaixo da meta; a correção funcional não altera a eficácia medida das guardas |
 | RF10 — registro | `tests/funcionais/test_rf10_registro.py` | Aprovado na bateria funcional | evidência funcional | Persistência real verificada separadamente por integração |
 | RF11 — rotinas | `tests/funcionais/test_rf11_rotinas.py` | Aprovado na bateria funcional | evidência funcional | Worker real e corrida concorrente ainda não demonstrados |
 | RF12 — histórico | `tests/funcionais/test_rf12_historico.py` | Aprovado na bateria funcional | evidência funcional | Integração implantada fora desta execução |
 | RNF01 — perímetro | `tests/perimetro/test_perimetro_declarado.py` | Aprovado: 5 casos | `2026-09-25-testes-rnf-perimetro.txt` | Inspeção do perímetro não comprova configuração implantada |
-| RNF02 — rastreabilidade | `tests/rnf/test_rnf02_07_auditoria.py` | Aprovado nos casos executados | mesma evidência | Persistência real requer PostgreSQL |
+| RNF02 — rastreabilidade | `tests/rnf/test_rnf02_07_auditoria.py` | Aprovado nos casos executados, inclusive na bateria integral com PostgreSQL | `2026-09-25-testes-rnf-perimetro.txt`; `2026-09-29-cobertura-integral-middleware.txt` | A execução local não substitui validação no ambiente implantado |
 | RNF03 — precisão | `app/pipeline/intencao/avaliacao.py` | Resultado já registrado em 5.4.11 | 5.4.11 | Reproduzir na mudança do modelo/conjunto |
-| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py` | Parcial: lógica passou; janela com PostgreSQL ignorada | mesma evidência | Medição contínua em ambiente implantado |
+| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py` | Parcial: lógica e janela local com PostgreSQL passaram na bateria integral | `2026-09-25-testes-rnf-perimetro.txt`; `2026-09-29-cobertura-integral-middleware.txt` | Medição contínua em ambiente implantado |
 | RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
 | RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
 | Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Microbenchmarks aprovados; cenário Locust reprovado por API indisponível | `2026-09-25-benchmark.txt`; `2026-09-25-locust.txt` | Reexecutar carga com API, banco e executor sintético ativos; TNF-DES-05 pendente |
-| Cobertura de código | `python -m pytest --cov=app --cov-report=term-missing` | 73,63% no escopo unitário/funcional/RNF/perímetro; abaixo de 80% | `2026-09-25-cobertura-backend.txt` | Meta de 80% e limitações documentadas abaixo |
-| Integração | matriz 10.5.9 e scripts `tests/integration/` | Consultar resultados e estratégia da seção 10.5 | seção 10.5 | Não confundir bateria funcional dublada com serviço real |
+| Cobertura de código | `python -m pytest ... --cov=app --cov-report=term-missing` | 84,06% na execução única das suítes unitária, funcional, RNF, perímetro e integração; meta de 80% atingida | `2026-09-29-cobertura-integral-middleware.txt` | Provedores comerciais reais permaneceram isolados e os `xfail` continuam visíveis |
+| Integração | matriz 10.5.9 e scripts `tests/integration/` | Incluída na bateria integral: PostgreSQL e RabbitMQ reais locais; serviços comerciais reais explicitamente ignorados | `2026-09-29-cobertura-integral-middleware.txt`; seção 10.5 | Não confundir infraestrutura local real com validação no ambiente implantado |
 
-**Cobertura de código.** A execução sobre `tests/unit`, `tests/funcionais`, `tests/rnf` e `tests/perimetro` concluiu com 933 aprovados, 10 ignorados e 22 `xfail`; mediu **73,63%** de cobertura de linhas/branches configurados para `app`, abaixo da meta de 80% de 9.1.8. A tabela completa e linhas ausentes estão em `docs/evidencias/2026-09-25-cobertura-backend.txt`. Entre os módulos com menor cobertura estão `app/webhooks/drive/__main__.py` (0%), `app/webhooks/portfolio/__main__.py` (0%), `app/webhooks/portfolio/aplicacao.py` (31,11%), `app/rag/vetorial/provisionar.py` (39,25%), `app/webhooks/portfolio/recebimento.py` (40,43%) e `app/webhooks/drive/manutencao.py` (41,10%). Os dois `__main__.py` são pontos de entrada; os módulos de processamento/integração indicam lacunas mais relevantes.
+**Cobertura integral do middleware.** Em 29/09/2026, uma única execução reuniu `tests/unit`, `tests/funcionais`, `tests/rnf`, `tests/perimetro` e `tests/integration`, com PostgreSQL 16 e RabbitMQ 4.3.6 reais do Compose. O resultado foi **1214 aprovados, 8 ignorados e 17 `xfail` em 354,68 s**, sem falhas, e **84,06%** de cobertura de linhas/branches configurados para `app`. A meta de 80% definida em 9.1.8 foi atingida neste ambiente e recorte. O log auditável, o comando, o ambiente e os motivos de cada grupo ignorado estão em [`docs/evidencias/2026-09-29-cobertura-integral-middleware.txt`](evidencias/2026-09-29-cobertura-integral-middleware.txt).
 
-`python -m pytest --cov=app --cov-report=term-missing` iniciou a suíte completa de 1.187 itens, mas ficou sem progresso durante teste de integração externa e foi interrompido. A medição concluída excluiu `tests/integration`, portanto não é cobertura integral de integração e serviços. As métricas também são limitadas pelos `xfail`, `skip`, dependências dubladas, funcionalidades fora do MVP e módulos não carregados na execução. Para aproximar a meta sem testes artificiais, priorizar webhooks reais, provisionamento vetorial, persistência/worker e ramos de falha; repetir após validar as integrações externas.
+O travamento anterior vinha da habilitação implícita dos testes reais de Gemini e Pinecone pela simples presença das credenciais. Esses módulos agora exigem `TESTES_EXTERNOS_REAIS=1` além da respectiva chave e são ignorados na coleta quando a autorização não existe. Os oito `skip` da execução correspondem a Gemini real, Pinecone real, três casos de RF07 fora do MVP, RNF06 real sem autorização, e dois casos Direct Line cujo cliente não está implementado. Entre os módulos com menor cobertura permanecem os pontos de entrada `app/rag/ingestao/__main__.py`, `app/webhooks/drive/__main__.py` e `app/webhooks/portfolio/__main__.py` (0%), além de `app/rag/vetorial/provisionar.py` (39,25%), `app/api/routes/portfolio.py` (41,46%) e `app/pipeline/intencao/avaliacao.py` (47,78%). A aprovação da suíte e a meta atingida não comprovam provedores comerciais reais, não eliminam os 17 `xfail` triados em 10.7.1 e não alteram a reprovação parcial do RNF06.
 **Riscos para liberação.** RF05 ainda não efetiva alterações com confirmação;
-RF06 e RF07 estão fora do MVP; RF04/RF08 permanecem parciais; a guarda de injeção
-não falha de modo seguro em uma indisponibilidade; o RNF06 reprova parcialmente;
+RF06 permanece parcial e RF07 está fora do MVP; RF04/RF08 permanecem parciais;
+o RNF06 reprova parcialmente;
 a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
-contínua, persistência PostgreSQL e carga Locust implantada seguem pendentes.
+contínua, validação no ambiente implantado e carga Locust implantada seguem
+pendentes.
 
 **Conclusão crítica.** Os resultados comprovam uma base automatizada executável e
 algumas regras centrais cobertas, mas não sustentam declaração de conformidade
@@ -12315,6 +12480,9 @@ partir da `develop` e merge request.
 - MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
 - PEDREGOSA, F. et al. *Scikit-learn: Machine Learning in Python*. Journal of Machine Learning Research, v. 12, p. 2825-2830, 2011. Disponível em: https://www.jmlr.org/papers/v12/pedregosa11a.html. Acesso em: 28 set. 2026.
 - MOCK SERVICE WORKER. *Documentação do MSW*. Disponível em: https://mswjs.io/docs/. Acesso em: 2 set. 2026.
+- NAÇÕES UNIDAS BRASIL. *Objetivos de Desenvolvimento Sustentável*. Disponível em: https://brasil.un.org/pt-br/sdgs. Acesso em: 28 set. 2026.
+- OPENROUTER. *google/gemini-3.5-flash: preços por token*. Disponível em: https://openrouter.ai/google/gemini-3.5-flash. Acesso em: 28 set. 2026.
+- PINECONE. *Pricing*. Disponível em: https://www.pinecone.io/pricing/. Acesso em: 28 set. 2026.
 - REIMERS, N.; GUREVYCH, I. *Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks*. In: Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP-IJCNLP), p. 3982-3992, 2019. Disponível em: https://arxiv.org/abs/1908.10084. Acesso em: 28 set. 2026.
 - PYTEST-RECORDING. *Plugin de gravação e reprodução para pytest*. Disponível em: https://github.com/kiwicom/pytest-recording. Acesso em: 2 set. 2026.
 - SCHEMATHESIS. *Property-based testing para APIs descritas em OpenAPI*. Disponível em: https://schemathesis.readthedocs.io/. Acesso em: 2 set. 2026.

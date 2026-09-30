@@ -9,27 +9,31 @@ obedece a ordem plantada num documento.
 Não usa índice nem banco: os trechos são montados à mão, para que uma
 falha aqui seja atribuível à geração e a nada mais (seção 5.1 do plano).
 
-**Pulado por padrão.** Sem `GEMINI_API_KEY` no ambiente, nada aqui roda
-— o CI não tem credencial de nenhum provedor. Cada execução faz quatro
-chamadas ao modelo; com a camada gratuita, rode sob demanda, não em
-laço.
+**Pulado por padrão.** Só roda com `TESTES_EXTERNOS_REAIS=1` e
+`GEMINI_API_KEY` no ambiente — o CI não tem credencial de nenhum provedor.
+Cada execução faz quatro chamadas ao modelo; com a camada gratuita, rode sob
+demanda, não em laço.
 
 O modelo não é determinístico. Um teste que falhe aqui de forma
 intermitente não é para rodar de novo até passar: é evidência de que a
 instrução não segura o modelo configurado, e vai para a bancada.
 """
 
+import os
+
 import pytest
 
 from app.config import settings
+
+if os.getenv("TESTES_EXTERNOS_REAIS") != "1" or not settings.gemini_api_key:
+    pytest.skip(
+        "exige TESTES_EXTERNOS_REAIS=1 e GEMINI_API_KEY: toca o serviço real",
+        allow_module_level=True,
+    )
+
 from app.rag.geracao import Gerador, Situacao
 from app.rag.linguagem.gemini import ModeloGemini
 from app.rag.recuperacao import Recuperacao, TrechoRecuperado
-
-pytestmark = pytest.mark.skipif(
-    not settings.gemini_api_key,
-    reason="exige GEMINI_API_KEY: toca o serviço real",
-)
 
 CUSTO = TrechoRecuperado(
     trecho_id="PRJ-2024-018_TAP#0008",

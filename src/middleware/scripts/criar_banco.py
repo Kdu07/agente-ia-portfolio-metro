@@ -30,6 +30,10 @@ from app.persistence.sessao import criar_engine
 RAIZ = Path(__file__).resolve().parent.parent
 ALEMBIC_INI = RAIZ / "alembic.ini"
 
+# Os schemas fora do padrão, na ordem em que as migrações os criaram.
+# A mesma lista que o `migrations/env.py` reconhece no autogenerate.
+ESQUEMAS = ("rag", "portfolio", "webhook")
+
 
 def _url_sem_senha() -> str:
     """A URL do banco com a senha ocultada, para log.
@@ -58,16 +62,22 @@ async def _verificar_conexao() -> None:
 
 
 def _tabelas(sincrona) -> list[str]:
-    """Tabelas do schema padrão e, prefixadas, as do schema `rag`.
+    """Tabelas do schema padrão e, prefixadas, as dos demais schemas.
 
-    O `rag` é criado pela migração da ingestão do executor próprio. Sem
-    listá-lo, o relatório diria que a migração rodou e não mostraria o
-    que ela criou.
+    Cada um dos outros schemas é criado por uma migração: `rag` pela
+    ingestão do executor próprio, `portfolio` pelos dados de projeto e
+    `webhook` pelas notificações das fontes externas. Sem listá-los, o
+    relatório diria que a migração rodou e não mostraria o que ela criou.
     """
     inspetor = inspect(sincrona)
+    existentes = set(inspetor.get_schema_names())
     tabelas = sorted(inspetor.get_table_names())
-    if "rag" in inspetor.get_schema_names():
-        tabelas += [f"rag.{nome}" for nome in sorted(inspetor.get_table_names(schema="rag"))]
+    for esquema in ESQUEMAS:
+        if esquema in existentes:
+            tabelas += [
+                f"{esquema}.{nome}"
+                for nome in sorted(inspetor.get_table_names(schema=esquema))
+            ]
     return tabelas
 
 

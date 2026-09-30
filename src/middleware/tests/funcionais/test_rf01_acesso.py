@@ -51,14 +51,15 @@ def test_tf_rf01_03_sessao_ausente_ou_expirada_recusa_antes_do_pipeline(cookie) 
     assert chamadas == 0
 
 
-@pytest.mark.xfail(strict=True, reason="grupo desconhecido ainda recebe perfil padrão de membro")
-def test_tf_rf01_04_claim_sem_perfil_correspondente_e_recusada(monkeypatch) -> None:
+def test_tf_rf01_04_claim_sem_perfil_correspondente_recebe_perfil_seguro(monkeypatch) -> None:
     monkeypatch.setattr(permissoes.settings, "entra_grupo_diretoria", "diretoria")
     monkeypatch.setattr(permissoes.settings, "entra_grupo_lider_projeto", "lider")
     monkeypatch.setattr(permissoes.settings, "entra_grupo_membro_equipe", "membro")
     identidade = IdentidadeEntra("u-sem-perfil", "Sem perfil", None, ("grupo-desconhecido",))
     usuario = permissoes.resolver(identidade)
-    assert usuario is None
+    assert usuario.perfil is Perfil.MEMBRO_EQUIPE
+    assert usuario.projetos == frozenset()
+    assert usuario.permissoes == frozenset()
 
 
 def test_tf_rf01_05_mesmo_enunciado_obedece_a_escopos_distintos() -> None:

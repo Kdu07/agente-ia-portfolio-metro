@@ -98,7 +98,11 @@ export function Composer({ valor, estadoVoz, parcial, onAlterar, onEnviar, onAlt
       data-voz={estadoVoz}
       className="caixa-mensagem group/caixa mx-auto w-full max-w-190 rounded-2xl border bg-card pt-3 pr-2.5 pb-2.5 pl-4 shadow-2 transition-[border-color,box-shadow,translate] duration-200 ease-padrao focus-within:border-primary/50 focus-within:shadow-3 focus-within:ring-4 focus-within:ring-primary/15 motion-safe:focus-within:-translate-y-0.5 data-[voz=gravando]:border-gravacao/55"
     >
+      <label htmlFor="campo-mensagem" className="sr-only">
+        Campo de mensagem
+      </label>
       <textarea
+        id="campo-mensagem"
         ref={ligarCampo}
         value={texto}
         onChange={(evento) => onAlterar(evento.target.value)}

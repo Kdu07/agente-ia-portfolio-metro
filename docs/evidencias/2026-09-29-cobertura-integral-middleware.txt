@@ -1,0 +1,84 @@
+EVIDÊNCIA — COBERTURA INTEGRAL DO MIDDLEWARE (#459)
+Data: 2026-09-29
+Branch: test/cobertura-integral-middleware
+Commit-base: 6ec100a
+
+OBJETIVO
+Medir, em uma única execução, a cobertura do middleware com as suítes unitária,
+funcional, de RNF, de perímetro e de integração, usando PostgreSQL e RabbitMQ
+reais do ambiente Docker local.
+
+AMBIENTE
+- Executor: contêiner Linux temporário, Python 3.12.14 e pytest 9.1.1.
+- Banco: PostgreSQL 16 do Compose, com migrações aplicadas.
+- Mensageria: RabbitMQ 4.3.6 do Compose.
+- TESTES_EXTERNOS_REAIS=0: provedores comerciais reais não foram acionados.
+- AQUECER_MODELOS=false: a execução não dependeu de aquecimento na inicialização.
+
+O contêiner Linux foi usado porque a política Windows App Control da máquina de
+desenvolvimento bloqueou a DLL nativa não assinada do SciPy. Essa limitação é do
+ambiente local, e não uma falha do código do middleware.
+
+COMANDO EXECUTADO
+python -m pytest tests/unit tests/funcionais tests/rnf tests/perimetro \
+  tests/integration --cov=app --cov-report=term-missing -q -ra \
+  -p no:cacheprovider --basetemp /tmp/g02-pytest-459-integral
+
+RESULTADO FINAL
+- Exit code: 0
+- 1214 passed
+- 8 skipped
+- 17 xfailed
+- 17 warnings
+- Tempo: 354,68 s (5 min 54 s)
+- Cobertura total: 84,06%
+- Instruções: 7514; não cobertas: 1023
+- Branches: 1450; parciais: 188
+- Meta do projeto: 80%; resultado: atingida neste ambiente e recorte.
+
+ISOLAMENTO DOS SERVIÇOS EXTERNOS
+Os testes reais de Gemini e Pinecone antes eram habilitados apenas pela presença
+das chaves no .env. Isso tornava a suíte integral dependente da rede e, no caso
+do Pinecone, de uma operação externa com consistência eventual. Os dois módulos
+agora exigem simultaneamente TESTES_EXTERNOS_REAIS=1 e a credencial específica;
+sem essa autorização explícita, são ignorados ainda durante a coleta, antes da
+importação dos SDKs e modelos pesados.
+
+Motivos dos 8 skips:
+- 1 módulo Gemini real: exige TESTES_EXTERNOS_REAIS=1 e GEMINI_API_KEY.
+- 1 módulo Pinecone real: exige TESTES_EXTERNOS_REAIS=1 e PINECONE_API_KEY.
+- 3 casos do RF07: requisito explicitamente fora do MVP.
+- 1 caso RNF06 real: exige EXECUTAR_RNF06_REAL=1 e credenciais do Content Safety.
+- 2 casos Direct Line: cliente ainda não implementado.
+
+Os 17 xfails são defeitos, pendências aceitas ou funcionalidades fora do MVP já
+triados na seção 10.7.1 do Projeto.md. Eles permaneceram visíveis e não foram
+convertidos artificialmente em aprovação.
+
+INTEGRAÇÕES EXERCITADAS
+- PostgreSQL real: testes de persistência, auditoria e demais casos de integração.
+- RabbitMQ real: testes de mensageria e webhooks, com isolamento próprio.
+- Serviços externos com fita/dublê: executados conforme seus testes.
+- Gemini, Pinecone, Direct Line e Content Safety real: não exercitados nesta
+  rodada pelos motivos explícitos acima.
+
+MÓDULOS COM MENOR COBERTURA E LACUNAS
+- app/rag/ingestao/__main__.py: 0,00%.
+- app/webhooks/drive/__main__.py: 0,00%.
+- app/webhooks/portfolio/__main__.py: 0,00%.
+- app/rag/vetorial/provisionar.py: 39,25%.
+- app/api/routes/portfolio.py: 41,46%.
+- app/pipeline/intencao/avaliacao.py: 47,78%.
+
+Os três arquivos __main__.py são pontos de entrada. As lacunas mais relevantes
+para testes futuros estão no provisionamento vetorial, nas rotas de portfólio e
+nos ramos auxiliares da avaliação do classificador. A cobertura acima de 80% não
+comprova os provedores comerciais reais, não elimina os 17 xfails e não altera a
+reprovação parcial já registrada para o RNF06.
+
+DIAGNÓSTICO ANTERIOR À EXECUÇÃO VERDE
+A primeira rodada integral no mesmo ambiente terminou com 1208 aprovados, 13
+ignorados, 17 xfails e uma falha de ambiente: o SDK Pinecone e bibliotecas de
+extração de documentos não estavam instalados na imagem de teste. Após alinhar
+essas dependências ao extra de desenvolvimento do projeto, a mesma bateria foi
+repetida e produziu o resultado final aprovado registrado acima.

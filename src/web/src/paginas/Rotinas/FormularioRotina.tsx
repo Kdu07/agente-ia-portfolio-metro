@@ -224,7 +224,7 @@ export function FormularioRotina({ aberto, modo, inicial, salvando, erro, onFech
         ) : null}
 
         {formulario.repeticao === "legada" ? (
-          <div role="note" className="rounded-md border border-desfecho-abuso/30 bg-desfecho-abuso/10 px-3.5 py-3 text-[13px] leading-relaxed text-foreground">
+          <div role="alert" className="rounded-md border border-desfecho-abuso/30 bg-desfecho-abuso/10 px-3.5 py-3 text-[13px] leading-relaxed text-foreground">
             Este agendamento foi criado em um formato antigo (
             <code className="font-mono text-[13.5px]">{formulario.agenda_legada}</code>) e será preservado. Para
             modificá-lo, escolha uma nova opção em <strong>Repetir</strong>.
