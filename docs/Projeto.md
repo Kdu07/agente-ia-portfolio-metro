@@ -7909,6 +7909,7 @@ individualmente ou em sequência:
 | `npm run typecheck` | Verificação de tipos do código da aplicação e dos arquivos de build |
 | `npm run test` | Execução das suítes automatizadas |
 | `npm run build` | Construção do pacote de produção, precedida da verificação de tipos |
+| `npm run audit:a11y` | Auditoria WCAG 2.1 A/AA com axe-core nas seis telas, temas claro e escuro (9.2.18) |
 
 As suítes cobrem dezessete casos distribuídos em três arquivos:
 
@@ -8063,6 +8064,67 @@ A declaração dessas limitações é parte da entrega. Um protótipo avaliado s
 elas produz duas leituras erradas em direções opostas: a de que a solução já
 consulta o portfólio real, e a de que a interface não funciona quando o avaliador
 percebe que o dado é fixo.
+
+### 9.2.18 Auditoria automatizada de acessibilidade (WCAG 2.1 A/AA)
+
+A interface já tratava contraste (9.2.5), tabela acessível nos gráficos e
+informação que não depende só da cor, mas até a Sprint 5 não havia passado por
+auditoria completa com ferramenta automatizada. Esta subseção registra a
+auditoria da issue `#468`: escopo, ferramenta, resultado por tela e tema, e o
+que ficou para correção (`#469`).
+
+**Ferramenta e execução.** A verificação usa **axe-core** via
+`@axe-core/playwright`, com as tags `wcag2a`, `wcag2aa`, `wcag21a` e
+`wcag21aa`. O script `src/web/scripts/auditoria-a11y.mjs` sobe o *build* em
+`vite preview`, autentica as telas protegidas mockando a API com
+`page.route` (usuário com `ver_intencoes` e `gerir_rotinas`) e percorre as
+seis rotas nos temas claro e escuro (`localStorage` `prata:tema`). O comando
+é `npm run audit:a11y`, a partir de `src/web`.
+
+**Escopo.** Doze combinações (seis telas × dois temas): Login (`/entrar`),
+Principal (`/`), Histórico (`/historico`), Intenções (`/intencoes`), Rotinas
+(`/rotinas`) e Não encontrada (`/pagina-inexistente`).
+
+**Resultado do axe (28/09/2026).** Dez combinações sem violação A/AA. Duas
+com falha, ambas na tela Intenções:
+
+| Tela | Tema claro | Tema escuro |
+| --- | --- | --- |
+| Login | 0 | 0 |
+| Principal | 0 | 0 |
+| Histórico | 0 | 0 |
+| Intenções | 1 *serious* | 1 *serious* |
+| Rotinas | 0 | 0 |
+| Não encontrada | 0 | 0 |
+
+A falha única é `scrollable-region-focusable` (impacto *serious*; critérios
+WCAG **2.1.1** / **2.1.3**): nas seções “Pedidos fora do escopo” e “Pedidos
+com baixa confiança”, o contêiner `.overflow-x-auto` é rolável e não possui
+conteúdo focável nem recebe foco por teclado. A correção cabe à `#469`
+(tornar a região focável ou garantir foco interno).
+
+**Teclado e foco.** Amostragem na ordem natural de Tab e nas folhas CSS
+carregadas:
+
+- regras `:focus-visible` presentes em todas as telas amostradas;
+- na moldura autenticada, a barra lateral precede o conteúdo da página;
+- Login concentra um único focável (botão Microsoft);
+- nenhum diálogo modal aberto no estado inicial das telas; Escape em menu do
+  perfil, barra móvel e formulário de rotina deve ser revalidado ao abrir
+  esses componentes.
+
+Achados manuais além do axe (não bloqueiam o critério A/AA detectado pela
+ferramenta, mas entram no backlog de melhoria):
+
+- a página Não encontrada renderiza o título sem `<h1>`
+  (`tituloDaPagina=false` no cabeçalho);
+- as telas autenticadas não expõem landmark `<main>` / `role="main"`; a
+  estrutura depende de *headings* e da barra lateral.
+
+**Limitações.** O axe não substitui revisão com leitor de tela nem contraste
+contextual ponto a ponto. A API foi mockada no Playwright; o percurso não
+exercita o middleware real. Gráficos em SVG podem gerar itens *incomplete* do
+axe sem constituir falha registrada acima.
 
 ## 9.3 Modelo de Recomendação
 
