@@ -1,9 +1,13 @@
 # Arquitetura da Solução — Agente de Portfólio do Metrô
 
 Este documento descreve a arquitetura da solução e a estrutura de pastas que a
-implementa. A proposta posiciona um **middleware próprio** entre o usuário e o
-**Copilot Studio**, que atua como executor de ações no ecossistema Microsoft do
-Metrô (SharePoint, Power BI, Power Automate).
+implementa. A solução posiciona um **middleware próprio** entre o usuário e o
+executor configurado. A porta `Executor` permite selecionar o **Copilot Studio**
+por Direct Line ou o **executor próprio**, que implementa recuperação de
+documentos por RAG (*Retrieval-Augmented Generation*). A API também expõe o
+portfólio estruturado no PostgreSQL por repositórios próprios; ele ainda não é
+roteado pelo `ExecutorRag`. A prova de conceito executável usa o segundo
+caminho; o primeiro depende de habilitação no tenant do parceiro.
 
 O escopo foi revisado: o middleware deixa de ser uma camada de passagem
 invisível e passa a ser o produto, com interface web própria, dados que são
@@ -12,9 +16,9 @@ frente da tela.
 
 ## 1. Visão geral
 
-O usuário nunca fala diretamente com o Copilot. Toda entrada — digitada,
+O usuário nunca fala diretamente com o executor. Toda entrada — digitada,
 ditada ou disparada por uma rotina agendada — passa pelo middleware, que cumpre
-cinco papéis:
+seis papéis:
 
 1. **Proteger contra prompt injection** — barra tentativas de manipular o
    agente, combinando filtros por padrões conhecidos, um classificador por
@@ -30,11 +34,17 @@ cinco papéis:
    apenas a quem tem permissão para vê-los.
 5. **Executar rotinas** — prompts pré-programados que disparam em datas
    planejadas, como um relatório para a diretoria todo dia 5.
+6. **Receber integrações assíncronas** — valida os dois webhooks, garante os
+   eventos no RabbitMQ e deixa o `worker` atualizar o portfólio ou o índice RAG
+   fora do tempo da requisição HTTP.
 
-O Copilot Studio, configurado no tenant Microsoft do parceiro, recebe o prompt
-já validado com a intenção resolvida e executa a ação correspondente (buscar e
-escrever documentos, consultar dados, disparar fluxos) por meio de conectores
-com permissões mínimas.
+Depois das guardas e da classificação, a fábrica em
+`app/executor/fabrica.py` monta o adaptador selecionado por `EXECUTOR`. O
+Copilot Studio recebe o prompt validado por Direct Line; o executor próprio
+recupera trechos do corpus no Pinecone, mantém texto e metadados no PostgreSQL
+e usa Gemini ou OpenRouter para compor a resposta. As consultas estruturadas do
+portfólio são atendidas pelas rotas `portfolio/`. Ambos os executores obedecem
+ao mesmo contrato e devolvem a resposta ao mesmo pipeline.
 
 ### 1.1 Trajeto de uma mensagem
 
@@ -50,8 +60,11 @@ flowchart TB
     A["1. Sessão, perfil e permissões"] --> B["2. Guarda de injeção"]
     B --> C["3. Guarda de abuso"]
     C --> D["4. Classificação de intenção"]
-    D --> E["5. Execução no Copilot Studio"]
-    E --> F["6. Guarda de saída"]
+    D --> E["5. Fábrica do executor"]
+    E --> EC["Copilot Studio<br/>(Direct Line)"]
+    E --> ER["Executor próprio<br/>(RAG documental)"]
+    EC --> F["6. Guarda de saída"]
+    ER --> F
     F --> G["7. Registro da interação"]
     G --> R["Resposta ao usuário"]
 
@@ -67,55 +80,87 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    WEB["src/web<br/>React + Vite"]
+    USER(["Usuário"])
+    DRIVE["Google Drive<br/><i>WH-01 + corpus</i>"]
+    APPS["Google Apps Script<br/><i>WH-02 · HMAC</i>"]
 
     subgraph LOCAL["docker compose"]
-        NGX["web — Nginx"]
-        API["middleware — FastAPI"]
-        WRK["worker — APScheduler"]
-        DB[("db — PostgreSQL")]
+        WEB["web<br/>React + Nginx"]
+        API["middleware<br/>FastAPI + pipeline"]
+        WRK["worker<br/>APScheduler + consumidor"]
+        MQ[("rabbitmq<br/>RabbitMQ 4.3")]
+        DB[("db<br/>PostgreSQL 16")]
     end
 
-    subgraph TENANT["Tenant Microsoft"]
+    subgraph AZURE_EQUIPE["Tenant Azure da equipe"]
         ENTRA["Entra ID"]
         SAFE["Azure AI Content Safety"]
         SPEECH["Azure Speech"]
-        CS["Copilot Studio (Direct Line)"]
-        CN["SharePoint · Power BI · Power Automate"]
     end
 
-    WEB --> NGX
-    NGX -->|"/api"| API
-    API --> DB
-    API --> ENTRA
-    API --> SAFE
-    API --> CS
-    WRK --> DB
-    WRK --> SAFE
-    WRK --> CS
-    CS --> CN
-    API -.->|"emite token efêmero"| SPEECH
-    WEB -.->|"áudio"| SPEECH
+    subgraph EXECUTORES["Executores selecionados por configuração"]
+        CS["Copilot Studio (Direct Line)"]
+        RAG["Executor próprio (RAG)"]
+    end
+
+    subgraph TERCEIROS["Serviços externos do executor próprio"]
+        PINE["Pinecone"]
+        LLM["Gemini / OpenRouter"]
+    end
+
+    USER -->|"HTTPS"| WEB
+    WEB -->|"HTTPS /api"| API
+    API -->|"OAuth 2.0 / OIDC"| ENTRA
+    API -->|"SQL / TLS"| DB
+    WRK -->|"SQL / TLS"| DB
+    API -->|"HTTPS"| SAFE
+    WRK -->|"HTTPS"| SAFE
+    API -.->|"HTTPS · Direct Line (previsto)"| CS
+    API -->|"chamada interna · contrato Executor"| RAG
+    WRK -.->|"HTTPS · Direct Line (previsto)"| CS
+    WRK -->|"chamada interna · contrato Executor"| RAG
+    RAG -->|"HTTPS · busca vetorial"| PINE
+    RAG -->|"HTTPS · geração"| LLM
+    RAG -->|"SQL · textos e metadados"| DB
+    API -->|"AMQP 0-9-1 · publica"| MQ
+    MQ -->|"AMQP 0-9-1 · consome"| WRK
+    DRIVE -->|"HTTPS · WH-01"| API
+    APPS -->|"HTTPS · WH-02"| API
+    WRK -->|"HTTPS · leitura incremental"| DRIVE
+    API -.->|"HTTPS · token / transcrição"| SPEECH
+    WEB -.->|"WebSocket/HTTPS · áudio contínuo"| SPEECH
 ```
 
 O `worker` não chama a API por HTTP: ele importa o mesmo orquestrador em
 processo. É o mesmo código, acionado por um gatilho diferente — ver
-[seção 4](#4-rotinas-agendadas).
+[seção 4](#4-rotinas-agendadas). Ele também consome
+`prata.webhooks.incoming`; os webhooks só respondem `202` depois da confirmação
+de publicação no RabbitMQ.
+
+O diagrama é uma **visão lógica da solução em execução**, não a afirmação de
+que todos os blocos estão hospedados na Azure. Localmente, os cinco serviços
+do retângulo `docker compose` sobem juntos. Na nuvem, `web`, `middleware` e o
+job de migração têm configuração de implantação; o `worker` é opcional e o
+RabbitMQ ainda não foi provisionado. O detalhamento está na seção 6 de
+[Projeto.md](Projeto.md).
 
 ### 1.3 Por que essa separação
 
 | Ganho | Custo assumido |
 |---|---|
-| Controle e auditoria totais sobre o que entra e sai do Copilot | Latência extra (dois saltos de rede + inferência) |
+| Controle e auditoria totais sobre o que entra e sai do executor | Latência extra (saltos de rede + inferência) |
 | Catálogo de intenções como ativo próprio, independente do executor | Classificação de intenção duplicada com o *topic matching* do Copilot |
 | Controle de acesso por perfil aplicado antes de qualquer ação | Dois ambientes para operar e versionar |
 | Registro completo das interações, base para a análise de intenções | Banco próprio para manter, migrar e proteger |
 | Interface própria: rotinas, histórico e dashboard que o Copilot não oferece | Experiência nativa do Copilot (ex.: canal Teams) deixa de ser aproveitada |
 
 Sobre a duplicação de classificação: a decisão é que **o middleware é a fonte de
-verdade** — ele classifica e envia a intenção já resolvida; os tópicos do
-Copilot funcionam apenas como mapeamento de ação (ver
-[copilot/topicos.md](../copilot/topicos.md)).
+verdade** — ele classifica e envia a intenção já resolvida ao adaptador
+selecionado. Quando o Copilot estiver ativo, seus tópicos funcionarão apenas
+como mapeamento de ação (ver [copilot/topicos.md](../copilot/topicos.md)); no
+executor próprio, o escopo do usuário filtra a recuperação documental. O
+portfólio estruturado permanece acessível pelas rotas e repositórios próprios,
+sem atribuir ao `ExecutorRag` um roteamento que ainda não existe.
 
 ## 2. As barreiras de segurança
 
