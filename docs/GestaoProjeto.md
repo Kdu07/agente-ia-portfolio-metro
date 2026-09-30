@@ -1804,7 +1804,7 @@ A matriz mantém o histórico de avaliação desde a identificação de cada ite
 | R20 | Escopo / Compliance | Ameaça | Índice vetorial do executor próprio no Pinecone, em `us-east-1` → vetores dos trechos e da pergunta, com identificadores e campos de filtro, ficam num provedor externo fora do Brasil; vetor não é anonimização, dada a literatura de inversão de embeddings | — | — | — | — | — | — | 4·2 | **8** | 🟡 Moderada | Resp. infraestrutura | Em Monitoramento |
 | **R21** | **Cronograma / Capacidade** | **Ameaça** | **Antecipação do escopo da Sprint 5 para a Sprint 4 → carga atribuída acima da capacidade declarada, conclusão acumulada no fim do ciclo e itens que não cabem na semana** | — | — | — | — | — | — | **5·4** | **20** | 🔴 Crítica | Scrum Master | **Materializado** |
 | **R22** | **Qualidade** | **Ameaça** | **Volume de merge requests sob prazo comprimido, com integração concentrada em poucas pessoas → revisão superficial, defeito integrado na `develop` e retrabalho no ciclo seguinte** | — | — | — | — | — | — | **4·3** | **12** | 🟠 Alta | Tech Lead | **Em Monitoramento** |
-| **R23** | **Escopo / Compliance** | **Ameaça** | **Procedimento de `copilot/solucao/README.md` manda versionar no repositório o export da *solution* do Copilot Studio, contrariando a restrição expressa do parceiro de 04/09 → links e conexões do ambiente restrito expostos no repositório** | — | — | — | — | — | — | **3·5** | **15** | 🟠 Alta | Resp. integração Microsoft | **Aberto** |
+| **R23** | **Escopo / Compliance** | **Ameaça** | **Export da *solution* do Copilot Studio versionado no repositório, contrariando a restrição expressa do parceiro de 04/09 → links e conexões do ambiente restrito expostos no repositório e no seu histórico** | — | — | — | — | — | — | **1·5** | **5** | 🟡 Moderada | Resp. integração Microsoft | **Mitigado** |
 | O01 | Stakeholders / Negócio | Oportunidade | MVP com valor demonstrado → internalização e evolução da solução pelo parceiro | 3·4 | 12 | 3·4 | 12 | 3·4 | 12 | 3·4 | **12** | 🟠 Alta | Product Owner | Em Monitoramento |
 | O02 | Técnica / Reuso | Oportunidade | Reuso dos artefatos do Módulo 8/2025 → decisões de engenharia aceleradas e maior maturidade da solução | 4·3 | 12 | 4·3 | 12 | 4·3 | 12 | 4·3 | **12** | 🟠 Alta | Resp. PLN | Em Monitoramento |
 | O03 | Equipe / Capacitação | Oportunidade | Domínio de tecnologias de alta demanda → equipe mais qualificada e portfólio fortalecido | 4·2 | 8 | 5·2 | 10 | 5·2 | 10 | 5·2 | **10** | 🟠 Alta | Scrum Master | Em Monitoramento |
@@ -1821,6 +1821,8 @@ A matriz mantém o histórico de avaliação desde a identificação de cada ite
 `R22` é a face de qualidade da mesma compressão. Com seis merge requests em revisão no corte e 82% dos merges executados por duas integrantes, a pressão de prazo recai sobre poucos revisores, e o risco é a revisão virar carimbo. Probabilidade 4, pelo volume em fila; impacto 3, porque um defeito integrado é corrigível dentro do módulo.
 
 `R23` nasce da liberação do ambiente do parceiro. Na mensagem de 04/09, o parceiro determinou que os agentes criados **não sejam exportados nem publicados em repositórios**, porque os arquivos exportados contêm links para o SharePoint e conexões com outros serviços do ambiente restrito. O `copilot/solucao/README.md` do repositório prevê o oposto: versionar ali o `.zip` exportado da *solution*. A pasta está vazia — nenhum export foi versionado, e nenhuma branch contém link do ambiente —, por isso o item entra como **Aberto**, e não materializado. A probabilidade é 3 porque o procedimento está escrito e a integração com o Copilot Studio está na fila. O impacto é 5 porque a materialização viola uma restrição de confidencialidade expressa pelo parceiro, o mesmo nível de `R09`.
+
+> **Registro de atualização.** Em **29/09/2026**, ainda antes do primeiro export, a #513 inverteu o procedimento: o `copilot/solucao/README.md` passou a proibir o versionamento da *solution* e a apontar `copilot/topicos.md` e `copilot/conectores.md` como único registro da configuração do agente, e o `.gitignore` passou a ignorar tudo na pasta além do README. A probabilidade cai de 3 para 1, e o item passa a **Mitigado**. O impacto fica em 5, porque a restrição continua valendo e o dano de uma materialização seria o mesmo. A exposição residual aceita é um export adicionado à força (`git add -f`) ou fora da pasta, e a revisão de merge request cobre esse caso. As notas da abertura acima foram preservadas; a severidade das tabelas desta seção já reflete a reavaliação.
 
 `O06` é o lado positivo da mesma liberação: pela primeira vez no módulo, RF04 a RF08 podem ser demonstrados no ambiente real, e a base sintética pode ser comparada aos dados de exemplo do parceiro. Entra como **Aberto** porque ainda não foi capturada — o cliente Direct Line (#374) segue em `Backlog`.
 
@@ -1858,7 +1860,7 @@ O histórico registra, por item, a evolução desde a identificação, de modo q
 | R20 | — | — | — | **8 — Em Monitoramento** | — | Item novo, registrado na abertura da sprint |
 | **R21** | — | — | — | **20 — Materializado** | — | **Item novo.** Antecipação do escopo da Sprint 5; 141% da capacidade declarada |
 | **R22** | — | — | — | **12 — Em Monitoramento** | — | **Item novo.** Seis MRs em revisão no corte; 82% dos merges em duas pessoas |
-| **R23** | — | — | — | **15 — Aberto** | — | **Item novo.** Procedimento de versionar o export do Copilot Studio contraria a restrição do parceiro de 04/09 |
+| **R23** | — | — | — | **5 — Mitigado** | — | **Item novo.** Aberto com 15, porque o procedimento de versionar o export do Copilot Studio contrariava a restrição do parceiro de 04/09. Mitigado em 29/09 (#513): README reescrito e pasta barrada no `.gitignore`. Probabilidade cai de 3 para 1 |
 | O01 | 12 — Aberto | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Sem evidência para reavaliar | Sem evidência para reavaliar; `O06` torna a captura mais viável |
 | O02 | 12 — Em Monitoramento | 12 — Em Monitoramento | 12 — Em Monitoramento | **12 — Em Monitoramento** | Reuso permanece relevante | Reuso permanece relevante |
 | O03 | 8 — Aberto | 10 — Em Monitoramento | 10 — Em Monitoramento | **10 — Em Monitoramento** | Frentes técnicas distintas no ciclo (voz, RF/RNF, PLN, mensageria) mantêm a captura | Novas frentes no ciclo: implantação em nuvem, webhooks e mensageria, testes de carga |
@@ -1889,7 +1891,7 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | Verificação de carga (`AM07` / `AM17`) | 2,25:1 em horas atribuídas | Ineficaz, com melhora sobre 2,50:1 | `AM21`, no planejamento |
 | Medição de latência (`R14`) | Latência por etapa gravada e exposta no painel (MR !127) | **Efetiva** como instrumentação | Campanha em voz na Sprint 5 |
 | Índices e agregação por janela (`R16`) | Índices integrados (#417); consultas do painel limitadas por janela | **Efetiva** | Volume de demonstração |
-| Proibição de exportar agentes para o repositório (`R23`) | Pasta `copilot/solucao/` vazia; procedimento ainda contradiz a restrição | Não iniciada | Card de adequação na Sprint 5 |
+| Proibição de exportar agentes para o repositório (`R23`) | Pasta `copilot/solucao/` vazia; README reescrito para proibir o export e pasta barrada no `.gitignore` (#513, 29/09) | **Efetiva** | Revisão de merge request até a demonstração final |
 
 ### 4.5 Plano de resposta — ameaças
 
@@ -1917,7 +1919,7 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 | **R20** | Texto dos trechos fora do metadado do índice (só vetor, identificador e campos de filtro); namespaces separados por ambiente; somente dado sintético; banco vetorial atrás da porta `rag/vetorial/`, com o adaptador pgvector como reserva | Acionar o pgvector sobre o PostgreSQL da equipe — o que exige trocar a imagem do banco por uma com a extensão `vector` — e apagar os namespaces do Pinecone |
 | **R21** | Planejar dentro da capacidade declarada, com excedente justificado item a item (`AM20`); checkpoint de quarta com data prevista por card (`AM25`) | **Acionada.** Priorizar a conclusão dos cards `P_ALTA` na própria Sprint 4, com redistribuição entre integrantes, sem transferir cards para a Sprint 5 |
 | **R22** | Teto de 40% dos merges por integrante (`AM22`); revisor nomeado na abertura; SLA de revisão medido (`AM23`) | Congelar novas integrações na véspera da entrega e revisar em par os merge requests pendentes; defeito encontrado vira card com prioridade alta na Sprint 5 |
-| **R23** | Reescrever `copilot/solucao/README.md` para proibir o versionamento de exports; guardar a configuração do agente só como descrição (`copilot/topicos.md`, `copilot/conectores.md`), sem links nem conexões do ambiente; revisão de MR recusa qualquer `.zip` de *solution* | Remover o arquivo, reescrever o histórico da branch afetada antes do merge, comunicar à orientadora e ao parceiro e pedir a rotação dos links e credenciais expostos |
+| **R23** | **Executada em 29/09 (#513).** `copilot/solucao/README.md` reescrito para proibir o versionamento de exports; configuração do agente guardada só como descrição (`copilot/topicos.md`, `copilot/conectores.md`), sem links nem conexões do ambiente; `.gitignore` ignora tudo em `copilot/solucao/` além do README; revisão de MR recusa qualquer arquivo de *solution*, inclusive adicionado à força | Remover o arquivo, reescrever o histórico da branch afetada antes do merge, comunicar à orientadora e ao parceiro e pedir a rotação dos links e credenciais expostos |
 
 ### 4.6 Estratégia de aproveitamento — oportunidades
 
@@ -1936,13 +1938,13 @@ As ações de mitigação em curso são classificadas como `Não iniciada`, `Em 
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | **5** | | O03 | R11 | **R21** | |
 | **4** | | R20 | R05, R07, R12, R18, R19, R22, O02, O04 | R01, **O06** | |
-| **3** | | R17 | R03, R08, R10, R14 | R06, R13, O01 | **R23** |
+| **3** | | R17 | R03, R08, R10, R14 | R06, R13, O01 | |
 | **2** | | | R16 | R02, R15 | R09 |
-| **1** | | | | R04 | |
+| **1** | | | | R04 | **R23** |
 
 `O05`, encerrada, deixa a matriz.
 
-Em relação à Sprint 3, a faixa crítica troca de composição. Saem `R01`, `R02` e `R06`, que caem com a liberação do ambiente do parceiro, e entra `R21`, na célula (P5, I4), pela compressão de escopo. `R02` desce da linha P5 para (P2, I4), e `R06` para (P3, I4). `R23` inaugura a célula (P3, I5), ao lado de `R09` na coluna de impacto máximo. `O06` entra em (P4, I4), junto a `R01`: a mesma liberação que reduz o risco dos dados é a oportunidade de validá-los.
+Em relação à Sprint 3, a faixa crítica troca de composição. Saem `R01`, `R02` e `R06`, que caem com a liberação do ambiente do parceiro, e entra `R21`, na célula (P5, I4), pela compressão de escopo. `R02` desce da linha P5 para (P2, I4), e `R06` para (P3, I4). `R23` entrou na célula (P3, I5), ao lado de `R09` na coluna de impacto máximo, e desceu para (P1, I5) com a mitigação de 29/09: a probabilidade cai, e o impacto de uma eventual materialização continua máximo. `O06` entra em (P4, I4), junto a `R01`: a mesma liberação que reduz o risco dos dados é a oportunidade de validá-los.
 
 A figura da matriz produzida no artefato de entendimento de negócio permanece como registro da avaliação inicial:
 
@@ -1956,7 +1958,9 @@ A figura da matriz produzida no artefato de entendimento de negócio permanece c
 
 **2º — R01 · Representatividade dos dados sintéticos (Sev. 16, 🟠 alta).** Sai da faixa crítica pela primeira vez desde a Sprint 2, mas continua o item de maior severidade entre os que não se materializaram. O SharePoint de teste traz dados de exemplo produzidos pelo parceiro, e é por isso que a probabilidade cai. A queda, porém, é de potencial, e não de fato: enquanto a base sintética não for comparada a esses dados, as métricas de 5.4.11 continuam sem prova de aderência ao portfólio real. A captura de `O06` é a mitigação de `R01`.
 
-**3º — R23 · Export do Copilot Studio no repositório (Sev. 15, 🟠 alta, aberto).** Empata em severidade com `R11` e fica à frente pelo impacto: 5 contra 3. `R11` compromete a continuidade da infraestrutura; `R23`, se materializar, viola uma restrição de confidencialidade expressa pelo parceiro, e o dano não se desfaz removendo o arquivo — o link e as conexões já estariam no histórico. É também o item de mitigação mais barata da matriz: basta reescrever um README antes do primeiro export, e o momento de fazer isso é antes de o cliente Direct Line (#374) sair do `Backlog`.
+**3º — R11 · Credenciais de nuvem (Sev. 15, 🟠 alta, materializado).** Único materializado entre os itens de severidade alta, e sem movimento desde a Sprint 2: a infraestrutura segue vinculada à conta pessoal de um integrante. A contingência — provisionamento pessoal com documentação reproduzível — é efetiva quanto à continuidade, mas não remove a exposição. As credenciais recebidas em 04/09 são do ambiente do parceiro, e não da nuvem da equipe, por isso o item não muda com a liberação. O encaminhamento é retomar a solicitação institucional; se ela não vier, o ambiente é recriado sob outra credencial a partir da documentação.
+
+`R23`, que ocupava esta posição na abertura da revisão com severidade 15, saiu do pódio ao ser mitigado em 29/09 (#513): o procedimento foi invertido antes do primeiro export, como a análise original recomendava, e a severidade caiu para 5.
 
 > **Nota de processo (fora do pódio de severidade).** `R02` e `R06`, que ocupavam o pódio desde a Sprint 2, deixam a faixa crítica juntos, e pela mesma razão. A resposta que os tirou de lá — escalar via orientadora e seguir com premissas documentadas — foi a contingência prevista desde a Sprint 1. O aprendizado registrável é que a contingência funcionou, mas a revisão da Sprint 3 não percebeu a mudança: a correção acima existe para isso.
 

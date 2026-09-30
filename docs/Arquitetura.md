@@ -381,7 +381,7 @@ g02/
 │       └── nginx.conf                # Estáticos + proxy /api -> middleware
 │
 ├── copilot/                          # Lado Copilot Studio (configuração versionada)
-│   ├── solucao/                      # Exports da solution do Copilot Studio
+│   ├── solucao/                      # Sem exports: proibidos pelo parceiro (R23)
 │   ├── topicos.md                    # Contrato intenção -> tópico/ação
 │   └── conectores.md                 # Conectores habilitados e permissões (governança)
 │
@@ -450,7 +450,11 @@ cookie de sessão viaja sem CORS e sem exceção de `SameSite`.
 O Copilot Studio é configurado por interface no tenant do parceiro e não gera
 código-fonte; o que se versiona são os artefatos de rastreabilidade:
 
-- **`solucao/`** — exports da *solution* (backup/migração da configuração);
+- **`solucao/`** — deliberadamente vazia. O parceiro proíbe versionar o export
+  da *solution*, porque ele carrega links do SharePoint e conexões do ambiente
+  restrito (`R23` em [GestaoProjeto.md](GestaoProjeto.md)). O README da pasta
+  registra a proibição, e o `.gitignore` barra o que for colocado ali; backup e
+  migração ficam no ambiente do parceiro;
 - **`topicos.md`** — o contrato entre os dois mundos: qual intenção do catálogo
   dispara qual tópico/ação. Deve evoluir junto com
   `src/middleware/app/pipeline/intencao/catalogo.py`;
