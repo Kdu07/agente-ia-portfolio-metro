@@ -7703,6 +7703,35 @@ leitor de tela, conforme descrito em 9.2.5.
 
 ### 9.2.6 Páginas e navegabilidade
 
+A navegação da aplicação é dividida em duas áreas: uma área pública de entrada e a moldura principal da aplicação, acessível apenas por sessão autenticada.
+
+```mermaid
+flowchart TD
+    START([Acesso Inicial]) --> CHECK{Sessão ativa?}
+    CHECK -- Não --> LOGIN["/entrar (Login)"]
+    LOGIN -- "Autenticação com sucesso" --> HOME
+    CHECK -- Sim --> HOME["/ (Principal - Conversa)"]
+    
+    subgraph LAYOUT["Moldura da Aplicação (Layout)"]
+        direction TB
+        HOME
+        HIST["/historico (Histórico de Conversas)"]
+        CONV["/conversas/:conversaId (Retomar Conversa)"]
+        
+        INT["/intencoes (Painel de Intenções)<br><i>🔒 Permissão: ver_intencoes</i>"]
+        ROT["/rotinas (Gestão de Rotinas)<br><i>🔒 Permissão: gerir_rotinas</i>"]
+        
+        404["qualquer outra rota (Não Encontrada)"]
+    end
+    
+    HOME <--> HIST
+    HOME <--> CONV
+    HOME <--> INT
+    HOME <--> ROT
+    
+    HOME -. "Rota inválida" .-> 404
+```
+
 | Rota | Página | Proteção | Finalidade |
 | --- | --- | --- | --- |
 | `/entrar` | `Login` | pública | Entrada na aplicação, fora da moldura de navegação |
@@ -7974,21 +8003,21 @@ descrito em 9.2.6.
 
 ### 9.2.13 Percurso das telas
 
+O quadro abaixo descreve a verificação de navegabilidade e estado visual da aplicação atual, refletindo as telas completas.
+
 | Passo | Ação | O que verificar |
 | --- | --- | --- |
-| 1 | Abrir `http://localhost:5173` | A página principal apresenta o estado inicial com quatro sugestões de partida |
+| 1 | Abrir `http://localhost:5173` | Se não autenticado, redireciona para `/entrar`. Se autenticado, a página principal apresenta o estado inicial com as sugestões de partida |
 | 2 | Acionar uma das sugestões | O texto é levado ao campo de mensagem, pronto para envio |
 | 3 | Enviar a mensagem | A bolha do usuário aparece imediatamente, o indicador de processamento é exibido e a resposta chega em seguida |
-| 4 | Acessar Histórico | As três conversas gravadas do dublê são listadas, com data relativa |
-| 5 | Abrir uma conversa do histórico | Os turnos gravados são apresentados e as sugestões de partida não reaparecem |
-| 6 | Acionar Nova conversa | O contexto é reiniciado, ainda que já se esteja na página principal |
-| 7 | Acessar Intenções | O painel de análise é apresentado, com os recortes do registro de intenções |
-| 8 | Acessar Rotinas | A lista de rotinas é apresentada, com busca, criação, edição e exclusão operantes |
-| 9 | Digitar um endereço inexistente | A tela de rota não encontrada é apresentada, e não uma página em branco |
+| 4 | Acessar Histórico (`/historico`) | As conversas anteriores do usuário são listadas, ordenadas por atualização |
+| 5 | Abrir uma conversa do histórico | A rota muda para `/conversas/:conversaId`, os turnos gravados são apresentados e as sugestões de partida não reaparecem |
+| 6 | Acionar Nova conversa | O contexto é reiniciado (`/`), mesmo que já se esteja na página principal |
+| 7 | Acessar Intenções (`/intencoes`) | O painel de análise é apresentado, apenas se o usuário possuir a permissão `ver_intencoes` |
+| 8 | Acessar Rotinas (`/rotinas`) | A lista de rotinas é apresentada (apenas para `gerir_rotinas`), com busca, criação, edição e exclusão operantes |
+| 9 | Digitar um endereço inexistente | A tela de rota não encontrada é apresentada preservando o Layout central, e não uma página em branco |
 
-O estado das rotinas é mantido em memória e reinicia a cada recarregamento da
-página, como convém a um dublê. Criar, editar e excluir produzem efeito visível
-enquanto a aba permanecer aberta.
+O estado de rotinas e intenções agora consome as respectivas rotas de API, e o fluxo reflete a arquitetura atual de rotas protegidas da interface.
 
 ### 9.2.14 Como exercitar cada desfecho do pipeline
 
