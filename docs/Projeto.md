@@ -2716,15 +2716,20 @@ C6 consolida o resultado — vindo do Pilar 2 ou a notificação de bloqueio —
 
 </details>
 
-### 5.2.3 Diagrama atual da Sprint 2
+### 5.2.3 Diagrama de componentes vigente
 
-Esta subseção é a referência vigente de componentes para a evolução S3–S5 e substitui, para implementação, a topologia histórica recolhida acima. O middleware orquestra o fluxo e o executor é escolhido por configuração. Em relação ao estado da S3, a emissão de token de voz, as três guardas, o cliente do executor e a execução de rotinas receberam implementação nas ondas seguintes; o estado verificável de cada integração é registrado nas respectivas seções, sem transformar o diagrama em evidência de deploy.
+Esta subseção é a referência vigente de componentes e substitui, para
+implementação, a topologia histórica recolhida acima. O middleware orquestra o
+fluxo e a porta `Executor` seleciona, por configuração, o Copilot Studio ou o
+executor próprio. O desenho representa componentes e contratos comprováveis no
+repositório; a presença no diagrama não equivale a implantação na nuvem, cujo
+estado está registrado na seção 6.
 
-O diagrama adota três agrupamentos principais. O `src/web` concentra a
-experiência do usuário; o `src/middleware` recebe as requisições e aplica o
-orquestrador; e o worker executa as rotinas agendadas pelo mesmo fluxo do chat.
-PostgreSQL e os serviços do tenant Microsoft aparecem como dependências externas
-ou compartilhadas, deixando explícitos os limites de responsabilidade da equipe.
+O diagrama separa a interface, os processos executáveis da aplicação, a
+infraestrutura de dados e mensageria e os serviços externos. O `src/web`
+concentra a experiência do usuário; a API recebe requisições e webhooks; e o
+`worker` executa rotinas e consome eventos do RabbitMQ. Os dois processos Python
+reutilizam o pipeline e acessam o PostgreSQL, mas não se chamam por HTTP.
 
 O canal de voz aparece com **os dois trajetos** decididos em 5.7.1.3, e a
 distinção entre eles é a única parte do diagrama que não se lê de imediato. No
@@ -2739,6 +2744,8 @@ produzem um único registro de solicitação, com o canal marcado como voz.
 ```mermaid
 flowchart TB
   ATOR([Usuário Autenticado<br/>Diretoria / Líder / Membro])
+  DRIVE["Google Drive<br/><i>WH-01 + corpus documental</i>"]
+  APPS["Google Apps Script<br/><i>WH-02 · HMAC</i>"]
 
   subgraph CLIENT["Navegador / Cliente"]
     direction TB
@@ -2757,46 +2764,57 @@ flowchart TB
       GINJ["pipeline/guardas/injecao/"]
       GABU["pipeline/guardas/abuso/"]
       INT["pipeline/intencao/ (Ensemble + Calibração)"]
-      COP["copilot/client.py (Direct Line)"]
+      FAB["executor/fabrica.py<br/><i>porta Executor</i>"]
       GSAI["pipeline/guardas/saida.py"]
       ANL["analytics/ (Consultas SQL Read-only)"]
+      PORT["portfolio/ + api/routes/portfolio.py<br/><i>dados estruturados</i>"]
       VOZ_BE["voz/ (Token Efêmero + Ingestão de Áudio)"]
+      WH["api/routes/webhooks.py<br/><i>WH-01 · WH-02</i>"]
       PER["persistence/ (SQLAlchemy 2 Async)"]
     end
 
-    subgraph WRK["worker (APScheduler 3)"]
+    subgraph WRK["worker (processo separado)"]
       direction TB
       AGD["rotinas/agendador.py<br/><i>Fuso America/Sao_Paulo</i>"]
       EXE["rotinas/execucao.py<br/><i>Reuso do Orquestrador (canal=rotina)</i>"]
+      CON["mensageria/consumidor.py<br/><i>eventos dos webhooks</i>"]
     end
 
-    DB[("db (PostgreSQL 16)<br/><i>Usuários, Intenções, Rotinas, Jobstore</i>")]
+    MQ[("rabbitmq (RabbitMQ 4.3)<br/><i>eventos · retentativas · falhas</i>")]
+    DB[("db (PostgreSQL 16)<br/><i>Interações · Portfólio · RAG · Rotinas</i>")]
   end
 
-  subgraph TENANT_PARCEIRO["Tenant Microsoft do Parceiro (Homologado)"]
+  subgraph TENANT_PARCEIRO["Tenant Microsoft do parceiro (integração prevista)"]
     direction TB
-    ENTRA["Microsoft Entra ID<br/><i>Identidade e Claims de Grupo</i>"]
     CS["Copilot Studio (Direct Line API)<br/><i>Executor Corporativo</i>"]
     M365["SharePoint Online · Power BI · Power Automate<br/><i>Fontes do Portfólio (Menor Privilégio)</i>"]
   end
 
   subgraph TENANT_EQUIPE["Tenant da Equipe (Perímetro Declarado RNF01 / R12)"]
     direction TB
+    ENTRA["Microsoft Entra ID<br/><i>Identidade e Claims de Grupo</i>"]
     SAFE["Azure AI Content Safety<br/><i>Prompt Shields + Categorias de Abuso</i>"]
-    SPEECH["Azure Speech Services<br/><i>Transcrição em Tempo Real (STT)</i>"]
+    SPEECH["Azure Speech Services<br/><i>Streaming + Fast Transcription</i>"]
+  end
+
+  subgraph EXE_PROPRIO["Executor próprio (configuração da PoC)"]
+    direction TB
+    RAG["rag/executor.py<br/><i>recuperação e geração</i>"]
+    PINE["Pinecone<br/><i>índice vetorial</i>"]
+    LLM["Gemini / OpenRouter<br/><i>geração da resposta</i>"]
   end
 
   %% Conexões Cliente / Proxy
   ATOR --> SPA
-  SPA -->|"Requisições HTTP /api"| NGX
-  NGX --> API
+  SPA -->|"HTTPS /api"| NGX
+  NGX -->|"HTTP interno"| API
 
   %% Canal de voz — os dois trajetos decididos em 5.7.1.3
   API --> VOZ_BE
-  SPA -.->|"Trajeto A: streaming de áudio"| SPEECH
-  VOZ_BE -.->|"Trajeto A: emite token efêmero"| SPEECH
-  SPA -->|"Trajeto B: POST /api/voz/audios"| NGX
-  VOZ_BE -->|"Trajeto B: transcreve o áudio recebido"| SPEECH
+  SPA -.->|"Trajeto A: WebSocket/HTTPS · streaming"| SPEECH
+  VOZ_BE -.->|"Trajeto A: HTTPS · token efêmero"| SPEECH
+  SPA -->|"Trajeto B: HTTPS POST /api/voz/audios"| NGX
+  VOZ_BE -->|"Trajeto B: HTTPS · Fast Transcription"| SPEECH
 
   %% Fluxo Backend / Pipeline
   API --> AUTH
@@ -2804,41 +2822,57 @@ flowchart TB
   API --> ORQ
 
   ORQ --> GINJ
-  GINJ --> SAFE
+  GINJ -->|"HTTPS"| SAFE
   ORQ --> GABU
-  GABU --> SAFE
+  GABU -->|"HTTPS"| SAFE
   ORQ --> INT
-  ORQ --> COP
-  COP <-->|"Direct Line"| CS
-  CS <--> M365
+  ORQ --> FAB
+  FAB -.->|"configuração copilot · HTTPS Direct Line"| CS
+  FAB -->|"configuração proprio · chamada interna"| RAG
+  CS <-->|"HTTPS · conectores"| M365
+  RAG -->|"HTTPS · busca vetorial"| PINE
+  RAG -->|"HTTPS · geração"| LLM
+  RAG -->|"SQL · textos e metadados"| DB
   ORQ --> GSAI
-  GSAI --> SAFE
+  GSAI -->|"HTTPS"| SAFE
   ORQ --> PER
-  PER --> DB
+  PER -->|"SQL / TLS"| DB
 
-  %% Rotinas e Analytics
+  %% Rotinas, analytics, webhooks e mensageria
   API --> ANL
-  ANL --> DB
-  AGD <--> DB
+  ANL -->|"SQL / TLS"| DB
+  API --> PORT
+  PORT -->|"SQL · consultas e vínculos"| DB
+  AGD <-->|"SQL / TLS · jobstore"| DB
   AGD --> EXE
   EXE --> ORQ
+  DRIVE -->|"HTTPS · WH-01"| WH
+  APPS -->|"HTTPS · WH-02 + HMAC"| WH
+  WH -->|"AMQP 0-9-1 · publish confirm"| MQ
+  MQ -->|"AMQP 0-9-1 · consume/ack"| CON
+  CON -->|"aplica evento"| DB
+  CON -->|"HTTPS · leitura incremental"| DRIVE
 
   classDef web fill:#e8f0fe,stroke:#3a5a8f,stroke-width:1px;
   classDef mid fill:#eef3fb,stroke:#3a5a8f,stroke-width:1px;
   classDef wrk fill:#eaf7ec,stroke:#2f7a3d,stroke-width:1px;
+  classDef queue fill:#fff4db,stroke:#a66a00,stroke-width:1px;
   classDef db fill:#fdf3e3,stroke:#b5822a,stroke-width:1px;
   classDef extParceiro fill:#f4e3f4,stroke:#8f3a8f,stroke-width:1px;
   classDef extEquipe fill:#ffebee,stroke:#c62828,stroke-width:1px;
+  classDef extTerceiro fill:#fff8e1,stroke:#a66a00,stroke-width:1px;
 
   class SPA,NGX web;
-  class API,AUTH,ORQ,GINJ,GABU,INT,COP,GSAI,ANL,VOZ_BE,PER mid;
-  class AGD,EXE wrk;
+  class API,AUTH,ORQ,GINJ,GABU,INT,FAB,GSAI,ANL,PORT,VOZ_BE,WH,PER mid;
+  class AGD,EXE,CON wrk;
+  class MQ queue;
   class DB db;
-  class ENTRA,CS,M365 extParceiro;
-  class SAFE,SPEECH extEquipe;
+  class CS,M365 extParceiro;
+  class ENTRA,SAFE,SPEECH extEquipe;
+  class DRIVE,APPS,RAG,PINE,LLM extTerceiro;
 ```
 
-*Figura 22 — Diagrama de componentes da arquitetura do middleware na Sprint 2.*
+*Figura 22 — Diagrama de componentes vigente da solução.*
 Fonte: Material produzido pelos autores (2026).
 
 #### 5.2.3.1 Responsabilidades dos componentes
@@ -2848,20 +2882,40 @@ Fonte: Material produzido pelos autores (2026).
 | Interface web | Páginas de Chat, Histórico, Intenções e Rotinas | Oferece os fluxos de conversa, retomada de sessões, consulta de métricas e gerenciamento de rotinas. O acesso às páginas de Intenções e Rotinas depende das permissões correspondentes. |
 | Entrada | Nginx | Entrega os arquivos estáticos da aplicação web e encaminha as chamadas `/api` para a API. |
 | API e identidade | `api/` e `auth/` | Expõe as rotas HTTP, resolve sessão, perfil e permissões e integra a autenticação OAuth com o Entra ID, mantendo a sessão no cookie `httpOnly`. |
-| Orquestração | `pipeline/orquestrador.py` | Coordena as etapas da mensagem em ordem fixa, garantindo que as guardas sejam executadas antes da chamada ao Copilot e do registro do desfecho. |
+| Orquestração | `pipeline/orquestrador.py` | Coordena as etapas da mensagem em ordem fixa, garantindo que as guardas sejam executadas antes da chamada ao executor e do registro do desfecho. |
 | Guardas | `pipeline/guardas/injecao/`, `abuso/` e `saida.py` | Detectam injeção direta, abuso e injeção indireta na resposta. As avaliações que dependem de serviço externo usam o Azure AI Content Safety. |
 | Intenção | `pipeline/intencao/` | Pré-processa a mensagem, consulta o catálogo e classifica a intenção que será usada pelo orquestrador. |
-| Integração Copilot | `copilot/client.py` | Centraliza a comunicação com o Copilot Studio por Direct Line, evitando que outras partes da aplicação criem integrações paralelas. |
+| Execução | `executor/`, `copilot/client.py` e `rag/` | Expõe uma única porta `Executor`. A fábrica seleciona por configuração o adaptador Direct Line ou o executor próprio, que recupera documentos no Pinecone, mantém textos no PostgreSQL e gera a resposta por Gemini/OpenRouter. |
+| Portfólio estruturado | `portfolio/` e `api/routes/portfolio.py` | Consulta projetos, riscos, marcos, indicadores e vínculos no PostgreSQL. Essas rotas já existem, mas ainda não são acionadas pelo `ExecutorRag`. |
 | Persistência e analytics | `persistence/` e `analytics/` | Persiste sessões, mensagens e desfechos no PostgreSQL; as consultas analíticas produzem recortes somente para leitura. |
-| Voz | `voz/` e Azure Speech | Emite token efêmero para a transcrição em tempo real, sem transferir a responsabilidade de autenticação do middleware para o navegador. |
+| Voz | `voz/` e Azure Speech | Emite token efêmero para o streaming no navegador e processa a ingestão assíncrona de arquivos, fazendo ambos os trajetos convergirem no pipeline. |
 | Rotinas | `rotinas/` e worker APScheduler | Valida prompts no cadastro, armazena o job e executa a rotina na data programada, reutilizando o orquestrador com `canal=rotina`. |
-| Serviços externos | Entra ID, Copilot Studio e conectores Microsoft, no tenant do parceiro; Azure AI Content Safety e Azure Speech, no tenant da equipe | Fornece identidade, execução conversacional e acesso às fontes corporativas conforme o menor privilégio, além da avaliação de conteúdo e da transcrição. A alocação de tenant é a declarada em 3.3.1.1 e a exposição correspondente é o risco R12. |
+| Webhooks e mensageria | `api/routes/webhooks.py`, `webhooks/`, `mensageria/` e RabbitMQ | Valida WH-01 e WH-02, publica `webhook.received` com confirmação e processa o evento no worker, com retentativas e fila de falhas. |
+| Serviços externos | Entra ID, Content Safety e Speech no tenant da equipe; Google Drive, Apps Script, Pinecone e Gemini/OpenRouter em terceiros; Copilot Studio previsto no tenant do parceiro | Fornecem identidade, proteção, voz, fontes e execução. A distribuição por perímetro e os riscos correspondentes estão declarados em 3.3.1.1 e na matriz de riscos. |
 
 As setas entre agrupamentos representam contratos de integração, e não
 necessariamente chamadas síncronas. Por exemplo, o agendador dispara uma
 execução no worker, enquanto o jobstore e os registros de conversa permanecem
-no banco. Da mesma forma, o navegador acessa o Speech para o áudio, mas recebe
-do middleware o token efêmero que autoriza essa sessão.
+no banco. Os webhooks entram por HTTPS, mas seu processamento prossegue de forma
+assíncrona por AMQP. Da mesma forma, o navegador acessa o Speech para o áudio,
+mas recebe do middleware o token efêmero que autoriza essa sessão.
+
+**Contratos entre fronteiras.** Chamadas entre módulos do mesmo processo são
+diretas e não inventam um protocolo de rede. Nas fronteiras, direção e contrato
+são os seguintes:
+
+| Origem → destino | Protocolo/contrato | Finalidade |
+|---|---|---|
+| Navegador → Nginx → FastAPI | HTTPS `/api`; HTTP interno no Compose | Interface, autenticação, chat, portfólio, histórico, intenções e rotinas |
+| FastAPI → Entra ID | OAuth 2.0 Authorization Code + PKCE sobre HTTPS | Autenticação e resolução da sessão |
+| FastAPI/worker → PostgreSQL | PostgreSQL sobre TLS, via SQLAlchemy | Estado operacional, portfólio, corpus, auditoria e agenda |
+| FastAPI → RabbitMQ → worker | AMQP 0-9-1, publicação confirmada e consumo com `ack` | Processamento assíncrono dos eventos dos webhooks |
+| Google Drive → FastAPI | HTTPS, cabeçalhos do canal WH-01 | Aviso de alteração do corpus |
+| Apps Script → FastAPI | HTTPS, JSON assinado por HMAC no WH-02 | Evento de alteração do portfólio |
+| FastAPI/worker → Content Safety | REST/HTTPS | Guardas de injeção, abuso e saída |
+| Navegador/FastAPI → Azure Speech | WebSocket/HTTPS no streaming; REST/HTTPS na Fast Transcription | Conversão de voz em texto nos dois trajetos |
+| Executor próprio → Pinecone/LLM | HTTPS | Busca vetorial e geração da resposta |
+| Adaptador Copilot → Copilot Studio | Direct Line sobre HTTPS, previsto | Executor alternativo dependente do tenant do parceiro |
 
 #### 5.2.3.2 Fluxos representados
 
@@ -2869,14 +2923,16 @@ do middleware o token efêmero que autoriza essa sessão.
 Histórico. O Nginx encaminha a requisição para a API, que resolve a sessão, o
 perfil e as permissões antes de entregar a mensagem ao orquestrador. O
 orquestrador aplica, em ordem, as guardas de injeção e abuso, classifica a
-intenção, envia ao Copilot um prompt rotulado, avalia a resposta e registra o
-desfecho no PostgreSQL.
+intenção, chama a porta `Executor`, avalia a resposta e registra o desfecho no
+PostgreSQL. A fábrica usa `EXECUTOR=copilot` para Direct Line ou
+`EXECUTOR=proprio` para o RAG documental. As consultas estruturadas existem em
+rotas próprias de portfólio e ainda não são selecionadas pelo executor.
 
 **Autenticação e proteção.** A autenticação usa Authorization Code com PKCE no
 Entra ID. Os claims de grupo retornam para a camada de autenticação e são
 convertidos em permissões de aplicação. O Azure AI Content Safety participa das
 avaliações de entrada e saída; assim, uma mensagem bloqueada não é enviada ao
-Copilot e uma resposta com indício de injeção indireta não é apresentada sem
+executor e uma resposta com indício de injeção indireta não é apresentada sem
 tratamento.
 
 **Voz.** A página Chat encaminha o áudio ao Azure Speech. A API emite um token
@@ -2895,6 +2951,13 @@ PostgreSQL por meio do módulo `analytics/`. O módulo é somente leitura e
 retorna volume, desfechos, bloqueios e confiança, mantendo a separação entre
 consulta analítica e alteração de dados operacionais.
 
+**Webhooks.** Google Drive envia o WH-01 com os cabeçalhos do canal, e o Apps
+Script envia o WH-02 com JSON assinado por HMAC. A API valida o contrato,
+registra o recebimento e publica `webhook.received` no RabbitMQ por AMQP 0-9-1.
+O worker confirma o consumo depois de aplicar o evento; falhas transitórias
+passam pelas filas de retentativa e falhas definitivas chegam a
+`prata.failed`.
+
 #### 5.2.3.3 Relação com requisitos e decisões arquiteturais
 
 | Elemento do diagrama | Requisitos ou decisões atendidos |
@@ -2902,17 +2965,18 @@ consulta analítica e alteração de dados operacionais.
 | Sessão, Entra ID e permissões | RF01 e RNF05: autenticação e autorização ocorrem antes do acesso aos dados. |
 | Guardas de injeção, abuso e saída | RF09 e RNF06: barram manipulação, uso indevido e injeção indireta, com detecção e falso positivo medidos por barreira. |
 | Catálogo e classificação de intenção | RF02, RF03 e RNF03: direcionam a solicitação e permitem recusar intenções fora do escopo. |
-| Copilot Studio como integração única | Pilar 2 da arquitetura (INT-02): o middleware controla o ponto de comunicação com o agente e os conectores corporativos. |
+| Porta `Executor` e dois adaptadores | O middleware controla o ponto de execução sem acoplar o pipeline ao Copilot ou ao RAG; a PoC usa o executor próprio e preserva o Direct Line como integração prevista. |
 | Persistência e registro de desfechos | RF10, RNF02 e RNF07: uma linha por solicitação, com retenção declarada e cifra em repouso. |
 | Histórico e retomada de conversas | RF12: a conversa agrupa as interações e o acesso é restrito ao seu autor. |
 | Worker usando o orquestrador | RF11 e RF06: mantém as rotinas agendadas sujeitas às mesmas regras de segurança do chat, incluindo a varredura periódica de pendências. |
 | Analytics somente leitura | RF10: permite acompanhar volume, confiança e bloqueios sem conceder à camada de indicadores permissão de escrita. |
+| Webhooks, RabbitMQ e consumidor no worker | Atualizam portfólio e corpus fora do tempo da requisição, com confirmação, idempotência, retentativas e fila de falhas. |
 | Alocação de tenant dos serviços externos | RNF01: o perímetro declarado em 3.3.1.1 nomeia cada serviço e o tenant em que ele executa. |
 
-Esta versão é a referência arquitetural da Sprint 2 para a implementação do
-MVP. Alterações na divisão de responsabilidades, nos serviços externos ou no
-fluxo fixo do orquestrador devem ser refletidas neste diagrama e nas vistas
-relacionadas de 5.3 e 5.6.
+Esta é a referência arquitetural vigente para a implementação do MVP.
+Alterações na divisão de responsabilidades, nos serviços externos ou no fluxo
+fixo do orquestrador devem ser refletidas neste diagrama e nas vistas
+relacionadas de 5.3, 5.6 e 6.1.
 
 #### 5.2.3.4 Guardas e ordem invariante do pipeline
 
@@ -4449,7 +4513,7 @@ A questão anterior sobre políticas de DLP e conectores personalizados foi ence
 
 ### 5.6.1 Objetivo
 
-> **Vista da Sprint 1 — mantida como histórico.** Esta seção compartilha os identificadores `A1`–`F5` com 5.2.1 e herda a mesma inversão: o percurso descrito em 5.6.5 leva a solicitação do núcleo de PLN ao roteador `D1` e aos serviços de negócio `D2`–`D6`, construídos pela equipe. Na arquitetura vigente esses serviços não existem — consultar, atualizar, alertar, comparar e gerar relatório são executados pelo Copilot Studio, e o middleware entrega guardas, registro, análise e rotinas. A vista em camadas correspondente ao contrato atual é **5.2.3**. Esta seção é preservada pelo valor dos princípios de desenho registrados em 5.6.2, que continuam válidos.
+> **Vista da Sprint 1 — mantida como histórico.** Esta seção compartilha os identificadores `A1`–`F5` com 5.2.1 e herda a mesma inversão: o percurso descrito em 5.6.5 leva a solicitação do núcleo de PLN ao roteador `D1` e aos serviços de negócio `D2`–`D6`, antes previstos como componentes separados. Na arquitetura vigente o middleware é a porta de entrada, aplica o pipeline e chama a porta `Executor`; a PoC usa os repositórios estruturados e o RAG do executor próprio, enquanto o Copilot permanece como adaptador previsto. A vista correspondente ao contrato atual é **5.2.3** e a comparação está em **5.6.7**. Esta seção é preservada pelo valor dos princípios de desenho registrados em 5.6.2, que continuam válidos.
 
 Esta seção apresenta o esboço preliminar da solução técnica do agente de IA para gestão do portfólio de projetos do Metrô de São Paulo, representado como um conjunto de blocos conectados. O objetivo é oferecer, ainda em nível de visão inicial, um entendimento comum sobre quais componentes compõem a solução, qual a responsabilidade de cada um e como eles se comunicam.
 
@@ -4694,6 +4758,32 @@ A tabela consolida quais blocos sustentam cada requisito, permitindo verificar s
 
 </details>
 
+### 5.6.7 Evolução da visão preliminar para a arquitetura implementada
+
+A seção recolhida acima preserva a visão produzida na Sprint 1. Ela não é uma
+segunda arquitetura vigente. A referência de implementação é a seção 5.2.3, e
+o quadro abaixo registra por que seus blocos diferem do desenho preliminar sem
+apagar a rastreabilidade da decisão.
+
+| Visão preliminar | Arquitetura implementada | Razão da mudança |
+|---|---|---|
+| Copilot Studio orquestrava e consumia uma API de PLN | FastAPI é a porta de entrada e o orquestrador; a porta `Executor` seleciona Copilot ou executor próprio | Guardas, autorização e registro precisam ocorrer antes e depois de qualquer executor, sob controle da equipe |
+| Canal principal dentro do ecossistema Microsoft | Interface React própria, servida por Nginx e integrada às rotas reais da API | Histórico, dashboard e gestão de rotinas exigem jornadas que não dependem da interface do Copilot |
+| Serviços de consulta, atualização, alerta, comparação e relatório separados | Pipeline único seguido por adaptadores e repositórios de portfólio/RAG | Evita duplicar segurança e registro por tipo de intenção; o roteamento ocorre pelo catálogo |
+| SharePoint e conectores Microsoft como única fonte | PostgreSQL para dados estruturados e textos; Google Drive como corpus sintético; Pinecone como índice vetorial | O ambiente e os dados sintéticos disponibilizados no desenvolvimento não dependem do tenant do parceiro |
+| Execução conversacional somente pelo Copilot | Executor próprio integrado na PoC; Direct Line preservado como opção ainda não homologada | A habilitação do Direct Line no tenant do parceiro não está disponível para a equipe |
+| Processamento essencialmente síncrono | API síncrona para chat e RabbitMQ para eventos dos webhooks, consumidos pelo worker | Confirma o recebimento rapidamente e permite retentativas sem bloquear a requisição |
+| Rotinas descritas no fluxo, sem processo operacional separado | Worker de réplica única com APScheduler, jobstore e reconciliação no PostgreSQL | Mantém a API sem estado e evita disparos duplicados quando ela escala ou reinicia |
+| Segurança descrita como controle de escopo | Guardas de injeção, abuso e saída em ordem fixa, usando regras locais e Content Safety | Separa ameaças e assegura que todo executor receba apenas entradas já avaliadas |
+| Voz representada como conversão genérica | Streaming direto navegador–Speech e ingestão assíncrona pela API convergem no mesmo pipeline | Preserva resposta parcial no navegador e cria um caminho validável e rastreável para arquivos |
+
+As vistas permanecem coerentes por função: 5.2.3 descreve os componentes
+vigentes; 5.3.8 descreve a ordem das interações; 5.8 descreve domínio e
+serviços; 6.1 mostra a implantação local da PoC; e 6.4 separa o que possui
+configuração Azure do que ainda existe apenas no Compose. Em particular,
+RabbitMQ e o worker fazem parte da solução executável local, mas não devem ser
+interpretados como serviços já provisionados continuamente na Azure.
+
 ## 5.7 Canal de Voz: Ingestão de Áudio e Conversão entre Fala e Texto
 
 Esta seção registra a definição técnica do canal de voz da solução, atendendo aos elementos de detalhamento da API de conversão de áudio em texto e de texto em áudio e da API de recebimento dos áudios enviados pelo usuário. O canal de voz materializa o RF02 e a US02, ambos priorizados como MVP, e é a origem do risco R03 registrado na seção 2.6.2.
@@ -4765,7 +4855,7 @@ A topologia híbrida acrescenta um componente de ingestão de áudio à camada d
 
 | Seção | Registro | Encaminhamento |
 |---|---|---|
-| 5.2.3, diagrama da Sprint 2 | A aresta entre a página de conversa e o serviço de fala representava apenas o trajeto direto | **Resolvido.** O diagrama passou a representar os dois trajetos, com o de ingestão atravessando o módulo `voz/` antes de alcançar o serviço de fala |
+| 5.2.3, diagrama de componentes vigente | A aresta entre a página de conversa e o serviço de fala representava apenas o trajeto direto | **Resolvido.** O diagrama passou a representar os dois trajetos, com o de ingestão atravessando o módulo `voz/` antes de alcançar o serviço de fala |
 | 5.5, ficha INT-12 | — | **Resolvido.** A ficha de integração do canal de voz registra os dois trajetos e a emissão do token efêmero pelo backend |
 | 5.2.1, blocos A2 e A3 | Situa captura e conversão como componentes de interface, sem contraparte no servidor | **Encerrado sem ação.** A seção passou a ser vista da Sprint 1, mantida como histórico; corrigi-la reescreveria o registro do que se pensou à época |
 | 5.3.2, diagrama DS01 | O fragmento opcional de entrada por voz resolve a conversão dentro da linha de vida do canal | **Encerrado sem ação.** Mesma razão: DS01 é vista histórica, e os cenários vigentes estão em 5.3.8 |
@@ -5522,7 +5612,7 @@ Como F80 tem prioridade 2 e a subseção 5.7.5 especifica sem implementar, esta 
 
 | Seção | O que a seção 5.7 impõe a ela | Situação |
 |---|---|---|
-| 5.2.3 — diagrama vigente da Sprint 2 | Acrescentar o trajeto que passa pelo módulo `api/` antes de alcançar o serviço de fala | **Resolvido.** O diagrama representa os dois trajetos, e o texto que o acompanha distingue o que cada um habilita |
+| 5.2.3 — diagrama de componentes vigente | Acrescentar o trajeto que passa pelo módulo `api/` antes de alcançar o serviço de fala | **Resolvido.** O diagrama representa os dois trajetos, e o texto que o acompanha distingue o que cada um habilita |
 | 3.1.5.2 — indicadores | A ressalva sobre a revisão das metas está encerrada por 5.7.2.8, com as três metas mantidas. O indicador de *round-trip WER*, porém, atravessa dois serviços e não distingue de qual deles veio o erro | **Atualização requerida**: a ressalva de 5.7.5.5 precisa acompanhar o indicador onde ele é definido |
 | 2.6.2 — matriz de risco | O R03 passa de ameaça sem tratamento a ameaça com mitigação exequível e mensurável; e a decisão de 5.7.2 introduz dois riscos novos, o esgotamento do nível gratuito e a latência adicional do trajeto de ingestão | **Atualização requerida, não realizada aqui** |
 | 5.5.5 — ficha INT-12 | Registrar os dois trajetos e a emissão do token efêmero pelo backend | **Resolvido** |
