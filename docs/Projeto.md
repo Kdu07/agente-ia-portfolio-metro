@@ -7832,6 +7832,42 @@ leitor de tela, conforme descrito em 9.2.5.
 
 ### 9.2.6 Páginas e navegabilidade
 
+A navegação da aplicação é dividida em duas áreas: uma área pública de entrada e a moldura principal da aplicação, acessível apenas por sessão autenticada.
+
+```mermaid
+flowchart TD
+    START([Acesso Inicial]) --> CHECK{Sessão ativa?}
+    CHECK -- Não --> LOGIN["/entrar (Login)"]
+    LOGIN -- "Autenticação com sucesso" --> HOME
+    CHECK -- Sim --> HOME["/ (Principal - Conversa)"]
+
+    subgraph LAYOUT["Moldura da Aplicação (Layout)\n(barra lateral presente em todas as páginas)"]
+        direction TB
+        HOME
+        HIST["/historico (Histórico de Conversas)"]
+        CONV["/conversas/:conversaId (Retomar Conversa)"]
+
+        PERM_INT{tem ver_intencoes?}
+        INT["/intencoes (Painel de Intenções)<br><i>🔒 Permissão: ver_intencoes</i>"]
+
+        PERM_ROT{tem gerir_rotinas?}
+        ROT["/rotinas (Gestão de Rotinas)<br><i>🔒 Permissão: gerir_rotinas</i>"]
+
+        404["qualquer outra rota (Não Encontrada)"]
+    end
+
+    HOME <--> HIST
+    HIST --> CONV
+    HOME <--> PERM_INT
+    PERM_INT -- Sim --> INT
+    PERM_INT -- Não --> HOME
+    HOME <--> PERM_ROT
+    PERM_ROT -- Sim --> ROT
+    PERM_ROT -- Não --> HOME
+
+    HOME -. "Rota inválida" .-> 404
+```
+
 | Rota | Página | Proteção | Finalidade |
 | --- | --- | --- | --- |
 | `/entrar` | `Login` | pública | Entrada na aplicação, fora da moldura de navegação |
@@ -8088,36 +8124,33 @@ Para conferir o artefato de produção, `npm run build` seguido de `npm run
 preview` serve localmente o conteúdo de `dist/`, que não deve conter o arquivo
 `mockServiceWorker.js`.
 
-### 9.2.12 Identidade apresentada pelos dublês
+### 9.2.12 Identidade e sessão
 
-A identidade devolvida pelo dublê corresponde a uma líder de projeto com as duas
-permissões da solução, `ver_intencoes` e `gerir_rotinas`. Isso é deliberado:
-permite que as telas protegidas sejam percorridas em avaliação, sem que se
-afrouxe controle de acesso algum, uma vez que a verificação real ocorre no
-backend a cada rota e o arquivo de identidade dublada não entra no pacote de
-produção.
+A identidade e as permissões do usuário vêm do middleware real via Entra ID: a rota `GET /api/auth/eu` devolve os dados da sessão autenticada. O dublê de identidade que existia em sprints anteriores não é mais registrado; `mocks/navegador.ts` inicializa o MSW apenas com os handlers ainda pendentes de implementação no backend (`handlersPendentes`), e passa pela rede qualquer rota já implementada, incluindo as de conversa, histórico, intenções, rotinas e identidade.
 
-Em consequência, a barra lateral apresenta os quatro destinos de navegação. Uma
-sessão com permissões menores veria apenas os itens correspondentes, conforme
-descrito em 9.2.6.
+A barra lateral exibe apenas os destinos para os quais o usuário autenticado tem permissão, conforme descrito em 9.2.6. Um usuário com as duas permissões (`ver_intencoes` e `gerir_rotinas`) verá os quatro destinos de navegação; sessões com permissões menores verão apenas os itens correspondentes.
+
 
 ### 9.2.13 Percurso das telas
 
+O quadro abaixo descreve a verificação de navegabilidade e estado visual da aplicação atual, refletindo as telas completas.
+
+> [!IMPORTANT] **Pré-condições:** o middleware e o banco de dados devem estar no ar e acessíveis, e é preciso um usuário cadastrado no Entra ID capaz de autenticar-se. O passo 1 não é alcançável apenas com `npm run dev` sem os serviços de backend ativos. Os passos 7 e 8 exigem um usuário que possua, respectivamente, as permissões `ver_intencoes` e `gerir_rotinas`.
+
 | Passo | Ação | O que verificar |
 | --- | --- | --- |
-| 1 | Abrir `http://localhost:5173` | A página principal apresenta o estado inicial com quatro sugestões de partida |
+| 1 | Abrir `http://localhost:5173` | Se não autenticado, redireciona para `/entrar`. Se autenticado, a página principal apresenta o estado inicial com as sugestões de partida |
 | 2 | Acionar uma das sugestões | O texto é levado ao campo de mensagem, pronto para envio |
 | 3 | Enviar a mensagem | A bolha do usuário aparece imediatamente, o indicador de processamento é exibido e a resposta chega em seguida |
-| 4 | Acessar Histórico | As três conversas gravadas do dublê são listadas, com data relativa |
-| 5 | Abrir uma conversa do histórico | Os turnos gravados são apresentados e as sugestões de partida não reaparecem |
-| 6 | Acionar Nova conversa | O contexto é reiniciado, ainda que já se esteja na página principal |
-| 7 | Acessar Intenções | O painel de análise é apresentado, com os recortes do registro de intenções |
-| 8 | Acessar Rotinas | A lista de rotinas é apresentada, com busca, criação, edição e exclusão operantes |
-| 9 | Digitar um endereço inexistente | A tela de rota não encontrada é apresentada, e não uma página em branco |
+| 4 | Acessar Histórico (`/historico`) | As conversas anteriores do usuário são listadas, ordenadas por atualização |
+| 5 | Abrir uma conversa do histórico | A rota muda para `/conversas/:conversaId`, os turnos gravados são apresentados e as sugestões de partida não reaparecem |
+| 6 | Acionar Nova conversa | O contexto é reiniciado (`/`), mesmo que já se esteja na página principal |
+| 7 | Acessar Intenções (`/intencoes`) com um usuário que possui `ver_intencoes` | O painel de análise é apresentado; sem essa permissão, `RotaProtegida` redireciona para `/` e o item não aparece na barra lateral |
+| 8 | Acessar Rotinas (`/rotinas`) com um usuário que possui `gerir_rotinas` | A lista de rotinas é apresentada com busca, criação, edição e exclusão operantes; sem essa permissão, `RotaProtegida` redireciona para `/` e o item não aparece na barra lateral |
+| 9 | Digitar um endereço inexistente | A tela de rota não encontrada é apresentada preservando a moldura, com a barra lateral visível, e não uma página em branco |
 
-O estado das rotinas é mantido em memória e reinicia a cada recarregamento da
-página, como convém a um dublê. Criar, editar e excluir produzem efeito visível
-enquanto a aba permanecer aberta.
+O estado de rotinas e intenções consome as respectivas rotas de API, e o fluxo reflete a arquitetura de rotas protegidas da interface.
+
 
 ### 9.2.14 Como exercitar cada desfecho do pipeline
 
