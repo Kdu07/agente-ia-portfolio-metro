@@ -1,0 +1,106 @@
+EVIDÊNCIA — TNF-DES-03, TNF-DES-04 E TNF-DES-07 COM A API ATIVA
+Issue: #461
+Execução: 29–30/09/2026
+Commit de base: 260ec4c
+
+AMBIENTE
+
+- Host: Windows 11; Intel Core i5-1334U, 10 núcleos e 12 processadores
+  lógicos; aproximadamente 16,8 GB de RAM.
+- Docker Desktop 29.2.1: 12 CPUs lógicas e aproximadamente 8,2 GB de RAM.
+- API: uma instância Uvicorn/Python 3.12, em contêiner construído do
+  middleware do repositório e publicado apenas em 127.0.0.1:8000.
+- PostgreSQL: imagem postgres:16-alpine, banco local real.
+- Gerador de carga: Locust 2.42.6 em contêiner temporário construído a
+  partir da mesma imagem local do middleware. O gerador e o alvo
+  compartilharam o mesmo Docker Desktop.
+- Sessão: identidade sintética persistida no PostgreSQL local. Nenhum
+  cookie ou segredo foi registrado nesta evidência.
+- Pipeline: PERFORMANCE_MODE=true; somente o executor final foi trocado
+  por ExecutorDesempenho, com atraso configurado em 50 ms. Autenticação,
+  guardas, classificação e persistência permaneceram ativas. O Content
+  Safety estava configurado no ambiente.
+- Modelo de intenções aquecido antes das duas execuções válidas.
+
+CORREÇÃO DO ORÁCULO DE CARGA
+
+A mensagem padrão anterior, "Qual o status do projeto PRJ-2024-018?",
+foi recusada por baixa confiança pelo modelo carregado. Como o script
+aceitava qualquer campo `desfecho`, uma resposta HTTP 200 de recusa era
+contada como sucesso, embora o executor sintético não fosse alcançado.
+
+O locustfile passou a usar a frase canônica do catálogo "Qual o status do
+projeto XPTO?" e a exigir `desfecho=encaminhada`. Uma rodada de controle
+persistiu o desfecho `encaminhada`, comprovando a passagem pelo executor.
+As medições abaixo foram realizadas depois dessa correção. As rodadas
+diagnósticas anteriores não são usadas como resultado da issue.
+
+COMANDOS E PARÂMETROS
+
+Nominal (TNF-DES-03):
+
+  python -m locust -f tests/desempenho/locustfile.py \
+    --headless -u 10 -r 2 -t 5m --only-summary
+
+Pico (TNF-DES-04):
+
+  python -m locust -f tests/desempenho/locustfile.py \
+    --headless -u 30 -r 6 -t 5m --only-summary
+
+Nos dois casos, o intervalo entre solicitações foi de 1 a 3 segundos, o
+alvo foi POST /chat e o critério semântico exigiu `encaminhada`.
+
+RESULTADOS
+
+| Cenário | Usuários | Requisições | Falhas | Taxa de falha | p50 | p95 | p99 | Máximo |
+| Nominal | 10 | 137 | 27 | 19,71% | 8,3 s | 56 s | 80 s | 126,3 s |
+| Pico | 30 | 159 | 18 | 11,32% | 34 s | 106 s | 174 s | 205,9 s |
+
+O limite operacional da seção 9.1.8 é p95 <= 8 s. Logo:
+
+- TNF-DES-03: REPROVADO. O p95 nominal foi sete vezes o limite e houve
+  19,71% de falhas semânticas.
+- TNF-DES-04: REPROVADO. O pico apresentou degradação gradual até p95 de
+  106 s e também recusa abrupta por HTTP 500.
+- TNF-DES-07: REPROVADO, pois os dois p95 ultrapassaram 8 s.
+
+SATURAÇÃO E CAUSA OBSERVADA
+
+O primeiro ponto concorrente medido, dez usuários, já estava saturado;
+portanto, o limiar de saturação está em dez usuários ou abaixo neste
+ambiente. O pico de trinta usuários ampliou a cauda e esgotou o pool do
+banco.
+
+No nominal, 26 falhas foram respostas 200 com
+`bloqueada_injecao_modelo` e uma com `bloqueada_saida`. Os logs registram
+HTTP 429 do Content Safety durante a janela. A API permaneceu ativa, mas
+o contrato funcional não foi cumprido para essas solicitações. Ao fim da
+janela configurada, requisições em voo não drenaram e o processo Locust
+precisou receber SIGINT; isso também faz parte da evidência de saturação.
+
+No pico, as 18 falhas foram HTTP 500. O traceback da API identifica
+`sqlalchemy.exc.TimeoutError`: pool de tamanho 5, overflow máximo 10 e
+timeout de aquisição de 30 s. O PostgreSQL continuou ativo; foi a fila de
+conexões da aplicação que se esgotou. Foram persistidas 154 interações
+`encaminhada` para a identidade sintética do pico.
+
+LIMITAÇÕES
+
+- O gerador e o alvo compartilharam CPU, memória e rede do Docker
+  Desktop; os números caracterizam esta bancada, não a capacidade do
+  Azure Container Apps.
+- O Content Safety é externo e seu 429 participou do resultado. Repetir
+  com quota e limites conhecidos é necessário para separar capacidade
+  do middleware de capacidade contratada do provedor.
+- O ensaio identifica que dez usuários já saturam a configuração atual,
+  mas não faz busca fina entre um e dez usuários.
+- O executor foi sintético de propósito; o resultado não mede Copilot
+  Studio nem o executor RAG real.
+
+CONCLUSÃO
+
+A reexecução é válida e reproduzível, mas não aprova desempenho. Ela
+substitui a evidência anterior sem respostas HTTP por uma medição do
+pipeline ativo e revela dois riscos concretos antes da liberação: quota
+das guardas externas e dimensionamento/tempo de retenção das conexões do
+banco sob chamadas longas.

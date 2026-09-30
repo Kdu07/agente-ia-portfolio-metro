@@ -9571,6 +9571,23 @@ A micro-medição foi executada em Windows 11, Python 3.14.2, `pytest-benchmark`
 O cenário Locust foi executado com um usuário, `PERF_TARGET=http://localhost:8000`, espera entre tarefas de 0,1 s e duração de 10 s. A API não estava disponível: a tentativa terminou com zero respostas HTTP válidas e falha de conexão (HTTP 0). Portanto, não há p50/p95 de carga utilizáveis, e `TNF-DES-01`, `TNF-DES-03`, `TNF-DES-04` e `TNF-DES-07` permanecem sem resultado válido nesta rodada. O cenário de concorrência com worker (`TNF-DES-05`) também não foi exercitado; o teste unitário do worker não demonstra execução de worker separado sob carga. `TNF-DES-06` não foi executado pelo Locust nesta tentativa.
 
 Evidências brutas: `docs/evidencias/2026-09-25-benchmark.txt` e `docs/evidencias/2026-09-25-locust.txt`. Para repetir carga, iniciar API, PostgreSQL e executor sintético, configurar uma sessão de teste e usar o roteiro Locust documentado acima. Não reutilizar os números de carga registrados em 22/09 como resultado desta execução.
+
+#### 10.2.2.2 Reexecução com API ativa — 29–30/09/2026
+
+A carga foi reexecutada sobre o commit `260ec4c`, com API, PostgreSQL 16 e Content Safety configurados, sessão sintética persistida e `PERFORMANCE_MODE=true`. Esse modo troca **somente o executor final** por `ExecutorDesempenho`, com atraso de 50 ms; autenticação, guardas, classificação e persistência continuam no caminho medido. A bancada usou uma instância Uvicorn e Locust 2.42.6 em contêiner separado, ambos no mesmo Docker Desktop (12 CPUs lógicas e cerca de 8,2 GB de RAM). O host foi um Windows 11 com Intel Core i5-1334U e cerca de 16,8 GB de RAM.
+
+A preparação revelou um defeito no oráculo: a mensagem padrão anterior do `locustfile.py` era recusada por baixa confiança, mas qualquer resposta com `desfecho` era contada como sucesso. O script passou a enviar a frase canônica `Qual o status do projeto XPTO?` e a exigir `desfecho=encaminhada`. Uma rodada de controle persistiu esse desfecho antes da carga, comprovando que a solicitação alcançava o executor sintético. Resultados diagnósticos produzidos antes dessa correção foram descartados.
+
+| Cenário | Configuração | Requisições | Falhas | Taxa de falha | p50 | p95 | p99 | Resultado contra p95 ≤ 8 s |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| `TNF-DES-03` | 10 usuários, rampa 2/s, 5 min, espera 1–3 s | 137 | 27 | 19,71% | 8,3 s | 56 s | 80 s | **Reprovado** |
+| `TNF-DES-04` | 30 usuários, rampa 6/s, 5 min, espera 1–3 s | 159 | 18 | 11,32% | 34 s | 106 s | 174 s | **Reprovado** |
+| `TNF-DES-07` | aplicação do limite aos dois cenários | — | — | — | — | ambos acima de 8 s | — | **Reprovado** |
+
+O primeiro ponto concorrente medido, dez usuários, já estava saturado; logo, o limiar está em dez usuários ou abaixo nesta bancada. A degradação não foi apenas um aumento uniforme de latência. No nominal, 26 falhas foram respostas HTTP 200 com `bloqueada_injecao_modelo` e uma com `bloqueada_saida`; os logs registraram respostas 429 do Content Safety. No pico, as 18 falhas foram HTTP 500 causadas por `sqlalchemy.exc.TimeoutError`: o pool de conexões da aplicação (5 conexões, overflow de 10 e espera máxima de 30 s) esgotou. O PostgreSQL e a API permaneceram ativos durante as janelas, mas o serviço deixou de cumprir latência e contrato funcional.
+
+O resultado caracteriza a configuração local, não a capacidade do Azure: gerador e alvo compartilharam os recursos do Docker Desktop, a quota externa do Content Safety participou da saturação e não houve busca fina entre um e dez usuários. A evidência completa, incluindo ambiente, comandos, falhas e limitações, está em [`docs/evidencias/2026-09-30-locust-api-ativa.txt`](evidencias/2026-09-30-locust-api-ativa.txt). `TNF-DES-05` continua reservado ao teste concorrente com o worker, e `TNF-DES-06` não faz parte deste card.
+
 ### 10.2.3 Testes dos requisitos não funcionais
 
 **Nota de escopo.** O card que originou esta entrega foi escrito sobre RNF01 a RNF05. O RNF06 e o RNF07 entraram na mesma revisão de escopo que acrescentou RF09 a RF12, conforme as notas de 3.3.1 e 3.4, e não possuem card próprio. Cobri-los aqui é o que evita que a eficácia das barreiras e a proteção do registro — os dois requisitos que sustentam, respectivamente, o RF09 e o par RF10 e RF12 — fiquem sem procedimento de medição. A extensão fica registrada neste parágrafo e na descrição do *merge request*.
@@ -11702,7 +11719,7 @@ interna ainda pendente no RF06.
 | RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
 | RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
-| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Microbenchmarks aprovados; cenário Locust reprovado por API indisponível | `2026-09-25-benchmark.txt`; `2026-09-25-locust.txt` | Reexecutar carga com API, banco e executor sintético ativos; TNF-DES-05 pendente |
+| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | `TNF-DES-03`, `TNF-DES-04` e `TNF-DES-07` executados com API ativa e reprovados: p95 de 56 s no nominal e 106 s no pico | `2026-09-30-locust-api-ativa.txt`; seção 10.2.2.2 | Saturação em dez usuários ou menos; investigar quota do Content Safety e pool do banco; TNF-DES-05 pendente |
 | Cobertura de código | `python -m pytest ... --cov=app --cov-report=term-missing` | 84,06% na execução única das suítes unitária, funcional, RNF, perímetro e integração; meta de 80% atingida | `2026-09-29-cobertura-integral-middleware.txt` | Provedores comerciais reais permaneceram isolados e os `xfail` continuam visíveis |
 | Integração | matriz 10.5.9 e scripts `tests/integration/` | Incluída na bateria integral: PostgreSQL e RabbitMQ reais locais; serviços comerciais reais explicitamente ignorados | `2026-09-29-cobertura-integral-middleware.txt`; seção 10.5 | Não confundir infraestrutura local real com validação no ambiente implantado |
 
