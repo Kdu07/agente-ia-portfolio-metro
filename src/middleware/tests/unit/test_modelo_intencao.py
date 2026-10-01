@@ -152,8 +152,10 @@ def test_curva_de_rejeicao_troca_cobertura_por_acuracia(
     coberturas = [p.cobertura for p in pontos]
     assert coberturas == sorted(coberturas, reverse=True)
     assert pontos[0].cobertura == 1.0
-    # Rejeitar as incertas não pode piorar a acurácia das aceitas.
-    assert pontos[-1].acuracia_aceitos >= pontos[0].acuracia_aceitos
+    # Rejeitar as incertas não pode piorar a acurácia das aceitas. O último
+    # ponto com alguma aceita é o que conta: sem aceitas a acurácia é 0.0.
+    ultimo_medido = [p for p in pontos if p.cobertura > 0][-1]
+    assert ultimo_medido.acuracia_aceitos >= pontos[0].acuracia_aceitos
 
 
 def test_rejeicao_sobe_precisao_e_custa_cobertura(
@@ -225,7 +227,7 @@ class ModeloProbabilidadesFalso:
         return np.array([[0.6, 0.4], [0.3, 0.7]])
 
 
-def test_curva_sem_mensagem_aceita_mantem_acuracia_neutra() -> None:
+def test_curva_sem_mensagem_aceita_zera_acuracia() -> None:
     enunciados = [
         Enunciado("um", "classe_a", Origem.CATALOGO),
         Enunciado("dois", "classe_b", Origem.CATALOGO),
@@ -234,7 +236,7 @@ def test_curva_sem_mensagem_aceita_mantem_acuracia_neutra() -> None:
     (ponto,) = avaliacao.curva_de_rejeicao(ModeloProbabilidadesFalso(), enunciados, (0.9,))
 
     assert ponto.cobertura == 0.0
-    assert ponto.acuracia_aceitos == 1.0
+    assert ponto.acuracia_aceitos == 0.0
 
 
 def test_avaliacao_com_limiares_explicita_rejeicao_total() -> None:

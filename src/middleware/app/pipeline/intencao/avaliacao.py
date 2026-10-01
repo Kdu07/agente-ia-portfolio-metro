@@ -174,10 +174,12 @@ def curva_de_rejeicao(
             PontoRejeicao(
                 limiar=limiar,
                 cobertura=float(aceitos.mean()),
+                # Sem mensagem aceita não há acurácia a medir; 0.0, e não
+                # 1.0, pelo mesmo critério de `avaliar_com_limiares`.
                 acuracia_aceitos=(
                     float((previstos[aceitos] == verdadeiros[aceitos]).mean())
                     if aceitos.any()
-                    else 1.0
+                    else 0.0
                 ),
             )
         )
@@ -547,10 +549,11 @@ def relatorio(artefato) -> str:
 
     partes.append("\n=== Curva de rejeição ===")
     for ponto in curva_de_rejeicao(modelo, teste, tuple(round(0.1 * i, 1) for i in range(10))):
+        acuracia = f"{ponto.acuracia_aceitos:.3f}" if ponto.cobertura > 0 else SEM_AMOSTRAS
         partes.append(
             _linha(
                 f"limiar {ponto.limiar:.1f}",
-                f"cobertura={ponto.cobertura:.3f} acurácia={ponto.acuracia_aceitos:.3f}",
+                f"cobertura={ponto.cobertura:.3f} acurácia={acuracia}",
             )
         )
 
