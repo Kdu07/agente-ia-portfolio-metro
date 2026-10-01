@@ -152,8 +152,10 @@ def test_curva_de_rejeicao_troca_cobertura_por_acuracia(
     coberturas = [p.cobertura for p in pontos]
     assert coberturas == sorted(coberturas, reverse=True)
     assert pontos[0].cobertura == 1.0
-    # Rejeitar as incertas não pode piorar a acurácia das aceitas.
-    assert pontos[-1].acuracia_aceitos >= pontos[0].acuracia_aceitos
+    # Rejeitar as incertas não pode piorar a acurácia das aceitas. O último
+    # ponto com alguma aceita é o que conta: sem aceitas a acurácia é 0.0.
+    ultimo_medido = [p for p in pontos if p.cobertura > 0][-1]
+    assert ultimo_medido.acuracia_aceitos >= pontos[0].acuracia_aceitos
 
 
 def test_rejeicao_sobe_precisao_e_custa_cobertura(
@@ -225,7 +227,7 @@ class ModeloProbabilidadesFalso:
         return np.array([[0.6, 0.4], [0.3, 0.7]])
 
 
-def test_curva_sem_mensagem_aceita_mantem_acuracia_neutra() -> None:
+def test_curva_sem_mensagem_aceita_zera_acuracia() -> None:
     enunciados = [
         Enunciado("um", "classe_a", Origem.CATALOGO),
         Enunciado("dois", "classe_b", Origem.CATALOGO),
@@ -234,7 +236,7 @@ def test_curva_sem_mensagem_aceita_mantem_acuracia_neutra() -> None:
     (ponto,) = avaliacao.curva_de_rejeicao(ModeloProbabilidadesFalso(), enunciados, (0.9,))
 
     assert ponto.cobertura == 0.0
-    assert ponto.acuracia_aceitos == 1.0
+    assert ponto.acuracia_aceitos == 0.0
 
 
 def test_avaliacao_com_limiares_explicita_rejeicao_total() -> None:
@@ -252,7 +254,87 @@ def test_avaliacao_com_limiares_explicita_rejeicao_total() -> None:
     assert resultado.rejeitados == 2
     assert resultado.cobertura == 0.0
     assert resultado.acuracia_aceitos == 0.0
-    assert resultado.precisao_por_intencao == {"classe_a": 1.0, "classe_b": 1.0}
+    assert resultado.precisao_por_intencao == {"classe_a": 0.0, "classe_b": 0.0}
+    assert resultado.amostras_por_intencao == {"classe_a": 0, "classe_b": 0}
+
+
+class ModeloTransacaoRejeitadaFalso:
+    """Modelo com uma transação real, mas sem previsões aceitas."""
+
+    classes_ = np.array(["atualizar_avanco", "consultar_status_projeto"])
+
+    def predict_proba(self, textos) -> np.ndarray:
+        assert len(textos) == 2
+        return np.array([[0.6, 0.4], [0.3, 0.7]])
+
+
+def test_rejeicao_total_nao_satisfaz_meta_de_precisao_transacional() -> None:
+    enunciados = [
+        Enunciado("Atualize o avanco", "atualizar_avanco", Origem.CATALOGO),
+        Enunciado(
+            "Qual o status do projeto?",
+            "consultar_status_projeto",
+            Origem.CATALOGO,
+        ),
+    ]
+
+    resultado = avaliacao.avaliar_com_limiares(
+        ModeloTransacaoRejeitadaFalso(),
+        enunciados,
+        {"atualizar_avanco": 0.9, "consultar_status_projeto": 0.9},
+    )
+
+    assert resultado.cobertura == 0.0
+    assert resultado.precisao_media(Categoria.TRANSACAO) == 0.0
+    assert resultado.sem_amostras(Categoria.TRANSACAO) == ["atualizar_avanco"]
+
+    # O relatório não imprime 0.000 como se fosse precisão medida.
+    linhas = avaliacao._linhas_com_limiares(resultado)
+    (precisao,) = [linha for linha in linhas if "precisão média" in linha]
+    assert precisao.endswith(avaliacao.SEM_AMOSTRAS)
+    (sem_amostras,) = [linha for linha in linhas if "sem amostras aceitas" in linha]
+    assert sem_amostras.endswith("atualizar_avanco")
+
+
+class ModeloCoberturaParcialFalso:
+    """Duas transações: `criar_projeto` aceita e certa, `atualizar_avanco` rejeitada."""
+
+    classes_ = np.array(["criar_projeto", "atualizar_avanco"])
+
+    def predict_proba(self, textos) -> np.ndarray:
+        assert len(textos) == 3
+        return np.array([[0.95, 0.05], [0.95, 0.05], [0.4, 0.6]])
+
+
+def test_cobertura_parcial_mede_precisao_so_nas_classes_com_amostras() -> None:
+    """Classe sem previsão aceita não sobe nem derruba a média.
+
+    Com o 1.0 antigo ela aprovaria a meta sem medir nada; com 0.0 na
+    média, `atualizar_avanco` levaria a precisão a 0.5 sem nenhum falso
+    positivo. Fora da média, sobra o que foi de fato medido.
+    """
+    enunciados = [
+        Enunciado("Crie o projeto", "criar_projeto", Origem.CATALOGO),
+        Enunciado("Cadastre um projeto novo", "criar_projeto", Origem.CATALOGO),
+        Enunciado("Atualize o avanço", "atualizar_avanco", Origem.CATALOGO),
+    ]
+
+    resultado = avaliacao.avaliar_com_limiares(
+        ModeloCoberturaParcialFalso(),
+        enunciados,
+        {"criar_projeto": 0.9, "atualizar_avanco": 0.9},
+    )
+
+    assert resultado.cobertura == pytest.approx(2 / 3)
+    assert resultado.rejeitados == 1
+    assert resultado.amostras_por_intencao == {"atualizar_avanco": 0, "criar_projeto": 2}
+    assert resultado.precisao_media(Categoria.TRANSACAO) == 1.0
+    assert resultado.medidas(Categoria.TRANSACAO) == ["criar_projeto"]
+    assert resultado.sem_amostras(Categoria.TRANSACAO) == ["atualizar_avanco"]
+
+    linhas = "\n".join(avaliacao._linhas_com_limiares(resultado))
+    assert "1.000 (1/2 transações medidas)" in linhas
+    assert "atualizar_avanco" in linhas
 
 
 def test_confusoes_descarta_diagonal_e_ordena_por_frequencia() -> None:
