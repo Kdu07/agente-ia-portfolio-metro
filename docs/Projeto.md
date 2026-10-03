@@ -7697,10 +7697,11 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 Esta seção documenta como o código-fonte da solução está organizado, quais
 convenções governam a escrita e como as partes se comunicam. As subseções 9.2.2
 a 9.2.17 cobrem a camada de interface, entregue na Sprint 3 e correspondente ao
-item 5 do Artefato 7. A organização interna do middleware é descrita nas seções
+item 6 do Artefato 7 (Desenvolvimento e documentação técnica). A organização
+interna do middleware é descrita nas seções
 5.2 e 5.6, que tratam do diagrama de componentes e da arquitetura em blocos.
 
-A entrega do item 5 do Artefato 7 se distribui em duas seções: a estrutura, os
+A entrega do item 6 do Artefato 7 se distribui em duas seções: a estrutura, os
 componentes, a integração com as APIs e a execução do protótipo estão descritos
 aqui; os testes automatizados implementados estão documentados em 9.5.
 
@@ -7726,17 +7727,17 @@ que o navegador nunca manipula token de acesso.
 | Tecnologia | Versão | Papel | Justificativa |
 | --- | --- | --- | --- |
 | React | 19.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
-| TypeScript | 5.9 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
+| TypeScript | 5.5 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
 | Vite | 5.4 | Empacotador e servidor de desenvolvimento | Recarga rápida durante o desenvolvimento e divisão automática de pacote na construção |
-| React Router | 6.30 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
-| TanStack Query | 5.102 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
-| Tailwind CSS | 4.3 | Estilização | Vocabulário visual declarado em configuração única, com breakpoints responsivos prontos |
+| React Router | 6.26 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
+| TanStack Query | 5.51 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
+| Tailwind CSS | 4.3 | Estilização | Utilitários de estilo e tokens visuais centralizados na folha global com a configuração CSS-first da versão 4 |
 | shadcn/ui e Radix UI | Componentes versionados em `componentes/ui`; 1.6 | Componentes de interface | Primitivos com teclado, foco e papéis acessíveis, e componentes mantidos no repositório, ajustáveis ao guia visual (8.3) |
 | Recharts | 3.8 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
-| Azure Speech SDK | 1.51 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
+| Azure Speech SDK | 1.38 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
 | MSW | 2.15 | Dublês de API | Interceptação na camada de rede, o que permite exercitar a interface sem alterar o código de produção |
-| Vitest | 2.1 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
-| Testing Library | 16.3 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
+| Vitest | 2.0 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
+| Testing Library | 16.0 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
 | ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações |
 
 ### 9.2.3 Estrutura de diretórios da interface
@@ -7744,24 +7745,35 @@ que o navegador nunca manipula token de acesso.
 ```
 src/web/
 ├── public/                     Estáticos servidos sem processamento
-│   ├── logo-prata.png
+│   ├── favicon.svg
 │   └── mockServiceWorker.js    Worker do MSW, removido do pacote de produção
 ├── src/
 │   ├── componentes/
-│   │   ├── chat/               Componentes da tela de conversa
+│   │   ├── chat/               Componentes da conversa e entrada por voz
 │   │   ├── graficos/           Visualizações do painel de intenções
-│   │   └── ui/                 Componentes transversais de interface
+│   │   ├── marca/              Elementos da identidade visual
+│   │   ├── moldura/            Navegação, perfil e conversas recentes
+│   │   ├── movimento/          Transições e movimento
+│   │   ├── ui/                 Primitivos e componentes transversais
+│   │   └── ProvedoresVisuais.tsx Tema, ícones, movimento e notificações
 │   ├── estilos/
 │   │   └── global.css          Camada de estilo compartilhada
 │   ├── hooks/                  Lógica de estado reutilizável
 │   ├── mocks/
 │   │   ├── dados/              Massa de teste por domínio
-│   │   ├── handlers.ts         Rotas dubladas
-│   │   └── navegador.ts        Inicialização do worker
-│   ├── paginas/                Uma pasta por tela, com index.tsx
+│   │   ├── handlers.ts         Handlers MSW usados nos testes e rotas pendentes
+│   │   └── navegador.ts        Registro apenas de rotas pendentes no navegador
+│   ├── paginas/
+│   │   ├── Historico/
+│   │   ├── Intencoes/
+│   │   ├── Login/
+│   │   ├── NaoEncontrada/
+│   │   ├── Principal/
+│   │   └── Rotinas/             Tela e módulos específicos da gestão de rotinas
 │   ├── servicos/
 │   │   ├── api.ts              Cliente HTTP tipado
 │   │   └── chaves.ts           Chaves de cache do TanStack Query
+│   ├── tema/                   Contexto e provedor de tema
 │   ├── testes/                 Suítes automatizadas e utilitários de teste
 │   ├── tipos/
 │   │   └── index.ts            Contratos da API espelhando app/schemas
@@ -7771,7 +7783,6 @@ src/web/
 │   └── rotas.tsx               Mapa de rotas
 ├── index.html
 ├── package.json
-├── tailwind.config.ts
 ├── tsconfig.json               Configuração do código da aplicação
 ├── tsconfig.node.json          Configuração dos arquivos de build
 ├── vite.config.ts
@@ -7829,6 +7840,9 @@ informação que se perde quando o autor sai do projeto.
 | --- | --- |
 | `ui/Layout.tsx` | Moldura da aplicação: barra lateral, navegação principal e identidade da sessão. Atua como rota-pai e renderiza `Outlet`, o que permite que a tela de entrada exista fora da moldura |
 | `ui/EstadoVazio.tsx` | Estado vazio padrão das telas, com título, descrição e ação opcional |
+| `moldura/` | Barra lateral, conversas recentes e menu do perfil, compartilhados pela navegação |
+| `marca/` | Logo, símbolo, linhas e botão de entrada Microsoft da identidade visual |
+| `movimento/` | Configuração de transições compartilhadas pela interface |
 | `chat/BolhaMensagem.tsx` | Uma mensagem da conversa, com avatar, horário, filete lateral e etiqueta de desfecho |
 | `chat/Composer.tsx` | Campo de envio, com Enter para enviar e Shift mais Enter para quebrar linha, e exibição da transcrição parcial durante a gravação |
 | `chat/BotaoMicrofone.tsx` | Acionamento da captura de voz, com estado visível e `aria-pressed` |
@@ -8007,7 +8021,9 @@ Query; `useState` fica reservado ao que não precisa sobreviver a uma navegaçã
 | Hook | Responsabilidade |
 | --- | --- |
 | `useUsuario` | Identidade e permissões da sessão atual, obtidas em `GET /auth/eu`. Como o cookie é `httpOnly`, perguntar ao servidor é a única forma de saber quem está autenticado |
+| `useConversas` | Lista de conversas do histórico, consultada em `GET /conversas` |
 | `useConversa` | Turnos carregados, envio de mensagem, fila otimista e tratamento de erro de uma conversa |
+| `usePainelIntencoes` | Oito recortes do painel de intenções, com período e perfil incorporados às chaves de cache |
 | `useMicrofone` | Ciclo de vida da captura de voz, incluindo obtenção e renovação do token e liberação do microfone ao desmontar |
 
 O `useConversa` concentra uma conversão que não deveria estar nos componentes.
@@ -8118,14 +8134,16 @@ centenas de kilobytes e a maior parte das sessões nunca usa voz.
 
 ### 9.2.9 Camada de dublês de API
 
-A interface é desenvolvida e testada contra uma camada de dublês construída com
-MSW, que intercepta as requisições na camada de rede do navegador. A escolha da
-ferramenta é relevante: por interceptar a rede, e não substituir o cliente HTTP,
-ela permite que a interface exercite exatamente o mesmo caminho de código que
-usará em produção. Nenhum componente, hook ou serviço contém ramo condicional
-para ambiente de desenvolvimento.
+A interface usa o middleware real como caminho padrão, tanto em
+desenvolvimento quanto em produção. Os dublês construídos com MSW interceptam
+as requisições na camada de rede do navegador e são usados integralmente nos
+testes, que precisam de respostas determinísticas sem depender do backend. No
+navegador, só são registrados dublês para rotas ainda não implementadas pelo
+middleware. Como a interceptação ocorre na rede, e não pela substituição do
+cliente HTTP, componentes, hooks e serviços percorrem o mesmo caminho de código
+em todos os ambientes.
 
-Os dublês reproduzem vinte rotas fiéis ao contrato descrito em
+Os dublês reproduzem vinte e uma rotas fiéis ao contrato descrito em
 `documentos/api/openapi-voz.yaml` e nos tipos de `tipos/index.ts`, incluindo os
 oito desfechos possíveis do pipeline com os textos de resposta correspondentes.
 Isso permite verificar, sem backend, que a distinção entre bloqueio seco de
@@ -8133,9 +8151,10 @@ injeção e recusa orientativa de abuso chega corretamente à tela.
 
 Três propriedades da camada foram estabelecidas deliberadamente:
 
-* Os dublês são inicializados antes da primeira renderização. Montar a aplicação
-  primeiro faria a consulta inicial de identidade sair antes de o worker assumir
-  a rede, receber 401 e redirecionar o usuário ao login;
+* Quando há rotas pendentes, seus dublês são inicializados antes da primeira
+  renderização. Montar a aplicação primeiro faria a consulta inicial de
+  identidade sair antes de o worker assumir a rede, receber 401 e redirecionar
+  o usuário ao login;
 * Requisições sem dublê correspondente seguem para a rede em vez de falhar. Uma
   rota do backend ainda não dublada deve mostrar o erro real, e não um erro da
   ferramenta de teste;
@@ -8147,11 +8166,12 @@ Três propriedades da camada foram estabelecidas deliberadamente:
 
 **Estado atual da integração.** Em desenvolvimento, a interface consome o
 middleware real pelo proxy `/api`: identidade da sessão, conversa, histórico,
-intenções e rotinas saem do backend, com login de verdade. O navegador registra
-apenas os dublês das rotas que o middleware ainda não implementa
-(`handlersPendentes`), cada uma com o motivo em `ROTAS_PENDENTES`, em
-`src/web/src/mocks/handlers.ts`; hoje, só `GET /voz/token`, até a emissão do
-token entrar com a issue #396. A troca não exigiu mudança em componente ou hook:
+intenções, rotinas e autenticação passam pelo backend. O navegador registra
+apenas os dublês das rotas ainda não implementadas, mantidas em
+`handlersPendentes` e justificadas em `ROTAS_PENDENTES`, em
+`src/web/src/mocks/handlers.ts`. No estado atual, ambas as listas estão vazias,
+portanto nenhuma requisição do navegador é respondida por dublê. A troca para
+as rotas reais não exigiu mudança em componente ou hook:
 os esquemas de resposta das rotas reais foram conferidos campo a campo contra
 `tipos/index.ts`, e o fluxo de conversa, histórico e intenções foi percorrido
 contra o middleware real com uma sessão local. `VITE_SEM_DUBLES=true` desliga
