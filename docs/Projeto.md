@@ -8172,16 +8172,24 @@ individualmente ou em sequência:
 | `npm run lint` | Análise estática, incluindo regras de hooks do React |
 | `npm run typecheck` | Verificação de tipos do código da aplicação e dos arquivos de build |
 | `npm run test` | Execução das suítes automatizadas |
+| `npm run test:coverage` | Executa as suítes com V8 e reprova se linhas, ramos ou funções ficarem abaixo de 80%; gera relatório HTML e Cobertura em `coverage/` |
 | `npm run build` | Construção do pacote de produção, precedida da verificação de tipos |
 | `npm run audit:a11y` | Auditoria WCAG 2.1 A/AA com axe-core nas seis telas, temas claro e escuro (9.2.18) |
 
-As suítes cobrem dezessete casos distribuídos em três arquivos:
+O job `web:vitest` da integração contínua executa `npm run test:coverage` e
+publica o relatório Cobertura como artefato `coverage_report`, que o GitLab
+exibe no merge request. A mesma execução aplica os limites globais de 80% para
+linhas, ramos e funções; o relatório V8 desta atualização mediu 86,23%, 87,26%
+e 82,93%, respectivamente.
 
-| Arquivo | Casos | Escopo |
-| --- | --- | --- |
-| `testes/desfechos.test.ts` | 4 | Cobertura dos oito desfechos, ausência de etiqueta no desfecho atendido, presença de filete nos demais e verificação de que o rótulo não nomeia a barreira acionada |
-| `testes/navegacao.test.tsx` | 4 | Substituição de conteúdo ao trocar de conversa, sugestões de partida em conversa nova, ausência de repetição de alerta em conversa gravada e destino explícito para rota inexistente |
-| `testes/paginas.test.tsx` | 9 | Envio e recebimento de mensagem, recusa fora de escopo tratada como resposta e não como erro, não revelação da barreira em tentativa de injeção, envio por Enter com quebra de linha por Shift mais Enter, indicação de entrada por voz ativa, e filtragem, criação e exclusão de rotinas |
+A cobertura funcional é distribuída por suítes focadas, entre elas:
+
+| Arquivo | Escopo |
+| --- | --- |
+| `testes/microfone.test.tsx` | Falhas de token e permissão, transcrição parcial/final, renovação de token, cancelamento e encerramento do reconhecedor |
+| `testes/primitivos-ui.test.tsx` | Estados e interações observáveis dos componentes acessíveis de diálogo, gaveta, menu, avatar, separador e painel |
+| `testes/componentes-ui.test.tsx` | Componentes transversais, navegação adaptativa e estados vazios |
+| `testes/falhas.test.tsx` | Erros de rede, tempo limite, indisponibilidade e ações de recuperação |
 
 A escolha de consultar elementos por papel acessível, e não por classe ou
 identificador, faz com que a quebra de um atributo de acessibilidade derrube o
@@ -9360,21 +9368,23 @@ gestão das rotinas.
 
 Três limites devem ser declarados.
 
-O primeiro é que **não há testes de integração nesta entrega**. Todos os casos
-executam contra dublês, e a comunicação real entre interface e middleware
-depende da resolução de sessão no backend, ainda não implementada. Os testes de
-integração são escopo do item 7 do Artefato 7 e estão previstos para a Sprint 5,
-com o planejamento correspondente registrado em 10.5.
+O primeiro é que **a suíte da interface não sobe o middleware real**. Os casos
+executam contra MSW, e a conversa entre interface e backend precisa ser
+verificada em um ambiente integrado. Esta suíte não substitui os testes de
+integração do item 7 do Artefato 7, registrados em 10.5.
 
-O segundo é que **as telas de entrada, histórico e intenções ainda não possuem
-casos próprios**. Elas são exercitadas indiretamente, pela navegação e pelas
-regras de permissão, mas não por asserção específica sobre seu conteúdo. A
-ampliação está registrada em *issue* própria.
+O segundo limite da entrega inicial — **ausência de casos próprios para entrada,
+histórico e intenções** — foi superado. As suítes atuais verificam autenticação,
+conteúdo e ações do histórico e filtros/estados do painel em
+`testes/autenticacao.test.tsx`, `testes/paginas.test.tsx` e
+`testes/intencoes.test.tsx`.
 
 O terceiro é que **a cobertura não é medida nesta entrega**. A meta de oitenta
-por cento definida em 9.1.8 é consolidada em 10.7, junto com a cobertura do
-middleware, e a instrumentação correspondente será acrescentada quando as duas
-camadas tiverem suíte executável no mesmo encadeamento de integração contínua.
+por cento definida em 9.1.8 não era medida na entrega inicial documentada aqui.
+Essa lacuna foi fechada: `npm run test:coverage` mede linhas, ramos e funções,
+aplica o limite mínimo de 80% e publica Cobertura no merge request pela pipeline
+da interface (9.2.10). A execução atual superou os três limites; a consolidação
+da cobertura do middleware permanece registrada em 10.7.
 
 ### 9.5.6 Testes do executor próprio
 
