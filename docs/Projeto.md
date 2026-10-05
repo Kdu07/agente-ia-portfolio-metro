@@ -7806,7 +7806,7 @@ oferece reenvio da última mensagem, em vez de informar apenas que houve erro.
 | `POST /chat` | `useConversa` | Envio de mensagem e recebimento do desfecho |
 | `GET /conversas` | `Historico` | Lista de conversas |
 | `GET /conversas/:id` | `useConversa` | Turnos de uma conversa gravada |
-| `DELETE /conversas/:id` | `Historico` | Exclusão de conversa |
+| `DELETE /conversas/:id` | `Historico` | Arquivamento de conversa |
 | `GET /rotinas` | `Rotinas` | Lista de rotinas cadastradas |
 | `POST /rotinas/validar` | `Rotinas` | Validação de agenda antes do cadastro |
 | `POST /rotinas` | `Rotinas` | Criação de rotina |
@@ -7882,11 +7882,23 @@ Nesse modo, o executor é trocado por um executor sintético, e as guardas e o
 classificador continuam reais. Por isso o texto das respostas encaminhadas é
 `Resposta sintética do executor de desempenho.`, enquanto desfechos, intenções,
 bloqueios e métricas são os que o pipeline de fato produziu. Listas longas
-aparecem truncadas e indicadas como tal.
+aparecem truncadas e indicadas como tal. Há duas exceções, sinalizadas no
+próprio exemplo: a identidade de `GET /auth/eu` aparece com valores
+ilustrativos, para não publicar o identificador e o e-mail de uma pessoa real,
+e o sucesso de `POST /rotinas/{id}/executar` foi obtido com a confirmação do
+dono substituída (seção 9.2.8.6).
+
+As seções 9.2.8.3 a 9.2.8.7 trazem exemplo de requisição e de resposta de cada
+rota da tabela de endpoints consumidos, acima, com uma exceção: o exemplo de
+`GET /voz/token` está na seção 5.7.4.6, junto da decisão que o justifica. A
+especificação descreve também as rotas que a interface não chama: a submissão
+de áudio, com contrato próprio na seção 5.7.3, os webhooks, definidos na seção
+9.1.2.7, e as rotas de avisos, de portfólio e de saúde.
 
 #### 9.2.8.2 Formato de erro e códigos de estado
 
-Toda resposta de erro produzida pelas rotas tem o mesmo corpo, o do
+Toda resposta de erro das rotas desta seção, de sessão, conversação,
+histórico, rotinas e painel de intenções, tem o mesmo corpo, o do
 `HTTPException` do FastAPI, declarado na especificação como `ErroResposta`:
 
 ```json
@@ -7911,16 +7923,25 @@ Pydantic, cada um com o local (`loc`), o tipo e a mensagem:
 }
 ```
 
-O cliente em `servicos/api.ts` precisa, portanto, aceitar `detail` como texto ou
-como lista. As rotas de rotina tornam isso concreto: devolvem 422 nas duas
-formas, lista quando o corpo viola o schema e texto quando a agenda ou o prompt
-são recusados pela validação de negócio (seção 9.2.8.5).
+As rotas de cadastro e de edição de rotina devolvem 422 nas duas formas: lista
+quando o corpo viola o schema e texto quando a agenda ou o prompt são recusados
+pela validação de negócio (seção 9.2.8.6). A especificação declara as duas
+formas nessas rotas, com `anyOf` entre `HTTPValidationError` e `ErroResposta`,
+para que um cliente gerado a partir dela aceite ambas. O cliente da interface
+já aceita: `detalheLegivel`, em `servicos/api.ts`, exibe o `detail` quando ele
+é texto e, quando é lista, mostra uma orientação para revisar os dados, porque
+a lista do Pydantic não é texto para o usuário.
+
+O canal de voz e os webhooks não seguem esse formato. A submissão de áudio
+devolve o catálogo da seção 5.7.3.8, com `codigo`, `mensagem` e `detalhe` no
+primeiro nível, e os webhooks devolvem `detail` como objeto, com `codigo` e
+`mensagem` (seção 9.1.2.7).
 
 | Código | Quando ocorre | Rotas | `detail` |
 | --- | --- | --- | --- |
-| 200, 201, 204 | Sucesso; 201 na criação de rotina; 204, sem corpo, na exclusão | Todas | — |
+| 200, 201, 204 | Sucesso; 201 na criação de rotina; 204, sem corpo, na exclusão e no encerramento da sessão | Todas | Não se aplica |
 | 400 | Corpo que não pode ser decodificado, por exemplo bytes fora de UTF-8 | Todas com corpo | `There was an error parsing the body` |
-| 401 | Cookie de sessão ausente, adulterado ou expirado | Todas | `Sessão ausente` ou `Sessão inválida` |
+| 401 | Cookie de sessão ausente, adulterado ou expirado | Todas, exceto `POST /auth/logout`, que é idempotente | `Sessão ausente` ou `Sessão inválida` |
 | 403 | Usuário autenticado sem a permissão da rota | `/rotinas/*` e `/intencoes/*` | `Acesso restrito: requer gerir_rotinas` (ou `ver_intencoes`) |
 | 403 | Dono da rotina inativo no Entra ID ou sem `gerir_rotinas` no momento do disparo | `POST /rotinas/{id}/executar` | Motivo da recusa |
 | 404 | Recurso inexistente **ou de outro usuário** | `/conversas/{id}`, `/rotinas/{id}` e sub-rotas | `Conversa não encontrada` ou `Rotina não encontrada` |
@@ -7941,7 +7962,44 @@ desfecho correspondente, porque se trata de uma decisão do pipeline, e não de
 uma falha do servidor. Tratá-lo como erro faria a interface exibir "algo deu
 errado" no lugar da orientação ao usuário.
 
-#### 9.2.8.3 Conversação
+#### 9.2.8.3 Sessão
+
+O login acontece por redirecionamento ao Microsoft Entra ID, em `GET /auth/login`
+e `GET /auth/callback`, sem chamada da interface por `fetch`, e por isso não tem
+exemplo de requisição aqui. Depois dele, a interface usa duas rotas.
+
+**`GET /auth/eu`** devolve a identidade da sessão, com o perfil e as permissões
+que decidem os menus exibidos. Como o cookie é `httpOnly`, perguntar ao servidor
+é a única forma de a interface conhecer o usuário.
+
+```bash
+curl http://localhost:5173/api/auth/eu -b "sessao=$SESSAO"
+```
+
+```json
+// formato da resposta, com valores ilustrativos
+{
+  "id": "<identificador do usuário no Entra ID>",
+  "nome": "Nome do usuário",
+  "email": "nome.sobrenome@exemplo.com",
+  "perfil": "lider_projeto",
+  "permissoes": ["gerir_rotinas", "ver_intencoes"]
+}
+```
+
+`perfil` vale `diretoria`, `lider_projeto` ou `membro_equipe`, e `permissoes`
+traz nenhuma, uma ou as duas permissões. Sem cookie válido, a rota devolve
+`401 {"detail": "Sessão ausente"}` ou `401 {"detail": "Sessão inválida"}`.
+
+**`POST /auth/logout`** invalida a sessão no servidor, apaga o cookie e responde
+204 sem corpo. É idempotente: sem sessão válida, apenas apaga o cookie e
+responde 204.
+
+```bash
+curl -X POST http://localhost:5173/api/auth/logout -b "sessao=$SESSAO"
+```
+
+#### 9.2.8.4 Conversação
 
 **`POST /chat`** envia uma mensagem ao pipeline. `mensagem` tem de 1 a 4.000
 caracteres. `conversa_id` é omitido na primeira mensagem e repetido nas
@@ -8018,7 +8076,7 @@ Os oito valores possíveis de `desfecho` são `encaminhada`,
 mensagem vazia, o 422 da seção 9.2.8.2; JSON malformado, 422 com
 `"type": "json_invalid"`.
 
-#### 9.2.8.4 Histórico de conversas
+#### 9.2.8.5 Histórico de conversas
 
 As três rotas exigem apenas sessão, e cada usuário vê somente as próprias
 conversas.
@@ -8100,7 +8158,7 @@ a aparecer com `incluir_arquivadas=true`. Um identificador inexistente devolve
 curl -X DELETE http://localhost:5173/api/conversas/effd3574-264e-4abb-8072-647e49cf0ebf -b "sessao=$SESSAO"
 ```
 
-#### 9.2.8.5 Rotinas
+#### 9.2.8.6 Rotinas
 
 Todas as rotas exigem a permissão `gerir_rotinas`. Sem ela, qualquer rota do
 grupo devolve `403 {"detail": "Acesso restrito: requer gerir_rotinas"}`. Cada
@@ -8138,8 +8196,16 @@ curl -X POST http://localhost:5173/api/rotinas/validar \
 {"valida": false, "intencao_prevista": null, "erro": "O prompt não corresponde a uma ação aceita pelo agente."}
 ```
 
-**`POST /rotinas`** cadastra a rotina com o mesmo corpo e responde 201.
-`proximo_disparo` confirma como a agenda foi entendida:
+**`POST /rotinas`** cadastra a rotina com o mesmo corpo e responde 201, com o
+`proximo_disparo` calculado pelo agendador:
+
+```bash
+curl -X POST http://localhost:5173/api/rotinas \
+  -b "sessao=$SESSAO" -H "Content-Type: application/json" \
+  -d '{"nome": "Status semanal da Linha 1",
+       "prompt": "Qual o status do projeto de modernização da Linha 1?",
+       "agenda_cron": "0 8 * * 1", "timezone": "America/Sao_Paulo", "ativa": true}'
+```
 
 ```json
 {
@@ -8157,13 +8223,26 @@ curl -X POST http://localhost:5173/api/rotinas/validar \
 }
 ```
 
+O `proximo_disparo` acima expõe um defeito registrado no #540. No cron padrão, o
+`1` do último campo é segunda-feira, mas o agendador, o APScheduler 3, numera o
+dia da semana a partir de segunda, com `0`. A agenda `0 8 * * 1`, cadastrada na
+terça-feira, 29/09, foi entendida como terça: o disparo previsto é 06/10, e não
+05/10. Pelo mesmo motivo, `1-5` vai de terça a sábado, e `7` é recusado. A
+interface não é afetada, porque monta a agenda com o nome do dia (`mon`,
+`mon-fri`), em `src/web/src/paginas/Rotinas/agenda.ts`. Quem chamar a API
+diretamente deve usar nomes até a correção.
+
 A validação de negócio roda antes de gravar. Agenda inválida resulta em
 `422 {"detail": "A agenda deve ser uma expressão cron válida com cinco campos: minuto, hora, dia, mês e dia da semana."}`,
 com `detail` em texto, enquanto `nome` vazio resulta no 422 do Pydantic, com
 `detail` em lista e `loc` igual a `["body", "nome"]`.
 
-**`GET /rotinas`** lista as rotinas do usuário no mesmo formato. Rotina
-desativada vem com `proximo_disparo: null`.
+**`GET /rotinas`** lista as rotinas do usuário, cada uma no formato da resposta
+de `POST /rotinas`. Rotina desativada vem com `proximo_disparo: null`.
+
+```bash
+curl http://localhost:5173/api/rotinas -b "sessao=$SESSAO"
+```
 
 **`PUT /rotinas/{id}`** substitui a rotina e **revalida o prompt**, para que uma
 rotina inócua não possa ser trocada depois por outra que não passaria no
@@ -8219,13 +8298,25 @@ distinção importa porque a ação esperada do usuário é diferente em cada ca
 corrigir o enunciado ou acionar o suporte. Na execução local sem Entra ID, a
 mesma chamada devolveu
 `503 {"detail": "Não foi possível confirmar a identidade no Microsoft Entra ID"}`
-e registrou a tentativa com `status: "falha"`. O exemplo de sucesso acima foi
-capturado com a consulta ao diretório substituída, e o restante do disparo
-correu sem alteração.
+e registrou a tentativa com `status: "falha"`.
+
+Com o Entra ID disponível, a chamada não conclui, por um defeito registrado
+no #541. A autenticação da requisição atualiza a linha do usuário em `usuario`
+e mantém esse bloqueio até o fim da requisição. A confirmação do dono, em sessão
+própria, repete a atualização da mesma linha e espera indefinidamente pelo
+bloqueio da requisição que a chamou. O disparo pelo agendador não passa pela
+autenticação de requisição e não é afetado. O exemplo de sucesso acima foi
+capturado com a confirmação do dono substituída e, por isso, não exercita esse
+trecho. Os testes de integração da rota também substituem o disparo inteiro, o
+que explica o defeito não ter aparecido neles.
 
 **`GET /rotinas/{id}/execucoes`** lista o histórico de disparos, o mais recente
 primeiro, e aceita `limite` entre 1 e 100 (padrão 20). Cada item tem o mesmo
 formato da resposta de `executar`:
+
+```bash
+curl "http://localhost:5173/api/rotinas/5564c11e-3ef1-4bd8-815d-f140875f3489/execucoes?limite=20" -b "sessao=$SESSAO"
+```
 
 ```json
 [
@@ -8246,12 +8337,16 @@ formato da resposta de `executar`:
 histórico, a remoção levaria junto a trilha de auditoria, e por isso a rota
 recusa:
 
+```bash
+curl -X DELETE http://localhost:5173/api/rotinas/5564c11e-3ef1-4bd8-815d-f140875f3489 -b "sessao=$SESSAO"
+```
+
 ```json
 // 409
 {"detail": "A rotina 5564c11e-3ef1-4bd8-815d-f140875f3489 já disparou e não pode ser apagada sem levar junto o histórico de execuções. Desative-a (ativa=False) em vez de removê-la."}
 ```
 
-#### 9.2.8.6 Painel de intenções
+#### 9.2.8.7 Painel de intenções
 
 As oito rotas exigem a permissão `ver_intencoes` e, sem ela, devolvem
 `403 {"detail": "Acesso restrito: requer ver_intencoes"}`. Todas recebem os
@@ -8264,10 +8359,19 @@ devolve o 422 do Pydantic:
 {"detail": [{"type": "enum", "loc": ["query", "janela"], "msg": "Input should be '7d', '30d' or '90d'", "input": "15d", "ctx": {"expected": "'7d', '30d' or '90d'"}}]}
 ```
 
-Os exemplos abaixo usam `janela=7d` sobre as seis mensagens da captura:
+As oito requisições seguem o mesmo padrão. Os exemplos abaixo usam `janela=7d`
+sobre as seis mensagens da captura, e o recorte por perfil acrescenta, por
+exemplo, `&perfil=lider_projeto`:
 
 ```bash
 curl "http://localhost:5173/api/intencoes/volume?janela=7d" -b "sessao=$SESSAO"
+curl "http://localhost:5173/api/intencoes/desfechos?janela=7d" -b "sessao=$SESSAO"
+curl "http://localhost:5173/api/intencoes/seguranca/resumo?janela=7d" -b "sessao=$SESSAO"
+curl "http://localhost:5173/api/intencoes/seguranca/serie?janela=7d" -b "sessao=$SESSAO"
+curl "http://localhost:5173/api/intencoes/catalogo/resumo?janela=7d" -b "sessao=$SESSAO"
+curl "http://localhost:5173/api/intencoes/catalogo/fora-de-escopo?janela=7d" -b "sessao=$SESSAO"
+curl "http://localhost:5173/api/intencoes/catalogo/baixa-confianca?janela=7d" -b "sessao=$SESSAO"
+curl "http://localhost:5173/api/intencoes/latencia?janela=7d" -b "sessao=$SESSAO"
 ```
 
 **`GET /intencoes/volume`**: mensagens por intenção. A lista traz todas as classes
