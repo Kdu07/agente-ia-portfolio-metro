@@ -7695,15 +7695,15 @@ Os dois estão disponíveis e não bloqueiam nenhuma onda. O que eles introduzem
 ## 9.2 Arquitetura de Codificação e Estrutura de Diretórios
 
 Esta seção documenta como o código-fonte da solução está organizado, quais
-convenções governam a escrita e como as partes se comunicam. As subseções 9.2.2
-a 9.2.17 cobrem a camada de interface, entregue na Sprint 3 e correspondente ao
-item 6 do Artefato 7 (Desenvolvimento e documentação técnica). A organização
-interna do middleware é descrita nas seções
-5.2 e 5.6, que tratam do diagrama de componentes e da arquitetura em blocos.
+convenções governam a escrita e como as partes se comunicam. As subseções 9.2.1
+a 9.2.19 descrevem a interface e seu estado atual de implementação. O conteúdo
+corresponde ao artefato **Desenvolvimento e documentação técnica**. A
+organização interna do middleware é descrita nas seções 5.2 e 5.6, que tratam
+do diagrama de componentes e da arquitetura em blocos.
 
-A entrega do item 6 do Artefato 7 se distribui em duas seções: a estrutura, os
-componentes, a integração com as APIs e a execução do protótipo estão descritos
-aqui; os testes automatizados implementados estão documentados em 9.5.
+Esta seção descreve a estrutura, os componentes, a integração com as APIs e a
+execução da interface; os testes automatizados implementados estão
+documentados em 9.5.
 
 ### 9.2.1 Organização do código-fonte
 
@@ -7727,18 +7727,23 @@ que o navegador nunca manipula token de acesso.
 | Tecnologia | Versão | Papel | Justificativa |
 | --- | --- | --- | --- |
 | React | 19.3 | Biblioteca de interface | Ecossistema maduro para interfaces de conversa e composição por componentes |
-| TypeScript | 5.5 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
+| TypeScript | 5.9 | Linguagem | Os contratos da API viram tipos verificados em tempo de compilação, o que transforma divergência de schema em erro de build e não em falha silenciosa |
 | Vite | 5.4 | Empacotador e servidor de desenvolvimento | Recarga rápida durante o desenvolvimento e divisão automática de pacote na construção |
-| React Router | 6.26 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
-| TanStack Query | 5.51 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
+| React Router | 6.30 | Roteamento | Rotas aninhadas com rota-pai, necessárias para que a tela de entrada exista fora da moldura da aplicação |
+| TanStack Query | 5.102 | Estado de servidor | Cache, invalidação e controle de repetição sem código manual de sincronização |
 | Tailwind CSS | 4.3 | Estilização | Utilitários de estilo e tokens visuais centralizados na folha global com a configuração CSS-first da versão 4 |
 | shadcn/ui e Radix UI | Componentes versionados em `componentes/ui`; 1.6 | Componentes de interface | Primitivos com teclado, foco e papéis acessíveis, e componentes mantidos no repositório, ajustáveis ao guia visual (8.3) |
 | Recharts | 3.8 | Visualização de dados | Gráficos do painel de intenções, com contêiner responsivo |
-| Azure Speech SDK | 1.38 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
+| Azure Speech SDK | 1.51 | Reconhecimento de fala | Transcrição parcial em tempo real na trajetória de transmissão contínua da seção 5.7.1.3 |
 | MSW | 2.15 | Dublês de API | Interceptação na camada de rede, o que permite exercitar a interface sem alterar o código de produção |
-| Vitest | 2.0 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
-| Testing Library | 16.0 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
+| Vitest | 2.1 | Execução de testes | Compartilha a configuração do Vite, evitando um segundo grafo de módulos |
+| Testing Library | 16.3 | Asserções de interface | Consultas por papel acessível, o que faz o teste falhar quando a acessibilidade quebra |
 | ESLint | 8.57 | Análise estática | Verificação de regras de hooks e de importações |
+
+As versões da tabela são apresentadas em forma resumida. No
+`package-lock.json` desta interface, os valores resolvidos são TypeScript
+5.9.3, React Router 6.30.6, TanStack Query 5.102.3, Azure Speech SDK 1.51.0,
+Vitest 2.1.9 e Testing Library 16.3.2.
 
 ### 9.2.3 Estrutura de diretórios da interface
 
@@ -7778,13 +7783,16 @@ src/web/
 │   ├── tipos/
 │   │   └── index.ts            Contratos da API espelhando app/schemas
 │   ├── utilitarios/
+│   │   ├── cn.ts               Combinação de classes CSS
 │   │   └── formato.ts          Formatação de data e hora
 │   ├── main.tsx                Ponto de entrada
 │   └── rotas.tsx               Mapa de rotas
 ├── index.html
 ├── package.json
+├── package-lock.json           Versões exatas instaladas
+├── scripts/                    Auditorias e capturas automatizadas
 ├── tsconfig.json               Configuração do código da aplicação
-├── tsconfig.node.json          Configuração dos arquivos de build
+├── tsconfig.node.json          Configuração Node do vite.config.ts
 ├── vite.config.ts
 ├── Dockerfile
 └── nginx.conf
@@ -7798,15 +7806,15 @@ dependência entre páginas que deveriam ser independentes.
 
 A existência de dois arquivos de configuração do TypeScript merece registro. O
 `tsconfig.json` cobre `src/` e serve à aplicação; o `tsconfig.node.json` cobre
-`vite.config.ts` e `tailwind.config.ts`, que rodam em Node e não no navegador.
-Sem o segundo, os arquivos de configuração ficavam fora da verificação de tipos
-e um erro real neles só apareceria em tempo de execução do build.
+somente `vite.config.ts`, que roda em Node e não no navegador. Sem o segundo,
+esse arquivo de configuração ficaria fora da verificação de tipos e um erro
+real nele só apareceria em tempo de execução do build.
 
 ### 9.2.4 Convenções de codificação
 
 **Nomenclatura em português.** Arquivos, funções, variáveis e tipos de domínio
 usam português, acompanhando a linguagem do glossário em
-`documentos/glossario-dominio.md`. Termos consagrados da tecnologia permanecem
+`docs/glossario-dominio.md`. Termos consagrados da tecnologia permanecem
 em inglês quando traduzi-los produziria confusão, como `hook`, `build` e
 `token`. O objetivo é que quem lê o código reconheça os mesmos nomes que lê na
 documentação do projeto.
@@ -7847,21 +7855,27 @@ informação que se perde quando o autor sai do projeto.
 | `chat/Composer.tsx` | Campo de envio, com Enter para enviar e Shift mais Enter para quebrar linha, e exibição da transcrição parcial durante a gravação |
 | `chat/BotaoMicrofone.tsx` | Acionamento da captura de voz, com estado visível e `aria-pressed` |
 | `chat/ConversaVazia.tsx` | Estado inicial de uma conversa nova, com quatro sugestões correspondentes a intenções reais do catálogo |
+| `chat/AvatarDaPrata.tsx` | Avatar e identidade visual do agente nas mensagens |
+| `chat/AvisoMarco.tsx` | Aviso contextual de marco apresentado na conversa |
 | `chat/IndicadorDigitando.tsx` | Sinaliza que o agente compõe a resposta, com `role="status"` e texto equivalente para leitor de tela |
 | `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo e classes visuais |
 | `graficos/CartaoResumo.tsx` | Números de topo de cada recorte do painel, em lista de definições |
 | `graficos/BarrasPorIntencao.tsx` | Volume de mensagens por intenção, em barras horizontais, com as intenções de contagem zero visíveis |
 | `graficos/DistribuicaoDesfechos.tsx` | Distribuição das mensagens entre os oito desfechos, com a cor semântica de cada um |
 | `graficos/SerieBloqueios.tsx` | Bloqueios ao longo do tempo, uma linha por guarda, sem total agregado |
+| `graficos/TempoPorEtapa.tsx` | Mediana e percentil 95 da latência por etapa do pipeline |
 | `graficos/TabelaEnunciados.tsx` | Enunciados recusados agrupados por repetição, o backlog de novas intenções |
+| `graficos/TabelaAcessivel.tsx` | Representação tabular acessível dos dados apresentados nos gráficos |
 
 O arquivo `componentes/graficos/README.md` registra as três regras que valem
 para as visualizações do painel de intenções e como cada componente as cumpre:
 uso obrigatório de contêiner responsivo, séries de bloqueio nunca somadas em um
 total agregado, e exibição de intenções com contagem zero, que são achado e não
-ausência de dado. Os três gráficos marcam o SVG como decorativo e repetem os
-dados em uma tabela fora da tela, que é a forma que o leitor de tela consegue
-navegar.
+ausência de dado. Os quatro gráficos (`BarrasPorIntencao`,
+`DistribuicaoDesfechos`, `SerieBloqueios` e `TempoPorEtapa`) marcam o SVG como
+decorativo e repetem os dados em uma `TabelaAcessivel` fora da tela, que é a
+forma que o leitor de tela consegue navegar. `CartaoResumo` e
+`TabelaEnunciados` apresentam os próprios dados em conteúdo HTML acessível.
 
 **Apresentação dos desfechos.** O backend informa o desfecho, não a cor nem o
 rótulo. A tradução acontece em um único arquivo para que a bolha, o histórico e
@@ -7887,11 +7901,11 @@ compartilham o rótulo "Não atendida" por essa razão. O segundo critério é o
 rótulo textual carrega a mesma informação e é ele que chega a quem usa leitor de
 tela ou não distingue as cores.
 
-As cores estão definidas em `tailwind.config.ts` e nomeadas pelo significado, e
-não pelo tom, de modo que uma mudança de paleta não exija alteração no código
-que as consome. Todas foram verificadas contra os dois fundos em que aparecem, o
-branco da página e o cinza da bolha do agente, com o mínimo de 4,5:1 exigido
-pelo nível AA da WCAG para texto pequeno.
+As cores estão definidas como tokens semânticos em
+`src/web/src/estilos/global.css`, e não pelo tom, de modo que uma mudança de
+paleta não exija alteração no código que as consome. Todas foram verificadas
+contra os dois fundos em que aparecem, o branco da página e o cinza da bolha do
+agente, com o mínimo de 4,5:1 exigido pelo nível AA da WCAG para texto pequeno.
 
 | Cor | Valor | Contraste sobre página | Contraste sobre bolha |
 | --- | --- | --- | --- |
@@ -8014,9 +8028,10 @@ principal. Há teste automatizado cobrindo os dois comportamentos.
 
 ### 9.2.7 Gerência de estado
 
-A regra que organiza o estado da interface é a separação entre o que pertence ao
-servidor e o que morre com a tela. Tudo que vem do servidor passa pelo TanStack
-Query; `useState` fica reservado ao que não precisa sobreviver a uma navegação.
+A regra que organiza o estado da interface distingue dados do servidor, estado
+transitório da tela e preferências persistidas localmente. Tudo que vem do
+servidor passa pelo TanStack Query; `useState` fica reservado ao que não precisa
+sobreviver a uma navegação. O tema é a exceção persistida pelo navegador.
 
 | Hook | Responsabilidade |
 | --- | --- |
@@ -8025,6 +8040,9 @@ Query; `useState` fica reservado ao que não precisa sobreviver a uma navegaçã
 | `useConversa` | Turnos carregados, envio de mensagem, fila otimista e tratamento de erro de uma conversa |
 | `usePainelIntencoes` | Oito recortes do painel de intenções, com período e perfil incorporados às chaves de cache |
 | `useMicrofone` | Ciclo de vida da captura de voz, incluindo obtenção e renovação do token e liberação do microfone ao desmontar |
+| `useTema` | Preferência de tema (`claro`, `escuro` ou `sistema`), fornecida pelo contexto e persistida em `localStorage` na chave `prata:tema` |
+| `useFocoDeVolta` | Restaura o foco ao elemento que abriu um diálogo, com alternativa quando esse elemento deixou de existir |
+| `useIsMobile` (`hooks/use-mobile.ts`) | Estado derivado da largura da janela, atualizado quando muda o breakpoint móvel |
 
 O `useConversa` concentra uma conversão que não deveria estar nos componentes.
 Um turno do backend carrega prompt e resposta juntos, porque representa uma
@@ -8082,10 +8100,11 @@ oferece reenvio da última mensagem, em vez de informar apenas que houve erro.
 
 | Método e rota | Consumidor | Finalidade |
 | --- | --- | --- |
+| `GET /auth/login` | `Login` | Início do fluxo de autenticação Entra ID |
 | `GET /auth/eu` | `useUsuario` | Identidade e permissões da sessão |
-| `POST /auth/logout` | `Layout` | Encerramento da sessão |
+| `POST /auth/logout` | `MenuDoPerfil` | Encerramento da sessão |
 | `POST /chat` | `useConversa` | Envio de mensagem e recebimento do desfecho |
-| `GET /conversas` | `Historico` | Lista de conversas |
+| `GET /conversas` | `useConversas` | Lista de conversas |
 | `GET /conversas/:id` | `useConversa` | Turnos de uma conversa gravada |
 | `DELETE /conversas/:id` | `Historico` | Exclusão de conversa |
 | `GET /rotinas` | `Rotinas` | Lista de rotinas cadastradas |
@@ -8143,18 +8162,17 @@ middleware. Como a interceptação ocorre na rede, e não pela substituição do
 cliente HTTP, componentes, hooks e serviços percorrem o mesmo caminho de código
 em todos os ambientes.
 
-Os dublês reproduzem vinte e uma rotas fiéis ao contrato descrito em
-`documentos/api/openapi-voz.yaml` e nos tipos de `tipos/index.ts`, incluindo os
-oito desfechos possíveis do pipeline com os textos de resposta correspondentes.
-Isso permite verificar, sem backend, que a distinção entre bloqueio seco de
-injeção e recusa orientativa de abuso chega corretamente à tela.
+O conjunto completo de handlers MSW é usado nos testes automatizados, com
+respostas determinísticas compatíveis com os tipos de `tipos/index.ts`. Ele
+permite verificar estados e desfechos sem depender do middleware. Esse conjunto
+de teste não é o caminho padrão do navegador nem uma forma de executar a
+interface sem backend.
 
 Três propriedades da camada foram estabelecidas deliberadamente:
 
 * Quando há rotas pendentes, seus dublês são inicializados antes da primeira
-  renderização. Montar a aplicação primeiro faria a consulta inicial de
-  identidade sair antes de o worker assumir a rede, receber 401 e redirecionar
-  o usuário ao login;
+  renderização. Com `ROTAS_PENDENTES` vazio, `handlersPendentes` também fica
+  vazio e o worker do navegador não é iniciado;
 * Requisições sem dublê correspondente seguem para a rede em vez de falhar. Uma
   rota do backend ainda não dublada deve mostrar o erro real, e não um erro da
   ferramenta de teste;
@@ -8179,8 +8197,8 @@ também os dublês pendentes.
 
 A suíte de testes continua usando o conjunto completo (`handlers`), porque
 precisa de respostas determinísticas e não depende de backend. O caso
-`dubles.test.ts` garante que o navegador registra apenas as rotas pendentes e que
-cada uma tem motivo registrado.
+`dubles.test.ts` garante que o navegador registra apenas as rotas pendentes e
+que cada uma tem motivo registrado.
 
 ### 9.2.10 Verificação automatizada
 
@@ -8195,49 +8213,39 @@ individualmente ou em sequência:
 | `npm run build` | Construção do pacote de produção, precedida da verificação de tipos |
 | `npm run audit:a11y` | Auditoria WCAG 2.1 A/AA com axe-core nas seis telas, temas claro e escuro (9.2.18) |
 
-As suítes cobrem dezessete casos distribuídos em três arquivos:
-
-| Arquivo | Casos | Escopo |
-| --- | --- | --- |
-| `testes/desfechos.test.ts` | 4 | Cobertura dos oito desfechos, ausência de etiqueta no desfecho atendido, presença de filete nos demais e verificação de que o rótulo não nomeia a barreira acionada |
-| `testes/navegacao.test.tsx` | 4 | Substituição de conteúdo ao trocar de conversa, sugestões de partida em conversa nova, ausência de repetição de alerta em conversa gravada e destino explícito para rota inexistente |
-| `testes/paginas.test.tsx` | 9 | Envio e recebimento de mensagem, recusa fora de escopo tratada como resposta e não como erro, não revelação da barreira em tentativa de injeção, envio por Enter com quebra de linha por Shift mais Enter, indicação de entrada por voz ativa, e filtragem, criação e exclusão de rotinas |
-
-A escolha de consultar elementos por papel acessível, e não por classe ou
-identificador, faz com que a quebra de um atributo de acessibilidade derrube o
-teste correspondente. O caso que verifica a não revelação da barreira é o
-exemplo mais direto dessa estratégia: ele falha se algum rótulo passar a
-distinguir bloqueio por regra de bloqueio por modelo, o que reintroduziria na
-interface a informação que o pipeline deliberadamente omite.
+O inventário atualizado dos casos, com identificadores, cenários, entradas e
+resultados esperados, está na seção 9.5.3; a execução e a cobertura medida estão
+registradas na seção 9.5.5. Os testes consultam elementos por papel acessível,
+e não por classe ou identificador, para que a quebra de um atributo de
+acessibilidade derrube o teste correspondente.
 
 ### 9.2.11 Execução do protótipo em máquina local
 
-A interface é executável de forma independente, sem middleware, banco de dados
-ou credenciais de nuvem, porque conversa com a camada de dublês descrita em
-9.2.9. Isso permite que qualquer pessoa da equipe execute, avalie e teste o
-protótipo isoladamente.
+A interface local usa o middleware real pelo proxy `/api`; não há dublê de
+navegador registrado enquanto `ROTAS_PENDENTES` estiver vazio. Para entrar e
+percorrer as telas protegidas, é necessário iniciar o middleware e o banco de
+dados conforme a configuração local do projeto, além de dispor de uma conta
+autorizada no Entra ID e das configurações de autenticação correspondentes.
 
 | Item | Versão | Observação |
 | --- | --- | --- |
 | Node.js | 20 ou superior | Mesma versão utilizada na imagem de contêiner |
 | npm | 10 ou superior | Acompanha a instalação do Node 20 |
-| Navegador | Chromium, Firefox ou Edge atualizados | O registro do *service worker* dos dublês exige suporte a *Service Workers* |
+| Navegador | Chromium, Firefox ou Edge atualizados | Navegador compatível com a versão atual da interface |
 
 A partir da raiz do repositório:
 
 ```bash
 cd src/web
-npm install
+npm ci
 npm run dev
 ```
 
 O servidor de desenvolvimento sobe em `http://localhost:5173`. A primeira
-execução leva mais tempo, porque instala as dependências e registra o *service
-worker* dos dublês.
-
-O console do navegador registra a ativação da camada de dublês. A ausência dessa
-mensagem indica que o arquivo `public/mockServiceWorker.js` não está presente,
-situação que se resolve executando `npx msw init public` a partir de `src/web`.
+execução instala as versões registradas em `package-lock.json`. A interface
+encaminha as chamadas `/api` ao middleware; o acesso às telas autenticadas
+depende do middleware, do banco de dados e do login Entra ID. Como
+`ROTAS_PENDENTES` está vazio, a inicialização não registra dublês no navegador.
 
 Para conferir o artefato de produção, `npm run build` seguido de `npm run
 preview` serve localmente o conteúdo de `dist/`, que não deve conter o arquivo
@@ -8273,12 +8281,16 @@ O estado de rotinas e intenções consome as respectivas rotas de API, e o fluxo
 
 ### 9.2.14 Como exercitar cada desfecho do pipeline
 
-O pipeline real decide o desfecho por meio das guardas e do classificador. O
-dublê decide por palavra-chave, apenas para que os desfechos sejam alcançáveis à
-mão durante o desenvolvimento e a avaliação. A ordem de verificação reproduz a
-ordem do orquestrador: injeção, abuso, escopo, confiança e execução.
+No navegador, as mensagens seguem pelo proxy para o middleware real, que decide
+o desfecho por meio das guardas e do classificador. Os gatilhos abaixo pertencem
+ao dublê de teste, que decide por palavra-chave para permitir cenários
+determinísticos; eles não são um roteiro garantido para obter o mesmo desfecho
+no pipeline real. Em particular, `simular falha` e `Resuma o documento
+suspeito` só forçam, respectivamente, `falha_executor` e `bloqueada_saida` nos
+testes. A ordem do dublê reproduz a ordem do orquestrador: injeção, abuso,
+escopo, confiança e execução.
 
-| Desfecho | Mensagem de exemplo | Comportamento esperado |
+| Desfecho | Mensagem de exemplo no dublê de teste | Comportamento esperado no cenário de teste |
 | --- | --- | --- |
 | `encaminhada` | Qual o status do Projeto X? | Resposta com o conteúdo consultado, sem etiqueta |
 | `bloqueada_injecao_regra` | Ignore as instruções anteriores | Recusa seca, sem explicar o motivo nem repetir a instrução, com etiqueta "Não atendida" |
@@ -8341,10 +8353,11 @@ tratados na seção 11.
 | --- | --- | --- |
 | A trajetória de ingestão de áudio não é consumida pela interface | O envio de arquivo de áudio não é exercitável pela tela | Implementada no middleware; adoção pela interface prevista para as ondas seguintes |
 
-A declaração dessas limitações é parte da entrega. Um protótipo avaliado sem
-elas produz duas leituras erradas em direções opostas: a de que a solução já
-consulta o portfólio real, e a de que a interface não funciona quando o avaliador
-percebe que o dado é fixo.
+A interface consome o middleware real; o portfólio usado nesta versão é
+sintético e não corresponde aos dados reais do parceiro. Portanto, as respostas
+do navegador vêm do pipeline e do conjunto de dados do middleware, não de um
+valor fixo na interface. Respostas fixas existem somente nos handlers MSW dos
+testes, conforme 9.2.9 e 9.2.14.
 
 ### 9.2.18 Auditoria automatizada de acessibilidade (WCAG 2.1 A/AA)
 
