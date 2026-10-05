@@ -4471,11 +4471,11 @@ A coluna de executor é a consequência mais direta da revisão de escopo, e exp
 |---|---|---|---|---|
 | P01 | Registro de aplicação no Entra ID, com URI de redirecionamento e escopos | INT-08 (onda 1) | TI do Metrô | A confirmar |
 | P02 | Mapeamento entre grupos do Entra ID e os perfis e permissões do agente | INT-08, RF01 | PMO / TI do Metrô | A confirmar |
-| P03 | Copilot Studio com **canal Direct Line habilitado** e segredo disponível | INT-02 (onda 1 em diante) | TI do Metrô | A confirmar |
+| P03 | Copilot Studio com **canal Direct Line habilitado** e segredo disponível | INT-02 (onda 1 em diante) | TI do Metrô | Não atendido em 05/10/2026: Direct Line não habilitado (5.5.10.2) |
 | P04 | Confirmação do licenciamento, incluindo conectores *premium* e limites de mensagens | INT-02, INT-05, INT-09 | TI do Metrô | A confirmar |
-| P05 | Site do SharePoint de desenvolvimento, com leitura e escrita | INT-03, INT-04, INT-05 | TI do Metrô | A confirmar |
-| P06 | Estrutura das listas do portfólio: colunas, tipos e domínios de valores | INT-03 e representatividade dos dados sintéticos | PMO | A confirmar |
-| P07 | Amostras anonimizadas ou modelos dos documentos de projeto | INT-04 | PMO | A confirmar |
+| P05 | Site do SharePoint de desenvolvimento, com leitura e escrita | INT-03, INT-04, INT-05 | TI do Metrô | Atendido no site de teste, com nível de edição inferido (5.5.10.2) |
+| P06 | Estrutura das listas do portfólio: colunas, tipos e domínios de valores | INT-03 e representatividade dos dados sintéticos | PMO | Levantado em 05/10/2026 (5.5.10.2); de-para no #485 |
+| P07 | Amostras anonimizadas ou modelos dos documentos de projeto | INT-04 | PMO | Parcial: documentos na biblioteca e cronogramas como anexos de lista (5.5.10.2) |
 | P08 | Acesso a espaço de trabalho do Power BI e capacidade dedicada | INT-06 | TI do Metrô | A confirmar |
 | P09 | Modelos (Word/PowerPoint) dos relatórios e da apresentação mensal | INT-09 | PMO | A confirmar |
 | P10 | Recurso **Azure AI Content Safety** provisionado | INT-11 (onda 2) | Equipe | Provisionado no tenant da equipe |
@@ -4512,6 +4512,115 @@ O TAPI estabelece como premissa que a plataforma de portfólio pode ser modifica
 | Q10 | Content Safety e Speech precisam ser reprovisionados no tenant do parceiro antes de qualquer uso com dado real? | Determina o esforço de migração no handover e a validade do perímetro declarado em 3.3.1.1 | INT-11, INT-12 |
 
 A questão anterior sobre políticas de DLP e conectores personalizados foi encerrada pela inversão da arquitetura: não há mais conector personalizado apontando do Copilot para um endpoint externo, porque o Copilot deixou de chamar a solução. Em seu lugar entra Q02, sobre a habilitação do Direct Line, e Q10, sobre a alocação de tenant dos serviços de IA.
+
+As questões Q01 a Q06 foram verificadas no ambiente de teste do parceiro em 05/10/2026; as respostas estão na seção [5.5.10](#5510-validação-no-ambiente-de-teste-do-parceiro).
+
+### 5.5.10 Validação no ambiente de teste do parceiro
+
+Os requisitos funcionais, o catálogo de intenções e os perfis de acesso foram especificados sobre a base sintética e o TAPI. Esta seção os confronta com a estrutura e as permissões encontradas no ambiente de teste liberado pelo parceiro em 04/09/2026 (SharePoint com dados de exemplo e Copilot Studio), e responde às questões Q01 a Q06 da seção 5.5.9. O de-para campo a campo entre as listas do ambiente e a base sintética, com o efeito esperado nas métricas, é tratado separadamente (#485).
+
+#### 5.5.10.1 Método e limites
+
+A inspeção foi feita em 05/10/2026, somente em modo de leitura, com a credencial de teste distribuída pelo parceiro a um integrante da equipe. Foram consultadas as páginas de conteúdo do site, as configurações de cada lista (nome, tipo e obrigatoriedade das colunas, e as opções das colunas de escolha relevantes), as configurações do site e, no Copilot Studio, o seletor de ambientes, a lista de agentes e a autenticação e os canais do agente de teste da equipe.
+
+Pela restrição de confidencialidade da liberação (ver `R23`), esta seção não reproduz registros, valores, nomes de pessoas ou de projetos, endereços nem identificadores do ambiente. As listas são citadas pelo nome, que é parte da estrutura; os domínios das colunas de escolha são descritos pela quantidade de opções e pelo mapeamento ao vocabulário da solução.
+
+Limites:
+
+- nenhuma escrita foi testada; a capacidade de escrita é inferida da interface (Q06);
+- o perfil de aluno não acessa a gestão de permissões do site, então os grupos e níveis do parceiro não foram observados (Q05);
+- os dados de exemplo têm volume pequeno (6 projetos e 3 subportfólios), o que permite validar estrutura e vocabulário, mas não medir o desempenho do classificador ou do RAG;
+- em um registro de projeto inspecionado, só o título e o status estavam preenchidos; não se generaliza essa observação aos demais registros;
+- Q07 a Q10 não são respondíveis pela inspeção do ambiente e permanecem abertas.
+
+Classificação usada nas tabelas a seguir:
+
+- **sustentado:** o ambiente tem a estrutura e os dados que o requisito ou a intenção lê ou grava;
+- **parcial:** a estrutura existe, mas falta algum campo, a semântica diverge, o fluxo do parceiro não é modelado pela solução ou a fonte não é a que a solução consome;
+- **sem dados:** o ambiente não tem estrutura nem registros para o requisito ou a intenção;
+- **não depende do ambiente:** o requisito é atendido pela própria solução e não lê nem grava dados do parceiro.
+
+#### 5.5.10.2 Respostas às questões abertas
+
+| # | Resposta observada em 05/10/2026 | Efeito |
+|---|---|---|
+| Q01 | A conta de teste enxerga quatro ambientes do Power Platform: o padrão, dois de área restrita e um de produção. Em um dos ambientes de área restrita, a equipe criou e publicou um agente de teste; o ambiente padrão não tem agentes. Conectores *premium* e limites de mensagens não foram verificados. | O licenciamento permite criar e publicar agentes no ambiente de laboratório. A demonstração no ambiente do parceiro (#514) parte desse ambiente, e não do padrão. |
+| Q02 | **Não.** O agente de teste está com a autenticação padrão, "Autenticar com Microsoft", que atende Teams, Power Apps e Microsoft 365 Copilot; nenhum canal está configurado. Usar outros canais com autenticação exige a opção "Autenticar manualmente" ([Microsoft Learn](https://learn.microsoft.com/microsoft-copilot-studio/publication-fundamentals-publish-channels)), e o Direct Line exige gerar segredo. | Habilitar o Direct Line é uma alteração de configuração no ambiente do parceiro, sob a governança dele. Até lá, o executor próprio segue como caminho de demonstração (5.5.8) e o pré-requisito P03 continua não atendido. |
+| Q03 | O site tem 12 listas e 5 bibliotecas. A lista **Projetos** é o eixo, consultada pelas demais. Há listas por projeto (Avanço, Cronograma, Entregas e Marcos, Riscos e problemas, Projetos – Registro de mudanças, Termo de abertura, Termo de encerramento/descontinuidade) e por portfólio (Subportfólio – Base, Situação – Portfólio, Riscos e problemas – Portfólio, Portfólio – Registro de mudanças). O **subportfólio** organiza quase todas as listas. | A base sintética não tem o subportfólio como entidade, nem tabelas de termo de abertura, termo de encerramento e registro de mudanças. O detalhamento campo a campo está no de-para (#485). |
+| Q04 | A biblioteca de documentos tem 5 arquivos. Os cronogramas não estão em colunas: cada item da lista Cronograma guarda o cronograma como anexo `.xlsx`, com nome fora da convenção `CÓDIGO_TIPO_vN_AAAAMMDD`. | O formato é legível pela extração do RAG (`openpyxl`), mas a fonte, anexo de item de lista do SharePoint, não é coberta pela ingestão atual, que consome a pasta do Google Drive (WH-01). |
+| Q05 | Os papéis aparecem como **colunas de pessoa nas listas**, em dois níveis. No projeto: Líder e Diretor responsável (Projetos), Equipe e Representante da diretoria (Termo de abertura). No subportfólio: Responsável, Membro GPM, Aprovador PMO Corporativo e Apoio. O site é um grupo privado do Microsoft 365, e as configurações do site não mostram "Usuários e Permissões" ao perfil de aluno. | O RF01, no ambiente do parceiro, dependeria de a solução ler essas colunas, e não de herdar permissões do SharePoint. Ver 5.5.10.5. |
+| Q06 | Inferido pela interface, sem teste de escrita: as configurações de lista oferecem "Excluir esta lista" e "Criar Coluna", mas não "Permissões para esta lista". O nível é compatível com **Editar**, que permite criar, editar e excluir itens e listas. | Uma ação executada com essa identidade consegue escrever, e também apagar estrutura. Isso reforça o desenho em que o agente propõe a alteração e o usuário confirma (RF05). |
+
+#### 5.5.10.3 Requisitos funcionais
+
+| RF | Classificação | Base |
+|---|---|---|
+| RF01 — Controle de acesso, permissões e perfil | Parcial | Os perfis `lider_projeto`, `diretoria` e `membro_equipe` podem ser derivados de colunas de pessoa (5.5.10.5), mas os quatro papéis de subportfólio não têm equivalente na solução, e as permissões do site não são visíveis ao perfil de teste. |
+| RF02 — Interação por texto e voz | Não depende do ambiente | Atendido pela interface e pelo middleware da equipe. O canal do Copilot Studio não está disponível (Q02). |
+| RF03 — Identificação e controle de intenções | Não depende do ambiente | Classificador e catálogo são da solução. |
+| RF04 — Consulta e análise de informações dos projetos | Parcial | Avanço e marcos são sustentados; status, riscos, cronograma e documentos são parciais; faturas e aderência normativa não têm dados (5.5.10.4). |
+| RF05 — Apoio à criação e atualização de projetos | Parcial | Há estrutura e permissão de escrita para projeto, avanço, marcos, riscos, mudanças e termos, mas o ambiente tem fluxos de aprovação (termo de abertura, parecer do subportfólio, deliberação do portfólio) que a solução não modela; os riscos não têm probabilidade e impacto; o cronograma está em anexo. |
+| RF06 — Alertas e apoio proativo a pendências | Parcial | As datas previstas de marcos e de planos de ação permitem derivar pendências; as regras e a periodicidade do PMO (Q07) seguem abertas. |
+| RF07 — Análise comparativa do portfólio | Sustentado | A lista Avanço guarda, por data de referência, o previsto e o realizado físico e econômico de cada projeto, o que permite comparar projetos e calcular desvio. |
+| RF08 — Relatórios e informações gerenciais | Parcial | O relatório de status combina dados sustentados e parciais; a situação do portfólio é texto livre; o termo de encerramento não tem registros; o Power BI (Q08) não foi verificado. |
+| RF09 — Proteção da interação com o agente | Não depende do ambiente | Barreiras da solução. |
+| RF10 — Registro e análise das intenções | Não depende do ambiente | Registro no banco da solução. |
+| RF11 — Rotinas agendadas | Parcial | Herda a classificação do RF06, cujas varreduras as rotinas disparam. |
+| RF12 — Histórico e retomada de conversas | Não depende do ambiente | Histórico no banco da solução. |
+
+#### 5.5.10.4 Catálogo de intenções
+
+| Intenção | Classificação | Base no ambiente |
+|---|---|---|
+| `consultar_status_projeto` | Parcial | O status do projeto tem duas opções, que indicam se o registro está ativo; não há fase nem motivo de suspensão ou encerramento. |
+| `consultar_avanco` | Sustentado | Lista Avanço: previsto e realizado físico e econômico por data de referência. |
+| `consultar_cronograma` | Parcial | Cronograma só em anexo `.xlsx` (Q04). |
+| `consultar_marcos` | Sustentado | Lista Entregas e Marcos, com datas prevista e realizada; o estado do marco é derivado das datas, e não de uma coluna de status. |
+| `consultar_riscos` | Parcial | Riscos e problemas ficam na mesma lista, sem coluna de tipo; não há probabilidade nem impacto, só quatro níveis de criticidade. |
+| `consultar_problemas` | Parcial | Mesma lista dos riscos, sem coluna que distinga problema de risco. |
+| `consultar_aderencia_normativa` | Sem dados | Nenhuma lista ou coluna sobre normas ou aderência. |
+| `consultar_documento_projeto` | Parcial | Há documentos na biblioteca e em anexos, mas a fonte não é a consumida pela ingestão (Q04). |
+| `consultar_conceito_gestao` | Não depende do ambiente | Responde a partir da base de conhecimento da solução. |
+| `consultar_faturas_vencidas` | Sem dados | Nenhuma lista de faturas ou pagamentos; o ambiente só tem custo e previsto/realizado econômico. |
+| `comparar_projetos` | Sustentado | Lista Avanço (ver RF07). |
+| `consultar_indicadores_portfolio` | Parcial | A situação do portfólio é texto livre por subportfólio; os indicadores numéricos precisam ser agregados a partir da lista Avanço. |
+| `gerar_relatorio_status` | Parcial | Combina status, avanço, marcos e riscos, com as limitações de cada um. |
+| `gerar_previa_diretoria` | Parcial | Situação do portfólio em texto livre e avanço por projeto. |
+| `gerar_relatorio_encerramento` | Sem dados | A lista Termo de encerramento existe, mas não tem registros. |
+| `criar_projeto` | Parcial | A lista Projetos aceita escrita, mas o ambiente associa o projeto a um termo de abertura com fluxo de aprovação, que a solução não modela. |
+| `atualizar_avanco` | Sustentado | Novo registro na lista Avanço. |
+| `atualizar_cronograma` | Sem dados | Não há colunas de cronograma; atualizar exigiria editar o anexo. |
+| `registrar_risco` | Parcial | A lista não tem probabilidade nem impacto, que a solução coleta. |
+| `registrar_problema` | Parcial | Mesma lista dos riscos, sem coluna de tipo. |
+| `atualizar_termo_abertura` | Parcial | A lista Termo de abertura existe, mas a atualização entra num fluxo de aprovação que a solução não modela. |
+| `registrar_entrega_marco` | Sustentado | Data realizada na lista Entregas e Marcos. |
+| `atualizar_mapa_beneficios` | Parcial | Benefícios esperados existem só como texto livre em Projetos e no Termo de abertura; não há lista de mapa de benefícios. |
+| `registrar_mudanca` | Parcial | As listas de registro de mudanças existem nos dois níveis, mas incluem parecer do subportfólio e deliberação do portfólio, que a solução não modela. |
+| `encerrar_projeto` | Sustentado | A lista Termo de encerramento tem a estrutura completa e obrigatória para o registro. |
+| `consultar_pendencias` | Parcial | Derivável das datas previstas; as regras do PMO (Q07) seguem abertas. |
+| `fora_de_escopo` | Não depende do ambiente | Barreira da solução. |
+| `tentativa_injecao` | Não depende do ambiente | Barreira da solução. |
+
+Totais: 6 sustentadas, 15 parciais, 4 sem dados e 3 que não dependem do ambiente, num catálogo de 28 intenções.
+
+#### 5.5.10.5 Perfis e permissões
+
+| Perfil da solução | Onde aparece no ambiente | Divergência |
+|---|---|---|
+| `lider_projeto` | Líder (Projetos e Termo de abertura) | Equivalente. |
+| `diretoria` | Diretor responsável (Projetos) e Representante da diretoria, patrocinador (Termo de abertura) | Dois papéis do ambiente para um perfil da solução. |
+| `membro_equipe` | Equipe (Termo de abertura) | Existe só no termo de abertura, não na lista Projetos. |
+| — | Responsável, Membro GPM, Aprovador PMO Corporativo e Apoio (Subportfólio – Base) | Papéis de subportfólio e de PMO sem equivalente na solução. A *feature* F70 (seção 2.7) já previa os perfis de responsável de subportfólio e de GPM, que não chegaram aos três perfis implementados. |
+
+Duas divergências adicionais: os responsáveis por mudança e por deliberação nas listas de registro de mudanças são texto livre, e não colunas de pessoa, e por isso não servem para derivar perfil; e a mesma informação aparece com tipos diferentes entre listas (por exemplo, "Escalar?" é escolha em uma lista e sim/não em outra), o que deixa em aberto qual lista é a fonte da verdade para cada campo.
+
+#### 5.5.10.6 Consequências para o projeto
+
+1. **Executor.** Sem Direct Line (Q02), RF04 a RF08 continuam demonstrados pelo executor próprio. Habilitar o canal é decisão do parceiro e entra no handover.
+2. **RF01.** Implementar perfis no ambiente do parceiro significa ler as colunas de pessoa das listas, nos dois níveis, e decidir com o PMO como os papéis de subportfólio se traduzem em permissões da solução.
+3. **Modelo de dados.** O subportfólio, os termos de abertura e de encerramento, o registro de mudanças e os fluxos de aprovação não existem na base sintética. Essa distância é a matéria do de-para (#485) e da reavaliação do risco `R01`.
+4. **Ingestão.** Documentos e cronogramas do ambiente estão em bibliotecas e anexos de lista do SharePoint, fonte que a ingestão atual não consome.
+5. **Escrita.** A identidade de teste tem nível de edição. Qualquer escrita do agente deve continuar exigindo confirmação do usuário, e o escopo de escrita deve ser restrito às listas necessárias.
 
 ## 5.6 Visão preliminar da arquitetura em blocos conectados
 
