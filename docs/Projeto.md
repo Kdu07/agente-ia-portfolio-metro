@@ -10237,6 +10237,33 @@ no mesmo processo e substitui as dependências externas por respostas
 determinísticas. Rede, Azure, Copilot/RAG e operação continuada precisam de
 uma janela posterior no ambiente implantado.
 
+**Resultado no ambiente implantado em 05/10/2026.** A sonda foi executada no
+`dev` do Azure Container Apps, pela entrada pública do `web`, entre
+`2026-10-05T18:42:17.138435Z` e `2026-10-05T18:53:12.490129Z` — das 15h42 às
+15h53 em `America/Sao_Paulo`. A janela teve 12 amostras, intervalo nominal de
+30 segundos, timeout individual de 180 segundos e nenhuma parada programada.
+As 12 amostras foram válidas: dez disponíveis, duas indisponíveis, zero
+inconclusivas. O indicativo foi, portanto, **83,333%**, 15,667 pontos
+percentuais abaixo da meta preliminar de 99%; o RNF04 ficou **reprovado nesta
+janela**.
+
+As duas falhas não vieram da sessão, do proxy ou do observador. O agente
+respondeu em cerca de 1,5 segundo, mas recusou o enunciado benigno com
+`desfecho=recusada_baixa_confianca`. Como o instrumento mede o caminho útil
+percebido por quem usa o agente, uma resposta ativa que não conclui a
+solicitação legítima conta como indisponível. Nas dez amostras disponíveis, a
+latência variou de 12,701 s a 43,718 s, com média de 23,943 s e mediana de
+23,585 s. O log completo, os instantes e as condições de reprodução estão em
+[`docs/evidencias/2026-10-05-rnf04-disponibilidade-implantada.txt`](evidencias/2026-10-05-rnf04-disponibilidade-implantada.txt).
+
+O resultado continua sendo um recorte curto do ambiente de desenvolvimento,
+não uma certificação mensal ou de produção. A sonda é sequencial, de modo que
+o intervalo começa depois da resposta anterior, e o marcador UUID usado para
+reencontrar o turno também integra o texto classificado. A janela comprova que
+o instrumento atravessou Entra ID, chat e persistência reais e revelou uma
+instabilidade funcional; ampliar o período exige primeiro estabilizar o
+enunciado sintético e pactuar com o parceiro a meta e o horário de operação.
+
 #### 10.2.3.5 RNF05 — Adequação da resposta ao perfil do usuário
 
 O requisito tem dois critérios de aceitação em 3.3.1, e eles são **assimétricos de propósito**: taxa de adequação de no mínimo 90% e **zero exposição** de conteúdo não autorizado. A assimetria precisa ser explicada, porque à primeira vista parece incoerência. Os dois critérios medem coisas de naturezas diferentes. Adequação é julgamento de forma — se a profundidade e o recorte da resposta servem ao contexto de atuação daquele perfil —, e admite discordância entre avaliadores, de modo que exigir 100% transformaria o critério em disputa de opinião. Exposição de conteúdo não autorizado é fato binário: ou o conteúdo apareceu, ou não apareceu. Um único caso reprova o conjunto inteiro, e nenhuma taxa média o compensa, porque a média de uma violação de confidencialidade não é uma grandeza com significado.
@@ -10364,7 +10391,7 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
 | RNF02 | 10.2.3.2 | 1 | 3 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Executado localmente; conferência PostgreSQL real permanece fora desta execução |
 | RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
-| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Disponível e executado em janela local; medição implantada ainda pendente |
+| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Executado localmente e no `dev` implantado; janela de 05/10 com 83,333%, abaixo da meta preliminar de 99% |
 | RNF05 | 10.2.3.5 | 2 | 2 | `tests/rnf/test_rnf05_perfil.py` | Executado: 6 aprovados na bancada sintética; validação humana ainda pendente |
 | RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
 | RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
@@ -10383,7 +10410,7 @@ Torna-os, porém, mais fáceis de degradar sem que ninguém perceba, e por duas 
 
 **O que fica fora.** Cinco exclusões, cada uma com registro anterior neste documento.
 
-A **disponibilidade real** do agente não é medida. O RNF04 produz um indicativo sobre uma janela declarada, e 3.3.1 já reconhece que o percentual não foi pactuado com o parceiro. Disponibilidade se apura em operação continuada, que o MVP acadêmico não tem, e apresentar o resultado da sonda como certificação seria dar a uma hipótese a aparência de um resultado.
+A **disponibilidade continuada** do agente não é medida. O RNF04 agora possui um indicativo local e outro no `dev` implantado, sobre a janela curta registrada em 10.2.3.4, e 3.3.1 já reconhece que o percentual não foi pactuado com o parceiro. Disponibilidade se apura em operação continuada, que o MVP acadêmico não tem, e apresentar esse recorte como certificação seria dar a uma hipótese a aparência de um resultado.
 
 A **medição do canal de voz** não acontece nesta seção. Os indicadores de 3.1.5.2 — WER, acurácia de termos de domínio, degradação ponta a ponta e inteligibilidade da síntese — dependem do corpus de áudio de 5.7.6, que ainda não foi gravado. O que existe hoje é a aproximação textual do RNF03, o recorte de texto ruidoso, que estabelece a ordem de grandeza da robustez do classificador e não substitui a medição sobre áudio real.
 
@@ -12215,7 +12242,7 @@ interna ainda pendente no RF06.
 | RNF01 — perímetro | `tests/perimetro/test_perimetro_declarado.py` | Aprovado: 5 casos | `2026-09-25-testes-rnf-perimetro.txt` | Inspeção do perímetro não comprova configuração implantada |
 | RNF02 — rastreabilidade | `tests/rnf/test_rnf02_07_auditoria.py` | Aprovado nos casos executados, inclusive na bateria integral com PostgreSQL | `2026-09-25-testes-rnf-perimetro.txt`; `2026-09-29-cobertura-integral-middleware.txt` | A execução local não substitui validação no ambiente implantado |
 | RNF03 — precisão | `app/pipeline/intencao/avaliacao.py` | Resultado já registrado em 5.4.11 | 5.4.11 | Reproduzir na mudança do modelo/conjunto |
-| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py` | Parcial: lógica e janela local com PostgreSQL passaram na bateria integral | `2026-09-25-testes-rnf-perimetro.txt`; `2026-09-29-cobertura-integral-middleware.txt` | Medição contínua em ambiente implantado |
+| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py`; `app/rotinas/sonda.py` | Reprovado na janela implantada: 10 de 12 amostras disponíveis, ou 83,333%, contra meta preliminar de 99% | `2026-10-05-rnf04-disponibilidade-implantada.txt`; evidências locais anteriores | Janela curta no `dev`; operação continuada e meta/horário pactuados com o parceiro permanecem pendentes |
 | RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
 | RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
