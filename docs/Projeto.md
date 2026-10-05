@@ -55,6 +55,7 @@
   - [2.8 Canvas do Projeto](#28-canvas-do-projeto)
   - [2.9 Objetivos de Desenvolvimento Sustentável](#29-objetivos-de-desenvolvimento-sustentável)
   - [2.10 Custos da Prova de Conceito e da Solução Final](#210-custos-da-prova-de-conceito-e-da-solução-final)
+  - [2.11 Análise Financeira para o Parceiro](#211-análise-financeira-para-o-parceiro)
 - [3. Requisitos do Projeto](#3-requisitos-do-projeto)
   - [3.1 Business Drivers](#31-business-drivers)
   - [3.2 Requisitos Funcionais (RFs)](#32-requisitos-funcionais-rfs)
@@ -1281,9 +1282,10 @@ Esta seção detalha os custos de pessoal e de tecnologia de dois objetos distin
 | Premissa | Valor adotado | Fonte e data de consulta |
 |---|---|---|
 | Custo-hora de pessoal | R$ 81,25, único para todas as funções | Salário de referência de R$ 13.000,00 mensais para Desenvolvedor Pleno contratado como PJ em São Paulo, dividido por 160 h (Glassdoor, 25/09/2026) |
-| Horas de trabalho | Estimativa de cada card pela régua de tamanho: PP 0,25 h, P 0,5 h, M 1 h e G 2 h | Kanban do GitLab, com a Sprint 5 pelo planejamento fechado em 28/09/2026 (seções 7.2 e 3.6.1 do [GestaoProjeto.md](GestaoProjeto.md)) |
+| Horas de trabalho | Estimativa de cada card pela régua de tamanho: PP 0,25 h, P 0,5 h, M 1 h e G 2 h | Kanban do GitLab, com a Sprint 4 pelo fechamento da milestone, extraído em 30/09/2026, e a Sprint 5 pelo planejamento fechado em 28/09/2026; as horas acadêmicas ficam fora do contrato (seções 7.2, 7.2.5 e 3.6.1 do [GestaoProjeto.md](GestaoProjeto.md)) |
 | Câmbio | PTAX de venda de R$ 5,1991, com IOF de 3,5% sobre compras internacionais com cartão | Banco Central do Brasil, 25/09/2026 |
 | Serviços de nuvem da Azure | Tabela oficial em reais, região `brazilsouth` | Microsoft, 25/09/2026 |
+| Gasto real da Azure | Custo por recurso do grupo `rg-prata-agent` em setembro | Azure Cost Management, 30/09/2026 |
 | Microsoft Copilot Studio | Pacote de 25.000 créditos por R$ 1.145,10 ao mês | Microsoft, 25/09/2026 |
 | Modelo de geração do executor próprio | US$ 1,50 por milhão de tokens de entrada e US$ 9,00 por milhão de tokens de saída, no modelo `google/gemini-3.5-flash` | OpenRouter, 28/09/2026 |
 | Índice vetorial do executor próprio | Plano Starter, gratuito; o plano pago mais próximo, Standard, tem mínimo de US$ 50 por mês | Pinecone, 28/09/2026 |
@@ -1292,19 +1294,19 @@ As fontes de 25/09/2026 estão listadas na seção 7.15 do [GestaoProjeto.md](Ge
 
 ### 2.10.2 Prova de conceito
 
-**Pessoal.** A prova de conceito consumiu 435,00 h de trabalho, somadas as cinco sprints: 55,00 h na Sprint 1, 90,50 h na Sprint 2, 55,50 h na Sprint 3, 143,75 h na Sprint 4 e 90,25 h planejadas para a Sprint 5. A equipe é de estudantes, e o custo abaixo valora esse trabalho a preço de mercado, ou seja, o que ele custaria num contrato.
+**Pessoal.** A prova de conceito consumiu 426,75 h de trabalho, somadas as cinco sprints: 55,00 h na Sprint 1, 90,50 h na Sprint 2, 55,50 h na Sprint 3, 135,50 h na Sprint 4 e 90,25 h planejadas para a Sprint 5. A equipe é de estudantes, e o custo abaixo valora esse trabalho a preço de mercado, ou seja, o que ele custaria num contrato.
 
 | Função | Horas | Custo |
 |---|---:|---:|
 | Gestão de projeto e processos | 51,25 h | R$ 4.164,06 |
-| Negócio, requisitos e viabilidade | 66,75 h | R$ 5.423,44 |
-| Arquitetura, dados e nuvem | 78,00 h | R$ 6.337,50 |
-| Desenvolvimento de software e PLN | 134,25 h | R$ 10.907,81 |
+| Negócio, requisitos e viabilidade | 65,50 h | R$ 5.321,88 |
+| Arquitetura, dados e nuvem | 76,00 h | R$ 6.175,00 |
+| Desenvolvimento de software e PLN | 129,25 h | R$ 10.501,56 |
 | UX/UI e frontend | 39,50 h | R$ 3.209,38 |
 | Qualidade e testes | 65,25 h | R$ 5.301,56 |
-| **Total de pessoal** | **435,00 h** | **R$ 35.343,75** |
+| **Total de pessoal** | **426,75 h** | **R$ 34.673,44** |
 
-A regra que associa as horas de cada sprint a uma função está na seção 7.2.2 do [GestaoProjeto.md](GestaoProjeto.md).
+A regra que associa as horas de cada sprint a uma função está na seção 7.2.2 do [GestaoProjeto.md](GestaoProjeto.md). Desse esforço, 26,50 h são entregas que existem por causa do módulo ou da própria proposta comercial, como o contrato de convivência, a matriz de papéis, a análise dos ODS e o próprio orçamento. A prova de conceito as consumiu, mas elas não entram no contrato da solução final (seção 7.2.5 do [GestaoProjeto.md](GestaoProjeto.md)).
 
 **Tecnologia.** No módulo, parte das ferramentas saiu sem custo, em planos acadêmicos, contas gratuitas ou no ambiente do Inteli, e a nuvem operou sob o teto de R$ 300 por ano, com alerta de orçamento (11.2.6). A tabela registra o equivalente comercial de cada item, que é o custo de reproduzir a prova de conceito fora do ambiente acadêmico.
 
@@ -1314,15 +1316,31 @@ A regra que associa as horas de cada sprint a uma função está na seção 7.2.
 | Figma Professional | Protótipos, mockups e correções de interface | R$ 516,58 | 2 assentos por 3 meses, a US$ 16 por assento |
 | Maze Starter | Teste de usabilidade com gravação | R$ 532,73 | 1 mês, a US$ 99 |
 | Azure: PostgreSQL, Container Registry e Key Vault | Banco, imagens e segredos dos estágios de desenvolvimento e homologação | R$ 389,28 | 2 meses a R$ 194,64 |
-| Azure Container Apps | Execução do `web` e do `middleware` | R$ 0,00 | Escala a zero, dentro da franquia mensal gratuita |
+| Azure Container Apps | Execução do `web`, do `middleware` e do job de migração nos estágios `dev` e `prd` | R$ 44,88 | 2 meses a R$ 22,44, o gasto real de setembro, já descontada a franquia mensal gratuita (ver abaixo) |
 | Azure AI Content Safety e Azure AI Speech | Guardas e transcrição | R$ 0,00 | Nível gratuito F0 |
 | Google Drive | Corpus sintético lido pela ingestão | R$ 0,00 | Pasta controlada, lida por conta de serviço |
 | Pinecone | Índice vetorial do corpus | R$ 0,00 | Plano Starter, suficiente para os 76 documentos e 1.883 trechos indexados (9.4.6) |
 | Embeddings e classificador | Vetorização e classificação de intenções | R$ 0,00 | Modelos locais, sem tarifa por requisição |
-| **Total fixo de tecnologia** | | **R$ 4.247,51** | |
+| **Total fixo de tecnologia** | | **R$ 4.292,39** | |
 | Modelo de geração | Resposta com citação a cada consulta ao executor próprio | Cerca de R$ 0,05 por consulta | Cerca de 3.500 tokens de entrada (cinco trechos de até 350 tokens, as instruções fixas, a pergunta e até três turnos de histórico) e até 400 de saída: US$ 0,00885 por consulta, convertidos pela PTAX com IOF |
 
-Somados pessoal e tecnologia fixa, a prova de conceito custa **R$ 39.591,26** a preço de mercado, e a geração acrescenta centavos por consulta. O pessoal responde por 89% desse valor, o que confirma a leitura da seção 2.8.9: o valor da prova de conceito está no trabalho de construir e avaliar o pipeline, e não em infraestrutura.
+Somados pessoal e tecnologia fixa, a prova de conceito custa **R$ 38.965,83** a preço de mercado, e a geração acrescenta centavos por consulta. O pessoal responde por 89% desse valor, o que confirma a leitura da seção 2.8.9: o valor da prova de conceito está no trabalho de construir e avaliar o pipeline, e não em infraestrutura.
+
+**Gasto real e equivalente comercial.** O equivalente comercial precifica cada recurso pela tabela da Microsoft, sem a cota gratuita de 12 meses da assinatura FreeTrial do módulo, mas com as franquias mensais que valem para qualquer assinatura, como a do Container Apps, do mesmo modo que a operação em produção (seção 7.5.3 do [GestaoProjeto.md](GestaoProjeto.md)). O gasto real é o que a assinatura do módulo cobrou, e o levantamento tem três recortes. Cobre só o grupo de recursos `rg-prata-agent`, que reúne os estágios `dev` e `prd` (11.2); o grupo `METROSP`, da validação do ambiente com uma imagem de exemplo (6.5), não hospeda a solução e ficou fora. Cobre só setembro, mês em que os dois estágios foram provisionados. E cobre só a Azure: o gasto no OpenRouter com o modelo de geração não foi levantado. Nesse recorte, o Azure Cost Management registra, em 30/09/2026, um custo real de **R$ 22,56** em setembro, com previsão de R$ 28,61 para o mês fechado, sem créditos nem impostos.
+
+| Recurso | Tipo | Gasto real |
+|---|---|---:|
+| `ca-middleware-dev` | Container App | R$ 19,23 |
+| `ca-web-dev` | Container App | R$ 2,37 |
+| `ca-middleware-prd` | Container App | R$ 0,63 |
+| `caj-migracao-dev` | Job do Container Apps | R$ 0,12 |
+| `ca-web-prd` | Container App | R$ 0,09 |
+| `kv-prata-dev-g02t17` | Key Vault | R$ 0,07 |
+| `kv-prata-prd-g02t17` | Key Vault | R$ 0,04 |
+| Demais 10 recursos do grupo | | R$ 0,01 |
+| **Total** | | **R$ 22,56** |
+
+O equivalente comercial de setembro é de R$ 217,08: R$ 194,64 de banco, registro e cofre e R$ 22,44 de Container Apps. A assinatura cobrou R$ 22,56, cerca de 10% disso, porque o servidor PostgreSQL e o registro estão na cota gratuita de 12 meses e o banco fica desligado entre usos (11.2.6). Nos Container Apps, o gasto real já é o equivalente comercial: a escala a zero não manteve o uso dentro da franquia mensal, e os R$ 22,44 vêm quase todos do `middleware` de desenvolvimento, que reserva 2 vCPU e 4 GiB para carregar o modelo de *embeddings* sempre que acorda. Por isso a tabela de tecnologia usa esse valor, repetido em outubro, no lugar de uma premissa de custo zero. Para o modelo de geração, a estimativa de cerca de R$ 0,05 por consulta continua como referência até que o gasto no OpenRouter seja levantado.
 
 ### 2.10.3 Solução final
 
@@ -1330,14 +1348,14 @@ A solução final é a que o Metrô contrataria: construção e implantação no
 
 | Componente | Natureza | Valor | Premissas |
 |---|---|---:|---|
-| Contrato de construção, implantação e transferência | Pessoal, insumos, despesas, imposto e margem | R$ 60.584,06, em três marcos | 451,00 h × R$ 81,25 = R$ 36.643,75 de pessoal, 60,48% do preço; insumos de R$ 4.247,51; despesas de R$ 2.400,00; Simples Nacional de 15,5%; margem de 15% sobre custos, despesas e impostos (seções 7.2 a 7.9) |
-| Operação em produção | Tecnologia | R$ 4.448,61 por mês; R$ 53.383,32 por ano | Detalhada na tabela seguinte (seção 7.5) |
+| Contrato de construção, transição, implantação e transferência | Pessoal, insumos, despesas, imposto e margem | R$ 59.197,12, em cinco marcos de 20% | 438,25 h × R$ 81,25 = R$ 35.607,81 de pessoal, 60,15% do preço: 400,25 h de construção faturável, 22,00 h do pacote de transição e 16,00 h de treinamento e operação assistida; insumos de R$ 4.292,39; despesas de R$ 2.400,00; Simples Nacional de 15,5%; margem de 15% sobre custos, despesas e impostos (seções 7.2 a 7.9) |
+| Operação em produção | Tecnologia | R$ 4.448,61 por mês em regime; R$ 48.205,10 no primeiro ano, com a rampa de adoção, e R$ 53.383,32 por ano depois | Detalhada na tabela seguinte (seções 7.5 e 7.5.6) |
 | Sustentação Nível 3, opcional | Pessoal | R$ 20.466,99 por ano | 15 h por mês, 180 h por ano, com o mesmo custo-hora, imposto e margem (seção 7.11) |
-| **Custo total de propriedade** | | **R$ 113.967,38 no primeiro ano; R$ 220.734,02 em três anos** | Sem a sustentação opcional; com ela, R$ 134.434,37 e R$ 282.134,99 |
+| **Custo total de propriedade** | | **R$ 107.402,22 no primeiro ano; R$ 214.168,86 em três anos** | Sem a sustentação opcional; com ela, R$ 127.869,21 e R$ 275.569,83 |
 
-O contrato inclui 16 h de treinamento e operação assistida além das 435,00 h de construção. A operação é dimensionada para 90 usuários ativos, os responsáveis pelas 86 frentes do portfólio e 4 integrantes do PMO, com 6 interações por usuário por dia útil, o que dá 11.340 interações de usuários e 390 disparos de rotinas por mês (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)).
+O contrato soma à construção faturável o pacote de transição e 16 h de treinamento e operação assistida. A operação é dimensionada para 90 usuários ativos em regime, os responsáveis pelas 86 frentes do portfólio e 4 integrantes do PMO, com 6 interações por usuário por dia útil, o que dá 11.340 interações de usuários e 390 disparos de rotinas por mês (seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md)). A solução chega a esse volume pela rampa do plano de adoção (capítulo 12): 20% do uso de regime no mês do piloto e 50% e 80% nos dois meses da expansão (seção 7.5.6 do [GestaoProjeto.md](GestaoProjeto.md)).
 
-| Serviço de operação | Custo mensal | Premissa |
+| Serviço de operação | Custo mensal em regime | Premissa |
 |---|---:|---|
 | Microsoft Copilot Studio | R$ 3.435,30 | 73.899 créditos por mês, em 3 pacotes de 25.000 |
 | Azure Container Apps | R$ 711,35 | Uma réplica mínima de `web`, `middleware` e `worker`, sem partida a frio no expediente |
@@ -1351,7 +1369,106 @@ O contrato inclui 16 h de treinamento e operação assistida além das 435,00 h 
 
 **O que muda da prova de conceito para a solução final.** Três diferenças explicam por que a solução final não é a prova de conceito com mais usuários. A primeira é o executor: a prova de conceito responde pelo executor próprio, sobre serviços que a equipe provisiona, enquanto a solução final usa o Copilot Studio, que sozinho responde por 77% do custo de operação. A segunda é o perímetro: o Content Safety e o Speech saem do nível gratuito, no tenant da equipe, para o nível pago, no tenant do Metrô, que é a condição para usar dado real (risco R12). A terceira é a disponibilidade: os apps deixam de escalar a zero e mantêm uma réplica mínima, para que nenhum usuário espere a partida a frio do classificador.
 
-A integração com o Copilot Studio por Direct Line está no escopo do contrato, mas não foi concluída na prova de conceito (5.1.3). As horas do módulo não a incluem, e o esforço para concluí-la é risco de escopo, coberto pela reserva de contingência de R$ 3.664,38, que leva o preço a R$ 65.712,18 (seção 7.9.3 do [GestaoProjeto.md](GestaoProjeto.md)). Manter o executor próprio em produção trocaria os créditos do Copilot Studio por cobrança por token, mas exigiria um modelo de geração dentro do perímetro homologado e uma proposta nova (seção 7.13.3 do [GestaoProjeto.md](GestaoProjeto.md)).
+A integração com o Copilot Studio por Direct Line está no escopo do contrato, mas não foi concluída na prova de conceito (5.1.3). Por ser trabalho conhecido, ela entra nas horas do contrato, num pacote de transição para produção que reúne também os tópicos do agente para RF04 a RF06, o reprovisionamento dos serviços de IA no tenant do Metrô (R12) e o uso de dado real (R01): 22,00 h ao todo, estimadas pela mesma régua de tamanho (seção 7.2.6 do [GestaoProjeto.md](GestaoProjeto.md)). A reserva de contingência, de R$ 3.560,78, que leva o preço a R$ 64.180,26, fica para o desvio que não se conhece (seção 7.9.3 do [GestaoProjeto.md](GestaoProjeto.md)). Manter o executor próprio em produção trocaria os créditos do Copilot Studio por cobrança por token, mas exigiria um modelo de geração dentro do perímetro homologado e uma proposta nova (seção 7.13.3 do [GestaoProjeto.md](GestaoProjeto.md)).
+
+## 2.11 Análise Financeira para o Parceiro
+
+Esta seção projeta, período a período, os custos e as receitas da solução final para o Metrô, separando pessoal e tecnologia. O Metrô é uma empresa pública e a solução é interna, de modo que não há receita de venda: a receita é o valor do tempo que os usuários deixam de gastar procurando e consolidando informação do portfólio. Do lado do custo, o pessoal tem duas parcelas: o contrato com o fornecedor e o tempo da própria equipe do Metrô com curadoria, suporte e treinamento. A projeção usa os custos da seção 2.10, aplica a rampa do plano de adoção (capítulo 12) e reproduz o payback e o ROI da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md).
+
+### 2.11.1 Premissas e cenários
+
+| Premissa | Valor | Origem |
+|---|---|---|
+| Receita para o Metrô | Horas de pessoal liberadas da busca e da consolidação manual, valoradas pelo custo da hora do usuário | Seção 7.12.1 do [GestaoProjeto.md](GestaoProjeto.md) |
+| Volume de uso em regime | 11.340 interações de usuários por mês: 90 usuários ativos × 6 interações por dia útil × 21 dias úteis | Seção 7.5.1 do [GestaoProjeto.md](GestaoProjeto.md) |
+| Rampa de adoção | 20% do uso de regime no primeiro mês, 50% no segundo, 80% no terceiro e 100% a partir do quarto | Piloto de quatro semanas em um dos seis subportfólios e expansão aos demais nos meses 2 e 3 (capítulo 12); seção 7.5.6 do [GestaoProjeto.md](GestaoProjeto.md) |
+| Valor da hora do usuário | R$ 50,00: salário de referência de R$ 8.000,00 mensais para profissional de PMO em São Paulo, dividido por 160 h, sem encargos | Glassdoor, consultado em 25/09/2026 |
+| Tempo poupado por interação | 1 minuto no cenário pessimista, 3 no base e 5 no otimista | Única premissa que varia entre os cenários, porque o tempo atual de cada consulta ainda não foi medido |
+| Pessoal: contrato com o fornecedor | R$ 59.197,12, tratado como desembolso no início da operação | Seção 2.10.3; quatro dos cinco marcos vencem antes da operação, e tratar o quinto também como antecipado torna o payback conservador |
+| Pessoal do Metrô: curadoria | 8 h por mês do PMO, contínuas: revisão do corpus, do catálogo de intenções e das perguntas sugeridas e leitura quinzenal do painel de intenções | Papel do PMO no público-alvo (12.1.1) e na governança (12.2.2) |
+| Pessoal do Metrô: suporte de primeira linha | 8 h por mês no piloto e na expansão e 4 h por mês depois, do PMO com a TI responsável pela sustentação | Plantão de dúvidas quinzenal do piloto (12.1.3), estendido ao atendimento das dúvidas fora do plantão |
+| Pessoal do Metrô: treinamento dos 90 usuários | 1 h por usuário, entre a sessão de lançamento de 30 minutos e o guia com a primeira rotina, mais 2 h do PMO por subportfólio para preparar e conduzir a sessão: 18 usuários no piloto e 72 na expansão, 102 h ao todo | Ações de onboarding (12.1.3) |
+| Pessoal do Metrô: rede de multiplicadores | Um líder por subportfólio, cerca de 1 h por semana nos dois meses da expansão: 52 h | Rede de multiplicadores (12.2.3) |
+| Pessoal do Metrô: novos usuários | 10% dos 90 usuários por ano a partir do segundo ano, 1 h de onboarding cada: 9 h por ano | Inclusão do agente no onboarding de novos líderes e membros (12.1.3) |
+| Valor da hora da equipe do Metrô | R$ 50,00, o mesmo do benefício | A hora da TI tende a ser mais cara, mas responde por pouco do total |
+| Custo de tecnologia para o Metrô | Operação de R$ 4.448,61 por mês em regime; R$ 1.691,58, R$ 2.722,53 e R$ 3.753,50 nos três meses da rampa | Seções 2.10.3 e 7.5.6 do [GestaoProjeto.md](GestaoProjeto.md) |
+| Receita de tecnologia | Nenhuma | A solução não substitui sistemas nem licenças: SharePoint e Power BI continuam, e o agente passa a consultá-los |
+| Horizonte | 36 meses, com volume e preços constantes a partir do quarto mês, sem reajuste e sem desconto do valor do dinheiro no tempo | Mesmo horizonte do custo total de propriedade (seção 7.11 do [GestaoProjeto.md](GestaoProjeto.md)) |
+
+O pessoal do Metrô soma 310 h, ou R$ 15.500,00, no primeiro ano, concentradas no piloto e na expansão, e 153 h, ou R$ 7.650,00, por ano a partir do segundo.
+
+A premissa decisiva é a da receita. As horas liberadas são ganho de capacidade, e não entrada de caixa: o Metrô não reduz a folha porque cada gestor ganha alguns minutos por dia. O ganho existe se o tempo liberado for usado em análise, acompanhamento de riscos e decisões, que é o benefício de eficiência declarado no TAPI.
+
+### 2.11.2 Projeção por período
+
+**Custos para o Metrô**, iguais nos três cenários:
+
+| Período | Pessoal: contrato com o fornecedor | Pessoal: equipe do Metrô | Tecnologia: operação em produção | Custo do período |
+|---|---:|---:|---:|---:|
+| Ano 1 | R$ 59.197,12 | R$ 15.500,00 | R$ 48.205,10 | R$ 122.902,22 |
+| Ano 2 | R$ 0,00 | R$ 7.650,00 | R$ 53.383,32 | R$ 61.033,32 |
+| Ano 3 | R$ 0,00 | R$ 7.650,00 | R$ 53.383,32 | R$ 61.033,32 |
+| **36 meses** | **R$ 59.197,12** | **R$ 30.800,00** | **R$ 154.971,74** | **R$ 244.968,86** |
+
+**Receitas para o Metrô**, por ano; o primeiro ano é menor por causa da rampa:
+
+| Cenário | Tempo poupado por interação | Horas liberadas no ano 1 | Horas liberadas nos anos 2 e 3 | Receita no ano 1 | Receita nos anos 2 e 3 |
+|---|---:|---:|---:|---:|---:|
+| Pessimista | 1 min | 1.984,5 h | 2.268 h | R$ 99.225,00 | R$ 113.400,00 |
+| Base | 3 min | 5.953,5 h | 6.804 h | R$ 297.675,00 | R$ 340.200,00 |
+| Otimista | 5 min | 9.922,5 h | 11.340 h | R$ 496.125,00 | R$ 567.000,00 |
+
+**Resultado**, receita menos custo, por período:
+
+| Cenário | Ano 1 | Ano 2 | Ano 3 | Acumulado em 36 meses | Payback | ROI em 12 meses | ROI em 36 meses |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Pessimista | −R$ 23.677,22 | R$ 52.366,68 | R$ 52.366,68 | R$ 81.056,14 | 17,4 meses | −19,3% | 33,1% |
+| **Base** | **R$ 174.772,78** | **R$ 279.166,68** | **R$ 279.166,68** | **R$ 733.106,14** | **4,5 meses** | **142,2%** | **299,3%** |
+| Otimista | R$ 373.222,78 | R$ 505.966,68 | R$ 505.966,68 | R$ 1.385.156,14 | 3,2 meses | 303,7% | 565,4% |
+
+O payback é o mês em que a receita acumulada, descontadas a operação e a equipe do Metrô, cobre o contrato, com interpolação dentro do mês; ROI = resultado acumulado ÷ custo acumulado do período. O custo acumulado em 36 meses é o custo total de propriedade da seção 2.10.3 mais os R$ 30.800,00 da equipe do Metrô, e os valores de payback e de ROI são os da seção 7.12.1 do [GestaoProjeto.md](GestaoProjeto.md).
+
+A rampa se vê mês a mês no começo da operação. No cenário-base:
+
+| Mês | Uso de regime | Receita | Operação | Equipe do Metrô | Resultado do mês | Acumulado, depois do contrato |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | 20% | R$ 5.670,00 | R$ 1.691,58 | R$ 1.800,00 | R$ 2.178,42 | −R$ 57.018,70 |
+| 2 | 50% | R$ 14.175,00 | R$ 2.722,53 | R$ 4.150,00 | R$ 7.302,47 | −R$ 49.716,23 |
+| 3 | 80% | R$ 22.680,00 | R$ 3.753,50 | R$ 4.150,00 | R$ 14.776,50 | −R$ 34.939,73 |
+| 4 | 100% | R$ 28.350,00 | R$ 4.448,61 | R$ 600,00 | R$ 23.301,39 | −R$ 11.638,34 |
+| 5 | 100% | R$ 28.350,00 | R$ 4.448,61 | R$ 600,00 | R$ 23.301,39 | R$ 11.663,05 |
+
+Nos dois meses da expansão, a equipe do Metrô custa quase tanto quanto a operação, por causa do treinamento e dos multiplicadores; a partir do quarto mês, fica em R$ 600,00. O contrato se paga no meio do quinto mês.
+
+### 2.11.3 Ponto de equilíbrio e sensibilidade
+
+Dois números valem mais que os cenários. Em regime, cada interação precisa poupar **32 segundos** para cobrir a operação e a equipe do Metrô; para recuperar também o contrato em 12 meses, já com a rampa, precisa poupar cerca de **75 segundos** (seção 7.12.2 do [GestaoProjeto.md](GestaoProjeto.md)). O cenário pessimista fica abaixo dessa fronteira: com 1 minuto poupado, o primeiro ano fecha negativo, o contrato se paga em 17,4 meses e o resultado passa a positivo no segundo ano.
+
+No cenário-base, variando uma premissa por vez:
+
+| Variação | Operação mensal em regime | Payback |
+|---|---:|---:|
+| **Base** | **R$ 4.448,61** | **4,5 meses** |
+| Metade do volume de uso | R$ 2.722,53 | 7,9 meses |
+| Dobro do volume de uso | R$ 7.991,21 | 2,9 meses |
+| 2 créditos por interação, só resposta generativa | R$ 2.104,90 | 4,2 meses |
+| 12 créditos por interação: duas ações do agente e uma resposta generativa | R$ 6.825,87 | 4,8 meses |
+| Créditos por pagamento conforme o uso em todos os meses | R$ 4.833,89 | 4,5 meses |
+| Usuários com licença Microsoft 365 Copilot | R$ 1.013,31 | 4,1 meses |
+| Sem rampa: 90 usuários desde o primeiro mês | R$ 4.448,61 | 2,9 meses |
+| Com a sustentação Nível 3 opcional, de R$ 1.705,58 por mês | R$ 6.154,19 | 4,9 meses |
+
+Com 12 créditos por interação, o resultado acumulado em 36 meses do cenário-base cai de R$ 733.106,14 para R$ 651.152,69. Com a sustentação opcional, o cenário pessimista leva 28,6 meses para se pagar, e o acumulado em 36 meses do cenário-base cai para R$ 671.705,26. As oito primeiras linhas são as da seção 7.13.2 do [GestaoProjeto.md](GestaoProjeto.md); a última soma à operação o preço anual da sustentação, dividido por 12.
+
+### 2.11.4 Leitura para o parceiro
+
+A solução se paga no primeiro ano nos cenários base e otimista, em 4,5 e 3,2 meses, e em 17,4 meses no pessimista. A diferença entre eles é um único dado ainda não medido, o tempo que cada consulta poupa, e por isso a primeira decisão financeira do Metrô não é aprovar o contrato, mas medir: cronometrar uma amostra de consultas típicas pelo caminho manual e repeti-las pelo agente durante a operação assistida, como recomenda a seção 7.12.3 do [GestaoProjeto.md](GestaoProjeto.md). Com o tempo medido, os três cenários viram um número só.
+
+O custo que decide é o de tecnologia. A operação responde por 39% do custo do primeiro ano e por 63% do custo em três anos, e o Copilot Studio responde por 77% da operação em regime. As licenças Microsoft 365 Copilot que o Metrô já tenha, ou venha a ter, para os gestores do portfólio são a maior alavanca de custo, mas a sua aplicação ao canal Direct Line precisa ser confirmada com o licenciamento da Microsoft antes de virar premissa. O consumo real de créditos por interação é o segundo dado a medir: se cada consulta acionar duas ações do agente, a operação sobe 53%.
+
+A introdução em fases tem custo e retorno. Ela adia o payback do cenário-base de 2,9 para 4,5 meses, e a equipe do Metrô gasta metade das suas horas de três anos no primeiro ano, com o treinamento e os multiplicadores; em troca, reduz o risco de abandono que o plano de adoção identifica e permite corrigir o catálogo e o guia com o piloto antes de levar a solução aos demais subportfólios. O indicador de usuários ativos do plano (12.2.4) mostra, já no piloto, se a rampa se confirma.
+
+Ficaram fora da conta os benefícios que não foram monetizados: rastreabilidade, confidencialidade, padronização e relatórios recorrentes.
 
 # 3. Requisitos do Projeto
 
@@ -4471,11 +4588,11 @@ A coluna de executor é a consequência mais direta da revisão de escopo, e exp
 |---|---|---|---|---|
 | P01 | Registro de aplicação no Entra ID, com URI de redirecionamento e escopos | INT-08 (onda 1) | TI do Metrô | A confirmar |
 | P02 | Mapeamento entre grupos do Entra ID e os perfis e permissões do agente | INT-08, RF01 | PMO / TI do Metrô | A confirmar |
-| P03 | Copilot Studio com **canal Direct Line habilitado** e segredo disponível | INT-02 (onda 1 em diante) | TI do Metrô | A confirmar |
+| P03 | Copilot Studio com **canal Direct Line habilitado** e segredo disponível | INT-02 (onda 1 em diante) | TI do Metrô | Não atendido em 05/10/2026: Direct Line não habilitado (5.5.10.2) |
 | P04 | Confirmação do licenciamento, incluindo conectores *premium* e limites de mensagens | INT-02, INT-05, INT-09 | TI do Metrô | A confirmar |
-| P05 | Site do SharePoint de desenvolvimento, com leitura e escrita | INT-03, INT-04, INT-05 | TI do Metrô | A confirmar |
-| P06 | Estrutura das listas do portfólio: colunas, tipos e domínios de valores | INT-03 e representatividade dos dados sintéticos | PMO | A confirmar |
-| P07 | Amostras anonimizadas ou modelos dos documentos de projeto | INT-04 | PMO | A confirmar |
+| P05 | Site do SharePoint de desenvolvimento, com leitura e escrita | INT-03, INT-04, INT-05 | TI do Metrô | Atendido no site de teste, com nível de edição inferido (5.5.10.2) |
+| P06 | Estrutura das listas do portfólio: colunas, tipos e domínios de valores | INT-03 e representatividade dos dados sintéticos | PMO | Levantado em 05/10/2026 (5.5.10.2); de-para no #485 |
+| P07 | Amostras anonimizadas ou modelos dos documentos de projeto | INT-04 | PMO | Parcial: documentos na biblioteca e cronogramas como anexos de lista (5.5.10.2) |
 | P08 | Acesso a espaço de trabalho do Power BI e capacidade dedicada | INT-06 | TI do Metrô | A confirmar |
 | P09 | Modelos (Word/PowerPoint) dos relatórios e da apresentação mensal | INT-09 | PMO | A confirmar |
 | P10 | Recurso **Azure AI Content Safety** provisionado | INT-11 (onda 2) | Equipe | Provisionado no tenant da equipe |
@@ -4512,6 +4629,115 @@ O TAPI estabelece como premissa que a plataforma de portfólio pode ser modifica
 | Q10 | Content Safety e Speech precisam ser reprovisionados no tenant do parceiro antes de qualquer uso com dado real? | Determina o esforço de migração no handover e a validade do perímetro declarado em 3.3.1.1 | INT-11, INT-12 |
 
 A questão anterior sobre políticas de DLP e conectores personalizados foi encerrada pela inversão da arquitetura: não há mais conector personalizado apontando do Copilot para um endpoint externo, porque o Copilot deixou de chamar a solução. Em seu lugar entra Q02, sobre a habilitação do Direct Line, e Q10, sobre a alocação de tenant dos serviços de IA.
+
+As questões Q01 a Q06 foram verificadas no ambiente de teste do parceiro em 05/10/2026; as respostas estão na seção [5.5.10](#5510-validação-no-ambiente-de-teste-do-parceiro).
+
+### 5.5.10 Validação no ambiente de teste do parceiro
+
+Os requisitos funcionais, o catálogo de intenções e os perfis de acesso foram especificados sobre a base sintética e o TAPI. Esta seção os confronta com a estrutura e as permissões encontradas no ambiente de teste liberado pelo parceiro em 04/09/2026 (SharePoint com dados de exemplo e Copilot Studio), e responde às questões Q01 a Q06 da seção 5.5.9. O de-para campo a campo entre as listas do ambiente e a base sintética, com o efeito esperado nas métricas, é tratado separadamente (#485).
+
+#### 5.5.10.1 Método e limites
+
+A inspeção foi feita em 05/10/2026, somente em modo de leitura, com a credencial de teste distribuída pelo parceiro a um integrante da equipe. Foram consultadas as páginas de conteúdo do site, as configurações de cada lista (nome, tipo e obrigatoriedade das colunas, e as opções das colunas de escolha relevantes), as configurações do site e, no Copilot Studio, o seletor de ambientes, a lista de agentes e a autenticação e os canais do agente de teste da equipe.
+
+Pela restrição de confidencialidade da liberação (ver `R23`), esta seção não reproduz registros, valores, nomes de pessoas ou de projetos, endereços nem identificadores do ambiente. As listas são citadas pelo nome, que é parte da estrutura; os domínios das colunas de escolha são descritos pela quantidade de opções e pelo mapeamento ao vocabulário da solução.
+
+Limites:
+
+- nenhuma escrita foi testada; a capacidade de escrita é inferida da interface (Q06);
+- o perfil de aluno não acessa a gestão de permissões do site, então os grupos e níveis do parceiro não foram observados (Q05);
+- os dados de exemplo têm volume pequeno (6 projetos e 3 subportfólios), o que permite validar estrutura e vocabulário, mas não medir o desempenho do classificador ou do RAG;
+- em um registro de projeto inspecionado, só o título e o status estavam preenchidos; não se generaliza essa observação aos demais registros;
+- Q07 a Q10 não são respondíveis pela inspeção do ambiente e permanecem abertas.
+
+Classificação usada nas tabelas a seguir:
+
+- **sustentado:** o ambiente tem a estrutura e os dados que o requisito ou a intenção lê ou grava;
+- **parcial:** a estrutura existe, mas falta algum campo, a semântica diverge, o fluxo do parceiro não é modelado pela solução ou a fonte não é a que a solução consome;
+- **sem dados:** o ambiente não tem estrutura nem registros para o requisito ou a intenção;
+- **não depende do ambiente:** o requisito é atendido pela própria solução e não lê nem grava dados do parceiro.
+
+#### 5.5.10.2 Respostas às questões abertas
+
+| # | Resposta observada em 05/10/2026 | Efeito |
+|---|---|---|
+| Q01 | A conta de teste enxerga quatro ambientes do Power Platform: o padrão, dois de área restrita e um de produção. Em um dos ambientes de área restrita, a equipe criou e publicou um agente de teste; o ambiente padrão não tem agentes. Conectores *premium* e limites de mensagens não foram verificados. | O licenciamento permite criar e publicar agentes no ambiente de laboratório. A demonstração no ambiente do parceiro (#514) parte desse ambiente, e não do padrão. |
+| Q02 | **Não.** O agente de teste está com a autenticação padrão, "Autenticar com Microsoft", que atende Teams, Power Apps e Microsoft 365 Copilot; nenhum canal está configurado. Usar outros canais com autenticação exige a opção "Autenticar manualmente" ([Microsoft Learn](https://learn.microsoft.com/microsoft-copilot-studio/publication-fundamentals-publish-channels)), e o Direct Line exige gerar segredo. | Habilitar o Direct Line é uma alteração de configuração no ambiente do parceiro, sob a governança dele. Até lá, o executor próprio segue como caminho de demonstração (5.5.8) e o pré-requisito P03 continua não atendido. |
+| Q03 | O site tem 12 listas e 5 bibliotecas. A lista **Projetos** é o eixo, consultada pelas demais. Há listas por projeto (Avanço, Cronograma, Entregas e Marcos, Riscos e problemas, Projetos – Registro de mudanças, Termo de abertura, Termo de encerramento/descontinuidade) e por portfólio (Subportfólio – Base, Situação – Portfólio, Riscos e problemas – Portfólio, Portfólio – Registro de mudanças). O **subportfólio** organiza quase todas as listas. | A base sintética não tem o subportfólio como entidade, nem tabelas de termo de abertura, termo de encerramento e registro de mudanças. O detalhamento campo a campo está no de-para (#485). |
+| Q04 | A biblioteca de documentos tem 5 arquivos. Os cronogramas não estão em colunas: cada item da lista Cronograma guarda o cronograma como anexo `.xlsx`, com nome fora da convenção `CÓDIGO_TIPO_vN_AAAAMMDD`. | O formato é legível pela extração do RAG (`openpyxl`), mas a fonte, anexo de item de lista do SharePoint, não é coberta pela ingestão atual, que consome a pasta do Google Drive (WH-01). |
+| Q05 | Os papéis aparecem como **colunas de pessoa nas listas**, em dois níveis. No projeto: Líder e Diretor responsável (Projetos), Equipe e Representante da diretoria (Termo de abertura). No subportfólio: Responsável, Membro GPM, Aprovador PMO Corporativo e Apoio. O site é um grupo privado do Microsoft 365, e as configurações do site não mostram "Usuários e Permissões" ao perfil de aluno. | O RF01, no ambiente do parceiro, dependeria de a solução ler essas colunas, e não de herdar permissões do SharePoint. Ver 5.5.10.5. |
+| Q06 | Inferido pela interface, sem teste de escrita: as configurações de lista oferecem "Excluir esta lista" e "Criar Coluna", mas não "Permissões para esta lista". O nível é compatível com **Editar**, que permite criar, editar e excluir itens e listas. | Uma ação executada com essa identidade consegue escrever, e também apagar estrutura. Isso reforça o desenho em que o agente propõe a alteração e o usuário confirma (RF05). |
+
+#### 5.5.10.3 Requisitos funcionais
+
+| RF | Classificação | Base |
+|---|---|---|
+| RF01 — Controle de acesso, permissões e perfil | Parcial | Os perfis `lider_projeto`, `diretoria` e `membro_equipe` podem ser derivados de colunas de pessoa (5.5.10.5), mas os quatro papéis de subportfólio não têm equivalente na solução, e as permissões do site não são visíveis ao perfil de teste. |
+| RF02 — Interação por texto e voz | Não depende do ambiente | Atendido pela interface e pelo middleware da equipe. O canal do Copilot Studio não está disponível (Q02). |
+| RF03 — Identificação e controle de intenções | Não depende do ambiente | Classificador e catálogo são da solução. |
+| RF04 — Consulta e análise de informações dos projetos | Parcial | Avanço e marcos são sustentados; status, riscos, cronograma e documentos são parciais; faturas e aderência normativa não têm dados (5.5.10.4). |
+| RF05 — Apoio à criação e atualização de projetos | Parcial | Há estrutura e permissão de escrita para projeto, avanço, marcos, riscos, mudanças e termos, mas o ambiente tem fluxos de aprovação (termo de abertura, parecer do subportfólio, deliberação do portfólio) que a solução não modela; os riscos não têm probabilidade e impacto; o cronograma está em anexo. |
+| RF06 — Alertas e apoio proativo a pendências | Parcial | As datas previstas de marcos e de planos de ação permitem derivar pendências; as regras e a periodicidade do PMO (Q07) seguem abertas. |
+| RF07 — Análise comparativa do portfólio | Sustentado | A lista Avanço guarda, por data de referência, o previsto e o realizado físico e econômico de cada projeto, o que permite comparar projetos e calcular desvio. |
+| RF08 — Relatórios e informações gerenciais | Parcial | O relatório de status combina dados sustentados e parciais; a situação do portfólio é texto livre; o termo de encerramento não tem registros; o Power BI (Q08) não foi verificado. |
+| RF09 — Proteção da interação com o agente | Não depende do ambiente | Barreiras da solução. |
+| RF10 — Registro e análise das intenções | Não depende do ambiente | Registro no banco da solução. |
+| RF11 — Rotinas agendadas | Parcial | Herda a classificação do RF06, cujas varreduras as rotinas disparam. |
+| RF12 — Histórico e retomada de conversas | Não depende do ambiente | Histórico no banco da solução. |
+
+#### 5.5.10.4 Catálogo de intenções
+
+| Intenção | Classificação | Base no ambiente |
+|---|---|---|
+| `consultar_status_projeto` | Parcial | O status do projeto tem duas opções, que indicam se o registro está ativo; não há fase nem motivo de suspensão ou encerramento. |
+| `consultar_avanco` | Sustentado | Lista Avanço: previsto e realizado físico e econômico por data de referência. |
+| `consultar_cronograma` | Parcial | Cronograma só em anexo `.xlsx` (Q04). |
+| `consultar_marcos` | Sustentado | Lista Entregas e Marcos, com datas prevista e realizada; o estado do marco é derivado das datas, e não de uma coluna de status. |
+| `consultar_riscos` | Parcial | Riscos e problemas ficam na mesma lista, sem coluna de tipo; não há probabilidade nem impacto, só quatro níveis de criticidade. |
+| `consultar_problemas` | Parcial | Mesma lista dos riscos, sem coluna que distinga problema de risco. |
+| `consultar_aderencia_normativa` | Sem dados | Nenhuma lista ou coluna sobre normas ou aderência. |
+| `consultar_documento_projeto` | Parcial | Há documentos na biblioteca e em anexos, mas a fonte não é a consumida pela ingestão (Q04). |
+| `consultar_conceito_gestao` | Não depende do ambiente | Responde a partir da base de conhecimento da solução. |
+| `consultar_faturas_vencidas` | Sem dados | Nenhuma lista de faturas ou pagamentos; o ambiente só tem custo e previsto/realizado econômico. |
+| `comparar_projetos` | Sustentado | Lista Avanço (ver RF07). |
+| `consultar_indicadores_portfolio` | Parcial | A situação do portfólio é texto livre por subportfólio; os indicadores numéricos precisam ser agregados a partir da lista Avanço. |
+| `gerar_relatorio_status` | Parcial | Combina status, avanço, marcos e riscos, com as limitações de cada um. |
+| `gerar_previa_diretoria` | Parcial | Situação do portfólio em texto livre e avanço por projeto. |
+| `gerar_relatorio_encerramento` | Sem dados | A lista Termo de encerramento existe, mas não tem registros. |
+| `criar_projeto` | Parcial | A lista Projetos aceita escrita, mas o ambiente associa o projeto a um termo de abertura com fluxo de aprovação, que a solução não modela. |
+| `atualizar_avanco` | Sustentado | Novo registro na lista Avanço. |
+| `atualizar_cronograma` | Sem dados | Não há colunas de cronograma; atualizar exigiria editar o anexo. |
+| `registrar_risco` | Parcial | A lista não tem probabilidade nem impacto, que a solução coleta. |
+| `registrar_problema` | Parcial | Mesma lista dos riscos, sem coluna de tipo. |
+| `atualizar_termo_abertura` | Parcial | A lista Termo de abertura existe, mas a atualização entra num fluxo de aprovação que a solução não modela. |
+| `registrar_entrega_marco` | Sustentado | Data realizada na lista Entregas e Marcos. |
+| `atualizar_mapa_beneficios` | Parcial | Benefícios esperados existem só como texto livre em Projetos e no Termo de abertura; não há lista de mapa de benefícios. |
+| `registrar_mudanca` | Parcial | As listas de registro de mudanças existem nos dois níveis, mas incluem parecer do subportfólio e deliberação do portfólio, que a solução não modela. |
+| `encerrar_projeto` | Sustentado | A lista Termo de encerramento tem a estrutura completa e obrigatória para o registro. |
+| `consultar_pendencias` | Parcial | Derivável das datas previstas; as regras do PMO (Q07) seguem abertas. |
+| `fora_de_escopo` | Não depende do ambiente | Barreira da solução. |
+| `tentativa_injecao` | Não depende do ambiente | Barreira da solução. |
+
+Totais: 6 sustentadas, 15 parciais, 4 sem dados e 3 que não dependem do ambiente, num catálogo de 28 intenções.
+
+#### 5.5.10.5 Perfis e permissões
+
+| Perfil da solução | Onde aparece no ambiente | Divergência |
+|---|---|---|
+| `lider_projeto` | Líder (Projetos e Termo de abertura) | Equivalente. |
+| `diretoria` | Diretor responsável (Projetos) e Representante da diretoria, patrocinador (Termo de abertura) | Dois papéis do ambiente para um perfil da solução. |
+| `membro_equipe` | Equipe (Termo de abertura) | Existe só no termo de abertura, não na lista Projetos. |
+| — | Responsável, Membro GPM, Aprovador PMO Corporativo e Apoio (Subportfólio – Base) | Papéis de subportfólio e de PMO sem equivalente na solução. A *feature* F70 (seção 2.7) já previa os perfis de responsável de subportfólio e de GPM, que não chegaram aos três perfis implementados. |
+
+Duas divergências adicionais: os responsáveis por mudança e por deliberação nas listas de registro de mudanças são texto livre, e não colunas de pessoa, e por isso não servem para derivar perfil; e a mesma informação aparece com tipos diferentes entre listas (por exemplo, "Escalar?" é escolha em uma lista e sim/não em outra), o que deixa em aberto qual lista é a fonte da verdade para cada campo.
+
+#### 5.5.10.6 Consequências para o projeto
+
+1. **Executor.** Sem Direct Line (Q02), RF04 a RF08 continuam demonstrados pelo executor próprio. Habilitar o canal é decisão do parceiro e entra no handover.
+2. **RF01.** Implementar perfis no ambiente do parceiro significa ler as colunas de pessoa das listas, nos dois níveis, e decidir com o PMO como os papéis de subportfólio se traduzem em permissões da solução.
+3. **Modelo de dados.** O subportfólio, os termos de abertura e de encerramento, o registro de mudanças e os fluxos de aprovação não existem na base sintética. Essa distância é a matéria do de-para (#485) e da reavaliação do risco `R01`.
+4. **Ingestão.** Documentos e cronogramas do ambiente estão em bibliotecas e anexos de lista do SharePoint, fonte que a ingestão atual não consome.
+5. **Escrita.** A identidade de teste tem nível de edição. Qualquer escrita do agente deve continuar exigindo confirmação do usuário, e o escopo de escrita deve ser restrito às listas necessárias.
 
 ## 5.6 Visão preliminar da arquitetura em blocos conectados
 
@@ -8172,16 +8398,24 @@ individualmente ou em sequência:
 | `npm run lint` | Análise estática, incluindo regras de hooks do React |
 | `npm run typecheck` | Verificação de tipos do código da aplicação e dos arquivos de build |
 | `npm run test` | Execução das suítes automatizadas |
+| `npm run test:coverage` | Executa as suítes com V8 e reprova se linhas, ramos ou funções ficarem abaixo de 80%; gera relatório HTML e Cobertura em `coverage/` |
 | `npm run build` | Construção do pacote de produção, precedida da verificação de tipos |
 | `npm run audit:a11y` | Auditoria WCAG 2.1 A/AA com axe-core nas seis telas, temas claro e escuro (9.2.18) |
 
-As suítes cobrem dezessete casos distribuídos em três arquivos:
+O job `web:vitest` da integração contínua executa `npm run test:coverage` e
+publica o relatório Cobertura como artefato `coverage_report`, que o GitLab
+exibe no merge request. A mesma execução aplica os limites globais de 80% para
+linhas, ramos e funções; o relatório V8 desta atualização mediu 86,23%, 87,26%
+e 82,93%, respectivamente.
 
-| Arquivo | Casos | Escopo |
-| --- | --- | --- |
-| `testes/desfechos.test.ts` | 4 | Cobertura dos oito desfechos, ausência de etiqueta no desfecho atendido, presença de filete nos demais e verificação de que o rótulo não nomeia a barreira acionada |
-| `testes/navegacao.test.tsx` | 4 | Substituição de conteúdo ao trocar de conversa, sugestões de partida em conversa nova, ausência de repetição de alerta em conversa gravada e destino explícito para rota inexistente |
-| `testes/paginas.test.tsx` | 9 | Envio e recebimento de mensagem, recusa fora de escopo tratada como resposta e não como erro, não revelação da barreira em tentativa de injeção, envio por Enter com quebra de linha por Shift mais Enter, indicação de entrada por voz ativa, e filtragem, criação e exclusão de rotinas |
+A cobertura funcional é distribuída por suítes focadas, entre elas:
+
+| Arquivo | Escopo |
+| --- | --- |
+| `testes/microfone.test.tsx` | Falhas de token e permissão, transcrição parcial/final, renovação de token, cancelamento e encerramento do reconhecedor |
+| `testes/primitivos-ui.test.tsx` | Estados e interações observáveis dos componentes acessíveis de diálogo, gaveta, menu, avatar, separador e painel |
+| `testes/componentes-ui.test.tsx` | Componentes transversais, navegação adaptativa e estados vazios |
+| `testes/falhas.test.tsx` | Erros de rede, tempo limite, indisponibilidade e ações de recuperação |
 
 A escolha de consultar elementos por papel acessível, e não por classe ou
 identificador, faz com que a quebra de um atributo de acessibilidade derrube o
@@ -9305,7 +9539,7 @@ em execução.
 
 ### 9.5.3 Casos implementados
 
-Na execução registrada em 05/10/2026, os 419 casos passaram em 20 arquivos. A
+Na execução registrada em 05/10/2026, os 429 casos passaram em 21 arquivos. A
 tabela abaixo atribui identificadores individuais e registra, por arquivo, o
 intervalo de IDs, os cenários cobertos, as entradas/precondições e o resultado
 esperado comum aos casos daquele conjunto. A ordem dos IDs acompanha a ordem
@@ -9332,11 +9566,12 @@ asserção correspondente no código.
 | TU-WEB-342–384 | `testes/componentes-rotinas.test.tsx` | Formulário, validação, agenda, ativação, filtros, resultados, edição, exclusão e diálogos de rotina. | Props de rotina, campos vazios/válidos/inválidos, opções de agenda, estado de operação e eventos de formulário. | Validações e status são apresentados corretamente; ações chamam o callback esperado, formulários válidos são enviados e operações em andamento não são duplicadas. |
 | TU-WEB-385–387 | `testes/middleware.test.tsx` | Conversa criada pelo backend, resposta 422 do FastAPI e erro 500 sem JSON. | Handlers MSW com novo `conversa_id`, corpo FastAPI de validação e resposta de texto puro 500. | O ID recebido é reutilizado no turno seguinte; 422 e 500 são exibidos em linguagem legível, sem expor o texto técnico cru. |
 | TU-WEB-388–411 | `testes/paginas.test.tsx` | Fluxos da página principal, rotinas, histórico e navegação: envio, bloqueios, agendas, operações CRUD, permissões, carregamento e recuperação. | Interações de usuário com campos/botões e respostas MSW de sucesso, vazias ou de falha, conforme cada teste. | A página apresenta conteúdo e estados coerentes, executa ações na ordem correta, respeita confirmação/permissões e permite recuperar falhas recuperáveis. |
-| TU-WEB-412–413 | `testes/elementos-visuais.test.tsx` | Renderização do conjunto de avatares e orientação acessível dos separadores. | Avatar com imagem, fallback, badge e contagem de grupo; separadores horizontais e verticais. | Partes do avatar são renderizadas e os separadores expõem corretamente a orientação. |
-| TU-WEB-414 | `testes/inicializacao.test.tsx` | Ordem de inicialização do ponto de entrada da interface. | Inicialização dos dublês pendente e elemento raiz presente no documento. | A árvore da aplicação só é montada depois que os dublês assumem a rede. |
-| TU-WEB-415–419 | `testes/rotas.test.tsx` | Proteção e carregamento das rotas de intenções e rotinas. | Carregamento de identidade, ausência de sessão, usuário sem permissão e usuário com a permissão correspondente. | Rotas restritas aguardam a identidade; sessão ausente retorna à entrada, falta de permissão não mostra a tela protegida e acesso autorizado carrega as páginas. |
+| TU-WEB-412–416 | `testes/microfone.test.tsx` | Falhas de token e permissão, transcrição contínua, atualização do token e encerramento do reconhecedor. | SDK do Azure Speech dublado em estados de sucesso, erro, cancelamento e desmontagem do componente. | A interface informa falhas recuperáveis, entrega transcrições e sempre encerra os recursos de captura. |
+| TU-WEB-417–423 | `testes/primitivos-ui.test.tsx` | Avatar, separador, sheet, drawer, menu, diálogo e confirmação destrutiva. | Componentes compartilhados renderizados com conteúdo, orientação, ações e atributos acessíveis. | Os primitivos expõem semântica acessível e executam abertura, fechamento, seleção e confirmação conforme o contrato. |
+| TU-WEB-424 | `testes/inicializacao.test.tsx` | Ordem de inicialização do ponto de entrada da interface. | Inicialização dos dublês pendente e elemento raiz presente no documento. | A árvore da aplicação só é montada depois que os dublês assumem a rede. |
+| TU-WEB-425–429 | `testes/rotas.test.tsx` | Proteção e carregamento das rotas de intenções e rotinas. | Carregamento de identidade, ausência de sessão, usuário sem permissão e usuário com a permissão correspondente. | Rotas restritas aguardam a identidade; sessão ausente retorna à entrada, falta de permissão não mostra a tela protegida e acesso autorizado carrega as páginas. |
 
-Os 419 casos executados são enumerados individualmente a seguir. Os IDs são sequenciais, agrupados pela ordem dos arquivos na tabela acima; dentro de cada arquivo, preservam a ordem dos testes. Cada cenário conserva o grupo Vitest e o título do teste. A entrada e o resultado esperado de cada ID são os descritos na linha da família correspondente.
+Os 429 casos executados são enumerados individualmente a seguir. Os IDs são sequenciais, agrupados pela ordem dos arquivos na tabela acima; dentro de cada arquivo, preservam a ordem dos testes. Cada cenário conserva o grupo Vitest e o título do teste. A entrada e o resultado esperado de cada ID são os descritos na linha da família correspondente.
 
 | ID | Caso executado (arquivo > grupo > teste) |
 | --- | --- |
@@ -9521,11 +9756,11 @@ Os 419 casos executados são enumerados individualmente a seguir. Os IDs são se
 | TU-WEB-179 | `src/testes/componentes-chat.test.tsx > AvisoMarco > renderiza ícone de alerta` |
 | TU-WEB-180 | `src/testes/autenticacao.test.tsx > Tela de entrada > não mostra erro no acesso normal` |
 | TU-WEB-181 | `src/testes/autenticacao.test.tsx > Tela de entrada > avisa quando o login voltou recusado do servidor` |
-| TU-WEB-182 | `src/testes/autenticacao.test.tsx > Saída > encerra a sessão e volta à tela de entrada 695ms` |
+| TU-WEB-182 | `src/testes/autenticacao.test.tsx > Saída > encerra a sessão e volta à tela de entrada` |
 | TU-WEB-183 | `src/testes/autenticacao.test.tsx > Conversas recentes no Layout > mostra conversas reais e não os títulos fixos antigos` |
 | TU-WEB-184 | `src/testes/autenticacao.test.tsx > Conversas recentes no Layout > mostra texto simples quando não há conversas` |
 | TU-WEB-185 | `src/testes/autenticacao.test.tsx > Conversas recentes no Layout > mostra erro discreto quando a listagem falha` |
-| TU-WEB-186 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'BarrasPorIntencao' desenha dentro de ResponsiveContainer 302ms` |
+| TU-WEB-186 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'BarrasPorIntencao' desenha dentro de ResponsiveContainer` |
 | TU-WEB-187 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'DistribuicaoDesfechos' desenha dentro de ResponsiveContainer` |
 | TU-WEB-188 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'SerieBloqueios' desenha dentro de ResponsiveContainer` |
 | TU-WEB-189 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'BarrasPorIntencao' nao deixa foco dentro do desenho escondido` |
@@ -9543,25 +9778,25 @@ Os 419 casos executados são enumerados individualmente a seguir. Os IDs são se
 | TU-WEB-201 | `src/testes/graficos.test.tsx > Cores e formatos > cada desfecho usa a cor da etiqueta do chat` |
 | TU-WEB-202 | `src/testes/graficos.test.tsx > Cores e formatos > formata o dia sem deslocar a data pelo fuso` |
 | TU-WEB-203 | `src/testes/graficos.test.tsx > Cores e formatos > formata percentual e duracao em portugues` |
-| TU-WEB-204 | `src/testes/falhas.test.tsx > Falha de rede > orienta a verificar a conexão e recupera ao tentar de novo 335ms` |
-| TU-WEB-205 | `src/testes/falhas.test.tsx > Falha de rede > oferece reenviar a mensagem que não chegou ao servidor 409ms` |
+| TU-WEB-204 | `src/testes/falhas.test.tsx > Falha de rede > orienta a verificar a conexão e recupera ao tentar de novo` |
+| TU-WEB-205 | `src/testes/falhas.test.tsx > Falha de rede > oferece reenviar a mensagem que não chegou ao servidor` |
 | TU-WEB-206 | `src/testes/falhas.test.tsx > Tempo limite > libera a conversa quando o agente não responde no prazo` |
 | TU-WEB-207 | `src/testes/falhas.test.tsx > Tempo limite > mostra o erro de tempo em uma consulta, sem ficar carregando` |
 | TU-WEB-208 | `src/testes/falhas.test.tsx > Indisponibilidade do servidor e ausência de dados > no histórico, 503 é indisponibilidade e lista vazia é ausência` |
 | TU-WEB-209 | `src/testes/falhas.test.tsx > Indisponibilidade do servidor e ausência de dados > nas intenções, o servidor fora do ar não vira painel vazio` |
 | TU-WEB-210 | `src/testes/falhas.test.tsx > Indisponibilidade do servidor e ausência de dados > uma conversa gravada que não abre mostra o motivo e permite recarregar` |
 | TU-WEB-211 | `src/testes/falhas.test.tsx > Indisponibilidade do servidor e ausência de dados > não oferece reenviar quando o servidor recusa o pedido` |
-| TU-WEB-212 | `src/testes/navegacao.test.tsx > Navegação entre conversas > substitui o conteúdo ao trocar de conversa 915ms` |
+| TU-WEB-212 | `src/testes/navegacao.test.tsx > Navegação entre conversas > substitui o conteúdo ao trocar de conversa` |
 | TU-WEB-213 | `src/testes/navegacao.test.tsx > Navegação entre conversas > apresenta as sugestões de partida em uma conversa nova` |
-| TU-WEB-214 | `src/testes/navegacao.test.tsx > Navegação entre conversas > preserva a conversa ao passar pelo Histórico e voltar 462ms` |
+| TU-WEB-214 | `src/testes/navegacao.test.tsx > Navegação entre conversas > preserva a conversa ao passar pelo Histórico e voltar` |
 | TU-WEB-215 | `src/testes/navegacao.test.tsx > Navegação entre conversas > não repete o alerta de marco em uma conversa já gravada` |
 | TU-WEB-216 | `src/testes/navegacao.test.tsx > Navegação entre conversas > não duplica o primeiro turno quando a conversa persistida é carregada` |
 | TU-WEB-217 | `src/testes/navegacao.test.tsx > Navegação entre conversas > leva a uma tela explícita quando a rota não existe` |
 | TU-WEB-218 | `src/testes/intencoes.test.tsx > Página de intenções > mostra o carregamento antes de as rotas responderem` |
-| TU-WEB-219 | `src/testes/intencoes.test.tsx > Página de intenções > compõe os cinco componentes de gráfico nos três recortes 949ms` |
+| TU-WEB-219 | `src/testes/intencoes.test.tsx > Página de intenções > compõe os cinco componentes de gráfico nos três recortes` |
 | TU-WEB-220 | `src/testes/intencoes.test.tsx > Página de intenções > distingue erro de ausência de dados` |
 | TU-WEB-221 | `src/testes/intencoes.test.tsx > Página de intenções > mostra o estado vazio quando o período não tem mensagens` |
-| TU-WEB-222 | `src/testes/intencoes.test.tsx > Página de intenções > aplica o período e o perfil escolhidos às consultas 579ms` |
+| TU-WEB-222 | `src/testes/intencoes.test.tsx > Página de intenções > aplica o período e o perfil escolhidos às consultas` |
 | TU-WEB-223 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'foreground' sobre 'background' atinge 4.5:1` |
 | TU-WEB-224 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'foreground' sobre 'card' atinge 4.5:1` |
 | TU-WEB-225 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'foreground' sobre 'secondary' atinge 4.5:1` |
@@ -9683,15 +9918,15 @@ Os 419 casos executados são enumerados individualmente a seguir. Os IDs são se
 | TU-WEB-341 | `src/testes/formato.test.ts > Grupos de data das listas de conversa > agrupa na ordem fixa e sem grupo vazio` |
 | TU-WEB-342 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > renderiza formulário com campos obrigatórios` |
 | TU-WEB-343 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra erro quando validação falha` |
-| TU-WEB-344 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida nome com menos de 3 caracteres 363ms` |
-| TU-WEB-345 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida prompt com menos de 10 caracteres 443ms` |
+| TU-WEB-344 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida nome com menos de 3 caracteres` |
+| TU-WEB-345 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida prompt com menos de 10 caracteres` |
 | TU-WEB-346 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida horário inválido` |
 | TU-WEB-347 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra campo de dia da semana para repetição semanal` |
 | TU-WEB-348 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra campo de dia do mês para repetição mensal` |
 | TU-WEB-349 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra checkboxes para dias personalizados` |
 | TU-WEB-350 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida dia do mês fora do intervalo` |
 | TU-WEB-351 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida seleção de dias personalizados vazia` |
-| TU-WEB-352 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > salva formulário válido 892ms` |
+| TU-WEB-352 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > salva formulário válido` |
 | TU-WEB-353 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > chama onFechar ao clicar em Cancelar` |
 | TU-WEB-354 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > desabilita botão de salvar durante salvamento` |
 | TU-WEB-355 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra modo de edição quando em modo editar` |
@@ -9727,18 +9962,18 @@ Os 419 casos executados são enumerados individualmente a seguir. Os IDs são se
 | TU-WEB-385 | `src/testes/middleware.test.tsx > Conversa contra o middleware > reaproveita a conversa criada pelo backend nos turnos seguintes` |
 | TU-WEB-386 | `src/testes/middleware.test.tsx > Conversa contra o middleware > mostra uma frase legível quando o FastAPI recusa o corpo com 422` |
 | TU-WEB-387 | `src/testes/middleware.test.tsx > Conversa contra o middleware > não exibe o texto cru de um 500 sem JSON` |
-| TU-WEB-388 | `src/testes/paginas.test.tsx > Página principal > envia a mensagem e recebe a resposta do agente 540ms` |
+| TU-WEB-388 | `src/testes/paginas.test.tsx > Página principal > envia a mensagem e recebe a resposta do agente` |
 | TU-WEB-389 | `src/testes/paginas.test.tsx > Página principal > recusa um pedido fora do escopo sem tratar como erro` |
 | TU-WEB-390 | `src/testes/paginas.test.tsx > Página principal > não revela qual barreira bloqueou uma tentativa de injeção` |
 | TU-WEB-391 | `src/testes/paginas.test.tsx > Página principal > dispensa a notificação de pendência ao pedir detalhes` |
 | TU-WEB-392 | `src/testes/paginas.test.tsx > Página principal > envia com Enter e quebra linha com Shift mais Enter` |
 | TU-WEB-393 | `src/testes/paginas.test.tsx > Página principal > informa quando o token de voz não pode ser obtido` |
 | TU-WEB-394 | `src/testes/paginas.test.tsx > Página de rotinas > filtra as rotinas cadastradas` |
-| TU-WEB-395 | `src/testes/paginas.test.tsx > Página de rotinas > valida e cria uma rotina 652ms` |
-| TU-WEB-396 | `src/testes/paginas.test.tsx > Página de rotinas > mostra apenas o complemento necessário para agendas semanais e mensais 441ms` |
-| TU-WEB-397 | `src/testes/paginas.test.tsx > Página de rotinas > gera cron com nomes para os dias personalizados 504ms` |
+| TU-WEB-395 | `src/testes/paginas.test.tsx > Página de rotinas > valida e cria uma rotina` |
+| TU-WEB-396 | `src/testes/paginas.test.tsx > Página de rotinas > mostra apenas o complemento necessário para agendas semanais e mensais` |
+| TU-WEB-397 | `src/testes/paginas.test.tsx > Página de rotinas > gera cron com nomes para os dias personalizados` |
 | TU-WEB-398 | `src/testes/paginas.test.tsx > Página de rotinas > solicita confirmação antes de excluir` |
-| TU-WEB-399 | `src/testes/paginas.test.tsx > Página de rotinas > edita e exclui uma rotina pelas rotas reais 524ms` |
+| TU-WEB-399 | `src/testes/paginas.test.tsx > Página de rotinas > edita e exclui uma rotina pelas rotas reais` |
 | TU-WEB-400 | `src/testes/paginas.test.tsx > Página de rotinas > consulta e apresenta o histórico de execuções` |
 | TU-WEB-401 | `src/testes/paginas.test.tsx > Página de rotinas > fecha o formulário com Esc e devolve o foco ao botão que o abriu` |
 | TU-WEB-402 | `src/testes/paginas.test.tsx > Página de rotinas > mostra a intenção prevista pelo rótulo, e não pelo identificador` |
@@ -9751,14 +9986,24 @@ Os 419 casos executados são enumerados individualmente a seguir. Os IDs são se
 | TU-WEB-409 | `src/testes/paginas.test.tsx > Página de histórico > arquiva a conversa depois de confirmar` |
 | TU-WEB-410 | `src/testes/paginas.test.tsx > Página de histórico > abre a conversa selecionada na rota correspondente` |
 | TU-WEB-411 | `src/testes/paginas.test.tsx > Saudação > apresenta o agente sem etiquetar o cumprimento como fora do escopo` |
-| TU-WEB-412 | `src/testes/elementos-visuais.test.tsx > Elementos visuais compartilhados > renderiza avatar, fallback, imagem, badge e contagem de grupo` |
-| TU-WEB-413 | `src/testes/elementos-visuais.test.tsx > Elementos visuais compartilhados > expõe separadores horizontais e verticais com suas orientações` |
-| TU-WEB-414 | `src/testes/inicializacao.test.tsx > Inicialização da interface > só monta a aplicação depois que os dublês assumem a rede` |
-| TU-WEB-415 | `src/testes/rotas.test.tsx > Rotas protegidas > aguarda a identidade antes de renderizar uma tela restrita` |
-| TU-WEB-416 | `src/testes/rotas.test.tsx > Rotas protegidas > manda para a entrada quando não existe sessão` |
-| TU-WEB-417 | `src/testes/rotas.test.tsx > Rotas protegidas > esconde a tela restrita quando a permissão não está concedida` |
-| TU-WEB-418 | `src/testes/rotas.test.tsx > Rotas protegidas > carrega a tela restrita quando a permissão correspondente existe` |
-| TU-WEB-419 | `src/testes/rotas.test.tsx > Rotas protegidas > carrega a gestão de rotinas para quem pode administrá-las` |
+| TU-WEB-412 | `src/testes/microfone.test.tsx > useMicrofone > informa a falha ao obter o token e permite nova tentativa` |
+| TU-WEB-413 | `src/testes/microfone.test.tsx > useMicrofone > explica como liberar o microfone quando a permissão é negada` |
+| TU-WEB-414 | `src/testes/microfone.test.tsx > useMicrofone > transcreve trechos, atualiza o token e encerra a captura` |
+| TU-WEB-415 | `src/testes/microfone.test.tsx > useMicrofone > apresenta erro de SDK e encerra a captura ao desmontar` |
+| TU-WEB-416 | `src/testes/microfone.test.tsx > useMicrofone > encerra o reconhecedor quando o serviço interrompe a transcrição` |
+| TU-WEB-417 | `src/testes/primitivos-ui.test.tsx > componentes Avatar > exibe alternativa acessível e contador para um grupo` |
+| TU-WEB-418 | `src/testes/primitivos-ui.test.tsx > Separator > expõe orientação vertical a tecnologias assistivas` |
+| TU-WEB-419 | `src/testes/primitivos-ui.test.tsx > Sheet > abre o painel e fecha pelo controle acessível` |
+| TU-WEB-420 | `src/testes/primitivos-ui.test.tsx > Drawer > apresenta o conteúdo e fecha por ação explícita` |
+| TU-WEB-421 | `src/testes/primitivos-ui.test.tsx > DropdownMenu > altera opções e navega em um submenu` |
+| TU-WEB-422 | `src/testes/primitivos-ui.test.tsx > Dialog e AlertDialog > confirma uma ação destrutiva e oferece cancelamento acessível` |
+| TU-WEB-423 | `src/testes/primitivos-ui.test.tsx > Dialog e AlertDialog > fecha o diálogo comum após a ação do rodapé` |
+| TU-WEB-424 | `src/testes/inicializacao.test.tsx > Inicialização da interface > só monta a aplicação depois que os dublês assumem a rede` |
+| TU-WEB-425 | `src/testes/rotas.test.tsx > Rotas protegidas > aguarda a identidade antes de renderizar uma tela restrita` |
+| TU-WEB-426 | `src/testes/rotas.test.tsx > Rotas protegidas > manda para a entrada quando não existe sessão` |
+| TU-WEB-427 | `src/testes/rotas.test.tsx > Rotas protegidas > esconde a tela restrita quando a permissão não está concedida` |
+| TU-WEB-428 | `src/testes/rotas.test.tsx > Rotas protegidas > carrega a tela restrita quando a permissão correspondente existe` |
+| TU-WEB-429 | `src/testes/rotas.test.tsx > Rotas protegidas > carrega a gestão de rotinas para quem pode administrá-las` |
 
 ### 9.5.4 Execução
 
@@ -9782,18 +10027,18 @@ A medição usa `@vitest/coverage-v8` sobre `src/**/*.{ts,tsx}`, excluindo
 declarações de tipo, testes e dublês (`vite.config.ts`). A meta definida em
 9.1.8 é 80% de cobertura de linhas para código crítico.
 
-**Última execução com cobertura registrada:** 05/10/2026, no *working tree*
-baseado no HEAD `5267c2cabea3b207b37e6d8319c357e74ebc5a4f`. Essa execução inclui
-os testes adicionados nesta alteração, ainda não commitados. A partir de
-`src/web`, foi executado `npm run test:coverage` (Vitest 2.1.9, cobertura V8).
+**Última execução com cobertura registrada:** 05/10/2026, na branch
+`docs/cobertura-testes`, após incorporar a `develop` no commit `29deff7`. A
+partir de `src/web`, foi executado `npm run test:coverage` (Vitest 2.1.9,
+cobertura V8).
 
 | Medida | Resultado | Meta | Situação |
 | --- | ---: | ---: | --- |
-| Casos executados | 419 aprovados em 20 arquivos; nenhuma falha | Todos aprovados | Atingida |
-| Linhas e statements | 80,80% | ≥ 80% | Atingida; 0,80 ponto percentual acima |
-| Branches | 86,91% | Indicador complementar | — |
-| Functions | 74,32% | Indicador complementar | — |
-| Duração total reportada pelo Vitest | 13,52 s | — | — |
+| Casos executados | 429 aprovados em 21 arquivos; nenhuma falha | Todos aprovados | Atingida |
+| Linhas e statements | 87,48% | ≥ 80% | Atingida; 7,48 pontos percentuais acima |
+| Branches | 87,62% | ≥ 80% | Atingida |
+| Functions | 83,58% | ≥ 80% | Atingida |
+| Duração total reportada pelo Vitest | 25,35 s | — | — |
 
 A cobertura de linhas superou a meta de 80% definida em 9.1.8. Branches e
 functions são métricas adicionais reportadas pelo V8; a meta vigente está
@@ -9804,6 +10049,24 @@ simuladas: cobrem o consumo do contrato HTTP e a apresentação de respostas
 FastAPI, mas não substituem um teste ponta a ponta da interface contra um
 middleware real. Os relatórios HTML e JSON são gerados em `src/web/coverage/`
 para orientar a ampliação contínua dos casos.
+
+O primeiro é que **a suíte da interface não sobe o middleware real**. Os casos
+executam contra MSW, e a conversa entre interface e backend precisa ser
+verificada em um ambiente integrado. Esta suíte não substitui os testes de
+integração do item 7 do Artefato 7, registrados em 10.5.
+
+O segundo limite da entrega inicial — **ausência de casos próprios para entrada,
+histórico e intenções** — foi superado. As suítes atuais verificam autenticação,
+conteúdo e ações do histórico e filtros/estados do painel em
+`testes/autenticacao.test.tsx`, `testes/paginas.test.tsx` e
+`testes/intencoes.test.tsx`.
+
+O terceiro é que **a cobertura não é medida nesta entrega**. A meta de oitenta
+por cento definida em 9.1.8 não era medida na entrega inicial documentada aqui.
+Essa lacuna foi fechada: `npm run test:coverage` mede linhas, ramos e funções,
+aplica o limite mínimo de 80% e publica Cobertura no merge request pela pipeline
+da interface (9.2.10). A execução atual superou os três limites; a consolidação
+da cobertura do middleware permanece registrada em 10.7.
 
 ### 9.5.6 Testes do executor próprio
 
@@ -10003,8 +10266,8 @@ A estratégia é estruturada da seguinte forma:
 
 Na execução da interface registrada em 05/10/2026, sobre o *working tree*
 baseado no HEAD `5267c2cabea3b207b37e6d8319c357e74ebc5a4f`, Vitest aprovou
-**419 testes em 20 arquivos**; a cobertura V8 foi de **80,80% de linhas**,
-superando a meta de 80%. Essa execução inclui testes ainda não commitados. A
+**429 testes em 21 arquivos**; a cobertura V8 foi de **87,48% de linhas**,
+superando a meta de 80%. A
 execução de integração do middleware registrada em 25/09/2026 coletou 217 casos,
 com os grupos internos e de webhooks aprovados contra o Compose (evidência em
 10.5.7.3). As ferramentas utilizadas incluem pytest, Vitest, MSW,
@@ -10668,6 +10931,33 @@ no mesmo processo e substitui as dependências externas por respostas
 determinísticas. Rede, Azure, Copilot/RAG e operação continuada precisam de
 uma janela posterior no ambiente implantado.
 
+**Resultado no ambiente implantado em 05/10/2026.** A sonda foi executada no
+`dev` do Azure Container Apps, pela entrada pública do `web`, entre
+`2026-10-05T18:42:17.138435Z` e `2026-10-05T18:53:12.490129Z` — das 15h42 às
+15h53 em `America/Sao_Paulo`. A janela teve 12 amostras, intervalo nominal de
+30 segundos, timeout individual de 180 segundos e nenhuma parada programada.
+As 12 amostras foram válidas: dez disponíveis, duas indisponíveis, zero
+inconclusivas. O indicativo foi, portanto, **83,333%**, 15,667 pontos
+percentuais abaixo da meta preliminar de 99%; o RNF04 ficou **reprovado nesta
+janela**.
+
+As duas falhas não vieram da sessão, do proxy ou do observador. O agente
+respondeu em cerca de 1,5 segundo, mas recusou o enunciado benigno com
+`desfecho=recusada_baixa_confianca`. Como o instrumento mede o caminho útil
+percebido por quem usa o agente, uma resposta ativa que não conclui a
+solicitação legítima conta como indisponível. Nas dez amostras disponíveis, a
+latência variou de 12,701 s a 43,718 s, com média de 23,943 s e mediana de
+23,585 s. O log completo, os instantes e as condições de reprodução estão em
+[`docs/evidencias/2026-10-05-rnf04-disponibilidade-implantada.txt`](evidencias/2026-10-05-rnf04-disponibilidade-implantada.txt).
+
+O resultado continua sendo um recorte curto do ambiente de desenvolvimento,
+não uma certificação mensal ou de produção. A sonda é sequencial, de modo que
+o intervalo começa depois da resposta anterior, e o marcador UUID usado para
+reencontrar o turno também integra o texto classificado. A janela comprova que
+o instrumento atravessou Entra ID, chat e persistência reais e revelou uma
+instabilidade funcional; ampliar o período exige primeiro estabilizar o
+enunciado sintético e pactuar com o parceiro a meta e o horário de operação.
+
 #### 10.2.3.5 RNF05 — Adequação da resposta ao perfil do usuário
 
 O requisito tem dois critérios de aceitação em 3.3.1, e eles são **assimétricos de propósito**: taxa de adequação de no mínimo 90% e **zero exposição** de conteúdo não autorizado. A assimetria precisa ser explicada, porque à primeira vista parece incoerência. Os dois critérios medem coisas de naturezas diferentes. Adequação é julgamento de forma — se a profundidade e o recorte da resposta servem ao contexto de atuação daquele perfil —, e admite discordância entre avaliadores, de modo que exigir 100% transformaria o critério em disputa de opinião. Exposição de conteúdo não autorizado é fato binário: ou o conteúdo apareceu, ou não apareceu. Um único caso reprova o conjunto inteiro, e nenhuma taxa média o compensa, porque a média de uma violação de confidencialidade não é uma grandeza com significado.
@@ -10795,7 +11085,7 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
 | RNF02 | 10.2.3.2 | 1 | 3 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Executado localmente; conferência PostgreSQL real permanece fora desta execução |
 | RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
-| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Disponível e executado em janela local; medição implantada ainda pendente |
+| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Executado localmente e no `dev` implantado; janela de 05/10 com 83,333%, abaixo da meta preliminar de 99% |
 | RNF05 | 10.2.3.5 | 2 | 2 | `tests/rnf/test_rnf05_perfil.py` | Executado: 6 aprovados na bancada sintética; validação humana ainda pendente |
 | RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
 | RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
@@ -10814,7 +11104,7 @@ Torna-os, porém, mais fáceis de degradar sem que ninguém perceba, e por duas 
 
 **O que fica fora.** Cinco exclusões, cada uma com registro anterior neste documento.
 
-A **disponibilidade real** do agente não é medida. O RNF04 produz um indicativo sobre uma janela declarada, e 3.3.1 já reconhece que o percentual não foi pactuado com o parceiro. Disponibilidade se apura em operação continuada, que o MVP acadêmico não tem, e apresentar o resultado da sonda como certificação seria dar a uma hipótese a aparência de um resultado.
+A **disponibilidade continuada** do agente não é medida. O RNF04 agora possui um indicativo local e outro no `dev` implantado, sobre a janela curta registrada em 10.2.3.4, e 3.3.1 já reconhece que o percentual não foi pactuado com o parceiro. Disponibilidade se apura em operação continuada, que o MVP acadêmico não tem, e apresentar esse recorte como certificação seria dar a uma hipótese a aparência de um resultado.
 
 A **medição do canal de voz** não acontece nesta seção. Os indicadores de 3.1.5.2 — WER, acurácia de termos de domínio, degradação ponta a ponta e inteligibilidade da síntese — dependem do corpus de áudio de 5.7.6, que ainda não foi gravado. O que existe hoje é a aproximação textual do RNF03, o recorte de texto ruidoso, que estabelece a ordem de grandeza da robustez do classificador e não substitui a medição sobre áudio real.
 
@@ -12646,7 +12936,7 @@ interna ainda pendente no RF06.
 | RNF01 — perímetro | `tests/perimetro/test_perimetro_declarado.py` | Aprovado: 5 casos | `2026-09-25-testes-rnf-perimetro.txt` | Inspeção do perímetro não comprova configuração implantada |
 | RNF02 — rastreabilidade | `tests/rnf/test_rnf02_07_auditoria.py` | Aprovado nos casos executados, inclusive na bateria integral com PostgreSQL | `2026-09-25-testes-rnf-perimetro.txt`; `2026-09-29-cobertura-integral-middleware.txt` | A execução local não substitui validação no ambiente implantado |
 | RNF03 — precisão | `app/pipeline/intencao/avaliacao.py` | Resultado já registrado em 5.4.11 | 5.4.11 | Reproduzir na mudança do modelo/conjunto |
-| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py` | Parcial: lógica e janela local com PostgreSQL passaram na bateria integral | `2026-09-25-testes-rnf-perimetro.txt`; `2026-09-29-cobertura-integral-middleware.txt` | Medição contínua em ambiente implantado |
+| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py`; `app/rotinas/sonda.py` | Reprovado na janela implantada: 10 de 12 amostras disponíveis, ou 83,333%, contra meta preliminar de 99% | `2026-10-05-rnf04-disponibilidade-implantada.txt`; evidências locais anteriores | Janela curta no `dev`; operação continuada e meta/horário pactuados com o parceiro permanecem pendentes |
 | RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
 | RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |

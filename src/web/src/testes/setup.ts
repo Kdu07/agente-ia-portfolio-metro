@@ -43,9 +43,9 @@ Object.defineProperty(window, "matchMedia", {
   }),
 });
 
-// Os componentes do Radix medem o gatilho com `ResizeObserver` para
-// posicionar menus e dicas, e o Select usa captura de ponteiro. Nenhum dos
-// dois existe no jsdom.
+// Radix mede o gatilho com `ResizeObserver` e o Select usa captura de ponteiro;
+// o Vaul também captura ponteiros durante o gesto de arrastar da gaveta. Essas
+// APIs de layout e ponteiro não são implementadas pelo jsdom.
 class ResizeObserverDeTeste {
   observe() {}
   unobserve() {}
@@ -53,6 +53,7 @@ class ResizeObserverDeTeste {
 }
 window.ResizeObserver ??= ResizeObserverDeTeste as unknown as typeof ResizeObserver;
 Element.prototype.hasPointerCapture ??= vi.fn(() => false);
+Element.prototype.setPointerCapture ??= vi.fn();
 Element.prototype.releasePointerCapture ??= vi.fn();
 
 // Animacao em teste so atrasa a assercao: com isto, toda transicao do
