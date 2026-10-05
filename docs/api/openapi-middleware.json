@@ -246,6 +246,16 @@
               }
             }
           },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1698,11 +1708,18 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Corpo fora do schema (`detail` em lista, do Pydantic) ou agenda e prompt recusados pela validação de negócio (`detail` em texto)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErroResposta"
+                    }
+                  ]
                 }
               }
             }
@@ -1877,11 +1894,18 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Corpo fora do schema (`detail` em lista, do Pydantic) ou agenda e prompt recusados pela validação de negócio (`detail` em texto)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErroResposta"
+                    }
+                  ]
                 }
               }
             }
@@ -2036,7 +2060,7 @@
             }
           },
           "403": {
-            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "description": "Usuário sem gerir_rotinas, ou dono da rotina inativo no Microsoft Entra ID ou sem gerir_rotinas no momento do disparo",
             "content": {
               "application/json": {
                 "schema": {
@@ -2047,6 +2071,16 @@
           },
           "404": {
             "description": "Rotina inexistente ou de outro usuário (indistinguíveis de propósito)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Disparo concluído sem registro de execução consultável",
             "content": {
               "application/json": {
                 "schema": {

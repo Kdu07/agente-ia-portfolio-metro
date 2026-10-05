@@ -30,8 +30,11 @@ from app.rotinas.validacao import ResultadoValidacao, validar_agenda, validar_pr
 from app.schemas.erro import (
     RESPOSTA_401,
     RESPOSTA_403,
+    RESPOSTA_403_DISPARO,
     RESPOSTA_404_ROTINA,
     RESPOSTA_409_ROTINA,
+    RESPOSTA_422_ROTINA,
+    RESPOSTA_500_EXECUCAO,
     RESPOSTA_503_ENTRA,
 )
 from app.schemas.rotina import (
@@ -74,7 +77,12 @@ async def validar(pedido: RotinaRequest, usuario: UsuarioAtual) -> ValidacaoResp
     )
 
 
-@router.post("", response_model=RotinaResposta, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=RotinaResposta,
+    status_code=status.HTTP_201_CREATED,
+    responses=RESPOSTA_422_ROTINA,
+)
 async def criar(
     pedido: RotinaRequest,
     usuario: UsuarioAtual,
@@ -108,7 +116,11 @@ async def criar(
     return _resposta_rotina(rotina)
 
 
-@router.put("/{rotina_id}", response_model=RotinaResposta, responses=RESPOSTA_404_ROTINA)
+@router.put(
+    "/{rotina_id}",
+    response_model=RotinaResposta,
+    responses={**RESPOSTA_404_ROTINA, **RESPOSTA_422_ROTINA},
+)
 async def atualizar(
     rotina_id: str,
     pedido: RotinaRequest,
@@ -165,7 +177,12 @@ async def remover(
 @router.post(
     "/{rotina_id}/executar",
     response_model=ExecucaoResposta,
-    responses={**RESPOSTA_404_ROTINA, **RESPOSTA_503_ENTRA},
+    responses={
+        **RESPOSTA_403_DISPARO,
+        **RESPOSTA_404_ROTINA,
+        **RESPOSTA_500_EXECUCAO,
+        **RESPOSTA_503_ENTRA,
+    },
 )
 async def executar_agora(
     rotina_id: str,
