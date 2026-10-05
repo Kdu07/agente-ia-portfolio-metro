@@ -2243,11 +2243,11 @@ Entram aqui as ferramentas e os recursos de nuvem usados diretamente para constr
 | Figma Professional | Protótipos, mockups e correções de interface | 2 assentos completos por 3 meses | 2 × US$ 16 × 3 = US$ 96,00 × 5,1991 × 1,035 | R$ 516,58 |
 | Maze Starter | Sessões de usabilidade com gravação | 1 mês, período das sessões da Sprint 4 | US$ 99,00 × 5,1991 × 1,035 | R$ 532,73 |
 | Azure, ambiente de desenvolvimento e homologação | PostgreSQL, registro de imagens e cofre de segredos | 2 meses, setembro e outubro | 2 × R$ 194,64 (ver abaixo) | R$ 389,28 |
-| Azure Container Apps de desenvolvimento | API, web e worker de teste | Escala a zero fora do uso, dentro da franquia mensal gratuita | Seção 7.5.3 | R$ 0,00 |
+| Azure Container Apps de desenvolvimento e homologação | `web`, `middleware` e job de migração dos estágios `dev` e `prd` | 2 meses, setembro e outubro, com escala a zero fora do uso | 2 × R$ 22,44, gasto real de setembro, já descontada a franquia mensal gratuita (ver abaixo) | R$ 44,88 |
 | Content Safety e Speech de desenvolvimento | Guardas e transcrição nos testes | Nível gratuito F0, usado no módulo | Franquia do fornecedor | R$ 0,00 |
 | Copilot Studio de teste | Demonstração de RF04 a RF06 | Ambiente de teste cedido pelo Metrô | Sem cobrança ao fornecedor | R$ 0,00 |
 | Linguagens, bibliotecas, Docker e IDE | Desenvolvimento e testes | Software livre ou gratuito | Sem licença paga | R$ 0,00 |
-| **Total de insumos** | | | | **R$ 4.247,51** |
+| **Total de insumos** | | | | **R$ 4.292,39** |
 
 O ambiente de desenvolvimento repete o dimensionamento do `infra/azure/provisionar.sh`, com preços da tabela oficial da Microsoft em reais para `brazilsouth`:
 
@@ -2259,7 +2259,11 @@ O ambiente de desenvolvimento repete o dimensionamento do `infra/azure/provision
 | Key Vault Standard, 10.000 operações | R$ 0,1551 por 10.000 operações | 1 × R$ 0,1551 | R$ 0,16 |
 | **Total mensal** | | | **R$ 194,64** |
 
-**Custo total da construção (C) = pessoal + insumos = R$ 35.607,81 + R$ 4.247,51 = R$ 39.855,32**
+O registro de imagens do módulo usa o plano Standard porque é o que a cota gratuita de 12 meses da assinatura cobre (seção 11.2.6 do `Projeto.md`); fora dela, o orçamento adota o Basic, o mesmo da produção (seção 7.5.4).
+
+O Container Apps fica fora dessa tabela porque é cobrado pelo tempo de uso, e não pela capacidade reservada, e por isso é precificado pelo gasto real. O Azure Cost Management registra R$ 22,44 em setembro para os apps e o job de migração do grupo `rg-prata-agent`, quase todo do `middleware` de desenvolvimento, que reserva 2 vCPU e 4 GiB para carregar o modelo de *embeddings* sempre que acorda. A escala a zero não bastou para manter o uso dentro da franquia mensal gratuita; como essa franquia vale para qualquer assinatura, e não só para a do módulo, o gasto real já é o equivalente comercial. Outubro, mês da transição, repete o valor de setembro. O detalhamento por recurso está na seção 2.10.2 do `Projeto.md`.
+
+**Custo total da construção (C) = pessoal + insumos = R$ 35.607,81 + R$ 4.292,39 = R$ 39.900,20**
 
 Os três serviços cotados em dólar são convertidos pela PTAX de venda de 25/09/2026, R$ 5,1991, com IOF de 3,5% sobre compras internacionais com cartão. O GitLab Premium é vendido em assinatura anual; o orçamento aloca ao contrato apenas os três meses de uso, e os outros nove ficam com a empresa para os contratos seguintes.
 
@@ -2293,10 +2297,11 @@ Cada solicitação encaminhada ao Copilot Studio aciona uma ação do agente sob
 
 | Modalidade | Preço | Cálculo | Custo mensal |
 |---|---:|---|---:|
-| Pacote de 25.000 créditos | R$ 1.145,10 por pacote por mês | 3 pacotes × R$ 1.145,10 | **R$ 3.435,30** |
+| Pacotes de 25.000 créditos | R$ 1.145,10 por pacote por mês | 3 pacotes × R$ 1.145,10 | **R$ 3.435,30** |
+| Pacotes e excedente conforme o uso | R$ 1.145,10 por pacote e R$ 0,0517 por crédito excedente | 2 × R$ 1.145,10 + 23.899 × R$ 0,0517 | R$ 3.525,78 |
 | Pagamento conforme o uso | R$ 0,0517 por crédito | 73.899 × R$ 0,0517 | R$ 3.820,58 |
 
-Os pacotes são R$ 385,28 por mês mais baratos que o pagamento conforme o uso, mesmo com 1.101 créditos ociosos, e são a modalidade adotada.
+A Microsoft permite combinar as duas formas de compra: os pacotes formam a capacidade contratada, e o consumo que passa dela é cobrado pelo medidor de pagamento conforme o uso. Em regime, 3 pacotes são a combinação mais barata, mesmo com 1.101 créditos ociosos: R$ 90,48 por mês abaixo de 2 pacotes com o excedente conforme o uso e R$ 385,28 abaixo do pagamento só conforme o uso. Abaixo do regime, a combinação mais barata muda, e a rampa de adoção (seção 7.5.6) a aplica mês a mês.
 
 #### 7.5.3 Azure Container Apps
 
@@ -2350,14 +2355,14 @@ O Copilot Studio responde por 77% do custo de operação e é o único item que 
 
 Os valores de 7.5.1 a 7.5.5 são os de regime, com os 90 usuários ativos. A solução não chega a esse volume no primeiro dia: o plano de adoção (capítulo 12 do [Projeto.md](Projeto.md)) a introduz por um piloto de quatro semanas em um dos seis subportfólios, seguido da expansão aos demais nos meses 2 e 3, um subportfólio por vez. A operação e o benefício da seção 7.12 seguem a mesma rampa, expressa como a fração do uso de regime em cada mês:
 
-| Mês de operação | Fase do plano de adoção | Uso de regime | Usuários ativos equivalentes | Créditos do Copilot Studio | Modalidade mais barata | Operação no mês |
+| Mês de operação | Fase do plano de adoção | Uso de regime | Usuários ativos equivalentes | Créditos do Copilot Studio | Combinação de créditos mais barata | Operação no mês |
 |---|---|---:|---:|---:|---|---:|
 | 1 | Piloto | 20% | 18 | 14.780 | Pagamento conforme o uso | R$ 1.691,58 |
-| 2 | Expansão | 50% | 45 | 36.950 | Pagamento conforme o uso | R$ 2.869,93 |
-| 3 | Expansão | 80% | 72 | 59.119 | Pagamento conforme o uso | R$ 4.048,30 |
+| 2 | Expansão | 50% | 45 | 36.950 | 1 pacote e 11.950 créditos conforme o uso | R$ 2.722,53 |
+| 3 | Expansão | 80% | 72 | 59.119 | 2 pacotes e 9.119 créditos conforme o uso | R$ 3.753,50 |
 | 4 em diante | Sustentação | 100% | 90 | 73.899 | 3 pacotes de 25.000 créditos | R$ 4.448,61 |
 
-O piloto corresponde a um sexto das 86 frentes mais os 4 integrantes do PMO, cerca de 18 usuários. Nos meses da expansão, o uso médio fica atrás do número de habilitados, porque cada subportfólio entra ao longo do mês e leva algumas semanas para formar o hábito; por isso a rampa só chega a 100% no quarto mês. Em cada mês vale a modalidade de crédito mais barata: abaixo do regime, pacotes inteiros deixariam créditos ociosos, e o pagamento conforme o uso sai mais barato. Contêineres, banco, registro e cofre são fixos e não acompanham a rampa. Com ela, a operação do primeiro ano soma **R$ 48.647,30**, e não R$ 53.383,32; a partir do segundo ano, vale o valor de regime.
+O piloto corresponde a um sexto das 86 frentes mais os 4 integrantes do PMO, cerca de 18 usuários. Nos meses da expansão, o uso médio fica atrás do número de habilitados, porque cada subportfólio entra ao longo do mês e leva algumas semanas para formar o hábito; por isso a rampa só chega a 100% no quarto mês. Em cada mês vale a combinação de créditos mais barata da seção 7.5.2. No piloto, um pacote deixaria 10.220 créditos ociosos e custaria R$ 1.145,10, contra R$ 764,12 do pagamento conforme o uso. Na expansão, compensa contratar os pacotes que o consumo esgota e pagar o excedente conforme o uso: R$ 147,40 a menos que o pagamento só conforme o uso no segundo mês e R$ 294,80 a menos no terceiro. Contêineres, banco, registro e cofre são fixos e não acompanham a rampa. Com ela, a operação do primeiro ano soma **R$ 48.205,10**, e não R$ 53.383,32; a partir do segundo ano, vale o valor de regime. A conta supõe que o número de pacotes possa mudar de um mês para o outro; se o licenciamento do Metrô exigir quantidade fixa, os meses da expansão ficam no pagamento conforme o uso, o que soma R$ 442,20 ao primeiro ano.
 
 ### 7.6 Despesas operacionais
 
@@ -2415,41 +2420,41 @@ Onde C é o custo total da construção, D são as despesas operacionais, m é a
 
 | Etapa | Cálculo | Valor |
 |---|---|---:|
-| Custo total da construção (C) | Pessoal R$ 35.607,81 + insumos R$ 4.247,51 | R$ 39.855,32 |
+| Custo total da construção (C) | Pessoal R$ 35.607,81 + insumos R$ 4.292,39 | R$ 39.900,20 |
 | Despesas operacionais (D) | Seção 7.6 | R$ 2.400,00 |
-| Base (C + D) | R$ 39.855,32 + R$ 2.400,00 | R$ 42.255,32 |
+| Base (C + D) | R$ 39.900,20 + R$ 2.400,00 | R$ 42.300,20 |
 | Fator de preço | 1,15 / (1 − 0,155 × 1,15) = 1,15 / 0,82175 | 1,399452 |
-| **Preço final (P)** | R$ 42.255,32 × 1,15 / 0,82175 | **R$ 59.134,31** |
-| Imposto (I) | 15,5% × R$ 59.134,31 | R$ 9.165,82 |
-| Lucro (L) | P − C − D − I | R$ 7.713,17 |
-| Prova da margem | 15% × (C + D + I) = 15% × R$ 51.421,14 | R$ 7.713,17 |
+| **Preço final (P)** | R$ 42.300,20 × 1,15 / 0,82175 | **R$ 59.197,12** |
+| Imposto (I) | 15,5% × R$ 59.197,12 | R$ 9.175,55 |
+| Lucro (L) | P − C − D − I | R$ 7.721,37 |
+| Prova da margem | 15% × (C + D + I) = 15% × R$ 51.475,75 | R$ 7.721,36 |
 
-A prova confirma que o lucro é exatamente 15% da soma de custos, despesas e impostos, como pede o artefato.
+A prova confirma que o lucro é 15% da soma de custos, despesas e impostos, como pede o artefato. A diferença de R$ 0,01 entre o lucro e a prova vem do arredondamento do preço a centavos.
 
 #### 7.9.2 Composição do preço
 
 | Componente | Valor | Participação no preço |
 |---|---:|---:|
-| Pessoal: 438,25 h de construção faturável, transição, treinamento e repasse | R$ 35.607,81 | 60,22% |
-| Insumos, licenças e plataformas da construção | R$ 4.247,51 | 7,18% |
-| Despesas operacionais | R$ 2.400,00 | 4,06% |
-| Imposto, Simples Nacional Anexo V | R$ 9.165,82 | 15,50% |
-| Lucro | R$ 7.713,17 | 13,04% |
-| **Preço final ao Metrô** | **R$ 59.134,31** | **100,00%** |
+| Pessoal: 438,25 h de construção faturável, transição, treinamento e repasse | R$ 35.607,81 | 60,15% |
+| Insumos, licenças e plataformas da construção | R$ 4.292,39 | 7,25% |
+| Despesas operacionais | R$ 2.400,00 | 4,05% |
+| Imposto, Simples Nacional Anexo V | R$ 9.175,55 | 15,50% |
+| Lucro | R$ 7.721,37 | 13,04% |
+| **Preço final ao Metrô** | **R$ 59.197,12** | **100,00%** |
 
-A margem de 15% sobre custos, despesas e impostos equivale a 13,04% do preço (0,15 / 1,15). O preço corresponde a R$ 134,93 por hora orçada, 1,66 vez o custo-hora de R$ 81,25.
+A margem de 15% sobre custos, despesas e impostos equivale a 13,04% do preço (0,15 / 1,15). O preço corresponde a R$ 135,08 por hora orçada, 1,66 vez o custo-hora de R$ 81,25. As participações estão arredondadas a duas casas e, por isso, somam 99,99%.
 
 A demonstração de resultado do contrato, por competência, fecha no mesmo lucro:
 
 | Demonstração do resultado | Valor |
 |---|---:|
-| Receita bruta de serviços | R$ 59.134,31 |
-| (−) Simples Nacional | R$ 9.165,82 |
-| **Receita líquida** | **R$ 49.968,49** |
-| (−) Custo dos serviços: pessoal e insumos | R$ 39.855,32 |
-| **Lucro bruto** | **R$ 10.113,17** |
+| Receita bruta de serviços | R$ 59.197,12 |
+| (−) Simples Nacional | R$ 9.175,55 |
+| **Receita líquida** | **R$ 50.021,57** |
+| (−) Custo dos serviços: pessoal e insumos | R$ 39.900,20 |
+| **Lucro bruto** | **R$ 10.121,37** |
 | (−) Despesas operacionais | R$ 2.400,00 |
-| **Lucro do contrato** | **R$ 7.713,17** |
+| **Lucro do contrato** | **R$ 7.721,37** |
 
 #### 7.9.3 Reserva de contingência opcional
 
@@ -2458,8 +2463,8 @@ A seção 3.5.3 registra que a Sprint 4 operou com carga de 141% da capacidade (
 | Item | Cálculo | Valor |
 |---|---|---:|
 | Reserva de contingência | 10% × R$ 35.607,81 | R$ 3.560,78 |
-| Preço com reserva | (R$ 42.255,32 + R$ 3.560,78) × 1,399452 | R$ 64.117,45 |
-| Acréscimo ao preço | R$ 64.117,45 − R$ 59.134,31 | R$ 4.983,14 |
+| Preço com reserva | (R$ 42.300,20 + R$ 3.560,78) × 1,399452 | R$ 64.180,26 |
+| Acréscimo ao preço | R$ 64.180,26 − R$ 59.197,12 | R$ 4.983,14 |
 
 A reserva não é lucro: se não for usada, não é faturada.
 
@@ -2467,19 +2472,19 @@ A reserva não é lucro: se não for usada, não é faturada.
 
 | Condição | Proposta |
 |---|---|
-| Preço fixo | R$ 59.134,31, com NFS-e por marco |
+| Preço fixo | R$ 59.197,12, com NFS-e por marco |
 | Marcos de faturamento | 20% no aceite de cada uma das Sprints 1 a 4 e 20% no aceite final, que reúne a Sprint 5, o pacote de transição, o treinamento e a operação assistida |
 | Prazo de pagamento | 30 dias após o aceite de cada marco |
 | Validade da proposta | 30 dias, pelo risco de câmbio sobre as licenças cotadas em dólar |
 | Não incluído | Infraestrutura de produção (seção 7.5), paga pelo Metrô à Microsoft, e sustentação Nível 3 (seção 7.11) |
 
-O faturamento por sprint é a condição que remove o estrangulamento do fluxo de caixa: com os três marcos de 30%, 30% e 40% que a proposta considerava antes, o fornecedor financiaria o cliente por três meses e precisaria de R$ 16.101,27 de capital de giro no fim de setembro (seção 7.10). Ele também acompanha o ritmo do trabalho, porque o Metrô aceita e paga cada incremento entregue, em vez de acumular o risco de aceite em dois marcos grandes.
+O faturamento por sprint é a condição que remove o estrangulamento do fluxo de caixa: com os três marcos de 30%, 30% e 40% que a proposta considerava antes, o fornecedor financiaria o cliente por três meses e precisaria de R$ 16.104,86 de capital de giro no fim de setembro (seção 7.10). Ele também acompanha o ritmo do trabalho, porque o Metrô aceita e paga cada incremento entregue, em vez de acumular o risco de aceite em dois marcos grandes.
 
 ### 7.10 Fluxo de caixa do fornecedor
 
 O fluxo de caixa mostra quando o dinheiro entra e sai, o que o preço não mostra. As premissas são as dos marcos da seção 7.9.4:
 
-* **Entradas:** 20% em 13/09 e 20% em 27/09, 30 dias após os aceites das Sprints 1 (14/08) e 2 (28/08); 20% em 11/10 e 20% em 25/10, após os aceites das Sprints 3 (11/09) e 4 (25/09); 20% em 30/11, após o aceite final (31/10).
+* **Entradas:** 20% em 13/09 e 20% em 27/09, 30 dias após os aceites das Sprints 1 (14/08) e 2 (28/08); 20% em 11/10 e 20% em 25/10, após os aceites das Sprints 3 (11/09) e 4 (25/09); 20% em 30/11, após o aceite final (31/10). As quatro primeiras parcelas são de R$ 11.839,42, e a última, de R$ 11.839,44, absorve os R$ 0,02 do arredondamento.
 * **Pessoal:** pago no mês em que as horas faturáveis são executadas. Agosto recebe as Sprints 1 e 2 sem as horas acadêmicas (142,50 h); setembro, a Sprint 3, a Sprint 4 e as tasks da Sprint 5 marcadas até 30/09 no cronograma da seção 3.6.1, também sem as horas acadêmicas (55,00 h + 124,50 h + 35,75 h = 215,25 h); outubro, as demais tasks da Sprint 5, o pacote de transição e o treinamento (42,50 h + 22,00 h + 16,00 h = 80,50 h). As tasks com duas etapas contam metade das horas em cada data. O centavo de arredondamento da distribuição foi absorvido em outubro.
 * **Insumos:** GitLab e Figma em três parcelas mensais, Maze em setembro, Azure de desenvolvimento em setembro e outubro.
 * **Despesas:** contabilidade, Workspace e deslocamentos todos os meses; domínio e proposta comercial em agosto.
@@ -2488,17 +2493,17 @@ O fluxo de caixa mostra quando o dinheiro entra e sai, o que o preço não mostr
 | Mês | Saldo inicial | Entradas | Saídas: custos | Saídas: despesas | Saídas: DAS | Saldo final | Situação |
 |---|---:|---:|---:|---:|---:|---:|---|
 | Agosto | R$ 0,00 | R$ 0,00 | R$ 12.686,63 | R$ 1.260,00 | R$ 0,00 | **−R$ 13.946,63** | Estrangulamento: construção sem recebimento |
-| Setembro | −R$ 13.946,63 | R$ 23.653,72 | R$ 19.324,93 | R$ 570,00 | R$ 0,00 | **−R$ 10.187,84** | Os aceites das Sprints 1 e 2 cobrem o mês de maior custo |
-| Outubro | −R$ 10.187,84 | R$ 23.653,72 | R$ 7.843,76 | R$ 570,00 | R$ 3.666,33 | **R$ 1.385,79** | Saldo positivo com os aceites das Sprints 3 e 4 |
-| Novembro | R$ 1.385,79 | R$ 11.826,87 | R$ 0,00 | R$ 0,00 | R$ 3.666,33 | **R$ 9.546,33** | Recebimento do aceite final |
-| Dezembro | R$ 9.546,33 | R$ 0,00 | R$ 0,00 | R$ 0,00 | R$ 1.833,16 | **R$ 7.713,17** | DAS do aceite final quitado |
-| **Total** | | **R$ 59.134,31** | **R$ 39.855,32** | **R$ 2.400,00** | **R$ 9.165,82** | **R$ 7.713,17** | |
+| Setembro | −R$ 13.946,63 | R$ 23.678,84 | R$ 19.347,37 | R$ 570,00 | R$ 0,00 | **−R$ 10.185,16** | Os aceites das Sprints 1 e 2 cobrem o mês de maior custo |
+| Outubro | −R$ 10.185,16 | R$ 23.678,84 | R$ 7.866,20 | R$ 570,00 | R$ 3.670,22 | **R$ 1.387,26** | Saldo positivo com os aceites das Sprints 3 e 4 |
+| Novembro | R$ 1.387,26 | R$ 11.839,44 | R$ 0,00 | R$ 0,00 | R$ 3.670,22 | **R$ 9.556,48** | Recebimento do aceite final |
+| Dezembro | R$ 9.556,48 | R$ 0,00 | R$ 0,00 | R$ 0,00 | R$ 1.835,11 | **R$ 7.721,37** | DAS do aceite final quitado |
+| **Total** | | **R$ 59.197,12** | **R$ 39.900,20** | **R$ 2.400,00** | **R$ 9.175,55** | **R$ 7.721,37** | |
 
-Composição das saídas de custo: agosto, pessoal R$ 11.578,13, GitLab R$ 936,31 e Figma R$ 172,19; setembro, pessoal R$ 17.489,06, GitLab R$ 936,31, Figma R$ 172,19, Maze R$ 532,73 e Azure R$ 194,64; outubro, pessoal R$ 6.540,62, GitLab R$ 936,30, Figma R$ 172,20 e Azure R$ 194,64.
+Composição das saídas de custo: agosto, pessoal R$ 11.578,13, GitLab R$ 936,31 e Figma R$ 172,19; setembro, pessoal R$ 17.489,06, GitLab R$ 936,31, Figma R$ 172,19, Maze R$ 532,73 e Azure R$ 217,08; outubro, pessoal R$ 6.540,62, GitLab R$ 936,30, Figma R$ 172,20 e Azure R$ 217,08. Os R$ 217,08 mensais do Azure somam R$ 194,64 de banco, registro e cofre e R$ 22,44 de Container Apps (seção 7.4).
 
-O saldo final de R$ 7.713,17 é o lucro da seção 7.9, o que confirma que o fluxo contém todas as entradas e saídas do orçamento: o regime de caixa muda o momento de cada valor, não o resultado. Com o faturamento por sprint, o saldo só é negativo em agosto e setembro, e o **ponto de estrangulamento** é o fim de agosto, com necessidade de capital de giro de **R$ 13.946,63**: são as duas primeiras sprints, executadas antes do primeiro recebimento. Setembro, o mês de maior custo, já recebe os aceites das Sprints 1 e 2 e reduz a necessidade, e o caixa volta ao positivo em outubro.
+O saldo final de R$ 7.721,37 é o lucro da seção 7.9, o que confirma que o fluxo contém todas as entradas e saídas do orçamento: o regime de caixa muda o momento de cada valor, não o resultado. Com o faturamento por sprint, o saldo só é negativo em agosto e setembro, e o **ponto de estrangulamento** é o fim de agosto, com necessidade de capital de giro de **R$ 13.946,63**: são as duas primeiras sprints, executadas antes do primeiro recebimento. Setembro, o mês de maior custo, já recebe os aceites das Sprints 1 e 2 e reduz a necessidade, e o caixa volta ao positivo em outubro.
 
-Com os três marcos de 30%, 30% e 40%, o saldo seria de −R$ 13.946,63 em agosto, −R$ 16.101,27 em setembro e −R$ 9.524,48 em outubro, e só voltaria ao positivo em novembro: três meses negativos e um pico maior, no mês de maior custo. Uma medida adicional continua disponível, sem entrar no fluxo: pagar os prestadores PJ no quinto dia útil do mês seguinte, prática comum de mercado, leva cada saída de pessoal para depois do recebimento do mês e reduz ainda mais o capital de giro necessário.
+Com os três marcos de 30%, 30% e 40%, o saldo seria de −R$ 13.946,63 em agosto, −R$ 16.104,86 em setembro e −R$ 9.534,59 em outubro, e só voltaria ao positivo em novembro: três meses negativos e um pico maior, no mês de maior custo. Uma medida adicional continua disponível, sem entrar no fluxo: pagar os prestadores PJ no quinto dia útil do mês seguinte, prática comum de mercado, leva cada saída de pessoal para depois do recebimento do mês e reduz ainda mais o capital de giro necessário.
 
 ### 7.11 Custo total de propriedade e sustentação opcional
 
@@ -2506,11 +2511,11 @@ O custo total de propriedade soma o que o Metrô paga ao fornecedor e o que paga
 
 | Componente | Primeiro ano | Três anos |
 |---|---:|---:|
-| Contrato de construção e implantação | R$ 59.134,31 | R$ 59.134,31 |
-| Operação em produção, com a rampa de adoção (seções 7.5 e 7.5.6) | R$ 48.647,30 | R$ 155.413,94 |
-| **Custo total de propriedade** | **R$ 107.781,61** | **R$ 214.548,25** |
+| Contrato de construção e implantação | R$ 59.197,12 | R$ 59.197,12 |
+| Operação em produção, com a rampa de adoção (seções 7.5 e 7.5.6) | R$ 48.205,10 | R$ 154.971,74 |
+| **Custo total de propriedade** | **R$ 107.402,22** | **R$ 214.168,86** |
 | Sustentação Nível 3 opcional | R$ 20.466,99 | R$ 61.400,97 |
-| **Custo total com sustentação** | **R$ 128.248,60** | **R$ 275.949,22** |
+| **Custo total com sustentação** | **R$ 127.869,21** | **R$ 275.569,83** |
 
 A projeção de três anos aplica a rampa de adoção nos três primeiros meses e mantém volume e preços constantes a partir do quarto. A operação responde por 45% do custo do primeiro ano e por 72% do custo em três anos: a decisão de adotar a solução é, sobretudo, a decisão de pagar a operação. O tempo que a equipe do Metrô dedica à curadoria, ao suporte e ao treinamento não é pago a terceiros e fica fora desta tabela; ele entra na viabilidade da seção 7.12.
 
@@ -2539,13 +2544,13 @@ Não há medição do tempo que cada consulta leva hoje, e por isso o benefício
 | (−) Operação em produção, em regime | R$ 4.448,61 | R$ 4.448,61 | R$ 4.448,61 |
 | (−) Pessoal do Metrô, em regime | R$ 637,50 | R$ 637,50 | R$ 637,50 |
 | **Benefício líquido mensal, em regime** | **R$ 4.363,89** | **R$ 23.263,89** | **R$ 42.163,89** |
-| **Payback do contrato, com a rampa** | **17,5 meses** | **4,5 meses** | **3,2 meses** |
-| Resultado em 12 meses | −R$ 24.056,61 | R$ 174.393,39 | R$ 372.843,39 |
-| ROI em 12 meses | −19,5% | 141,5% | 302,4% |
-| Resultado em 36 meses | R$ 80.676,75 | R$ 732.726,75 | R$ 1.384.776,75 |
-| ROI em 36 meses | 32,9% | 298,7% | 564,4% |
+| **Payback do contrato, com a rampa** | **17,4 meses** | **4,5 meses** | **3,2 meses** |
+| Resultado em 12 meses | −R$ 23.677,22 | R$ 174.772,78 | R$ 373.222,78 |
+| ROI em 12 meses | −19,3% | 142,2% | 303,7% |
+| Resultado em 36 meses | R$ 81.056,14 | R$ 733.106,14 | R$ 1.385.156,14 |
+| ROI em 36 meses | 33,1% | 299,3% | 565,4% |
 
-Fórmulas, mês a mês: benefício bruto = 11.340 × uso de regime do mês × minutos / 60 × R$ 50,00; benefício líquido = benefício bruto − operação do mês − pessoal do Metrô no mês; payback = mês em que o benefício líquido acumulado cobre os R$ 59.134,31 do contrato, com interpolação dentro do mês; resultado em n meses = benefício bruto acumulado − (contrato + operação acumulada + pessoal do Metrô acumulado); ROI = resultado / (contrato + operação acumulada + pessoal do Metrô acumulado). Os valores em regime valem a partir do segundo ano; entre o quarto e o décimo segundo mês, o pessoal do Metrô é de R$ 600,00, porque ainda não há reposição de usuários. No cenário pessimista, o contrato se paga em 17,5 meses e o primeiro ano fecha negativo: a rampa e o pessoal do Metrô consomem o pouco que um minuto por consulta rende.
+Fórmulas, mês a mês: benefício bruto = 11.340 × uso de regime do mês × minutos / 60 × R$ 50,00; benefício líquido = benefício bruto − operação do mês − pessoal do Metrô no mês; payback = mês em que o benefício líquido acumulado cobre os R$ 59.197,12 do contrato, com interpolação dentro do mês; resultado em n meses = benefício bruto acumulado − (contrato + operação acumulada + pessoal do Metrô acumulado); ROI = resultado / (contrato + operação acumulada + pessoal do Metrô acumulado). Os valores em regime valem a partir do segundo ano; entre o quarto e o décimo segundo mês, o pessoal do Metrô é de R$ 600,00, porque ainda não há reposição de usuários. No cenário pessimista, o contrato se paga em 17,4 meses e o primeiro ano fecha negativo: a rampa e o pessoal do Metrô consomem o pouco que um minuto por consulta rende.
 
 #### 7.12.2 Ponto de equilíbrio
 
@@ -2554,9 +2559,9 @@ Mais útil que os três cenários é saber quanto tempo cada interação precisa
 | Objetivo | Tempo mínimo poupado por interação | Cálculo |
 |---|---:|---|
 | Cobrir a operação e o pessoal do Metrô, em regime | 32 s | (R$ 4.448,61 + R$ 637,50) / (11.340 × R$ 50,00 / 60) = 0,54 min |
-| Recuperar também o contrato em 12 meses, com a rampa | 75 s | (R$ 59.134,31 + R$ 48.647,30 + R$ 15.500,00) / (10,5 × 11.340 × R$ 50,00 / 60) = 1,24 min |
+| Recuperar também o contrato em 12 meses, com a rampa | 75 s | (R$ 59.197,12 + R$ 48.205,10 + R$ 15.500,00) / (10,5 × 11.340 × R$ 50,00 / 60) = 1,24 min |
 
-No segundo cálculo, R$ 48.647,30 e R$ 15.500,00 são a operação e o pessoal do Metrô no primeiro ano, e 10,5 é a soma do uso de regime dos 12 primeiros meses (0,2 + 0,5 + 0,8 + 9 × 1). Basta que cada consulta ao agente evite cerca de um minuto e quinze segundos de busca manual para a solução se pagar no primeiro ano; no cenário pessimista, com um minuto, o retorno chega em 17,5 meses. É esse número, e não o ROI do cenário otimista, que deve orientar a decisão.
+No segundo cálculo, R$ 48.205,10 e R$ 15.500,00 são a operação e o pessoal do Metrô no primeiro ano, e 10,5 é a soma do uso de regime dos 12 primeiros meses (0,2 + 0,5 + 0,8 + 9 × 1). Basta que cada consulta ao agente evite cerca de um minuto e quinze segundos de busca manual para a solução se pagar no primeiro ano; no cenário pessimista, com um minuto, o retorno chega em 17,4 meses. É esse número, e não o ROI do cenário otimista, que deve orientar a decisão.
 
 #### 7.12.3 Leitura crítica
 
@@ -2570,15 +2575,15 @@ A lacuna principal é a ausência de medição do tempo atual. Antes da implanta
 
 | Variação | Preço final | Diferença para o preço-base | Lucro sobre o preço |
 |---|---:|---:|---:|
-| Margem de 10% | R$ 56.034,78 | −R$ 3.099,53 | 9,09% |
-| **Base: margem de 15%, Anexo V** | **R$ 59.134,31** | **R$ 0,00** | **13,04%** |
-| Margem de 20% | R$ 62.292,86 | R$ 3.158,55 | 16,67% |
-| Margem de 25% | R$ 65.512,12 | R$ 6.377,81 | 20,00% |
-| Fator R atingido, Anexo III com 6% | R$ 52.195,08 | −R$ 6.939,23 | 13,04% |
-| Com reserva de contingência | R$ 64.117,45 | R$ 4.983,14 | 13,04% |
-| Horas pela capacidade declarada: 6 × 16 h × 5 sprints − 26,50 h acadêmicas + 22,00 h de transição + 16 h = 491,50 h | R$ 65.189,14 | R$ 6.054,83 | 13,04% |
+| Margem de 10% | R$ 56.094,30 | −R$ 3.102,82 | 9,09% |
+| **Base: margem de 15%, Anexo V** | **R$ 59.197,12** | **R$ 0,00** | **13,04%** |
+| Margem de 20% | R$ 62.359,02 | R$ 3.161,90 | 16,67% |
+| Margem de 25% | R$ 65.581,71 | R$ 6.384,59 | 20,00% |
+| Fator R atingido, Anexo III com 6% | R$ 52.250,52 | −R$ 6.946,60 | 13,04% |
+| Com reserva de contingência | R$ 64.180,26 | R$ 4.983,14 | 13,04% |
+| Horas pela capacidade declarada: 6 × 16 h × 5 sprints − 26,50 h acadêmicas + 22,00 h de transição + 16 h = 491,50 h | R$ 65.251,94 | R$ 6.054,82 | 13,04% |
 
-A última linha testa a premissa mais sensível do orçamento. As horas dos cards medem o tamanho das tarefas pela régua da seção 2.5.2, e não a dedicação total da equipe; a própria Sprint 4 mostra carga atribuída acima da capacidade. Um fornecedor que precificasse a dedicação reservada, e não as tarefas, cobraria R$ 65.189,14, R$ 6.054,83 a mais, mesmo descontando as horas acadêmicas. O orçamento mantém a base dos cards por ser a única rastreável card a card no Kanban.
+A última linha testa a premissa mais sensível do orçamento. As horas dos cards medem o tamanho das tarefas pela régua da seção 2.5.2, e não a dedicação total da equipe; a própria Sprint 4 mostra carga atribuída acima da capacidade. Um fornecedor que precificasse a dedicação reservada, e não as tarefas, cobraria R$ 65.251,94, R$ 6.054,82 a mais, mesmo descontando as horas acadêmicas. O orçamento mantém a base dos cards por ser a única rastreável card a card no Kanban.
 
 #### 7.13.2 Sensibilidade da operação e do payback
 
@@ -2587,15 +2592,15 @@ Cenário-base de 3 minutos poupados por interação, com a rampa de adoção e o
 | Variação | Créditos em regime | Operação mensal em regime | Payback |
 |---|---|---:|---:|
 | **Base** | **3 pacotes** | **R$ 4.448,61** | **4,5 meses** |
-| Metade do volume | Conforme o uso | R$ 2.869,93 | 8,0 meses |
+| Metade do volume | 1 pacote e excedente conforme o uso | R$ 2.722,53 | 7,9 meses |
 | Dobro do volume | 6 pacotes | R$ 7.991,21 | 2,9 meses |
 | 2 créditos por interação, só resposta generativa | Conforme o uso | R$ 2.104,90 | 4,2 meses |
-| 12 créditos por interação: duas ações do agente e uma resposta generativa | Conforme o uso | R$ 7.562,87 | 5,0 meses |
+| 12 créditos por interação: duas ações do agente e uma resposta generativa | 5 pacotes e excedente conforme o uso | R$ 6.825,87 | 4,8 meses |
 | Créditos por pagamento conforme o uso em todos os meses | Conforme o uso | R$ 4.833,89 | 4,5 meses |
 | Usuários com licença Microsoft 365 Copilot | Nenhum | R$ 1.013,31 | 4,1 meses |
 | Sem rampa: 90 usuários desde o primeiro mês | 3 pacotes | R$ 4.448,61 | 2,9 meses |
 
-O cenário de 12 créditos testa o consumo que a seção 7.5.2 não mede: uma consulta que aciona o SharePoint e o Power BI na mesma interação consome duas ações do agente, 5 + 5 créditos, mais os 2 da resposta generativa. São 126.684 créditos por mês em regime, e o pagamento conforme o uso, R$ 6.549,56, sai mais barato que 6 pacotes, R$ 6.870,60. A operação sobe 70%, e o payback, só meio mês, porque o contrato e o benefício não mudam: o consumo de créditos pesa mais no resultado de três anos, que cai de R$ 732.726,75 para R$ 625.862,70. A linha sem rampa mostra o custo de introduzir a solução em fases, cerca de um mês e meio de payback, que é o preço de reduzir o risco de abandono do plano de adoção.
+O cenário de 12 créditos testa o consumo que a seção 7.5.2 não mede: uma consulta que aciona o SharePoint e o Power BI na mesma interação consome duas ações do agente, 5 + 5 créditos, mais os 2 da resposta generativa. São 126.684 créditos por mês em regime, e a combinação mais barata é de 5 pacotes com os 1.684 créditos excedentes conforme o uso, R$ 5.812,56, contra R$ 6.549,56 só conforme o uso e R$ 6.870,60 em 6 pacotes. A operação sobe 53%, e o payback, só um terço de mês, porque o contrato e o benefício não mudam: o consumo de créditos pesa mais no resultado de três anos, que cai de R$ 733.106,14 para R$ 651.152,69. A linha sem rampa mostra o custo de introduzir a solução em fases, cerca de um mês e meio de payback, que é o preço de reduzir o risco de abandono do plano de adoção.
 
 A tabela de cobrança da Microsoft não cobra créditos do Copilot Studio quando o usuário tem licença do Microsoft 365 Copilot. Se o Metrô já tiver essas licenças para os gestores do portfólio, a operação cai para R$ 1.013,31 por mês; a aplicação dessa regra ao canal Direct Line deve ser confirmada com o licenciamento da Microsoft antes de ser usada como premissa.
 
@@ -2604,12 +2609,12 @@ A tabela de cobrança da Microsoft não cobra créditos do Copilot Studio quando
 | Risco | Efeito no orçamento | Resposta |
 |---|---|---|
 | Câmbio sobre GitLab, Figma e Maze | Cada 10% de alta do dólar soma R$ 385,82 aos insumos | Validade de 30 dias da proposta |
-| Consumo de nuvem acima do previsto (`R10`) | O Copilot Studio sobe em degraus de R$ 1.145,10; com 12 créditos por interação, a operação passa a R$ 7.562,87 | Orçamento no Azure Cost Management com alertas em 80% e 100% do valor mensal |
+| Consumo de nuvem acima do previsto (`R10`) | O Copilot Studio sobe em degraus de R$ 1.145,10; com 12 créditos por interação, a operação passa a R$ 6.825,87 | Orçamento no Azure Cost Management com alertas em 80% e 100% do valor mensal |
 | Escopo acima da capacidade (`R21`) | Horas além das 438,25 h orçadas | Reserva de contingência da seção 7.9.3 |
 | Transição para produção maior que o estimado | Horas além das 22,00 h do pacote da seção 7.2.6 | Reserva de contingência, com aprovação formal de mudança de escopo |
 | Serviços de IA no tenant da equipe (`R12`) | Reprovisionamento do Content Safety e do Speech no tenant do Metrô | Orçado no pacote de transição; troca de configuração, e não de código (seção 6.3 do `Projeto.md`) |
 | Executor próprio fora do perímetro (`R19`, `R20`) | Nenhum no preço, porque não compõe o cenário comercial | Qualquer uso em produção exige nova proposta |
-| Expansão mais lenta que a rampa | Adia o benefício; um mês a mais com metade do uso adia o payback do cenário-base de 4,5 para 5,1 meses | Indicador de usuários ativos do plano de adoção, acompanhado desde o piloto |
+| Expansão mais lenta que a rampa | Adia o benefício; um mês a mais com metade do uso adia o payback do cenário-base de 4,5 para 5,0 meses | Indicador de usuários ativos do plano de adoção, acompanhado desde o piloto |
 | Atraso de pagamento do cliente | Estende o período de caixa negativo da seção 7.10 | Capital de giro de R$ 13.946,63 reservado antes da assinatura |
 
 #### 7.13.4 Lacunas declaradas
@@ -2629,20 +2634,20 @@ A tabela de cobrança da Microsoft não cobra créditos do Copilot Studio quando
 |---|---:|
 | Horas orçadas | 438,25 h |
 | Custo de pessoal | R$ 35.607,81 |
-| Insumos, licenças e plataformas | R$ 4.247,51 |
-| **Custo total da construção (C)** | **R$ 39.855,32** |
+| Insumos, licenças e plataformas | R$ 4.292,39 |
+| **Custo total da construção (C)** | **R$ 39.900,20** |
 | **Despesas operacionais (D)** | **R$ 2.400,00** |
-| **Imposto (I), 15,5%** | **R$ 9.165,82** |
-| **Lucro (L), 15% sobre C + D + I** | **R$ 7.713,17** |
-| **Preço final ao Metrô (P)** | **R$ 59.134,31** |
-| Preço com reserva de contingência | R$ 64.117,45 |
-| Operação em produção, paga pelo Metrô | R$ 4.448,61 por mês em regime; R$ 48.647,30 no primeiro ano, com a rampa |
-| Custo total de propriedade no primeiro ano | R$ 107.781,61 |
+| **Imposto (I), 15,5%** | **R$ 9.175,55** |
+| **Lucro (L), 15% sobre C + D + I** | **R$ 7.721,37** |
+| **Preço final ao Metrô (P)** | **R$ 59.197,12** |
+| Preço com reserva de contingência | R$ 64.180,26 |
+| Operação em produção, paga pelo Metrô | R$ 4.448,61 por mês em regime; R$ 48.205,10 no primeiro ano, com a rampa |
+| Custo total de propriedade no primeiro ano | R$ 107.402,22 |
 | Payback do contrato no cenário-base | 4,5 meses |
 | Tempo mínimo poupado para payback em 12 meses | 75 s por interação |
 | Capital de giro necessário ao fornecedor | R$ 13.946,63 |
 
-O Metrô pagaria **R$ 59.134,31** pela construção, pela transição para produção, pela implantação e pela transferência do Prata Agent, em cinco marcos de 20%, e cerca de **R$ 4.450,00 por mês** para mantê-lo em operação depois da rampa de adoção. O investimento se paga no primeiro ano desde que cada consulta poupe cerca de um minuto e quinze segundos de busca manual; com menos que isso, o retorno passa dos 12 meses.
+O Metrô pagaria **R$ 59.197,12** pela construção, pela transição para produção, pela implantação e pela transferência do Prata Agent, em cinco marcos de 20%, e cerca de **R$ 4.450,00 por mês** para mantê-lo em operação depois da rampa de adoção. O investimento se paga no primeiro ano desde que cada consulta poupe cerca de um minuto e quinze segundos de busca manual; com menos que isso, o retorno passa dos 12 meses.
 
 | Item do artefato | Onde está atendido |
 |---|---|
