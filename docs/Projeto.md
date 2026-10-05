@@ -10102,7 +10102,29 @@ Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente uti
 
 > **Comparação com a execução anterior.** Os sete casos de `test_rf02_canais.py` passaram nesta execução integral. Os dois casos antes marcados `xfail` foram resolvidos; os totais acima foram recalculados com toda a suíte.
 
-**Análise crítica.** A maior concentração de lacunas está nos RF05 e RF06, cujos fluxos ainda não estão implementados, e no RF04, que possui apenas um cenário aprovado. Os pontos de maior risco para a versão atual são a validação incompleta de áudio em RF02, a autorização e validação de entidades em RF03/RF04 e o comportamento da guarda de injeção quando o serviço externo falha em RF09. Os casos planejados para ondas futuras permanecem registrados como `xfail`, evitando que sejam apresentados como funcionalidades concluídas. Cada defeito confirmado deve ser vinculado a uma *issue* de correção antes do encerramento da issue de execução.
+**Análise crítica daquele corte.** Em 25/09, a maior concentração de lacunas
+estava nos RF05 e RF06 e no RF04, que possuía apenas um cenário aprovado. A
+validação de áudio em RF02, a autorização e a validação de entidades em
+RF03/RF04 e a falha inesperada da guarda de injeção em RF09 eram os riscos mais
+visíveis. O parágrafo descreve a execução preservada acima; não deve ser lido
+como estado atual depois das correções e medições complementares.
+
+#### 10.1.7.1 Atualização funcional da Sprint 5 — 28/09/2026
+
+A #457 corrigiu a falha fechada da guarda de injeção e a #458 triou os 22
+`xfail` históricos. Após a correção de quatro expectativas desatualizadas, o
+recorte dos sete arquivos que continham esses casos terminou com **26 aprovados
+e 17 `xfail` em 234,87 s**, sem `XPASS`. A execução partiu da `develop` no
+commit `773874b`; os testes corrigidos estão no commit `ac1187e` e a triagem, no
+commit `fa60650`.
+
+O resultado não transforma lacunas em aprovações: os 17 `xfail` remanescentes
+representam 12 defeitos do produto, quatro itens fora do MVP e uma pendência
+aceita. RF09 deixou de possuir falha funcional esperada; RF01 e três casos de
+RF04 passaram a verificar o contrato vigente. A classificação caso a caso e o
+estado atualizado por RF estão em 10.7.1. A evidência bruta de 25/09 permanece
+preservada para mostrar a evolução, em vez de ser sobrescrita pelo recorte
+posterior.
 
 ## 10.2 Testes de RNFs
 
@@ -12344,6 +12366,24 @@ quatro itens fora do MVP e uma pendência aceita. A integração externa por Tea
 ou correio permanece fora do MVP e não deve ser confundida com a proatividade
 interna ainda pendente no RF06.
 
+### 10.7.2 Execuções complementares consolidadas
+
+Esta consolidação foi revista em **05/10/2026**, sobre a `develop` no commit
+`6837f19`. Ela não constitui uma nova execução combinada: relaciona as rodadas
+auditáveis das issues #457 a #463 e define qual resultado prevalece quando uma
+rodada posterior amplia a anterior.
+
+| Recorte | Data e commit da execução | Resultado consolidado | Evidência |
+|---|---|---|---|
+| Guarda de injeção e triagem funcional (#457–#458) | 28/09; base `773874b`, correção `ac1187e` | Recorte reexecutado com 26 aprovados e 17 `xfail`; falha fechada de injeção corrigida e quatro expectativas atualizadas | 10.1.7.1 e 10.7.1; [histórico bruto de 25/09](evidencias/2026-09-25-testes-funcionais.txt) |
+| Cobertura integral inicial (#459) | 29/09; base `6ec100a` | 1214 aprovados, 8 ignorados, 17 `xfail`; cobertura de 84,06% | [evidência da cobertura integral](evidencias/2026-09-29-cobertura-integral-middleware.txt) |
+| Ampliação da cobertura (#460) | 29/09; base `269a0ec` | 1246 aprovados, 8 ignorados, 17 `xfail`; cobertura de **85,71%**, resultado mais recente e vigente | [evidência da cobertura ampliada](evidencias/2026-09-29-cobertura-80-middleware.txt) |
+| Carga com API ativa (#461) | 29–30/09; base `260ec4c`, complemento `d0d223a` | Um usuário aprovado; 5, 10 e 30 usuários reprovados; saturação delimitada entre 1 e 5 usuários | [evidência do Locust com API ativa](evidencias/2026-09-30-locust-api-ativa.txt) |
+| Worker concorrente com chat (#462) | 30/09; base `9b2555d` | Cinco rotinas geraram cinco execuções; latência do chat durante os disparos inconclusiva e 26,19% das mensagens legítimas foram bloqueadas | [evidência das rotinas com chat](evidencias/2026-09-30-tnf-des-05-rotinas-chat.txt) |
+| Disponibilidade implantada (#463) | 05/10; base `5267c2c` | 10 de 12 amostras disponíveis: **83,333%**, abaixo da meta preliminar de 99% | [evidência da disponibilidade implantada](evidencias/2026-10-05-rnf04-disponibilidade-implantada.txt) |
+
+### 10.7.3 Matriz de requisito, resultado, evidência e lacuna
+
 | Requisito | Script / seção | Resultado | Evidência | Lacuna |
 |---|---|---|---|---|
 | RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | Aprovado: 5 casos no recorte reexecutado | evidência original; reexecução da #458 em 28/09 | Perfil seguro padrão, escopo e permissões verificados |
@@ -12366,26 +12406,47 @@ interna ainda pendente no RF06.
 | RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
 | Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Baseline de 1 usuário aprovado; 5, 10 e 30 usuários reprovados; `TNF-DES-05` aprovou a unicidade com cinco rotinas, com latência durante o disparo inconclusiva e 26,19% das mensagens legítimas bloqueadas, sem separar detecção de indisponibilidade | `2026-09-30-locust-api-ativa.txt`; `2026-09-30-tnf-des-05-rotinas-chat.txt`; seção 10.2.2 | Transição para saturação delimitada entre 1 e 5 usuários; separar os bloqueios do `TNF-DES-05` por motivo nos logs; investigar quota/estabilidade do Content Safety, guardas de saída e pool do banco |
-| Cobertura de código | `python -m pytest ... --cov=app --cov-report=term-missing` | 84,06% na execução única das suítes unitária, funcional, RNF, perímetro e integração; meta de 80% atingida | `2026-09-29-cobertura-integral-middleware.txt` | Provedores comerciais reais permaneceram isolados e os `xfail` continuam visíveis |
+| Cobertura de código | `python -m pytest ... --cov=app --cov-report=term-missing` | 85,71% na execução ampliada das suítes unitária, funcional, RNF, perímetro e integração; meta de 80% atingida | `2026-09-29-cobertura-80-middleware.txt`; baseline em `2026-09-29-cobertura-integral-middleware.txt` | Provedores comerciais reais permaneceram isolados e os 17 `xfail` continuam visíveis |
 | Integração | matriz 10.5.9 e scripts `tests/integration/` | Incluída na bateria integral: PostgreSQL e RabbitMQ reais locais; serviços comerciais reais explicitamente ignorados | `2026-09-29-cobertura-integral-middleware.txt`; seção 10.5 | Não confundir infraestrutura local real com validação no ambiente implantado |
 
-**Cobertura integral do middleware.** Em 29/09/2026, uma única execução reuniu `tests/unit`, `tests/funcionais`, `tests/rnf`, `tests/perimetro` e `tests/integration`, com PostgreSQL 16 e RabbitMQ 4.3.6 reais do Compose. O resultado foi **1214 aprovados, 8 ignorados e 17 `xfail` em 354,68 s**, sem falhas, e **84,06%** de cobertura de linhas/branches configurados para `app`. A meta de 80% definida em 9.1.8 foi atingida neste ambiente e recorte. O log auditável, o comando, o ambiente e os motivos de cada grupo ignorado estão em [`docs/evidencias/2026-09-29-cobertura-integral-middleware.txt`](evidencias/2026-09-29-cobertura-integral-middleware.txt).
+**Cobertura integral do middleware.** A primeira execução integral de 29/09/2026
+reuniu `tests/unit`, `tests/funcionais`, `tests/rnf`, `tests/perimetro` e
+`tests/integration`, com PostgreSQL 16 e RabbitMQ 4.3.6 reais do Compose. Ela
+terminou com 1214 aprovados, 8 ignorados e 17 `xfail`, sem falhas, e **84,06%**
+de cobertura. A #460 acrescentou 57 casos observáveis aos módulos prioritários e
+repetiu o mesmo recorte: **1246 aprovados, 8 ignorados e 17 `xfail` em 393,77 s**,
+sem falhas, com **85,71%** de cobertura. Esse é o resultado vigente e supera em
+5,71 pontos percentuais a meta de 80% definida em 9.1.8. O baseline está em
+[`2026-09-29-cobertura-integral-middleware.txt`](evidencias/2026-09-29-cobertura-integral-middleware.txt)
+e a ampliação, em
+[`2026-09-29-cobertura-80-middleware.txt`](evidencias/2026-09-29-cobertura-80-middleware.txt).
 
-O travamento anterior vinha da habilitação implícita dos testes reais de Gemini e Pinecone pela simples presença das credenciais. Esses módulos agora exigem `TESTES_EXTERNOS_REAIS=1` além da respectiva chave e são ignorados na coleta quando a autorização não existe. Os oito `skip` da execução correspondem a Gemini real, Pinecone real, três casos de RF07 fora do MVP, RNF06 real sem autorização, e dois casos Direct Line cujo cliente não está implementado. Entre os módulos com menor cobertura permanecem os pontos de entrada `app/rag/ingestao/__main__.py`, `app/webhooks/drive/__main__.py` e `app/webhooks/portfolio/__main__.py` (0%), além de `app/rag/vetorial/provisionar.py` (39,25%), `app/api/routes/portfolio.py` (41,46%) e `app/pipeline/intencao/avaliacao.py` (47,78%). A aprovação da suíte e a meta atingida não comprovam provedores comerciais reais, não eliminam os 17 `xfail` triados em 10.7.1 e não alteram a reprovação parcial do RNF06.
+O travamento anterior vinha da habilitação implícita dos testes reais de Gemini
+e Pinecone pela simples presença das credenciais. Esses módulos agora exigem
+`TESTES_EXTERNOS_REAIS=1` além da respectiva chave e são ignorados na coleta
+quando a autorização não existe. Os oito `skip` da execução ampliada
+correspondem a Gemini real, Pinecone real, três casos de RF07 fora do MVP, RNF06
+real sem autorização e dois casos Direct Line cujo cliente não está
+implementado. A #460 elevou `app/api/routes/portfolio.py` de 41,46% para 97,56%,
+`app/pipeline/intencao/avaliacao.py` de 47,78% para 57,41% e
+`app/rag/vetorial/provisionar.py` de 39,25% para 73,66%. A meta atingida não
+comprova provedores comerciais reais, não elimina os 17 `xfail` triados em
+10.7.1 e não altera a reprovação parcial do RNF06.
 **Riscos para liberação.** RF05 ainda não efetiva alterações com confirmação;
 RF06 permanece parcial e RF07 está fora do MVP; RF04/RF08 permanecem parciais;
 o RNF06 reprova parcialmente;
 a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
-contínua, validação e carga no ambiente implantado seguem pendentes. A carga
-local também revelou bloqueios de mensagens legítimas pelas guardas e saturação
-a partir do primeiro ponto concorrente medido.
+continuada e carga no ambiente implantado seguem pendentes. A janela curta no
+`dev` reprovou o RNF04 com 83,333%, e a carga local revelou bloqueios de
+mensagens legítimas pelas guardas e saturação a partir do primeiro ponto
+concorrente medido.
 
 **Conclusão crítica.** Os resultados comprovam uma base automatizada executável e
 algumas regras centrais cobertas, mas não sustentam declaração de conformidade
 integral do artefato nem prontidão de liberação. RFs parciais, RNF06, proteção em
-repouso, observabilidade implantada, estabilidade e disponibilidade das guardas
-e capacidade sob carga exigem resolução ou aceitação explícita de risco antes da
-liberação.
+repouso, disponibilidade abaixo da meta na janela implantada, estabilidade das
+guardas e capacidade sob carga exigem resolução ou aceitação explícita de risco
+antes da liberação.
 
 # 11. Procedimentos de Implantação
 
@@ -13182,7 +13243,7 @@ O esforço é relativo entre os itens da lista, e não uma estimativa em horas:
 | AF12 | Subir a detecção das guardas de injeção e de abuso para 90%, com regras corporativas e o conjunto adversarial, mantendo o falso positivo em até 5% | RNF06 reprovado por detecção: 8,3% na injeção e 0% no abuso (10.2.3.6) | Alta | M |
 | AF13 | Cifrar em repouso o registro de interações e fixar o prazo definitivo de retenção com o parceiro | RNF07 parcial: prompt em claro e prazo provisório (10.2.3.7); risco R13 | Alta | M |
 | AF14 | Tratar a saturação sob concorrência, com cota do Content Safety e pool de conexões dimensionados, e medir a carga de novo no ambiente implantado | Limites de latência ultrapassados a partir de cinco usuários, com respostas 429 do Content Safety e esgotamento do pool do banco (10.2.2.2) | Alta | M |
-| AF15 | Medir o worker de rotinas sob carga concorrente com o chat e a disponibilidade contínua no ambiente implantado | `TNF-DES-05` pendente e RNF04 parcial (10.7) | Média | M |
+| AF15 | Ampliar a medição do worker sob carga concorrente e da disponibilidade no ambiente implantado | `TNF-DES-05` comprovou unicidade, mas a latência concorrente ficou inconclusiva; a janela curta do RNF04 atingiu 83,333%, abaixo da meta (10.7) | Média | M |
 | AF16 | Implementar o cliente Direct Line e ligar o Copilot Studio como executor; até lá, deixar o executor próprio como padrão da configuração, que hoje aponta para o cliente não implementado | Direct Line com `NotImplementedError` ([Arquitetura.md](Arquitetura.md), seções 12.2 e 13.4); padrão `executor = "copilot"` em `config.py`; risco R02 | Média | G |
 | AF17 | Revisar por amostra humana a fidelidade das respostas do RAG ao trecho citado | Meta de fidelidade de 0,95 sem medição automática (9.4.6) | Média | P |
 | AF18 | Medir a cobertura das consultas por categoria de informação, com ao menos uma pergunta por categoria na bancada do RAG | Objetivo O2 sem indicador de cobertura por categoria (2.8.10.1) | Média | P |
