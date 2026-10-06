@@ -1885,6 +1885,8 @@ O histórico registra, por item, a evolução desde a identificação, de modo q
 
 ### 4.4 Riscos materializados e efetividade das respostas
 
+> **Nota de fechamento (Sprint 5).** As duas tabelas desta seção registram o estado da Sprint 4 e foram preservadas como estavam. Onde divergem da matriz da seção [4.2](#42-matriz-de-risco-consolidada--status-final-do-projeto), vale a 4.2: o `R18` registra o feriado de 07/09, a Sprint 4 fechou sem card aberto (`R21`) e a ação do `R23` foi executada na Sprint 5. O `R08`, materializado na Sprint 2, não consta da primeira tabela; sua resposta está na seção 4.5. A avaliação final das respostas está na seção [4.9.2](#492-mitigações-e-contingências-avaliadas-pelo-resultado).
+
 | Item | O que ocorreu | Contingência acionada | Efetividade observada | Encaminhamento |
 |---|---|---|---|---|
 | **R02** — Restrições do ecossistema Microsoft | Acesso indisponível da Sprint 2 até 04/09, quando o parceiro liberou o SharePoint de teste e o Copilot Studio | Demonstração pela stack própria com executor dublado, depois pelo executor próprio; guia de implantação do Copilot | **Efetiva e encerrada.** Sustentou três ciclos de desenvolvimento sem o ambiente do parceiro; com a liberação, deixa de ser necessária como condição | Integrar o cliente Direct Line (#374) e capturar `O06`; manter o executor próprio como caminho alternativo |
@@ -2056,7 +2058,7 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 
 | ID | Ação | Responsável | Indicador de sucesso | Status |
 |---|---|---|---|---|
-| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | Planejada — o planejamento da seção 3.6 soma 83,50 h de 96,00 h, com folga de 12,50 h |
+| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | Planejada — o planejamento da seção 3.6 soma 90,25 h de 96,00 h, com folga de 5,75 h |
 | AM21 | Redistribuir carga no planejamento, e não durante a sprint | Scrum Master da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento | Planejada |
 | AM22 | Limitar a 40% a participação de cada integrante nos merges do ciclo | Tech Lead da Sprint 5 | Maior participação individual nos merges de até 40% | Planejada |
 | AM23 | Medir pela API o tempo até a primeira revisão de cada merge request | Responsável pela gestão de configuração | Mediana e maior espera publicadas no fechamento | Planejada |
