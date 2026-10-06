@@ -193,6 +193,11 @@ class Orquestrador:
             )
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
         if veredito.suspeita:
+            # Sem o serviço, a guarda falha fechada do mesmo jeito, mas o
+            # registro não pode chamar de ataque o que foi falta de cota ou
+            # fila cheia: isso inflaria os bloqueios do painel e do RNF06.
+            if veredito.indisponivel:
+                return await self._encerrar(ctx, Desfecho.FALHA_GUARDA)
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
 
         # --- 2. Guarda de abuso -------------------------------------------
@@ -318,6 +323,8 @@ class Orquestrador:
                 ctx.interacao_id,
                 veredito_saida.motivo,
             )
+            if veredito_saida.indisponivel:
+                return await self._encerrar(ctx, Desfecho.FALHA_GUARDA)
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_SAIDA)
 
         # --- 6. Registro ---------------------------------------------------

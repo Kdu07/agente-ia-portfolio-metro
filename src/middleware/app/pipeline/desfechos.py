@@ -18,7 +18,12 @@ pede um tratamento diferente:
 - **fora_de_escopo** é uma classe TREINADA do catálogo, não um erro: a
   recusa é orientativa e a sessão continua ativa;
 - **baixa confiança** é uma classificação incerta sobre uma intenção que
-  pode ser legítima — pede reformulação, não recusa.
+  pode ser legítima — pede reformulação, não recusa;
+- **falha da guarda** é a guarda de injeção ou de saída sem veredito,
+  porque o Content Safety não respondeu (cota, fila local cheia, tempo
+  esgotado). A mensagem continua barrada, como manda o *fail-closed*, mas
+  não é ataque nem resposta suspeita: o usuário só precisa repetir, e o
+  painel não pode contar o caso como bloqueio.
 
 Nota histórica: existiu aqui uma propriedade `preserva_prompt`, que
 impedia gravar o prompt das tentativas de injeção porque a mensagem era
@@ -41,6 +46,7 @@ class Desfecho(Enum):
     RECUSADA_FORA_ESCOPO = "recusada_fora_escopo"
     RECUSADA_BAIXA_CONFIANCA = "recusada_baixa_confianca"
     BLOQUEADA_SAIDA = "bloqueada_saida"
+    FALHA_GUARDA = "falha_guarda"
     FALHA_EXECUTOR = "falha_executor"
 
     @property
