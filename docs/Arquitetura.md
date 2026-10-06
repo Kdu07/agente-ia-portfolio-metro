@@ -14,6 +14,36 @@ invisível e passa a ser o produto, com interface web própria, dados que são
 consultados e não apenas escritos, e um processo que executa sem ninguém na
 frente da tela.
 
+## Sumário
+
+- [1. Visão geral](#1-visão-geral)
+  - [1.1 Trajeto de uma mensagem](#11-trajeto-de-uma-mensagem)
+  - [1.2 Componentes e serviços](#12-componentes-e-serviços)
+  - [1.3 Por que essa separação](#13-por-que-essa-separação)
+- [2. As barreiras de segurança](#2-as-barreiras-de-segurança)
+  - [2.1 A guarda de saída](#21-a-guarda-de-saída)
+- [3. Ordem das etapas](#3-ordem-das-etapas)
+- [4. Rotinas agendadas](#4-rotinas-agendadas)
+- [5. Registro e análise de intenções](#5-registro-e-análise-de-intenções)
+- [6. Perfis e permissões](#6-perfis-e-permissões)
+- [7. Tecnologias](#7-tecnologias)
+- [8. Estrutura de pastas](#8-estrutura-de-pastas)
+  - [8.1 Backend](#81-srcmiddleware--o-backend)
+  - [8.2 Interface](#82-srcweb--a-interface)
+  - [8.3 Configuração do executor](#83-copilot--configuração-versionada-do-executor)
+  - [8.4 Ambiente de desenvolvimento](#84-infra--ambiente-de-desenvolvimento)
+- [9. Modelo de dados](#9-modelo-de-dados)
+- [10. Decisões de segurança](#10-decisões-de-segurança-embutidas-na-estrutura)
+- [11. Consequências em aberto](#11-consequências-em-aberto)
+- [12. Estado atual e próximos passos](#12-estado-atual-e-próximos-passos)
+  - [12.1 Ordem de construção](#121-ordem-de-construção)
+  - [12.2 Dependências externas](#122-dependências-externas-em-caminho-crítico)
+- [13. Caminho alternativo: executor próprio](#13-caminho-alternativo-executor-próprio)
+  - [13.1 A porta e os dois adaptadores](#131-a-porta-e-os-dois-adaptadores)
+  - [13.2 O que muda nas barreiras](#132-o-que-muda-nas-barreiras)
+  - [13.3 Tecnologias do caminho alternativo](#133-tecnologias-do-caminho-alternativo)
+  - [13.4 Perímetro e limites](#134-perímetro-e-limites)
+
 ## 1. Visão geral
 
 O usuário nunca fala diretamente com o executor. Toda entrada — digitada,

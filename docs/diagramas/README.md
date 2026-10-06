@@ -26,6 +26,13 @@ Com as 22 tabelas num diagrama só, o texto ficava ilegível no tamanho da
 página. Os recortes são subfiguras de uma mesma figura, com uma legenda só,
 para que dividir o modelo não obrigue a renumerar as figuras seguintes.
 
+## Sumário
+
+- [Regerar](#regerar)
+  - [Canvas do capítulo 2](#canvas-do-capítulo-2)
+  - [Modelagens do capítulo 4](#modelagens-do-capítulo-4)
+- [Antes de editar as modelagens](#antes-de-editar-as-modelagens)
+
 ## Regerar
 
 ### Canvas do capítulo 2
