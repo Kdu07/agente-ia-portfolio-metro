@@ -1,0 +1,137 @@
+EVIDENCIA — CORRECAO DA SATURACAO DO PIPELINE DE CHAT (#529)
+Data: 05/10/2026
+Branch: fix/saturacao-pipeline-chat
+Base da branch: develop em 29deff7
+
+1. OBJETIVO
+
+Reexecutar os cenarios nominal e de pico que, na rodada de 29–30/09/2026,
+apresentaram respostas 429 do Azure Content Safety, bloqueios de mensagens
+legitimas e esgotamento do pool do PostgreSQL. A rodada verifica se:
+
+- dez usuarios por cinco minutos mantem p95 abaixo de 8 s;
+- uma mensagem legitima deixa de ser bloqueada por 429 ou indisponibilidade
+  externa na carga nominal;
+- a aplicacao deixa de produzir HTTP 500 por esgotamento do pool;
+- a carga de trinta usuarios degrada de forma controlada;
+- as guardas de injecao e de saida continuam falhando fechadas.
+
+2. ALTERACOES EXERCITADAS
+
+- `app/persistence/repository.py` passou a oferecer repositorios transacionais
+  de conversa e interacao. Cada operacao de banco abre, confirma e encerra uma
+  sessao curta, sem manter uma conexao ocupada enquanto o pipeline aguarda
+  Content Safety, classificador ou executor.
+- `app/api/deps.py` passou a montar o orquestrador com esses repositorios e a
+  confirmar a resolucao do usuario antes das chamadas externas.
+- `app/persistence/sessao.py` e `app/config.py` tornaram explicitos e
+  configuraveis o tamanho, o overflow e o tempo de espera do pool.
+- `app/pipeline/guardas/content_safety.py` passou a reutilizar um cliente HTTP,
+  limitar concorrencia e taxa, e repetir apenas falhas transitorias
+  (429/502/503/504, timeout e transporte).
+- `app/pipeline/orquestrador.py` deixou de reenviar ao Prompt Shields cada turno
+  historico ja encaminhado. Turnos bloqueados nao entram no contexto, e as
+  regras deterministicas de injecao continuam sendo aplicadas ao historico.
+- `app/main.py` passou a controlar o ciclo de vida do cliente HTTP e a converter
+  eventual esgotamento do pool em HTTP 503 sanitizado, nunca em HTTP 500 com
+  detalhe interno.
+
+3. AMBIENTE
+
+- Host: Windows, Docker Desktop 29.2.1, 12 CPUs logicas e cerca de 8 GB
+  disponiveis ao Docker.
+- Alvo: uma instancia da API, PostgreSQL 16 local e Azure Content Safety real.
+- Gerador: Locust 2.46.7 em conteiner Linux separado.
+- `PERFORMANCE_MODE=true`: somente o executor final foi substituido pelo
+  executor sintetico de 50 ms. Autenticacao, guardas, classificacao e banco
+  permaneceram reais.
+- Sessao e usuario sinteticos foram criados apenas para a bancada. Cookie,
+  chave do Content Safety e demais segredos nao foram registrados.
+
+4. COMANDOS REPRODUZIVEIS
+
+Com API e PostgreSQL ativos, sessao sintetica valida e `PERF_SESSION_COOKIE`
+definido apenas no ambiente do processo gerador:
+
+Nominal:
+  locust -f tests/desempenho/locustfile.py --headless \
+    --host http://host.docker.internal:8000 \
+    -u 10 -r 2 -t 5m --stop-timeout 180 \
+    --csv /tmp/locust-529-nominal-rate
+
+Pico:
+  locust -f tests/desempenho/locustfile.py --headless \
+    --host http://host.docker.internal:8000 \
+    -u 30 -r 6 -t 5m --stop-timeout 180 \
+    --csv /tmp/locust-529-pico-rate
+
+Uma rodada curta imediatamente apos reiniciar a API foi descartada porque ainda
+incluia aquecimento do modelo. Ela nao compoe os resultados abaixo.
+
+5. RESULTADOS
+
+5.1 Carga nominal — 10 usuarios, rampa 2/s, cinco minutos, espera 1–3 s
+
+- Locust: 398 respostas contabilizadas, 0 falhas e taxa de falha de 0%.
+- Tempo medio: 5,569 s.
+- p50: 5,6 s.
+- p95: 6,4 s.
+- p99: 7,3 s.
+- minimo: 2,177 s; maximo: 7,509 s.
+- Banco: 400 interacoes encaminhadas e nenhum bloqueio na janela. As duas linhas
+  alem do CSV correspondem a requisicoes em voo que terminaram durante a
+  drenagem posterior ao fechamento das estatisticas do Locust.
+- Logs: nenhuma resposta 429 do Content Safety, nenhum esgotamento de pool e
+  nenhum HTTP 500 na rodada valida.
+
+Resultado: aprovado para o criterio do card (p95 <= 8 s), para ausencia de
+bloqueio legitimo por indisponibilidade externa e para ausencia de HTTP 500 do
+pool. O p50 de 5,6 s ainda reprova o limite historico de p50 < 3 s da secao
+9.1.8; por isso o desempenho global nao e declarado integralmente aprovado.
+
+5.2 Pico — 30 usuarios, rampa 6/s, cinco minutos, espera 1–3 s
+
+- Locust: 576 respostas contabilizadas, 178 falhas semanticas (30,90%).
+- Tempo medio: 13,885 s.
+- p50: 16 s.
+- p95: 17 s.
+- p99: 18 s.
+- minimo: 4,945 s; maximo: 19,684 s.
+- Falhas do oraculo: 120 `bloqueada_injecao_modelo` e 58
+  `bloqueada_saida`.
+- Banco apos a drenagem: 580 interacoes, sendo 402 encaminhadas, 120 bloqueadas
+  na injecao e 58 bloqueadas na saida. As quatro linhas adicionais foram
+  requisicoes em voo concluidas depois do corte do CSV.
+- Logs: nenhum HTTP 500, nenhuma excecao de QueuePool e nenhum 429 do Azure.
+  A contrapressao local registrou 120 indisponibilidades na injecao, 58 na
+  saida e 83 no abuso. A guarda de abuso falhou aberta; injecao e saida
+  falharam fechadas, como exige a politica de seguranca.
+
+Resultado: a saturacao passou de falha descontrolada do banco/servico externo
+para contrapressao local limitada e observavel. O sistema permanece seguro e
+nao produz HTTP 500, mas nao sustenta trinta usuarios com o contrato funcional
+e os limites temporais exigidos. O pico permanece reprovado como capacidade.
+
+6. TESTES AUTOMATIZADOS
+
+- Recorte final de guardas, pool, saturacao e fluxo de chat em Linux: 115
+  aprovados e 10 avisos; uma bateria anterior mais ampla do mesmo recorte teve
+  161 aprovados.
+- Suite unitaria completa em Linux: 971 aprovados, 10 avisos.
+- Ruff nos arquivos alterados: aprovado.
+- `git diff --check`: aprovado.
+
+A suite completa no host Windows nao foi usada como evidencia porque a politica
+de controle de aplicativos bloqueou DLLs de SciPy/gevent. O mesmo codigo foi
+executado em conteiner Linux, onde a suite unitaria terminou sem falhas.
+
+7. LIMITACOES E CONCLUSAO
+
+O limitador e por processo. Varias replicas da API e o worker compartilham a
+mesma cota externa, portanto o valor deve ser recalibrado por replica ou
+substituido por coordenacao distribuida/uma cota maior no ambiente implantado.
+A bancada local tambem nao certifica a capacidade do Azure Container Apps.
+
+A correcao atende o recorte nominal da issue #529 e elimina o esgotamento do
+pool observado no pico. Permanecem duas lacunas explicitas: p50 nominal acima de
+3 s e perda funcional por contrapressao no pico de trinta usuarios.

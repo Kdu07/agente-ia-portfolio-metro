@@ -42,6 +42,11 @@ MENSAGENS: dict[Desfecho, str] = {
         "Não consegui montar uma resposta confiável para essa solicitação. "
         "Tente reformular; se persistir, acione o suporte."
     ),
+    # Mesmo texto da falha do executor: diz que vale repetir sem contar que
+    # existe uma verificação, nem que ela estava fora do ar naquele momento.
+    Desfecho.FALHA_GUARDA: (
+        "Não consegui completar a ação agora. Tente novamente em instantes."
+    ),
     Desfecho.FALHA_EXECUTOR: (
         "Não consegui completar a ação agora. Tente novamente em instantes."
     ),

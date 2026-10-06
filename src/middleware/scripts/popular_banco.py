@@ -202,6 +202,11 @@ ENUNCIADOS_NEGATIVOS = {
         "Quais marcos vencem esta semana?",
         "consultar_marcos",
     ),
+    # Por último, para não deslocar o id ordinal das linhas já semeadas.
+    Desfecho.FALHA_GUARDA: (
+        "Qual o status do projeto Linha Verde?",
+        None,
+    ),
 }
 
 RESPOSTAS_DE_RECUSA = {
@@ -222,6 +227,9 @@ RESPOSTAS_DE_RECUSA = {
     ),
     Desfecho.FALHA_EXECUTOR: (
         "Não consegui consultar o portfólio agora. Tente novamente em instantes."
+    ),
+    Desfecho.FALHA_GUARDA: (
+        "Não consegui completar a ação agora. Tente novamente em instantes."
     ),
 }
 

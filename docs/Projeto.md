@@ -2270,7 +2270,7 @@ Entidade central. Uma linha é gravada para cada mensagem que atravessa o pipeli
 | `resposta` | `text` | `NOT NULL` | Texto entregue ao usuário — a resposta do executor ou a recusa. |
 | `intencao_id` | `text` | `NULL` | Código da intenção resolvida, em *snake_case*; nulo quando o bloqueio antecedeu a classificação. Sem chave estrangeira: o catálogo é artefato de código. |
 | `confianca_intencao` | `DOUBLE PRECISION` | `NOT NULL` | Confiança do classificador. Alimenta o recorte de baixa confiança. |
-| `desfecho` | `text` | `NOT NULL`, `CHECK` | Como o pipeline decidiu tratar a mensagem — oito valores, ver 4.4.1. |
+| `desfecho` | `text` | `NOT NULL`, `CHECK` | Como o pipeline decidiu tratar a mensagem — nove valores, ver 4.4.1. |
 | `latencia_ms` | `INTEGER` | `NOT NULL` | Tempo total do pipeline. É o custo do pedágio, medido. |
 | `latencia_etapas` | `JSONB` | `NULL` | Tempo de cada etapa efetivamente percorrida, em milissegundos, como `{"injecao": 12, "executor": 1830}`. Etapa não percorrida não aparece, em vez de constar como zero. Nulo nas interações gravadas antes da medição por etapa. |
 | `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Momento do processamento. |
@@ -2795,14 +2795,15 @@ CREATE TABLE interacao (
     CONSTRAINT ck_interacao_canal CHECK (
         canal IN ('chat', 'voz', 'rotina')
     ),
-    -- Os oito desfechos do pipeline. Injeção por regra e por modelo são
+    -- Os nove desfechos do pipeline. Injeção por regra e por modelo são
     -- valores distintos porque a origem do bloqueio muda a leitura do
     -- painel de segurança.
     CONSTRAINT ck_interacao_desfecho CHECK (
         desfecho IN ('encaminhada', 'bloqueada_injecao_regra',
                      'bloqueada_injecao_modelo', 'bloqueada_abuso',
                      'recusada_fora_escopo', 'recusada_baixa_confianca',
-                     'bloqueada_saida', 'falha_executor')
+                     'bloqueada_saida', 'falha_guarda',
+                     'falha_executor')
     ),
     CONSTRAINT fk_interacao_conversa_id_conversa FOREIGN KEY (conversa_id)
         REFERENCES conversa (id) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -4074,9 +4075,17 @@ não é igual nas três guardas:
 
 | Guarda | Comportamento quando o serviço falha | Razão |
 |---|---|---|
-| Injeção | **Falha fechada:** devolve suspeita com motivo interno `servico_indisponivel`; o executor não é acionado | Liberar a mensagem transformaria a indisponibilidade da barreira em uma janela de ataque direto. |
+| Injeção | **Falha fechada:** devolve suspeita com motivo interno `servico_indisponivel`; o executor não é acionado e a interação é registrada como `falha_guarda` | Liberar a mensagem transformaria a indisponibilidade da barreira em uma janela de ataque direto. |
 | Abuso | **Falha aberta:** as categorias genéricas deixam de decidir, mas as políticas corporativas locais continuam sendo aplicadas | Interromper todo o uso legítimo durante uma queda do moderador seria uma indisponibilidade total. O risco residual é aceito e sinalizado no *log*, depois de a mensagem já ter atravessado a guarda de injeção. |
-| Saída | **Falha fechada:** a resposta é considerada suspeita e fica retida | Entregar uma resposta possivelmente contaminada por um documento é pior que pedir ao usuário uma nova tentativa; a retenção também é persistida como `BLOQUEADA_SAIDA`. |
+| Saída | **Falha fechada:** a resposta é considerada suspeita e fica retida | Entregar uma resposta possivelmente contaminada por um documento é pior que pedir ao usuário uma nova tentativa; a retenção é persistida como `falha_guarda`, e não como `bloqueada_saida`. |
+
+Nas duas guardas que falham fechadas, a indisponibilidade não é registrada
+como detecção. Desde a #529, o desfecho é `falha_guarda`: a mensagem continua
+barrada, ou a resposta continua retida, mas o painel não conta o caso como
+bloqueio, e o usuário recebe o mesmo texto da falha do executor, que pede nova
+tentativa sem revelar que existe uma verificação. Contar a falta do serviço como
+ataque inflaria a série de bloqueios e a taxa de falso positivo do RNF06
+justamente nos momentos de carga.
 
 Credencial ausente é distinguida de falha em tempo de execução. Sem
 `CONTENT_SAFETY_ENDPOINT` ou `CONTENT_SAFETY_KEY`, as três guardas mantêm apenas
@@ -7091,6 +7100,7 @@ classDiagram
         RECUSADA_BAIXA_CONFIANCA
         FALHA_EXECUTOR
         BLOQUEADA_SAIDA
+        FALHA_GUARDA
     }
 
     %% Modelos de Persistência (SQLAlchemy 2 / PostgreSQL)
@@ -7429,12 +7439,12 @@ com exemplos executados o que entra, o que sai e o que fica no banco.
 |---|---|---|---|---|
 | 1. Recebimento | `api/routes/chat.py`, `api/routes/voz.py` | JSON com `mensagem`, ou arquivo de áudio, e o cookie de sessão | Resolve o usuário; na voz, valida formato, tamanho e duração (pelo `ffprobe`), grava `transcricao_audio` como `recebido` e responde 202 | Nenhum: erro de validação é HTTP 4xx, sem linha em `interacao` |
 | 2. Transcrição, só na voz | `servicos/processamento_audio.py`, `voz/transcricao.py` | Arquivo salvo | Em tarefa de fundo, envia o áudio ao Azure AI Speech e recebe texto, idioma e confiança | Nenhum: a falha marca o áudio como `falhou` |
-| 3. Guarda de injeção | `pipeline/guardas/injecao/` | Texto | Regras determinísticas e, depois, o Prompt Shields do Content Safety | `bloqueada_injecao_regra`, `bloqueada_injecao_modelo` |
+| 3. Guarda de injeção | `pipeline/guardas/injecao/` | Texto | Regras determinísticas e, depois, o Prompt Shields do Content Safety | `bloqueada_injecao_regra`, `bloqueada_injecao_modelo`; `falha_guarda`, sem resposta do Content Safety |
 | 4. Guarda de abuso | `pipeline/guardas/abuso/` | Texto | Políticas corporativas de `politicas.py` e categorias do Content Safety | `bloqueada_abuso` |
 | 5. Saudação | `pipeline/intencao/saudacao.py` | Texto | Responde a mensagem que só cumprimenta com a apresentação do agente | `recusada_fora_escopo`, com `intencao_id = saudacao` |
 | 6. Classificação | `pipeline/intencao/classificador.py` | Texto | Intenção e confiança do ensemble, comparada ao limiar da intenção (5.4.11.4) | `recusada_baixa_confianca`; `bloqueada_injecao_modelo` (`tentativa_injecao`); `recusada_fora_escopo` |
 | 7. Execução | `executor/`, com o RAG em `rag/executor.py` | Texto, intenção e histórico | Gera a resposta com citações (5.9.2) | `falha_executor` |
-| 8. Guarda de saída | `pipeline/guardas/saida.py` | Resposta do executor | Regras e Prompt Shields sobre o texto que volta | `bloqueada_saida` |
+| 8. Guarda de saída | `pipeline/guardas/saida.py` | Resposta do executor | Regras e Prompt Shields sobre o texto que volta | `bloqueada_saida`; `falha_guarda`, sem resposta do Content Safety |
 | 9. Registro | `Orquestrador._encerrar`, `persistence/` | Contexto do turno | Grava a linha de `interacao` e monta a resposta; na voz, `transcricao_audio` passa a `concluida` com o `interacao_id`, na mesma transação | `encaminhada`, se nada parou antes |
 
 A resposta de cada desfecho que não é `encaminhada` é um texto fixo de
@@ -9446,7 +9456,7 @@ informação que se perde quando o autor sai do projeto.
 | `chat/desfechos.ts` | Tabela que traduz cada desfecho do pipeline em rótulo e classes visuais |
 | `graficos/CartaoResumo.tsx` | Números de topo de cada recorte do painel, em lista de definições |
 | `graficos/BarrasPorIntencao.tsx` | Volume de mensagens por intenção, em barras horizontais, com as intenções de contagem zero visíveis |
-| `graficos/DistribuicaoDesfechos.tsx` | Distribuição das mensagens entre os oito desfechos, com a cor semântica de cada um |
+| `graficos/DistribuicaoDesfechos.tsx` | Distribuição das mensagens entre os nove desfechos, com a cor semântica de cada um |
 | `graficos/SerieBloqueios.tsx` | Bloqueios ao longo do tempo, uma linha por guarda, sem total agregado |
 | `graficos/TempoPorEtapa.tsx` | Mediana e percentil 95 da latência por etapa do pipeline |
 | `graficos/TabelaEnunciados.tsx` | Enunciados recusados agrupados por repetição, o backlog de novas intenções |
@@ -9475,6 +9485,7 @@ a aba de rotinas usem a mesma linguagem visual para o mesmo evento.
 | `recusada_fora_escopo` | Fora do escopo | `recusa` |
 | `recusada_baixa_confianca` | Precisa de mais detalhes | `recusa` |
 | `bloqueada_saida` | Resposta não entregue | `injecao` |
+| `falha_guarda` | Indisponível | `falha` |
 | `falha_executor` | Indisponível | `falha` |
 
 Dois critérios governam essa tabela. O primeiro é que o rótulo é escrito para o
@@ -10024,10 +10035,10 @@ Uma pergunta fora do escopo recebe recusa orientativa:
 }
 ```
 
-Os oito valores possíveis de `desfecho` são `encaminhada`,
+Os nove valores possíveis de `desfecho` são `encaminhada`,
 `bloqueada_injecao_regra`, `bloqueada_injecao_modelo`, `bloqueada_abuso`,
-`recusada_fora_escopo`, `recusada_baixa_confianca`, `bloqueada_saida` e
-`falha_executor`. Erros típicos: sem cookie, `401 {"detail": "Sessão ausente"}`;
+`recusada_fora_escopo`, `recusada_baixa_confianca`, `bloqueada_saida`,
+`falha_guarda` e `falha_executor`. Erros típicos: sem cookie, `401 {"detail": "Sessão ausente"}`;
 mensagem vazia, o 422 da seção 9.2.8.2; JSON malformado, 422 com
 `"type": "json_invalid"`.
 
@@ -10374,7 +10385,7 @@ visível.
 
 *Lista truncada: a resposta traz uma entrada por classe do catálogo.*
 
-**`GET /intencoes/desfechos`**: distribuição dos oito desfechos, com rótulo legível.
+**`GET /intencoes/desfechos`**: distribuição dos nove desfechos, com rótulo legível.
 
 ```json
 [
@@ -10385,6 +10396,7 @@ visível.
   {"chave": "recusada_fora_escopo", "rotulo": "Fora do escopo", "total": 1},
   {"chave": "recusada_baixa_confianca", "rotulo": "Baixa confiança", "total": 0},
   {"chave": "bloqueada_saida", "rotulo": "Resposta não entregue", "total": 0},
+  {"chave": "falha_guarda", "rotulo": "Verificação indisponível", "total": 0},
   {"chave": "falha_executor", "rotulo": "Falha do executor", "total": 0}
 ]
 ```
@@ -10605,10 +10617,10 @@ No navegador, as mensagens seguem pelo proxy para o middleware real, que decide
 o desfecho por meio das guardas e do classificador. Os gatilhos abaixo pertencem
 ao dublê de teste, que decide por palavra-chave para permitir cenários
 determinísticos; eles não são um roteiro garantido para obter o mesmo desfecho
-no pipeline real. Em particular, `simular falha` e `Resuma o documento
-suspeito` só forçam, respectivamente, `falha_executor` e `bloqueada_saida` nos
-testes. A ordem do dublê reproduz a ordem do orquestrador: injeção, abuso,
-escopo, confiança e execução.
+no pipeline real. Em particular, `simular cota`, `simular falha` e `Resuma o
+documento suspeito` só forçam, respectivamente, `falha_guarda`,
+`falha_executor` e `bloqueada_saida` nos testes. A ordem do dublê reproduz a
+ordem do orquestrador: injeção, abuso, escopo, confiança e execução.
 
 | Desfecho | Mensagem de exemplo no dublê de teste | Comportamento esperado no cenário de teste |
 | --- | --- | --- |
@@ -10618,9 +10630,10 @@ escopo, confiança e execução.
 | `recusada_fora_escopo` | Qual a previsão do tempo amanhã? | Recusa orientativa indicando o que o agente faz, com etiqueta "Fora do escopo" |
 | `recusada_baixa_confianca` | daquele projeto | Pedido de detalhamento, com etiqueta "Precisa de mais detalhes" |
 | `bloqueada_saida` | Resuma o documento suspeito | Resposta não entregue, com etiqueta "Resposta não entregue" |
+| `falha_guarda` | simular cota | Aviso de indisponibilidade, com etiqueta "Indisponível", igual ao da falha do executor |
 | `falha_executor` | simular falha | Aviso de indisponibilidade, com etiqueta "Indisponível" |
 
-O oitavo desfecho, `bloqueada_injecao_modelo`, não possui gatilho no dublê. A
+O nono desfecho, `bloqueada_injecao_modelo`, não possui gatilho no dublê. A
 razão é que ele se apresenta na interface de forma idêntica ao bloqueio por
 regra, por decisão registrada em 9.2.5: distinguir os dois na tela informaria ao
 autor da tentativa qual barreira a interceptou. Ele se tornará alcançável quando
@@ -11727,7 +11740,7 @@ asserção correspondente no código.
 | TU-WEB-212–217 | `testes/navegacao.test.tsx` | Troca de conversa, ida e volta pelo histórico e carregamento de conversa persistida. | Rotas com e sem identificador, conversas com turnos e navegação entre página principal e histórico. | O contexto exibido corresponde à conversa selecionada, não há sobreposição nem duplicação do primeiro turno e o histórico pode ser retomado. |
 | TU-WEB-218–222 | `testes/intencoes.test.tsx` | Carregamento, composição de gráficos, erro versus ausência, estado vazio e filtros do painel de intenções. | Respostas MSW atrasadas, erro, período sem mensagens e seleções de período/perfil. | Loading precede os dados; painel apresenta os gráficos e filtros esperados e distingue indisponibilidade de resultado vazio. |
 | TU-WEB-223–326 | `testes/contraste.test.ts` | Contraste de texto, ícones, bordas, desfechos, controles e séries nos temas claro e escuro. | Cada combinação de tokens declarada em `REGRAS`, repetida para ambos os temas, incluindo o mínimo de 4,5:1 para texto e 3:1 para elementos gráficos. | Tokens existem como cores hexadecimais e cada par atinge ou supera a razão mínima de contraste correspondente. |
-| TU-WEB-327–333 | `testes/desfechos.test.ts` | Vocabulário de desfechos, rótulos não reveladores, tratamento do sucesso, distinção visual e etiqueta em saudação/recusa. | Os oito desfechos declarados, incluindo injeção, abuso, saída, recusa e encaminhamento. | Catálogo completo sem excedentes; rótulos não identificam a barreira; o sucesso não é marcado e os demais têm distinção apropriada. |
+| TU-WEB-327–333 | `testes/desfechos.test.ts` | Vocabulário de desfechos, rótulos não reveladores, tratamento do sucesso, distinção visual e etiqueta em saudação/recusa. | Os nove desfechos declarados, incluindo injeção, abuso, saída, recusa, falhas e encaminhamento. | Catálogo completo sem excedentes; rótulos não identificam a barreira; o sucesso não é marcado e os demais têm distinção apropriada. |
 | TU-WEB-334–337 | `testes/dubles.test.ts` | Handlers compartilhados entre navegador e teste, rotas pendentes, início do MSW e opção de desativação. | Configuração de handlers, rota conhecida/desconhecida e variável `VITE_SEM_DUBLES`. | Os dublês de teste correspondem aos do navegador, rotas pendentes ficam identificadas e a configuração de desativação é respeitada. |
 | TU-WEB-338–341 | `testes/formato.test.ts` | Formatação de valores apresentados na interface. | Valores válidos e limites de entrada definidos nos casos do módulo. | O valor formatado corresponde à convenção de apresentação usada pela interface. |
 | TU-WEB-342–384 | `testes/componentes-rotinas.test.tsx` | Formulário, validação, agenda, ativação, filtros, resultados, edição, exclusão e diálogos de rotina. | Props de rotina, campos vazios/válidos/inválidos, opções de agenda, estado de operação e eventos de formulário. | Validações e status são apresentados corretamente; ações chamam o callback esperado, formulários válidos são enviados e operações em andamento não são duplicadas. |
@@ -12068,7 +12081,7 @@ Os 429 casos executados são enumerados individualmente a seguir. Os IDs são se
 | TU-WEB-324 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'serie-saida' sobre 'card' atinge 3:1` |
 | TU-WEB-325 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'etapa-classificacao' sobre 'card' atinge 3:1` |
 | TU-WEB-326 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'etapa-executor' sobre 'card' atinge 3:1` |
-| TU-WEB-327 | `src/testes/desfechos.test.ts > Aparência dos desfechos > cobre os oito desfechos do vocabulário fechado` |
+| TU-WEB-327 | `src/testes/desfechos.test.ts > Aparência dos desfechos > cobre os nove desfechos do vocabulário fechado` |
 | TU-WEB-328 | `src/testes/desfechos.test.ts > Aparência dos desfechos > não nomeia a barreira que barrou a mensagem` |
 | TU-WEB-329 | `src/testes/desfechos.test.ts > Aparência dos desfechos > mantém o desfecho atendido sem etiqueta` |
 | TU-WEB-330 | `src/testes/desfechos.test.ts > Aparência dos desfechos > dá filete lateral a todo desfecho que não é o atendido` |
@@ -12495,7 +12508,7 @@ A prova de conceito comprova o benefício de **encontrar a informação e confia
 
 Os benefícios parciais têm a base construída e um limite conhecido. A proatividade depende de ligar a tela às rotas de avisos e de criar a sonda de pendências; a confidencialidade, de cifrar o registro em repouso e de levar os serviços para o tenant do parceiro; a recusa segura, de subir a detecção das guardas de injeção e de abuso; e a sustentação pelo Metrô, da transferência.
 
-Os benefícios de **tempo e de retrabalho** continuam como hipótese, e são eles que sustentam o retorno financeiro da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md). O payback calculado ali herda essa condição até que o piloto meça o tempo poupado por consulta (I8). A escala também não foi demonstrada: na bancada local, a resposta atende aos limites de latência com um usuário (p50 de 2,6 s e p95 de 4,2 s) e os ultrapassa a partir de cinco usuários simultâneos (10.2.2.2), o que precisa ser medido de novo no ambiente implantado antes de um piloto com vários líderes.
+Os benefícios de **tempo e de retrabalho** continuam como hipótese, e são eles que sustentam o retorno financeiro da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md). O payback calculado ali herda essa condição até que o piloto meça o tempo poupado por consulta (I8). A escala também não foi demonstrada: na reexecução local após a #529, dez usuários atenderam ao p95 de 8 s sem falhas, mas não ao p50 de 3 s; com trinta usuários, latência e capacidade funcional continuaram reprovadas, embora sem HTTP 500 ou esgotamento do pool (10.2.2.4). O comportamento ainda precisa ser medido no ambiente implantado antes de um piloto com vários líderes.
 
 # 10. Planejamento e Execução de Testes
 
@@ -13056,6 +13069,23 @@ O resultado caracteriza a configuração local, não a capacidade do Azure: gera
 
 Os percentis foram recalculados de `interacao.latencia_ms` na janela exata. Eles medem o pipeline no servidor, sem o caminho entre o Locust, o proxy e a API, e por isso não se comparam aos do Locust em 10.2.2.2. O ensaio usou uma réplica de cada processo e não exercita a escala horizontal de 5.1.4. A evidência, com ambiente, comando, contagens, consultas de conferência, limitações e as pendências que dependem dos logs e do banco da bancada, está em [`docs/evidencias/2026-09-30-tnf-des-05-rotinas-chat.txt`](evidencias/2026-09-30-tnf-des-05-rotinas-chat.txt).
 
+#### 10.2.2.4 Reexecução após correção da saturação — 05/10/2026
+
+A issue #529 tratou as duas causas comprovadas na rodada de 10.2.2.2. O chat passou a usar transações curtas, devolvendo a conexão ao pool antes de esperar serviços externos. O cliente do Content Safety passou a ser compartilhado, com concorrência e taxa limitadas, repetição exclusiva de falhas transitórias e contrapressão local. O histórico mantém apenas turnos previamente encaminhados e aplica regras determinísticas de injeção, sem reenviar cada turno aceito ao serviço externo. As guardas do prompt atual e da resposta atual continuam no caminho real.
+
+| Cenário reexecutado | Configuração | Respostas no Locust | Falhas | p50 (limite < 3 s) | p95 (limite < 8 s) | p99 | HTTP 500/pool | Resultado |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| `TNF-DES-03` | 10 usuários, rampa 2/s, 5 min, espera 1–3 s | 398 | 0 (0%) | 5,6 s — **reprovado** | 6,4 s — **aprovado** | 7,3 s | 0 | **Aprovado no critério da #529; parcial contra 9.1.8** |
+| `TNF-DES-04` | 30 usuários, rampa 6/s, 5 min, espera 1–3 s | 576 | 178 (30,90%) | 16 s — **reprovado** | 17 s — **reprovado** | 18 s | 0 | **Reprovado em capacidade, com saturação controlada** |
+
+Na carga nominal, o banco registrou 400 interações encaminhadas e nenhum bloqueio; as duas além do CSV terminaram durante a drenagem posterior ao fechamento das estatísticas. Não houve 429 do Content Safety, exceção de pool ou HTTP 500. O p95 caiu de 56 s para 6,4 s e passou a meta do card, mas o p50 de 5,6 s ainda não atende ao limite histórico de 3 s. Por isso, o cenário não sustenta uma declaração de conformidade integral com 9.1.8.
+
+O p50 é o teto do próprio limitador. A 4 chamadas por segundo, com três chamadas ao Content Safety por mensagem encaminhada, uma réplica atende no máximo cerca de 1,33 mensagem por segundo, e os 398 turnos em 300 s batem com esse teto. Com dez usuários e pausa média de 2 s entre mensagens, a latência que fecha a conta é 10 ÷ 1,33 − 2 ≈ 5,5 s, praticamente o p50 medido. Baixá-lo para menos de 3 s exige menos chamadas por turno ou uma cota maior, e não ajuste no código do pipeline.
+
+No pico, o banco registrou 580 interações após a drenagem: 402 encaminhadas, 120 bloqueadas na injeção e 58 bloqueadas na saída. As quatro além do CSV ainda estavam em voo no corte estatístico. Não houve 429, HTTP 500 ou esgotamento do pool. As recusas vieram da fila local: injeção e saída mantiveram o *fail-closed*, enquanto abuso manteve o *fail-open*. Isso preserva o invariante de segurança e transforma a pane anterior em contrapressão observável, mas 30,90% de falha semântica e p95 de 17 s mantêm o pico reprovado. As contagens por desfecho seguem o vocabulário da rodada: depois dela, a guarda sem veredito passou a registrar `falha_guarda` (5.2.3.4), e as 178 recusas por fila deixariam de aparecer como bloqueios de injeção e de saída no painel.
+
+O resultado vale para uma réplica local da API. O limitador é por processo, e várias réplicas ou o worker dividem a mesma cota externa. Na Azure, o `infra/azure/variaveis.sh` reparte as 5 chamadas por segundo do F0 entre os estágios, 1,5 no dev e 2,5 no prd, e a fase `apps` divide a cota do estágio entre o middleware e o worker, quando ele existe. Pela mesma conta, o prd comporta cerca de 0,8 mensagem por segundo, e a carga no ambiente implantado continua por medir. A bancada também rodou com `PERFORMANCE_MODE=true`, que troca o executor próprio pelo sintético de 50 ms: a busca e a leitura dos trechos do RAG, que no executor real consultam o PostgreSQL, ficaram de fora da medição. Na revisão do merge request, essas leituras passaram a abrir sessão própria e a devolver a conexão antes da geração, como as demais operações do chat, mas o efeito sob carga ainda não foi medido. A evidência completa, com ambiente, comandos, contagens, testes e limitações, está em [`docs/evidencias/2026-10-05-saturacao-pipeline-chat.txt`](evidencias/2026-10-05-saturacao-pipeline-chat.txt).
+
 ### 10.2.3 Testes dos requisitos não funcionais
 
 **Nota de escopo.** O card que originou esta entrega foi escrito sobre RNF01 a RNF05. O RNF06 e o RNF07 entraram na mesma revisão de escopo que acrescentou RF09 a RF12, conforme as notas de 3.3.1 e 3.4, e não possuem card próprio. Cobri-los aqui é o que evita que a eficácia das barreiras e a proteção do registro — os dois requisitos que sustentam, respectivamente, o RF09 e o par RF10 e RF12 — fiquem sem procedimento de medição. A extensão fica registrada neste parágrafo e na descrição do *merge request*.
@@ -13364,7 +13394,7 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | RNF05 | 10.2.3.5 | 2 | 2 | `tests/rnf/test_rnf05_perfil.py` | Executado: 6 aprovados na bancada sintética; validação humana ainda pendente |
 | RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
 | RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
-| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Executado: baseline aprovado; cargas de 5, 10 e 30 usuários reprovadas; `TNF-DES-05` aprovou a unicidade, com latência durante o disparo inconclusiva e bloqueios de causa não determinada |
+| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Executado: baseline aprovado; após #529, 10 usuários aprovaram p95 e reprovaram p50 sem falhas, enquanto 30 usuários mantiveram reprovação com contrapressão controlada e sem HTTP 500; `TNF-DES-05` aprovou a unicidade, com latência durante o disparo inconclusiva |
 | **Total** | — | **21** | **16** | — | — |
 
 A linha de desempenho é a única sem requisito de origem, e o identificador `TNF-DES` registra isso em vez de escondê-lo. A ancoragem está em 10.2.1: os parâmetros vêm do orçamento arquitetural de 5.1.7.3 e do limite operacional de 9.1.8, que divergem entre si, e a reconciliação adotada reporta contra os dois e declara falha apenas no segundo. Enquanto um RNF de desempenho não for formalizado, essa linha permanece sustentada por uma decisão desta seção, e não pela especificação de requisitos.
@@ -15406,7 +15436,7 @@ rodada posterior amplia a anterior.
 | RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | 4 | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
 | RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | 6 | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | 4 | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
-| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | 7 | Baseline de 1 usuário aprovado; 5, 10 e 30 usuários reprovados; `TNF-DES-05` aprovou a unicidade com cinco rotinas, com latência durante o disparo inconclusiva e 26,19% das mensagens legítimas bloqueadas, sem separar detecção de indisponibilidade | `2026-09-30-locust-api-ativa.txt`; `2026-09-30-tnf-des-05-rotinas-chat.txt`; seção 10.2.2 | Transição para saturação delimitada entre 1 e 5 usuários; separar os bloqueios do `TNF-DES-05` por motivo nos logs; investigar quota/estabilidade do Content Safety, guardas de saída e pool do banco |
+| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | 7 | Baseline de 1 usuário aprovado; após #529, 10 usuários: p50 5,6 s reprovado, p95 6,4 s aprovado e 0 falhas; 30 usuários: p50 16 s, p95 17 s e 30,90% de falhas semânticas, sem HTTP 500/pool; `TNF-DES-05` aprovou a unicidade com latência durante o disparo inconclusiva | `2026-09-30-locust-api-ativa.txt`; `2026-09-30-tnf-des-05-rotinas-chat.txt`; `2026-10-05-saturacao-pipeline-chat.txt`; seção 10.2.2 | Otimizar o p50 nominal; dimensionar contrapressão/cota por réplica; repetir no ambiente implantado e reexecutar a concorrência entre worker e chat |
 | Cobertura de código | `python -m pytest ... --cov=app --cov-report=term-missing` | — | 85,71% na execução ampliada das suítes unitária, funcional, RNF, perímetro e integração; meta de 80% atingida | `2026-09-29-cobertura-80-middleware.txt`; baseline em `2026-09-29-cobertura-integral-middleware.txt` | Provedores comerciais reais permaneceram isolados e os 17 `xfail` continuam visíveis |
 | Integração | matriz 10.5.9 e scripts `tests/integration/` | — | Incluída na bateria integral: PostgreSQL e RabbitMQ reais locais; serviços comerciais reais explicitamente ignorados | `2026-09-29-cobertura-integral-middleware.txt`; seção 10.5 | Não confundir infraestrutura local real com validação no ambiente implantado |
 
@@ -15456,9 +15486,9 @@ RF06 permanece parcial, RF04 permanece parcial e RF07 e RF08 estão fora do MVP;
 o RNF06 reprova parcialmente;
 a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
 continuada e carga no ambiente implantado seguem pendentes. A janela curta no
-`dev` reprovou o RNF04 com 83,333%, e a carga local revelou bloqueios de
-mensagens legítimas pelas guardas e saturação a partir do primeiro ponto
-concorrente medido.
+`dev` reprovou o RNF04 com 83,333%. A carga local, após #529, eliminou falhas
+nominais e HTTP 500 do pool, mas o p50 de dez usuários e a capacidade funcional
+no pico de trinta usuários ainda reprovam.
 
 **Conclusão crítica.** Os resultados comprovam uma base automatizada executável e
 algumas regras centrais cobertas, mas não sustentam declaração de conformidade
@@ -16265,7 +16295,7 @@ O esforço é relativo entre os itens da lista, e não uma estimativa em horas:
 | AF11 | Validar perfis e permissões no tenant definitivo, com o registro da aplicação no Entra ID e a permissão `User.Read.All` consentida pelo administrador | Limite de RF01 (9.6.1); dependência externa ([Arquitetura.md](Arquitetura.md), seção 12.2) | Alta | P |
 | AF12 | Subir a detecção das guardas de injeção e de abuso para 90%, com regras corporativas e o conjunto adversarial, mantendo o falso positivo em até 5% | RNF06 reprovado por detecção: 8,3% na injeção e 0% no abuso (10.2.3.6) | Alta | M |
 | AF13 | Cifrar em repouso o registro de interações e fixar o prazo definitivo de retenção com o parceiro | RNF07 parcial: prompt em claro e prazo provisório (10.2.3.7); risco R13 | Alta | M |
-| AF14 | Tratar a saturação sob concorrência, com cota do Content Safety e pool de conexões dimensionados, e medir a carga de novo no ambiente implantado | Limites de latência ultrapassados a partir de cinco usuários, com respostas 429 do Content Safety e esgotamento do pool do banco (10.2.2.2) | Alta | M |
+| AF14 | Medir a carga no ambiente implantado com a cota do Content Safety repartida entre estágios e processos, e ampliar a cota ou reduzir as chamadas por turno se o p50 continuar acima de 3 s | A #529 eliminou 429 e esgotamento do pool no recorte local; o p50 nominal de 5,6 s é o teto de 1,33 mensagem por segundo imposto pelo limitador, e o prd recebe 2,5 das 5 chamadas por segundo do F0 (10.2.2.4) | Alta | M |
 | AF15 | Ampliar a medição do worker sob carga concorrente e da disponibilidade no ambiente implantado | `TNF-DES-05` comprovou unicidade, mas a latência concorrente ficou inconclusiva; a janela curta do RNF04 atingiu 83,333%, abaixo da meta (10.7) | Média | M |
 | AF16 | Implementar o cliente Direct Line e ligar o Copilot Studio como executor; até lá, deixar o executor próprio como padrão da configuração, que hoje aponta para o cliente não implementado | Direct Line com `NotImplementedError` ([Arquitetura.md](Arquitetura.md), seções 12.2 e 13.4); padrão `executor = "copilot"` em `config.py`; risco R02 | Média | G |
 | AF17 | Revisar por amostra humana a fidelidade das respostas do RAG ao trecho citado | Meta de fidelidade de 0,95 sem medição automática (9.4.6) | Média | P |

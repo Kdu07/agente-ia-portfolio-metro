@@ -448,6 +448,17 @@ json_texto() {
   printf '"%s"' "${s//\"/\\\"}"
 }
 
+# Parte de cada processo na cota do estágio (`CS_RPS`, em variaveis.sh). O
+# middleware e o worker passam pelas mesmas guardas, e cada um só enxerga o
+# próprio limitador; sem a divisão, os dois juntos estourariam o F0.
+taxa_content_safety() {
+  local processos=1
+  if [ "${COM_WORKER:-0}" = 1 ] || tem_worker; then
+    processos=2
+  fi
+  awk -v cota="$CS_RPS" -v n="$processos" 'BEGIN { printf "%.2f", cota / n }'
+}
+
 # Monta a configuração comum ao middleware e ao worker. Ambos usam a mesma
 # imagem e os mesmos adaptadores; muda apenas o processo iniciado no contêiner.
 configuracao_app() {
@@ -472,6 +483,7 @@ configuracao_app() {
   done
   if segredo_existe content-safety-key; then
     ENVS_APP+=("{\"name\": \"CONTENT_SAFETY_ENDPOINT\", \"value\": $(json_texto "$(endpoint_cognitivo "$CS")")}")
+    ENVS_APP+=("{\"name\": \"CONTENT_SAFETY_REQUISICOES_POR_SEGUNDO\", \"value\": $(json_texto "$(taxa_content_safety)")}")
   fi
 }
 

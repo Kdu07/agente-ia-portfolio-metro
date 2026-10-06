@@ -65,8 +65,8 @@ async def executar(rotina: Rotina) -> ChatResponse:
     3. chamar `Orquestrador.processar` com `canal=Canal.ROTINA` e
        `rotina_id=rotina.id`;
     4. fechar a execução com o status derivado do desfecho: `ENCAMINHADA`
-       vira `SUCESSO`, qualquer desfecho bloqueado vira `BLOQUEADA`,
-       exceção vira `FALHA`.
+       vira `SUCESSO`, `FALHA_EXECUTOR`, `FALHA_GUARDA` e exceção viram
+       `FALHA`, e os demais desfechos bloqueados viram `BLOQUEADA`.
 
     O desfecho bloqueado NÃO é erro do sistema: significa que as guardas
     fizeram o trabalho delas sobre um prompt agendado. Aparece na tela de
@@ -173,7 +173,9 @@ async def _processar(rotina: Rotina, usuario: UsuarioAutenticado) -> ChatRespons
 def _status_da_resposta(resposta: ChatResponse) -> StatusExecucao:
     if resposta.desfecho == Desfecho.ENCAMINHADA.value:
         return StatusExecucao.SUCESSO
-    if resposta.desfecho == Desfecho.FALHA_EXECUTOR.value:
+    # Falha da guarda é transitória como a do executor: o enunciado não tem
+    # nada a corrigir, e BLOQUEADA mandaria o dono reescrevê-lo.
+    if resposta.desfecho in (Desfecho.FALHA_EXECUTOR.value, Desfecho.FALHA_GUARDA.value):
         return StatusExecucao.FALHA
     return StatusExecucao.BLOQUEADA
 

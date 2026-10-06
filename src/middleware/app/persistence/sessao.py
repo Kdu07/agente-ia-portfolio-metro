@@ -36,7 +36,16 @@ def criar_engine() -> AsyncEngine:
     derruba conexões paradas — sem o ping, a primeira rotina depois de
     um intervalo longo falharia com a conexão morta que o pool guardou.
     """
-    return create_async_engine(settings.database_url, pool_pre_ping=True)
+    opcoes: dict[str, object] = {"pool_pre_ping": True}
+    # SQLite usa outro tipo de pool nos testes e não aceita estes parâmetros.
+    # No PostgreSQL, todos ficam explícitos e ajustáveis por ambiente.
+    if not settings.database_url.startswith("sqlite"):
+        opcoes.update(
+            pool_size=settings.database_pool_size,
+            max_overflow=settings.database_max_overflow,
+            pool_timeout=settings.database_pool_timeout_seconds,
+        )
+    return create_async_engine(settings.database_url, **opcoes)
 
 
 def iniciar() -> None:

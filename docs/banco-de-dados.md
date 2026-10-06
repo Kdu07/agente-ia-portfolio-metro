@@ -126,7 +126,7 @@ Uma interação usuário-agente, registrada para histórico e análise.
 **Restrições:**
 - `ck_interacao_perfil`: `perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')`
 - `ck_interacao_canal`: `canal IN ('chat', 'voz', 'rotina')`
-- `ck_interacao_desfecho`: `desfecho IN ('encaminhada', 'bloqueada_injecao_regra', 'bloqueada_injecao_modelo', 'bloqueada_abuso', 'recusada_fora_escopo', 'recusada_baixa_confianca', 'bloqueada_saida', 'falha_executor')`
+- `ck_interacao_desfecho`: `desfecho IN ('encaminhada', 'bloqueada_injecao_regra', 'bloqueada_injecao_modelo', 'bloqueada_abuso', 'recusada_fora_escopo', 'recusada_baixa_confianca', 'bloqueada_saida', 'falha_guarda', 'falha_executor')`
 - `fk_interacao_conversa_id_conversa`: FK para conversa.id (ON UPDATE CASCADE, ON DELETE RESTRICT)
 - `fk_interacao_usuario_id_usuario`: FK para usuario.id (ON UPDATE CASCADE, ON DELETE RESTRICT)
 - `fk_interacao_rotina_id_rotina`: FK para rotina.id (ON UPDATE CASCADE, ON DELETE RESTRICT)

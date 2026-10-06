@@ -31,6 +31,7 @@ export type Desfecho =
   | "recusada_fora_escopo"
   | "recusada_baixa_confianca"
   | "bloqueada_saida"
+  | "falha_guarda"
   | "falha_executor";
 
 export interface Usuario {
