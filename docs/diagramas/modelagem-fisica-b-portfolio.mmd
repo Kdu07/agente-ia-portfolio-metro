@@ -1,0 +1,104 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
+erDiagram
+    direction LR
+    projeto ||--o{ marco : fk_marco_projeto_codigo_projeto
+    projeto ||--o{ risco : fk_risco_projeto_codigo_projeto
+    projeto ||--o{ indicador : fk_indicador_projeto_codigo_projeto
+    usuario ||--o{ usuario_projeto : fk_usuario_projeto_usuario_id_usuario
+    projeto ||--o{ usuario_projeto : fk_usuario_projeto_projeto_codigo_projeto
+    usuario ||--o{ preferencia_aviso : fk_preferencia_aviso_usuario_id_usuario
+    usuario ||--o{ aviso : fk_aviso_usuario_id_usuario
+
+    usuario["public.usuario (recorte a)"] {
+        text id PK "pk_usuario"
+    }
+
+    projeto["portfolio.projeto"] {
+        text codigo PK "pk_projeto"
+        text nome "NOT NULL"
+        text descricao "NULL"
+        text status "NOT NULL, ck_projeto_status, ix_projeto_status"
+        text prioridade "NOT NULL, ck_projeto_prioridade"
+        date data_inicio "NULL"
+        date data_fim_prevista "NULL"
+        date data_fim_real "NULL"
+        numeric_15_2 orcamento_aprovado "NULL"
+        numeric_15_2 orcamento_atual "NULL"
+        integer avanco_percentual "NOT NULL, ck_projeto_avanco"
+        text lider_id "NULL, ix_projeto_lider"
+        timestamptz criado_em "NOT NULL"
+        timestamptz atualizado_em "NOT NULL"
+    }
+
+    marco["portfolio.marco"] {
+        text id PK "pk_marco"
+        text projeto_codigo FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT, ix_marco_projeto"
+        text nome "NOT NULL"
+        text descricao "NULL"
+        date data_prevista "NOT NULL, ix_marco_data_prevista"
+        date data_real "NULL"
+        text status "NOT NULL, ck_marco_status"
+        timestamptz criado_em "NOT NULL"
+        timestamptz atualizado_em "NOT NULL"
+    }
+
+    risco["portfolio.risco"] {
+        text id PK "pk_risco"
+        text projeto_codigo FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT, ix_risco_projeto"
+        text descricao "NOT NULL"
+        text categoria "NULL"
+        integer probabilidade "NOT NULL, ck_risco_probabilidade"
+        integer impacto "NOT NULL, ck_risco_impacto"
+        text status "NOT NULL, ck_risco_status, ix_risco_status"
+        text plano_mitigacao "NULL"
+        timestamptz criado_em "NOT NULL"
+        timestamptz atualizado_em "NOT NULL"
+    }
+
+    indicador["portfolio.indicador"] {
+        text id PK "pk_indicador"
+        text projeto_codigo FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT, ix_indicador_projeto"
+        text nome "NOT NULL"
+        text descricao "NULL"
+        numeric_15_2 valor_atual "NULL"
+        numeric_15_2 valor_meta "NULL"
+        text unidade "NULL"
+        date data_medicao "NULL"
+        timestamptz criado_em "NOT NULL"
+        timestamptz atualizado_em "NOT NULL"
+    }
+
+    usuario_projeto["portfolio.usuario_projeto"] {
+        text usuario_id PK, FK "pk_usuario_projeto, ON UPDATE CASCADE ON DELETE CASCADE, ix_usuario_projeto_usuario"
+        text projeto_codigo PK, FK "ON UPDATE CASCADE ON DELETE CASCADE, ix_usuario_projeto_projeto"
+        text papel "NOT NULL, ck_usuario_projeto_papel"
+        timestamptz criado_em "NOT NULL"
+    }
+
+    preferencia_aviso {
+        text usuario_id PK, FK "pk_preferencia_aviso, ON DELETE CASCADE"
+        text projeto_codigo PK "ix_preferencia_aviso_candidatas"
+        text event_type PK "ck_preferencia_aviso_event_type"
+        boolean ativa "NOT NULL DEFAULT false"
+        integer severidade_minima "NULL, ck_preferencia_aviso_severidade_minima"
+        timestamptz atualizada_em "NOT NULL"
+    }
+
+    aviso {
+        text id PK "pk_aviso"
+        text usuario_id FK, UK "NOT NULL, ON DELETE CASCADE, ix_aviso_usuario_criado"
+        text projeto_codigo "NOT NULL"
+        text source_id UK "NOT NULL, uq_aviso_evento_usuario"
+        text event_id UK "NOT NULL"
+        text event_type "NOT NULL, ck_aviso_event_type"
+        text entity_id "NOT NULL"
+        bigint versao "NOT NULL"
+        jsonb diferencas "NOT NULL"
+        timestamptz criado_em "NOT NULL"
+        timestamptz lido_em "NULL"
+    }

@@ -1,0 +1,104 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
+erDiagram
+    usuario ||--o{ sessao_usuario : fk_sessao_usuario_usuario_id_usuario
+    usuario ||--o{ conversa : fk_conversa_usuario_id_usuario
+    usuario ||--o{ interacao : fk_interacao_usuario_id_usuario
+    usuario ||--o{ rotina : fk_rotina_dono_id_usuario
+    usuario ||--o{ transcricao_audio : fk_transcricao_audio_usuario_id_usuario
+    conversa ||--o{ interacao : fk_interacao_conversa_id_conversa
+    conversa |o--o{ transcricao_audio : fk_transcricao_audio_conversa_id_conversa
+    interacao |o--o| transcricao_audio : fk_transcricao_audio_interacao_id_interacao
+    rotina ||--o{ execucao_rotina : fk_execucao_rotina_rotina_id_rotina
+    rotina |o--o{ interacao : fk_interacao_rotina_id_rotina
+    interacao |o--o{ execucao_rotina : fk_execucao_rotina_interacao_id_interacao
+
+    usuario {
+        text id PK "pk_usuario"
+        text nome "NOT NULL"
+        text email UK "NULL, uq_usuario_email"
+        text perfil "NOT NULL, ck_usuario_perfil"
+        timestamptz criado_em "NOT NULL DEFAULT now()"
+        timestamptz visto_em "NOT NULL DEFAULT now()"
+    }
+
+    sessao_usuario {
+        text id PK "pk_sessao_usuario"
+        text usuario_id FK "NOT NULL, ON UPDATE CASCADE ON DELETE CASCADE, ix_sessao_usuario_usuario"
+        text perfil "NOT NULL, ck_sessao_usuario_perfil"
+        text[] permissoes "NOT NULL DEFAULT vazio, ck_sessao_usuario_permissoes"
+        timestamptz criada_em "NOT NULL"
+        timestamptz expira_em "NOT NULL"
+        text[] projetos "NOT NULL DEFAULT vazio"
+    }
+
+    conversa {
+        text id PK "pk_conversa"
+        text usuario_id FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT"
+        text conversa_externa_id "NULL"
+        text titulo "NULL"
+        timestamptz criada_em "NOT NULL"
+        timestamptz atualizada_em "NOT NULL, ix_conversa_usuario_atualizada"
+        timestamptz arquivada_em "NULL"
+    }
+
+    interacao {
+        text id PK "pk_interacao"
+        text conversa_id FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT, ix_interacao_conversa_criada"
+        text usuario_id FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT, ix_interacao_usuario_criada"
+        text perfil "NOT NULL, ck_interacao_perfil"
+        text canal "NOT NULL, ck_interacao_canal"
+        text prompt "NOT NULL"
+        text resposta "NOT NULL"
+        text intencao_id "NULL, ix_interacao_intencao_criada"
+        double_precision confianca_intencao "NOT NULL"
+        text desfecho "NOT NULL, ck_interacao_desfecho, ix_interacao_desfecho_criada"
+        integer latencia_ms "NOT NULL"
+        timestamptz criada_em "NOT NULL, ix_interacao_criada_em, ix_interacao_sem_intencao parcial"
+        text rotina_id FK "NULL, ON UPDATE CASCADE ON DELETE RESTRICT"
+        jsonb latencia_etapas "NULL"
+    }
+
+    rotina {
+        text id PK "pk_rotina"
+        text nome "NOT NULL"
+        text prompt "NOT NULL"
+        text agenda_cron "NOT NULL"
+        text timezone "NOT NULL"
+        text dono_id FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT, ix_rotina_dono"
+        boolean ativa "NOT NULL DEFAULT true"
+        timestamptz criada_em "NOT NULL"
+        timestamptz atualizada_em "NOT NULL"
+        text intencao_prevista "NULL"
+    }
+
+    execucao_rotina {
+        text id PK "pk_execucao_rotina"
+        text rotina_id FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT, ix_execucao_rotina_iniciada"
+        timestamptz iniciada_em "NOT NULL"
+        timestamptz concluida_em "NULL"
+        text status "NOT NULL, ck_execucao_rotina_status"
+        text interacao_id FK "NULL, ON UPDATE CASCADE ON DELETE RESTRICT"
+        text erro "NULL"
+    }
+
+    transcricao_audio {
+        text id PK "pk_transcricao_audio"
+        text usuario_id FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT, ix_transcricao_audio_usuario_criada"
+        text estado "NOT NULL, ck_transcricao_audio_estado"
+        text formato "NOT NULL"
+        double_precision duracao_segundos "NOT NULL"
+        timestamptz criada_em "NOT NULL"
+        timestamptz expira_em "NOT NULL, ix_transcricao_audio_expira_em"
+        text conversa_id FK "NULL, ON UPDATE CASCADE ON DELETE RESTRICT"
+        text interacao_id FK, UK "NULL, ON UPDATE CASCADE ON DELETE RESTRICT, uq_transcricao_audio_interacao_id"
+        text texto "NULL"
+        text idioma "NULL"
+        double_precision confianca "NULL"
+        integer latencia_ms "NULL"
+        text mensagem_erro "NULL"
+    }

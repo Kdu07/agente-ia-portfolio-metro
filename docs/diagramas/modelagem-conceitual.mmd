@@ -1,17 +1,52 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
 erDiagram
+    direction LR
+    USUARIO ||--o{ SESSAO : abre
     USUARIO ||--o{ CONVERSA : mantem
     USUARIO ||--o{ INTERACAO : registra
     USUARIO ||--o{ ROTINA : cadastra
+    USUARIO ||--o{ TRANSCRICAO_AUDIO : envia
     CONVERSA ||--o{ INTERACAO : agrupa
+    CONVERSA |o--o{ TRANSCRICAO_AUDIO : recebe
+    TRANSCRICAO_AUDIO |o--o| INTERACAO : origina
     ROTINA ||--o{ EXECUCAO_ROTINA : gera
+    ROTINA |o--o{ INTERACAO : origina
     EXECUCAO_ROTINA |o--o| INTERACAO : produz
-    ROTINA ||--o{ INTERACAO : origina
+    PROJETO ||--o{ MARCO : planeja
+    PROJETO ||--o{ RISCO : expoe
+    PROJETO ||--o{ INDICADOR : mede
+    USUARIO ||--o{ PARTICIPACAO : participa
+    PROJETO ||--o{ PARTICIPACAO : reune
+    USUARIO ||--o{ PREFERENCIA_AVISO : escolhe
+    PROJETO ||--o{ PREFERENCIA_AVISO : "e assinado em"
+    USUARIO ||--o{ AVISO : recebe
+    PROJETO ||--o{ AVISO : "e assunto de"
+    FONTE_PORTFOLIO }o--o{ PROJETO : "pode alterar"
+    FONTE_PORTFOLIO ||--o{ VERSAO_ENTIDADE : versiona
+    FONTE_PORTFOLIO ||--o{ AUDITORIA_PORTFOLIO : origina
+    PROJETO ||--o{ AUDITORIA_PORTFOLIO : "e alterado em"
+    RECEBIMENTO ||--o{ AUDITORIA_PORTFOLIO : "e aplicado em"
+    CANAL_DRIVE |o--o{ RECEBIMENTO : entrega
+    SINCRONIZACAO_FONTE ||--o{ CANAL_DRIVE : "e observada por"
+    ARQUIVO_CORPUS ||--o{ TRECHO : divide
 
     USUARIO {
         identidade federada_do_entra
         texto nome
         perfil corporativo
         datahora ultimo_acesso
+    }
+
+    SESSAO {
+        resumo token_do_cookie
+        perfil do_login
+        lista permissoes_e_projetos
+        datahora expiracao
     }
 
     CONVERSA {
@@ -26,7 +61,14 @@ erDiagram
         canal chat_voz_ou_rotina
         intencao classificacao_resolvida
         desfecho decisao_do_pipeline
-        duracao latencia
+        duracao latencia_total_e_por_etapa
+    }
+
+    TRANSCRICAO_AUDIO {
+        estado ciclo_da_transcricao
+        texto reconhecido
+        duracao do_audio
+        datahora expiracao
     }
 
     ROTINA {
@@ -39,6 +81,93 @@ erDiagram
     EXECUCAO_ROTINA {
         datahora inicio
         datahora fim
-        status sucesso_bloqueada_falha
+        status em_execucao_sucesso_bloqueada_falha
         texto erro
+    }
+
+    PROJETO {
+        codigo identificador_de_negocio
+        texto nome
+        status situacao_do_projeto
+        valor orcamento_e_avanco
+    }
+
+    MARCO {
+        texto nome
+        data prevista_e_real
+        status situacao_do_marco
+    }
+
+    RISCO {
+        texto descricao
+        nota probabilidade_e_impacto
+        status situacao_do_risco
+    }
+
+    INDICADOR {
+        texto nome
+        valor atual_e_meta
+        data medicao
+    }
+
+    PARTICIPACAO {
+        papel lider_membro_ou_observador
+    }
+
+    PREFERENCIA_AVISO {
+        tipo evento_assinado
+        estado ativa
+        nota severidade_minima
+    }
+
+    AVISO {
+        tipo evento
+        diferencas campos_alterados
+        datahora leitura
+    }
+
+    FONTE_PORTFOLIO {
+        identificador emissor
+        referencia planilha
+        escopo projetos_e_tipos
+    }
+
+    VERSAO_ENTIDADE {
+        numero ultima_versao_aplicada
+        resumo dados_aplicados
+    }
+
+    AUDITORIA_PORTFOLIO {
+        valores anteriores_e_novos
+        resultado desfecho_da_aplicacao
+        datahora registro
+    }
+
+    RECEBIMENTO {
+        identificador mensagem
+        provedor drive_ou_apps_script
+        datahora recebimento_e_publicacao
+    }
+
+    CANAL_DRIVE {
+        resumo token_do_canal
+        estado pendente_ativo_encerrado
+        datahora expiracao
+    }
+
+    SINCRONIZACAO_FONTE {
+        cursor posicao_de_leitura
+        estado ociosa_em_andamento_falha
+    }
+
+    ARQUIVO_CORPUS {
+        identificador origem_no_drive
+        ficha documento_versao_projeto
+        situacao destino_na_ingestao
+    }
+
+    TRECHO {
+        texto conteudo_indexado
+        localizador secao_aba_ou_slide
+        lista perfis_com_acesso
     }
