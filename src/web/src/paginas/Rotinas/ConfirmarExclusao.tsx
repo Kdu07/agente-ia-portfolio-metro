@@ -61,7 +61,7 @@ export function ConfirmarExclusao({ rotina, excluindo, onCancelar, onConfirmar, 
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="bg-card">Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={excluindo}

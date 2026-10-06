@@ -43,7 +43,7 @@ export function AvisoMarco({ onVerDetalhes, onDispensar }: Props) {
           <p className="text-[13px] text-muted-foreground">Projeto X, aguardando aprovação do cliente.</p>
         </div>
         <div className="col-span-2 flex items-center justify-end gap-0.5 sm:col-span-1">
-          <Button type="button" variant="outline" size="sm" onClick={onVerDetalhes} className="rounded-md bg-card">
+          <Button type="button" variant="outline" size="sm" onClick={onVerDetalhes}>
             Ver detalhes
           </Button>
           <BotaoIcone rotulo="Dispensar alerta" icone={IconeFechar} onClick={onDispensar} />

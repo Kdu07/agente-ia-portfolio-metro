@@ -223,6 +223,7 @@ const handlersComRotaReal = [
       proximo_disparo: new Date(Date.now() + 86_400_000).toISOString(),
       criada_em: agora,
       atualizada_em: agora,
+      ultima_execucao: null,
     };
     rotinas = [nova, ...rotinas];
     return HttpResponse.json(nova, { status: 201 });
@@ -264,6 +265,9 @@ const handlersComRotaReal = [
       desfecho: "encaminhada",
       erro: null,
     };
+    rotinas = rotinas.map((rotina) =>
+      rotina.id === id ? { ...rotina, ultima_execucao: { iniciada_em: agora, status: execucao.status } } : rotina,
+    );
     return HttpResponse.json(execucao);
   }),
 

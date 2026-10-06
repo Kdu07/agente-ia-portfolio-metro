@@ -126,6 +126,8 @@
   - [8.3 Critério para itens de código](#83-critério-para-itens-de-código)
   - [8.4 Itens de GitLab](#84-itens-de-gitlab)
   - [8.5 Testes executados](#85-testes-executados)
+- [9. Feedbacks orais](#9-feedbacks-orais)
+  - [9.1 Testes executados](#91-testes-executados)
 
 ## 1. Introdução
 
@@ -468,3 +470,20 @@ A execução de 29/09/2026 foi feita sobre o commit [`9d7ae52`](https://git.inte
 | S3-09 | `npx vitest run src/testes/middleware.test.tsx` | **3 aprovados**, 0 falhas |
 
 As execuções do backend registraram apenas avisos de depreciação do Starlette. A aprovação dos testes de S3-03 a S3-06 não muda o status desses itens: o `test_upload_sem_auth` confirma o formato de 401 fora do catálogo, e os testes de persistência, de propriedade e do fluxo de voz usam repositórios ou processadores substitutos, conforme as tabelas da seção 5.1.
+
+## 9. Feedbacks orais
+
+Esta seção reúne os apontamentos feitos oralmente pelos professores, fora das avaliações publicadas registradas nas seções 3 a 6. Como não há registro escrito, a coluna "Feedback" resume o apontamento como a equipe o registrou, e não a fala literal; a leitura que orientou a correção fica na coluna seguinte. Valem a mesma legenda de status (1.3) e o mesmo critério para itens de código (8.3).
+
+| ID | Sprint | Artefato | Feedback | Correção realizada | Evidência | Status |
+|---|---|---|---|---|---|---|
+| OR-01 | Sprint 5 | Interface web — botões | Professor Bruno Rodilha: a hierarquia dos botões da interface está pouco clara. | A equipe leu o apontamento como falta de distinção entre a ação principal de cada tela e as demais, que apareciam com o mesmo peso visual. A interface passou a usar uma hierarquia de quatro níveis — primário, secundário, terciário e destrutivo —, com no máximo um primário por região (barra lateral, conteúdo da página e diálogo). A tela de rotinas sem nenhuma rotina ficou com um só primário, e a confirmação de arquivar conversa passou ao botão destrutivo, como a de excluir rotina. Os fundos dos botões passaram a tokens opacos, verificados pelo teste de contraste, o que corrigiu o hover do primário no tema escuro, de 4,02:1 para 6,28:1. Um teste novo reprova cor fixa nos componentes. Testes executados e aprovados em 06/10 (9.1). | [9.2.5](Projeto.md#925-componentes-da-interface); [`button.tsx`](../src/web/src/componentes/ui/button.tsx); [`global.css`](../src/web/src/estilos/global.css); [`f18a1ab`](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/commit/f18a1ab4628283557a2f1c3b9b74694e34347a5c) e [`b47e246`](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/commit/b47e24600b07de922c46f9d20a99da32831dc878) (06/10); card #538 | Corrigido |
+
+### 9.1 Testes executados
+
+Os testes foram executados em 06/10/2026, a partir de `src/web`, sobre o commit [`b47e246`](https://git.inteli.edu.br/graduacao/2026-2a/t17/g02/-/commit/b47e24600b07de922c46f9d20a99da32831dc878) da branch `design/cores-hierarquia-botoes`.
+
+| Itens | Comando | Resultado |
+|---|---|---|
+| OR-01 | `npx vitest run src/testes/contraste.test.ts src/testes/cores-fixas.test.ts` | **123 aprovados**, 0 falhas |
+| OR-01 | `npx vitest run` | **458 aprovados** em 22 arquivos, 0 falhas |

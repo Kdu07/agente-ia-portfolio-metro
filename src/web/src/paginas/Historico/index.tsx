@@ -107,7 +107,7 @@ export function Historico() {
         </span>
         <h2 className="text-base font-semibold">Não foi possível carregar o histórico</h2>
         <p className="text-sm text-muted-foreground">{erro}</p>
-        <Button type="button" variant="outline" className="mt-2 bg-card" onClick={() => void tentarNovamente()}>
+        <Button type="button" variant="outline" className="mt-2" onClick={() => void tentarNovamente()}>
           Tentar novamente
         </Button>
       </div>
@@ -175,6 +175,7 @@ export function Historico() {
                         rotulo={`Arquivar ${tituloDe(conversa)}`}
                         icone={IconeArquivar}
                         onClick={() => setParaArquivar(conversa)}
+                        destrutivo
                         className="mr-2 size-8.5 shrink-0"
                       />
                     </li>
@@ -221,7 +222,7 @@ export function Historico() {
           onCloseAutoFocus={(evento) => devolverFoco(evento, campoBusca.current)}
         >
           <AlertDialogHeader className="items-start text-left">
-            <span className="mb-1 grid size-10.5 place-items-center rounded-[12px] bg-primario-suave text-primario-texto">
+            <span className="mb-1 grid size-10.5 place-items-center rounded-[12px] bg-destructive/10 text-destructive">
               <IconeArquivar aria-hidden="true" />
             </span>
             <AlertDialogTitle className="text-[19px] font-[650] font-stretch-106%">Arquivar conversa?</AlertDialogTitle>
@@ -231,8 +232,9 @@ export function Historico() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-card">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               disabled={arquivar.isPending}
               onClick={(evento) => {
                 evento.preventDefault();

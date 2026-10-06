@@ -7028,7 +7028,7 @@ Esta subseção registra a pilha efetivamente usada na implementação do canal 
 | **FastAPI** (`fastapi`) | `>=0.115` | Expõe as rotas de upload e conversa, aplica dependências e traduz os resultados e erros internos em respostas HTTP | As tarefas em segundo plano usadas no processamento de áudio pertencem ao processo da aplicação e não constituem mensageria durável; uma interrupção do processo pode exigir reenvio. |
 | **Pydantic** e **pydantic-settings** | `pydantic>=2.7`; `pydantic-settings>=2.3` | Validam contratos de entrada e saída e carregam configurações como endpoint, região, chave, idioma e versão da API de fala | A validação estrutural não substitui a validação do conteúdo real do arquivo nem a gestão segura dos segredos. Alterações nos modelos devem permanecer compatíveis com os clientes ou ser versionadas. |
 | **python-multipart** (`python-multipart`) | `>=0.0.9` | Permite ao FastAPI interpretar o campo de arquivo enviado por `multipart/form-data` | Apenas interpreta o corpo da requisição; formato real, tamanho e assinatura do arquivo continuam sendo verificados pela aplicação. |
-| **SQLAlchemy**, **asyncpg** e **Alembic** | `sqlalchemy>=2.0`; `asyncpg>=0.29`; `alembic>=1.13` | Persistem assincronamente conversa, interação e resultado do NLP em PostgreSQL e versionam a evolução do esquema | O fluxo persistente depende de PostgreSQL disponível e da migração na revisão esperada. Transações, pool e migrações precisam ser administrados em conjunto; esses componentes não armazenam o áudio bruto. |
+| **SQLAlchemy**, **asyncpg** e **Alembic** | `sqlalchemy[asyncio]>=2.1`; `asyncpg>=0.29`; `alembic>=1.13` | Persistem assincronamente conversa, interação e resultado do NLP em PostgreSQL e versionam a evolução do esquema | O fluxo persistente depende de PostgreSQL disponível e da migração na revisão esperada. Transações, pool e migrações precisam ser administrados em conjunto; esses componentes não armazenam o áudio bruto. |
 
 #### 5.7.8.3 Mapeamento entre componentes e código
 
@@ -9505,23 +9505,32 @@ nomeados pelo papel que exercem na hierarquia de leitura, definidos em
 `src/web/src/estilos/global.css`. A adoção dos tokens substituiu seis cinzas
 declarados de forma avulsa ao longo da folha de estilo, o que tornava a
 verificação de contraste inviável na prática: não havia um lugar único a
-auditar.
+auditar. Cada token tem um valor para o tema claro e outro para o escuro, e
+todos são hexadecimais opacos, porque o teste
+`src/web/src/testes/contraste.test.ts` lê os valores do próprio CSS e confere
+cada par nos dois temas sem compor transparência.
 
-A verificação foi feita contra todos os fundos claros em que a interface
+A verificação foi feita contra todos os fundos em que a interface
 efetivamente aplica cada token, e não apenas contra o branco. A distinção não é
 formal: o cinza secundário anterior aprovava sobre a página e reprovava sobre a
 bolha do agente e sobre a etiqueta de status, de modo que uma verificação
-restrita ao branco teria declarado conformidade inexistente.
+restrita ao branco teria declarado conformidade inexistente. Na tabela, o pior
+caso é o menor contraste entre a página, o cartão, a superfície secundária e o
+topo do degradê da conversa (`--canvas-topo`), que é o pior fundo para todos os
+tokens de texto.
 
-| Token | Valor | Uso | Pior caso medido | Mínimo exigido |
-| --- | --- | --- | --- | --- |
-| `--texto-forte` | `#172033` | Títulos e corpo do documento | 14,51 | 4,5 |
-| `--texto-padrao` | `#344054` | Texto de interface, rótulos e navegação | 9,33 | 4,5 |
-| `--texto-suave` | `#646d82` | Texto secundário, horários, legendas e metadados | 4,62 | 4,5 |
-| `--indicador-neutro` | `#8691a5` | Ponto de status inativo | 3,18 | 3,0 |
-| `--texto-desabilitado` | `#98a2b3` | Texto de controle desabilitado | 2,30 | isento |
+| Token | Claro | Escuro | Uso | Pior caso (claro / escuro) | Mínimo exigido |
+| --- | --- | --- | --- | --- | --- |
+| `--foreground` | `#0E1A2E` | `#EDF2F9` | Títulos e texto de destaque | 14,76 / 12,26 | 4,5 |
+| `--texto` | `#2F3D55` | `#C3CDDC` | Texto de interface, rótulos e navegação | 9,27 / 8,59 | 4,5 |
+| `--muted-foreground` | `#5A6A82` | `#8D9AB0` | Texto secundário, horários, legendas e metadados | 4,66 / 4,85 | 4,5 |
+| `--primario-texto` | `#1A52C2` | `#7EAAFF` | Texto e ícone na cor de ação | 5,87 / 5,96 | 4,5 |
+| `--controle-desligado` | `#76849A` | `#6A7A95` | Trilho do interruptor desligado | 3,38 / 3,62 | 3,0 |
+| `--ring` | `#1D5BD6` | `#7EAAFF` | Anel de foco, sobre a página | 5,55 / 8,18 | 3,0 |
 
-As correções aplicadas foram as seguintes.
+A tabela a seguir registra a correção que introduziu a escala, com os nomes
+de token e os valores de então. O papel de `--texto-suave` é hoje o de
+`--muted-foreground`.
 
 | Elemento | Antes | Razão anterior | Depois | Razão |
 | --- | --- | --- | --- | --- |
@@ -9541,6 +9550,67 @@ prejudicaria a compreensão em vez de melhorá-la. A segunda são os pontos
 animados do indicador de digitação, que são decorativos, estão marcados com
 `aria-hidden` e têm seu significado carregado pelo texto equivalente lido por
 leitor de tela, conforme descrito em 9.2.5.
+
+**Hierarquia dos botões.** Cada botão da interface ocupa um de quatro níveis,
+e o nível define a variante de `src/web/src/componentes/ui/button.tsx`. A regra
+central é que cada região — a barra lateral, o conteúdo da página e cada
+diálogo — tem no máximo um botão primário, e é ele que indica a ação principal
+ali. A regra responde ao apontamento OR-01 da
+[revisão dos feedbacks](RevisaoFeedbacks.md#9-feedbacks-orais): antes
+dela, a tela de rotinas sem nenhuma rotina tinha dois primários para a mesma
+ação, e a confirmação de arquivar uma conversa usava o mesmo azul de uma ação
+comum.
+
+| Nível | Variante | Aparência | Quando usar | Exemplos |
+| --- | --- | --- | --- | --- |
+| Primário | `default` | Preenchido no azul de ação | A ação que conclui a tarefa da região | Nova rotina; Criar rotina e Salvar alterações no formulário; Executar agora; Enviar mensagem; Nova conversa na barra lateral |
+| Secundário | `outline` | Contorno sobre o fundo do cartão | Alternativa ao primário e recuperação de erro | Cancelar; Fechar; Tentar novamente; Recarregar conversa; ordenação; Ver detalhes |
+| Terciário | `ghost` e `BotaoIcone` | Sem fundo, com a superfície secundária no hover | Ações que se repetem a cada linha e ações utilitárias | Menu ⋯ e última execução da rotina; Arquivar na lista do histórico; Copiar resposta; Dispensar alerta |
+| Destrutivo | `destructive` | Preenchido em vermelho | Somente o botão que confirma uma remoção | Excluir rotina; Arquivar conversa |
+
+Três decisões completam a escala. A primeira é que o gatilho de uma remoção,
+na lista, nunca é vermelho preenchido: no histórico, é o ícone de arquivar,
+terciário, que só fica vermelho no hover (`BotaoIcone` com `destrutivo`); nas
+rotinas, é o item Excluir do menu ⋯, em texto vermelho (`DropdownMenuItem` com
+`variant="destructive"`). O vermelho preenchido fica reservado à confirmação,
+para que a cor marque o momento em que a remoção acontece. A segunda é que arquivar uma
+conversa é tratado como remoção, porque a tira da lista sem caminho de volta
+pela interface, embora o registro das interações seja preservado. A terceira é
+que "Sair", no menu do perfil, não é destrutivo, porque encerra a sessão sem
+apagar dados. Ficam fora da escala o botão de entrada com a Microsoft, que
+segue as diretrizes da marca; o microfone, cujo vermelho indica gravação em
+curso e não remoção; e os controles de seleção, como as abas de situação, os
+dias da semana e o interruptor que ativa ou pausa cada rotina.
+
+Os fundos dos botões também são tokens opacos, inclusive no hover, para que o
+teste de contraste meça a cor que vai para a tela. Duas trocas decorrem disso.
+O hover do primário no tema escuro passou a escurecer em vez de clarear, porque
+um azul mais claro que o primário não sustenta 4,5:1 com o texto branco: o
+valor anterior, `#3F7AEE`, dava 4,02. E o botão destrutivo do tema escuro, que
+usava o vermelho-claro de texto a 60% de opacidade, ganhou um fundo próprio,
+`--destrutivo-fundo`, igual nos dois temas.
+
+| Botão | Texto sobre fundo | Claro | Escuro |
+| --- | --- | --- | --- |
+| Primário | `--primary-foreground` sobre `--primary` | 5,97 | 4,88 |
+| Primário, no hover | `--primary-foreground` sobre `--primario-hover` | 7,80 | 6,28 |
+| Nova conversa, na barra lateral | `--sidebar-primary-foreground` sobre `--sidebar-primary` | 5,97 | 4,88 |
+| Secundário | `--foreground` sobre `--card` | 17,41 | 15,34 |
+| Secundário e terciário, no hover | `--foreground` sobre `--secondary` | 15,50 | 14,00 |
+| Terciário | `--texto` sobre `--card` | 10,94 | 10,75 |
+| Terciário só com ícone | `--muted-foreground` sobre `--card` | 5,50 | 6,07 |
+| Destrutivo | `--texto-sobre-cor` sobre `--destrutivo-fundo` | 5,47 | 5,47 |
+| Destrutivo, no hover | `--texto-sobre-cor` sobre `--destrutivo-hover` | 6,95 | 6,95 |
+| Arquivar na lista, no hover | `--destructive` sobre 10% de `--destructive` composto sobre `--card` | 4,72 | 6,51 |
+| Excluir no menu ⋯, em foco | `--destructive` sobre 10% (claro) ou 20% (escuro) de `--destructive` composto sobre `--popover` | 4,72 | 5,35 |
+
+Os nove primeiros pares estão em `contraste.test.ts`. Os dois últimos são os
+únicos fundos translúcidos entre os botões e foram medidos à parte, com a cor
+composta; os dois passam de 4,5:1, o mínimo do texto do item de menu. Completa a verificação o teste
+`src/web/src/testes/cores-fixas.test.ts`, que reprova hexadecimal, `rgb()` e
+cor da paleta do Tailwind nos componentes, e fundo translúcido nas variantes de
+botão. A única exceção nomeada são os seletores de `ui/chart.tsx` que
+reconhecem as cores padrão do Recharts para trocá-las por token.
 
 ### 9.2.6 Páginas e navegabilidade
 
@@ -10104,7 +10174,8 @@ curl -X POST http://localhost:5173/api/rotinas \
   "intencao_prevista_rotulo": "Consultar status de projeto",
   "proximo_disparo": "2026-10-06T08:00:00-03:00",
   "criada_em": "2026-09-30T00:12:51.331990Z",
-  "atualizada_em": "2026-09-30T00:12:51.331990Z"
+  "atualizada_em": "2026-09-30T00:12:51.331990Z",
+  "ultima_execucao": null
 }
 ```
 
@@ -10123,7 +10194,17 @@ com `detail` em texto, enquanto `nome` vazio resulta no 422 do Pydantic, com
 `detail` em lista e `loc` igual a `["body", "nome"]`.
 
 **`GET /rotinas`** lista as rotinas do usuário, cada uma no formato da resposta
-de `POST /rotinas`. Rotina desativada vem com `proximo_disparo: null`.
+de `POST /rotinas`. Rotina desativada vem com `proximo_disparo: null`. O campo
+`ultima_execucao` traz o disparo mais recente, com `iniciada_em` e `status`, ou
+`null` se a rotina nunca disparou. É o que a lista da interface mostra em cada
+linha sem abrir o histórico, e vem de uma consulta só para a lista inteira
+(`DISTINCT ON` sobre o índice `(rotina_id, iniciada_em DESC)`), e não de uma
+consulta por rotina. `PUT /rotinas/{id}` devolve o mesmo campo; `POST /rotinas`
+o devolve sempre nulo. O formato do campo, com valores ilustrativos:
+
+```json
+"ultima_execucao": {"iniciada_em": "2026-10-06T08:00:01.204518Z", "status": "sucesso"}
+```
 
 ```bash
 curl http://localhost:5173/api/rotinas -b "sessao=$SESSAO"
@@ -10153,7 +10234,8 @@ curl -X PUT http://localhost:5173/api/rotinas/5564c11e-3ef1-4bd8-815d-f140875f34
   "intencao_prevista_rotulo": "Consultar status de projeto",
   "proximo_disparo": "2026-10-05T08:00:00-03:00",
   "criada_em": "2026-09-30T00:12:51.331990Z",
-  "atualizada_em": "2026-09-30T00:12:51.990420Z"
+  "atualizada_em": "2026-09-30T00:12:51.990420Z",
+  "ultima_execucao": null
 }
 ```
 

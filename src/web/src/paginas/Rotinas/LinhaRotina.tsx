@@ -1,25 +1,43 @@
 /**
  * Uma rotina na lista.
  *
- * Nome, situação e ações na primeira linha; frequência, próxima execução e
- * intenção prevista embaixo, em três colunas que ocupam a largura toda. Os
- * dados não dividem mais o espaço com os botões, e por isso as colunas se
- * alinham de uma rotina para a outra, com "Pausar" ou "Ativar".
+ * Em cima, o nome e a ação em linguagem natural; à direita, o interruptor
+ * que ativa ou pausa e o menu ⋯ com Resultados, Editar e Excluir. Embaixo,
+ * uma linha de dados: frequência, próxima execução, a última execução com
+ * o status, que abre os Resultados, e a intenção prevista como etiqueta.
  *
- * As quatro ações têm o mesmo peso visual: Pausar/Ativar e Resultados com
- * rótulo, Editar e Excluir só com ícone e dica. O vermelho aparece só no
- * hover do Excluir e na confirmação.
+ * O interruptor é ao mesmo tempo o estado e a ação, e por isso substitui o
+ * selo "Ativa"/"Pausada" e o botão Pausar. Em texto, a pausa aparece uma
+ * vez só, no lugar da próxima execução, para quem não vê a posição do
+ * interruptor; a rotina pausada também atenua o nome.
  *
- * Continua um `<article>`: é por ele que os testes acham os botões de cada
- * rotina.
+ * As ações do menu só rodam quando ele fecha (`onCloseAutoFocus`), e
+ * depois de o foco voltar ao ⋯. Assim o diálogo que elas abrem guarda o ⋯
+ * como origem e devolve o foco a ele ao fechar, em vez de deixá-lo no
+ * `body`, onde ficaria o item do menu que acabou de sumir.
+ *
+ * Continua um `<article>`: é por ele que os testes acham os controles de
+ * cada rotina.
  */
 
-import { BotaoIcone } from "@/componentes/ui/BotaoIcone";
+import { useRef } from "react";
+
 import { Button } from "@/componentes/ui/button";
-import { IconeAtivar, IconeEditar, IconeExcluir, IconePausar, IconeResultados } from "@/componentes/ui/icones";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/componentes/ui/dropdown-menu";
+import { IconeEditar, IconeExcluir, IconeMaisAcoes, IconeResultados } from "@/componentes/ui/icones";
+import { Switch } from "@/componentes/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/componentes/ui/tooltip";
 import { cn } from "@/utilitarios/cn";
-import type { Rotina } from "@/tipos";
+import { formatarQuando } from "@/utilitarios/formato";
+import type { Rotina, UltimaExecucao } from "@/tipos";
 import { descreverAgenda, formatarData, rotuloDaIntencao } from "./agenda";
+import { STATUS_DE_EXECUCAO } from "./execucoes";
 
 interface Props {
   rotina: Rotina;
@@ -31,69 +49,143 @@ interface Props {
 }
 
 export function LinhaRotina({ rotina, operacaoEmCurso, onAlternar, onResultados, onEditar, onExcluir }: Props) {
-  const dados = [
-    { rotulo: "Frequência", valor: descreverAgenda(rotina.agenda_cron) },
-    { rotulo: "Próxima execução", valor: rotina.ativa ? formatarData(rotina.proximo_disparo) : "Pausada" },
-    { rotulo: "Intenção prevista", valor: rotuloDaIntencao(rotina) },
-  ];
+  const acaoDoMenu = useRef<(() => void) | null>(null);
+  const botaoDoMenu = useRef<HTMLButtonElement>(null);
+  const frequencia = descreverAgenda(rotina.agenda_cron);
 
   return (
-    <article className="grid grid-cols-1 gap-3 px-4.5 py-4 transition-colors [grid-template-areas:'principal''dados''acoes'] hover:bg-secondary/40 md:grid-cols-[minmax(0,1fr)_auto] md:gap-x-4.5 md:[grid-template-areas:'principal_acoes''dados_dados']">
-      <div className="min-w-0 [grid-area:principal]">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-[14.5px] font-semibold">{rotina.nome}</h3>
-          <StatusDaRotina ativa={rotina.ativa} />
-        </div>
+    <article className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2.5 px-4.5 py-4 transition-colors hover:bg-secondary/40">
+      <div className="min-w-0">
+        <h3 className={cn("text-[14.5px] font-semibold", !rotina.ativa && "text-muted-foreground")}>{rotina.nome}</h3>
         <p className="mt-0.5 line-clamp-2 text-[13px] text-muted-foreground">{rotina.prompt}</p>
       </div>
 
-      <div className="-ml-2 flex items-center gap-0.5 [grid-area:acoes] md:-mt-1 md:ml-0 md:justify-end">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={operacaoEmCurso}
-          onClick={() => onAlternar(rotina)}
-          className="text-[13.5px] text-texto"
-        >
-          {rotina.ativa ? <IconePausar aria-hidden="true" /> : <IconeAtivar aria-hidden="true" />}
-          {rotina.ativa ? "Pausar" : "Ativar"}
-        </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={() => onResultados(rotina)} className="text-[13.5px] text-texto">
-          <IconeResultados aria-hidden="true" />
-          Resultados
-        </Button>
-        <BotaoIcone rotulo="Editar" icone={IconeEditar} onClick={() => onEditar(rotina)} className="size-8.5" />
-        <BotaoIcone
-          rotulo="Excluir"
-          icone={IconeExcluir}
-          onClick={() => onExcluir(rotina)}
-          className="size-8.5 hover:bg-destructive/10 hover:text-destructive"
-        />
+      <div className="flex items-center gap-1.5 self-start">
+        {/* A dica fica num invólucro, e não no próprio interruptor: o
+            `TooltipTrigger` escreveria o `data-state` dele por cima do
+            `checked`/`unchecked` do Switch, e o trilho perderia a cor. */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <Switch
+                checked={rotina.ativa}
+                disabled={operacaoEmCurso}
+                onCheckedChange={() => onAlternar(rotina)}
+                aria-label={`${rotina.nome} ativa`}
+              />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={6}>
+            {rotina.ativa ? "Pausar rotina" : "Ativar rotina"}
+          </TooltipContent>
+        </Tooltip>
+
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  ref={botaoDoMenu}
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Mais ações para ${rotina.nome}`}
+                  className="size-8.5 text-muted-foreground [&_svg:not([class*='size-'])]:size-5"
+                >
+                  <IconeMaisAcoes aria-hidden="true" weight="bold" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={6}>
+              Mais ações
+            </TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent
+            align="end"
+            className="min-w-44 rounded-lg p-1.5 shadow-3"
+            onCloseAutoFocus={(evento) => {
+              const acao = acaoDoMenu.current;
+              if (!acao) return;
+              acaoDoMenu.current = null;
+              evento.preventDefault();
+              botaoDoMenu.current?.focus();
+              acao();
+            }}
+          >
+            <DropdownMenuItem className="rounded-md text-[13.5px]" onSelect={() => (acaoDoMenu.current = () => onResultados(rotina))}>
+              <IconeResultados aria-hidden="true" />
+              Ver resultados
+            </DropdownMenuItem>
+            <DropdownMenuItem className="rounded-md text-[13.5px]" onSelect={() => (acaoDoMenu.current = () => onEditar(rotina))}>
+              <IconeEditar aria-hidden="true" />
+              Editar
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              className="rounded-md text-[13.5px]"
+              onSelect={() => (acaoDoMenu.current = () => onExcluir(rotina))}
+            >
+              <IconeExcluir aria-hidden="true" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <dl className="grid grid-cols-2 gap-3 [grid-area:dados] md:grid-cols-3">
-        {dados.map(({ rotulo, valor }) => (
-          <div key={rotulo} className="min-w-0">
-            <dt className="text-xs text-muted-foreground">{rotulo}</dt>
-            <dd className="mt-px text-[13px] font-medium text-foreground tabular-nums">{valor}</dd>
-          </div>
-        ))}
-      </dl>
+      {/* Em linha, separada por pontos, a partir do tablet; empilhada no celular. */}
+      <div className="col-span-2 flex flex-col items-start gap-1 text-[13px] text-texto md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1.5">
+        <span>{frequencia.charAt(0).toUpperCase() + frequencia.slice(1)}</span>
+        <Ponto />
+        {!rotina.ativa ? (
+          <span className="text-muted-foreground">Pausada</span>
+        ) : rotina.proximo_disparo ? (
+          <span>
+            Próxima:{" "}
+            <time dateTime={rotina.proximo_disparo} title={formatarData(rotina.proximo_disparo)} className="font-medium text-foreground tabular-nums">
+              {formatarQuando(rotina.proximo_disparo)}
+            </time>
+          </span>
+        ) : (
+          <span className="text-muted-foreground">{formatarData(null)}</span>
+        )}
+        <Ponto />
+        {rotina.ultima_execucao ? (
+          <BotaoUltimaExecucao ultima={rotina.ultima_execucao} onClick={() => onResultados(rotina)} />
+        ) : (
+          <span className="text-muted-foreground">Ainda não executada</span>
+        )}
+        <span className="mt-0.5 rounded-full bg-secondary px-2 py-px text-xs text-muted-foreground md:mt-0 md:ml-auto">{rotuloDaIntencao(rotina)}</span>
+      </div>
     </article>
   );
 }
 
-function StatusDaRotina({ ativa }: { ativa: boolean }) {
+function Ponto() {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2 py-px text-xs font-[550]",
-        ativa ? "bg-desfecho-ok/10 text-desfecho-ok" : "bg-secondary text-muted-foreground",
-      )}
-    >
-      <i aria-hidden="true" className={cn("size-1.5 rounded-full bg-current", ativa && "ring-3 ring-desfecho-ok/20")} />
-      {ativa ? "Ativa" : "Pausada"}
+    <span aria-hidden="true" className="hidden text-muted-foreground md:inline">
+      ·
     </span>
+  );
+}
+
+/** A última execução abre os Resultados, onde está a resposta completa. */
+function BotaoUltimaExecucao({ ultima, onClick }: { ultima: UltimaExecucao; onClick: () => void }) {
+  const status = STATUS_DE_EXECUCAO[ultima.status];
+  const Icone = status.icone;
+  return (
+    <Button type="button" variant="ghost" size="sm" onClick={onClick} className="-mx-1.5 h-auto gap-1.5 px-1.5 py-0.5 text-[13px] font-normal">
+      <span>
+        Última:{" "}
+        <time dateTime={ultima.iniciada_em} title={formatarData(ultima.iniciada_em)} className="tabular-nums">
+          {formatarQuando(ultima.iniciada_em)}
+        </time>
+      </span>{" "}
+      <span className={cn("inline-flex items-center gap-1 font-medium", status.texto)}>
+        <Icone aria-hidden="true" className="size-3.5" />
+        {status.rotulo}
+      </span>
+      <span className="sr-only">, ver resultados</span>
+    </Button>
   );
 }

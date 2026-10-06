@@ -24,6 +24,7 @@ dado de outra pessoa, e basta um `return` mal colocado para vazá-lo.
 from datetime import UTC, datetime
 
 from sqlalchemy import func, select, update
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -440,6 +441,23 @@ class ExecucaoRepository(_RepositorioBase):
                 erro=erro,
             )
         )
+
+    async def ultimas_por_rotina(self, rotina_ids: list[str]) -> dict[str, ExecucaoRotina]:
+        """O disparo mais recente de cada rotina, numa consulta só.
+
+        É o que a lista de rotinas mostra em cada linha. Uma consulta por
+        rotina multiplicaria as idas ao banco pelo tamanho da lista; o
+        `DISTINCT ON` usa o índice `(rotina_id, iniciada_em DESC)`.
+        """
+        if not rotina_ids:
+            return {}
+        resultado = await self._sessao.execute(
+            select(ExecucaoRotinaTabela)
+            .where(ExecucaoRotinaTabela.rotina_id.in_(rotina_ids))
+            .order_by(ExecucaoRotinaTabela.rotina_id, ExecucaoRotinaTabela.iniciada_em.desc())
+            .ext(distinct_on(ExecucaoRotinaTabela.rotina_id))
+        )
+        return {linha.rotina_id: linha.to_dominio() for linha in resultado.scalars()}
 
     async def listar_por_rotina(self, rotina_id: str, *, limite: int = 20) -> list[ExecucaoRotina]:
         """Disparos recentes de uma rotina, mais recente primeiro."""

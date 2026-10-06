@@ -6,7 +6,7 @@ import { Rotinas } from "@/paginas/Rotinas";
 import { STATUS_DE_EXECUCAO } from "@/paginas/Rotinas/execucoes";
 import { MENSAGENS_FALHA, TEMPO_LIMITE_MS } from "@/servicos/api";
 import type { Execucao, Rotina, ValidacaoRotina } from "@/tipos";
-import { renderizar } from "../utilitarios";
+import { escolherAcaoDaRotina, renderizar } from "../utilitarios";
 import { comoNaTela, marca } from "./auxiliares";
 import { consultarMiddleware, servidor, ultimaTroca } from "./ponte";
 
@@ -38,8 +38,8 @@ describe("Rotinas contra o middleware vivo", () => {
 
     const cartao = (await screen.findByText(nome)).closest("article");
     expect(cartao).not.toBeNull();
-    fireEvent.click(within(cartao!).getByRole("button", { name: "Excluir" }));
-    const confirmacao = screen.getByRole("alertdialog", { name: "Excluir rotina?" });
+    await escolherAcaoDaRotina(cartao!, "Excluir");
+    const confirmacao = await screen.findByRole("alertdialog", { name: "Excluir rotina?" });
     fireEvent.click(within(confirmacao).getByRole("button", { name: "Excluir rotina" }));
 
     await waitFor(() => expect(screen.queryByText(nome)).not.toBeInTheDocument());
@@ -55,7 +55,7 @@ describe("Rotinas contra o middleware vivo", () => {
 
     renderizar(<Rotinas />);
     const cartao = (await screen.findByText(rotina!.nome)).closest("article");
-    fireEvent.click(within(cartao!).getByRole("button", { name: "Resultados" }));
+    await escolherAcaoDaRotina(cartao!, "Ver resultados");
 
     const dialogo = await screen.findByRole("dialog", { name: rotina!.nome });
     await waitFor(() => expect(within(dialogo).getAllByRole("listitem")).toHaveLength(execucoes.length));
