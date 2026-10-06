@@ -4757,11 +4757,11 @@ Nenhum valor de registro, nome de pessoa ou de projeto, endereço ou identificad
 
 Os efeitos abaixo são inferências a partir do de-para, e não medições.
 
-**Classificador de intenções (5.4.11).** A acurácia de 0,856 mede enunciados, mas o ambiente guarda registros, e não frases de usuários. Por isso, o de-para não confirma nem refuta esse número. O que ele mostra é um vocabulário do PMO que o catálogo modela de outra forma, como a criticidade no lugar de probabilidade, impacto e severidade. A degradação esperada, de magnitude não medida, se concentra na extração de entidades das intenções de risco e de avanço, mais do que na separação entre classes. Medi-la exige frases reais de usuários, como pede o item S3-08 da revisão de feedbacks.
+**Classificador de intenções (5.4.11).** A acurácia de 0,856 mede enunciados, mas o ambiente guarda registros, e não frases de usuários. Por isso, o de-para não confirma nem refuta esse número. O que ele mostra é um vocabulário do PMO que o catálogo modela de outra forma, como a criticidade no lugar de probabilidade, impacto e severidade. A degradação esperada, de magnitude não medida, pode aparecer na interpretação e no preenchimento dos parâmetros esperados pelas intenções de risco e de avanço, mais do que na separação entre classes. O extrator atual reconhece apenas projeto e data ou período; atributos como criticidade, probabilidade, impacto e percentual ainda exigem tratamento específico. Medir o efeito sobre o classificador exige frases reais de usuários, como pede o item S3-08 da revisão de feedbacks.
 
 **Consultas e RAG (9.4.6).** O acerto de conteúdo de 0,95 foi medido sobre um corpus sintético de documentos. No ambiente, os documentos ficam em bibliotecas e anexos que a ingestão atual não consome (5.5.10.6). Além disso, as listas não têm origem para prioridade, probabilidade × impacto e fase do projeto. Sobre dados do parceiro, as respostas que dependem dessas colunas ficariam sem fonte, e o número de 9.4.6 não se transfere.
 
-**Comparações numéricas.** Sem a conversão de escala, o avanço físico seria gravado como 0 ou 1 em `avanco_percentual`, e qualquer comparação com meta ou limite de avanço sairia errada.
+**Comparações numéricas.** Sem a conversão da escala fracionária de 0 a 1 para a escala inteira de 0 a 100, o avanço físico seria incompatível com `avanco_percentual` ou perderia precisão caso fosse convertido diretamente. Nesse cenário, qualquer comparação com meta ou limite de avanço produziria resultado incorreto.
 
 **Volume.** Os 51 itens do ambiente não sustentam nenhuma métrica sobre os dados do parceiro. Servem para validar a estrutura.
 
