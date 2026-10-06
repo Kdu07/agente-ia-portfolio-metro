@@ -5680,6 +5680,169 @@ Duas divergências adicionais: os responsáveis por mudança e por deliberação
 4. **Ingestão.** Documentos e cronogramas do ambiente estão em bibliotecas e anexos de lista do SharePoint, fonte que a ingestão atual não consome.
 5. **Escrita.** A identidade de teste tem nível de edição. Qualquer escrita do agente deve continuar exigindo confirmação do usuário, e o escopo de escrita deve ser restrito às listas necessárias.
 
+### 5.5.11 De-para entre o ambiente de teste do parceiro e a base sintética
+
+A base sintética foi desenhada antes do acesso ao ambiente do parceiro, a partir das premissas de 5.5.9 e do glossário de domínio. Esta subseção a confronta, coluna a coluna, com a estrutura das listas levantada em 5.5.10. Ela registra onde as duas divergem e o que isso significa para as métricas de 5.4.11 e 9.4.6 e para o risco `R01`.
+
+#### 5.5.11.1 Método e limites
+
+**Origem.** A origem é a estrutura das 12 listas do site de teste, coletada em 05/10/2026 com a identidade de aluno, nos limites descritos em 5.5.10.1. A coleta registrou:
+- nome, tipo e obrigatoriedade de cada coluna;
+- a quantidade de opções das colunas de escolha;
+- a quantidade de itens por lista.
+
+Nenhum valor de registro, nome de pessoa ou de projeto, endereço ou identificador do ambiente é reproduzido aqui.
+
+**Destino.** O destino é o schema `portfolio` de [banco-de-dados.md](banco-de-dados.md), com as restrições declaradas na migração `20260915_portfolio.py`. O perfil vem de `public.usuario`.
+
+**Classificação de cada linha:**
+- **Equivalente:** mesmo significado e tipo compatível.
+- **Conversão:** mesmo significado, mas exige regra de transformação. "Com perda" quando a regra não recupera todos os valores da base.
+- **Sem origem:** coluna da base sem campo correspondente no ambiente.
+- **Sem destino:** campo do ambiente sem coluna na base.
+
+**Limite.** O ambiente tem 51 itens somando as 12 listas. Num registro inspecionado, só o título e o status estavam preenchidos. O de-para valida estrutura e vocabulário. Não estima taxa de preenchimento, distribuição de valores nem métricas.
+
+#### 5.5.11.2 De-para por tabela da base
+
+**`portfolio.projeto`**, a partir da lista Projetos e da lista Avanço:
+
+| Coluna da base | Origem no ambiente | Correspondência | Regra ou lacuna |
+|---|---|---|---|
+| `codigo` (PK, NOT NULL) | — | Sem origem | A lista não tem coluna de código. A chave teria de vir do identificador interno do item ou de uma convenção combinada com o PMO |
+| `nome` (NOT NULL) | Título (texto, obrigatória) | Equivalente | — |
+| `descricao` | Objetivo (várias linhas) | Conversão | Hipótese da equipe. As outras dez colunas descritivas (Justificativa, Benefícios esperados, Escopo, Não escopo, Alinhamento estratégico, Premissas, Restrições, Principais partes interessadas, Ameaças, Oportunidades) não têm destino |
+| `status` (NOT NULL, 5 valores) | Status programa/projeto (escolha, 2 opções do tipo ativo/inativo, opcional) | Conversão com perda | O ambiente registra se o item está ativo, e não em que fase está. `planejado`, `em_andamento` e `suspenso` não são deriváveis. `concluido` e `cancelado` poderiam vir de Situação do encerramento, no Termo de encerramento, que tem 0 itens |
+| `prioridade` (NOT NULL, 4 valores) | — | Sem origem | Nenhuma coluna de prioridade |
+| `data_inicio`, `data_fim_prevista` | Início, Término (data) | Equivalente | Término lido como fim previsto, já que não há data de fim real |
+| `data_fim_real` | — | Sem origem | Candidata: Data de encerramento, no Termo de encerramento (0 itens) |
+| `orcamento_aprovado` | Custo (moeda) | Equivalente | Hipótese: o custo do registro equivale ao orçamento aprovado |
+| `orcamento_atual` | — | Sem origem | O Previsto econômico de Avanço é uma série de desembolso, não um orçamento |
+| `avanco_percentual` (INTEGER 0–100, NOT NULL) | Realizado físico, em Avanço (número exibido como porcentagem: fração de 0 a 1, decimal, opcional) | Conversão | Usar o último registro por Data de referência, multiplicado por 100 e arredondado. Sem essa regra, um valor de 0,45 é gravado como 0. Como o campo é opcional, é preciso uma regra para ausência |
+| `lider_id` | Líder (pessoa) | Conversão | Pessoa do Microsoft 365 convertida em usuário da solução pela identidade do Entra ID |
+| — | Subportfólio (consulta), Subport (texto) | Sem destino | A base não tem a entidade (ver as listas sem destino, abaixo) |
+| — | Fonte de recursos, Atualização, Revisão, Data da revisão, Motivo da revisão, Revisão interna, Status2, Meta do ano | Sem destino | — |
+
+**`portfolio.marco`**, a partir da lista Entregas e Marcos:
+
+| Coluna da base | Origem no ambiente | Correspondência | Regra ou lacuna |
+|---|---|---|---|
+| `projeto_codigo` (NOT NULL) | Projeto (consulta) | Conversão | Depende da chave de projeto, que não tem origem |
+| `nome` (NOT NULL) | Descrição (texto, obrigatória) | Equivalente | Entregas e marcos ficam na mesma lista, sem coluna de tipo |
+| `descricao` | — | Sem origem | — |
+| `data_prevista` (NOT NULL) | Data prevista (data, obrigatória) | Equivalente | — |
+| `data_real` | Data realizada (data) | Equivalente | — |
+| `status` (NOT NULL, 5 valores) | Status (escolha, 2 opções do tipo ativo/inativo), mais as datas | Conversão com perda | `concluido` se houver data realizada; `atrasado` se não houver e a data prevista já passou; `nao_iniciado` nos demais casos. `em_andamento` e `cancelado` não são deriváveis |
+
+**`portfolio.risco`**, a partir da lista Riscos e problemas:
+
+| Coluna da base | Origem no ambiente | Correspondência | Regra ou lacuna |
+|---|---|---|---|
+| `projeto_codigo` (NOT NULL) | Projeto (consulta) | Conversão | A lista Riscos e problemas – Portfólio liga o item ao subportfólio, e não ao projeto, por isso não cabe nesta tabela |
+| `descricao` (NOT NULL) | Risco/Problema (várias linhas, obrigatória) | Equivalente | A coluna Item, que é o título, não tem destino próprio |
+| `categoria` | — | Sem origem | A coluna Tipo/Criticidade não traz nenhuma opção de tipo |
+| `probabilidade`, `impacto` (NOT NULL, 1–5) | — | Sem origem | O ambiente tem Tipo/Criticidade (escolha, 4 níveis, obrigatória). Uma escala ordinal única de 4 níveis não se decompõe em probabilidade e impacto, então a severidade de 1 a 25 não é reproduzível |
+| `status` (NOT NULL, 4 valores) | Status (escolha, 2 opções do tipo ativo/inativo, obrigatória) | Conversão com perda | Risco e problema não se distinguem por coluna. `materializado` só sairia da leitura do texto |
+| `plano_mitigacao` | Soluções de contorno / Plano de ação (várias linhas, obrigatória) | Equivalente | — |
+| — | Data de atualização, Data prevista de conclusão da solução/plano, Escalar? | Sem destino | — |
+
+**`portfolio.indicador`**, a partir da lista Avanço:
+
+| Coluna da base | Origem no ambiente | Correspondência | Regra ou lacuna |
+|---|---|---|---|
+| `projeto_codigo` (NOT NULL) | Projeto (consulta, obrigatória) | Conversão | Depende da chave de projeto |
+| `nome` (NOT NULL), `unidade` | — | Conversão | Cada item de Avanço vira dois indicadores, um físico (%) e um econômico (R$), com nome e unidade fixos |
+| `valor_atual`, `valor_meta` | Realizado e Previsto, físico e econômico | Conversão | O físico é multiplicado por 100, para ficar na escala de `avanco_percentual`. Previsto físico e Previsto econômico são obrigatórios; os realizados, não |
+| `data_medicao` | Data de referência (data, obrigatória) | Equivalente | A série, de cerca de 4 registros por projeto, cabe na tabela, que aceita várias medições |
+| `descricao` | Situação (várias linhas) | Equivalente | — |
+
+**`portfolio.usuario_projeto` e perfil** (detalhado em 5.5.10.5):
+
+| Destino na base | Origem no ambiente | Correspondência | Regra ou lacuna |
+|---|---|---|---|
+| `papel = lider` | Líder (Projetos) | Equivalente | — |
+| `papel = membro` | Equipe (só no Termo de abertura) | Conversão | Não existe na lista Projetos |
+| `papel = observador` | — | Sem origem | — |
+| perfil `diretoria` (`public.usuario`) | Diretor responsável (Projetos) e Representante da diretoria (Termo de abertura) | Conversão | Dois papéis do ambiente para um perfil da solução |
+
+**Listas sem destino na base:**
+
+| Lista do ambiente | Itens | O que a base precisaria para recebê-la |
+|---|:-:|---|
+| Subportfólio – Base | 3 | Entidade de subportfólio, chave estrangeira em projeto e os papéis Responsável, Membro GPM, Aprovador PMO Corporativo e Apoio |
+| Situação – Portfólio | 6 | Relato textual por subportfólio e data de referência |
+| Riscos e problemas – Portfólio | 2 | Risco ligado a subportfólio, e não a projeto |
+| Cronograma | 2 | Leitura do anexo `.xlsx` de cada item, fora da ingestão atual (5.5.10.6) |
+| Termo de abertura | 2 | Entidade do termo com o fluxo de aprovação (Submeter aprovação, Situação TAP) |
+| Termo de encerramento/descontinuidade | 0 | Entidade de encerramento. Seria a origem de `data_fim_real` e do status final do projeto |
+| Projetos – Registro de mudanças | 1 | Registro de mudança com parecer do subportfólio |
+| Portfólio – Registro de mudanças | 1 | Registro de mudança com deliberação e análise de impacto em 7 dimensões |
+
+#### 5.5.11.3 Divergências
+
+**Vocabulário**
+
+1. Os status do ambiente são de registro, e não de ciclo de vida. São 2 opções do tipo ativo/inativo, contra 5 valores no projeto, 5 no marco e 4 no risco da base.
+2. A criticidade de 4 níveis ocupa o lugar de probabilidade × impacto. As intenções `consultar_riscos` (entidade `severidade`) e `registrar_risco` (entidades `probabilidade` e `impacto`) seguem o vocabulário da base (5.4.4).
+3. O avanço é uma fração decimal de 0 a 1 no ambiente e um inteiro de 0 a 100 na base.
+4. O ambiente tem 3 subportfólios; o glossário de domínio usa 5 genéricos.
+
+**Estrutura**
+
+5. O subportfólio é o eixo do ambiente, consultado em quase todas as listas, e não existe na base.
+6. O avanço é uma série temporal de previsto × realizado, físico e econômico. A base guarda um valor único por projeto.
+7. Entregas e marcos ficam juntos, e riscos e problemas também, sem coluna de tipo em nenhum dos dois casos.
+8. O cronograma existe só como anexo.
+9. Os fluxos de governança não têm modelo na base: a aprovação do termo de abertura, o parecer do subportfólio e a deliberação do portfólio.
+
+**Campos**
+
+10. **Colunas NOT NULL da base:**
+    - sem origem no ambiente: `projeto.codigo`, `projeto.prioridade`, `risco.probabilidade` e `risco.impacto`;
+    - que só se preenchem por regra ou com perda: `projeto.status`, `projeto.avanco_percentual`, `marco.status` e `risco.status`.
+
+    Preencher as quatro primeiras com um valor padrão fabricaria informação que o parceiro não registra. O tratamento coerente é aceitar a ausência ou definir a origem com o PMO.
+11. **Tipos que mudam entre listas do próprio ambiente:**
+    - Escalar?: escolha numa lista, sim/não em outra;
+    - Fonte de recursos: texto em Projetos, escolha no Termo de abertura;
+    - Revisão: texto em Projetos, número no Termo de abertura;
+    - Subportfólio: consulta na maioria das listas, escolha em Portfólio – Registro de mudanças.
+
+    A fonte da verdade de cada campo fica a definir com o PMO.
+12. Há texto livre onde a base é estruturada. A situação do portfólio, os benefícios esperados e as ameaças e oportunidades de Projetos são campos de várias linhas.
+
+#### 5.5.11.4 Efeito esperado nas métricas
+
+Os efeitos abaixo são inferências a partir do de-para, e não medições.
+
+**Classificador de intenções (5.4.11).** A acurácia de 0,856 mede enunciados, mas o ambiente guarda registros, e não frases de usuários. Por isso, o de-para não confirma nem refuta esse número. O que ele mostra é um vocabulário do PMO que o catálogo modela de outra forma, como a criticidade no lugar de probabilidade, impacto e severidade. A degradação esperada, de magnitude não medida, pode aparecer na interpretação e no preenchimento dos parâmetros esperados pelas intenções de risco e de avanço, mais do que na separação entre classes. O extrator atual reconhece apenas projeto e data ou período; atributos como criticidade, probabilidade, impacto e percentual ainda exigem tratamento específico. Medir o efeito sobre o classificador exige frases reais de usuários, como pede o item S3-08 da revisão de feedbacks.
+
+**Consultas e RAG (9.4.6).** O acerto de conteúdo de 0,95 foi medido sobre um corpus sintético de documentos. No ambiente, os documentos ficam em bibliotecas e anexos que a ingestão atual não consome (5.5.10.6). Além disso, as listas não têm origem para prioridade, probabilidade × impacto e fase do projeto. Sobre dados do parceiro, as respostas que dependem dessas colunas ficariam sem fonte, e o número de 9.4.6 não se transfere.
+
+**Comparações numéricas.** Sem a conversão da escala fracionária de 0 a 1 para a escala inteira de 0 a 100, o avanço físico seria incompatível com `avanco_percentual` ou perderia precisão caso fosse convertido diretamente. Nesse cenário, qualquer comparação com meta ou limite de avanço produziria resultado incorreto.
+
+**Volume.** Os 51 itens do ambiente não sustentam nenhuma métrica sobre os dados do parceiro. Servem para validar a estrutura.
+
+#### 5.5.11.5 Reavaliação do risco R01
+
+O status final segue a regra de encerramento da seção 4.2 do [GestaoProjeto.md](GestaoProjeto.md). A regra é aplicada na ordem abaixo, e vale o primeiro critério que se cumprir:
+1. **Materializado:** o evento ocorreu.
+2. **Mitigado:** o evento não ocorreu e a ação preventiva foi concluída.
+3. **Encerrado:** o horizonte do item era o módulo.
+4. **Aberto:** a exposição continua depois do módulo.
+
+Aplicada ao `R01`, a regra leva ao quarto critério:
+
+- **O evento não ocorreu.** O `R01` descreve dados pouco representativos que levam a métricas enganosas e a baixa aderência no uso real. O de-para confirma a causa. Mas as métricas de 5.4.11 e 9.4.6 estão declaradas como válidas só sobre a base sintética (5.4.11.8 e 5.5.11.4), e não houve uso real.
+- **A ação preventiva ficou incompleta.** A comparação com os dados de exemplo do parceiro foi feita, e é esta subseção. A ampliação da base com o vocabulário e a estrutura do PMO não foi feita, como mostram as divergências de 5.5.11.3.
+- **A exposição continua depois do módulo.** Quem conectar a solução aos dados do parceiro precisa antes recalibrar a base e o corpus e reexecutar as bancadas.
+
+O `R01` fica **Aberto**, com severidade 20 (P5 × I4). Na Sprint 4, a probabilidade tinha caído de 5 para 4 por uma queda de potencial. Agora ela volta a 5, porque o de-para confirma a causa. O item é transferido ao Metrô no handover, e a primeira ação é a recalibração da base e do corpus.
+
+O critério específico registrado na linha do `R01` reservava o Aberto para o caso de a comparação não se concluir. Ele cede à regra geral de encerramento, que vale para todos os itens.
+
+O `R04` permanece Mitigado sobre a base sintética, com a validade condicionada a essa recalibração.
+
 ## 5.6 Visão preliminar da arquitetura em blocos conectados
 
 <details>
