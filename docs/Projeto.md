@@ -10988,10 +10988,23 @@ Duas execuções foram registradas em 10/09/2026
 | Ponta a ponta, com PostgreSQL real e índice em memória | A primeira execução gravou os 1.883 trechos no banco e no índice; a segunda não baixou nem vetorizou nada; retirar da pasta o arquivo de riscos da Acessibilidade L4 retirou os 22 trechos dele dos dois lugares e marcou o arquivo como `removido` |
 
 O e5 vetorizou 1,2 trecho por segundo na CPU, o que põe a primeira ingestão
-completa em cerca de meia hora. A carga completa do corpus no índice do
-Pinecone não está registrada neste documento: a execução ponta a ponta usou um
-índice em memória no lugar dele, e o Pinecone foi exercitado pelo roteiro de
+completa em cerca de meia hora. As duas execuções acima usaram um índice em
+memória no lugar do Pinecone, e o Pinecone foi exercitado pelo roteiro de
 validação de 9.4.4.5 e pelos casos IT-RAG-05 a IT-RAG-08 (10.5.5.11).
+
+A carga completa no Pinecone foi conferida em 05/10/2026 pelo notebook
+[vetorizacao-e-recuperacao-rag.ipynb](../src/middleware/notebooks/vetorizacao-e-recuperacao-rag.ipynb).
+O notebook lê a pasta do parceiro de novo e refaz a identificação, a vigência,
+as permissões e a divisão com o código da ingestão. Resultados:
+
+- os números da simulação são os da tabela acima;
+- os 1.883 trechos gerados são, texto por texto, os gravados em `rag.trecho`;
+- o *namespace* `bancada-eduardo` tem 1.883 vetores;
+- os 32 vetores de uma amostra, recalculados, coincidem com os gravados
+  (cosseno 1,000000).
+
+Índice, banco e código atual descrevem o mesmo corpus. Na mesma execução, o e5
+vetorizou 1,4 trecho por segundo, na mesma ordem da medição acima.
 
 ### 9.4.4 Índice vetorial no Pinecone
 
@@ -11424,6 +11437,38 @@ A fidelidade segue sem medição automática. O detalhe da execução, com cada
 resposta ao lado dos trechos citados, é gerado pela opção `--saida`, que é o
 material dessa revisão.
 
+**Notebook de vetorização e recuperação.** O notebook
+[vetorizacao-e-recuperacao-rag.ipynb](../src/middleware/notebooks/vetorizacao-e-recuperacao-rag.ipynb)
+chama as mesmas funções desta bancada e acrescenta o que o relatório em texto
+não mostra:
+
+- os cinco trechos recuperados para cada uma das 26 perguntas, com documento,
+  localizador e *score*;
+- a recuperação medida sozinha, sem o modelo de geração, por
+  `bancada.avaliar_recuperacao`;
+- o gráfico das faixas de *score*;
+- o filtro de permissão aplicado ao projeto Restrito;
+- as respostas ao lado das fontes citadas.
+
+**Executado em 05/10/2026 sobre o commit `a3c5404`, ele reproduziu todos os
+números desta seção:** recall@k de 0,975, abstenção correta de 1,00 (6 de 6),
+acerto de conteúdo de 0,95 (19 de 20), nenhum vazamento, nenhuma abstenção
+indevida e nenhuma resposta sem citação válida. As faixas de *score* também
+são as mesmas. O R19 é de novo a única falha, pela mesma razão. A última seção
+do notebook confere esses números e os de 9.4.3.7. A execução para se um
+número determinístico divergir, ou seja, os do corpus, dos trechos e da
+recuperação. Os da geração só são comparados. Fixar outro modelo de geração
+foge do escopo deste notebook.
+
+O notebook também mediu o efeito do prefixo do e5 (9.4.3.5). No par
+pergunta–trecho da R01, usar o mesmo prefixo nos dois lados baixa o cosseno de
+0,894 para 0,875. A queda é de um quarto da largura da faixa de *score* da
+bancada e passa a distância entre o 2º e o 5º trecho recuperados da própria
+R01: o prefixo errado não gera erro, gera outra ordem de trechos. A seção 8 do
+notebook, a da bancada completa, custa 26 chamadas ao modelo de geração. As
+saídas ficam salvas no arquivo, e a forma de execução está no
+[README da pasta](../src/middleware/notebooks/README.md).
+
 ### 9.4.7 Configuração e execução
 
 As dependências do executor próprio ficam no extra `rag` do `pyproject.toml` —
@@ -11462,6 +11507,9 @@ python -m app.rag.ingestao --reindexar               # reindexa todos os documen
 python -m scripts.buscar_trechos "orçamento do Trecho Sul" --perfil lider_projeto --projetos PRJ-2024-018
 python -m scripts.perguntar_rag "Qual o custo total estimado do Trecho Sul?" --perfil lider_projeto --projetos PRJ-2024-018
 python -m app.rag.bancada --saida bancada.md         # mede recuperação e geração (9.4.6)
+
+pip install -e ".[rag,notebook]"                     # notebook de 9.4.3.7 e 9.4.6
+python -m nbconvert --to notebook --execute --inplace notebooks\vetorizacao-e-recuperacao-rag.ipynb
 ```
 
 `buscar_trechos` exercita só a recuperação, sem chamar o modelo, e é o comando
