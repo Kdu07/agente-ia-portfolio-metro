@@ -1,10 +1,20 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
 erDiagram
+    USUARIO ||--o{ SESSAO_USUARIO : abre
     USUARIO ||--o{ CONVERSA : mantem
     USUARIO ||--o{ INTERACAO : registra
     USUARIO ||--o{ ROTINA : cadastra
+    USUARIO ||--o{ TRANSCRICAO_AUDIO : envia
     CONVERSA ||--o{ INTERACAO : agrupa
+    CONVERSA |o--o{ TRANSCRICAO_AUDIO : recebe
+    INTERACAO |o--o| TRANSCRICAO_AUDIO : "e transcrita em"
     ROTINA ||--o{ EXECUCAO_ROTINA : gera
-    ROTINA ||--o{ INTERACAO : origina
+    ROTINA |o--o{ INTERACAO : origina
     EXECUCAO_ROTINA |o--o| INTERACAO : produz
 
     USUARIO {
@@ -14,6 +24,16 @@ erDiagram
         texto perfil "CHECK: diretoria, lider_projeto, membro_equipe"
         datahora criado_em "primeiro acesso"
         datahora visto_em "acesso mais recente"
+    }
+
+    SESSAO_USUARIO {
+        texto id PK "SHA-256 do token do cookie"
+        texto usuario_id FK "CASCADE"
+        texto perfil "CHECK: perfil no login"
+        lista_texto permissoes "CHECK: ver_intencoes, gerir_rotinas"
+        datahora criada_em
+        datahora expira_em
+        lista_texto projetos "codigos acessiveis, carregados no login"
     }
 
     CONVERSA {
@@ -35,11 +55,12 @@ erDiagram
         texto prompt "obrigatorio"
         texto resposta "obrigatorio"
         texto intencao_id "nulo se bloqueada antes de classificar; sem FK"
-        decimal confianca_intencao
+        real confianca_intencao
         texto desfecho "CHECK: oito valores"
-        inteiro latencia_ms
+        inteiro latencia_ms "total do pipeline"
         datahora criada_em
         texto rotina_id FK "nulo, preenchido quando canal e rotina"
+        json latencia_etapas "ms por etapa; nulo antes da medicao"
     }
 
     ROTINA {
@@ -60,7 +81,24 @@ erDiagram
         texto rotina_id FK "RESTRICT"
         datahora iniciada_em "gravado antes do pipeline"
         datahora concluida_em "nulo enquanto executa"
-        texto status "CHECK: sucesso, bloqueada, falha"
+        texto status "CHECK: em_execucao, sucesso, bloqueada, falha"
         texto interacao_id FK "nulo ate o fim do disparo"
         texto erro "mensagem, quando houver"
+    }
+
+    TRANSCRICAO_AUDIO {
+        texto id PK
+        texto usuario_id FK "RESTRICT"
+        texto estado "CHECK: recebido, transcrevendo, concluida, falhou"
+        texto formato "formato do audio recebido"
+        real duracao_segundos
+        datahora criada_em
+        datahora expira_em "deixa de ser servido apos"
+        texto conversa_id FK "nulo ate entrar numa conversa"
+        texto interacao_id FK, UK "uma transcricao por interacao"
+        texto texto "nulo ate concluir"
+        texto idioma
+        real confianca
+        inteiro latencia_ms
+        texto mensagem_erro
     }
