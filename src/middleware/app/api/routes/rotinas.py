@@ -16,7 +16,6 @@ from datetime import UTC, datetime
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from apscheduler.triggers.cron import CronTrigger
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.analytics.metricas import rotulo_de_intencao
@@ -25,6 +24,7 @@ from app.auth.entra import FalhaConsultaDiretorio, UsuarioEntraInativo
 from app.persistence.models import ExecucaoRotina, Interacao, Rotina
 from app.persistence.repository import ExecucaoRepository, RotinaRepository
 from app.rotinas import execucao as execucao_rotina
+from app.rotinas.cron import criar_gatilho_cron
 from app.rotinas.execucao import ExecucaoNaoAutorizada, PermissaoRotinaRevogada, RotinaNaoEncontrada
 from app.rotinas.validacao import ResultadoValidacao, validar_agenda, validar_prompt
 from app.schemas.erro import (
@@ -270,7 +270,7 @@ async def _rotina_do_usuario(
 def _resposta_rotina(rotina: Rotina) -> RotinaResposta:
     proximo = None
     if rotina.ativa:
-        gatilho = CronTrigger.from_crontab(
+        gatilho = criar_gatilho_cron(
             rotina.agenda_cron,
             timezone=ZoneInfo(rotina.timezone),
         )
