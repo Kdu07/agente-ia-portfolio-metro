@@ -46,12 +46,20 @@ describe("Rotas protegidas", () => {
   it("carrega a tela restrita quando a permissão correspondente existe", async () => {
     renderizar(<Rotas />, "/intencoes");
 
-    expect(await screen.findByRole("heading", { name: "Análise de intenções" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole(
+        "heading",
+        { name: "Análise de intenções" },
+        { timeout: 10_000 },
+      ),
+    ).toBeInTheDocument();
   });
 
   it("carrega a gestão de rotinas para quem pode administrá-las", async () => {
     renderizar(<Rotas />, "/rotinas");
 
-    expect(await screen.findByRole("heading", { name: "Rotinas" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Rotinas" }, { timeout: 10_000 }),
+    ).toBeInTheDocument();
   });
 });

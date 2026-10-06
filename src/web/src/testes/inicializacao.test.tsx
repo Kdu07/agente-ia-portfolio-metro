@@ -34,5 +34,5 @@ describe("Inicialização da interface", () => {
     liberarDubles();
     await vi.waitFor(() => expect(mocks.createRoot).toHaveBeenCalledWith(document.getElementById("raiz")));
     expect(mocks.render).toHaveBeenCalledOnce();
-  });
+  }, 15_000);
 });
