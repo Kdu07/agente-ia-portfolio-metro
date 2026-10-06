@@ -1,0 +1,80 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
+erDiagram
+    direction LR
+    canal_drive |o--o{ recebimento : fk_recebimento_canal_id_canal_drive
+
+    canal_drive["webhook.canal_drive"] {
+        text canal_id PK "pk_canal_drive"
+        text fonte_id "NOT NULL, ix_canal_drive_fonte_estado"
+        bytea token_sha256 "NOT NULL, ck_canal_drive_token_sha256"
+        text recurso_id "NULL, ck_canal_drive_recurso_confirmado"
+        text recurso_uri "NULL"
+        timestamptz expira_em "NOT NULL"
+        text estado "NOT NULL, ck_canal_drive_estado"
+        timestamptz criado_em "NOT NULL"
+        timestamptz ativado_em "NULL"
+        timestamptz encerrado_em "NULL"
+    }
+
+    recebimento["webhook.recebimento"] {
+        text message_id PK "pk_recebimento"
+        text correlation_id "NOT NULL"
+        text provedor UK "NOT NULL, ck_recebimento_provedor, uq_recebimento_chave_externa"
+        text chave_externa UK "NOT NULL"
+        text fonte_id "NOT NULL"
+        text canal_id FK "NULL, ON DELETE RESTRICT"
+        jsonb evento "NOT NULL"
+        timestamptz recebido_em "NOT NULL, ix_recebimento_pendente parcial"
+        timestamptz publicado_em "NULL"
+        timestamptz processado_em "NULL"
+        integer tentativas "NOT NULL DEFAULT 0, ck_recebimento_tentativas"
+        text erro_codigo "NULL"
+        bytea corpo_sha256 "NULL, ck_recebimento_corpo_sha256"
+    }
+
+    sincronizacao_fonte["webhook.sincronizacao_fonte"] {
+        text fonte_id PK "pk_sincronizacao_fonte"
+        text cursor "NULL"
+        text estado "NOT NULL, ck_sincronizacao_fonte_estado"
+        timestamptz concluida_em "NULL"
+        timestamptz atualizado_em "NOT NULL"
+    }
+
+    fonte_portfolio["webhook.fonte_portfolio"] {
+        text source_id PK "pk_fonte_portfolio, ck_fonte_portfolio_source_id"
+        text planilha_id "NOT NULL"
+        text[] projetos "NOT NULL"
+        text[] tipos "NOT NULL, ck_fonte_portfolio_tipos"
+        boolean ativa "NOT NULL DEFAULT true"
+        timestamptz criada_em "NOT NULL"
+        timestamptz atualizada_em "NOT NULL"
+    }
+
+    versao_entidade["webhook.versao_entidade"] {
+        text source_id PK "pk_versao_entidade"
+        text event_type PK "ck_versao_entidade_event_type"
+        text entity_id PK
+        bigint versao "NOT NULL, ck_versao_entidade_versao"
+        bytea dados_sha256 "NOT NULL"
+        timestamptz atualizada_em "NOT NULL"
+    }
+
+    auditoria_portfolio["webhook.auditoria_portfolio"] {
+        text id PK "pk_auditoria_portfolio"
+        text message_id "NOT NULL"
+        text source_id "NOT NULL"
+        text event_id "NOT NULL"
+        text event_type "NOT NULL"
+        text projeto_codigo "NOT NULL, ix_auditoria_portfolio_entidade"
+        text entity_id "NOT NULL"
+        bigint versao "NOT NULL"
+        jsonb anteriores "NOT NULL"
+        jsonb novos "NOT NULL"
+        text resultado "NOT NULL, ck_auditoria_portfolio_resultado"
+        timestamptz registrado_em "NOT NULL"
+    }

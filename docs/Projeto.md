@@ -2101,11 +2101,16 @@ A matriz confronta os casos de uso com os requisitos de 3.2, verificando que nen
 
 A solução é um middleware de segurança, governança e orquestração posicionado entre o usuário e o Copilot Studio. Ele recebe toda entrada — digitada, ditada ou disparada por uma rotina agendada —, aplica as barreiras de segurança, resolve a intenção contra o catálogo, aciona o executor e registra o que aconteceu.
 
-Essa posição determina o que o banco de dados guarda, e o que ele **não** guarda. O portfólio de projetos do Metrô — projetos, marcos, riscos, cronogramas, documentos — permanece nas fontes corporativas, acessadas pelo Copilot Studio por meio de seus conectores. O banco da solução não replica nada disso. Ele registra a **solicitação**: quem pediu, o que pediu e como o sistema a classificou.
+Essa posição determina o que o banco de dados guarda. Ele reúne quatro grupos de dados, cada um com origem e razão de ser próprias:
 
-A distinção é a decisão estruturante desta seção. Um modelo que tentasse espelhar o portfólio criaria uma segunda fonte de verdade, com todos os problemas de sincronização que a arquitetura evita justamente ao delegar a execução (ver [Arquitetura.md](Arquitetura.md), seção 1).
+1. **O registro da solicitação** — quem pediu, o que pediu, como o sistema classificou e qual foi o desfecho, junto com as sessões de login, as conversas, as rotinas e os áudios recebidos. É o núcleo do middleware.
+2. **Uma cópia estruturada do portfólio**, no *schema* `portfolio` — projetos, marcos, riscos, indicadores e a participação dos usuários em cada projeto. As linhas são criadas pela carga sintética de demonstração (`scripts/popular_banco.py`) e mantidas pelo WH-02 (9.1.2.7.2), que **atualiza** apenas os campos que o contrato autoriza, a partir da planilha-fonte: o `status` do projeto; o `status`, a `data_prevista` e a `data_real` do marco; e o `status`, a `probabilidade` e o `impacto` do risco. O WH-02 não cria nem exclui projetos e não altera vínculos de usuários, orçamento ou indicadores. Os avisos que essas atualizações geram, e as preferências de quem os recebe, ficam no *schema* `public`, ao lado de `usuario`: são dado do usuário, lido pelas rotas autenticadas.
+3. **O texto e a proveniência do corpus do RAG**, no *schema* `rag` — os vetores ficam no índice vetorial; o texto que eles representam e o destino que cada arquivo teve na ingestão ficam aqui.
+4. **A trilha de entrada dos webhooks**, no *schema* `webhook` — os canais de notificação do Drive, as notificações recebidas, o cursor de leitura de cada fonte, o cadastro dos emissores do WH-02, a última versão aplicada a cada entidade e a auditoria do que cada evento alterou.
 
-> **Escopo desta modelagem.** Os diagramas e as descrições abaixo representam as cinco tabelas da migração inicial da Sprint 3. O esquema versionado evoluiu para **oito tabelas**: `usuario`, `sessao_usuario`, `conversa`, `interacao`, `rotina`, `execucao_rotina`, `rag.arquivo` e `rag.trecho`. As três adições são implementadas em `app/persistence/tabelas.py` e `app/rag/tabelas.py`, com migrações em `src/middleware/migrations/versions/`: a sessão sustenta o login (RF01), e arquivo/trecho sustentam a recuperação documental e sua proveniência (RF04). As vistas abaixo são um recorte do núcleo inicial, não o inventário completo do esquema; nenhuma tabela ou decisão de modelagem é alterada por esta revisão.
+A versão anterior desta seção afirmava que o banco não espelhava o portfólio, para não criar uma segunda fonte de verdade. A afirmação deixou de valer quando o *schema* `portfolio` passou a dar destino às consultas estruturadas e o WH-02 passou a gravar nele (ver [Arquitetura.md](Arquitetura.md), seção 1). O risco de divergência que motivava a regra continua real, e é tratado no próprio modelo, em vez de evitado: cada emissor tem escopo cadastrado em `webhook.fonte_portfolio`; a ordem dos eventos é garantida pela versão por entidade em `webhook.versao_entidade`, que descarta o que chega atrasado e recusa a mesma versão com dados diferentes; e cada aplicação deixa rastro em `webhook.auditoria_portfolio`. Os documentos do portfólio continuam nas fontes corporativas: atualizar um registro no PostgreSQL não corrige um documento divergente, e a execução do WH-02 com a planilha e o gatilho reais do Apps Script está entre as limitações de 9.1.2.7.3.
+
+> **Escopo desta modelagem.** Os diagramas, o dicionário e o DDL deste capítulo cobrem as **22 tabelas** criadas pelas 12 migrações Alembic de `src/middleware/migrations/versions/`, até a revisão `20260925_audio_persistente`, que é a *head* de uma cadeia linear: nove no *schema* `public`, duas em `rag`, cinco em `portfolio` e seis em `webhook`. Ficam fora três estruturas que não são modelo da aplicação: `alembic_version`, que o Alembic cria para registrar a revisão aplicada; `apscheduler_jobs`, criada em tempo de execução pelo *jobstore* do agendador de rotinas (`app/rotinas/agendador.py`); e `rag.trecho_vetor`, do adaptador pgvector de reserva, que nenhuma migração cria porque exige a extensão `vector`, ausente da imagem `postgres:16-alpine` — os vetores ficam no Pinecone. Os modelos lógico e físico são apresentados em quatro recortes, um por grupo de tabelas: **(a)** núcleo, **(b)** portfólio e avisos, **(c)** webhooks e **(d)** corpus do RAG.
 
 ### 4.1.1 Atores e entidades do negócio
 
@@ -2114,13 +2119,24 @@ A distinção é a decisão estruturante desta seção. Um modelo que tentasse e
 - **Interação** — uma mensagem processada e seu desfecho. É a entidade central: existe uma linha para cada mensagem que atravessa o pipeline, inclusive as barradas, com o texto submetido, a resposta entregue, a intenção resolvida, o canal de entrada e quanto tempo o processamento levou.
 - **Rotina** — solicitação em linguagem natural cadastrada para execução automática sob a identidade do seu dono, com expressão de recorrência e fuso horário próprios.
 - **Execução de rotina** — um disparo e seu resultado, com início e fim registrados separadamente, ligado à interação que produziu.
+- **Sessão** — o login aberto, guardado no servidor: o resumo SHA-256 do token do cookie, o perfil, as permissões e os projetos acessíveis no momento do login, e a expiração. Existe para que o logout e a revogação tenham efeito imediato, o que um cookie autocontido não permitiria.
+- **Transcrição de áudio** — um áudio enviado pelo canal de voz e o ciclo da sua transcrição, do recebimento ao texto reconhecido, ligado à conversa e à interação que originou.
+- **Projeto, marco, risco e indicador** — a cópia estruturada do portfólio (4.1). O projeto é identificado pelo código de negócio; marcos, riscos e indicadores pertencem a um único projeto.
+- **Participação** — o vínculo de um usuário com um projeto e o papel que exerce nele (`lider`, `membro` ou `observador`). É dela que sai a lista de projetos acessíveis gravada na sessão.
+- **Preferência de aviso e aviso** — a adesão de um usuário aos avisos de um tipo de evento em um projeto, desligada por padrão, e cada aviso privado gerado quando um evento aplicado ao portfólio interessa a quem aderiu.
+- **Fonte do portfólio, versão de entidade e auditoria** — o cadastro de cada emissor do WH-02 e do escopo que ele pode alterar, a última versão aplicada a cada entidade por emissor e a trilha de cada evento processado.
+- **Canal, recebimento e sincronização** — a inscrição de notificação no Drive (WH-01), cada notificação aceita de qualquer dos dois webhooks e o cursor de leitura de mudanças de cada fonte documental.
+- **Arquivo e trecho do corpus** — cada arquivo que a ingestão do RAG já listou, com o destino que teve, e o texto de cada trecho indexado, com os perfis autorizados a lê-lo.
 
 ### 4.1.2 Fluxos principais de dados
 
-1. **Identificação e autorização.** O usuário autentica-se pelo Entra ID. O middleware projeta o identificador federado, o nome e o perfil no registro local — por gravação idempotente, a cada requisição — e resolve as permissões a partir dos *claims* antes de qualquer processamento. As permissões não são persistidas: lê-las do banco arriscaria conceder um acesso que o Entra já revogou.
-2. **Ciclo de mensagem e registro.** Toda entrada por chat, voz ou rotina atravessa o orquestrador em ordem fixa e produz **uma** linha de `interacao`, vinculada ao usuário e a uma `conversa`, com o prompt submetido, a resposta entregue, o desfecho e a latência. O registro acontece em todos os desfechos, inclusive nos bloqueios — e o mesmo turno que grava a interação atualiza o momento da conversa, que é o que ordena a lista de histórico.
-3. **Agendamento.** Rotinas cadastradas são persistidas com o prompt, a recorrência, o fuso e o dono sob cuja identidade executam. Cada disparo grava uma linha de `execucao_rotina` **antes** de rodar, entra pelo mesmo orquestrador, produz seu próprio registro em `interacao` e fecha a execução com o resultado. É essa ordem que torna visível um disparo que travou.
-4. **Análise.** As agregações do painel leem a tabela de interações; nenhuma consulta analítica escreve.
+1. **Identificação e autorização.** O usuário autentica-se pelo Entra ID. No retorno do login, o middleware projeta o identificador federado, o nome e o perfil em `usuario` e abre uma `sessao_usuario` com o perfil, as permissões derivadas dos *claims* e os projetos acessíveis, lidos de `portfolio.usuario_projeto`. As requisições seguintes resolvem a sessão no servidor, sem nova consulta ao Entra, e regravam a projeção do usuário para manter `visto_em` como o último uso. Uma mudança de grupo no provedor só chega no login seguinte; o logout apaga a sessão na hora.
+2. **Ciclo de mensagem e registro.** Toda entrada por chat, voz ou rotina atravessa o orquestrador em ordem fixa e produz **uma** linha de `interacao`, vinculada ao usuário e a uma `conversa`, com o prompt submetido, a resposta entregue, o desfecho e a latência, total e por etapa. O registro acontece em todos os desfechos, inclusive nos bloqueios — e o mesmo turno que grava a interação atualiza o momento da conversa, que é o que ordena a lista de histórico.
+3. **Voz.** Um áudio aceito cria uma linha de `transcricao_audio` no estado `recebido`, que passa a `transcrevendo` quando o processamento começa. O texto reconhecido entra no orquestrador do item anterior e, na mesma transação que grava a interação, a transcrição vai a `concluida` e é ligada à conversa e à interação — no máximo uma transcrição por interação. Uma falha leva a `falhou`, com a mensagem. O arquivo de áudio é temporário; a linha deixa de ser servida depois de `expira_em`.
+4. **Agendamento.** Rotinas cadastradas são persistidas com o prompt, a recorrência, o fuso e o dono sob cuja identidade executam. Cada disparo grava uma linha de `execucao_rotina` com status `em_execucao` **antes** de rodar, entra pelo mesmo orquestrador, produz seu próprio registro em `interacao` e fecha a execução com o resultado. É essa ordem que torna visível um disparo que travou.
+5. **Eventos do portfólio (WH-02).** O emissor da planilha envia um evento assinado; o receptor grava um `webhook.recebimento`, deduplicado pela chave externa, e publica o evento na fila. O *worker*, numa única transação, revalida a fonte em `webhook.fonte_portfolio`, trava a linha da entidade em `webhook.versao_entidade`, aplica os campos autorizados à tabela do portfólio quando a versão é maior, registra o desfecho em `webhook.auditoria_portfolio`, grava os `aviso` das adesões elegíveis de `preferencia_aviso` e marca o recebimento como processado.
+6. **Notificações do Drive (WH-01) e corpus.** Cada inscrição de notificação no Drive é um `webhook.canal_drive`, que guarda o resumo do token, nunca o token. Uma notificação aceita vira um `webhook.recebimento`, e o cursor confirmado de cada fonte fica em `webhook.sincronizacao_fonte`. A ingestão do corpus grava em `rag.arquivo` o destino de cada arquivo listado e substitui em `rag.trecho` os trechos de cada documento reindexado.
+7. **Análise.** As agregações do painel leem a tabela de interações; nenhuma consulta analítica escreve.
 
 ## 4.2 Modelo Conceitual de Dados
 
@@ -2129,17 +2145,34 @@ O modelo conceitual define as entidades do middleware, seus papéis e as associa
 ![Modelagem conceitual do domínio do middleware](/docs/imagens/Modelagem%20Conceitual.png)
 *Figura 18 — Modelagem Conceitual.*
 
-> A imagem é gerada a partir de [`docs/diagramas/modelagem-conceitual.mmd`](diagramas/modelagem-conceitual.mmd). As três modelagens deste capítulo têm fonte versionada em texto; o [README do diretório](diagramas/README.md) traz o comando de regeração. Antes desta revisão as figuras existiam apenas como PNG, e corrigir um relacionamento significava redesenhar o diagrama inteiro.
+> A imagem é gerada a partir de [`docs/diagramas/modelagem-conceitual.mmd`](diagramas/modelagem-conceitual.mmd). As modelagens deste capítulo têm fonte versionada em texto — uma para o modelo conceitual e quatro recortes para cada um dos modelos lógico e físico —, e o [README do diretório](diagramas/README.md) traz o comando de regeração. O modelo conceitual é um só porque mostra as associações do domínio, inclusive as que atravessam os recortes e as que não viram chave estrangeira no banco (4.3.2).
 
 ### 4.2.1 Entidades do domínio
 
-| Entidade | Papel |
-|---|---|
-| `USUARIO` | Identidade institucional projetada do Entra ID, com nome, perfil observado e momento do último acesso. |
-| `CONVERSA` | Sessão de diálogo: agrupa turnos em ordem, guarda título, vínculo com o executor e arquivamento. |
-| `INTERACAO` | Registro de uma mensagem processada: autor, conversa, canal, prompt, resposta, intenção resolvida, desfecho e latência. |
-| `ROTINA` | Solicitação agendada, com prompt, recorrência, fuso horário e o usuário sob cuja identidade executa. |
-| `EXECUCAO_ROTINA` | Um disparo e seu resultado, ligado à interação que produziu. |
+| Grupo | Entidade | Papel |
+|---|---|---|
+| Núcleo | `USUARIO` | Identidade institucional projetada do Entra ID, com nome, perfil observado e momento do último acesso. |
+| Núcleo | `SESSAO` | Login aberto no servidor: perfil, permissões e projetos acessíveis no momento do login, com expiração. |
+| Núcleo | `CONVERSA` | Sessão de diálogo: agrupa turnos em ordem, guarda título, vínculo com o executor e arquivamento. |
+| Núcleo | `INTERACAO` | Registro de uma mensagem processada: autor, conversa, canal, prompt, resposta, intenção resolvida, desfecho e latência. |
+| Núcleo | `TRANSCRICAO_AUDIO` | Um áudio recebido e o ciclo da sua transcrição, ligado à conversa e à interação que originou. |
+| Núcleo | `ROTINA` | Solicitação agendada, com prompt, recorrência, fuso horário e o usuário sob cuja identidade executa. |
+| Núcleo | `EXECUCAO_ROTINA` | Um disparo e seu resultado, ligado à interação que produziu. |
+| Portfólio e avisos | `PROJETO` | Projeto do portfólio, identificado pelo código de negócio, com status, prioridade, prazos, orçamento e avanço. |
+| Portfólio e avisos | `MARCO` | Entrega planejada de um projeto, com data prevista, data real e status. |
+| Portfólio e avisos | `RISCO` | Risco de um projeto, com probabilidade e impacto de 1 a 5, status e plano de mitigação. |
+| Portfólio e avisos | `INDICADOR` | Medida de desempenho de um projeto, com valor atual, meta e data de medição. |
+| Portfólio e avisos | `PARTICIPACAO` | Vínculo de um usuário com um projeto e o papel que exerce nele. |
+| Portfólio e avisos | `PREFERENCIA_AVISO` | Adesão de um usuário aos avisos de um tipo de evento em um projeto, com severidade mínima para riscos. |
+| Portfólio e avisos | `AVISO` | Aviso privado de uma alteração do portfólio, com as diferenças e o momento da leitura. |
+| Webhooks | `FONTE_PORTFOLIO` | Emissor do WH-02, a planilha de origem, os projetos e os tipos de evento que pode alterar. |
+| Webhooks | `VERSAO_ENTIDADE` | Última versão que um emissor aplicou a uma entidade, com o resumo dos dados aplicados. |
+| Webhooks | `AUDITORIA_PORTFOLIO` | Trilha de cada evento do portfólio processado: valores anteriores e novos e o desfecho. |
+| Webhooks | `RECEBIMENTO` | Notificação aceita de qualquer dos dois webhooks, da chegada à publicação e ao processamento. |
+| Webhooks | `CANAL_DRIVE` | Inscrição de notificação no Drive, com o resumo do token e a expiração. |
+| Webhooks | `SINCRONIZACAO_FONTE` | Cursor de leitura de mudanças de uma fonte documental. |
+| Corpus do RAG | `ARQUIVO_CORPUS` | Arquivo listado pela ingestão, com a ficha do documento e o destino que teve. |
+| Corpus do RAG | `TRECHO` | Texto de um trecho indexado, com o localizador e os perfis autorizados. |
 
 ### 4.2.2 Regras de negócio e cardinalidades
 
@@ -2150,20 +2183,42 @@ O modelo conceitual define as entidades do middleware, seus papéis e as associa
 - **`ROTINA` *gera* `EXECUCAO_ROTINA` (1:N).** Cada disparo é uma linha própria. Apagar uma rotina que já disparou é recusado: a operação correta é desativá-la, o que a tira da agenda sem apagar o que ela já fez.
 - **`EXECUCAO_ROTINA` *produz* `INTERACAO` (1:0..1).** A execução aponta para a interação que gerou, e a interação aponta de volta para a rotina de origem. Os dois sentidos existem porque servem a telas diferentes — a aba de resultados navega da execução para a mensagem; o painel filtra as mensagens que nasceram de rotinas. O vínculo é opcional porque a interação ainda não existe quando o disparo começa: a execução é registrada **antes** de o pipeline rodar, para que uma rotina travada apareça em vez de sumir.
 - **Classificação opcional.** `interacao.intencao_id` admite nulo, porque nem toda mensagem chega a ser classificada: os bloqueios por injeção e por abuso ocorrem **antes** da classificação, e uma mensagem barrada ali é registrada sem intenção resolvida. O campo não referencia tabela alguma — o catálogo de intenções é artefato de código, revisado a cada sprint (5.4.9).
-- **Controle de visualização.** A permissão de leitura agregada do painel libera a consulta de todas as interações; sem ela, o usuário enxerga apenas as próprias. A verificação é feita no servidor, independentemente do que a interface exiba, e a permissão vem dos *claims* do Entra a cada requisição — não há coluna de permissão no banco.
+- **Controle de visualização.** A permissão de leitura agregada do painel (`ver_intencoes`) libera a consulta de todas as interações; sem ela, o usuário enxerga apenas as próprias. A verificação é feita no servidor, independentemente do que a interface exiba, a partir das permissões gravadas na sessão no login. Não há coluna de permissão em `usuario`: as permissões são um retrato do login, e não um atributo permanente da pessoa.
+- **`USUARIO` *abre* `SESSAO` (1:N).** Cada login é uma sessão própria, e várias podem coexistir. A sessão vence em `expira_em`, e as vencidas do usuário são apagadas no login seguinte.
+- **`USUARIO` *envia* `TRANSCRICAO_AUDIO` (1:N); `CONVERSA` *recebe* `TRANSCRICAO_AUDIO` (0..1:N); `TRANSCRICAO_AUDIO` *origina* `INTERACAO` (0..1:0..1).** A conversa e a interação só são preenchidas quando a transcrição conclui, porque é o texto reconhecido que entra no pipeline. Uma interação tem no máximo uma transcrição, o que o banco garante por unicidade.
+- **`PROJETO` *planeja* `MARCO`, *expõe* `RISCO` e *mede* `INDICADOR` (1:N cada).** Marco, risco e indicador pertencem a um único projeto, e o WH-02 confere esse pertencimento antes de aplicar um evento: um risco de outro projeto não é alterado em nome deste.
+- **`USUARIO` e `PROJETO` se relacionam por `PARTICIPACAO` (N:M).** Cada par usuário–projeto aparece uma vez, com um papel. A participação define o escopo de projetos acessíveis, carregado na sessão e revalidado na geração e na leitura dos avisos.
+- **`USUARIO` *escolhe* `PREFERENCIA_AVISO`, que *é assinada em* um `PROJETO` (1:N cada).** Há no máximo uma preferência por usuário, projeto e tipo de evento, e ela nasce desligada: não existe inscrição automática nem envio retroativo. A severidade mínima só se aplica a riscos.
+- **`USUARIO` *recebe* `AVISO`, que tem um `PROJETO` como *assunto* (1:N cada).** O mesmo evento não gera dois avisos para a mesma pessoa, por mais que seja reentregue.
+- **`FONTE_PORTFOLIO` *pode alterar* `PROJETO` (N:M).** O escopo de cada emissor — projetos e tipos de evento — é cadastrado nele, e a fonte é revalidada a cada evento processado, e não só no recebimento.
+- **`FONTE_PORTFOLIO` *versiona* `VERSAO_ENTIDADE` (1:N).** Há uma versão por emissor, tipo de evento e entidade. Ela sobrevive ao expurgo dos recebimentos, para que uma repetição antiga nunca reaplique estado.
+- **`RECEBIMENTO` *é aplicado em* `AUDITORIA_PORTFOLIO`, que *se origina* de uma `FONTE_PORTFOLIO` e registra a alteração de um `PROJETO` (1:N cada).** A auditoria registra também os eventos descartados — repetidos, antigos ou sem diferença —, e não só os aplicados.
+- **`CANAL_DRIVE` *entrega* `RECEBIMENTO` (0..1:N).** Só as notificações do Drive chegam por um canal; as do Apps Script não têm canal. Uma fonte documental, com seu cursor em `SINCRONIZACAO_FONTE`, *é observada por* vários canais ao longo do tempo (1:N), porque cada inscrição expira e é renovada.
+- **`ARQUIVO_CORPUS` *divide-se em* `TRECHO` (1:N).** No máximo um arquivo por documento lógico está indexado de cada vez; os demais ficam registrados com o destino que tiveram — substituído, em quarentena, não identificado, ignorado ou removido.
 
 ## 4.3 Modelo Lógico de Dados
 
 O modelo lógico traduz o domínio em estrutura relacional, com chaves, tipos, restrições de integridade e a validação da normalização.
 
-![Modelagem lógica do middleware](/docs/imagens/Modelagem%20Lógica.png)
-*Figura 19 — Modelagem Lógica.*
+![Modelagem lógica — (a) núcleo](/docs/imagens/modelagem-logica-a-nucleo.png)
 
-> Fonte: [`docs/diagramas/modelagem-logica.mmd`](diagramas/modelagem-logica.mmd).
+![Modelagem lógica — (b) portfólio e avisos](/docs/imagens/modelagem-logica-b-portfolio.png)
 
-**Decisão sobre identificadores.** As chaves primárias são UUID armazenados em colunas `text`. A modelagem da Sprint 2 previa inteiros sequenciais (`serial`) pela legibilidade em log e em consulta manual, com a contrapartida registrada: identificador sequencial revela volume de uso e permite enumeração de registros alheios. A troca estava prevista para "a onda que expõe o histórico na interface", e é esta. O tipo é `text`, e não `uuid` nativo, porque o valor circula como cadeia de caracteres em todo o código, nos *schemas* Pydantic e no contrato da API — converter na borda do banco acrescentaria uma tradução sem ganho. A revisão está detalhada em 4.4.2.
+![Modelagem lógica — (c) webhooks](/docs/imagens/modelagem-logica-c-webhook.png)
 
-**Decisão sobre vocabulários.** `perfil`, `canal`, `desfecho` e `status` são colunas de texto com domínio controlado por restrição `CHECK`, e não tipos enumerados do banco. É a escolha adequada enquanto os vocabulários ainda evoluem a cada sprint (5.4.9): `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria cada valor novo uma migração desconfortável, enquanto um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum. As listas de valores são **geradas a partir dos enums do código**, e não digitadas no DDL — ver 4.4.2. O identificador de intenção é a exceção deliberada: não tem `CHECK` nem chave estrangeira, porque o catálogo é explicitamente um artefato vivo, revisado a cada sprint.
+![Modelagem lógica — (d) corpus do RAG](/docs/imagens/modelagem-logica-d-rag.png)
+
+*Figura 19 — Modelagem Lógica, em quatro recortes: (a) núcleo; (b) portfólio e avisos; (c) webhooks; (d) corpus do RAG.*
+
+> Fontes: [`modelagem-logica-a-nucleo.mmd`](diagramas/modelagem-logica-a-nucleo.mmd), [`modelagem-logica-b-portfolio.mmd`](diagramas/modelagem-logica-b-portfolio.mmd), [`modelagem-logica-c-webhook.mmd`](diagramas/modelagem-logica-c-webhook.mmd) e [`modelagem-logica-d-rag.mmd`](diagramas/modelagem-logica-d-rag.mmd). Linha cheia é chave estrangeira; linha tracejada é referência lógica que o banco deliberadamente não amarra (4.3.2). No recorte (b), `USUARIO` aparece só com a chave, como ponto de chegada das referências; a tabela completa está no recorte (a).
+
+**Decisão sobre identificadores.** As chaves primárias das tabelas cujo registro nasce no middleware — conversa, interação, rotina, execução de rotina, transcrição, aviso, auditoria, canal do Drive e recebimento — são UUID armazenados em colunas `text`. A modelagem da Sprint 2 previa inteiros sequenciais (`serial`) pela legibilidade em log e em consulta manual, com a contrapartida registrada: identificador sequencial revela volume de uso e permite enumeração de registros alheios. A troca estava prevista para "a onda que expõe o histórico na interface", e foi feita nela. O tipo é `text`, e não `uuid` nativo, porque o valor circula como cadeia de caracteres em todo o código, nos *schemas* Pydantic e no contrato da API — converter na borda do banco acrescentaria uma tradução sem ganho. A revisão está detalhada em 4.4.2. As demais tabelas usam outra chave, por um destes motivos:
+
+- **Chave de outro sistema.** `usuario.id` é o `oid` do Entra. `portfolio.projeto.codigo` é o código de negócio do projeto (`PRJ-2024-018`), o mesmo que circula nos eventos do WH-02 e nos documentos; os `id` de marco, risco e indicador vêm da carga do portfólio e são os `entity_id` que o WH-02 recebe. `rag.arquivo.origem_id` é o identificador do arquivo no Drive, estável a renomeações, e `rag.trecho.trecho_id` é composto do documento e da posição do trecho, o mesmo identificador do vetor no índice. `webhook.fonte_portfolio.source_id` é o identificador do emissor, igual ao cabeçalho `X-Prata-Source`, e `webhook.sincronizacao_fonte.fonte_id` é a fonte documental configurada.
+- **Resumo em vez do segredo.** `sessao_usuario.id` é o SHA-256 do token do cookie, e não o token: quem lê a tabela — um *backup*, um *dump* de suporte — não consegue montar um cookie válido.
+- **Chave composta que é a própria regra.** `preferencia_aviso` (usuário, projeto, tipo de evento), `portfolio.usuario_projeto` (usuário, projeto) e `webhook.versao_entidade` (fonte, tipo de evento, entidade). Nas três, a unicidade da combinação é o que se quer garantir, e um identificador artificial obrigaria a repeti-la numa restrição `UNIQUE` à parte.
+
+**Decisão sobre vocabulários.** `perfil`, `canal`, `desfecho`, `status`, `estado`, `papel`, `provedor`, `resultado`, `situacao` e `event_type` são colunas de texto com domínio controlado por restrição `CHECK`, e não tipos enumerados do banco. É a escolha adequada enquanto os vocabulários ainda evoluem a cada sprint (5.4.9): `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria cada valor novo uma migração desconfortável, enquanto um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum — foi assim que `em_execucao` entrou em `execucao_rotina.status`, na migração `20260921_execucao_em_andamento`. As listas de valores são **geradas a partir dos enums do código**, e não digitadas no DDL — ver 4.4.2. O identificador de intenção é a exceção deliberada: não tem `CHECK` nem chave estrangeira, porque o catálogo é explicitamente um artefato vivo, revisado a cada sprint.
 
 ### 4.3.1 Esquema relacional e dicionário de dados
 
@@ -2252,16 +2307,346 @@ Um disparo e seu resultado. Não existia na modelagem da Sprint 2.
 | `rotina_id` | `text` | `FK (rotina.id)`, `NOT NULL` | Rotina disparada. |
 | `iniciada_em` | `TIMESTAMPTZ` | `NOT NULL` | Início, gravado **antes** de o pipeline rodar. |
 | `concluida_em` | `TIMESTAMPTZ` | `NULL` | Fim. Nulo enquanto o disparo não termina. |
-| `status` | `text` | `NOT NULL`, `CHECK` | `sucesso`, `bloqueada` (o pipeline barrou o prompt) ou `falha` (erro de execução). |
+| `status` | `text` | `NOT NULL`, `CHECK` | `em_execucao` (gravado no início), `sucesso`, `bloqueada` (o pipeline barrou o prompt) ou `falha` (erro de execução). |
 | `interacao_id` | `text` | `FK (interacao.id)`, `NULL` | Interação que o disparo produziu. Nula até o fim, porque ela ainda não existe quando ele começa. |
 | `erro` | `text` | `NULL` | Mensagem do erro, quando houver. |
 
 **Início e fim são gravados separadamente, e é isso que torna visível uma rotina travada.** Se a linha só pudesse ser escrita completa, um disparo que nunca termina não apareceria em lugar nenhum — nem para quem a cadastrou, nem para quem opera.
 
+#### 4.3.1.6 Tabela: `sessao_usuario`
+
+Recorte (a). Sessão de login aberta, guardada no servidor para que o logout e a revogação tenham efeito imediato. Lida e escrita só por `auth/sessao.py`.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | SHA-256 do token que viaja no cookie, e não o token. |
+| `usuario_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Dono da sessão. Apagar o usuário apaga as sessões dele. |
+| `perfil` | `text` | `NOT NULL`, `CHECK` | Perfil observado no login. |
+| `permissoes` | `text[]` | `NOT NULL`, `DEFAULT '{}'`, `CHECK` | Permissões derivadas dos *claims* no login. O `CHECK` só aceita subconjuntos de `ver_intencoes` e `gerir_rotinas`. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Abertura da sessão. |
+| `expira_em` | `TIMESTAMPTZ` | `NOT NULL` | Fim da validade. Sessão vencida não é resolvida, e as vencidas do usuário são apagadas no login seguinte. |
+| `projetos` | `text[]` | `NOT NULL`, `DEFAULT '{}'` | Códigos dos projetos acessíveis, lidos de `portfolio.usuario_projeto` no login para não repetir a consulta a cada requisição. |
+
+**`perfil`, `permissoes` e `projetos` são o retrato do login.** Valem até a sessão expirar: uma mudança de grupo no tenant, ou de participação num projeto, só chega no login seguinte. Nome e e-mail não se repetem aqui; vêm de `usuario` pela chave.
+
+#### 4.3.1.7 Tabela: `transcricao_audio`
+
+Recorte (a). Estado durável de um áudio enviado pelo canal de voz, separado do arquivo de áudio, que é temporário e apagado ao fim do processamento.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador da submissão, devolvido por `POST /voz/audios` e consultado em `GET /voz/audios/{id}/transcricao`. |
+| `usuario_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Quem enviou. A consulta filtra por ele: ninguém lê a transcrição de outra pessoa. |
+| `estado` | `text` | `NOT NULL`, `CHECK` | `recebido`, `transcrevendo`, `concluida` ou `falhou`. |
+| `formato` | `text` | `NOT NULL` | Formato do áudio recebido. |
+| `duracao_segundos` | `DOUBLE PRECISION` | `NOT NULL` | Duração do áudio. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Recebimento. |
+| `expira_em` | `TIMESTAMPTZ` | `NOT NULL` | A partir deste instante o registro deixa de ser servido — hoje, uma hora depois do recebimento. |
+| `conversa_id` | `text` | `FK (conversa.id)`, `NULL` | Conversa em que o texto entrou. Preenchida na conclusão. |
+| `interacao_id` | `text` | `FK (interacao.id)`, `UNIQUE`, `NULL` | Interação que o texto produziu, gravada na mesma transação que ela. No máximo uma transcrição por interação. |
+| `texto` | `text` | `NULL` | Texto reconhecido. |
+| `idioma` | `text` | `NULL` | Idioma reconhecido. |
+| `confianca` | `DOUBLE PRECISION` | `NULL` | Confiança do reconhecimento. |
+| `latencia_ms` | `INTEGER` | `NULL` | Tempo da transcrição. |
+| `mensagem_erro` | `text` | `NULL` | Motivo da falha, quando `estado` é `falhou`. |
+
+**A expiração existe; o expurgo, ainda não.** `expira_em` limita o que é servido, mas nenhuma tarefa apaga as linhas vencidas, e a política de retenção do áudio segue em aberto no código (`servicos/audio_service.py`). Por isso o índice sobre `expira_em` ainda não tem consulta que o use (4.4.1).
+
+#### 4.3.1.8 Tabela: `portfolio.projeto`
+
+Recorte (b). Projeto do portfólio. As linhas nascem da carga do portfólio; o WH-02 só altera `status`.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `codigo` | `text` | `PK` | Código de negócio do projeto, como `PRJ-2024-018`. |
+| `nome` | `text` | `NOT NULL` | Nome do projeto. |
+| `descricao` | `text` | `NULL` | Descrição. |
+| `status` | `text` | `NOT NULL`, `CHECK` | `planejado`, `em_andamento`, `suspenso`, `concluido` ou `cancelado`. Único campo desta tabela que o WH-02 altera. |
+| `prioridade` | `text` | `NOT NULL`, `CHECK` | `baixa`, `media`, `alta` ou `critica`. |
+| `data_inicio` | `DATE` | `NULL` | Início do projeto. |
+| `data_fim_prevista` | `DATE` | `NULL` | Término planejado. |
+| `data_fim_real` | `DATE` | `NULL` | Término efetivo. |
+| `orcamento_aprovado` | `NUMERIC(15,2)` | `NULL` | Orçamento aprovado. |
+| `orcamento_atual` | `NUMERIC(15,2)` | `NULL` | Orçamento vigente. |
+| `avanco_percentual` | `INTEGER` | `NOT NULL`, `CHECK` | Avanço físico, de 0 a 100. |
+| `lider_id` | `text` | `NULL` | Identificador do líder, sem chave estrangeira. Não é preenchido pela carga nem lido por consulta alguma (4.3.2). |
+| `criado_em` | `TIMESTAMPTZ` | `NOT NULL` | Carga do registro. |
+| `atualizado_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração, inclusive as feitas pelo WH-02. |
+
+#### 4.3.1.9 Tabela: `portfolio.marco`
+
+Recorte (b). Entrega planejada de um projeto.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador do marco; é o `entity_id` dos eventos `marco.alterado`. |
+| `projeto_codigo` | `text` | `FK (portfolio.projeto.codigo)`, `NOT NULL` | Projeto a que o marco pertence. |
+| `nome` | `text` | `NOT NULL` | Nome da entrega. |
+| `descricao` | `text` | `NULL` | Descrição. |
+| `data_prevista` | `DATE` | `NOT NULL` | Data planejada. Alterada pelo WH-02. |
+| `data_real` | `DATE` | `NULL` | Data em que o marco foi cumprido. Alterada pelo WH-02. |
+| `status` | `text` | `NOT NULL`, `CHECK` | `nao_iniciado`, `em_andamento`, `concluido`, `atrasado` ou `cancelado`. Alterado pelo WH-02. |
+| `criado_em` | `TIMESTAMPTZ` | `NOT NULL` | Carga do registro. |
+| `atualizado_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração. |
+
+#### 4.3.1.10 Tabela: `portfolio.risco`
+
+Recorte (b). Risco de um projeto.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador do risco; é o `entity_id` dos eventos `risco.alterado`. |
+| `projeto_codigo` | `text` | `FK (portfolio.projeto.codigo)`, `NOT NULL` | Projeto exposto ao risco. |
+| `descricao` | `text` | `NOT NULL` | Descrição do risco. |
+| `categoria` | `text` | `NULL` | Categoria. |
+| `probabilidade` | `INTEGER` | `NOT NULL`, `CHECK` | De 1 a 5. Alterada pelo WH-02. |
+| `impacto` | `INTEGER` | `NOT NULL`, `CHECK` | De 1 a 5. Alterado pelo WH-02. |
+| `status` | `text` | `NOT NULL`, `CHECK` | `identificado`, `monitorado`, `mitigado` ou `materializado`. Alterado pelo WH-02. |
+| `plano_mitigacao` | `text` | `NULL` | Plano de resposta. |
+| `criado_em` | `TIMESTAMPTZ` | `NOT NULL` | Carga do registro. |
+| `atualizado_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração. |
+
+**A severidade não é coluna.** O produto `probabilidade × impacto`, de 1 a 25, é calculado quando o consumidor seleciona os avisos (9.1.2.7.2), e não armazenado: guardá-lo criaria um valor dependente de outros dois da mesma linha (4.3.3).
+
+#### 4.3.1.11 Tabela: `portfolio.indicador`
+
+Recorte (b). Medida de desempenho de um projeto. Fica fora do WH-02.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador do indicador. |
+| `projeto_codigo` | `text` | `FK (portfolio.projeto.codigo)`, `NOT NULL` | Projeto medido. |
+| `nome` | `text` | `NOT NULL` | Nome do indicador. |
+| `descricao` | `text` | `NULL` | Descrição. |
+| `valor_atual` | `NUMERIC(15,2)` | `NULL` | Última medição. |
+| `valor_meta` | `NUMERIC(15,2)` | `NULL` | Meta. |
+| `unidade` | `text` | `NULL` | Unidade de medida. |
+| `data_medicao` | `DATE` | `NULL` | Data da última medição. |
+| `criado_em` | `TIMESTAMPTZ` | `NOT NULL` | Carga do registro. |
+| `atualizado_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração. |
+
+#### 4.3.1.12 Tabela: `portfolio.usuario_projeto`
+
+Recorte (b). Participação de um usuário em um projeto. É a única tabela do *schema* `portfolio` que aponta para fora dele.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `usuario_id` | `text` | `PK`, `FK (usuario.id)` | Participante. |
+| `projeto_codigo` | `text` | `PK`, `FK (portfolio.projeto.codigo)` | Projeto. |
+| `papel` | `text` | `NOT NULL`, `CHECK` | `lider`, `membro` ou `observador`. |
+| `criado_em` | `TIMESTAMPTZ` | `NOT NULL` | Início da participação. |
+
+**A participação é o escopo de acesso aos projetos.** É ela que vira a lista `projetos` da sessão e que a geração e a leitura dos avisos consultam. As duas chaves estrangeiras são `ON DELETE CASCADE`: a participação não é registro de auditoria, e não tem sentido sem o usuário ou o projeto.
+
+#### 4.3.1.13 Tabela: `preferencia_aviso`
+
+Recorte (b), no *schema* `public`. Adesão de um usuário aos avisos de um tipo de evento em um projeto.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `usuario_id` | `text` | `PK`, `FK (usuario.id)` | Quem aderiu. Derivado da sessão, nunca do payload. |
+| `projeto_codigo` | `text` | `PK` | Projeto. Sem chave estrangeira (4.3.2). |
+| `event_type` | `text` | `PK`, `CHECK` | `projeto.status_alterado`, `marco.alterado` ou `risco.alterado`. |
+| `ativa` | `BOOLEAN` | `NOT NULL`, `DEFAULT FALSE` | Desligada por padrão: não há inscrição automática. |
+| `severidade_minima` | `INTEGER` | `NULL`, `CHECK` | Só para `risco.alterado`, de 1 a 25. Nula significa qualquer nível. |
+| `atualizada_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração. |
+
+**O `CHECK` de `severidade_minima` amarra duas colunas.** Um mínimo de severidade em evento que não seja de risco é recusado pelo banco, e não só pela interface.
+
+#### 4.3.1.14 Tabela: `aviso`
+
+Recorte (b), no *schema* `public`. Aviso privado de uma alteração do portfólio.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador do aviso. |
+| `usuario_id` | `text` | `FK (usuario.id)`, `NOT NULL` | Destinatário. |
+| `projeto_codigo` | `text` | `NOT NULL` | Projeto alterado. Sem chave estrangeira (4.3.2). |
+| `source_id` | `text` | `NOT NULL` | Emissor do evento. |
+| `event_id` | `text` | `NOT NULL` | Identificador do evento no emissor. |
+| `event_type` | `text` | `NOT NULL`, `CHECK` | Tipo de evento. |
+| `entity_id` | `text` | `NOT NULL` | Projeto, marco ou risco alterado. |
+| `versao` | `BIGINT` | `NOT NULL` | Versão da entidade que gerou o aviso. |
+| `diferencas` | `JSONB` | `NOT NULL` | Campos alterados, com o valor anterior e o novo. |
+| `criado_em` | `TIMESTAMPTZ` | `NOT NULL` | Geração do aviso. |
+| `lido_em` | `TIMESTAMPTZ` | `NULL` | Leitura. Nulo enquanto não lido. |
+
+**`UNIQUE (source_id, event_id, usuario_id)` é a idempotência dos avisos.** A reentrega de um evento já processado não gera o aviso de novo. O aviso guarda um retrato do evento, e não uma referência à auditoria, mas é lido sob as permissões de hoje: o acesso ao projeto é revalidado a cada leitura, e perder o acesso esconde também os avisos antigos (9.1.2.7.2). Os avisos além do prazo de retenção são expurgados pela manutenção do *worker*.
+
+#### 4.3.1.15 Tabela: `webhook.fonte_portfolio`
+
+Recorte (c). Cadastro de cada emissor do WH-02 e do escopo que ele pode alterar.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `source_id` | `text` | `PK`, `CHECK` | Identificador do emissor: de 1 a 64 caracteres ASCII, letras, números, `_` e `-`, o mesmo formato do cabeçalho `X-Prata-Source`. |
+| `planilha_id` | `text` | `NOT NULL` | Planilha de origem no Drive. |
+| `projetos` | `text[]` | `NOT NULL` | Códigos dos projetos que a fonte pode alterar. |
+| `tipos` | `text[]` | `NOT NULL`, `CHECK` | Tipos de evento que a fonte pode emitir; o `CHECK` só aceita subconjuntos dos três tipos. |
+| `ativa` | `BOOLEAN` | `NOT NULL`, `DEFAULT TRUE` | Desativar revoga a fonte sem apagar o histórico. |
+| `criada_em` | `TIMESTAMPTZ` | `NOT NULL` | Cadastro. |
+| `atualizada_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração. |
+
+#### 4.3.1.16 Tabela: `webhook.versao_entidade`
+
+Recorte (c). Última versão que um emissor aplicou a uma entidade do portfólio.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `source_id` | `text` | `PK` | Emissor. |
+| `event_type` | `text` | `PK`, `CHECK` | Tipo de evento. |
+| `entity_id` | `text` | `PK` | Entidade. |
+| `versao` | `BIGINT` | `NOT NULL`, `CHECK` | Última versão aplicada, a partir de 0. `BIGINT` porque o emissor numera até 2⁵³ − 1, o maior inteiro exato em JavaScript. |
+| `dados_sha256` | `BYTEA` | `NOT NULL` | Resumo SHA-256 dos campos normalizados da versão. Decide entre repetição inofensiva e conflito quando a mesma versão chega de novo. |
+| `atualizada_em` | `TIMESTAMPTZ` | `NOT NULL` | Última aplicação. |
+
+**A linha é travada durante a aplicação de um evento** (`SELECT ... FOR UPDATE`), o que serializa eventos concorrentes da mesma entidade. Versão menor que a gravada termina como `ignorado_antigo`; a mesma versão com o mesmo resumo, como `repetido`; a mesma versão com resumo diferente é conflito permanente, sem sobrescrita. No primeiro evento de uma entidade, a linha nasce com versão 0 e resumo zerado.
+
+#### 4.3.1.17 Tabela: `webhook.auditoria_portfolio`
+
+Recorte (c). Trilha técnica de cada evento do portfólio processado.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id` | `text` | `PK` | Identificador do registro. |
+| `message_id` | `text` | `NOT NULL` | Recebimento que originou o evento. Sem chave estrangeira (4.3.2). |
+| `source_id` | `text` | `NOT NULL` | Emissor. |
+| `event_id` | `text` | `NOT NULL` | Identificador do evento no emissor. |
+| `event_type` | `text` | `NOT NULL` | Tipo de evento. |
+| `projeto_codigo` | `text` | `NOT NULL` | Projeto alterado. |
+| `entity_id` | `text` | `NOT NULL` | Entidade alterada. |
+| `versao` | `BIGINT` | `NOT NULL` | Versão do evento. |
+| `anteriores` | `JSONB` | `NOT NULL` | Valores dos campos autorizados antes da aplicação. |
+| `novos` | `JSONB` | `NOT NULL` | Valores dos campos autorizados depois da aplicação. |
+| `resultado` | `text` | `NOT NULL`, `CHECK` | `aplicado`, `sem_diferenca`, `repetido` ou `ignorado_antigo`. |
+| `registrado_em` | `TIMESTAMPTZ` | `NOT NULL` | Momento do registro. |
+
+**É trilha técnica, e não interação.** O processo que altera o portfólio não é um usuário, e a auditoria não cria uma `interacao` fictícia para representá-lo (9.1.2.7.2). A tabela não tem chave estrangeira nenhuma: a trilha precisa sobreviver ao expurgo dos recebimentos e a qualquer mudança no cadastro das fontes.
+
+#### 4.3.1.18 Tabela: `webhook.canal_drive`
+
+Recorte (c). Inscrição de notificação de mudanças no Drive (WH-01).
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `canal_id` | `text` | `PK` | UUID gerado pelo middleware e enviado ao Google como `id` do canal. |
+| `fonte_id` | `text` | `NOT NULL` | Fonte documental observada. |
+| `token_sha256` | `BYTEA` | `NOT NULL`, `CHECK` | SHA-256 do token do canal, com exatamente 32 bytes. Nunca o token. |
+| `recurso_id` | `text` | `NULL` | Recurso confirmado pela resposta autenticada da inscrição. |
+| `recurso_uri` | `text` | `NULL` | URI do recurso confirmado. |
+| `expira_em` | `TIMESTAMPTZ` | `NOT NULL` | Enquanto pendente, o prazo local da inscrição; depois, a expiração concedida pelo Google. |
+| `estado` | `text` | `NOT NULL`, `CHECK` | `pendente`, `ativo` ou `encerrado`. |
+| `criado_em` | `TIMESTAMPTZ` | `NOT NULL` | Registro da inscrição. |
+| `ativado_em` | `TIMESTAMPTZ` | `NULL` | Confirmação pelo Drive. |
+| `encerrado_em` | `TIMESTAMPTZ` | `NULL` | Encerramento. |
+
+**Guardar o resumo, e não o token, impede forjar notificação a partir do banco.** E um `CHECK` de duas colunas (`ck_canal_drive_recurso_confirmado`) impede canal `ativo` sem recurso confirmado: um recurso visto apenas num *callback* nunca é gravado aqui.
+
+#### 4.3.1.19 Tabela: `webhook.recebimento`
+
+Recorte (c). Uma notificação aceita, de qualquer dos dois webhooks, da chegada ao processamento.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `message_id` | `text` | `PK` | UUID do evento interno publicado na fila. |
+| `correlation_id` | `text` | `NOT NULL` | Correlação do fluxo, para os logs. |
+| `provedor` | `text` | `NOT NULL`, `CHECK` | `google_drive` ou `apps_script`. |
+| `chave_externa` | `text` | `NOT NULL` | Chave da notificação no provedor: `canal:número da mensagem` no Drive, `source_id:event_id` no Apps Script. |
+| `fonte_id` | `text` | `NOT NULL` | Fonte que originou a notificação. |
+| `canal_id` | `text` | `FK (webhook.canal_drive.canal_id)`, `NULL` | Canal do Drive. Nulo no Apps Script. |
+| `evento` | `JSONB` | `NOT NULL` | Payload normalizado do evento interno — nunca o token, a URI recebida ou conteúdo de documento. |
+| `recebido_em` | `TIMESTAMPTZ` | `NOT NULL` | Chegada. |
+| `publicado_em` | `TIMESTAMPTZ` | `NULL` | Publicação confirmada na fila. Nulo enquanto pendente. |
+| `processado_em` | `TIMESTAMPTZ` | `NULL` | Fim do processamento pelo *worker*. |
+| `tentativas` | `INTEGER` | `NOT NULL`, `DEFAULT 0`, `CHECK` | Tentativas de entrega, nunca negativas. |
+| `erro_codigo` | `text` | `NULL` | Código da falha, sem conteúdo sensível. |
+| `corpo_sha256` | `BYTEA` | `NULL`, `CHECK` | SHA-256 dos bytes exatos do corpo, só no WH-02. Distingue a repetição legítima de um corpo diferente com o mesmo identificador. |
+
+**`UNIQUE (provedor, chave_externa)` torna a repetição idempotente, e `publicado_em` nulo é o que a recuperação procura.** O recebimento é gravado antes da publicação na fila: um processo que caia entre as duas etapas deixa o pendente visível, em vez de perdê-lo.
+
+#### 4.3.1.20 Tabela: `webhook.sincronizacao_fonte`
+
+Recorte (c). Cursor de leitura de mudanças de cada fonte documental.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `fonte_id` | `text` | `PK` | Fonte documental. |
+| `cursor` | `text` | `NULL` | `pageToken` do Drive confirmado. Serve à leitura das mudanças; não é credencial nem chave de deduplicação, e vem do servidor, nunca de um *callback*. |
+| `estado` | `text` | `NOT NULL`, `CHECK` | `ociosa`, `em_andamento` ou `falha`. |
+| `concluida_em` | `TIMESTAMPTZ` | `NULL` | Última sincronização concluída. |
+| `atualizado_em` | `TIMESTAMPTZ` | `NOT NULL` | Última alteração. |
+
+#### 4.3.1.21 Tabela: `rag.arquivo`
+
+Recorte (d). Uma linha por arquivo que a fonte já listou, com o destino que ele teve na ingestão e por quê. É o que torna a ingestão auditável: "este arquivo não está no índice porque foi substituído pela versão 3" é uma linha, e não um silêncio.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `origem_id` | `text` | `PK` | Identificador do arquivo no Drive, estável a renomeações. |
+| `nome` | `text` | `NOT NULL` | Nome do arquivo. |
+| `mime` | `text` | `NOT NULL` | Tipo MIME. |
+| `md5` | `text` | `NULL` | Resumo MD5 do conteúdo, informado pela fonte. |
+| `modificado_em` | `TIMESTAMPTZ` | `NULL` | Última modificação na fonte. |
+| `link` | `text` | `NULL` | Endereço do arquivo, usado na citação. |
+| `documento_id` | `text` | `NULL` | Documento lógico a que o arquivo pertence. Nulo quando o arquivo não foi identificado. |
+| `codigo` | `text` | `NULL` | Código do documento, lido da ficha. |
+| `tipo` | `text` | `NULL` | Tipo de documento. |
+| `versao` | `INTEGER` | `NULL` | Versão do documento. |
+| `periodo` | `text` | `NULL` | Período de referência. |
+| `data_referencia` | `DATE` | `NULL` | Data de referência. |
+| `projeto` | `text` | `NULL` | Projeto a que o documento se refere. |
+| `classificacao` | `text` | `NULL` | Classificação de acesso declarada no documento. |
+| `perfis` | `text[]` | `NULL`, `CHECK` | Permissão efetiva do documento. Nula no consolidado do portfólio, em que cada linha tem a sua (ver `rag.trecho.perfis`). |
+| `situacao` | `text` | `NOT NULL`, `CHECK` | `indexado`, `substituido`, `quarentena`, `nao_identificado`, `ignorado` ou `removido`. |
+| `motivo` | `text` | `NULL` | Por que o arquivo teve esse destino. |
+| `observacoes` | `text[]` | `NOT NULL`, `DEFAULT '{}'` | Observações da ingestão. |
+| `metadados` | `JSONB` | `NOT NULL`, `DEFAULT '{}'` | Ficha completa, para que uma execução em que o arquivo não mudou não precise baixá-lo de novo. |
+| `assinatura` | `text` | `NULL` | MD5, versão do *pipeline*, permissão e contexto. Diferente da calculada na execução, o documento é reindexado. |
+| `total_trechos` | `INTEGER` | `NOT NULL`, `DEFAULT 0` | Trechos indexados. |
+| `visto_em` | `TIMESTAMPTZ` | `NOT NULL` | Última vez que a fonte listou o arquivo. |
+| `indexado_em` | `TIMESTAMPTZ` | `NULL` | Última indexação. |
+
+**No máximo um arquivo indexado por documento lógico**, o que o banco garante com um índice único parcial (`ix_arquivo_documento_indexado`, 4.4.1). Duas versões do mesmo documento no índice ao mesmo tempo seria exatamente a contradição que a resolução de vigência existe para evitar.
+
+#### 4.3.1.22 Tabela: `rag.trecho`
+
+Recorte (d). Texto de cada trecho indexado, lido pelo `trecho_id` depois da busca vetorial.
+
+| Coluna | Tipo | Restrições | Descrição |
+| :--- | :--- | :--- | :--- |
+| `trecho_id` | `text` | `PK` | Composto do documento e da posição do trecho; é também o identificador do vetor no índice. |
+| `documento_id` | `text` | `NOT NULL` | Documento lógico. |
+| `origem_id` | `text` | `FK (rag.arquivo.origem_id)`, `NOT NULL` | Arquivo de origem. |
+| `ordinal` | `INTEGER` | `NOT NULL` | Posição do trecho no documento. |
+| `texto` | `text` | `NOT NULL` | Exatamente o texto que foi vetorizado. |
+| `tokens` | `INTEGER` | `NOT NULL` | Tamanho do trecho em *tokens*. |
+| `localizador` | `text` | `NOT NULL` | Seção, aba ou *slide*: o que a citação mostra ao usuário. |
+| `projeto` | `text` | `NULL` | Projeto do trecho. |
+| `perfis` | `text[]` | `NOT NULL`, `CHECK` | Perfis autorizados a ler o trecho — a mesma permissão que foi para o índice. |
+
+**O índice vetorial guarda vetor, identificador e filtros, nunca o texto.** O texto mora aqui, e é lido pelo `trecho_id` depois da busca (invariante 1 de `rag/vetorial/base.py`).
+
 ### 4.3.2 Integridade referencial e restrições
 
 - **Unicidade de identidade.** `usuario.id` é a chave primária e `usuario.email` é único, impedindo duplicação do mesmo colaborador.
-- **Todas as chaves estrangeiras são `ON DELETE RESTRICT` e `ON UPDATE CASCADE`.** São sete: `conversa → usuario`, `interacao → conversa`, `interacao → usuario`, `interacao → rotina`, `rotina → usuario`, `execucao_rotina → rotina` e `execucao_rotina → interacao`. O registro de auditoria não pode ser removido por efeito colateral da exclusão de um usuário ou de uma rotina: preservar a trilha prevalece sobre a conveniência da limpeza.
+- **São 20 chaves estrangeiras, com quatro políticas, e a política segue o valor de auditoria do dado.** A regra é: o que é trilha não pode sumir por efeito colateral da exclusão de outra linha; o que é dado pessoal sem valor de auditoria vai embora com o dono.
+
+  | Política | Chaves estrangeiras | Por quê |
+  | :--- | :--- | :--- |
+  | `ON UPDATE CASCADE ON DELETE RESTRICT` (14) | `conversa → usuario`; `interacao → conversa`, `→ usuario` e `→ rotina`; `rotina → usuario`; `execucao_rotina → rotina` e `→ interacao`; `transcricao_audio → usuario`, `→ conversa` e `→ interacao`; `portfolio.marco`, `portfolio.risco` e `portfolio.indicador → portfolio.projeto`; `rag.trecho → rag.arquivo` | São registro de auditoria, ou dados que só existem pendurados em outro. Preservar a trilha prevalece sobre a conveniência da limpeza: um usuário com interações não é apagado, e um projeto com marcos não some levando-os junto. |
+  | `ON UPDATE CASCADE ON DELETE CASCADE` (3) | `sessao_usuario → usuario`; `portfolio.usuario_projeto → usuario` e `→ portfolio.projeto` | Sessão e participação não são auditoria. Remover um usuário deve encerrar o acesso dele junto, e a participação não tem sentido sem as duas pontas. |
+  | `ON DELETE CASCADE`, sem `ON UPDATE` (2) | `preferencia_aviso → usuario`; `aviso → usuario` | Preferências e avisos são dado do usuário, privado e com retenção curta. A migração `20260925_avisos_portfolio` não declara `ON UPDATE`, e o padrão do PostgreSQL (`NO ACTION`) vale aqui — sem efeito prático, porque o `id` do usuário é o `oid` do Entra e não muda. |
+  | `ON DELETE RESTRICT`, sem `ON UPDATE` (1) | `webhook.recebimento → webhook.canal_drive` | Canais são preservados enquanto houver recebimento retido. O `canal_id` é um UUID gerado pelo middleware, que não muda. |
+
+- **Referências deliberadamente sem chave estrangeira.** Algumas colunas apontam para outra entidade sem que o banco amarre o vínculo, e cada caso tem um motivo:
+  - `interacao.intencao_id` — o catálogo de intenções é artefato de código, revisado a cada sprint (5.4.9).
+  - `preferencia_aviso.projeto_codigo` e `aviso.projeto_codigo` — o portfólio é mapeado em outro *metadata* do SQLAlchemy, e o acesso ao projeto é revalidado a cada leitura, e não congelado na linha.
+  - `portfolio.projeto.lider_id` — não tem chave para `usuario`, a carga sintética não o preenche e nenhuma consulta o lê. A liderança que o sistema usa é a de `usuario_projeto`, com papel `lider` (4.3.3).
+  - `webhook.auditoria_portfolio.message_id` e as demais colunas da auditoria — a trilha precisa sobreviver ao expurgo dos recebimentos e a mudanças no cadastro das fontes.
+  - `webhook.versao_entidade.source_id` — não tem chave para `webhook.fonte_portfolio`, cuja vigência a aplicação revalida antes de cada evento; e o controle de versão não depende dos recibos, para que uma repetição antiga não reaplique estado depois do expurgo deles.
+  - `webhook.fonte_portfolio.projetos` — é uma lista (`text[]`), e o PostgreSQL não aceita chave estrangeira em elemento de *array*; o escopo é conferido pela aplicação a cada evento.
+  - `fonte_id` em `canal_drive`, `recebimento` e `sincronizacao_fonte` — identifica a fonte documental configurada, que não é tabela.
+  - `rag.arquivo.documento_id` e `rag.trecho.documento_id` — o documento lógico é um conceito da ingestão, e não uma linha; o que o banco amarra é o arquivo de origem.
 - **Apagar uma rotina que já disparou é recusado pela aplicação, com orientação.** A restrição do banco barraria de qualquer forma, mas devolveria uma violação de integridade que o chamador teria de interpretar. A operação correta é desativar (`ativa = FALSE`), que tira a rotina da agenda sem apagar o que ela já fez.
 - **Arquivar não apaga.** `conversa.arquivada_em` marca a conversa como fora da lista, e as interações continuam onde estavam. Excluí-las abriria caminho para alguém limpar a própria trilha depois de um bloqueio.
 - **`interacao.prompt`, `interacao.resposta` e `rotina.prompt` são `NOT NULL`.** Uma solicitação sem texto não é registro incompleto, é registro inválido: não há o que auditar nem o que classificar.
@@ -2269,24 +2654,46 @@ Um disparo e seu resultado. Não existia na modelagem da Sprint 2.
 
 ### 4.3.3 Justificativa de normalização (3FN)
 
-1. **Primeira Forma Normal.** Os atributos das cinco tabelas do núcleo inicial são atômicos. A evolução de autenticação armazena as permissões da sessão em `sessao_usuario`; esse registro complementar não está representado nos diagramas da migração inicial (4.1).
-2. **Segunda Forma Normal.** Todas as chaves primárias são simples, e portanto não há dependência parcial em nenhuma tabela.
-3. **Terceira Forma Normal.** Nenhum atributo não-chave depende de outro atributo não-chave. Em `interacao`, `prompt`, `resposta`, `intencao_id`, `desfecho` e `latencia_ms` dependem exclusivamente de `id`: todos são resultado do processamento daquela mensagem específica, e não derivam do usuário nem da conversa. A única redundância do modelo é `interacao.perfil`, e ela é **desnormalização deliberada e documentada** (4.3.1.3): o perfil histórico não é derivável do estado atual do usuário, porque o estado atual muda.
+1. **Primeira Forma Normal.** As colunas escalares das 22 tabelas são atômicas. Há dois desvios deliberados, ambos de valores que o modelo trata como uma unidade, e não como linhas de outra entidade:
+   - **Listas (`text[]`)** em `sessao_usuario.permissoes` e `.projetos`, `webhook.fonte_portfolio.projetos` e `.tipos`, `rag.arquivo.perfis` e `.observacoes` e `rag.trecho.perfis`. Cada lista é lida e gravada inteira — o retrato do login, o escopo de um emissor, a permissão de um documento —, e nunca consultada elemento a elemento por outra tabela. Onde o conteúdo é vocabulário fechado, um `CHECK` com o operador de contenção `<@` recusa qualquer valor fora dele. Uma tabela associativa por lista traria uma junção a cada requisição autenticada, para nenhum ganho de integridade que o `CHECK` já não dê.
+   - **Documentos (`JSONB`)** em `interacao.latencia_etapas`, `aviso.diferencas`, `webhook.recebimento.evento`, `webhook.auditoria_portfolio.anteriores` e `.novos` e `rag.arquivo.metadados`. São retratos de algo cuja forma varia — as etapas que o *pipeline* percorreu, os campos que um tipo de evento autoriza, a ficha de um documento — e são gravados e lidos inteiros. Uma coluna por etapa ou por campo exigiria uma migração a cada guarda ou tipo de evento novo.
+2. **Segunda Forma Normal.** Três tabelas têm chave composta, e em nenhuma há dependência parcial. Em `preferencia_aviso`, `ativa`, `severidade_minima` e `atualizada_em` descrevem a adesão de um usuário a um tipo de evento de um projeto, e não o usuário, o projeto ou o tipo isoladamente. Em `portfolio.usuario_projeto`, `papel` e `criado_em` dependem do par: a mesma pessoa é líder num projeto e observadora em outro. Em `webhook.versao_entidade`, `versao`, `dados_sha256` e `atualizada_em` dependem da tripla: o mesmo emissor numera independentemente cada tipo de evento de cada entidade. As demais tabelas têm chave simples.
+3. **Terceira Forma Normal.** Nenhum atributo não chave depende de outro atributo não chave, com as exceções abaixo, que são **desnormalizações deliberadas e documentadas**:
+   - **Perfil no momento do fato.** `interacao.perfil` (4.3.1.3) e `sessao_usuario.perfil` repetem `usuario.perfil`, mas registram o perfil de um instante — da interação ou do login —, que não é derivável do estado atual, porque o estado atual muda.
+   - **Retrato do evento.** `aviso` e `webhook.auditoria_portfolio` copiam emissor, evento, tipo, projeto, entidade e versão. Cada um precisa ser legível sozinho: o aviso, pelo destinatário, mesmo depois do expurgo dos recebimentos; a auditoria, por quem investiga, sem depender de tabela nenhuma.
+   - **Filtros do trecho.** `rag.trecho.projeto` e `rag.trecho.perfis` são os filtros que acompanham o vetor no índice e devem coincidir exatamente com ele. Não são cópia de `rag.arquivo`: no consolidado do portfólio, cada linha do documento tem a sua permissão, e `rag.arquivo.perfis` fica nulo.
+   - **`portfolio.projeto.lider_id`** repetiria a participação com papel `lider` de `usuario_projeto`. A coluna existe desde a migração do portfólio, mas não é preenchida nem lida (4.3.2), e por isso não chega a criar duas fontes para o mesmo fato.
+
+   Na direção oposta, a severidade de um risco (`probabilidade × impacto`) **não** é armazenada: é calculada na consulta que seleciona os avisos, justamente para não criar um atributo dependente de outros dois da mesma linha (4.3.1.10).
 
 ## 4.4 Modelo Físico de Dados
 
-O modelo físico implementa o esquema para **PostgreSQL 16**, com as restrições de integridade e os índices que sustentam o histórico e as agregações do painel.
+O modelo físico implementa o esquema para **PostgreSQL 16**, em quatro *schemas* (`public`, `portfolio`, `webhook` e `rag`), com as restrições de integridade e os índices que sustentam o histórico, as agregações do painel, as consultas do portfólio, os avisos e a recuperação dos webhooks.
 
-![Modelagem física do middleware](/docs/imagens/Modelagem%20Física.png)
-*Figura 20 — Modelagem Física.*
+![Modelagem física — (a) núcleo](/docs/imagens/modelagem-fisica-a-nucleo.png)
 
-> Fonte: [`docs/diagramas/modelagem-fisica.mmd`](diagramas/modelagem-fisica.mmd). O diagrama traz os tipos e os índices como estão no banco criado pela migração inicial; o DDL completo está em 4.4.1.
+![Modelagem física — (b) portfólio e avisos](/docs/imagens/modelagem-fisica-b-portfolio.png)
+
+![Modelagem física — (c) webhooks](/docs/imagens/modelagem-fisica-c-webhook.png)
+
+![Modelagem física — (d) corpus do RAG](/docs/imagens/modelagem-fisica-d-rag.png)
+
+*Figura 20 — Modelagem Física, em quatro recortes: (a) núcleo; (b) portfólio e avisos; (c) webhooks; (d) corpus do RAG.*
+
+> Fontes: [`modelagem-fisica-a-nucleo.mmd`](diagramas/modelagem-fisica-a-nucleo.mmd), [`modelagem-fisica-b-portfolio.mmd`](diagramas/modelagem-fisica-b-portfolio.mmd), [`modelagem-fisica-c-webhook.mmd`](diagramas/modelagem-fisica-c-webhook.mmd) e [`modelagem-fisica-d-rag.mmd`](diagramas/modelagem-fisica-d-rag.mmd). Os diagramas trazem os tipos do PostgreSQL, as colunas na ordem física, os nomes das restrições e dos índices e a política de cada chave estrangeira, como estão no banco na revisão `20260925_audio_persistente`. Só as chaves estrangeiras são desenhadas; as referências sem chave estão no recorte lógico correspondente (Figura 19). O DDL completo está em 4.4.1.
 
 ### 4.4.1 Script DDL
 
-O DDL abaixo foi **extraído do banco em operação** (`pg_dump --schema-only`), e não redigido à parte. A diferença importa: um script escrito à mão diverge do esquema real na primeira migração que ninguém lembra de refletir aqui. A fonte de verdade é a migração Alembic em `src/middleware/migrations/versions/`; esta seção é a leitura dela.
+O DDL abaixo foi **redigido para leitura e conferido contra o banco**: as 12 migrações foram aplicadas a um PostgreSQL 16 vazio até a revisão `20260925_audio_persistente`, e o `pg_dump --schema-only` desse banco foi comparado com o de outro banco vazio em que se aplicou só este script. Os dois *dumps* são idênticos — mesmas tabelas, colunas na mesma ordem, mesmos tipos, *defaults*, restrições e índices. A comparação importa porque um script escrito à mão diverge do esquema real na primeira migração que ninguém lembra de refletir aqui: a versão anterior desta seção, por exemplo, ainda trazia o `status` de `execucao_rotina` sem `em_execucao`. A fonte de verdade continua sendo a migração Alembic em `src/middleware/migrations/versions/`; esta seção é a leitura dela, e a comparação deve ser refeita a cada migração nova.
+
+As colunas acrescentadas depois da criação da tabela — `sessao_usuario.projetos`, `interacao.latencia_etapas` e `webhook.recebimento.corpo_sha256` — aparecem no fim da tabela, porque é lá que o `ALTER TABLE ... ADD COLUMN` as põe. Os índices estão agrupados por recorte no fim do script, cada um com a consulta ou a rota que sustenta, e os que hoje não têm consulta que os use estão marcados como tal.
 
 ```sql
+-- ============================================================
+-- RECORTE (a) — NÚCLEO: identidade, sessão, conversa, interação,
+-- rotinas e áudio (schema public)
+-- ============================================================
+
 -- TABELA: usuario
 
 CREATE TABLE usuario (
@@ -2303,6 +2710,31 @@ CREATE TABLE usuario (
     CONSTRAINT ck_usuario_perfil CHECK (
         perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')
     )
+);
+
+-- TABELA: sessao_usuario
+
+CREATE TABLE sessao_usuario (
+    id          text        NOT NULL,   -- SHA-256 do token do cookie
+    usuario_id  text        NOT NULL,
+    perfil      text        NOT NULL,
+    permissoes  text[]      NOT NULL DEFAULT '{}',
+    criada_em   timestamptz NOT NULL,
+    expira_em   timestamptz NOT NULL,
+    -- acrescentada por ALTER TABLE em 20260915_usuario_projeto_sessao,
+    -- por isso é a última coluna física
+    projetos    text[]      NOT NULL DEFAULT '{}',
+    CONSTRAINT pk_sessao_usuario PRIMARY KEY (id),
+    CONSTRAINT ck_sessao_usuario_perfil CHECK (
+        perfil IN ('diretoria', 'lider_projeto', 'membro_equipe')
+    ),
+    CONSTRAINT ck_sessao_usuario_permissoes CHECK (
+        permissoes <@ ARRAY['ver_intencoes', 'gerir_rotinas']::text[]
+    ),
+    -- CASCADE, e não RESTRICT: sessão não é dado de auditoria, e remover
+    -- um usuário deve encerrar o acesso dele junto
+    CONSTRAINT fk_sessao_usuario_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- TABELA: conversa
@@ -2354,6 +2786,7 @@ CREATE TABLE interacao (
     latencia_ms         integer          NOT NULL,
     criada_em           timestamptz      NOT NULL,
     rotina_id           text,
+    -- acrescentada em 20260922_latencia_por_etapa
     latencia_etapas     jsonb,
     CONSTRAINT pk_interacao PRIMARY KEY (id),
     CONSTRAINT ck_interacao_perfil CHECK (
@@ -2390,8 +2823,10 @@ CREATE TABLE execucao_rotina (
     interacao_id  text,
     erro          text,
     CONSTRAINT pk_execucao_rotina PRIMARY KEY (id),
+    -- em_execucao entrou em 20260921_execucao_em_andamento: é o estado
+    -- gravado antes de o pipeline rodar
     CONSTRAINT ck_execucao_rotina_status CHECK (
-        status IN ('sucesso', 'bloqueada', 'falha')
+        status IN ('em_execucao', 'sucesso', 'bloqueada', 'falha')
     ),
     CONSTRAINT fk_execucao_rotina_rotina_id_rotina FOREIGN KEY (rotina_id)
         REFERENCES rotina (id) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -2399,48 +2834,549 @@ CREATE TABLE execucao_rotina (
         REFERENCES interacao (id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
--- ÍNDICES
+-- TABELA: transcricao_audio
 
--- Turnos de uma conversa, em ordem (RF12)
+CREATE TABLE transcricao_audio (
+    id                text             NOT NULL,
+    usuario_id        text             NOT NULL,
+    estado            text             NOT NULL,
+    formato           text             NOT NULL,
+    duracao_segundos  double precision NOT NULL,
+    criada_em         timestamptz      NOT NULL,
+    expira_em         timestamptz      NOT NULL,
+    conversa_id       text,
+    interacao_id      text,
+    texto             text,
+    idioma            text,
+    confianca         double precision,
+    latencia_ms       integer,
+    mensagem_erro     text,
+    CONSTRAINT pk_transcricao_audio PRIMARY KEY (id),
+    -- no máximo uma transcrição por interação
+    CONSTRAINT uq_transcricao_audio_interacao_id UNIQUE (interacao_id),
+    CONSTRAINT ck_transcricao_audio_estado CHECK (
+        estado IN ('recebido', 'transcrevendo', 'concluida', 'falhou')
+    ),
+    CONSTRAINT fk_transcricao_audio_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_transcricao_audio_conversa_id_conversa FOREIGN KEY (conversa_id)
+        REFERENCES conversa (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_transcricao_audio_interacao_id_interacao FOREIGN KEY (interacao_id)
+        REFERENCES interacao (id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- ============================================================
+-- RECORTE (b) — PORTFÓLIO E AVISOS (schemas portfolio e public)
+-- ============================================================
+
+CREATE SCHEMA portfolio;
+
+-- TABELA: portfolio.projeto
+
+CREATE TABLE portfolio.projeto (
+    codigo              text          NOT NULL,
+    nome                text          NOT NULL,
+    descricao           text,
+    status              text          NOT NULL,
+    prioridade          text          NOT NULL,
+    data_inicio         date,
+    data_fim_prevista   date,
+    data_fim_real       date,
+    orcamento_aprovado  numeric(15,2),
+    orcamento_atual     numeric(15,2),
+    avanco_percentual   integer       NOT NULL,
+    lider_id            text,          -- sem FK: ver 4.3.2
+    criado_em           timestamptz   NOT NULL,
+    atualizado_em       timestamptz   NOT NULL,
+    CONSTRAINT pk_projeto PRIMARY KEY (codigo),
+    CONSTRAINT ck_projeto_status CHECK (
+        status IN ('planejado', 'em_andamento', 'suspenso', 'concluido', 'cancelado')
+    ),
+    CONSTRAINT ck_projeto_prioridade CHECK (
+        prioridade IN ('baixa', 'media', 'alta', 'critica')
+    ),
+    CONSTRAINT ck_projeto_avanco CHECK (
+        avanco_percentual >= 0 AND avanco_percentual <= 100
+    )
+);
+
+-- TABELA: portfolio.marco
+
+CREATE TABLE portfolio.marco (
+    id              text        NOT NULL,
+    projeto_codigo  text        NOT NULL,
+    nome            text        NOT NULL,
+    descricao       text,
+    data_prevista   date        NOT NULL,
+    data_real       date,
+    status          text        NOT NULL,
+    criado_em       timestamptz NOT NULL,
+    atualizado_em   timestamptz NOT NULL,
+    CONSTRAINT pk_marco PRIMARY KEY (id),
+    CONSTRAINT ck_marco_status CHECK (
+        status IN ('nao_iniciado', 'em_andamento', 'concluido', 'atrasado', 'cancelado')
+    ),
+    CONSTRAINT fk_marco_projeto_codigo_projeto FOREIGN KEY (projeto_codigo)
+        REFERENCES portfolio.projeto (codigo) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- TABELA: portfolio.risco
+
+CREATE TABLE portfolio.risco (
+    id               text        NOT NULL,
+    projeto_codigo   text        NOT NULL,
+    descricao        text        NOT NULL,
+    categoria        text,
+    probabilidade    integer     NOT NULL,
+    impacto          integer     NOT NULL,
+    status           text        NOT NULL,
+    plano_mitigacao  text,
+    criado_em        timestamptz NOT NULL,
+    atualizado_em    timestamptz NOT NULL,
+    CONSTRAINT pk_risco PRIMARY KEY (id),
+    -- a severidade (probabilidade × impacto, de 1 a 25) é derivada na
+    -- consulta, e não armazenada
+    CONSTRAINT ck_risco_probabilidade CHECK (
+        probabilidade >= 1 AND probabilidade <= 5
+    ),
+    CONSTRAINT ck_risco_impacto CHECK (
+        impacto >= 1 AND impacto <= 5
+    ),
+    CONSTRAINT ck_risco_status CHECK (
+        status IN ('identificado', 'monitorado', 'mitigado', 'materializado')
+    ),
+    CONSTRAINT fk_risco_projeto_codigo_projeto FOREIGN KEY (projeto_codigo)
+        REFERENCES portfolio.projeto (codigo) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- TABELA: portfolio.indicador
+
+CREATE TABLE portfolio.indicador (
+    id              text          NOT NULL,
+    projeto_codigo  text          NOT NULL,
+    nome            text          NOT NULL,
+    descricao       text,
+    valor_atual     numeric(15,2),
+    valor_meta      numeric(15,2),
+    unidade         text,
+    data_medicao    date,
+    criado_em       timestamptz   NOT NULL,
+    atualizado_em   timestamptz   NOT NULL,
+    CONSTRAINT pk_indicador PRIMARY KEY (id),
+    CONSTRAINT fk_indicador_projeto_codigo_projeto FOREIGN KEY (projeto_codigo)
+        REFERENCES portfolio.projeto (codigo) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- TABELA: portfolio.usuario_projeto
+
+CREATE TABLE portfolio.usuario_projeto (
+    usuario_id      text        NOT NULL,
+    projeto_codigo  text        NOT NULL,
+    papel           text        NOT NULL,
+    criado_em       timestamptz NOT NULL,
+    CONSTRAINT pk_usuario_projeto PRIMARY KEY (usuario_id, projeto_codigo),
+    CONSTRAINT ck_usuario_projeto_papel CHECK (
+        papel IN ('lider', 'membro', 'observador')
+    ),
+    CONSTRAINT fk_usuario_projeto_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_usuario_projeto_projeto_codigo_projeto FOREIGN KEY (projeto_codigo)
+        REFERENCES portfolio.projeto (codigo) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- TABELA: preferencia_aviso
+
+CREATE TABLE preferencia_aviso (
+    usuario_id         text        NOT NULL,
+    projeto_codigo     text        NOT NULL,   -- sem FK: ver 4.3.2
+    event_type         text        NOT NULL,
+    ativa              boolean     NOT NULL DEFAULT false,
+    severidade_minima  integer,
+    atualizada_em      timestamptz NOT NULL,
+    CONSTRAINT pk_preferencia_aviso PRIMARY KEY (usuario_id, projeto_codigo, event_type),
+    CONSTRAINT ck_preferencia_aviso_event_type CHECK (
+        event_type IN ('projeto.status_alterado', 'marco.alterado', 'risco.alterado')
+    ),
+    -- mínimo de severidade só faz sentido para risco
+    CONSTRAINT ck_preferencia_aviso_severidade_minima CHECK (
+        severidade_minima IS NULL
+        OR (event_type = 'risco.alterado' AND severidade_minima BETWEEN 1 AND 25)
+    ),
+    -- só ON DELETE: a migração não declara ON UPDATE
+    CONSTRAINT fk_preferencia_aviso_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON DELETE CASCADE
+);
+
+-- TABELA: aviso
+
+CREATE TABLE aviso (
+    id              text        NOT NULL,
+    usuario_id      text        NOT NULL,
+    projeto_codigo  text        NOT NULL,   -- sem FK: ver 4.3.2
+    source_id       text        NOT NULL,
+    event_id        text        NOT NULL,
+    event_type      text        NOT NULL,
+    entity_id       text        NOT NULL,
+    versao          bigint      NOT NULL,
+    diferencas      jsonb       NOT NULL,
+    criado_em       timestamptz NOT NULL,
+    lido_em         timestamptz,
+    CONSTRAINT pk_aviso PRIMARY KEY (id),
+    -- reentrega do mesmo evento não gera o aviso de novo
+    CONSTRAINT uq_aviso_evento_usuario UNIQUE (source_id, event_id, usuario_id),
+    CONSTRAINT ck_aviso_event_type CHECK (
+        event_type IN ('projeto.status_alterado', 'marco.alterado', 'risco.alterado')
+    ),
+    CONSTRAINT fk_aviso_usuario_id_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- RECORTE (c) — WEBHOOKS (schema webhook)
+-- ============================================================
+
+CREATE SCHEMA webhook;
+
+-- TABELA: webhook.canal_drive
+
+CREATE TABLE webhook.canal_drive (
+    canal_id      text        NOT NULL,
+    fonte_id      text        NOT NULL,
+    token_sha256  bytea       NOT NULL,   -- o resumo, nunca o token
+    recurso_id    text,
+    recurso_uri   text,
+    expira_em     timestamptz NOT NULL,
+    estado        text        NOT NULL,
+    criado_em     timestamptz NOT NULL,
+    ativado_em    timestamptz,
+    encerrado_em  timestamptz,
+    CONSTRAINT pk_canal_drive PRIMARY KEY (canal_id),
+    CONSTRAINT ck_canal_drive_estado CHECK (
+        estado IN ('pendente', 'ativo', 'encerrado')
+    ),
+    CONSTRAINT ck_canal_drive_token_sha256 CHECK (
+        octet_length(token_sha256) = 32
+    ),
+    -- canal ativo exige o recurso confirmado pela resposta autenticada
+    CONSTRAINT ck_canal_drive_recurso_confirmado CHECK (
+        estado <> 'ativo' OR (recurso_id IS NOT NULL AND recurso_uri IS NOT NULL)
+    )
+);
+
+-- TABELA: webhook.recebimento
+
+CREATE TABLE webhook.recebimento (
+    message_id      text        NOT NULL,
+    correlation_id  text        NOT NULL,
+    provedor        text        NOT NULL,
+    chave_externa   text        NOT NULL,
+    fonte_id        text        NOT NULL,
+    canal_id        text,
+    evento          jsonb       NOT NULL,
+    recebido_em     timestamptz NOT NULL,
+    publicado_em    timestamptz,
+    processado_em   timestamptz,
+    tentativas      integer     NOT NULL DEFAULT 0,
+    erro_codigo     text,
+    -- acrescentada em 20260924_webhook_portfolio; só o WH-02 a preenche
+    corpo_sha256    bytea,
+    CONSTRAINT pk_recebimento PRIMARY KEY (message_id),
+    -- a chave externa é única por provedor: é o que torna a repetição
+    -- idempotente
+    CONSTRAINT uq_recebimento_chave_externa UNIQUE (provedor, chave_externa),
+    CONSTRAINT ck_recebimento_provedor CHECK (
+        provedor IN ('google_drive', 'apps_script')
+    ),
+    CONSTRAINT ck_recebimento_tentativas CHECK (
+        tentativas >= 0
+    ),
+    CONSTRAINT ck_recebimento_corpo_sha256 CHECK (
+        corpo_sha256 IS NULL OR octet_length(corpo_sha256) = 32
+    ),
+    -- canais são preservados enquanto houver recebimento retido; só
+    -- ON DELETE, sem ON UPDATE
+    CONSTRAINT fk_recebimento_canal_id_canal_drive FOREIGN KEY (canal_id)
+        REFERENCES webhook.canal_drive (canal_id) ON DELETE RESTRICT
+);
+
+-- TABELA: webhook.sincronizacao_fonte
+
+CREATE TABLE webhook.sincronizacao_fonte (
+    fonte_id       text        NOT NULL,
+    cursor         text,
+    estado         text        NOT NULL,
+    concluida_em   timestamptz,
+    atualizado_em  timestamptz NOT NULL,
+    CONSTRAINT pk_sincronizacao_fonte PRIMARY KEY (fonte_id),
+    CONSTRAINT ck_sincronizacao_fonte_estado CHECK (
+        estado IN ('ociosa', 'em_andamento', 'falha')
+    )
+);
+
+-- TABELA: webhook.fonte_portfolio
+
+CREATE TABLE webhook.fonte_portfolio (
+    source_id      text        NOT NULL,
+    planilha_id    text        NOT NULL,
+    projetos       text[]      NOT NULL,
+    tipos          text[]      NOT NULL,
+    ativa          boolean     NOT NULL DEFAULT true,
+    criada_em      timestamptz NOT NULL,
+    atualizada_em  timestamptz NOT NULL,
+    CONSTRAINT pk_fonte_portfolio PRIMARY KEY (source_id),
+    -- mesmo formato do cabeçalho X-Prata-Source
+    CONSTRAINT ck_fonte_portfolio_source_id CHECK (
+        source_id ~ '^[A-Za-z0-9_-]{1,64}$'
+    ),
+    CONSTRAINT ck_fonte_portfolio_tipos CHECK (
+        tipos <@ ARRAY['projeto.status_alterado', 'marco.alterado', 'risco.alterado']::text[]
+    )
+);
+
+-- TABELA: webhook.versao_entidade
+
+CREATE TABLE webhook.versao_entidade (
+    source_id      text        NOT NULL,
+    event_type     text        NOT NULL,
+    entity_id      text        NOT NULL,
+    versao         bigint      NOT NULL,
+    dados_sha256   bytea       NOT NULL,   -- sem CHECK de tamanho
+    atualizada_em  timestamptz NOT NULL,
+    CONSTRAINT pk_versao_entidade PRIMARY KEY (source_id, event_type, entity_id),
+    CONSTRAINT ck_versao_entidade_event_type CHECK (
+        event_type IN ('projeto.status_alterado', 'marco.alterado', 'risco.alterado')
+    ),
+    CONSTRAINT ck_versao_entidade_versao CHECK (
+        versao >= 0
+    )
+);
+
+-- TABELA: webhook.auditoria_portfolio
+
+CREATE TABLE webhook.auditoria_portfolio (
+    id              text        NOT NULL,
+    -- sem FK para recebimento: a trilha sobrevive ao expurgo dos recibos
+    message_id      text        NOT NULL,
+    source_id       text        NOT NULL,
+    event_id        text        NOT NULL,
+    event_type      text        NOT NULL,
+    projeto_codigo  text        NOT NULL,
+    entity_id       text        NOT NULL,
+    versao          bigint      NOT NULL,
+    anteriores      jsonb       NOT NULL,
+    novos           jsonb       NOT NULL,
+    resultado       text        NOT NULL,
+    registrado_em   timestamptz NOT NULL,
+    CONSTRAINT pk_auditoria_portfolio PRIMARY KEY (id),
+    CONSTRAINT ck_auditoria_portfolio_resultado CHECK (
+        resultado IN ('aplicado', 'sem_diferenca', 'repetido', 'ignorado_antigo')
+    )
+);
+
+-- ============================================================
+-- RECORTE (d) — CORPUS DO RAG (schema rag)
+-- ============================================================
+
+CREATE SCHEMA rag;
+
+-- TABELA: rag.arquivo
+
+CREATE TABLE rag.arquivo (
+    origem_id        text        NOT NULL,
+    nome             text        NOT NULL,
+    mime             text        NOT NULL,
+    md5              text,
+    modificado_em    timestamptz,
+    link             text,
+    documento_id     text,
+    codigo           text,
+    tipo             text,
+    versao           integer,
+    periodo          text,
+    data_referencia  date,
+    projeto          text,
+    classificacao    text,
+    perfis           text[],
+    situacao         text        NOT NULL,
+    motivo           text,
+    observacoes      text[]      NOT NULL DEFAULT '{}',
+    metadados        jsonb       NOT NULL DEFAULT '{}',
+    assinatura       text,
+    total_trechos    integer     NOT NULL DEFAULT 0,
+    visto_em         timestamptz NOT NULL,
+    indexado_em      timestamptz,
+    CONSTRAINT pk_arquivo PRIMARY KEY (origem_id),
+    CONSTRAINT ck_arquivo_situacao CHECK (
+        situacao IN ('indexado', 'substituido', 'quarentena',
+                     'nao_identificado', 'ignorado', 'removido')
+    ),
+    CONSTRAINT ck_arquivo_perfis CHECK (
+        perfis <@ ARRAY['diretoria', 'lider_projeto', 'membro_equipe']::text[]
+    )
+);
+
+-- TABELA: rag.trecho
+
+CREATE TABLE rag.trecho (
+    trecho_id     text    NOT NULL,
+    documento_id  text    NOT NULL,
+    origem_id     text    NOT NULL,
+    ordinal       integer NOT NULL,
+    texto         text    NOT NULL,
+    tokens        integer NOT NULL,
+    localizador   text    NOT NULL,
+    projeto       text,
+    perfis        text[]  NOT NULL,
+    CONSTRAINT pk_trecho PRIMARY KEY (trecho_id),
+    CONSTRAINT ck_trecho_perfis CHECK (
+        perfis <@ ARRAY['diretoria', 'lider_projeto', 'membro_equipe']::text[]
+    ),
+    CONSTRAINT fk_trecho_origem_id_arquivo FOREIGN KEY (origem_id)
+        REFERENCES rag.arquivo (origem_id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-- ============================================================
+-- ÍNDICES — cada um com a consulta que sustenta (S4-06).
+-- Funções citadas em src/middleware/app/; rotas com o prefixo do router.
+-- ============================================================
+
+-- (a) Núcleo
+
+-- Turnos de uma conversa, em ordem (RF12):
+-- InteracaoRepository.listar_por_conversa, GET /conversas/{id}
 CREATE INDEX ix_interacao_conversa_criada ON interacao (conversa_id, criada_em);
 
--- Histórico do usuário e recortes do painel (RF10, RF12)
+-- Interações de um usuário, mais recente primeiro:
+-- InteracaoRepository.listar_por_usuario (nenhuma rota a chama hoje) e o
+-- filtro por usuario_id da contagem de turnos de GET /conversas
 CREATE INDEX ix_interacao_usuario_criada ON interacao (usuario_id, criada_em DESC);
+
+-- Janela de tempo de todas as agregações do painel (RF10):
+-- analytics/consultas.py, _na_janela; e o expurgo por idade,
+-- persistence/auditoria.py, expurgar_interacoes
 CREATE INDEX ix_interacao_criada_em ON interacao (criada_em DESC);
 
--- Volume por intenção, base do painel e do backlog de novas intenções (RF10)
+-- Volume e confiança por intenção (RF10): volume_por_intencao, GET
+-- /intencoes/volume; confianca_media_por_intencao
 CREATE INDEX ix_interacao_intencao_criada ON interacao (intencao_id, criada_em);
 
--- Distribuição de desfechos e série temporal de bloqueios por guarda
+-- Distribuição de desfechos, série de bloqueios e enunciados recusados:
+-- distribuicao_de_desfechos, serie_de_bloqueios, _enunciados_agrupados;
+-- GET /intencoes/desfechos, /intencoes/seguranca/serie e
+-- /intencoes/catalogo/{fora-de-escopo,baixa-confianca}
 CREATE INDEX ix_interacao_desfecho_criada ON interacao (desfecho, criada_em);
 
--- Índice parcial: as mensagens sem intenção resolvida incluem os bloqueios
--- e alimentam tanto o backlog de novas intenções quanto o painel de segurança
+-- Índice parcial previsto para as mensagens sem intenção resolvida.
+-- SEM CONSULTA QUE O USE HOJE: os recortes de fora de escopo e de baixa
+-- confiança partem do desfecho (índice anterior), e nenhum filtro faz
+-- intencao_id IS NULL
 CREATE INDEX ix_interacao_sem_intencao ON interacao (criada_em DESC)
     WHERE intencao_id IS NULL;
 
--- Lista de histórico, ordenada pelo turno mais recente (RF12)
+-- Lista de histórico, ordenada pelo turno mais recente (RF12):
+-- ConversaRepository.listar_com_total_por_usuario, GET /conversas
 CREATE INDEX ix_conversa_usuario_atualizada ON conversa (usuario_id, atualizada_em DESC);
 
--- Rotinas de um dono (RF11)
+-- Rotinas de um dono (RF11): RotinaRepository.listar_por_dono, GET /rotinas
 CREATE INDEX ix_rotina_dono ON rotina (dono_id);
 
--- Disparos recentes de uma rotina
+-- Disparos recentes de uma rotina: ExecucaoRepository.listar_por_rotina e
+-- listar_com_interacao_por_rotina, GET /rotinas/{id}/execucoes
 CREATE INDEX ix_execucao_rotina_iniciada ON execucao_rotina (rotina_id, iniciada_em DESC);
+
+-- Limpeza das sessões vencidas do usuário a cada novo login:
+-- auth/sessao.py, criar (DELETE ... WHERE usuario_id = ? AND expira_em <= ?)
+CREATE INDEX ix_sessao_usuario_usuario ON sessao_usuario (usuario_id);
+
+-- Áudios do usuário e expurgo dos vencidos.
+-- SEM CONSULTA QUE OS USE HOJE: AudioRepository.obter lê pela chave
+-- primária, e o expurgo do áudio ainda não foi implementado
+CREATE INDEX ix_transcricao_audio_usuario_criada ON transcricao_audio (usuario_id, criada_em DESC);
+CREATE INDEX ix_transcricao_audio_expira_em ON transcricao_audio (expira_em);
+
+-- (b) Portfólio e avisos
+
+-- Riscos, marcos e indicadores de um projeto:
+-- RiscoRepository, MarcoRepository e IndicadorRepository.listar_por_projeto;
+-- GET /portfolio/projetos/{codigo}/riscos, /marcos e /indicadores
+CREATE INDEX ix_risco_projeto ON portfolio.risco (projeto_codigo);
+CREATE INDEX ix_marco_projeto ON portfolio.marco (projeto_codigo);
+CREATE INDEX ix_indicador_projeto ON portfolio.indicador (projeto_codigo);
+
+-- Marcos que vencem nos próximos dias: MarcoRepository.listar_vencendo,
+-- GET /portfolio/marcos/vencendo
+CREATE INDEX ix_marco_data_prevista ON portfolio.marco (data_prevista);
+
+-- Usuários com acesso a um projeto: UsuarioProjetoRepository.
+-- listar_usuarios_do_projeto, GET /portfolio/projetos/{codigo}/usuarios;
+-- e avisos/repositorio.py, usuarios_com_acesso, ao gerar avisos
+CREATE INDEX ix_usuario_projeto_projeto ON portfolio.usuario_projeto (projeto_codigo);
+
+-- Projetos de um usuário, no login (listar_projetos_do_usuario).
+-- REDUNDANTE: usuario_id já é a primeira coluna de pk_usuario_projeto,
+-- que atende a mesma consulta
+CREATE INDEX ix_usuario_projeto_usuario ON portfolio.usuario_projeto (usuario_id);
+
+-- Filtros por status do projeto, por líder e por status do risco.
+-- SEM CONSULTA QUE OS USE HOJE: nenhum repositório filtra essas colunas
+CREATE INDEX ix_projeto_status ON portfolio.projeto (status);
+CREATE INDEX ix_projeto_lider ON portfolio.projeto (lider_id);
+CREATE INDEX ix_risco_status ON portfolio.risco (status);
+
+-- Adesões candidatas a receber o aviso de um evento:
+-- PreferenciaRepository.candidatas, chamada por avisos/geracao.py
+CREATE INDEX ix_preferencia_aviso_candidatas ON preferencia_aviso (projeto_codigo, event_type);
+
+-- Avisos do usuário, mais recentes primeiro, e contagem dos não lidos:
+-- AvisoRepository.listar e contar_nao_lidos; GET /avisos e /avisos/contagem
+CREATE INDEX ix_aviso_usuario_criado ON aviso (usuario_id, criado_em DESC);
+
+-- (c) Webhooks
+
+-- Canais de uma fonte: CanalDriveRepository.listar, usado pela linha de
+-- comando de webhooks/drive/__main__.py (só a primeira coluna é usada)
+CREATE INDEX ix_canal_drive_fonte_estado ON webhook.canal_drive (fonte_id, estado);
+
+-- Recuperação dos recebimentos ainda não publicados na fila:
+-- RecebimentoRepository.listar_pendentes, chamada pela manutenção do
+-- worker (webhooks/drive/manutencao.py)
+CREATE INDEX ix_recebimento_pendente ON webhook.recebimento (recebido_em)
+    WHERE publicado_em IS NULL;
+
+-- Histórico de alterações de uma entidade do portfólio.
+-- SEM CONSULTA QUE O USE HOJE: a trilha só recebe INSERT
+CREATE INDEX ix_auditoria_portfolio_entidade ON webhook.auditoria_portfolio (projeto_codigo, entity_id);
+
+-- (d) Corpus do RAG
+
+-- No máximo um arquivo indexado por documento lógico: regra de
+-- integridade, e não de consulta. Duas versões do mesmo documento no
+-- índice ao mesmo tempo seria a contradição que a vigência evita
+CREATE UNIQUE INDEX ix_arquivo_documento_indexado ON rag.arquivo (documento_id)
+    WHERE situacao = 'indexado';
+
+-- Reindexar e retirar um documento apagam os trechos por aqui:
+-- RegistroIngestao.substituir_trechos
+CREATE INDEX ix_trecho_documento ON rag.trecho (documento_id);
 ```
 
 ### 4.4.2 Decisões técnicas de implementação
 
 - **`TIMESTAMPTZ` em todas as colunas temporais.** Grava o instante absoluto, independentemente do fuso da sessão. É o que permite ao agendador respeitar `America/Sao_Paulo` sem que os registros fiquem ambíguos no horário de verão, e o que torna comparável o momento de solicitações registradas em máquinas distintas.
 - **UUID em coluna `text`, revisando a decisão da Sprint 2.** O modelo anterior adotava `serial` pela legibilidade, com o custo declarado: identificador sequencial revela volume de uso e permite enumeração de registros alheios, e a troca por identificador opaco ficava "para a onda que expõe o histórico na interface". Esta é essa onda, e a inversão aconteceu por dois motivos que se somam. O primeiro é o custo já previsto. O segundo é que o orquestrador implementado gera o identificador **antes** de gravar — a interação precisa de um id no início do pipeline, para correlacionar o registro com os alertas de segurança emitidos ao longo dele, e um `serial` só existiria depois do `INSERT`. A defesa de aplicação continua valendo: toda leitura verifica a propriedade do registro no servidor.
-- **`CHECK` gerado, nunca digitado.** As listas de valores de `perfil`, `canal`, `desfecho` e `status` são produzidas a partir dos enums do código na definição do esquema, e não escritas à mão no DDL. A razão é concreta: a versão anterior desta seção trazia `CHECK (perfil IN ('DIRETORIA', ...))` em maiúsculas, enquanto o código grava `'diretoria'` — divergência que passaria despercebida até a primeira gravação real ser recusada em produção. Gerar a lista faz de "acrescentar um desfecho e esquecer o banco" um erro de migração, que aparece antes de chegar ao usuário.
+- **`CHECK` gerado, nunca digitado.** As listas de valores dos vocabulários fechados — `perfil`, `canal`, `desfecho`, os `status` e `estado`, `papel`, `provedor`, `resultado`, `situacao` e `event_type` — são produzidas a partir dos enums do código na definição do esquema, e não escritas à mão no DDL. A razão é concreta: a versão anterior desta seção trazia `CHECK (perfil IN ('DIRETORIA', ...))` em maiúsculas, enquanto o código grava `'diretoria'` — divergência que passaria despercebida até a primeira gravação real ser recusada em produção. Gerar a lista faz de "acrescentar um desfecho e esquecer o banco" um erro de migração, que aparece antes de chegar ao usuário.
 - **Sem tipo enumerado do banco.** `ALTER TYPE ... ADD VALUE` não roda dentro de transação no PostgreSQL, o que tornaria desconfortável cada valor novo; um `CHECK` se altera com `DROP`/`ADD CONSTRAINT` comum. `interacao.intencao_id` não tem nem `CHECK` nem chave estrangeira, porque o catálogo de intenções é artefato de código revisado a cada sprint (5.4.9) e amarrá-lo ao banco faria de cada revisão uma migração.
 - **Permissões fora de `usuario`.** A coluna `pode_ver_intencoes` não foi criada. Na implementação atual, perfil e permissões derivados do login são persistidos em `sessao_usuario`, conforme 4.3.1.1; não são recalculados a partir do Entra a cada requisição.
-- **Índices derivados dos recortes, não do palpite.** Cada um dos nove índices corresponde a uma consulta nomeada em [Arquitetura.md](Arquitetura.md), seção 5, e a lista está em `src/middleware/migrations/README.md`. O índice parcial sobre as mensagens sem classificação serve ao agrupamento que alimenta tanto o backlog de novas intenções quanto o recorte de segurança, já que ambos os casos chegam ao banco sem intenção resolvida. Não há índice sobre `rotina.ativa`: a consulta que o usaria roda uma vez na subida do worker, sobre dezenas de linhas.
-- **Verificação do esquema por teste, e não por inspeção.** `tests/integration/test_persistencia.py` roda contra o PostgreSQL real e exercita o que só o servidor sabe responder: se cada valor dos enums passa no `CHECK`, se a chave estrangeira recusa apagar um usuário com registro, se o índice parcial existe com a cláusula `WHERE` correta. A suíte pula limpa quando o banco não responde.
-- **Sem vista materializada nesta etapa.** Para o volume esperado de um MVP, a agregação em SQL sobre `intencao` é suficiente. Materializar antes de medir seria otimização especulativa, com custo de atualização e de invalidação.
-- **Cifra em repouso e retenção (RNF07).** Sem a camada de mascaramento removida na revisão de escopo, `intencao.prompt` guarda o texto do usuário em claro, inclusive o das tentativas de ataque. Duas medidas são parte do esquema, e não recomendações: a cifra em repouso é habilitada no nível da instância PostgreSQL, e o expurgo das solicitações além do prazo de retenção é executado como tarefa periódica do próprio agendador. O risco correspondente é o R13, registrado na matriz vigente ([GestaoProjeto.md](GestaoProjeto.md), seção 4).
-- **Migrações versionadas.** O esquema evolui por Alembic. Como o modelo tem desdobramentos previstos para as ondas seguintes — conversa como entidade própria, histórico de execuções de rotina, vocabulário fechado de desfechos —, versionar é o que permite acrescentá-los sem recriar o banco e reverter uma alteração que se mostre errada.
+- **Índices justificados pela consulta, e auditados contra ela.** Além dos índices implícitos das chaves primárias e das quatro restrições `UNIQUE`, o esquema tem 28 índices explícitos, dois deles parciais. Cada um está comentado em 4.4.1 com a consulta ou a rota que o usa, levantada no código (`src/middleware/app/`) e não no palpite. O levantamento mostrou que **19 índices sustentam consultas** existentes, **1 é regra de integridade** — `ix_arquivo_documento_indexado`, único e parcial — e **8 não têm consulta que os use**: `ix_interacao_sem_intencao`, porque os recortes de fora de escopo e de baixa confiança partem do desfecho, e não de `intencao_id IS NULL`; os dois de `transcricao_audio`, que aguardam a listagem e o expurgo do áudio; `ix_projeto_status`, `ix_projeto_lider` e `ix_risco_status`, que nenhum repositório filtra; `ix_auditoria_portfolio_entidade`, numa trilha que só recebe `INSERT`; e `ix_usuario_projeto_usuario`, redundante com a chave primária composta, que começa pela mesma coluna. Os oito ficam registrados aqui como fato, e não como acerto: cada índice ocioso custa escrita em toda inserção, e removê-los é decisão de migração, e não de documentação. Não há índice sobre `rotina.ativa`: a consulta que o usaria roda uma vez na subida do *worker*, sobre dezenas de linhas.
+- **Idempotência no banco, e não só no código.** As três repetições que o sistema precisa absorver são barradas por restrição: a mesma notificação de um provedor, por `uq_recebimento_chave_externa`; o mesmo evento para o mesmo destinatário, por `uq_aviso_evento_usuario`; e a mesma versão de uma entidade, pela chave primária de `webhook.versao_entidade`, travada durante a aplicação. As gravações correspondentes usam `INSERT ... ON CONFLICT DO NOTHING`, de modo que uma reentrega não falha nem duplica.
+- **Pendências achadas por índice parcial.** `ix_recebimento_pendente` cobre só as linhas com `publicado_em IS NULL`: o recebimento é gravado antes de publicado na fila, e a recuperação procura exatamente o que ficou no meio do caminho. O índice cresce com as pendências, e não com o histórico.
+- **Resumos de 32 bytes conferidos pelo banco.** `canal_drive.token_sha256` e `recebimento.corpo_sha256` são `BYTEA` com `CHECK (octet_length(...) = 32)`, o tamanho de um SHA-256: um valor truncado ou em outra codificação é recusado na gravação. `versao_entidade.dados_sha256` não tem esse `CHECK`.
+- **Valores monetários e medidas em `NUMERIC(15,2)`.** Orçamentos e valores de indicador usam tipo exato, e não ponto flutuante, para que somas e comparações não acumulem erro de arredondamento.
+- **Verificação do esquema por teste, e não por inspeção.** `tests/integration/test_persistencia.py` roda contra o PostgreSQL real e exercita o que só o servidor sabe responder: se cada valor dos enums passa no `CHECK`, se a chave estrangeira recusa apagar um usuário com registro, se o índice parcial existe com a cláusula `WHERE` correta. A suíte pula limpa quando o banco não responde. O DDL de 4.4.1 é conferido de outra forma, pela comparação dos *dumps* descrita no início daquela seção.
+- **Sem vista materializada nesta etapa.** Para o volume esperado de um MVP, a agregação em SQL sobre `interacao` é suficiente. Materializar antes de medir seria otimização especulativa, com custo de atualização e de invalidação.
+- **Cifra em repouso e retenção (RNF07).** Sem a camada de mascaramento removida na revisão de escopo, `interacao.prompt` guarda o texto do usuário em claro, inclusive o das tentativas de ataque. A cifra em repouso é habilitada no nível da instância PostgreSQL. O expurgo das interações além do prazo de retenção está implementado e testado (`expurgar_interacoes`, em `app/persistence/auditoria.py`, coberto por `test_rnf02_07_auditoria.py`), mas **ainda não é agendado**: nenhuma tarefa do *worker* o chama. Os avisos, ao contrário, já são expurgados pela manutenção do *worker*, e o áudio só tem a expiração que limita o que é servido (4.3.1.7). O risco correspondente é o R13, registrado na matriz vigente ([GestaoProjeto.md](GestaoProjeto.md), seção 4).
+- **Tabelas fora das migrações.** `apscheduler_jobs` é criada pelo *jobstore* do agendador na primeira execução, e não por migração, porque seu formato pertence ao APScheduler. O adaptador pgvector de reserva declara `rag.trecho_vetor`, mas nenhuma migração a cria: exigiria a extensão `vector`, que a imagem `postgres:16-alpine` não tem, e entra na migração que trocar a imagem, se a reserva for acionada.
+- **Migrações versionadas.** O esquema evolui por Alembic, numa cadeia linear de 12 revisões. Foi por migração que chegaram a conversa como entidade própria, o histórico de execuções de rotina e o vocabulário fechado de desfechos, previstos na modelagem da Sprint 2, e depois a sessão de login, o *schema* do RAG, o portfólio, a medição de latência por etapa, os dois webhooks, os avisos e o áudio. Versionar é o que permite acrescentar cada um sem recriar o banco e reverter uma alteração que se mostre errada.
 
 # 5. Solução Técnica
 
