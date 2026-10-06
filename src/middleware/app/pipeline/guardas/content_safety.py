@@ -169,7 +169,12 @@ class Sessao:
     async def _postar_com_retentativa(
         self, url: str, cabecalhos: dict[str, str], corpo: dict
     ) -> httpx.Response:
-        """Repete apenas falhas transitórias, respeitando `Retry-After`."""
+        """Repete apenas falhas transitórias, respeitando `Retry-After`.
+
+        A espera pedida pelo serviço vale até o tempo limite de uma chamada.
+        Acima disso, desiste na hora e devolve a resposta de erro, que a
+        guarda trata como indisponibilidade.
+        """
         ultima: httpx.Response | None = None
         for tentativa in range(settings.content_safety_max_tentativas):
             try:
@@ -197,7 +202,14 @@ class Sessao:
             if resposta.status_code not in {429, 502, 503, 504}:
                 return resposta
             if tentativa + 1 < settings.content_safety_max_tentativas:
-                await asyncio.sleep(_espera(resposta, tentativa))
+                espera = _espera(resposta, tentativa)
+                # Repetir antes do prazo pedido só renderia outro 429 e gastaria
+                # cota; esperar o prazo inteiro prenderia a vaga do semáforo e
+                # derrubaria por fila quem está atrás. Sem as duas coisas, a
+                # guarda falha fechada agora, como numa indisponibilidade.
+                if espera > settings.content_safety_timeout_seconds:
+                    return resposta
+                await asyncio.sleep(espera)
 
         assert ultima is not None
         return ultima
