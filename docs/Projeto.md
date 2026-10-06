@@ -12317,7 +12317,7 @@ desse caminho com PostgreSQL, Pinecone e Gemini reais.
 ## 9.6 Funcionalidades Implementadas na Prova de Conceito
 
 Esta seção apresenta, em um único ponto, o que a prova de conceito entrega no
-estado verificado em 30/09/2026, a partir da `develop` no commit `df9f919`. A
+estado verificado em 06/10/2026, a partir da `develop` no commit `7e6e732`. A
 classificação não deriva apenas da existência de uma intenção no catálogo ou de
 uma tela: exige um caminho observável no código e uma evidência executável. Os
 resultados detalhados permanecem na matriz da seção 10.7; aqui eles são
@@ -12368,6 +12368,88 @@ Essa leitura deve ser atualizada junto da matriz 10.7 sempre que um `xfail`
 mudar de estado. Ela descreve funcionalidades do produto; requisitos não
 funcionais, integrações com serviços comerciais e resultados de desempenho
 continuam avaliados nas seções 10.2, 10.4 e 10.5.
+
+### 9.6.3 Balanço dos requisitos do parceiro
+
+Este balanço confronta a necessidade original do parceiro com o estado integrado
+da prova de conceito. Foram usados como fontes o TAPI, o documento de perguntas
+e respostas, os perfis de acesso, o exemplo de Mapa de Benefícios, o roteiro de
+cronograma guiado e a descrição da plataforma tecnológica do Metrô. A leitura
+também considera o ambiente de teste inspecionado em 5.5.10 e o de-para de dados
+de 5.5.11. Esses documentos são fontes de requisito e contexto; a situação só é
+considerada entregue quando há evidência no repositório.
+
+O pedido do parceiro não se limita aos requisitos isolados: o TAPI descreve uma
+visão de produto em que o núcleo de PLN interpreta texto e voz, o agente consulta
+e analisa o portfólio, apoia o preenchimento e a atualização dos artefatos,
+antecipa pendências e produz informações gerenciais dentro do ecossistema
+Microsoft. Ao mesmo tempo, delimita a entrega acadêmica como uma **prova de
+conceito funcional sobre dados sintéticos**: integração produtiva com o
+portfólio real, processamento de dados sensíveis e operação definitiva no
+tenant homologado não são apresentados como obrigação já concluída no MVP.
+
+| Eixo pedido pelo parceiro | O que a prova de conceito entrega | Diferença para a visão completa do parceiro |
+|---|---|---|
+| Linguagem natural, PLN e voz | Texto e voz percorrem o pipeline; o classificador reconhece intenções e recusa pedidos fora do catálogo | Robustez do canal de voz ainda não foi medida sobre corpus de áudio representativo; resposta falada permanece evolução |
+| Consulta a projetos e documentos | Consultas estruturadas e RAG funcionam sobre a base e o corpus sintéticos, com fonte na resposta | Bibliotecas e anexos do SharePoint do parceiro ainda não alimentam o executor; algumas categorias não possuem correspondência nos dados observados |
+| Criação e atualização guiada | O catálogo reconhece as intenções transacionais e preserva o desenho de confirmação | Não existe escrita efetiva com prévia, confirmação, autorização e trilha; assistentes de Termo de Abertura, Mapa de Benefícios e cronograma não foram concluídos |
+| Proatividade | Rotinas agendadas, worker, histórico de execução e infraestrutura de avisos estão implementados | Falta detectar pendências reais, selecionar o responsável e ligar os avisos à interface; Teams e correio eletrônico ficaram fora do MVP |
+| Comparações e materiais gerenciais | Há dados e intenções que permitem evolução posterior | Comparação entre projetos e geração de relatórios, apresentações e encerramentos não são funcionalidades entregues |
+| Segurança, rastreabilidade e perfis | Autenticação Microsoft, autorização no servidor, guardas, registro das interações e painel analítico existem | Os papéis do ambiente do parceiro não estão todos representados; as metas de disponibilidade e eficácia das guardas não foram atingidas; cifra em repouso e tenant definitivo permanecem no handover |
+| Ecossistema Microsoft e sustentação | A aplicação está implantada em Azure e mantém adaptadores para serviços externos | Direct Line/Copilot Studio e as fontes reais do SharePoint não integram o caminho funcional; Speech e Content Safety precisam ser reprovisionados no tenant do Metrô antes de dado real |
+
+Portanto, a prova de conceito comprova o núcleo técnico do agente, mas não deve
+ser apresentada como a solução produtiva completa descrita pelo parceiro. A
+principal distância funcional é a escrita no portfólio; as principais
+distâncias de integração são SharePoint e Copilot Studio; e as principais
+distâncias operacionais são a homologação do perímetro, a disponibilidade, a
+eficácia das guardas e a proteção do conteúdo persistido.
+
+Nesta subseção, **entregue** significa que o comportamento exigido para a prova
+de conceito possui implementação e teste; **parcial** significa que existe uma
+parte utilizável, mas falta um critério do parceiro, uma validação no ambiente
+definitivo ou uma meta mensurável; e **não entregue** significa que o resultado
+principal não está disponível, ainda que existam catálogo, modelo ou teste que
+registrem a intenção futura. Essa lente é mais ampla que a situação funcional de
+9.6.1: um fluxo pode estar completo sobre a base sintética e ainda ser parcial
+para operação no ambiente do parceiro.
+
+| Requisito | Origem no material do parceiro | Situação | Evidência no repositório | Motivo da lacuna e destino |
+|---|---|---|---|---|
+| **RF01 — Controle de acesso, permissões e perfil** | TAPI e *Perfis de Acesso Metrô 01-08-2026* | **Parcial** | `app/api/routes/auth.py`, `app/api/deps.py`, `tests/funcionais/test_rf01_acesso.py` e 5.5.10.5 | Login, autorização no servidor e isolamento por projeto existem, mas os papéis de subportfólio e do PMO observados no parceiro não têm equivalente e não foram validados no tenant definitivo. Destino: **AF11** e *handover* da matriz de grupos, papéis e permissões. |
+| **RF02 — Interação em linguagem natural por texto e voz** | TAPI, inclusive áudio de até cinco minutos como diferencial desejável | **Entregue** | `app/api/routes/chat.py`, `app/api/routes/voz.py`, `tests/funcionais/test_rf02_canais.py` e `tests/integration/test_fluxo_audio_transcricao.py` | Texto e voz chegam ao pipeline. Para uso com dado real, Speech deve ser reprovisionado no tenant homologado (**AF09**); robustez a ruído, ditado longo e resposta falada são evolução **AF23**, não lacuna do fluxo entregue. |
+| **RF03 — Identificação e controle de intenções** | TAPI e perguntas do parceiro sobre pedidos fora de escopo, híbridos e incompletos | **Parcial** | `app/pipeline/intencao/`, `app/pipeline/orquestrador.py` e `tests/funcionais/test_rf03_intencoes.py` | Classificação, limiar e recusas existem, mas entidade obrigatória ausente ainda não inicia pedido de complemento e a recusa de projeto alheio permanece conservadora. Destino: **AF03** e **AF06**. |
+| **RF04 — Consulta e análise de informações dos projetos** | TAPI e catálogo de perguntas por Diretoria, liderança, PMO e equipe | **Parcial** | `app/api/routes/portfolio.py`, `app/rag/executor.py`, `tests/funcionais/test_rf04_consulta.py`, 5.5.10.3 e 5.5.10.4 | Consultas estruturadas e documentais funcionam sobre dados sintéticos, mas nem todas as fontes e categorias do ambiente do parceiro são consumidas; a rota de detalhe ainda diferencia projeto alheio de inexistente. Destino: **AF04**, **AF10**, **AF17**, **AF18** e *handover* da ingestão de bibliotecas e anexos do SharePoint. |
+| **RF05 — Apoio à criação e atualização de projetos** | TAPI, exemplo de Mapa de Benefícios e roteiro de construção guiada do cronograma | **Não entregue** | Intenções em `app/pipeline/intencao/catalogo.py`; ausência comprovada pelos seis `xfail` de `tests/funcionais/test_rf05_transacoes.py` | Não há jornada com prévia, confirmação, escrita atômica e trilha da alteração; os fluxos de aprovação do parceiro também não foram modelados. Destino: **AF05**, **AF08** e **AF25**. |
+| **RF06 — Identificação, alertas e apoio proativo a pendências** | TAPI e perguntas do parceiro sobre marcos, atrasos, obrigações e dependências | **Parcial** | `app/api/routes/rotinas.py`, `app/api/routes/avisos.py`, `app/avisos/` e `tests/funcionais/test_rf06_pendencias.py` | Agenda e avisos existem, mas falta a sonda que detecta a pendência e notifica somente o responsável; o cartão inicial ainda é fixo. Destino: **AF01**, **AF02** e **AF07**; Teams ou correio eletrônico permanece evolução **AF19**. |
+| **RF07 — Análise comparativa do portfólio** | TAPI e perguntas de Diretoria/PMO sobre comparação e criticidade | **Não entregue** | Decisão de escopo em 2.7.5 e três casos `skip` em `tests/funcionais/test_rf07_analise.py` | O requisito foi priorizado como desejável e não há fluxo de comparação entre projetos. O ambiente possui dados que podem sustentá-lo (5.5.10.3). Destino: **AF21**. |
+| **RF08 — Geração de relatórios e informações gerenciais** | TAPI e perguntas do parceiro sobre resumo executivo, apresentação e encerramento | **Não entregue** | Um encaminhamento básico em `tests/funcionais/test_rf08_relatorios.py`; três casos permanecem `xfail` | Não há geração apresentada ao usuário com adequação por perfil, regra de suficiência e fontes filtradas. O requisito ficou fora do MVP. Destino: **AF22**. |
+| **RF09 — Proteção da interação com o agente** | Regras de blindagem e de não exposição registradas nas perguntas do parceiro; refinamento de segurança da equipe | **Entregue** | `app/pipeline/guardas/`, `app/pipeline/orquestrador.py` e `tests/funcionais/test_rf09_guardas.py` | A ordem e os desfechos funcionais estão cobertos. A eficácia quantitativa não atingiu o RNF06 e segue separadamente em **AF12**; isso não transforma a existência das três guardas em entrega inexistente. |
+| **RF10 — Registro e análise das intenções** | Benefícios de rastreabilidade e transparência do TAPI; refinamento da equipe | **Entregue** | `app/api/routes/intencoes.py`, `app/analytics/`, `tests/funcionais/test_rf10_registro.py` e página `Intenções` | Uma linha por solicitação e os recortes analíticos estão implementados. A validação operacional no ambiente definitivo integra o *handover*; retenção e cifra são tratadas pelo RNF07. |
+| **RF11 — Rotinas agendadas** | Proatividade, lembretes e relatórios periódicos pedidos no TAPI; refinamento da equipe | **Entregue** | `app/api/routes/rotinas.py`, `app/rotinas/`, `app/worker.py`, `tests/funcionais/test_rf11_rotinas.py` e `TNF-DES-05` em 10.2.2.3 | Cadastro, agenda, execução e histórico existem. O desempenho concorrente e a operação continuada ainda exigem acompanhamento em **AF14** e **AF15**. |
+| **RF12 — Histórico e retomada de conversas** | Continuidade de diálogo e memória de trabalho presentes nos exemplos do parceiro; refinamento da equipe | **Entregue** | `app/api/routes/conversas.py`, `app/pipeline/orquestrador.py`, `tests/funcionais/test_rf12_historico.py` e página `Histórico` | Listagem, isolamento, retomada e envio do histórico seguro ao executor estão implementados. A proteção do conteúdo persistido permanece vinculada ao RNF07 e à **AF13**. |
+
+Os RNFs foram transformados pela equipe em critérios mensuráveis a partir das
+restrições e benefícios do parceiro. Por isso, a coluna de origem distingue o
+pedido externo da meta quantitativa adotada pelo grupo.
+
+| Requisito | Origem no material do parceiro | Situação | Evidência no repositório | Motivo da lacuna e destino |
+|---|---|---|---|---|
+| **RNF01 — Confidencialidade por perímetro declarado** | Restrição de dados sensíveis do TAPI e plataforma Microsoft homologada | **Parcial** | `tests/perimetro/test_perimetro_declarado.py`, `.env.example`, `infra/docker-compose.yml` e 3.3.1.1 | O perímetro está declarado e os cinco testes passam sobre dados sintéticos, mas Content Safety e Speech estão no tenant da equipe, e o executor próprio usa Pinecone e Gemini. Antes de dado real: **AF09** e **AF10**. |
+| **RNF02 — Rastreabilidade das alterações** | Benefícios de rastreabilidade e auditoria do TAPI | **Parcial** | `app/persistence/auditoria.py`, `tests/rnf/test_rnf02_07_auditoria.py` e registro do RF10 | Autoria, canal, momento, retenção e expurgo das interações são exercitados; não há alteração de portfólio efetivada para comprovar a cobertura exigida pelo RNF. Destino: **AF05**. |
+| **RNF03 — Precisão na classificação de intenções** | Núcleo de PLN exigido pelo TAPI; meta de 85% formalizada pela equipe | **Entregue** | `app/pipeline/intencao/avaliacao.py`, notebook de 5.4.11 e acurácia **0,856** sobre 431 casos | A meta foi atingida com conjunto de teste separado do ajuste. Reexecutar a bancada quando catálogo, corpus ou modelo mudar; isso é governança, não funcionalidade faltante. |
+| **RNF04 — Disponibilidade do agente** | Necessidade de operação confiável; meta preliminar de 99% proposta pela equipe e ainda não pactuada | **Não entregue** | `app/rotinas/sonda.py`, `tests/rnf/test_rnf04_disponibilidade.py` e evidência de 10.2.3.4 | A janela implantada obteve **83,333%**, abaixo da meta, e foi curta demais para certificar operação continuada. Destino: **AF14**, **AF15** e pactuação de horário/meta no *handover*. |
+| **RNF05 — Adequação da resposta ao perfil** | Perfis de acesso e regras de autorização/não exposição fornecidos pelo parceiro | **Parcial** | `tests/rnf/test_rnf05_perfil.py`, `tests/funcionais/test_rf01_acesso.py` e 5.5.10.5 | A bancada sintética atingiu 100% e zero exposição, mas usa respostas dubladas e três perfis que não cobrem todos os papéis do parceiro. Destino: **AF11** e validação humana no piloto. |
+| **RNF06 — Eficácia das barreiras de segurança** | Blindagem e recusa segura exigidas pelo parceiro; metas de detecção e falso positivo propostas pela equipe | **Não entregue** | `tests/rnf/test_rnf06_barreiras.py`, corpus `dados/adversarial/` e 10.2.3.6 | A guarda de saída atingiu a meta, porém injeção (**8,3%**) e abuso (**0%**) ficaram abaixo de 90%; o requisito é indivisível e permanece reprovado. Destino: **AF12**. |
+| **RNF07 — Retenção e proteção do registro** | Confidencialidade e auditoria pedidas no TAPI; prazo e mecanismo detalhados pela equipe | **Parcial** | `app/persistence/auditoria.py`, `tests/rnf/test_rnf02_07_auditoria.py` e 10.2.3.7 | Acesso, prazo provisório e expurgo existem, mas o prompt permanece em claro e o prazo definitivo depende do parceiro. Destino: **AF13** e decisão de retenção no *handover*. |
+
+O resultado consolidado é: nos RFs, cinco estão **entregues** (RF02 e RF09 a
+RF12), quatro estão **parciais** (RF01, RF03, RF04 e RF06) e três estão **não
+entregues** (RF05, RF07 e RF08). Nos RNFs, um está **entregue** (RNF03), quatro
+estão **parciais** (RNF01, RNF02, RNF05 e RNF07) e dois estão **não entregues**
+(RNF04 e RNF06). A matriz de execução de 10.7 preserva os resultados dos testes;
+o capítulo 13 recebe cada lacuna com destino explícito, e o *handover* concentra
+o que depende de tenant, regra ou decisão do Metrô.
 
 ## 9.7 Benefícios Entregues pela Prova de Conceito
 
@@ -15307,11 +15389,11 @@ rodada posterior amplia a anterior.
 |---|---|:-:|---|---|---|
 | RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | 5 | Aprovado: 5 casos no recorte reexecutado | evidência original; reexecução da #458 em 28/09 | Perfil seguro padrão, escopo e permissões verificados |
 | RF02 — canais | `tests/funcionais/test_rf02_canais.py` | 7 | Aprovado: 7 aprovados; o `TF-RF02-07` roda sobre um processador de áudio dublê escrito no próprio teste e não exercita `app/servicos/processamento_audio.py` | mesma evidência | Limites desta bateria: dublês; integrações reais são cobertas em 10.5 |
-| RF03 — intenções | `tests/funcionais/test_rf03_intencoes.py` | 8 | Parcial: 5 aprovados, 1 defeito e 1 pendência aceita | mesma evidência; triagem 10.7.1 | Solicitar entidade obrigatória; acompanhar resposta orientativa sob `R08` |
+| RF03 — intenções | `tests/funcionais/test_rf03_intencoes.py` | 8 | Parcial: 6 aprovados, 1 defeito e 1 pendência aceita | mesma evidência; triagem 10.7.1 | Solicitar entidade obrigatória; acompanhar resposta orientativa sob `R08` |
 | RF04 — consulta | `tests/funcionais/test_rf04_consulta.py` | 5 | Parcial: 4 aprovados e 1 defeito | mesma evidência; reexecução da #458; triagem 10.7.1 | Uniformizar a resposta 403/404 para impedir enumeração |
 | RF05 — transações | `tests/funcionais/test_rf05_transacoes.py` | 6 | Não implementado: 6 defeitos do produto | mesma evidência; triagem 10.7.1 | Alteração, confirmação, autorização, trilha e atomicidade |
 | RF06 — pendências | `tests/funcionais/test_rf06_pendencias.py` | 5 | Parcial: 4 defeitos do produto e 1 cenário fora do MVP | mesma evidência; triagem 10.7.1 | Implementar sonda e aviso interno; Teams/correio permanece fora do MVP |
-| RF07 — análise documental | `tests/funcionais/test_rf07_analise.py` | 3 | Fora do MVP: 3 `skip` | mesma evidência | Escopo explicitamente excluído do MVP |
+| RF07 — análise comparativa | `tests/funcionais/test_rf07_analise.py` | 3 | Fora do MVP: 3 `skip` | mesma evidência | Escopo explicitamente excluído do MVP |
 | RF08 — relatórios | `tests/funcionais/test_rf08_relatorios.py` | 4 | Fora do MVP: 1 cenário-base aprovado e 3 `xfail` desejáveis | mesma evidência; triagem 10.7.1 | Retomar perfil, suficiência e filtro de fontes após o MVP |
 | RF09 — guardas | `tests/funcionais/test_rf09_guardas.py` | 7 | Casos funcionais aprovados após #457 | evidência original e reexecução da triagem em 28/09; RNF em `2026-09-25-testes-rnf-perimetro.txt` | RNF06 permanece abaixo da meta; a correção funcional não altera a eficácia medida das guardas |
 | RF10 — registro | `tests/funcionais/test_rf10_registro.py` | 5 | Aprovado na bateria funcional | evidência funcional | Persistência real verificada separadamente por integração |
@@ -15370,7 +15452,7 @@ API, e os sete do RF02 incluem um caso cujo componente central não foi
 exercitado.
 
 **Riscos para liberação.** RF05 ainda não efetiva alterações com confirmação;
-RF06 permanece parcial e RF07 está fora do MVP; RF04/RF08 permanecem parciais;
+RF06 permanece parcial, RF04 permanece parcial e RF07 e RF08 estão fora do MVP;
 o RNF06 reprova parcialmente;
 a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
 continuada e carga no ambiente implantado seguem pendentes. A janela curta no
@@ -16145,7 +16227,7 @@ Os indicadores I1 a I5 podem ser calculados desde o primeiro dia do piloto, porq
 
 # 13. Aperfeiçoamentos Futuros
 
-Este capítulo reúne as melhorias possíveis para a solução, que até aqui estavam espalhadas pelo documento: os requisitos que a prova de conceito entrega em parte ou não entrega (9.6), os casos `xfail` da triagem de testes (10.7.1), as pendências de usabilidade (10.3.12.9), o ponto que o [Arquitetura.md](Arquitetura.md) mantém em aberto (seção 11) e os desejos do parceiro registrados fora do MVP (2.7.6). Cada aperfeiçoamento aparece uma vez, com a lacuna de onde veio. Nenhum item já implementado aparece como futuro: a lista foi conferida contra a situação por requisito da seção 9.6.1, no estado de 30/09/2026.
+Este capítulo reúne as melhorias possíveis para a solução, que até aqui estavam espalhadas pelo documento: os requisitos que a prova de conceito entrega em parte ou não entrega (9.6), os casos `xfail` da triagem de testes (10.7.1), as pendências de usabilidade (10.3.12.9), o ponto que o [Arquitetura.md](Arquitetura.md) mantém em aberto (seção 11) e os desejos do parceiro registrados fora do MVP (2.7.6). Cada aperfeiçoamento aparece uma vez, com a lacuna de onde veio. Nenhum item já implementado aparece como futuro: a lista foi conferida em 06/10/2026 contra a situação funcional de 9.6.1 e o balanço dos requisitos do parceiro de 9.6.3.
 
 ## 13.1 Critérios de prioridade e de esforço
 
