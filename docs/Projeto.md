@@ -10087,10 +10087,10 @@ reprovisionamento no tenant do parceiro para qualquer uso com dado real.
 
 Esta seção registra os testes automatizados implementados durante o
 desenvolvimento, com seus casos, entradas, resultados esperados e forma de
-execução. As subseções 9.5.1 a 9.5.5 cobrem a camada de interface, entregue na
-Sprint 3, e a 9.5.6 cobre o executor próprio do middleware, descrito em 9.4. Os
-testes das demais camadas do middleware serão acrescentados nesta mesma seção
-pela pessoa responsável por aquela camada.
+execução. As subseções 9.5.1 a 9.5.5 cobrem a suíte da interface, iniciada na
+Sprint 3 e ampliada nas seguintes; a 9.5.6 cobre o executor próprio do
+middleware, descrito em 9.4. Os testes das demais camadas do middleware serão
+acrescentados nesta mesma seção pela pessoa responsável por aquela camada.
 
 A distinção entre esta seção e a seção 10 merece registro, porque as duas tratam
 de teste e respondem a perguntas diferentes. A seção 10 é o **planejamento** dos
@@ -10146,44 +10146,480 @@ aqui não deriva de um requisito. Verificar que a tecla Enter envia a mensagem e
 que Shift mais Enter quebra linha é comportamento de componente, e forçá-lo sob
 um requisito produziria identificador limpo e rastreabilidade falsa.
 
-Adota-se, portanto, o prefixo `TU-WEB-nn`, sequencial e contínuo, com a coluna
-de rastreabilidade indicando o requisito de origem quando ele existe e a decisão
-de projeto quando não existe. A coluna "Onda" da convenção de 10.1.1 é omitida
-porque todos os casos desta seção já estão implementados e em execução.
+Adota-se, portanto, o prefixo `TU-WEB-nnn`, sequencial e contínuo, ordenado pelos
+arquivos da suíte e, dentro de cada arquivo, pela ordem dos testes. Os títulos e
+os caminhos identificam a asserção implementada; os casos funcionais derivados
+de requisitos mantêm sua rastreabilidade em 10.1. A coluna "Onda" da convenção
+de 10.1.1 é omitida porque todos os casos desta seção já estão implementados e
+em execução.
 
 ### 9.5.3 Casos implementados
 
-**Apresentação dos desfechos**, em `testes/desfechos.test.ts`.
+Na execução registrada em 05/10/2026, os 429 casos passaram em 21 arquivos. A
+tabela abaixo atribui identificadores individuais e registra, por arquivo, o
+intervalo de IDs, os cenários cobertos, as entradas/precondições e o resultado
+esperado comum aos casos daquele conjunto. A ordem dos IDs acompanha a ordem
+dos testes no arquivo; nos casos parametrizados, cada linha de dados executada
+recebe seu próprio ID. O nome do arquivo e o título do teste identificam a
+asserção correspondente no código.
 
-| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
-| --- | --- | --- | --- | --- | --- |
-| TU-WEB-01 | Positivo | Cobertura do vocabulário fechado de desfechos | Tabela de aparência dos desfechos | Existe entrada para os oito desfechos declarados em `tipos/index.ts`, sem ausência nem excedente | RF03, RF09 |
-| TU-WEB-02 | Negativo | Rótulo não nomeia a barreira acionada | Desfechos de bloqueio por injeção, por abuso e de saída | Nenhum rótulo contém termo que identifique a barreira; os dois desfechos de injeção compartilham o mesmo rótulo | RF09 |
-| TU-WEB-03 | Positivo | Desfecho atendido não recebe etiqueta | Desfecho `encaminhada` | Rótulo vazio e ausência de filete lateral, para que a conversa normal não seja marcada | RF03 |
-| TU-WEB-04 | Positivo | Todo desfecho não atendido recebe distinção visual | Os sete desfechos restantes | Cada um possui filete lateral e etiqueta, garantindo que a informação não dependa apenas da cor | RF03, WCAG 1.4.1 |
+| IDs | Arquivo | Casos e cenários individuais | Entrada e pré-condição | Resultado esperado |
+| --- | --- | --- | --- | --- |
+| TU-WEB-001–056 | `testes/agenda.test.ts` | Geração de expressões cron; interpretação de agendas diária, semanal, mensal e legada; resumo de agenda; validação de formulário; formatação de datas e identificadores. | Combinações de repetição, horários, dias selecionados, expressões cron válidas/inválidas, campos de formulário e datas declaradas em cada teste. | Expressão cron, descrição e valores formatados correspondem à entrada; agendas inválidas ou incompletas são identificadas e formulário válido não apresenta erros. |
+| TU-WEB-057–098 | `testes/componentes-ui.test.tsx` | Renderização e interação dos componentes compartilhados Layout, CampoSelecao, DialogoResponsivo, EstadoVazio, CabecalhoPagina, BotaoIcone e moldura lateral. | Props e children válidos/ausentes, estados aberto/fechado, opções de seleção, eventos de clique e contextos com/sem provedor. | Estrutura, conteúdo, estado e callback correspondem às props; elementos ausentes não são renderizados indevidamente e atributos acessíveis permanecem presentes. |
+| TU-WEB-099–111 | `testes/execucoes.test.ts` | Mapeamento de estados de execução, rótulos, ícones, classes e cores; apresentação em português. | Estados sucesso, bloqueada, falha e em execução, incluindo o conjunto completo de status. | Cada estado tem representação consistente e rótulo localizado; animação e cores correspondem ao estado e ao desfecho. |
+| TU-WEB-112–127 | `testes/componentes-moldura.test.tsx` | Barra lateral, navegação, conversas recentes, skeleton, identidade e controle por permissão. | Usuário e permissões fornecidos pelos utilitários de renderização; eventos de navegação e estados de carregamento. | A moldura mostra as rotas e dados permitidos, omite ações sem permissão e mantém links, rótulos e callbacks acessíveis. |
+| TU-WEB-128–179 | `testes/componentes-chat.test.tsx` | Composer, envio e edição de texto, estados do microfone, bolhas de mensagem, conversa vazia, indicador de digitação, avisos e desfechos. | Texto vazio/preenchido, canal, estado de processamento/gravação, propriedades de mensagem e interação com botões. | Componentes refletem estado e conteúdo recebidos, disparam callbacks corretos e comunicam estado sem controles ou etiquetas indevidos. |
+| TU-WEB-180–185 | `testes/autenticacao.test.tsx` | Tela de entrada, recusa de login, encerramento da sessão e listagem de conversas recentes. | Respostas MSW de sucesso, login recusado, lista vazia ou erro de carregamento; ação explícita de saída. | A tela representa o estado correto, encerra a sessão e apresenta conversas, estado vazio ou erro sem confundir os resultados. |
+| TU-WEB-186–203 | `testes/graficos.test.tsx` | Tabelas acessíveis, séries temporais, distribuição de desfechos, intenções sem contagem, cartões-resumo, cores e formatação. | Dados de série e intenção, pontos repetidos, dados vazios, tokens de cor dos temas e valores de data/percentual/duração. | Gráficos e tabelas representam todos os dados requeridos, preservam foco por teclado, associam rótulos aos valores e formatam segundo as convenções locais. |
+| TU-WEB-204–211 | `testes/falhas.test.tsx` | Falha de rede, tempo limite, indisponibilidade, ausência de dados, conversa que não abre e pedido recusado. | Respostas MSW de rede/503/erro de pedido, lista vazia e relógio controlado para tempo limite; tentativa de recuperação quando oferecida. | A interface distingue falha de ausência, informa o problema, encerra carregamento e oferece nova tentativa apenas quando ela pode ser útil. |
+| TU-WEB-212–217 | `testes/navegacao.test.tsx` | Troca de conversa, ida e volta pelo histórico e carregamento de conversa persistida. | Rotas com e sem identificador, conversas com turnos e navegação entre página principal e histórico. | O contexto exibido corresponde à conversa selecionada, não há sobreposição nem duplicação do primeiro turno e o histórico pode ser retomado. |
+| TU-WEB-218–222 | `testes/intencoes.test.tsx` | Carregamento, composição de gráficos, erro versus ausência, estado vazio e filtros do painel de intenções. | Respostas MSW atrasadas, erro, período sem mensagens e seleções de período/perfil. | Loading precede os dados; painel apresenta os gráficos e filtros esperados e distingue indisponibilidade de resultado vazio. |
+| TU-WEB-223–326 | `testes/contraste.test.ts` | Contraste de texto, ícones, bordas, desfechos, controles e séries nos temas claro e escuro. | Cada combinação de tokens declarada em `REGRAS`, repetida para ambos os temas, incluindo o mínimo de 4,5:1 para texto e 3:1 para elementos gráficos. | Tokens existem como cores hexadecimais e cada par atinge ou supera a razão mínima de contraste correspondente. |
+| TU-WEB-327–333 | `testes/desfechos.test.ts` | Vocabulário de desfechos, rótulos não reveladores, tratamento do sucesso, distinção visual e etiqueta em saudação/recusa. | Os oito desfechos declarados, incluindo injeção, abuso, saída, recusa e encaminhamento. | Catálogo completo sem excedentes; rótulos não identificam a barreira; o sucesso não é marcado e os demais têm distinção apropriada. |
+| TU-WEB-334–337 | `testes/dubles.test.ts` | Handlers compartilhados entre navegador e teste, rotas pendentes, início do MSW e opção de desativação. | Configuração de handlers, rota conhecida/desconhecida e variável `VITE_SEM_DUBLES`. | Os dublês de teste correspondem aos do navegador, rotas pendentes ficam identificadas e a configuração de desativação é respeitada. |
+| TU-WEB-338–341 | `testes/formato.test.ts` | Formatação de valores apresentados na interface. | Valores válidos e limites de entrada definidos nos casos do módulo. | O valor formatado corresponde à convenção de apresentação usada pela interface. |
+| TU-WEB-342–384 | `testes/componentes-rotinas.test.tsx` | Formulário, validação, agenda, ativação, filtros, resultados, edição, exclusão e diálogos de rotina. | Props de rotina, campos vazios/válidos/inválidos, opções de agenda, estado de operação e eventos de formulário. | Validações e status são apresentados corretamente; ações chamam o callback esperado, formulários válidos são enviados e operações em andamento não são duplicadas. |
+| TU-WEB-385–387 | `testes/middleware.test.tsx` | Conversa criada pelo backend, resposta 422 do FastAPI e erro 500 sem JSON. | Handlers MSW com novo `conversa_id`, corpo FastAPI de validação e resposta de texto puro 500. | O ID recebido é reutilizado no turno seguinte; 422 e 500 são exibidos em linguagem legível, sem expor o texto técnico cru. |
+| TU-WEB-388–411 | `testes/paginas.test.tsx` | Fluxos da página principal, rotinas, histórico e navegação: envio, bloqueios, agendas, operações CRUD, permissões, carregamento e recuperação. | Interações de usuário com campos/botões e respostas MSW de sucesso, vazias ou de falha, conforme cada teste. | A página apresenta conteúdo e estados coerentes, executa ações na ordem correta, respeita confirmação/permissões e permite recuperar falhas recuperáveis. |
+| TU-WEB-412–416 | `testes/microfone.test.tsx` | Falhas de token e permissão, transcrição contínua, atualização do token e encerramento do reconhecedor. | SDK do Azure Speech dublado em estados de sucesso, erro, cancelamento e desmontagem do componente. | A interface informa falhas recuperáveis, entrega transcrições e sempre encerra os recursos de captura. |
+| TU-WEB-417–423 | `testes/primitivos-ui.test.tsx` | Avatar, separador, sheet, drawer, menu, diálogo e confirmação destrutiva. | Componentes compartilhados renderizados com conteúdo, orientação, ações e atributos acessíveis. | Os primitivos expõem semântica acessível e executam abertura, fechamento, seleção e confirmação conforme o contrato. |
+| TU-WEB-424 | `testes/inicializacao.test.tsx` | Ordem de inicialização do ponto de entrada da interface. | Inicialização dos dublês pendente e elemento raiz presente no documento. | A árvore da aplicação só é montada depois que os dublês assumem a rede. |
+| TU-WEB-425–429 | `testes/rotas.test.tsx` | Proteção e carregamento das rotas de intenções e rotinas. | Carregamento de identidade, ausência de sessão, usuário sem permissão e usuário com a permissão correspondente. | Rotas restritas aguardam a identidade; sessão ausente retorna à entrada, falta de permissão não mostra a tela protegida e acesso autorizado carrega as páginas. |
 
-**Navegação entre conversas**, em `testes/navegacao.test.tsx`.
+Os 429 casos executados são enumerados individualmente a seguir. Os IDs são sequenciais, agrupados pela ordem dos arquivos na tabela acima; dentro de cada arquivo, preservam a ordem dos testes. Cada cenário conserva o grupo Vitest e o título do teste. A entrada e o resultado esperado de cada ID são os descritos na linha da família correspondente.
 
-| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
-| --- | --- | --- | --- | --- | --- |
-| TU-WEB-05 | Positivo | Troca de conversa substitui o conteúdo | Mensagem enviada em uma conversa, seguida de navegação para outra | O conteúdo da conversa anterior deixa a tela e o da nova é apresentado, sem sobreposição | RF12 |
-| TU-WEB-06 | Positivo | Conversa nova apresenta sugestões de partida | Rota da página principal sem identificador de conversa | As quatro sugestões correspondentes a intenções do catálogo são exibidas | RF02, RF03 |
-| TU-WEB-07 | Negativo | Conversa gravada não repete o estado inicial | Rota de conversa com turnos gravados | As sugestões de partida não são exibidas sobre uma conversa que já possui histórico | RF12 |
-| TU-WEB-08 | Negativo | Rota inexistente leva a destino explícito | Endereço não registrado no mapa de rotas | Tela de rota não encontrada, e não tela em branco ou redirecionamento silencioso | Decisão de projeto, seção 9.2.6 |
-
-**Página principal e página de rotinas**, em `testes/paginas.test.tsx`.
-
-| ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade |
-| --- | --- | --- | --- | --- | --- |
-| TU-WEB-09 | Positivo | Envio de mensagem e recebimento da resposta | Mensagem de consulta ao portfólio | A mensagem do usuário aparece antes da resposta, e a resposta do agente é apresentada em seguida | RF02, RF04 |
-| TU-WEB-10 | Negativo | Recusa fora de escopo não é tratada como erro | Mensagem sobre assunto alheio ao portfólio | O texto orientativo ocupa a bolha como qualquer resposta, com etiqueta de recusa, e nenhuma mensagem de falha do sistema é exibida | RF03 |
-| TU-WEB-11 | Negativo | Tentativa de injeção não revela a barreira | Mensagem contendo instrução de manipulação do agente | Resposta seca, sem explicação do motivo e sem repetição da instrução recebida; a etiqueta não distingue bloqueio por regra de bloqueio por modelo | RF09 |
-| TU-WEB-12 | Positivo | Pedido ambíguo solicita detalhamento | Mensagem curta ou com referência indefinida | Resposta pede a informação faltante em vez de recusar ou de responder por suposição | RF03 |
-| TU-WEB-13 | Positivo | Enter envia e Shift mais Enter quebra linha | Texto digitado no campo de mensagem | Shift mais Enter preserva o texto sem criar bolha; Enter cria a bolha e esvazia o campo | Decisão de projeto, seção 9.2.5 |
-| TU-WEB-14 | Positivo | Entrada por voz sinaliza estado e entrega a transcrição | Acionamento do botão de microfone | O estado ativo é indicado de forma perceptível e o texto transcrito chega ao campo de mensagem | RF02 |
-| TU-WEB-15 | Positivo | Filtragem das rotinas cadastradas | Lista de rotinas do dublê e termo de busca | Apenas as rotinas correspondentes ao termo permanecem visíveis | RF11 |
-| TU-WEB-16 | Positivo | Validação e criação de rotina | Prompt e agenda informados no formulário | A validação é acionada antes da criação e a rotina passa a constar da lista | RF11 |
-| TU-WEB-17 | Negativo | Exclusão exige confirmação | Acionamento da exclusão de uma rotina | A exclusão não ocorre sem confirmação explícita do usuário | RF11 |
+| ID | Caso executado (arquivo > grupo > teste) |
+| --- | --- |
+| TU-WEB-001 | `src/testes/agenda.test.ts > cronDoFormulario > gera cron para repetição diária` |
+| TU-WEB-002 | `src/testes/agenda.test.ts > cronDoFormulario > gera cron para dias úteis` |
+| TU-WEB-003 | `src/testes/agenda.test.ts > cronDoFormulario > gera cron para repetição semanal` |
+| TU-WEB-004 | `src/testes/agenda.test.ts > cronDoFormulario > gera cron para dias personalizados` |
+| TU-WEB-005 | `src/testes/agenda.test.ts > cronDoFormulario > gera cron para repetição mensal` |
+| TU-WEB-006 | `src/testes/agenda.test.ts > cronDoFormulario > preserva cron legado quando repetição é legada` |
+| TU-WEB-007 | `src/testes/agenda.test.ts > cronDoFormulario > trata horário limite 00:00` |
+| TU-WEB-008 | `src/testes/agenda.test.ts > cronDoFormulario > trata horário limite 23:59` |
+| TU-WEB-009 | `src/testes/agenda.test.ts > formularioDaAgenda > interpreta cron diário` |
+| TU-WEB-010 | `src/testes/agenda.test.ts > formularioDaAgenda > interpreta cron de dias úteis` |
+| TU-WEB-011 | `src/testes/agenda.test.ts > formularioDaAgenda > interpreta cron semanal` |
+| TU-WEB-012 | `src/testes/agenda.test.ts > formularioDaAgenda > interpreta cron de dias personalizados` |
+| TU-WEB-013 | `src/testes/agenda.test.ts > formularioDaAgenda > interpreta cron mensal` |
+| TU-WEB-014 | `src/testes/agenda.test.ts > formularioDaAgenda > retorna legada para cron não reconhecido` |
+| TU-WEB-015 | `src/testes/agenda.test.ts > formularioDaAgenda > retorna legada para cron com campos extras` |
+| TU-WEB-016 | `src/testes/agenda.test.ts > formularioDaAgenda > retorna legada para minuto inválido` |
+| TU-WEB-017 | `src/testes/agenda.test.ts > formularioDaAgenda > retorna legada para hora inválida` |
+| TU-WEB-018 | `src/testes/agenda.test.ts > formularioDaAgenda > interpreta dia numérico (APScheduler 3.x)` |
+| TU-WEB-019 | `src/testes/agenda.test.ts > formularioDaAgenda > trata dia do mês limite 1` |
+| TU-WEB-020 | `src/testes/agenda.test.ts > formularioDaAgenda > trata dia do mês limite 31` |
+| TU-WEB-021 | `src/testes/agenda.test.ts > resumoDaAgenda > descreve agenda diária` |
+| TU-WEB-022 | `src/testes/agenda.test.ts > resumoDaAgenda > descreve agenda de dias úteis` |
+| TU-WEB-023 | `src/testes/agenda.test.ts > resumoDaAgenda > descreve agenda semanal` |
+| TU-WEB-024 | `src/testes/agenda.test.ts > resumoDaAgenda > descreve agenda de dias personalizados` |
+| TU-WEB-025 | `src/testes/agenda.test.ts > resumoDaAgenda > descreve agenda mensal` |
+| TU-WEB-026 | `src/testes/agenda.test.ts > resumoDaAgenda > descreve agenda legada` |
+| TU-WEB-027 | `src/testes/agenda.test.ts > resumoDaAgenda > pede seleção de dias quando nenhum dia selecionado` |
+| TU-WEB-028 | `src/testes/agenda.test.ts > descreverAgenda > descreve cron diário` |
+| TU-WEB-029 | `src/testes/agenda.test.ts > descreverAgenda > descreve cron de dias úteis` |
+| TU-WEB-030 | `src/testes/agenda.test.ts > descreverAgenda > descreve cron legado` |
+| TU-WEB-031 | `src/testes/agenda.test.ts > validarFormulario > valida formulário vazio` |
+| TU-WEB-032 | `src/testes/agenda.test.ts > validarFormulario > valida nome curto` |
+| TU-WEB-033 | `src/testes/agenda.test.ts > validarFormulario > valida nome válido` |
+| TU-WEB-034 | `src/testes/agenda.test.ts > validarFormulario > valida prompt curto` |
+| TU-WEB-035 | `src/testes/agenda.test.ts > validarFormulario > valida prompt válido` |
+| TU-WEB-036 | `src/testes/agenda.test.ts > validarFormulario > valida horário inválido` |
+| TU-WEB-037 | `src/testes/agenda.test.ts > validarFormulario > valida horário válido` |
+| TU-WEB-038 | `src/testes/agenda.test.ts > validarFormulario > valida horário limite 00:00` |
+| TU-WEB-039 | `src/testes/agenda.test.ts > validarFormulario > valida horário limite 23:59` |
+| TU-WEB-040 | `src/testes/agenda.test.ts > validarFormulario > valida dia do mês fora do intervalo` |
+| TU-WEB-041 | `src/testes/agenda.test.ts > validarFormulario > valida dia do mês válido` |
+| TU-WEB-042 | `src/testes/agenda.test.ts > validarFormulario > valida dia do mês limite 1` |
+| TU-WEB-043 | `src/testes/agenda.test.ts > validarFormulario > valida dia do mês limite 31` |
+| TU-WEB-044 | `src/testes/agenda.test.ts > validarFormulario > valida dias personalizados vazios` |
+| TU-WEB-045 | `src/testes/agenda.test.ts > validarFormulario > valida dias personalizados com seleção` |
+| TU-WEB-046 | `src/testes/agenda.test.ts > validarFormulario > valida timezone vazio` |
+| TU-WEB-047 | `src/testes/agenda.test.ts > validarFormulario > valida timezone preenchido` |
+| TU-WEB-048 | `src/testes/agenda.test.ts > validarFormulario > retorna sem erros para formulário válido` |
+| TU-WEB-049 | `src/testes/agenda.test.ts > dadosParaApi > converte formulário para formato da API` |
+| TU-WEB-050 | `src/testes/agenda.test.ts > formularioDaRotina > converte rotina para formulário` |
+| TU-WEB-051 | `src/testes/agenda.test.ts > formatarData > formata data válida` |
+| TU-WEB-052 | `src/testes/agenda.test.ts > formatarData > retorna mensagem quando data é null` |
+| TU-WEB-053 | `src/testes/agenda.test.ts > rotuloDaIntencao > retorna rótulo quando disponível` |
+| TU-WEB-054 | `src/testes/agenda.test.ts > rotuloDaIntencao > formata id quando não há rótulo` |
+| TU-WEB-055 | `src/testes/agenda.test.ts > rotuloDaIntencao > retorna Não classificada quando não há intenção` |
+| TU-WEB-056 | `src/testes/agenda.test.ts > rotuloDaIntencao > capitaliza primeira letra do id formatado` |
+| TU-WEB-057 | `src/testes/componentes-ui.test.tsx > Layout > renderiza sem erro` |
+| TU-WEB-058 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > renderiza título` |
+| TU-WEB-059 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > renderiza subtítulo quando fornecido` |
+| TU-WEB-060 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > não renderiza subtítulo quando não fornecido` |
+| TU-WEB-061 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > renderiza ações quando fornecidas` |
+| TU-WEB-062 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > não renderiza ações quando não fornecidas` |
+| TU-WEB-063 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > usa h1 quando tituloDaPagina é true` |
+| TU-WEB-064 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > usa p quando tituloDaPagina é false` |
+| TU-WEB-065 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > aplica className customizado` |
+| TU-WEB-066 | `src/testes/componentes-ui.test.tsx > CabecalhoPagina > tem role header` |
+| TU-WEB-067 | `src/testes/componentes-ui.test.tsx > CampoSelecao > renderiza select nativo` |
+| TU-WEB-068 | `src/testes/componentes-ui.test.tsx > CampoSelecao > renderiza opções fornecidas` |
+| TU-WEB-069 | `src/testes/componentes-ui.test.tsx > CampoSelecao > renderiza ícone de caret` |
+| TU-WEB-070 | `src/testes/componentes-ui.test.tsx > CampoSelecao > ícone caret tem aria-hidden` |
+| TU-WEB-071 | `src/testes/componentes-ui.test.tsx > CampoSelecao > tem appearance-none para estilo customizado` |
+| TU-WEB-072 | `src/testes/componentes-ui.test.tsx > CampoSelecao > permite mudar valor` |
+| TU-WEB-073 | `src/testes/componentes-ui.test.tsx > CampoSelecao > aplica className customizado` |
+| TU-WEB-074 | `src/testes/componentes-ui.test.tsx > CampoSelecao > propaga props adicionais para o select` |
+| TU-WEB-075 | `src/testes/componentes-ui.test.tsx > DialogoResponsivo > renderiza dialog quando aberto` |
+| TU-WEB-076 | `src/testes/componentes-ui.test.tsx > DialogoResponsivo > não renderiza dialog quando fechado` |
+| TU-WEB-077 | `src/testes/componentes-ui.test.tsx > DialogoResponsivo > renderiza título` |
+| TU-WEB-078 | `src/testes/componentes-ui.test.tsx > DialogoResponsivo > renderiza descrição` |
+| TU-WEB-079 | `src/testes/componentes-ui.test.tsx > DialogoResponsivo > renderiza conteúdo children` |
+| TU-WEB-080 | `src/testes/componentes-ui.test.tsx > DialogoResponsivo > chama onFechar ao fechar` |
+| TU-WEB-081 | `src/testes/componentes-ui.test.tsx > DialogoResponsivo > esconde descrição quando descricaoOculta é true` |
+| TU-WEB-082 | `src/testes/componentes-ui.test.tsx > DialogoResponsivo > aplica classe larga quando largas é true` |
+| TU-WEB-083 | `src/testes/componentes-ui.test.tsx > EstadoVazio > renderiza título` |
+| TU-WEB-084 | `src/testes/componentes-ui.test.tsx > EstadoVazio > renderiza descrição` |
+| TU-WEB-085 | `src/testes/componentes-ui.test.tsx > EstadoVazio > renderiza ação quando fornecida` |
+| TU-WEB-086 | `src/testes/componentes-ui.test.tsx > EstadoVazio > não renderiza ação quando não fornecida` |
+| TU-WEB-087 | `src/testes/componentes-ui.test.tsx > EstadoVazio > renderiza ícone quando fornecido` |
+| TU-WEB-088 | `src/testes/componentes-ui.test.tsx > EstadoVazio > não renderiza ícone quando não fornecido` |
+| TU-WEB-089 | `src/testes/componentes-ui.test.tsx > EstadoVazio > ícone tem aria-hidden` |
+| TU-WEB-090 | `src/testes/componentes-ui.test.tsx > EstadoVazio > tem borda tracejada` |
+| TU-WEB-091 | `src/testes/componentes-ui.test.tsx > EstadoVazio > aplica className customizado` |
+| TU-WEB-092 | `src/testes/componentes-ui.test.tsx > BotaoIcone > renderiza botão com ícone` |
+| TU-WEB-093 | `src/testes/componentes-ui.test.tsx > BotaoIcone > tem aria-label correto` |
+| TU-WEB-094 | `src/testes/componentes-ui.test.tsx > BotaoIcone > chama onClick ao clicar` |
+| TU-WEB-095 | `src/testes/componentes-ui.test.tsx > BotaoIcone > ícone tem aria-hidden` |
+| TU-WEB-096 | `src/testes/componentes-ui.test.tsx > BotaoIcone > aplica className customizado` |
+| TU-WEB-097 | `src/testes/componentes-ui.test.tsx > BotaoIcone > propaga props adicionais para o botão` |
+| TU-WEB-098 | `src/testes/componentes-ui.test.tsx > BotaoBarraLateral > renderiza null quando não há sidebar` |
+| TU-WEB-099 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > mapeia status sucesso corretamente` |
+| TU-WEB-100 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > mapeia status bloqueada corretamente` |
+| TU-WEB-101 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > mapeia status falha corretamente` |
+| TU-WEB-102 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > mapeia status em_execucao corretamente` |
+| TU-WEB-103 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > contém todos os status esperados` |
+| TU-WEB-104 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > cada status tem rotulo definido` |
+| TU-WEB-105 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > cada status tem icone definido` |
+| TU-WEB-106 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > cada status tem classe CSS definida` |
+| TU-WEB-107 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > status em_execucao tem animação de spin` |
+| TU-WEB-108 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > status sucesso usa cores de desfecho ok` |
+| TU-WEB-109 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > status bloqueada usa cores de desfecho injecao` |
+| TU-WEB-110 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > status falha usa cores de desfecho falha` |
+| TU-WEB-111 | `src/testes/execucoes.test.ts > STATUS_DE_EXECUCAO > rótulos estão em português e com acentuação correta` |
+| TU-WEB-112 | `src/testes/componentes-moldura.test.tsx > BarraLateral > renderiza a barra lateral com estrutura completa` |
+| TU-WEB-113 | `src/testes/componentes-moldura.test.tsx > BarraLateral > renderiza logo da Prata` |
+| TU-WEB-114 | `src/testes/componentes-moldura.test.tsx > BarraLateral > renderiza botão de nova conversa` |
+| TU-WEB-115 | `src/testes/componentes-moldura.test.tsx > BarraLateral > renderiza navegação principal` |
+| TU-WEB-116 | `src/testes/componentes-moldura.test.tsx > BarraLateral > renderiza link para página principal` |
+| TU-WEB-117 | `src/testes/componentes-moldura.test.tsx > BarraLateral > renderiza link para histórico` |
+| TU-WEB-118 | `src/testes/componentes-moldura.test.tsx > BarraLateral > renderiza seção de conversas recentes` |
+| TU-WEB-119 | `src/testes/componentes-moldura.test.tsx > BarraLateral > renderiza rodapé com menu do perfil` |
+| TU-WEB-120 | `src/testes/componentes-moldura.test.tsx > BarraLateral > não renderiza item de Intenções quando usuário não tem permissão` |
+| TU-WEB-121 | `src/testes/componentes-moldura.test.tsx > BarraLateral > não renderiza item de Rotinas quando usuário não tem permissão` |
+| TU-WEB-122 | `src/testes/componentes-moldura.test.tsx > ConversasRecentes > renderiza título da seção` |
+| TU-WEB-123 | `src/testes/componentes-moldura.test.tsx > ConversasRecentes > renderiza link para ver todas` |
+| TU-WEB-124 | `src/testes/componentes-moldura.test.tsx > ConversasRecentes > renderiza skeletons durante carregamento` |
+| TU-WEB-125 | `src/testes/componentes-moldura.test.tsx > ConversasRecentes > chama aoNavegar ao clicar em ver todas` |
+| TU-WEB-126 | `src/testes/componentes-moldura.test.tsx > ConversasRecentes > tem aria-labelledby correto` |
+| TU-WEB-127 | `src/testes/componentes-moldura.test.tsx > MenuDoPerfil > renderiza os dados da pessoa quando dentro do SidebarProvider` |
+| TU-WEB-128 | `src/testes/componentes-chat.test.tsx > Composer > envia mensagem ao pressionar Enter` |
+| TU-WEB-129 | `src/testes/componentes-chat.test.tsx > Composer > não envia ao pressionar Shift+Enter (quebra linha)` |
+| TU-WEB-130 | `src/testes/componentes-chat.test.tsx > Composer > desabilita botão de envio quando valor está vazio` |
+| TU-WEB-131 | `src/testes/componentes-chat.test.tsx > Composer > desabilita botão de envio quando voz está ativa` |
+| TU-WEB-132 | `src/testes/componentes-chat.test.tsx > Composer > habilita botão de envio quando há texto e voz inativa` |
+| TU-WEB-133 | `src/testes/componentes-chat.test.tsx > Composer > exibe placeholder correto para cada estado de voz` |
+| TU-WEB-134 | `src/testes/componentes-chat.test.tsx > Composer > campo fica somente leitura durante gravação` |
+| TU-WEB-135 | `src/testes/componentes-chat.test.tsx > Composer > exibe transcrição parcial durante gravação` |
+| TU-WEB-136 | `src/testes/componentes-chat.test.tsx > Composer > exibe valor digitado quando voz inativa` |
+| TU-WEB-137 | `src/testes/componentes-chat.test.tsx > Composer > chama onAlterar ao digitar` |
+| TU-WEB-138 | `src/testes/componentes-chat.test.tsx > Composer > envia ao clicar no botão de enviar` |
+| TU-WEB-139 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > renderiza mensagem do usuário com texto correto` |
+| TU-WEB-140 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > renderiza mensagem do agente com texto correto` |
+| TU-WEB-141 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > exibe ícone de voz quando canal é voz` |
+| TU-WEB-142 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > exibe ícone de rotina quando canal é rotina` |
+| TU-WEB-143 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > não exibe ícone de canal quando não especificado` |
+| TU-WEB-144 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > exibe horário quando fornecido` |
+| TU-WEB-145 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > não exibe horário quando vazio` |
+| TU-WEB-146 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > exibe etiqueta de desfecho quando aplicável` |
+| TU-WEB-147 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > não exibe etiqueta para desfecho atendido` |
+| TU-WEB-148 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > renderiza botão de copiar em respostas` |
+| TU-WEB-149 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > não renderiza botão de copiar em perguntas` |
+| TU-WEB-150 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > copia texto ao clicar no botão de copiar` |
+| TU-WEB-151 | `src/testes/componentes-chat.test.tsx > BolhaMensagem > mensagem local tem animação de entrada` |
+| TU-WEB-152 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > chama onAlternar ao clicar` |
+| TU-WEB-153 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > aria-label muda conforme estado` |
+| TU-WEB-154 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > aria-pressed é true quando estado ativo` |
+| TU-WEB-155 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > aria-pressed é false quando estado inativo` |
+| TU-WEB-156 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > botão desabilitado quando processando` |
+| TU-WEB-157 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > botão habilitado quando não processando` |
+| TU-WEB-158 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > exibe ícone de microfone quando ocioso` |
+| TU-WEB-159 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > exibe ícone de parar quando gravando` |
+| TU-WEB-160 | `src/testes/componentes-chat.test.tsx > BotaoMicrofone > exibe ícone de carregando quando processando` |
+| TU-WEB-161 | `src/testes/componentes-chat.test.tsx > ConversaVazia > renderiza título de boas-vindas` |
+| TU-WEB-162 | `src/testes/componentes-chat.test.tsx > ConversaVazia > renderiza descrição do que o agente faz` |
+| TU-WEB-163 | `src/testes/componentes-chat.test.tsx > ConversaVazia > renderiza todas as sugestões` |
+| TU-WEB-164 | `src/testes/componentes-chat.test.tsx > ConversaVazia > chama onEscolher ao clicar em sugestão` |
+| TU-WEB-165 | `src/testes/componentes-chat.test.tsx > ConversaVazia > cada sugestão é um botão clicável` |
+| TU-WEB-166 | `src/testes/componentes-chat.test.tsx > ConversaVazia > renderiza símbolo da Prata` |
+| TU-WEB-167 | `src/testes/componentes-chat.test.tsx > IndicadorDigitando > renderiza com role status` |
+| TU-WEB-168 | `src/testes/componentes-chat.test.tsx > IndicadorDigitando > renderiza avatar da Prata` |
+| TU-WEB-169 | `src/testes/componentes-chat.test.tsx > IndicadorDigitando > renderiza texto para leitor de tela` |
+| TU-WEB-170 | `src/testes/componentes-chat.test.tsx > IndicadorDigitando > renderiza três pontos de animação` |
+| TU-WEB-171 | `src/testes/componentes-chat.test.tsx > IndicadorDigitando > tem delay de animação diferente para cada ponto` |
+| TU-WEB-172 | `src/testes/componentes-chat.test.tsx > AvisoMarco > renderiza título do alerta` |
+| TU-WEB-173 | `src/testes/componentes-chat.test.tsx > AvisoMarco > renderiza descrição do projeto` |
+| TU-WEB-174 | `src/testes/componentes-chat.test.tsx > AvisoMarco > renderiza botão de ver detalhes` |
+| TU-WEB-175 | `src/testes/componentes-chat.test.tsx > AvisoMarco > renderiza botão de dispensar` |
+| TU-WEB-176 | `src/testes/componentes-chat.test.tsx > AvisoMarco > chama onVerDetalhes ao clicar no botão` |
+| TU-WEB-177 | `src/testes/componentes-chat.test.tsx > AvisoMarco > chama onDispensar ao clicar no botão de dispensar` |
+| TU-WEB-178 | `src/testes/componentes-chat.test.tsx > AvisoMarco > tem role region com aria-label correto` |
+| TU-WEB-179 | `src/testes/componentes-chat.test.tsx > AvisoMarco > renderiza ícone de alerta` |
+| TU-WEB-180 | `src/testes/autenticacao.test.tsx > Tela de entrada > não mostra erro no acesso normal` |
+| TU-WEB-181 | `src/testes/autenticacao.test.tsx > Tela de entrada > avisa quando o login voltou recusado do servidor` |
+| TU-WEB-182 | `src/testes/autenticacao.test.tsx > Saída > encerra a sessão e volta à tela de entrada` |
+| TU-WEB-183 | `src/testes/autenticacao.test.tsx > Conversas recentes no Layout > mostra conversas reais e não os títulos fixos antigos` |
+| TU-WEB-184 | `src/testes/autenticacao.test.tsx > Conversas recentes no Layout > mostra texto simples quando não há conversas` |
+| TU-WEB-185 | `src/testes/autenticacao.test.tsx > Conversas recentes no Layout > mostra erro discreto quando a listagem falha` |
+| TU-WEB-186 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'BarrasPorIntencao' desenha dentro de ResponsiveContainer` |
+| TU-WEB-187 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'DistribuicaoDesfechos' desenha dentro de ResponsiveContainer` |
+| TU-WEB-188 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'SerieBloqueios' desenha dentro de ResponsiveContainer` |
+| TU-WEB-189 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'BarrasPorIntencao' nao deixa foco dentro do desenho escondido` |
+| TU-WEB-190 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'DistribuicaoDesfechos' nao deixa foco dentro do desenho escondido` |
+| TU-WEB-191 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > 'SerieBloqueios' nao deixa foco dentro do desenho escondido` |
+| TU-WEB-192 | `src/testes/graficos.test.tsx > Regra 1: conteiner responsivo > a tabela de enunciados permite foco para rolagem por teclado` |
+| TU-WEB-193 | `src/testes/graficos.test.tsx > Regra 2: series de bloqueio nunca se somam > desenha uma linha por guarda e nenhuma de total` |
+| TU-WEB-194 | `src/testes/graficos.test.tsx > Regra 2: series de bloqueio nunca se somam > junta os pontos por instante sem criar chave agregada` |
+| TU-WEB-195 | `src/testes/graficos.test.tsx > Regra 2: series de bloqueio nunca se somam > a tabela acessivel tem uma coluna por guarda` |
+| TU-WEB-196 | `src/testes/graficos.test.tsx > Regra 3: zero e informacao > mantem no grafico as intencoes com contagem zero` |
+| TU-WEB-197 | `src/testes/graficos.test.tsx > Componentes > CartaoResumo associa cada numero ao que ele mede` |
+| TU-WEB-198 | `src/testes/graficos.test.tsx > Componentes > DistribuicaoDesfechos pinta cada barra com a cor do desfecho` |
+| TU-WEB-199 | `src/testes/graficos.test.tsx > Componentes > TabelaEnunciados lista os pedidos e mostra a mensagem quando vazia` |
+| TU-WEB-200 | `src/testes/graficos.test.tsx > Cores e formatos > toda cor dos graficos e um token de global.css definido nos dois temas` |
+| TU-WEB-201 | `src/testes/graficos.test.tsx > Cores e formatos > cada desfecho usa a cor da etiqueta do chat` |
+| TU-WEB-202 | `src/testes/graficos.test.tsx > Cores e formatos > formata o dia sem deslocar a data pelo fuso` |
+| TU-WEB-203 | `src/testes/graficos.test.tsx > Cores e formatos > formata percentual e duracao em portugues` |
+| TU-WEB-204 | `src/testes/falhas.test.tsx > Falha de rede > orienta a verificar a conexão e recupera ao tentar de novo` |
+| TU-WEB-205 | `src/testes/falhas.test.tsx > Falha de rede > oferece reenviar a mensagem que não chegou ao servidor` |
+| TU-WEB-206 | `src/testes/falhas.test.tsx > Tempo limite > libera a conversa quando o agente não responde no prazo` |
+| TU-WEB-207 | `src/testes/falhas.test.tsx > Tempo limite > mostra o erro de tempo em uma consulta, sem ficar carregando` |
+| TU-WEB-208 | `src/testes/falhas.test.tsx > Indisponibilidade do servidor e ausência de dados > no histórico, 503 é indisponibilidade e lista vazia é ausência` |
+| TU-WEB-209 | `src/testes/falhas.test.tsx > Indisponibilidade do servidor e ausência de dados > nas intenções, o servidor fora do ar não vira painel vazio` |
+| TU-WEB-210 | `src/testes/falhas.test.tsx > Indisponibilidade do servidor e ausência de dados > uma conversa gravada que não abre mostra o motivo e permite recarregar` |
+| TU-WEB-211 | `src/testes/falhas.test.tsx > Indisponibilidade do servidor e ausência de dados > não oferece reenviar quando o servidor recusa o pedido` |
+| TU-WEB-212 | `src/testes/navegacao.test.tsx > Navegação entre conversas > substitui o conteúdo ao trocar de conversa` |
+| TU-WEB-213 | `src/testes/navegacao.test.tsx > Navegação entre conversas > apresenta as sugestões de partida em uma conversa nova` |
+| TU-WEB-214 | `src/testes/navegacao.test.tsx > Navegação entre conversas > preserva a conversa ao passar pelo Histórico e voltar` |
+| TU-WEB-215 | `src/testes/navegacao.test.tsx > Navegação entre conversas > não repete o alerta de marco em uma conversa já gravada` |
+| TU-WEB-216 | `src/testes/navegacao.test.tsx > Navegação entre conversas > não duplica o primeiro turno quando a conversa persistida é carregada` |
+| TU-WEB-217 | `src/testes/navegacao.test.tsx > Navegação entre conversas > leva a uma tela explícita quando a rota não existe` |
+| TU-WEB-218 | `src/testes/intencoes.test.tsx > Página de intenções > mostra o carregamento antes de as rotas responderem` |
+| TU-WEB-219 | `src/testes/intencoes.test.tsx > Página de intenções > compõe os cinco componentes de gráfico nos três recortes` |
+| TU-WEB-220 | `src/testes/intencoes.test.tsx > Página de intenções > distingue erro de ausência de dados` |
+| TU-WEB-221 | `src/testes/intencoes.test.tsx > Página de intenções > mostra o estado vazio quando o período não tem mensagens` |
+| TU-WEB-222 | `src/testes/intencoes.test.tsx > Página de intenções > aplica o período e o perfil escolhidos às consultas` |
+| TU-WEB-223 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'foreground' sobre 'background' atinge 4.5:1` |
+| TU-WEB-224 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'foreground' sobre 'card' atinge 4.5:1` |
+| TU-WEB-225 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'foreground' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-226 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'foreground' sobre 'canvas-topo' atinge 4.5:1` |
+| TU-WEB-227 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'texto' sobre 'background' atinge 4.5:1` |
+| TU-WEB-228 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'texto' sobre 'card' atinge 4.5:1` |
+| TU-WEB-229 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'texto' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-230 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'texto' sobre 'canvas-topo' atinge 4.5:1` |
+| TU-WEB-231 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'muted-foreground' sobre 'background' atinge 4.5:1` |
+| TU-WEB-232 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'muted-foreground' sobre 'card' atinge 4.5:1` |
+| TU-WEB-233 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'muted-foreground' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-234 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'muted-foreground' sobre 'canvas-topo' atinge 4.5:1` |
+| TU-WEB-235 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'primario-texto' sobre 'background' atinge 4.5:1` |
+| TU-WEB-236 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'primario-texto' sobre 'card' atinge 4.5:1` |
+| TU-WEB-237 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'primario-texto' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-238 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'primario-texto' sobre 'canvas-topo' atinge 4.5:1` |
+| TU-WEB-239 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'primary-foreground' sobre 'primary' atinge 4.5:1` |
+| TU-WEB-240 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'branco' sobre 'bolha-usuario' atinge 4.5:1` |
+| TU-WEB-241 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'marinho' sobre 'prata-claro' atinge 4.5:1` |
+| TU-WEB-242 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'marinho' sobre 'prata-escuro' atinge 4.5:1` |
+| TU-WEB-243 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'branco' sobre 'gravacao' atinge 3:1` |
+| TU-WEB-244 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'ms-botao-texto' sobre 'ms-botao-fundo' atinge 4.5:1` |
+| TU-WEB-245 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'toast-icone' sobre 'foreground' atinge 3:1` |
+| TU-WEB-246 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-ok' sobre 'card' atinge 4.5:1` |
+| TU-WEB-247 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-ok' sobre 'background' atinge 4.5:1` |
+| TU-WEB-248 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-ok' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-249 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-injecao' sobre 'card' atinge 4.5:1` |
+| TU-WEB-250 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-injecao' sobre 'background' atinge 4.5:1` |
+| TU-WEB-251 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-injecao' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-252 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-abuso' sobre 'card' atinge 4.5:1` |
+| TU-WEB-253 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-abuso' sobre 'background' atinge 4.5:1` |
+| TU-WEB-254 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-abuso' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-255 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-recusa' sobre 'card' atinge 4.5:1` |
+| TU-WEB-256 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-recusa' sobre 'background' atinge 4.5:1` |
+| TU-WEB-257 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-recusa' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-258 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-falha' sobre 'card' atinge 4.5:1` |
+| TU-WEB-259 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-falha' sobre 'background' atinge 4.5:1` |
+| TU-WEB-260 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'desfecho-falha' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-261 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'sidebar-foreground' sobre 'sidebar' atinge 4.5:1` |
+| TU-WEB-262 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'sidebar-foreground' sobre 'sidebar-topo' atinge 4.5:1` |
+| TU-WEB-263 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'sidebar-foreground' sobre 'sidebar-accent' atinge 4.5:1` |
+| TU-WEB-264 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'sidebar-suave' sobre 'sidebar' atinge 4.5:1` |
+| TU-WEB-265 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'sidebar-suave' sobre 'sidebar-topo' atinge 4.5:1` |
+| TU-WEB-266 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'sidebar-suave' sobre 'sidebar-accent' atinge 4.5:1` |
+| TU-WEB-267 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'controle-desligado' sobre 'card' atinge 3:1` |
+| TU-WEB-268 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'controle-desligado' sobre 'secondary' atinge 3:1` |
+| TU-WEB-269 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'ring' sobre 'background' atinge 3:1` |
+| TU-WEB-270 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'serie-injecao' sobre 'card' atinge 3:1` |
+| TU-WEB-271 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'serie-abuso' sobre 'card' atinge 3:1` |
+| TU-WEB-272 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'serie-saida' sobre 'card' atinge 3:1` |
+| TU-WEB-273 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'etapa-classificacao' sobre 'card' atinge 3:1` |
+| TU-WEB-274 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'claro' > 'etapa-executor' sobre 'card' atinge 3:1` |
+| TU-WEB-275 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'foreground' sobre 'background' atinge 4.5:1` |
+| TU-WEB-276 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'foreground' sobre 'card' atinge 4.5:1` |
+| TU-WEB-277 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'foreground' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-278 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'foreground' sobre 'canvas-topo' atinge 4.5:1` |
+| TU-WEB-279 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'texto' sobre 'background' atinge 4.5:1` |
+| TU-WEB-280 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'texto' sobre 'card' atinge 4.5:1` |
+| TU-WEB-281 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'texto' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-282 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'texto' sobre 'canvas-topo' atinge 4.5:1` |
+| TU-WEB-283 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'muted-foreground' sobre 'background' atinge 4.5:1` |
+| TU-WEB-284 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'muted-foreground' sobre 'card' atinge 4.5:1` |
+| TU-WEB-285 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'muted-foreground' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-286 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'muted-foreground' sobre 'canvas-topo' atinge 4.5:1` |
+| TU-WEB-287 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'primario-texto' sobre 'background' atinge 4.5:1` |
+| TU-WEB-288 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'primario-texto' sobre 'card' atinge 4.5:1` |
+| TU-WEB-289 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'primario-texto' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-290 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'primario-texto' sobre 'canvas-topo' atinge 4.5:1` |
+| TU-WEB-291 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'primary-foreground' sobre 'primary' atinge 4.5:1` |
+| TU-WEB-292 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'branco' sobre 'bolha-usuario' atinge 4.5:1` |
+| TU-WEB-293 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'marinho' sobre 'prata-claro' atinge 4.5:1` |
+| TU-WEB-294 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'marinho' sobre 'prata-escuro' atinge 4.5:1` |
+| TU-WEB-295 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'branco' sobre 'gravacao' atinge 3:1` |
+| TU-WEB-296 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'ms-botao-texto' sobre 'ms-botao-fundo' atinge 4.5:1` |
+| TU-WEB-297 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'toast-icone' sobre 'foreground' atinge 3:1` |
+| TU-WEB-298 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-ok' sobre 'card' atinge 4.5:1` |
+| TU-WEB-299 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-ok' sobre 'background' atinge 4.5:1` |
+| TU-WEB-300 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-ok' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-301 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-injecao' sobre 'card' atinge 4.5:1` |
+| TU-WEB-302 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-injecao' sobre 'background' atinge 4.5:1` |
+| TU-WEB-303 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-injecao' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-304 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-abuso' sobre 'card' atinge 4.5:1` |
+| TU-WEB-305 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-abuso' sobre 'background' atinge 4.5:1` |
+| TU-WEB-306 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-abuso' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-307 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-recusa' sobre 'card' atinge 4.5:1` |
+| TU-WEB-308 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-recusa' sobre 'background' atinge 4.5:1` |
+| TU-WEB-309 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-recusa' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-310 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-falha' sobre 'card' atinge 4.5:1` |
+| TU-WEB-311 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-falha' sobre 'background' atinge 4.5:1` |
+| TU-WEB-312 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'desfecho-falha' sobre 'secondary' atinge 4.5:1` |
+| TU-WEB-313 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'sidebar-foreground' sobre 'sidebar' atinge 4.5:1` |
+| TU-WEB-314 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'sidebar-foreground' sobre 'sidebar-topo' atinge 4.5:1` |
+| TU-WEB-315 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'sidebar-foreground' sobre 'sidebar-accent' atinge 4.5:1` |
+| TU-WEB-316 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'sidebar-suave' sobre 'sidebar' atinge 4.5:1` |
+| TU-WEB-317 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'sidebar-suave' sobre 'sidebar-topo' atinge 4.5:1` |
+| TU-WEB-318 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'sidebar-suave' sobre 'sidebar-accent' atinge 4.5:1` |
+| TU-WEB-319 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'controle-desligado' sobre 'card' atinge 3:1` |
+| TU-WEB-320 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'controle-desligado' sobre 'secondary' atinge 3:1` |
+| TU-WEB-321 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'ring' sobre 'background' atinge 3:1` |
+| TU-WEB-322 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'serie-injecao' sobre 'card' atinge 3:1` |
+| TU-WEB-323 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'serie-abuso' sobre 'card' atinge 3:1` |
+| TU-WEB-324 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'serie-saida' sobre 'card' atinge 3:1` |
+| TU-WEB-325 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'etapa-classificacao' sobre 'card' atinge 3:1` |
+| TU-WEB-326 | `src/testes/contraste.test.ts > Contraste dos tokens no tema 'escuro' > 'etapa-executor' sobre 'card' atinge 3:1` |
+| TU-WEB-327 | `src/testes/desfechos.test.ts > Aparência dos desfechos > cobre os oito desfechos do vocabulário fechado` |
+| TU-WEB-328 | `src/testes/desfechos.test.ts > Aparência dos desfechos > não nomeia a barreira que barrou a mensagem` |
+| TU-WEB-329 | `src/testes/desfechos.test.ts > Aparência dos desfechos > mantém o desfecho atendido sem etiqueta` |
+| TU-WEB-330 | `src/testes/desfechos.test.ts > Aparência dos desfechos > dá filete lateral a todo desfecho que não é o atendido` |
+| TU-WEB-331 | `src/testes/desfechos.test.ts > Etiqueta da bolha > não etiqueta a apresentação que responde a uma saudação` |
+| TU-WEB-332 | `src/testes/desfechos.test.ts > Etiqueta da bolha > mantém a etiqueta na recusa por escopo sem intenção reconhecida` |
+| TU-WEB-333 | `src/testes/desfechos.test.ts > Etiqueta da bolha > não etiqueta a resposta atendida` |
+| TU-WEB-334 | `src/testes/dubles.test.ts > Camada de dublês > dubla no navegador só as rotas pendentes, cada uma com o motivo` |
+| TU-WEB-335 | `src/testes/dubles.test.ts > Camada de dublês > mantém nos testes as rotas reais que as telas consomem` |
+| TU-WEB-336 | `src/testes/dubles.test.ts > Camada de dublês > não inicia MSW no navegador quando nenhuma rota esta pendente` |
+| TU-WEB-337 | `src/testes/dubles.test.ts > Camada de dublês > VITE_SEM_DUBLES desliga também os pendentes` |
+| TU-WEB-338 | `src/testes/formato.test.ts > Grupos de data das listas de conversa > separa hoje, ontem, esta semana e anteriores pela semana do calendario` |
+| TU-WEB-339 | `src/testes/formato.test.ts > Grupos de data das listas de conversa > compara o dia em Sao Paulo, e nao em UTC` |
+| TU-WEB-340 | `src/testes/formato.test.ts > Grupos de data das listas de conversa > na segunda-feira, domingo ja e ontem e sabado vai para anteriores` |
+| TU-WEB-341 | `src/testes/formato.test.ts > Grupos de data das listas de conversa > agrupa na ordem fixa e sem grupo vazio` |
+| TU-WEB-342 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > renderiza formulário com campos obrigatórios` |
+| TU-WEB-343 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra erro quando validação falha` |
+| TU-WEB-344 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida nome com menos de 3 caracteres` |
+| TU-WEB-345 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida prompt com menos de 10 caracteres` |
+| TU-WEB-346 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida horário inválido` |
+| TU-WEB-347 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra campo de dia da semana para repetição semanal` |
+| TU-WEB-348 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra campo de dia do mês para repetição mensal` |
+| TU-WEB-349 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra checkboxes para dias personalizados` |
+| TU-WEB-350 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida dia do mês fora do intervalo` |
+| TU-WEB-351 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > valida seleção de dias personalizados vazia` |
+| TU-WEB-352 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > salva formulário válido` |
+| TU-WEB-353 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > chama onFechar ao clicar em Cancelar` |
+| TU-WEB-354 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > desabilita botão de salvar durante salvamento` |
+| TU-WEB-355 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra modo de edição quando em modo editar` |
+| TU-WEB-356 | `src/testes/componentes-rotinas.test.tsx > FormularioRotina > mostra aviso de agendamento legado` |
+| TU-WEB-357 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > renderiza informações da rotina` |
+| TU-WEB-358 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > mostra status Ativa quando rotina está ativa` |
+| TU-WEB-359 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > mostra status Pausada quando rotina está inativa` |
+| TU-WEB-360 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > chama onAlternar ao clicar em Pausar` |
+| TU-WEB-361 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > chama onAlternar ao clicar em Ativar` |
+| TU-WEB-362 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > chama onResultados ao clicar em Resultados` |
+| TU-WEB-363 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > chama onEditar ao clicar em Editar` |
+| TU-WEB-364 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > chama onExcluir ao clicar em Excluir` |
+| TU-WEB-365 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > desabilita botão de alternar durante operação` |
+| TU-WEB-366 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > mostra intenção prevista pelo rótulo` |
+| TU-WEB-367 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > mostra intenção prevista formatada quando não há rótulo` |
+| TU-WEB-368 | `src/testes/componentes-rotinas.test.tsx > LinhaRotina > mostra Não classificada quando não há intenção` |
+| TU-WEB-369 | `src/testes/componentes-rotinas.test.tsx > FiltroSituacao > renderiza todas as opções de filtro` |
+| TU-WEB-370 | `src/testes/componentes-rotinas.test.tsx > FiltroSituacao > chama onMudar ao clicar em opção` |
+| TU-WEB-371 | `src/testes/componentes-rotinas.test.tsx > FiltroSituacao > marca opção selecionada com aria-selected` |
+| TU-WEB-372 | `src/testes/componentes-rotinas.test.tsx > ConfirmarExclusao > renderiza diálogo quando rotina é fornecida` |
+| TU-WEB-373 | `src/testes/componentes-rotinas.test.tsx > ConfirmarExclusao > não renderiza diálogo quando rotina é null` |
+| TU-WEB-374 | `src/testes/componentes-rotinas.test.tsx > ConfirmarExclusao > chama onCancelar ao clicar em Cancelar` |
+| TU-WEB-375 | `src/testes/componentes-rotinas.test.tsx > ConfirmarExclusao > chama onConfirmar ao clicar em Excluir rotina` |
+| TU-WEB-376 | `src/testes/componentes-rotinas.test.tsx > ConfirmarExclusao > desabilita botão de excluir durante exclusão` |
+| TU-WEB-377 | `src/testes/componentes-rotinas.test.tsx > ConfirmarExclusao > mostra mensagem de aviso sobre histórico` |
+| TU-WEB-378 | `src/testes/componentes-rotinas.test.tsx > ConfirmarExclusao > tem role alertdialog com nome correto` |
+| TU-WEB-379 | `src/testes/componentes-rotinas.test.tsx > ResultadosRotina > renderiza diálogo quando rotina é fornecida` |
+| TU-WEB-380 | `src/testes/componentes-rotinas.test.tsx > ResultadosRotina > não renderiza diálogo quando rotina é null` |
+| TU-WEB-381 | `src/testes/componentes-rotinas.test.tsx > ResultadosRotina > mostra próxima execução quando rotina está ativa` |
+| TU-WEB-382 | `src/testes/componentes-rotinas.test.tsx > ResultadosRotina > mostra mensagem de pausada quando rotina está inativa` |
+| TU-WEB-383 | `src/testes/componentes-rotinas.test.tsx > ResultadosRotina > renderiza botão Executar agora` |
+| TU-WEB-384 | `src/testes/componentes-rotinas.test.tsx > ResultadosRotina > chama onFechar ao clicar em Fechar` |
+| TU-WEB-385 | `src/testes/middleware.test.tsx > Conversa contra o middleware > reaproveita a conversa criada pelo backend nos turnos seguintes` |
+| TU-WEB-386 | `src/testes/middleware.test.tsx > Conversa contra o middleware > mostra uma frase legível quando o FastAPI recusa o corpo com 422` |
+| TU-WEB-387 | `src/testes/middleware.test.tsx > Conversa contra o middleware > não exibe o texto cru de um 500 sem JSON` |
+| TU-WEB-388 | `src/testes/paginas.test.tsx > Página principal > envia a mensagem e recebe a resposta do agente` |
+| TU-WEB-389 | `src/testes/paginas.test.tsx > Página principal > recusa um pedido fora do escopo sem tratar como erro` |
+| TU-WEB-390 | `src/testes/paginas.test.tsx > Página principal > não revela qual barreira bloqueou uma tentativa de injeção` |
+| TU-WEB-391 | `src/testes/paginas.test.tsx > Página principal > dispensa a notificação de pendência ao pedir detalhes` |
+| TU-WEB-392 | `src/testes/paginas.test.tsx > Página principal > envia com Enter e quebra linha com Shift mais Enter` |
+| TU-WEB-393 | `src/testes/paginas.test.tsx > Página principal > informa quando o token de voz não pode ser obtido` |
+| TU-WEB-394 | `src/testes/paginas.test.tsx > Página de rotinas > filtra as rotinas cadastradas` |
+| TU-WEB-395 | `src/testes/paginas.test.tsx > Página de rotinas > valida e cria uma rotina` |
+| TU-WEB-396 | `src/testes/paginas.test.tsx > Página de rotinas > mostra apenas o complemento necessário para agendas semanais e mensais` |
+| TU-WEB-397 | `src/testes/paginas.test.tsx > Página de rotinas > gera cron com nomes para os dias personalizados` |
+| TU-WEB-398 | `src/testes/paginas.test.tsx > Página de rotinas > solicita confirmação antes de excluir` |
+| TU-WEB-399 | `src/testes/paginas.test.tsx > Página de rotinas > edita e exclui uma rotina pelas rotas reais` |
+| TU-WEB-400 | `src/testes/paginas.test.tsx > Página de rotinas > consulta e apresenta o histórico de execuções` |
+| TU-WEB-401 | `src/testes/paginas.test.tsx > Página de rotinas > fecha o formulário com Esc e devolve o foco ao botão que o abriu` |
+| TU-WEB-402 | `src/testes/paginas.test.tsx > Página de rotinas > mostra a intenção prevista pelo rótulo, e não pelo identificador` |
+| TU-WEB-403 | `src/testes/paginas.test.tsx > Página de rotinas > apresenta o status e o desfecho das execuções em frase` |
+| TU-WEB-404 | `src/testes/paginas.test.tsx > Página de rotinas > distingue falha de carregamento de uma lista vazia` |
+| TU-WEB-405 | `src/testes/paginas.test.tsx > Página de histórico > mostra carregamento, sucesso e conversas reais` |
+| TU-WEB-406 | `src/testes/paginas.test.tsx > Página de histórico > mostra um estado vazio quando a API devolve uma lista vazia` |
+| TU-WEB-407 | `src/testes/paginas.test.tsx > Página de histórico > distingue falha de carregamento e permite tentar novamente` |
+| TU-WEB-408 | `src/testes/paginas.test.tsx > Página de histórico > filtra as conversas pelo título` |
+| TU-WEB-409 | `src/testes/paginas.test.tsx > Página de histórico > arquiva a conversa depois de confirmar` |
+| TU-WEB-410 | `src/testes/paginas.test.tsx > Página de histórico > abre a conversa selecionada na rota correspondente` |
+| TU-WEB-411 | `src/testes/paginas.test.tsx > Saudação > apresenta o agente sem etiquetar o cumprimento como fora do escopo` |
+| TU-WEB-412 | `src/testes/microfone.test.tsx > useMicrofone > informa a falha ao obter o token e permite nova tentativa` |
+| TU-WEB-413 | `src/testes/microfone.test.tsx > useMicrofone > explica como liberar o microfone quando a permissão é negada` |
+| TU-WEB-414 | `src/testes/microfone.test.tsx > useMicrofone > transcreve trechos, atualiza o token e encerra a captura` |
+| TU-WEB-415 | `src/testes/microfone.test.tsx > useMicrofone > apresenta erro de SDK e encerra a captura ao desmontar` |
+| TU-WEB-416 | `src/testes/microfone.test.tsx > useMicrofone > encerra o reconhecedor quando o serviço interrompe a transcrição` |
+| TU-WEB-417 | `src/testes/primitivos-ui.test.tsx > componentes Avatar > exibe alternativa acessível e contador para um grupo` |
+| TU-WEB-418 | `src/testes/primitivos-ui.test.tsx > Separator > expõe orientação vertical a tecnologias assistivas` |
+| TU-WEB-419 | `src/testes/primitivos-ui.test.tsx > Sheet > abre o painel e fecha pelo controle acessível` |
+| TU-WEB-420 | `src/testes/primitivos-ui.test.tsx > Drawer > apresenta o conteúdo e fecha por ação explícita` |
+| TU-WEB-421 | `src/testes/primitivos-ui.test.tsx > DropdownMenu > altera opções e navega em um submenu` |
+| TU-WEB-422 | `src/testes/primitivos-ui.test.tsx > Dialog e AlertDialog > confirma uma ação destrutiva e oferece cancelamento acessível` |
+| TU-WEB-423 | `src/testes/primitivos-ui.test.tsx > Dialog e AlertDialog > fecha o diálogo comum após a ação do rodapé` |
+| TU-WEB-424 | `src/testes/inicializacao.test.tsx > Inicialização da interface > só monta a aplicação depois que os dublês assumem a rede` |
+| TU-WEB-425 | `src/testes/rotas.test.tsx > Rotas protegidas > aguarda a identidade antes de renderizar uma tela restrita` |
+| TU-WEB-426 | `src/testes/rotas.test.tsx > Rotas protegidas > manda para a entrada quando não existe sessão` |
+| TU-WEB-427 | `src/testes/rotas.test.tsx > Rotas protegidas > esconde a tela restrita quando a permissão não está concedida` |
+| TU-WEB-428 | `src/testes/rotas.test.tsx > Rotas protegidas > carrega a tela restrita quando a permissão correspondente existe` |
+| TU-WEB-429 | `src/testes/rotas.test.tsx > Rotas protegidas > carrega a gestão de rotinas para quem pode administrá-las` |
 
 ### 9.5.4 Execução
 
@@ -10194,6 +10630,7 @@ Os comandos são executados a partir de `src/web`.
 | `npm run test` | Executa a suíte inteira uma vez e retorna código de saída diferente de zero em caso de falha |
 | `npm run test -- --watch` | Reexecuta os casos afetados a cada alteração de arquivo, durante o desenvolvimento |
 | `npm run test -- desfechos` | Executa apenas os arquivos cujo nome contém o termo informado |
+| `npm run test:coverage` | Executa a suíte inteira com o provedor V8 e gera relatórios texto, HTML, JSON resumido e Cobertura |
 
 A suíte compõe, com a análise estática e a verificação de tipos, o encadeamento
 descrito em 9.2.10. A ordem recomendada antes de abrir uma *merge request* é
@@ -10202,13 +10639,32 @@ cada etapa é mais rápida que a seguinte e falha mais cedo.
 
 ### 9.5.5 Abrangência e limites
 
-Os dezessete casos cobrem os quatro comportamentos que a interface não pode
-errar sem consequência para o usuário ou para a segurança: a apresentação
-correta e não reveladora dos desfechos, a substituição de contexto ao trocar de
-conversa, o envio de mensagem em suas duas formas de acionamento e o ciclo de
-gestão das rotinas.
+A medição usa `@vitest/coverage-v8` sobre `src/**/*.{ts,tsx}`, excluindo
+declarações de tipo, testes e dublês (`vite.config.ts`). A meta definida em
+9.1.8 é 80% de cobertura de linhas para código crítico.
 
-Três limites devem ser declarados.
+**Última execução com cobertura registrada:** 05/10/2026, na branch
+`docs/cobertura-testes`, após incorporar a `develop` no commit `29deff7`. A
+partir de `src/web`, foi executado `npm run test:coverage` (Vitest 2.1.9,
+cobertura V8).
+
+| Medida | Resultado | Meta | Situação |
+| --- | ---: | ---: | --- |
+| Casos executados | 429 aprovados em 21 arquivos; nenhuma falha | Todos aprovados | Atingida |
+| Linhas e statements | 87,48% | ≥ 80% | Atingida; 7,48 pontos percentuais acima |
+| Branches | 87,62% | ≥ 80% | Atingida |
+| Functions | 83,58% | ≥ 80% | Atingida |
+| Duração total reportada pelo Vitest | 25,35 s | — | — |
+
+A cobertura de linhas superou a meta de 80% definida em 9.1.8. Branches e
+functions são métricas adicionais reportadas pelo V8; a meta vigente está
+definida para linhas de código crítico, não individualmente para essas métricas.
+A suíte contém testes de componentes e páginas, interações com MSW e
+verificações de contraste. Os testes que chamam o middleware usam respostas
+simuladas: cobrem o consumo do contrato HTTP e a apresentação de respostas
+FastAPI, mas não substituem um teste ponta a ponta da interface contra um
+middleware real. Os relatórios HTML e JSON são gerados em `src/web/coverage/`
+para orientar a ampliação contínua dos casos.
 
 O primeiro é que **a suíte da interface não sobe o middleware real**. Os casos
 executam contra MSW, e a conversa entre interface e backend precisa ser
@@ -10424,13 +10880,15 @@ A estratégia é estruturada da seguinte forma:
 - **10.6** — Testes de regras de negócio: verificam as regras específicas do portfólio do Metrô.
 - **10.7** — Consolidação da cobertura: apresenta o total de cobertura por requisito e as lacunas remanescentes.
 
-Nesta revisão (25/09/2026, commit `3298da0`), a suíte do frontend executa **185**
-testes com build e lint limpos; a integração coleta **217** casos e os grupos
-internos/webhooks passaram contra o Compose. Os testes utilizam pytest, Vitest,
-MSW, VCR.py/`pytest-recording` e o banco/broker do Docker Compose, conforme
-detalhado em cada subseção. A meta de cobertura de código permanece em 80% para
-backend e frontend (9.1.8); a medição do frontend nesta data ficou em 77,42% de
-linhas.
+Na execução da interface registrada em 05/10/2026, sobre o *working tree*
+baseado no HEAD `5267c2cabea3b207b37e6d8319c357e74ebc5a4f`, Vitest aprovou
+**429 testes em 21 arquivos**; a cobertura V8 foi de **87,48% de linhas**,
+superando a meta de 80%. A
+execução de integração do middleware registrada em 25/09/2026 coletou 217 casos,
+com os grupos internos e de webhooks aprovados contra o Compose (evidência em
+10.5.7.3). As ferramentas utilizadas incluem pytest, Vitest, MSW,
+VCR.py/`pytest-recording` e o banco/broker do Docker Compose, conforme detalhado
+em cada subseção.
 
 ## 10.1 Testes Funcionais
 
@@ -10480,7 +10938,7 @@ As ferramentas são as declaradas em 5.1.2, acrescidas de três adições que es
 
 O `httpx.AsyncClient` com `ASGITransport` não é uma quarta biblioteca de teste: `httpx` já é dependência do middleware, e o transporte ASGI apenas dispensa o servidor. A escolha do banco real em contêiner, em vez de um substituto em memória, decorre de os testes precisarem observar restrições de integridade e comportamento transacional que só existem no PostgreSQL — testar contra um banco diferente do de produção verificaria outro sistema.
 
-**Estado das ferramentas.** O card #440 incorporou Locust e `pytest-benchmark` ao extra `dev` do middleware e à matriz consolidada de 5.1.5. `pytest-cov` mede o backend e `@vitest/coverage-v8` mede a interface; os resultados consolidados e sua comparação com a meta de 80% permanecem para 10.7, depois da execução das suítes completas.
+**Estado das ferramentas.** O card #440 incorporou Locust e `pytest-benchmark` ao extra `dev` do middleware e à matriz consolidada de 5.1.5. `pytest-cov` mede o backend e `@vitest/coverage-v8` mede a interface. A execução atual do frontend e sua comparação com a meta estão em 9.5.5; a consolidação do backend e das lacunas por requisito permanece em 10.7.
 
 ### 10.1.2 Acesso e interação — RF01 a RF03
 
