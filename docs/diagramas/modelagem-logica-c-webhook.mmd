@@ -1,0 +1,83 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
+erDiagram
+    CANAL_DRIVE |o--o{ RECEBIMENTO : entrega
+    SINCRONIZACAO_FONTE ||..o{ CANAL_DRIVE : "fonte_id, sem FK"
+    FONTE_PORTFOLIO ||..o{ VERSAO_ENTIDADE : "source_id, sem FK"
+    FONTE_PORTFOLIO ||..o{ AUDITORIA_PORTFOLIO : "source_id, sem FK"
+    RECEBIMENTO ||..o{ AUDITORIA_PORTFOLIO : "message_id, sem FK"
+
+    CANAL_DRIVE["WEBHOOK.CANAL_DRIVE"] {
+        texto canal_id PK "UUID enviado ao Google como id do canal"
+        texto fonte_id "fonte observada"
+        bytes token_sha256 "CHECK: 32 bytes; nunca o token"
+        texto recurso_id "CHECK: obrigatorio quando ativo"
+        texto recurso_uri "CHECK: obrigatorio quando ativo"
+        datahora expira_em
+        texto estado "CHECK: pendente, ativo, encerrado"
+        datahora criado_em
+        datahora ativado_em
+        datahora encerrado_em
+    }
+
+    RECEBIMENTO["WEBHOOK.RECEBIMENTO"] {
+        texto message_id PK "UUID do evento interno"
+        texto correlation_id
+        texto provedor UK "CHECK: google_drive, apps_script"
+        texto chave_externa UK "chave da notificacao no provedor"
+        texto fonte_id "fonte que originou"
+        texto canal_id FK "so no Drive; RESTRICT"
+        json evento "payload normalizado do evento interno"
+        datahora recebido_em
+        datahora publicado_em "nulo enquanto pendente de publicacao"
+        datahora processado_em
+        inteiro tentativas "CHECK: maior ou igual a 0"
+        texto erro_codigo "sem conteudo sensivel"
+        bytes corpo_sha256 "CHECK: 32 bytes; so no WH-02"
+    }
+
+    SINCRONIZACAO_FONTE["WEBHOOK.SINCRONIZACAO_FONTE"] {
+        texto fonte_id PK
+        texto cursor "pageToken confirmado do Drive"
+        texto estado "CHECK: ociosa, em_andamento, falha"
+        datahora concluida_em
+        datahora atualizado_em
+    }
+
+    FONTE_PORTFOLIO["WEBHOOK.FONTE_PORTFOLIO"] {
+        texto source_id PK "CHECK: 1 a 64 caracteres ASCII"
+        texto planilha_id "planilha de origem no Drive"
+        lista_texto projetos "projetos que a fonte pode alterar"
+        lista_texto tipos "CHECK: subconjunto dos tres tipos"
+        booleano ativa "padrao verdadeiro"
+        datahora criada_em
+        datahora atualizada_em
+    }
+
+    VERSAO_ENTIDADE["WEBHOOK.VERSAO_ENTIDADE"] {
+        texto source_id PK
+        texto event_type PK "CHECK: tres tipos de evento"
+        texto entity_id PK
+        inteiro_longo versao "CHECK: maior ou igual a 0"
+        bytes dados_sha256 "hash dos campos aplicados"
+        datahora atualizada_em
+    }
+
+    AUDITORIA_PORTFOLIO["WEBHOOK.AUDITORIA_PORTFOLIO"] {
+        texto id PK
+        texto message_id "sem FK: sobrevive ao expurgo"
+        texto source_id
+        texto event_id
+        texto event_type
+        texto projeto_codigo
+        texto entity_id
+        inteiro_longo versao
+        json anteriores "campos autorizados antes"
+        json novos "campos autorizados depois"
+        texto resultado "CHECK: aplicado, sem_diferenca, repetido, ignorado_antigo"
+        datahora registrado_em
+    }

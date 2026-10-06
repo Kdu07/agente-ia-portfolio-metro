@@ -16,7 +16,6 @@ from datetime import UTC, datetime
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from apscheduler.triggers.cron import CronTrigger
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.analytics.metricas import rotulo_de_intencao
@@ -25,8 +24,19 @@ from app.auth.entra import FalhaConsultaDiretorio, UsuarioEntraInativo
 from app.persistence.models import ExecucaoRotina, Interacao, Rotina
 from app.persistence.repository import ExecucaoRepository, RotinaRepository
 from app.rotinas import execucao as execucao_rotina
+from app.rotinas.cron import criar_gatilho_cron
 from app.rotinas.execucao import ExecucaoNaoAutorizada, PermissaoRotinaRevogada, RotinaNaoEncontrada
 from app.rotinas.validacao import ResultadoValidacao, validar_agenda, validar_prompt
+from app.schemas.erro import (
+    RESPOSTA_401,
+    RESPOSTA_403,
+    RESPOSTA_403_DISPARO,
+    RESPOSTA_404_ROTINA,
+    RESPOSTA_409_ROTINA,
+    RESPOSTA_422_ROTINA,
+    RESPOSTA_500_EXECUCAO,
+    RESPOSTA_503_ENTRA,
+)
 from app.schemas.rotina import (
     ExecucaoResposta,
     RotinaRequest,
@@ -38,6 +48,7 @@ from app.schemas.usuario import Permissao
 router = APIRouter(
     prefix="/rotinas",
     dependencies=[Depends(exige_permissao(Permissao.GERIR_ROTINAS))],
+    responses={**RESPOSTA_401, **RESPOSTA_403},
 )
 
 
@@ -66,7 +77,12 @@ async def validar(pedido: RotinaRequest, usuario: UsuarioAtual) -> ValidacaoResp
     )
 
 
-@router.post("", response_model=RotinaResposta, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=RotinaResposta,
+    status_code=status.HTTP_201_CREATED,
+    responses=RESPOSTA_422_ROTINA,
+)
 async def criar(
     pedido: RotinaRequest,
     usuario: UsuarioAtual,
@@ -100,7 +116,11 @@ async def criar(
     return _resposta_rotina(rotina)
 
 
-@router.put("/{rotina_id}", response_model=RotinaResposta)
+@router.put(
+    "/{rotina_id}",
+    response_model=RotinaResposta,
+    responses={**RESPOSTA_404_ROTINA, **RESPOSTA_422_ROTINA},
+)
 async def atualizar(
     rotina_id: str,
     pedido: RotinaRequest,
@@ -132,7 +152,11 @@ async def atualizar(
     return _resposta_rotina(atualizada)
 
 
-@router.delete("/{rotina_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{rotina_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={**RESPOSTA_404_ROTINA, **RESPOSTA_409_ROTINA},
+)
 async def remover(
     rotina_id: str,
     usuario: UsuarioAtual,
@@ -150,7 +174,16 @@ async def remover(
         raise HTTPException(status.HTTP_409_CONFLICT, str(erro)) from erro
 
 
-@router.post("/{rotina_id}/executar", response_model=ExecucaoResposta)
+@router.post(
+    "/{rotina_id}/executar",
+    response_model=ExecucaoResposta,
+    responses={
+        **RESPOSTA_403_DISPARO,
+        **RESPOSTA_404_ROTINA,
+        **RESPOSTA_500_EXECUCAO,
+        **RESPOSTA_503_ENTRA,
+    },
+)
 async def executar_agora(
     rotina_id: str,
     usuario: UsuarioAtual,
@@ -187,7 +220,11 @@ async def executar_agora(
     return _resposta_execucao(*registro)
 
 
-@router.get("/{rotina_id}/execucoes", response_model=list[ExecucaoResposta])
+@router.get(
+    "/{rotina_id}/execucoes",
+    response_model=list[ExecucaoResposta],
+    responses=RESPOSTA_404_ROTINA,
+)
 async def listar_execucoes(
     rotina_id: str,
     usuario: UsuarioAtual,
@@ -233,7 +270,7 @@ async def _rotina_do_usuario(
 def _resposta_rotina(rotina: Rotina) -> RotinaResposta:
     proximo = None
     if rotina.ativa:
-        gatilho = CronTrigger.from_crontab(
+        gatilho = criar_gatilho_cron(
             rotina.agenda_cron,
             timezone=ZoneInfo(rotina.timezone),
         )

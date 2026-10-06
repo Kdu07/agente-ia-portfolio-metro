@@ -81,7 +81,7 @@ export function formularioDaAgenda(cron: string): Pick<FormularioRotina, "repeti
   const horario = `${String(horaNumero).padStart(2, "0")}:${String(minutoNumero).padStart(2, "0")}`;
   const base = { horario, dia_semana: "mon" as DiaSemana, dias_selecionados: ["mon", "wed", "fri"] as DiaSemana[], dia_mes: "1", agenda_legada: "" };
   if (diaMes === "*" && diaSemana === "*") return { ...base, repeticao: "diaria" };
-  if (diaMes === "*" && diaSemana.toLowerCase() === "mon-fri") return { ...base, repeticao: "dias_uteis" };
+  if (diaMes === "*" && ["mon-fri", "1-5"].includes(diaSemana.toLowerCase())) return { ...base, repeticao: "dias_uteis" };
 
   const diaNome = diaSemana.toLowerCase() as DiaSemana;
   if (diaMes === "*" && DIAS_SEMANA.some((dia) => dia.valor === diaNome)) return { ...base, repeticao: "semanal", dia_semana: diaNome };
@@ -91,10 +91,10 @@ export function formularioDaAgenda(cron: string): Pick<FormularioRotina, "repeti
     return { ...base, repeticao: "dias_personalizados", dias_selecionados: DIAS_SEMANA.filter((dia) => diasNomeados.includes(dia.valor)).map((dia) => dia.valor) };
   }
 
-  // No APScheduler 3.x, o dia numérico zero é segunda-feira.
+  // Cron padrão: 0 ou 7 = domingo, 1 = segunda-feira.
   const diaNumerico = Number(diaSemana);
-  if (diaMes === "*" && Number.isInteger(diaNumerico) && diaNumerico >= 0 && diaNumerico <= 6) {
-    return { ...base, repeticao: "semanal", dia_semana: DIAS_SEMANA[diaNumerico].valor };
+  if (diaMes === "*" && /^[0-7]$/.test(diaSemana)) {
+    return { ...base, repeticao: "semanal", dia_semana: DIAS_SEMANA[(diaNumerico + 6) % 7].valor };
   }
 
   const diaMesNumero = Number(diaMes);

@@ -8,8 +8,9 @@ from app.pipeline.intencao.classificador import ResultadoIntencao
 from app.rotinas import validacao
 
 
-def test_agenda_aceita_cron_de_cinco_campos_e_fuso_iana() -> None:
-    resultado = validacao.validar_agenda("0 8 * * 1-5", "America/Sao_Paulo")
+@pytest.mark.parametrize("dia_semana", ["0", "1", "1-5", "7", "mon", "mon-fri"])
+def test_agenda_aceita_cron_de_cinco_campos_e_fuso_iana(dia_semana: str) -> None:
+    resultado = validacao.validar_agenda(f"0 8 * * {dia_semana}", "America/Sao_Paulo")
 
     assert resultado.valida is True
     assert resultado.erro is None

@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends
 from app.analytics import consultas, metricas
 from app.analytics.metricas import Janela
 from app.api.deps import SessaoBanco, exige_permissao
+from app.schemas.erro import RESPOSTA_401, RESPOSTA_403
 from app.schemas.intencao import (
     ContagemResposta,
     EnunciadoAgrupadoResposta,
@@ -37,6 +38,7 @@ from app.schemas.usuario import Perfil, Permissao
 router = APIRouter(
     prefix="/intencoes",
     dependencies=[Depends(exige_permissao(Permissao.VER_INTENCOES))],
+    responses={**RESPOSTA_401, **RESPOSTA_403},
 )
 
 JANELA_PADRAO = Janela.ULTIMOS_30_DIAS

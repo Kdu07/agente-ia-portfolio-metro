@@ -1,0 +1,46 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
+erDiagram
+    arquivo ||--o{ trecho : fk_trecho_origem_id_arquivo
+
+    arquivo["rag.arquivo"] {
+        text origem_id PK "pk_arquivo"
+        text nome "NOT NULL"
+        text mime "NOT NULL"
+        text md5 "NULL"
+        timestamptz modificado_em "NULL"
+        text link "NULL"
+        text documento_id UK "NULL, ix_arquivo_documento_indexado UNIQUE parcial"
+        text codigo "NULL"
+        text tipo "NULL"
+        integer versao "NULL"
+        text periodo "NULL"
+        date data_referencia "NULL"
+        text projeto "NULL"
+        text classificacao "NULL"
+        text[] perfis "NULL, ck_arquivo_perfis"
+        text situacao "NOT NULL, ck_arquivo_situacao"
+        text motivo "NULL"
+        text[] observacoes "NOT NULL DEFAULT vazio"
+        jsonb metadados "NOT NULL DEFAULT vazio"
+        text assinatura "NULL"
+        integer total_trechos "NOT NULL DEFAULT 0"
+        timestamptz visto_em "NOT NULL"
+        timestamptz indexado_em "NULL"
+    }
+
+    trecho["rag.trecho"] {
+        text trecho_id PK "pk_trecho"
+        text documento_id "NOT NULL, ix_trecho_documento"
+        text origem_id FK "NOT NULL, ON UPDATE CASCADE ON DELETE RESTRICT"
+        integer ordinal "NOT NULL"
+        text texto "NOT NULL"
+        integer tokens "NOT NULL"
+        text localizador "NOT NULL"
+        text projeto "NULL"
+        text[] perfis "NOT NULL, ck_trecho_perfis"
+    }

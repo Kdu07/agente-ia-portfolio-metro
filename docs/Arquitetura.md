@@ -522,19 +522,19 @@ de [Projeto.md](Projeto.md).
 
 ## 9. Modelo de dados
 
-O esquema versionado tem **oito tabelas**. O capítulo 4 de
-[Projeto.md](Projeto.md) detalha o núcleo inicial e delimita as adições de autenticação e RAG:
+O esquema versionado tem **22 tabelas em quatro *schemas***, criadas por 12
+migrações Alembic. O capítulo 4 de [Projeto.md](Projeto.md) traz os modelos
+conceitual, lógico e físico, o dicionário de cada tabela e o DDL conferido
+contra o banco; o [banco-de-dados.md](banco-de-dados.md) lista, para cada
+índice, a consulta que ele sustenta.
 
-| Entidade | Papel |
-|---|---|
-| `usuario` | Identidade projetada do Entra ID: `id` do provedor, `nome`, `email`, `perfil` e `visto_em` |
-| `conversa` | Sessão de diálogo: título, vínculo com o Direct Line e arquivamento |
-| `interacao` | Uma mensagem processada: prompt, resposta, canal, intenção, confiança, desfecho e latência |
-| `rotina` | Prompt agendado, com recorrência, fuso e o usuário sob cuja identidade executa |
-| `execucao_rotina` | Um disparo e seu resultado, com início e fim gravados separadamente |
-| `sessao_usuario` | Sessão de login, perfil e permissões observados no login, com expiração |
-| `rag.arquivo` | Proveniência e controle dos arquivos ingeridos para recuperação documental |
-| `rag.trecho` | Trechos dos arquivos ingeridos e vínculo com sua origem |
+| Grupo | Tabelas | Papel |
+|---|---|---|
+| Núcleo (`public`) | `usuario`, `sessao_usuario`, `conversa`, `interacao`, `rotina`, `execucao_rotina`, `transcricao_audio` | Identidade projetada do Entra ID, sessão de login, diálogo, registro de cada mensagem processada, rotinas e seus disparos, e o ciclo das transcrições de voz |
+| Portfólio (`portfolio`) | `projeto`, `marco`, `risco`, `indicador`, `usuario_projeto` | Cópia estruturada do portfólio, criada pela carga e mantida pelo WH-02, e a participação de cada usuário nos projetos |
+| Avisos (`public`) | `preferencia_aviso`, `aviso` | Adesões aos avisos de cada projeto e tipo de evento, e os avisos privados gerados pelos eventos do portfólio |
+| Webhooks (`webhook`) | `canal_drive`, `recebimento`, `sincronizacao_fonte`, `fonte_portfolio`, `versao_entidade`, `auditoria_portfolio` | Entrada das notificações do Drive e dos eventos da planilha, com idempotência, controle de versão por entidade e auditoria |
+| Corpus (`rag`) | `arquivo`, `trecho` | Proveniência e destino dos arquivos ingeridos e o texto dos trechos indexados |
 
 A modelagem entregue na Sprint 2 tinha três entidades e antecipava, por escrito,
 os desdobramentos que faltavam: a conversa como entidade própria, o histórico de
@@ -552,9 +552,10 @@ Uma linha de `interacao` é gravada em **todos** os desfechos, inclusive nos
 bloqueios. As tentativas de ataque são justamente o dado mais valioso do
 recorte de segurança do dashboard.
 
-As permissões não são persistidas: resolvem-se dos *claims* de grupo a cada
-requisição. Projetá-las no banco criaria uma segunda fonte de verdade capaz de
-conceder um acesso que o Entra já revogou.
+As permissões não são coluna de `usuario`: resolvem-se dos *claims* de grupo
+no login e ficam gravadas na `sessao_usuario`, junto com o perfil e os projetos
+acessíveis, até a sessão expirar. Uma mudança de grupo no Entra só chega no
+login seguinte, e o logout apaga a sessão na hora.
 
 ## 10. Decisões de segurança embutidas na estrutura
 
