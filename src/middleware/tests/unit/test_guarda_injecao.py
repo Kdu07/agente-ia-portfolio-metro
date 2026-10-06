@@ -133,6 +133,27 @@ async def test_prompt_shields_libera_mensagem_limpa_como_prompt() -> None:
     assert corpo == {"userPrompt": LIMPA, "documents": []}
 
 
+@pytest.mark.usefixtures("com_content_safety")
+async def test_429_transitorio_e_repetido_sem_bloquear_usuario_legitimo(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A limitação transitória do Azure não vira falso bloqueio de injeção."""
+    respostas = iter(
+        [
+            httpx.Response(429, headers={"Retry-After": "0"}),
+            veredito(ataque=False)(None),
+        ]
+    )
+    monkeypatch.setattr(settings, "content_safety_espera_base_seconds", 0.0)
+    transporte, chamadas = servico(lambda _: next(respostas))
+
+    resultado = await classificador.classificar(LIMPA, transporte=transporte)
+
+    assert not resultado.suspeita
+    assert resultado.motivo == "limpo"
+    assert len(chamadas) == 2
+
+
 def _tempo_esgotado(request: httpx.Request) -> httpx.Response:
     raise httpx.ReadTimeout("tempo esgotado", request=request)
 
