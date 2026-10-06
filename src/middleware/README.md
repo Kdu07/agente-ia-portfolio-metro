@@ -60,7 +60,10 @@ para `dados/classificador.joblib`.
 | `python -m app.pipeline.intencao.avaliacao --f22` | Comparação entre estratégias (F22) — treina todas as configurações do zero |
 
 O relatório da bancada é a evidência do RNF03; os números correntes e sua leitura
-estão na seção 5.4.11 de [Projeto.md](../../docs/Projeto.md).
+estão na seção 5.4.11 de [Projeto.md](../../docs/Projeto.md). O notebook
+[avaliacao-classificador-intencoes.ipynb](notebooks/avaliacao-classificador-intencoes.ipynb)
+reproduz a mesma bancada com a matriz de confusão completa e confere cada número
+com a 5.4.11; como executá-lo está em [notebooks/README.md](notebooks/README.md).
 
 ## Banco de dados
 

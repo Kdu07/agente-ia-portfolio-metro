@@ -1,0 +1,42 @@
+# Evidência de execução — 05/10/2026
+Card: #477 — exemplos de entrada e saída do NLP (Projeto.md 5.9.4 e 10.5.5.12)
+Branch: docs/exemplos-e-avaliacao-nlp
+Commit de base: e76872681b48f4d835e5dfddbc2b125c0641f61d (develop), mais o arquivo de teste deste card
+Ambiente: Windows 11, Python 3.14.5, ambiente virtual src/middleware/.venv; pytest 9.1.1.
+Banco: PostgreSQL 16 (postgres:16-alpine) descartável na porta 5437, com `alembic upgrade head`.
+Modelo: dados/classificador.joblib (treinado em 27/08/2026) e intfloat/multilingual-e5-large na revisão 3d7cfbd, lidos do cache com HF_HUB_OFFLINE=1.
+Rede: --block-network, com exceção só de localhost; Speech, Content Safety e executor dublados no próprio teste.
+Comando (a partir de src/middleware):
+  python -m pytest tests/integration/test_exemplos_nlp.py -v -p no:cacheprovider --block-network --allowed-hosts="127.0.0.1,localhost,::1"
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.5, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\cadus\CADU_FILES\Inteli\Projeto 7 - Metro SP\g02-477-499\src\middleware\.venv\Scripts\python.exe
+benchmark: 5.3.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: C:\Users\cadus\CADU_FILES\Inteli\Projeto 7 - Metro SP\g02-477-499\src\middleware
+configfile: pyproject.toml
+plugins: anyio-4.15.1, locust-2.46.7, platformdirs-4.12.3, asyncio-1.4.0, benchmark-5.3.0, cov-7.1.0, recording-0.14.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 6 items
+
+tests/integration/test_exemplos_nlp.py::test_exemplo_de_texto_chega_ao_banco[IT-NLP-01] PASSED [ 16%]
+tests/integration/test_exemplos_nlp.py::test_exemplo_de_texto_chega_ao_banco[IT-NLP-03] PASSED [ 33%]
+tests/integration/test_exemplos_nlp.py::test_exemplo_de_texto_chega_ao_banco[IT-NLP-04] PASSED [ 50%]
+tests/integration/test_exemplos_nlp.py::test_exemplo_de_texto_chega_ao_banco[IT-NLP-05] PASSED [ 66%]
+tests/integration/test_exemplos_nlp.py::test_exemplo_de_texto_chega_ao_banco[IT-NLP-06] PASSED [ 83%]
+tests/integration/test_exemplos_nlp.py::test_it_nlp_02_exemplo_de_voz_chega_ao_banco PASSED [100%]
+
+============================== warnings summary ===============================
+tests\integration\test_exemplos_nlp.py:36
+  C:\Users\cadus\CADU_FILES\Inteli\Projeto 7 - Metro SP\g02-477-499\src\middleware\tests\integration\test_exemplos_nlp.py:36: StarletteDeprecationWarning: 'HTTP_413_REQUEST_ENTITY_TOO_LARGE' is deprecated. Use 'HTTP_413_CONTENT_TOO_LARGE' instead.
+    from app.api.routes import voz
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 6 passed, 1 warning in 101.72s (0:01:41) ===================
+
+Execução de controle sem PostgreSQL (DATABASE_URL apontando para porta fechada):
+  6 skipped — "PostgreSQL indisponível; suba o serviço db do Docker Compose."
+
+Regressão da suíte do middleware no mesmo ambiente, sem tests/integration/externos:
+  1 failed, 1199 passed, 52 skipped, 17 xfailed in 330.75s
+  A falha é tests/unit/test_provisionamento_vetorial.py (ModuleNotFoundError: pinecone):
+  a .venv local tem só o extra `dev`, sem o `rag`. Não tem relação com este card.
