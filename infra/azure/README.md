@@ -69,6 +69,12 @@ então os dois estágios usam os mesmos recursos. A fase `segredos` lê as chave
 direto deles. Depois de trocar uma chave, rode `segredos` e
 `RECONFIGURAR=1 ... apps` em cada estágio.
 
+O F0 do Content Safety aceita 5 chamadas por segundo, somados os dois estágios.
+O `variaveis.sh` reserva 1,5 ao dev e 2,5 ao prd (`CS_RPS`), e a fase `apps`
+divide a cota do estágio entre o middleware e o worker, quando ele existe, em
+`CONTENT_SAFETY_REQUISICOES_POR_SEGUNDO`. Como o deploy contínuo só troca a
+imagem, um valor novo só chega aos contêineres com `RECONFIGURAR=1 ... apps`.
+
 Para o middleware local usar os mesmos recursos:
 
 ```bash

@@ -72,6 +72,16 @@ case "$ESTAGIO" in
   prd) RAMO="${RAMO:-main}" ;;
 esac
 
+# Chamadas por segundo do Content Safety reservadas ao estágio. O recurso F0
+# aceita 5 e é um só para os dois estágios: a soma fica em 4, com a mesma
+# folga do padrão de `config.py`, e o prd leva a maior parte. O limitador do
+# middleware é por processo, então a fase `apps` ainda divide esta cota entre
+# o middleware e o worker, quando ele existe. CS_RPS troca o valor na hora.
+case "$ESTAGIO" in
+  dev) CS_RPS="${CS_RPS:-1.5}" ;;
+  prd) CS_RPS="${CS_RPS:-2.5}" ;;
+esac
+
 TAG="${TAG:-$(git rev-parse --short HEAD)}"
 IMG_API=$ACR.azurecr.io/prata-middleware:$TAG
 IMG_WEB=$ACR.azurecr.io/prata-web:$TAG
