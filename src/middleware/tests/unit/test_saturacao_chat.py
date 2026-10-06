@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 import pytest
 from fastapi import Request
 from sqlalchemy.exc import TimeoutError as SQLAlchemyTimeoutError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.config import settings
 from app.main import tratar_pool_esgotado
@@ -14,6 +15,10 @@ from app.persistence.models import Canal, Conversa, Interacao
 from app.pipeline import orquestrador as modulo_orquestrador
 from app.pipeline.desfechos import Desfecho
 from app.pipeline.orquestrador import Orquestrador, _Contexto
+from app.rag import recuperacao
+from app.rag.ingestao.registro import RegistroIngestao
+from app.rag.vetorial import fabrica as fabrica_vetorial
+from app.rag.vetorial.base import Escopo
 from app.schemas.usuario import Perfil, UsuarioAutenticado
 
 
@@ -132,3 +137,42 @@ async def test_historico_persistido_nao_repete_chamada_externa(
 
     assert len(historico) == 1
     assert historico[0].mensagem_usuario == "Qual o prazo?"
+
+
+async def test_recuperador_do_chat_fecha_cada_sessao_antes_de_devolver(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Com a fábrica, nenhuma leitura do RAG deixa conexão presa para a geração."""
+    eventos = []
+
+    class Sessao:
+        def __init__(self, **_opcoes) -> None:
+            """O `async_sessionmaker` repassa bind e opções; aqui não importam."""
+
+        async def __aenter__(self):
+            eventos.append("abriu")
+            return self
+
+        async def __aexit__(self, *args):
+            eventos.append("fechou")
+
+    class Vetorial:
+        async def buscar(self, vetor, **kwargs):
+            eventos.append("buscou")
+            return ()
+
+    async def textos(self, trecho_ids):
+        eventos.append("leu")
+        return {}
+
+    monkeypatch.setattr(fabrica_vetorial, "obter_repositorio_vetorial", lambda sessao: Vetorial())
+    monkeypatch.setattr(RegistroIngestao, "textos", textos)
+    recuperador = recuperacao.montar_recuperador(async_sessionmaker(class_=Sessao))
+    recuperador._codificar = lambda texto: [0.0]
+
+    resultado = await recuperador.recuperar(
+        "Qual o prazo do Trecho Sul?", Escopo(perfil=Perfil.LIDER_PROJETO)
+    )
+
+    assert resultado.vazia
+    assert eventos == ["abriu", "buscou", "fechou", "abriu", "leu", "fechou"]
