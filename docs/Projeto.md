@@ -8791,15 +8791,33 @@ mesma chamada devolveu
 `503 {"detail": "Não foi possível confirmar a identidade no Microsoft Entra ID"}`
 e registrou a tentativa com `status: "falha"`.
 
-Com o Entra ID disponível, a chamada não conclui, por um defeito registrado
-no #541. A autenticação da requisição atualiza a linha do usuário em `usuario`
-e mantém esse bloqueio até o fim da requisição. A confirmação do dono, em sessão
-própria, repete a atualização da mesma linha e espera indefinidamente pelo
-bloqueio da requisição que a chamou. O disparo pelo agendador não passa pela
-autenticação de requisição e não é afetado. O exemplo de sucesso acima foi
-capturado com a confirmação do dono substituída e, por isso, não exercita esse
-trecho. Os testes de integração da rota também substituem o disparo inteiro, o
-que explica o defeito não ter aparecido neles.
+No disparo manual, a rota confirma a transação da autenticação antes de chamar
+o executor (#539). Assim, o upsert de `usuario` feito pela requisição libera
+seu bloqueio antes de a confirmação do dono repetir o upsert em sessão própria.
+A execução continua exigindo que o solicitante seja o dono e que o Entra ID
+confirme sua identidade e permissão atual. O agendador usa o mesmo executor.
+
+A regressão foi verificada em 06/10/2026 com PostgreSQL 16 real, migrado pelo
+Alembic, e conexões independentes para a requisição e o executor. O teste em
+`src/middleware/tests/integration/test_disparo_manual_rotina.py` usa cookie
+assinado e sessão de login persistida, sem substituir a autenticação, o disparo
+ou a resolução do dono. Apenas a resposta do Graph e o processamento do prompt
+são controlados; os dois upserts e os registros de auditoria são reais. Antes
+da correção, o cenário de sucesso falhou com `TimeoutError` após o limite de
+cinco segundos, no upsert de `_resolver_dono`. Depois, retornou HTTP 200 e
+persistiu a execução concluída com `status: "sucesso"` e a interação vinculada.
+Os cinco casos passaram, incluindo dono inativo, permissão revogada, Graph
+indisponível e tentativa de executar rotina alheia. Para reproduzir, com
+`DATABASE_URL` apontando para um banco de testes migrado:
+
+```bash
+python -m pytest tests/integration/test_disparo_manual_rotina.py -q
+```
+
+O comando é executado em `src/middleware`. A fixture remove somente os registros
+que criou. O JSON de sucesso acima mantém a captura anterior, feita com a
+confirmação do dono substituída; a evidência da concorrência é o teste descrito
+aqui, sem depender de acesso a um tenant real do Entra ID.
 
 **`GET /rotinas/{id}/execucoes`** lista o histórico de disparos, o mais recente
 primeiro, e aceita `limite` entre 1 e 100 (padrão 20). Cada item tem o mesmo
