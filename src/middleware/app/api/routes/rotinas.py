@@ -20,7 +20,7 @@ from apscheduler.triggers.cron import CronTrigger
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.analytics.metricas import rotulo_de_intencao
-from app.api.deps import UsuarioAtual, exige_permissao, obter_execucoes, obter_rotinas
+from app.api.deps import SessaoBanco, UsuarioAtual, exige_permissao, obter_execucoes, obter_rotinas
 from app.auth.entra import FalhaConsultaDiretorio, UsuarioEntraInativo
 from app.persistence.models import ExecucaoRotina, Interacao, Rotina
 from app.persistence.repository import ExecucaoRepository, RotinaRepository
@@ -187,6 +187,7 @@ async def remover(
 async def executar_agora(
     rotina_id: str,
     usuario: UsuarioAtual,
+    banco: SessaoBanco,
     execucoes: Annotated[ExecucaoRepository, Depends(obter_execucoes)],
 ) -> ExecucaoResposta:
     """Dispara a rotina sob demanda, para o usuário testá-la.
@@ -195,6 +196,11 @@ async def executar_agora(
     que o solicitante é o dono não é formalidade: disparar a rotina de
     outra pessoa executaria com as permissões dela.
     """
+    # A autenticação atualizou `usuario` nesta transação. O executor confirma
+    # o dono no Entra e repete o upsert em sessão própria; liberar esse lock
+    # antes de aguardá-lo evita a espera circular entre as duas sessões.
+    # Até aqui há apenas a projeção da identidade, sem escrita de execução.
+    await banco.commit()
     try:
         resultado = await execucao_rotina.executar_agora(rotina_id, usuario.id)
     except (RotinaNaoEncontrada, ExecucaoNaoAutorizada) as erro:
