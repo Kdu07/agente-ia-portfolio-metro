@@ -11,6 +11,7 @@
     "lint": "eslint src --ext ts,tsx",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:integracao": "vitest run --config vitest.integracao.config.ts",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
     "audit:a11y": "node scripts/auditoria-a11y.mjs",
     "captura:responsivo": "node scripts/captura-responsiva.mjs"

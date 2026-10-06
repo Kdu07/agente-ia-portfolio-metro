@@ -14214,7 +14214,7 @@ OpenAPI do FastAPI declara (ver IT-CTR-03).
 | IT-WEB-01 | Envio de mensagem exibe a resposta | POST `/api/chat` interceptado; bolha do agente renderizada | 1 |
 | IT-WEB-02 | **`credentials: "include"` em toda chamada** | MSW inspeciona a requisição; ausência falha o teste | 1 |
 | IT-WEB-03 | **Nenhum `Authorization: Bearer` sai do navegador** | Varredura dos *handlers*: cabeçalho nunca presente | 1 |
-| IT-WEB-04 | 401 redireciona ao login | `window.location.href` vai para `/api/auth/login` | 1 |
+| IT-WEB-04 | 401 redireciona ao login | `window.location.href` vai para `/entrar`, e não para `/api/auth/login`: com o SSO ativo, ir direto ao login fecharia um ciclo de redirecionamentos (#353) | 1 |
 | IT-WEB-05 | Erro 500 exibe mensagem, não tela branca | `ErroApi` capturado e renderizado | 1 |
 | IT-WEB-06 | `conversa_id` devolvido é adotado | Servidor devolve id diferente → próximo POST usa o novo | 1 |
 | IT-WEB-07 | Resposta bloqueada aparece como orientação | `bloqueada=true` renderiza aviso, não erro | 2 |
@@ -14223,6 +14223,57 @@ OpenAPI do FastAPI declara (ver IT-CTR-03).
 | IT-WEB-10 | Rotinas: criar, listar, excluir | Fluxo completo contra o MSW, com confirmação de exclusão | 5 |
 | IT-WEB-11 | Estado de carregamento e de erro | TanStack Query exibe *loading* e *retry* | 4 |
 | IT-WEB-12 | Microfone com Azure Speech | `useMicrofone` produz parcial e final; token real pedido a `/api/voz/token` | Credencial e franquia do ambiente de teste |
+
+**Suíte contra o middleware vivo (#471).** Os casos acima, contra o MSW,
+verificam a interface diante do *formato* das respostas. A segunda camada
+verifica a interface diante do *servidor*. As telas são renderizadas no
+Vitest e falam com um uvicorn de verdade, com PostgreSQL, a carga do
+`popular_banco` e o pipeline inteiro: guardas, classificador real e
+persistência. O executor é o sintético do `PERFORMANCE_MODE`, o mesmo dos
+testes de desempenho, para que o caso não dependa de provedor de LLM.
+
+- **A ponte.** O MSW entra só como encanamento. Um único *handler*
+  (`src/web/src/testes/integracao/ponte.ts`) faz no teste o que o proxy do
+  Vite faz no desenvolvimento e o Nginx em produção: tira o `/api`, repassa
+  ao middleware e devolve a resposta dele sem alteração. Nenhum dublê de
+  `src/web/src/mocks/` é carregado nessa suíte.
+- **O cookie.** A ponte anexa o cookie `sessao`, que o navegador anexaria e o
+  `fetch` do Node não anexa. Em todo pedido, ela confere que a interface pediu
+  `credentials: "include"` e não mandou `Authorization`; uma violação reprova
+  o caso. É a verificação contínua de IT-WEB-02 e IT-WEB-03.
+- **As asserções.** Os casos comparam a tela com o que o middleware
+  devolveu, e não com um texto fixo, porque quem escolhe a resposta é o
+  pipeline. Depois de cada ação, conferem o estado no servidor por um pedido
+  direto, sem passar pela tela.
+- **Sessão expirada é real.** O `scripts/sessoes_integracao.py` abre, para o
+  `demo-roberto`, uma sessão válida e outra já vencida no banco. O 401 que a
+  segunda recebe é o do `obter_usuario_atual`.
+- **Tempo esgotado e 5xx são injetados no fio.** Fazer um servidor saudável
+  falhar sob demanda exigiria código de teste dentro do produto. Por isso, um
+  único pedido é retido ou recusado entre a tela e o middleware, e o caso só
+  passa quando o "Tentar novamente" se recupera contra o middleware real.
+
+| Tela | Caso (`src/web/src/testes/integracao/`) | Falha exercitada | IT-WEB |
+|---|---|---|---|
+| Conversa | Dois turnos: a resposta na tela é a que o pipeline devolveu; o 2º turno vai na conversa criada no 1º; os turnos estão no banco e a conversa aparece nas Recentes | — | 01, 06 |
+| Conversa | Conversa da carga aberta pela rota, com os turnos do banco | — | — |
+| Conversa | Envio retido além de `TEMPO_LIMITE_CHAT_MS`; o reenvio chega ao pipeline | Tempo esgotado | 11 |
+| Histórico | A lista é a do `GET /conversas`; arquivar some da tela e do servidor | — | — |
+| Histórico | `503` numa consulta; "Tentar novamente" traz a lista real | 5xx | 05, 11 |
+| Rotinas | Criar pela validação real (guardas e classificador) e excluir com confirmação | — | 10 |
+| Rotinas | Execuções gravadas da rotina da diretoria, com o status em frase | — | — |
+| Rotinas | Lista retida além de `TEMPO_LIMITE_MS`; "Tentar novamente" traz a real | Tempo esgotado | 11 |
+| Intenções | Volume por intenção igual ao do registro de interações | — | 09 |
+| Intenções | `502` em uma das oito consultas; o painel se completa no reenvio | 5xx | 11 |
+| Sessão | Sessão vencida: o 401 do middleware leva a `/entrar` | Sessão expirada | 04 |
+| Sessão | A sessão vence durante o uso: arquivar recebe 401, leva a `/entrar` e nada muda no servidor | Sessão expirada | 04 |
+
+O `POST /rotinas/{id}/executar` ficou fora dessa suíte. Pela leitura da
+rota, sem o Entra configurado a consulta ao diretório levanta
+`ConfiguracaoAusente`, que a rota não trata, e a resposta seria 500 em vez
+de indisponibilidade. É defeito a corrigir, não comportamento a fixar em
+teste. Como preparar o ambiente e
+rodar: 10.5.7.2. Na CI: job `integracao:web-middleware` (10.5.8).
 
 #### 10.5.5.9 IT-CTR — contratos
 
@@ -14431,7 +14482,18 @@ src/middleware/tests/
 │       └── test_pinecone_real.py
 
 src/web/src/testes/
-├── setup.ts                           # MSW + ambiente Vitest
+├── ambiente.ts                        # polyfills do jsdom, comuns às duas suítes
+├── setup.ts                           # MSW com os dublês de src/mocks
+├── integracao/                        # contra o middleware vivo (10.5.5.8)
+│   ├── ponte.ts                       # repassa /api ao uvicorn, com o cookie
+│   ├── setup.ts
+│   ├── verificar-middleware.ts        # globalSetup: middleware pronto?
+│   ├── auxiliares.ts
+│   ├── conversa.test.tsx
+│   ├── historico.test.tsx
+│   ├── intencoes.test.tsx
+│   ├── rotinas.test.tsx
+│   └── sessao.test.tsx
 ├── utilitarios.tsx
 ├── tokens.ts
 ├── autenticacao.test.tsx
@@ -14484,6 +14546,54 @@ Marcadores ainda úteis para recortes:
 .\.venv\Scripts\python.exe -m pytest -m integracao -q
 .\.venv\Scripts\python.exe -m pytest -m externo -q
 ```
+
+**Interface contra o middleware vivo (#471).** A suíte não roda no
+`npm test`: ela precisa do middleware no ar. O roteiro abaixo usa um banco
+descartável e roda o uvicorn **fora** de `src/middleware`. Assim o `.env`
+local não é lido, e o servidor sobe como na CI: sem Entra, sem Content
+Safety e sem provedor de LLM.
+
+O segredo de sessão só precisa ser o mesmo para o script e o uvicorn. A
+cada rodada, o banco é recriado, porque o `popular_banco` não apaga o que a
+suíte cria para as personas `demo-*`.
+
+```powershell
+# 1. Banco descartável (outra porta, se a 5433 estiver ocupada)
+docker run -d --name g02-integracao-web -e POSTGRES_USER=middleware `
+  -e POSTGRES_PASSWORD=middleware -e POSTGRES_DB=middleware -p 5433:5432 postgres:16-alpine
+
+# 2. Variáveis do middleware e da suíte (mesma sessão do PowerShell até o fim)
+$env:DATABASE_URL = "postgresql+asyncpg://middleware:middleware@127.0.0.1:5433/middleware"
+$env:SESSION_SECRET = [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+$env:PERFORMANCE_MODE = "true"
+$env:AQUECER_MODELOS = "true"
+$env:INTEGRACAO_SESSOES = "$env:TEMP\sessoes-integracao.json"
+
+# 3. Esquema, carga sintética e as duas sessões do demo-roberto
+cd src\middleware
+.\.venv\Scripts\python.exe -m alembic upgrade head
+.\.venv\Scripts\python.exe -m scripts.popular_banco
+.\.venv\Scripts\python.exe -m scripts.sessoes_integracao --saida $env:INTEGRACAO_SESSOES
+
+# 4. Middleware fora da pasta do .env; esperar /health/pronto dar 200 (~1,5 min)
+$middleware = (Get-Location).Path
+$uvicorn = Start-Process -PassThru -WorkingDirectory $env:TEMP -NoNewWindow "$middleware\.venv\Scripts\python.exe" `
+  "-m uvicorn --app-dir `"$middleware`" app.main:app --host 127.0.0.1 --port 8000"
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8000/health/pronto
+
+# 5. A suíte (com a porta 8000 ocupada, exportar INTEGRACAO_MIDDLEWARE_URL)
+cd ..\web
+npm run test:integracao
+
+# 6. Limpeza: encerrar o uvicorn e o banco. O python.exe da .venv é um
+#    lançador, e o /T leva junto o processo filho que segura a porta 8000.
+taskkill /PID $uvicorn.Id /T /F
+docker rm -f g02-integracao-web
+```
+
+Com o middleware fora do ar ou sem o arquivo de sessões, o `globalSetup`
+interrompe a suíte antes do primeiro caso e diz o que falta. Assim a falha
+não aparece como uma dezena de telas com "Sem conexão com o servidor".
 
 **O que roda hoje, e com que resultado.** A execução de 25/09/2026 está
 consolidada na subseção 10.5.7.3 (evidências embutidas neste documento).
@@ -14623,10 +14733,25 @@ succeed* ligada no projeto, qualquer job vermelho impede o merge.
 | `lint` | `web:eslint` | `node:20-alpine` | `npm run lint` |
 | `lint` | `web:tipos` | `node:20-alpine` | `npm run typecheck` (os dois `tsconfig`) |
 | `teste` | `middleware:pytest` | `python:3.12-slim` + serviços `postgres:16-alpine` e `rabbitmq:4.3.6-management-alpine` | `alembic upgrade head` e a suíte inteira com `--block-network` |
-| `teste` | `web:vitest` | `node:20-alpine` | `npm run test` |
+| `teste` | `web:vitest` | `node:20-alpine` | `npm run test:coverage`, com os limiares de 9.1.8 |
+| `teste` | `integracao:web-middleware` | `python:3.12-slim` + Node 20 (tarball oficial) + serviço `postgres:16-alpine` | `alembic upgrade head`, `popular_banco` e `sessoes_integracao`; uvicorn em segundo plano; espera `/health/pronto` e roda `npm run test:integracao` (10.5.5.8) |
 
-Os dois jobs de teste publicam relatório JUnit, e o resultado aparece por caso
+Os três jobs de teste publicam relatório JUnit, e o resultado aparece por caso
 na aba de testes do merge request.
+
+No `integracao:web-middleware`, as telas falam com o middleware de verdade,
+e quatro escolhas merecem registro:
+
+- **Python e Node no mesmo job.** O servidor precisa estar no ar enquanto a
+  suíte roda. A imagem é a do middleware, e o Node 20 entra pelo tarball
+  oficial, em versão fixa.
+- **A instalação repete a do Dockerfile:** torch CPU, `.[rag]` e o
+  e5-large na mesma revisão. É o mesmo servidor que vai para a Azure.
+- **Sem segredo no repositório.** O `SESSION_SECRET` é gerado no próprio
+  job e descartado com ele. O arquivo de sessões não entra nos artefatos;
+  só o JUnit e o `uvicorn.log` entram.
+- **Sem RabbitMQ.** Nenhuma rota usada pela interface publica evento; só os
+  *webhooks* publicam.
 
 No `middleware:pytest`, quatro escolhas merecem registro:
 
