@@ -16,7 +16,7 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from app.api.routes import (
     auth,
@@ -104,6 +104,7 @@ app = FastAPI(
 )
 
 app.add_exception_handler(voz.ErroAudioApi, voz.tratar_erro_audio)
+app.add_exception_handler(HTTPException, voz.tratar_http_exception)
 
 app.include_router(health.router, tags=["infra"])
 app.include_router(auth.router, tags=["auth"])

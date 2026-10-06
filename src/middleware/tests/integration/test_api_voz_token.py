@@ -60,6 +60,10 @@ def test_sem_sessao_responde_401_sem_emitir(sem_sessao, emitir):
     resposta = sem_sessao.get("/voz/token")
 
     assert resposta.status_code == 401
+    assert resposta.json() == {
+        "codigo": "NAO_AUTENTICADO",
+        "mensagem": "Sua sessão expirou. Entre novamente para continuar.",
+    }
     emitir.assert_not_awaited()
 
 
