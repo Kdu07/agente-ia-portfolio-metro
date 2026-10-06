@@ -9789,7 +9789,7 @@ A prova de conceito comprova o benefício de **encontrar a informação e confia
 
 Os benefícios parciais têm a base construída e um limite conhecido. A proatividade depende de ligar a tela às rotas de avisos e de criar a sonda de pendências; a confidencialidade, de cifrar o registro em repouso e de levar os serviços para o tenant do parceiro; a recusa segura, de subir a detecção das guardas de injeção e de abuso; e a sustentação pelo Metrô, da transferência.
 
-Os benefícios de **tempo e de retrabalho** continuam como hipótese, e são eles que sustentam o retorno financeiro da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md). O payback calculado ali herda essa condição até que o piloto meça o tempo poupado por consulta (I8). A escala também não foi demonstrada: na bancada local, a resposta atende aos limites de latência com um usuário (p50 de 2,6 s e p95 de 4,2 s) e os ultrapassa a partir de cinco usuários simultâneos (10.2.2.2), o que precisa ser medido de novo no ambiente implantado antes de um piloto com vários líderes.
+Os benefícios de **tempo e de retrabalho** continuam como hipótese, e são eles que sustentam o retorno financeiro da seção 7.12 do [GestaoProjeto.md](GestaoProjeto.md). O payback calculado ali herda essa condição até que o piloto meça o tempo poupado por consulta (I8). A escala também não foi demonstrada: na reexecução local após a #529, dez usuários atenderam ao p95 de 8 s sem falhas, mas não ao p50 de 3 s; com trinta usuários, latência e capacidade funcional continuaram reprovadas, embora sem HTTP 500 ou esgotamento do pool (10.2.2.4). O comportamento ainda precisa ser medido no ambiente implantado antes de um piloto com vários líderes.
 
 # 10. Planejamento e Execução de Testes
 
@@ -10324,6 +10324,21 @@ O resultado caracteriza a configuração local, não a capacidade do Azure: gera
 
 Os percentis foram recalculados de `interacao.latencia_ms` na janela exata. Eles medem o pipeline no servidor, sem o caminho entre o Locust, o proxy e a API, e por isso não se comparam aos do Locust em 10.2.2.2. O ensaio usou uma réplica de cada processo e não exercita a escala horizontal de 5.1.4. A evidência, com ambiente, comando, contagens, consultas de conferência, limitações e as pendências que dependem dos logs e do banco da bancada, está em [`docs/evidencias/2026-09-30-tnf-des-05-rotinas-chat.txt`](evidencias/2026-09-30-tnf-des-05-rotinas-chat.txt).
 
+#### 10.2.2.4 Reexecução após correção da saturação — 05/10/2026
+
+A issue #529 tratou as duas causas comprovadas na rodada de 10.2.2.2. O chat passou a usar transações curtas, devolvendo a conexão ao pool antes de esperar serviços externos. O cliente do Content Safety passou a ser compartilhado, com concorrência e taxa limitadas, repetição exclusiva de falhas transitórias e contrapressão local. O histórico mantém apenas turnos previamente encaminhados e aplica regras determinísticas de injeção, sem reenviar cada turno aceito ao serviço externo. As guardas do prompt atual e da resposta atual continuam no caminho real.
+
+| Cenário reexecutado | Configuração | Respostas no Locust | Falhas | p50 (limite < 3 s) | p95 (limite < 8 s) | p99 | HTTP 500/pool | Resultado |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| `TNF-DES-03` | 10 usuários, rampa 2/s, 5 min, espera 1–3 s | 398 | 0 (0%) | 5,6 s — **reprovado** | 6,4 s — **aprovado** | 7,3 s | 0 | **Aprovado no critério da #529; parcial contra 9.1.8** |
+| `TNF-DES-04` | 30 usuários, rampa 6/s, 5 min, espera 1–3 s | 576 | 178 (30,90%) | 16 s — **reprovado** | 17 s — **reprovado** | 18 s | 0 | **Reprovado em capacidade, com saturação controlada** |
+
+Na carga nominal, o banco registrou 400 interações encaminhadas e nenhum bloqueio; as duas além do CSV terminaram durante a drenagem posterior ao fechamento das estatísticas. Não houve 429 do Content Safety, exceção de pool ou HTTP 500. O p95 caiu de 56 s para 6,4 s e passou a meta do card, mas o p50 de 5,6 s ainda não atende ao limite histórico de 3 s. Por isso, o cenário não sustenta uma declaração de conformidade integral com 9.1.8.
+
+No pico, o banco registrou 580 interações após a drenagem: 402 encaminhadas, 120 bloqueadas na injeção e 58 bloqueadas na saída. As quatro além do CSV ainda estavam em voo no corte estatístico. Não houve 429, HTTP 500 ou esgotamento do pool. As recusas vieram da fila local: injeção e saída mantiveram o *fail-closed*, enquanto abuso manteve o *fail-open*. Isso preserva o invariante de segurança e transforma a pane anterior em contrapressão observável, mas 30,90% de falha semântica e p95 de 17 s mantêm o pico reprovado.
+
+O resultado vale para uma réplica local da API. O limitador é por processo e várias réplicas ou o worker ainda dividem a mesma cota externa; a implantação precisa recalibrar o limite por réplica ou adotar coordenação distribuída/cota maior. A evidência completa, com ambiente, comandos, contagens, testes e limitações, está em [`docs/evidencias/2026-10-05-saturacao-pipeline-chat.txt`](evidencias/2026-10-05-saturacao-pipeline-chat.txt).
+
 ### 10.2.3 Testes dos requisitos não funcionais
 
 **Nota de escopo.** O card que originou esta entrega foi escrito sobre RNF01 a RNF05. O RNF06 e o RNF07 entraram na mesma revisão de escopo que acrescentou RF09 a RF12, conforme as notas de 3.3.1 e 3.4, e não possuem card próprio. Cobri-los aqui é o que evita que a eficácia das barreiras e a proteção do registro — os dois requisitos que sustentam, respectivamente, o RF09 e o par RF10 e RF12 — fiquem sem procedimento de medição. A extensão fica registrada neste parágrafo e na descrição do *merge request*.
@@ -10631,7 +10646,7 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 | RNF05 | 10.2.3.5 | 2 | 2 | `tests/rnf/test_rnf05_perfil.py` | Executado: 6 aprovados na bancada sintética; validação humana ainda pendente |
 | RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
 | RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
-| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Executado: baseline aprovado; cargas de 5, 10 e 30 usuários reprovadas; `TNF-DES-05` aprovou a unicidade, com latência durante o disparo inconclusiva e bloqueios de causa não determinada |
+| Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Executado: baseline aprovado; após #529, 10 usuários aprovaram p95 e reprovaram p50 sem falhas, enquanto 30 usuários mantiveram reprovação com contrapressão controlada e sem HTTP 500; `TNF-DES-05` aprovou a unicidade, com latência durante o disparo inconclusiva |
 | **Total** | — | **21** | **16** | — | — |
 
 A linha de desempenho é a única sem requisito de origem, e o identificador `TNF-DES` registra isso em vez de escondê-lo. A ancoragem está em 10.2.1: os parâmetros vêm do orçamento arquitetural de 5.1.7.3 e do limite operacional de 9.1.8, que divergem entre si, e a reconciliação adotada reporta contra os dois e declara falha apenas no segundo. Enquanto um RNF de desempenho não for formalizado, essa linha permanece sustentada por uma decisão desta seção, e não pela especificação de requisitos.
@@ -12482,7 +12497,7 @@ interna ainda pendente no RF06.
 | RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
 | RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
-| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Baseline de 1 usuário aprovado; 5, 10 e 30 usuários reprovados; `TNF-DES-05` aprovou a unicidade com cinco rotinas, com latência durante o disparo inconclusiva e 26,19% das mensagens legítimas bloqueadas, sem separar detecção de indisponibilidade | `2026-09-30-locust-api-ativa.txt`; `2026-09-30-tnf-des-05-rotinas-chat.txt`; seção 10.2.2 | Transição para saturação delimitada entre 1 e 5 usuários; separar os bloqueios do `TNF-DES-05` por motivo nos logs; investigar quota/estabilidade do Content Safety, guardas de saída e pool do banco |
+| Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | Baseline de 1 usuário aprovado; após #529, 10 usuários: p50 5,6 s reprovado, p95 6,4 s aprovado e 0 falhas; 30 usuários: p50 16 s, p95 17 s e 30,90% de falhas semânticas, sem HTTP 500/pool; `TNF-DES-05` aprovou a unicidade com latência durante o disparo inconclusiva | `2026-09-30-locust-api-ativa.txt`; `2026-09-30-tnf-des-05-rotinas-chat.txt`; `2026-10-05-saturacao-pipeline-chat.txt`; seção 10.2.2 | Otimizar o p50 nominal; dimensionar contrapressão/cota por réplica; repetir no ambiente implantado e reexecutar a concorrência entre worker e chat |
 | Cobertura de código | `python -m pytest ... --cov=app --cov-report=term-missing` | 84,06% na execução única das suítes unitária, funcional, RNF, perímetro e integração; meta de 80% atingida | `2026-09-29-cobertura-integral-middleware.txt` | Provedores comerciais reais permaneceram isolados e os `xfail` continuam visíveis |
 | Integração | matriz 10.5.9 e scripts `tests/integration/` | Incluída na bateria integral: PostgreSQL e RabbitMQ reais locais; serviços comerciais reais explicitamente ignorados | `2026-09-29-cobertura-integral-middleware.txt`; seção 10.5 | Não confundir infraestrutura local real com validação no ambiente implantado |
 
@@ -12494,8 +12509,8 @@ RF06 permanece parcial e RF07 está fora do MVP; RF04/RF08 permanecem parciais;
 o RNF06 reprova parcialmente;
 a cifra e o prazo definitivo do RNF07 não estão comprovados; disponibilidade
 contínua, validação e carga no ambiente implantado seguem pendentes. A carga
-local também revelou bloqueios de mensagens legítimas pelas guardas e saturação
-a partir do primeiro ponto concorrente medido.
+local, após #529, eliminou falhas nominais e HTTP 500 do pool, mas o p50 de dez
+usuários e a capacidade funcional no pico de trinta usuários ainda reprovam.
 
 **Conclusão crítica.** Os resultados comprovam uma base automatizada executável e
 algumas regras centrais cobertas, mas não sustentam declaração de conformidade
@@ -13298,7 +13313,7 @@ O esforço é relativo entre os itens da lista, e não uma estimativa em horas:
 | AF11 | Validar perfis e permissões no tenant definitivo, com o registro da aplicação no Entra ID e a permissão `User.Read.All` consentida pelo administrador | Limite de RF01 (9.6.1); dependência externa ([Arquitetura.md](Arquitetura.md), seção 12.2) | Alta | P |
 | AF12 | Subir a detecção das guardas de injeção e de abuso para 90%, com regras corporativas e o conjunto adversarial, mantendo o falso positivo em até 5% | RNF06 reprovado por detecção: 8,3% na injeção e 0% no abuso (10.2.3.6) | Alta | M |
 | AF13 | Cifrar em repouso o registro de interações e fixar o prazo definitivo de retenção com o parceiro | RNF07 parcial: prompt em claro e prazo provisório (10.2.3.7); risco R13 | Alta | M |
-| AF14 | Tratar a saturação sob concorrência, com cota do Content Safety e pool de conexões dimensionados, e medir a carga de novo no ambiente implantado | Limites de latência ultrapassados a partir de cinco usuários, com respostas 429 do Content Safety e esgotamento do pool do banco (10.2.2.2) | Alta | M |
+| AF14 | Recalibrar por réplica a contrapressão/cota do Content Safety e medir a carga no ambiente implantado | A #529 eliminou 429 e esgotamento do pool no recorte local nominal e de pico; ainda há p50 nominal acima de 3 s e 30,90% de falhas semânticas sob 30 usuários (10.2.2.4) | Alta | M |
 | AF15 | Medir o worker de rotinas sob carga concorrente com o chat e a disponibilidade contínua no ambiente implantado | `TNF-DES-05` pendente e RNF04 parcial (10.7) | Média | M |
 | AF16 | Implementar o cliente Direct Line e ligar o Copilot Studio como executor; até lá, deixar o executor próprio como padrão da configuração, que hoje aponta para o cliente não implementado | Direct Line com `NotImplementedError` ([Arquitetura.md](Arquitetura.md), seções 12.2 e 13.4); padrão `executor = "copilot"` em `config.py`; risco R02 | Média | G |
 | AF17 | Revisar por amostra humana a fidelidade das respostas do RAG ao trecho citado | Meta de fidelidade de 0,95 sem medição automática (9.4.6) | Média | P |
