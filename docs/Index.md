@@ -1,143 +1,164 @@
-<Table>
+<p align="center">
+  <img src="imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
+</p>
+
+<table align="center" width="100%" style="table-layout: fixed;">
   <tr>
-    <td><a href= "https://www.btgpactual.com/"><img src="img/logo-btg.png" alt="Centro Paula Souza" border="0"></td>
-    <td>
-      <a href= "https://www.inteli.edu.br/"><img src="img/logo-Inteli.png" alt="Inteli - Instituto de Tecnologia e Liderança" border="0"></a>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/alexsander-dsbarbosa/">
+        <img src="imagens/alexsander.png" width="90" alt="Alexsander B.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/CaduQuaglia">
+        <img src="imagens/cadu.png" width="90" alt="Carlos Eduardo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/celsojwnior/">
+        <img src="imagens/celso.png" width="90" alt="Celso Rocha">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/eduardo-casarini/">
+        <img src="imagens/edu.png" width="90" alt="Eduardo C.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/marianalacerdareis/">
+        <img src="imagens/mariana.png" width="90" alt="Mariana Reis">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/mirela-bianchi-608601254/">
+        <img src="imagens/mirela.png" width="90" alt="Mirela Bianchi">
+      </a>
     </td>
   </tr>
 </table>
 
-# Nome do Projeto: <nome do projeto>
+<br>
 
-## Nome do Grupo: <nome do grupo>
+<p align="center">
+  <img src="imagens/professores.png" alt="Professores">
+</p>
 
-## Integrantes:
+<table align="center" width="100%" style="table-layout: fixed;">
+  <tr>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/vanunes/">
+        <img src="imagens/vanessa.png" width="100" alt="Vanessa Nunes">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/reginaldo-arakaki-9574222b/">
+        <img src="imagens/reginaldo.png" width="100" alt="Reginaldo A.">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/bryan-kano/">
+        <img src="imagens/bryan.png" width="100" alt="Bryan Kano">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/fernando-pizzo-208b526a/">
+        <img src="imagens/pizzo.png" width="100" alt="Fernando Pizzo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/lisane-valdo/">
+        <img src="imagens/lisane.png" width="100" alt="Lisane Valdo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/bruno-grandchamp-rodilha/">
+        <img src="imagens/bruno.png" width="100" alt="Bruno Rodilha">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/filipe-gon%C3%A7alves-08a55015b/">
+        <img src="imagens/filipe.png" width="100" alt="Filipe Gonçalves">
+      </a>
+    </td>
+  </tr>
+</table>
 
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
-- <a href="https://www.linkedin.com/in/username/">Nome</a>
+<br>
 
-# Sumário
+<p align="center">
+  <img src="imagens/bottom.png" alt="Elemento visual de encerramento do cabeçalho">
+</p>
 
-- [Revisão dos feedbacks das Sprints 1 a 3](RevisaoFeedbacks.md)
+# Índice da Documentação
 
-# 1. Introdução
-_conteúdo_
+**Grupo Prata** — Turma 17, grupo 02 do Inteli, Módulo 7 de Engenharia de Software, em parceria com o Metrô de São Paulo. Integrantes: Alexsander Barbosa, Carlos Eduardo Serrano Quaglia, Celso Rocha, Eduardo Casarini, Mariana Reis e Mirela Bianchi.
 
-## 1.1 Objetivo do Documento
+Este índice lista os documentos da pasta `docs` e diz, em uma linha, o que cada um contém. O [README do repositório](../README.md) é a porta de entrada do projeto; aqui fica o mapa para quem precisa achar um assunto específico na documentação.
 
-Este documento apresenta estabelecer padrões de codificação e práticas de desenvolvimento para garantir a qualidade e a consistência do código.
+## Sumário
 
-Nota: Explicar a importância de seguir padrões de desenvolvimento para facilitar a manutenção, melhorar a legibilidade e promover a colaboração.
+- [1. Desenvolvimento do produto](#1-desenvolvimento-do-produto)
+- [2. Gestão do projeto](#2-gestão-do-projeto)
+- [3. Processo de desenvolvimento](#3-processo-de-desenvolvimento)
+- [4. Documentos de apoio](#4-documentos-de-apoio)
+- [5. Outros artefatos da pasta](#5-outros-artefatos-da-pasta)
+- [6. Documentação fora da pasta docs](#6-documentação-fora-da-pasta-docs)
 
-# 2. Padrões de Codificação
-_conteúdo_
+## 1. Desenvolvimento do produto
 
-## 2.1 Naming Conventions
+| Documento | Descrição |
+|---|---|
+| [Projeto.md](Projeto.md) | Documento principal do projeto: negócio, requisitos, modelagem de dados, solução técnica, implantação, prototipação, projeto visual, desenvolvimento, testes, adoção e aperfeiçoamentos futuros. |
+| [Arquitetura.md](Arquitetura.md) | Arquitetura da solução: middleware, executores, barreiras de segurança, rotinas, perfis, tecnologias, estrutura de pastas e modelo de dados. |
+| [banco-de-dados.md](banco-de-dados.md) | Estrutura do PostgreSQL do middleware nos schemas `public`, `rag`, `portfolio` e `webhook`, com tabelas, índices, restrições, scripts, backup e implantação. |
+| [glossario-dominio.md](glossario-dominio.md) | Vocabulário do portfólio do Metrô que alimenta o reconhecimento de fala e serve de referência para medir a acurácia de termos de domínio no canal de voz. |
+| [plano-executor-proprio.md](plano-executor-proprio.md) | Plano de construção do executor próprio com recuperação e geração, que demonstra a solução ponta a ponta sem depender do Copilot Studio do parceiro. |
+| [Manual-instalacao.md](Manual-instalacao.md) | Manual de instalação, implantação e uso da prova de conceito. |
 
-- Variáveis e Funções: Utilize camelCase
-  - Exemplos:
-    - ```let userName = "John";``` 
-    - ```function calculateTotal() { ... } 
+## 2. Gestão do projeto
 
-- Classes e Interfaces: Utilize PascalCase
-  - Exemplos:
-    - ```class UserProfile { ... }``` 
-    - ```interface PaymentGateway { ... }```  
+| Documento | Descrição |
+|---|---|
+| [GestaoProjeto.md](GestaoProjeto.md) | Organização da equipe, avaliação de cada sprint, gestão de riscos e oportunidades, melhorias de processo, análise post-mortem e viabilidade financeira. |
+| [RevisaoFeedbacks.md](RevisaoFeedbacks.md) | Verificação, item a item, dos feedbacks recebidos ao longo das sprints, com o estado de cada correção e as pendências. |
 
-- Constantes: Utilize UPPER_CASE com underscores
-  - Exemplo:
-    - const MAX_USERS = 100; 
+## 3. Processo de desenvolvimento
 
-## 2.2 Formatação de Código
+| Documento | Descrição |
+|---|---|
+| [GestaoConfiguracao.md](GestaoConfiguracao.md) | Políticas de branches, commits, push e merge requests, infraestrutura como código, arquivos sensíveis, rollback e registro de variáveis de ambiente. |
+| [GuiaPadroesDesenvolvimento.md](GuiaPadroesDesenvolvimento.md) | Padrões de código, nomenclatura, análise estática, testes e revisão adotados pela equipe no middleware e na interface. |
 
-- Indentação: Utilize 2 espaços para indentação.
-- Linhas: Mantenha o comprimento das linhas em até 80 caracteres.
-- Chaves: Coloque chaves de abertura na mesma linha.
-  - Exemplo:
-    ```
-    if (condition) {
-        // código
-    }
-    ```
+## 4. Documentos de apoio
 
-## 2.3 Comentários e Documentação
+| Documento | Descrição |
+|---|---|
+| [diagramas/README.md](diagramas/README.md) | Relação entre as fontes dos diagramas gerados por código e as figuras do `Projeto.md`, com o procedimento para regenerá-las. |
 
-- Comentários de Linha: Use para explicar lógica complexa.
-  - Exemplo: // Calcula o total com desconto
+## 5. Outros artefatos da pasta
 
-- Comentários de Bloco: Use para documentar funções e classes com JSDoc.
-  - Exemplo: 
-    ```
-    /**
-    * Calcula o total de um pedido.
-    * @param {number} price - Preço do item.
-    * @param {number} quantity - Quantidade do item.
-    * @returns {number} Total calculado.
-    */
-    function calculateTotal(price, quantity) {
-        return price * quantity;
-    }
-    ```
+Pastas que não são documentos em Markdown, mas são referenciadas por eles.
 
-- Documentação da API
-  - Utilizar SWAGGER para documentação da API a partir dos comentários do código.
-  - Configure uma rota, como /api-docs, para que a documentação gerada pelo Swagger seja facilmente acessível aos desenvolvedores e stakeholders.
+| Pasta | Conteúdo |
+|---|---|
+| [api/](api/) | Contratos OpenAPI da API do middleware ([openapi-middleware.json](api/openapi-middleware.json)) e do canal de voz ([openapi-voz.yaml](api/openapi-voz.yaml)). |
+| [diagramas/](diagramas/) | Fontes em HTML e Mermaid dos canvas e das modelagens de dados. |
+| [evidencias/](evidencias/) | Saídas de testes, cobertura, desempenho e auditorias, nomeadas pela data de execução e citadas no `Projeto.md`. |
+| [imagens/](imagens/) | Figuras, diagramas exportados e imagens do cabeçalho usadas pelos documentos. |
 
-# 3. Padrões de Projeto
-_conteúdo_
+## 6. Documentação fora da pasta docs
 
-## 3.1 Design Patterns
+Documentos que ficam ao lado do código que descrevem, citados pelo `README.md` e pelos documentos acima.
 
-_Opcionalmente, o grupo pode definir um ou mais design patterns para serem adotados, como forma de exercitarem tipos de solução para problemas/situações recorrentes_
-_Sugestão de leitura: https://refactoring.guru/_
-
-## 3.2 Arquitetura de Software
-
-- Utilize a Arquitetura de Três Camadas: Separe a lógica de negócios (Camada de Negócios), a interface do usuário (Camada de Apresentção) e o acesso aos dados (Camada de Dados).
-  - Exemplo: Em uma aplicação Angular, utilize serviços para lógica de negócios, componentes para a interface e controladores para gerenciar a interação.
-
-# 4. Práticas de Desenvolvimento
-_conteúdo_
-
-## 4.1 Testes Automatizados
-
-- Testes Unitários: Utilize Jest para criar testes unitários
-  - Exemplo:
-    ```
-    test('adiciona 1 + 2 para igualar 3', () => {
-      expect(1 + 2).toBe(3);
-    });
-    ```
-
-- Testes de Integração: Como sugestão, utilizar o Cypress para testes de integração.
-  - Exemplo: Testar a interação entre componentes de frontend e backend.
-
-- Testes end-to-end: Como sugestão, utilizar o Cypress para testes end-to-end. 
-  - Exemplo: Testar um RF de ponta a ponta.
-
-## 4.2 Controle de Qualidade
-
-- Revisão de Código: Todos os commits devem ser revisados por pelo menos um outro desenvolvedor.
-
-- Sugestão: Utilizar ESLint para análise estática de código JavaScript/TypeScript.
-
-# 5. Ferramentas e Tecnologias
-
-## 5.1 Ferramentas de Desenvolvimento
-
-- Editor de Código: Utilize Visual Studio Code como editor padrão.
-
-- Plugins recomendados: ESLint, Prettier, GitLens.
-
-## 5.2 Tecnologias e Frameworks
-
-- Backend: Utilize Node.js com TypeScript.
-
-- Frontend: Utilize Angular com TypeScript.
-
+| Documento | Descrição |
+|---|---|
+| [src/README.md](../src/README.md) | Organização da pasta `src` e execução local dos serviços. |
+| [src/middleware/README.md](../src/middleware/README.md) | Guia de execução do middleware: ambiente, treino e avaliação do classificador, testes e execução da API. |
+| [src/middleware/migrations/README.md](../src/middleware/migrations/README.md) | Versionamento do esquema do PostgreSQL com Alembic. |
+| [src/middleware/tests/integration/fitas/README.md](../src/middleware/tests/integration/fitas/README.md) | Fitas VHS: respostas gravadas dos serviços externos usadas nos testes de integração. |
+| [src/web/src/componentes/graficos/README.md](../src/web/src/componentes/graficos/README.md) | Componentes de gráfico do painel de intenções. |
+| [src/emissor-portfolio/README.md](../src/emissor-portfolio/README.md) | Emissor do webhook de portfólio (WH-02), em Google Apps Script. |
+| [infra/azure/README.md](../infra/azure/README.md) | Scripts de criação e de atualização dos ambientes `dev` e `prd` no Azure Container Apps. |
+| [copilot/topicos.md](../copilot/topicos.md) | Contrato entre o middleware e o Copilot Studio: cada intenção do catálogo e o tópico ou ação correspondente. |
+| [copilot/conectores.md](../copilot/conectores.md) | Conectores do Copilot Studio e seus escopos de permissão, pelo princípio do menor privilégio. |
+| [copilot/solucao/README.md](../copilot/solucao/README.md) | Registro da restrição que impede versionar o export da solução do Copilot Studio. |
