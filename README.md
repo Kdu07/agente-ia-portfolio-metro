@@ -1,92 +1,5 @@
 <p align="center">
-  <img src="docs/imagens/header.png" alt="Módulo 7 - Metrô e Inteli">
-</p>
-
-<table align="center" width="100%" style="table-layout: fixed;">
-  <tr>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/alexsander-dsbarbosa/">
-        <img src="docs/imagens/alexsander.png" width="90" alt="Alexsander B.">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/CaduQuaglia">
-        <img src="docs/imagens/cadu.png" width="90" alt="Carlos Eduardo">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/celsojwnior/">
-        <img src="docs/imagens/celso.png" width="90" alt="Celso Rocha">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/eduardo-casarini/">
-        <img src="docs/imagens/edu.png" width="90" alt="Eduardo C.">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/marianalacerdareis/">
-        <img src="docs/imagens/mariana.png" width="90" alt="Mariana Reis">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/mirela-bianchi-608601254/">
-        <img src="docs/imagens/mirela.png" width="90" alt="Mirela Bianchi">
-      </a>
-    </td>
-  </tr>
-</table>
-
-<br>
-
-<p align="center">
-  <img src="docs/imagens/professores.png" alt="Professores">
-</p>
-
-<table align="center" width="100%" style="table-layout: fixed;">
-  <tr>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/vanunes/">
-        <img src="docs/imagens/vanessa.png" width="100" alt="Vanessa Nunes">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/reginaldo-arakaki-9574222b/">
-        <img src="docs/imagens/reginaldo.png" width="100" alt="Reginaldo A.">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/bryan-kano/">
-        <img src="docs/imagens/bryan.png" width="100" alt="Bryan Kano">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/fernando-pizzo-208b526a/">
-        <img src="docs/imagens/pizzo.png" width="100" alt="Fernando Pizzo">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/lisane-valdo/">
-        <img src="docs/imagens/lisane.png" width="100" alt="Lisane Valdo">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/bruno-grandchamp-rodilha/">
-        <img src="docs/imagens/bruno.png" width="100" alt="Bruno Rodilha">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/filipe-gon%C3%A7alves-08a55015b/">
-        <img src="docs/imagens/filipe.png" width="100" alt="Filipe Gonçalves">
-      </a>
-    </td>
-  </tr>
-</table>
-
-<br>
-
-<p align="center">
-  <img src="docs/imagens/bottom.png" alt="Elemento visual de encerramento do cabeçalho">
+  <img src="docs/imagens/logo-inteli.png" alt="Logo do Inteli" width="240">
 </p>
 
 # Agente de IA para Gestão do Portfólio de Projetos do Metrô
@@ -240,4 +153,4 @@ O histórico detalhado de cada entrega — incluindo métricas, retrospectivas e
 
 ## 📋 Licença
 
-<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt="Creative Commons"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt="Atribuição"><p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="#">Agente de IA para Gestão do Portfólio de Projetos do Metrô</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://www.inteli.edu.br/">Inteli</a>, <a href="https://www.linkedin.com/in/alexsander-dsbarbosa/">Alexsander B.</a>, <a href="https://github.com/CaduQuaglia">Carlos Eduardo</a>, <a href="https://www.linkedin.com/in/celsojwnior/">Celso Rocha</a>, <a href="https://www.linkedin.com/in/eduardo-casarini/">Eduardo C.</a>, <a href="https://www.linkedin.com/in/marianalacerdareis/">Mariana Reis</a> e <a href="https://www.linkedin.com/in/mirela-bianchi-608601254/">Mirela Bianchi</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer">Attribution 4.0 International</a>.</p>
+<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="#">Agente de IA para Gestão do Portfólio de Projetos do Metrô</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://www.inteli.edu.br/">Inteli</a>, <a href="https://www.linkedin.com/in/alexsander-dsbarbosa/">Alexsander B.</a>, <a href="https://github.com/CaduQuaglia">Carlos Eduardo</a>, <a href="https://www.linkedin.com/in/celsojwnior/">Celso Rocha</a>, <a href="https://www.linkedin.com/in/eduardo-casarini/">Eduardo C.</a>, <a href="https://www.linkedin.com/in/marianalacerdareis/">Mariana Reis</a> e <a href="https://www.linkedin.com/in/mirela-bianchi-608601254/">Mirela Bianchi</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer">Attribution 4.0 International</a>.</p>
