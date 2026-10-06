@@ -112,6 +112,17 @@ dev = [
     # a conferência contra o servidor real fica na suíte de integração.
     "aiosqlite>=0.20",
 ]
+# Notebooks de avaliação em notebooks/ (Projeto.md 5.4.11.1). Fora do `dev`
+# porque nem a CI nem a imagem executam notebook: quem reproduz a bancada
+# instala este extra. ipykernel dá o kernel da própria .venv, nbconvert
+# executa sem interface, e matplotlib e pandas desenham as tabelas e a
+# matriz de confusão.
+notebook = [
+    "ipykernel>=6.29",
+    "nbconvert>=7.16",
+    "matplotlib>=3.9",
+    "pandas>=2.2",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

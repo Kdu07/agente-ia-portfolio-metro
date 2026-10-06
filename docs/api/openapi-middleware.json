@@ -1,0 +1,4844 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Middleware — Agente de Portfólio Metrô SP",
+    "description": "Camada entre a interface web e o Copilot Studio: bloqueia prompt injection e prompts maliciosos, classifica e registra intenções, analisa esses dados e executa rotinas agendadas.",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "infra"
+        ],
+        "summary": "Health",
+        "description": "Confirma que o serviço está no ar.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/pronto": {
+      "get": {
+        "tags": [
+          "infra"
+        ],
+        "summary": "Pronto",
+        "description": "Confirma que o classificador já está carregado.\n\nSem aquecimento configurado não há o que esperar, e a réplica está\npronta desde a subida. Aquecimento que falhou também responde 503: a\nréplica não classificaria nenhuma mensagem, e o motivo está no log.",
+        "operationId": "pronto_health_pronto_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "description": "Redireciona ao Entra ID iniciando o fluxo Authorization Code + PKCE.\n\nO cookie do fluxo é SameSite=Lax, e não Strict como o de sessão: a\nvolta do Entra ao /callback é uma navegação vinda de outro site, e um\ncookie Strict não seria enviado nela — todo login falharia no `state`.",
+        "operationId": "login_auth_login_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Callback",
+        "description": "Recebe o retorno do Entra ID e abre a sessão.\n\nUm `state` que não confere resulta em 400 e nenhuma sessão: é o sinal\nde que o fluxo não começou neste navegador. Já uma recusa do Entra\n(usuário cancelou, não tem acesso ao app) ou um token inválido levam\nde volta à tela de entrada — são desfechos esperados, não ataques.",
+        "operationId": "callback_auth_callback_get",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          },
+          {
+            "name": "fluxo_login",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fluxo Login"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "description": "Invalida a sessão no servidor e limpa o cookie.\n\nInvalidar no servidor, e não apenas apagar o cookie, é o que torna o\nlogout efetivo: um cookie copiado antes continuaria valendo se a\nsessão só existisse no cliente.\n\nIdempotente: sem sessão válida, apenas limpa o cookie e devolve 204.\nUm 401 aqui mandaria o frontend ao login justamente ao sair.\n\nEncerra só a sessão do middleware. A sessão no Entra ID continua, e o\npróximo login no mesmo navegador passa sem pedir senha — o mesmo\ncomportamento dos apps Microsoft 365 ao sair de um só deles.",
+        "operationId": "logout_auth_logout_post",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/eu": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Eu",
+        "description": "Devolve a identidade da sessão atual.",
+        "operationId": "eu_auth_eu_get",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Enviar Mensagem",
+        "description": "Processa uma mensagem do usuário através do pipeline.\n\nFluxo: injeção -> abuso -> intenção -> Copilot -> saída -> registro.\nMensagens bloqueadas retornam 200 com resposta explicativa e\n`bloqueada=True`, nunca erro 500: um bloqueio é decisão do pipeline,\nnão falha do servidor, e tratá-lo como erro faria o cliente exibir\n\"algo deu errado\" no lugar da orientação.",
+        "operationId": "enviar_mensagem_chat_post",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversas": {
+      "get": {
+        "tags": [
+          "conversas"
+        ],
+        "summary": "Listar",
+        "description": "Conversas do usuário, mais recente primeiro.",
+        "operationId": "listar_conversas_get",
+        "parameters": [
+          {
+            "name": "incluir_arquivadas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Incluir Arquivadas"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversaResumo"
+                  },
+                  "title": "Response Listar Conversas Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversas/{conversa_id}": {
+      "get": {
+        "tags": [
+          "conversas"
+        ],
+        "summary": "Detalhar",
+        "description": "Turnos de uma conversa, para retomá-la no chat.\n\nUma conversa de outro usuário resulta em 404, e não 403: confirmar\nque o id existe já entregaria informação a quem estivesse varrendo\nidentificadores.",
+        "operationId": "detalhar_conversas__conversa_id__get",
+        "parameters": [
+          {
+            "name": "conversa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversa Id"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversaDetalhe"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversa inexistente ou de outro usuário (indistinguíveis de propósito)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "conversas"
+        ],
+        "summary": "Arquivar",
+        "description": "Arquiva a conversa, sem apagar as interações.\n\nO verbo HTTP é DELETE porque é o que o usuário percebe — a conversa\nsome da lista dele. Mas o registro sobrevive: apagar interações\nquebraria a rastreabilidade (RNF02) e abriria um caminho para apagar\na própria trilha depois de um bloqueio.",
+        "operationId": "arquivar_conversas__conversa_id__delete",
+        "parameters": [
+          {
+            "name": "conversa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversa Id"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversa inexistente ou de outro usuário (indistinguíveis de propósito)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voz/token": {
+      "get": {
+        "tags": [
+          "voz"
+        ],
+        "summary": "Token",
+        "description": "Devolve um token de curta duração do Azure Speech.\n\nO frontend renova antes de expirar, e não ao receber erro: uma\nrenovação reativa interromperia a fala do usuário no meio.",
+        "operationId": "token_voz_token_get",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente ou expirada"
+          },
+          "429": {
+            "description": "Cota temporária excedida"
+          },
+          "503": {
+            "description": "Serviço de fala não configurado ou indisponível"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voz/audios": {
+      "post": {
+        "tags": [
+          "voz"
+        ],
+        "summary": "Submeter áudio para transcrição",
+        "description": "Recebe um arquivo de áudio para transcrição via Azure AI Speech. Valida formato, tamanho e duração antes de processar. A submissão é assíncrona: retorna 202 com ID para consulta posterior do resultado.",
+        "operationId": "upload_audio_voz_audios_post",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_audio_voz_audios_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Áudio aceito e enfileirado para transcrição",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AudioUploadResponse"
+                },
+                "example": {
+                  "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+                  "estado": "recebido",
+                  "duracao_segundos": 11.4,
+                  "consultar_em": "/voz/audios/a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19/transcricao",
+                  "expira_em": "2026-09-03T18:42:10Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campo 'audio' não fornecido ou inválido"
+          },
+          "413": {
+            "description": "Arquivo excede 25 MB"
+          },
+          "415": {
+            "description": "Formato de arquivo não suportado (aceitos: mp3, wav, ogg, webm, mp4)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voz/audios/{id_audio}/transcricao": {
+      "get": {
+        "tags": [
+          "voz"
+        ],
+        "summary": "Consultar resultado da transcrição",
+        "description": "Consulta o estado atual da transcrição de um áudio submetido. Retorna o estado (recebido, transcrevendo, concluida ou falhou) e, quando concluída, o texto transcrito com metadados.",
+        "operationId": "consultar_transcricao_voz_audios__id_audio__transcricao_get",
+        "parameters": [
+          {
+            "name": "id_audio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id Audio"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado da transcrição consultado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscricaoResponse"
+                },
+                "examples": {
+                  "em_processamento": {
+                    "summary": "Ainda transcrevendo",
+                    "value": {
+                      "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+                      "estado": "transcrevendo"
+                    }
+                  },
+                  "concluida": {
+                    "summary": "Transcrição concluída",
+                    "value": {
+                      "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+                      "estado": "concluida",
+                      "texto": "Qual o avanço do projeto da Linha 15 Prata?",
+                      "idioma": "pt-BR",
+                      "confianca": 0.94,
+                      "duracao_segundos": 11.4,
+                      "latencia_ms": 1830
+                    }
+                  },
+                  "falhou": {
+                    "summary": "Transcrição falhou",
+                    "value": {
+                      "id_audio": "a3f1c9d2-5e08-4b77-9c31-2ad6e4f80b19",
+                      "estado": "falhou",
+                      "mensagem_erro": "Áudio muito ruidoso, não foi possível transcrever",
+                      "duracao_segundos": 11.4
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ID de áudio não encontrado ou expirado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intencoes/volume": {
+      "get": {
+        "tags": [
+          "intencoes"
+        ],
+        "summary": "Volume Por Intencao",
+        "description": "Mensagens por intenção, incluindo as classes com contagem zero.",
+        "operationId": "volume_por_intencao_intencoes_volume_get",
+        "parameters": [
+          {
+            "name": "janela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Janela",
+              "default": "30d"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Perfil"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContagemResposta"
+                  },
+                  "title": "Response Volume Por Intencao Intencoes Volume Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intencoes/desfechos": {
+      "get": {
+        "tags": [
+          "intencoes"
+        ],
+        "summary": "Distribuicao De Desfechos",
+        "description": "Quanto foi atendido, bloqueado, recusado e falhou.",
+        "operationId": "distribuicao_de_desfechos_intencoes_desfechos_get",
+        "parameters": [
+          {
+            "name": "janela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Janela",
+              "default": "30d"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Perfil"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContagemResposta"
+                  },
+                  "title": "Response Distribuicao De Desfechos Intencoes Desfechos Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intencoes/seguranca/resumo": {
+      "get": {
+        "tags": [
+          "intencoes"
+        ],
+        "summary": "Resumo De Seguranca",
+        "description": "Cabeçalho do recorte de segurança.",
+        "operationId": "resumo_de_seguranca_intencoes_seguranca_resumo_get",
+        "parameters": [
+          {
+            "name": "janela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Janela",
+              "default": "30d"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Perfil"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumoSegurancaResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intencoes/seguranca/serie": {
+      "get": {
+        "tags": [
+          "intencoes"
+        ],
+        "summary": "Serie De Bloqueios",
+        "description": "Bloqueios ao longo do tempo, uma linha por guarda.\n\nInjeção, abuso e saída em séries separadas: um pico em injeção é\nincidente de segurança e um pico em abuso é problema de uso. Somá-los\nnum único número esconderia os dois.",
+        "operationId": "serie_de_bloqueios_intencoes_seguranca_serie_get",
+        "parameters": [
+          {
+            "name": "janela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Janela",
+              "default": "30d"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Perfil"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SerieResposta"
+                  },
+                  "title": "Response Serie De Bloqueios Intencoes Seguranca Serie Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intencoes/catalogo/resumo": {
+      "get": {
+        "tags": [
+          "intencoes"
+        ],
+        "summary": "Resumo De Catalogo",
+        "description": "Cabeçalho do recorte de evolução do catálogo.",
+        "operationId": "resumo_de_catalogo_intencoes_catalogo_resumo_get",
+        "parameters": [
+          {
+            "name": "janela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Janela",
+              "default": "30d"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Perfil"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumoCatalogoResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intencoes/catalogo/fora-de-escopo": {
+      "get": {
+        "tags": [
+          "intencoes"
+        ],
+        "summary": "Enunciados Fora De Escopo",
+        "description": "O que os usuários pedem e o agente não faz.\n\nÉ o backlog de novas intenções, e o ponto onde o ciclo\nregistro -> análise -> catálogo se fecha.",
+        "operationId": "enunciados_fora_de_escopo_intencoes_catalogo_fora_de_escopo_get",
+        "parameters": [
+          {
+            "name": "janela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Janela",
+              "default": "30d"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Perfil"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnunciadoAgrupadoResposta"
+                  },
+                  "title": "Response Enunciados Fora De Escopo Intencoes Catalogo Fora De Escopo Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intencoes/catalogo/baixa-confianca": {
+      "get": {
+        "tags": [
+          "intencoes"
+        ],
+        "summary": "Enunciados Baixa Confianca",
+        "description": "Onde o classificador hesita — candidatos a mais exemplos de treino.",
+        "operationId": "enunciados_baixa_confianca_intencoes_catalogo_baixa_confianca_get",
+        "parameters": [
+          {
+            "name": "janela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Janela",
+              "default": "30d"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Perfil"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnunciadoAgrupadoResposta"
+                  },
+                  "title": "Response Enunciados Baixa Confianca Intencoes Catalogo Baixa Confianca Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intencoes/latencia": {
+      "get": {
+        "tags": [
+          "intencoes"
+        ],
+        "summary": "Latencia",
+        "description": "Percentis p50 e p95 do pipeline — o custo do pedágio, medido.\n\nAlém do total, decompõe o tempo por etapa percorrida, para que o\npainel aponte qual barreira pesa.",
+        "operationId": "latencia_intencoes_latencia_get",
+        "parameters": [
+          {
+            "name": "janela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Janela",
+              "default": "30d"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Perfil"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LatenciaResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rotinas": {
+      "get": {
+        "tags": [
+          "rotinas"
+        ],
+        "summary": "Listar",
+        "description": "Rotinas do usuário, com o próximo disparo calculado.",
+        "operationId": "listar_rotinas_get",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RotinaResposta"
+                  },
+                  "title": "Response Listar Rotinas Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "rotinas"
+        ],
+        "summary": "Criar",
+        "description": "Cadastra uma rotina para o usuário autenticado.\n\nO dono é sempre `usuario.id` — RotinaRequest não tem campo de dono\njustamente para que o cliente não possa escolhê-lo.\n\nA validação de `rotinas/validacao.py` roda ANTES de gravar: prompt\nque não resolve numa intenção do catálogo resulta em 422 com a\nexplicação, e nenhuma rotina é criada.",
+        "operationId": "criar_rotinas_post",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RotinaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RotinaResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Corpo fora do schema (`detail` em lista, do Pydantic) ou agenda e prompt recusados pela validação de negócio (`detail` em texto)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErroResposta"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rotinas/validar": {
+      "post": {
+        "tags": [
+          "rotinas"
+        ],
+        "summary": "Validar",
+        "description": "Valida prompt e agenda sem salvar.\n\nExiste para o formulário conferir antes de gravar. Salvar uma rotina\nque já nasce inválida produziria uma execução bloqueada semanas\ndepois, sem ninguém por perto para entender o motivo.",
+        "operationId": "validar_rotinas_validar_post",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RotinaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidacaoResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rotinas/{rotina_id}": {
+      "put": {
+        "tags": [
+          "rotinas"
+        ],
+        "summary": "Atualizar",
+        "description": "Edita uma rotina do próprio usuário, revalidando o prompt.\n\nRevalidar na edição é obrigatório: sem isso, bastaria criar uma\nrotina inócua e depois trocar o prompt para contornar a validação de\ncadastro.",
+        "operationId": "atualizar_rotinas__rotina_id__put",
+        "parameters": [
+          {
+            "name": "rotina_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rotina Id"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RotinaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RotinaResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Rotina inexistente ou de outro usuário (indistinguíveis de propósito)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Corpo fora do schema (`detail` em lista, do Pydantic) ou agenda e prompt recusados pela validação de negócio (`detail` em texto)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErroResposta"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "rotinas"
+        ],
+        "summary": "Remover",
+        "description": "Remove uma rotina que ainda não possui histórico.\n\nO worker reconcilia o jobstore com o PostgreSQL em até 30 segundos.\nRotina que já disparou deve ser desativada, preservando a auditoria.",
+        "operationId": "remover_rotinas__rotina_id__delete",
+        "parameters": [
+          {
+            "name": "rotina_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rotina Id"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Rotina inexistente ou de outro usuário (indistinguíveis de propósito)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Rotina com histórico de execuções; deve ser desativada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rotinas/{rotina_id}/executar": {
+      "post": {
+        "tags": [
+          "rotinas"
+        ],
+        "summary": "Executar Agora",
+        "description": "Dispara a rotina sob demanda, para o usuário testá-la.\n\nExecuta sob a identidade do dono, como o disparo agendado. Verificar\nque o solicitante é o dono não é formalidade: disparar a rotina de\noutra pessoa executaria com as permissões dela.",
+        "operationId": "executar_agora_rotinas__rotina_id__executar_post",
+        "parameters": [
+          {
+            "name": "rotina_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rotina Id"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecucaoResposta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário sem gerir_rotinas, ou dono da rotina inativo no Microsoft Entra ID ou sem gerir_rotinas no momento do disparo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Rotina inexistente ou de outro usuário (indistinguíveis de propósito)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Disparo concluído sem registro de execução consultável",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Microsoft Entra ID indisponível para confirmar o dono",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rotinas/{rotina_id}/execucoes": {
+      "get": {
+        "tags": [
+          "rotinas"
+        ],
+        "summary": "Listar Execucoes",
+        "description": "Histórico de disparos — a aba de resultados da rotina.\n\nÉ aqui que o resultado da rotina é entregue: no próprio app, sem\ndepender de e-mail, Teams ou integração externa.",
+        "operationId": "listar_execucoes_rotinas__rotina_id__execucoes_get",
+        "parameters": [
+          {
+            "name": "rotina_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rotina Id"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExecucaoResposta"
+                  },
+                  "title": "Response Listar Execucoes Rotinas  Rotina Id  Execucoes Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, adulterada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Usuário autenticado sem a permissão exigida pela rota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Rotina inexistente ou de outro usuário (indistinguíveis de propósito)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/projetos": {
+      "get": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Listar Projetos",
+        "description": "Lista os projetos visíveis ao usuário autenticado.",
+        "operationId": "listar_projetos_portfolio_projetos_get",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Projeto"
+                  },
+                  "title": "Response Listar Projetos Portfolio Projetos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/projetos/{codigo}": {
+      "get": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Obter Projeto",
+        "operationId": "obter_projeto_portfolio_projetos__codigo__get",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codigo"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Projeto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/projetos/{codigo}/riscos": {
+      "get": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Listar Riscos",
+        "operationId": "listar_riscos_portfolio_projetos__codigo__riscos_get",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codigo"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Risco"
+                  },
+                  "title": "Response Listar Riscos Portfolio Projetos  Codigo  Riscos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/projetos/{codigo}/marcos": {
+      "get": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Listar Marcos",
+        "operationId": "listar_marcos_portfolio_projetos__codigo__marcos_get",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codigo"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Marco"
+                  },
+                  "title": "Response Listar Marcos Portfolio Projetos  Codigo  Marcos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/projetos/{codigo}/indicadores": {
+      "get": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Listar Indicadores",
+        "operationId": "listar_indicadores_portfolio_projetos__codigo__indicadores_get",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codigo"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Indicador"
+                  },
+                  "title": "Response Listar Indicadores Portfolio Projetos  Codigo  Indicadores Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/marcos/vencendo": {
+      "get": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Listar Marcos Vencendo",
+        "operationId": "listar_marcos_vencendo_portfolio_marcos_vencendo_get",
+        "parameters": [
+          {
+            "name": "dias",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 7,
+              "title": "Dias"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Marco"
+                  },
+                  "title": "Response Listar Marcos Vencendo Portfolio Marcos Vencendo Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/projetos/{codigo}/usuarios": {
+      "get": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Listar Usuarios Projeto",
+        "operationId": "listar_usuarios_projeto_portfolio_projetos__codigo__usuarios_get",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codigo"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Listar Usuarios Projeto Portfolio Projetos  Codigo  Usuarios Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/projetos/{codigo}/usuarios/{usuario_id}": {
+      "post": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Adicionar Usuario Projeto",
+        "operationId": "adicionar_usuario_projeto_portfolio_projetos__codigo__usuarios__usuario_id__post",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codigo"
+            }
+          },
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Usuario Id"
+            }
+          },
+          {
+            "name": "papel",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PapelProjeto"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioProjeto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "portfolio",
+          "portfolio"
+        ],
+        "summary": "Remover Usuario Projeto",
+        "operationId": "remover_usuario_projeto_portfolio_projetos__codigo__usuarios__usuario_id__delete",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codigo"
+            }
+          },
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Usuario Id"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos/preferencias": {
+      "get": {
+        "tags": [
+          "avisos",
+          "avisos"
+        ],
+        "summary": "Listar Preferencias",
+        "description": "Preferências salvas nos projetos a que o usuário tem acesso.\n\nProjeto e tipo sem preferência salva estão desativados: o padrão é não\navisar, sem inscrição automática.",
+        "operationId": "listar_preferencias_avisos_preferencias_get",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PreferenciaResposta"
+                  },
+                  "title": "Response Listar Preferencias Avisos Preferencias Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos/preferencias/{projeto_codigo}/{event_type}": {
+      "put": {
+        "tags": [
+          "avisos",
+          "avisos"
+        ],
+        "summary": "Salvar Preferencia",
+        "description": "Liga, desliga ou ajusta a severidade mínima de um tipo de aviso.\n\nAtivar não gera aviso retroativo: só alterações aplicadas depois.",
+        "operationId": "salvar_preferencia_avisos_preferencias__projeto_codigo___event_type__put",
+        "parameters": [
+          {
+            "name": "projeto_codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Projeto Codigo"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TipoEventoPortfolio",
+              "description": "Tipo de evento do portfólio"
+            },
+            "description": "Tipo de evento do portfólio"
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenciaPedido"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenciaResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos": {
+      "get": {
+        "tags": [
+          "avisos",
+          "avisos"
+        ],
+        "summary": "Listar Avisos",
+        "description": "Avisos do usuário nos projetos a que tem acesso, mais recentes primeiro.",
+        "operationId": "listar_avisos_avisos_get",
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "nao_lidos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Nao Lidos"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvisoResposta"
+                  },
+                  "title": "Response Listar Avisos Avisos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos/contagem": {
+      "get": {
+        "tags": [
+          "avisos",
+          "avisos"
+        ],
+        "summary": "Contar Avisos",
+        "description": "Quantos avisos visíveis ainda não foram lidos.",
+        "operationId": "contar_avisos_avisos_contagem_get",
+        "parameters": [
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContagemAvisos"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos/{aviso_id}": {
+      "get": {
+        "tags": [
+          "avisos",
+          "avisos"
+        ],
+        "summary": "Obter Aviso",
+        "operationId": "obter_aviso_avisos__aviso_id__get",
+        "parameters": [
+          {
+            "name": "aviso_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Aviso Id"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvisoResposta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos/{aviso_id}/lido": {
+      "post": {
+        "tags": [
+          "avisos",
+          "avisos"
+        ],
+        "summary": "Marcar Lido",
+        "description": "Marca o aviso como lido; marcar de novo mantém a primeira leitura.",
+        "operationId": "marcar_lido_avisos__aviso_id__lido_post",
+        "parameters": [
+          {
+            "name": "aviso_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Aviso Id"
+            }
+          },
+          {
+            "name": "sessao",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessao"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/google-drive": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Receber Google Drive",
+        "description": "Recebe a notificação `changes.watch` do Drive (WH-01).",
+        "operationId": "receber_google_drive_webhooks_google_drive_post",
+        "responses": {
+          "202": {
+            "description": "Mudança registrada e publicada para processamento",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "204": {
+            "description": "`sync`, estado ignorado ou repetição já publicada"
+          },
+          "400": {
+            "description": "Cabeçalho ausente, repetido ou malformado, ou corpo não vazio"
+          },
+          "401": {
+            "description": "Token, canal, validade ou recurso não conferem"
+          },
+          "413": {
+            "description": "Corpo acima do limite"
+          },
+          "431": {
+            "description": "Cabeçalhos acima do limite"
+          },
+          "503": {
+            "description": "Banco, broker ou orçamento de 3 s indisponível; repetir"
+          }
+        }
+      }
+    },
+    "/webhooks/portfolio": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Receber Portfolio",
+        "description": "Recebe um evento do emissor Apps Script da planilha do portfólio (WH-02).",
+        "operationId": "receber_portfolio_webhooks_portfolio_post",
+        "responses": {
+          "202": {
+            "description": "Evento registrado e publicado para processamento",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "204": {
+            "description": "Repetição idêntica de evento já publicado"
+          },
+          "400": {
+            "description": "JSON malformado ou cabeçalho estrutural inválido"
+          },
+          "401": {
+            "description": "Assinatura, chave, fonte ou janela de timestamp inválida"
+          },
+          "403": {
+            "description": "Fonte sem autorização para o projeto ou o tipo de evento"
+          },
+          "409": {
+            "description": "Mesmo `event_id` com outro corpo; o original é preservado"
+          },
+          "413": {
+            "description": "Corpo acima de 32 KiB"
+          },
+          "415": {
+            "description": "Conteúdo que não é JSON UTF-8 sem compressão"
+          },
+          "422": {
+            "description": "Schema, enum, data, versão ou vínculo de entidade inválido"
+          },
+          "431": {
+            "description": "Cabeçalhos acima do limite"
+          },
+          "503": {
+            "description": "Cadastro, banco, broker ou orçamento de 3 s indisponível; repetir"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AudioUploadResponse": {
+        "properties": {
+          "id_audio": {
+            "type": "string",
+            "title": "Id Audio",
+            "description": "Identificador único da submissão, usado na consulta"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado",
+            "description": "Estado da submissão. Sempre 'recebido' nesta resposta",
+            "default": "recebido"
+          },
+          "duracao_segundos": {
+            "type": "number",
+            "title": "Duracao Segundos",
+            "description": "Duração do áudio em segundos, apurada na validação"
+          },
+          "consultar_em": {
+            "type": "string",
+            "title": "Consultar Em",
+            "description": "Caminho da consulta de transcrição"
+          },
+          "expira_em": {
+            "type": "string",
+            "title": "Expira Em",
+            "description": "Momento ISO 8601 em que o resultado deixa de estar disponível"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_audio",
+          "duracao_segundos",
+          "consultar_em",
+          "expira_em"
+        ],
+        "title": "AudioUploadResponse",
+        "description": "Resposta à submissão de áudio para transcrição.\n\nDevolvida ao cliente quando o áudio é aceito e enfileirado para\nprocessamento. O estado é sempre \"recebido\" nesta resposta."
+      },
+      "AvisoResposta": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "projeto_codigo": {
+            "type": "string",
+            "title": "Projeto Codigo"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/TipoEventoPortfolio"
+          },
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id"
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Versao"
+          },
+          "diferencas": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Diferencas"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "lido_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lido Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "projeto_codigo",
+          "event_type",
+          "entity_id",
+          "versao",
+          "diferencas",
+          "criado_em",
+          "lido_em"
+        ],
+        "title": "AvisoResposta",
+        "description": "Um aviso como a lista e o detalhe o exibem."
+      },
+      "Body_upload_audio_voz_audios_post": {
+        "properties": {
+          "audio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "contentMediaType": "application/octet-stream"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio",
+            "description": "Arquivo de áudio (mp3, wav, ogg, webm, mp4)"
+          },
+          "idioma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idioma",
+            "description": "Código BCP 47 do idioma (padrão: pt-BR)"
+          },
+          "conversa_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversa Id",
+            "description": "ID da conversa existente"
+          }
+        },
+        "type": "object",
+        "title": "Body_upload_audio_voz_audios_post"
+      },
+      "Canal": {
+        "type": "string",
+        "enum": [
+          "chat",
+          "voz",
+          "rotina"
+        ],
+        "title": "Canal",
+        "description": "Por onde a mensagem entrou no pipeline.\n\nExiste para que o dashboard separe uso digitado de ditado de\nagendado, e para que cada disparo de rotina seja rastreável até a\ninteração que gerou. Sem este campo, uma execução de rotina fica\nindistinguível de alguém digitando."
+      },
+      "ChatRequest": {
+        "properties": {
+          "mensagem": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Mensagem"
+          },
+          "conversa_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversa Id"
+          },
+          "canal": {
+            "$ref": "#/components/schemas/Canal",
+            "default": "chat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensagem"
+        ],
+        "title": "ChatRequest",
+        "description": "Mensagem enviada pelo usuário ao agente."
+      },
+      "ChatResponse": {
+        "properties": {
+          "resposta": {
+            "type": "string",
+            "title": "Resposta"
+          },
+          "conversa_id": {
+            "type": "string",
+            "title": "Conversa Id"
+          },
+          "intencao_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intencao Id"
+          },
+          "desfecho": {
+            "type": "string",
+            "title": "Desfecho"
+          },
+          "bloqueada": {
+            "type": "boolean",
+            "title": "Bloqueada",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "resposta",
+          "conversa_id",
+          "desfecho"
+        ],
+        "title": "ChatResponse",
+        "description": "Resposta do agente ao usuário.\n\n`conversa_id` é sempre o identificador do middleware, nunca o\nconversationId do Direct Line: o cliente não deve conhecer o executor."
+      },
+      "ContagemAvisos": {
+        "properties": {
+          "nao_lidos": {
+            "type": "integer",
+            "title": "Nao Lidos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nao_lidos"
+        ],
+        "title": "ContagemAvisos"
+      },
+      "ContagemResposta": {
+        "properties": {
+          "chave": {
+            "type": "string",
+            "title": "Chave"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chave",
+          "rotulo",
+          "total"
+        ],
+        "title": "ContagemResposta",
+        "description": "Uma barra de um gráfico de distribuição."
+      },
+      "ConversaDetalhe": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "titulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulo"
+          },
+          "criada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criada Em"
+          },
+          "turnos": {
+            "items": {
+              "$ref": "#/components/schemas/TurnoResposta"
+            },
+            "type": "array",
+            "title": "Turnos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "titulo",
+          "criada_em",
+          "turnos"
+        ],
+        "title": "ConversaDetalhe",
+        "description": "Uma conversa com seus turnos, para retomada."
+      },
+      "ConversaResumo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "titulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulo"
+          },
+          "criada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criada Em"
+          },
+          "atualizada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizada Em"
+          },
+          "total_turnos": {
+            "type": "integer",
+            "title": "Total Turnos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "titulo",
+          "criada_em",
+          "atualizada_em",
+          "total_turnos"
+        ],
+        "title": "ConversaResumo",
+        "description": "Item da lista de histórico.\n\nNão traz os turnos: a lista carrega dezenas de conversas e não deve\npuxar o conteúdo de todas para renderizar a barra lateral."
+      },
+      "EnunciadoAgrupadoResposta": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "ocorrencias": {
+            "type": "integer",
+            "title": "Ocorrencias"
+          },
+          "ultima_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ultima Em"
+          },
+          "confianca_media": {
+            "type": "number",
+            "title": "Confianca Media"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt",
+          "ocorrencias",
+          "ultima_em",
+          "confianca_media"
+        ],
+        "title": "EnunciadoAgrupadoResposta",
+        "description": "Um enunciado recusado, agrupado por repetição."
+      },
+      "ErroResposta": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErroResposta",
+        "description": "Erro devolvido por uma rota, com a mensagem legível para a tela."
+      },
+      "ExecucaoResposta": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rotina_id": {
+            "type": "string",
+            "title": "Rotina Id"
+          },
+          "iniciada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Iniciada Em"
+          },
+          "concluida_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concluida Em"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusExecucao"
+          },
+          "resposta": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resposta"
+          },
+          "desfecho": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desfecho"
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Erro"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rotina_id",
+          "iniciada_em",
+          "concluida_em",
+          "status",
+          "resposta",
+          "desfecho",
+          "erro"
+        ],
+        "title": "ExecucaoResposta",
+        "description": "Um disparo, na aba de resultados da rotina.\n\n`status=BLOQUEADA` não é erro do sistema: significa que as guardas\nbarraram o prompt agendado. A tela precisa distinguir isso de `FALHA`\n(executor fora, banco indisponível), porque a ação do usuário é\ndiferente — corrigir o enunciado versus acionar o suporte."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Indicador": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "projeto_codigo": {
+            "type": "string",
+            "title": "Projeto Codigo"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "valor_atual": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Atual"
+          },
+          "valor_meta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Meta"
+          },
+          "unidade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unidade"
+          },
+          "data_medicao": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Medicao"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "projeto_codigo",
+          "nome"
+        ],
+        "title": "Indicador",
+        "description": "Um indicador de desempenho de um projeto."
+      },
+      "Janela": {
+        "type": "string",
+        "enum": [
+          "7d",
+          "30d",
+          "90d"
+        ],
+        "title": "Janela",
+        "description": "Períodos oferecidos pelo dashboard."
+      },
+      "LatenciaEtapaResposta": {
+        "properties": {
+          "etapa": {
+            "type": "string",
+            "title": "Etapa"
+          },
+          "p50": {
+            "type": "number",
+            "title": "P50"
+          },
+          "p95": {
+            "type": "number",
+            "title": "P95"
+          },
+          "amostras": {
+            "type": "integer",
+            "title": "Amostras"
+          }
+        },
+        "type": "object",
+        "required": [
+          "etapa",
+          "p50",
+          "p95",
+          "amostras"
+        ],
+        "title": "LatenciaEtapaResposta",
+        "description": "Percentis de uma etapa do pipeline, em milissegundos."
+      },
+      "LatenciaResposta": {
+        "properties": {
+          "p50": {
+            "type": "number",
+            "title": "P50"
+          },
+          "p95": {
+            "type": "number",
+            "title": "P95"
+          },
+          "etapas": {
+            "items": {
+              "$ref": "#/components/schemas/LatenciaEtapaResposta"
+            },
+            "type": "array",
+            "title": "Etapas",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "p50",
+          "p95"
+        ],
+        "title": "LatenciaResposta",
+        "description": "Percentis de latência do pipeline, em milissegundos.\n\n`p50` e `p95` são do pipeline inteiro; `etapas` os decompõe. A lista\ntem padrão vazio para que um cliente que só conhece o total continue\nlendo a resposta sem mudança."
+      },
+      "Marco": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "projeto_codigo": {
+            "type": "string",
+            "title": "Projeto Codigo"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "data_prevista": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Prevista"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "data_real": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Real"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "nao_iniciado"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "projeto_codigo",
+          "nome",
+          "data_prevista"
+        ],
+        "title": "Marco",
+        "description": "Um marco (milestone) de um projeto."
+      },
+      "PapelProjeto": {
+        "type": "string",
+        "enum": [
+          "lider",
+          "membro",
+          "observador"
+        ],
+        "title": "PapelProjeto",
+        "description": "Papel de um usuário em um projeto."
+      },
+      "Perfil": {
+        "type": "string",
+        "enum": [
+          "diretoria",
+          "lider_projeto",
+          "membro_equipe"
+        ],
+        "title": "Perfil",
+        "description": "Papel do usuário na gestão do portfólio (personas do projeto)."
+      },
+      "PontoSerieResposta": {
+        "properties": {
+          "momento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Momento"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "momento",
+          "total"
+        ],
+        "title": "PontoSerieResposta",
+        "description": "Um ponto de uma série temporal."
+      },
+      "PreferenciaPedido": {
+        "properties": {
+          "ativa": {
+            "type": "boolean",
+            "title": "Ativa"
+          },
+          "severidade_minima": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 25.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severidade Minima"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ativa"
+        ],
+        "title": "PreferenciaPedido",
+        "description": "Liga ou desliga os avisos de um tipo de evento de um projeto."
+      },
+      "PreferenciaResposta": {
+        "properties": {
+          "projeto_codigo": {
+            "type": "string",
+            "title": "Projeto Codigo"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/TipoEventoPortfolio"
+          },
+          "ativa": {
+            "type": "boolean",
+            "title": "Ativa"
+          },
+          "severidade_minima": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severidade Minima"
+          },
+          "atualizada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizada Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "projeto_codigo",
+          "event_type",
+          "ativa",
+          "severidade_minima",
+          "atualizada_em"
+        ],
+        "title": "PreferenciaResposta"
+      },
+      "Projeto": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "title": "Codigo"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "em_andamento"
+          },
+          "prioridade": {
+            "type": "string",
+            "title": "Prioridade",
+            "default": "media"
+          },
+          "data_inicio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Inicio"
+          },
+          "data_fim_prevista": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Fim Prevista"
+          },
+          "data_fim_real": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Fim Real"
+          },
+          "orcamento_aprovado": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orcamento Aprovado"
+          },
+          "orcamento_atual": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orcamento Atual"
+          },
+          "avanco_percentual": {
+            "type": "integer",
+            "title": "Avanco Percentual",
+            "default": 0
+          },
+          "lider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lider Id"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo",
+          "nome"
+        ],
+        "title": "Projeto",
+        "description": "Um projeto do portfólio do Metrô."
+      },
+      "ResumoCatalogoResposta": {
+        "properties": {
+          "intencoes_acionadas": {
+            "type": "integer",
+            "title": "Intencoes Acionadas"
+          },
+          "intencoes_sem_uso": {
+            "type": "integer",
+            "title": "Intencoes Sem Uso"
+          },
+          "enunciados_fora_de_escopo": {
+            "type": "integer",
+            "title": "Enunciados Fora De Escopo"
+          },
+          "enunciados_baixa_confianca": {
+            "type": "integer",
+            "title": "Enunciados Baixa Confianca"
+          }
+        },
+        "type": "object",
+        "required": [
+          "intencoes_acionadas",
+          "intencoes_sem_uso",
+          "enunciados_fora_de_escopo",
+          "enunciados_baixa_confianca"
+        ],
+        "title": "ResumoCatalogoResposta",
+        "description": "Cabeçalho do recorte de evolução do catálogo."
+      },
+      "ResumoSegurancaResposta": {
+        "properties": {
+          "total_mensagens": {
+            "type": "integer",
+            "title": "Total Mensagens"
+          },
+          "bloqueios_injecao": {
+            "type": "integer",
+            "title": "Bloqueios Injecao"
+          },
+          "bloqueios_abuso": {
+            "type": "integer",
+            "title": "Bloqueios Abuso"
+          },
+          "bloqueios_saida": {
+            "type": "integer",
+            "title": "Bloqueios Saida"
+          },
+          "taxa_de_bloqueio": {
+            "type": "number",
+            "title": "Taxa De Bloqueio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_mensagens",
+          "bloqueios_injecao",
+          "bloqueios_abuso",
+          "bloqueios_saida",
+          "taxa_de_bloqueio"
+        ],
+        "title": "ResumoSegurancaResposta",
+        "description": "Cabeçalho do recorte de segurança."
+      },
+      "Risco": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "projeto_codigo": {
+            "type": "string",
+            "title": "Projeto Codigo"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao"
+          },
+          "categoria": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoria"
+          },
+          "probabilidade": {
+            "type": "integer",
+            "title": "Probabilidade",
+            "default": 3
+          },
+          "impacto": {
+            "type": "integer",
+            "title": "Impacto",
+            "default": 3
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "identificado"
+          },
+          "plano_mitigacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plano Mitigacao"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "projeto_codigo",
+          "descricao"
+        ],
+        "title": "Risco",
+        "description": "Um risco associado a um projeto."
+      },
+      "RotinaRequest": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "prompt": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Prompt"
+          },
+          "agenda_cron": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Agenda Cron"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "default": "America/Sao_Paulo"
+          },
+          "ativa": {
+            "type": "boolean",
+            "title": "Ativa",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "prompt",
+          "agenda_cron"
+        ],
+        "title": "RotinaRequest",
+        "description": "Cadastro ou edição de uma rotina.\n\nNão há campo `dono_id`: o dono é sempre o usuário autenticado. Aceitar\no dono do cliente permitiria cadastrar uma rotina que executa sob a\nidentidade de outra pessoa."
+      },
+      "RotinaResposta": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "agenda_cron": {
+            "type": "string",
+            "title": "Agenda Cron"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "ativa": {
+            "type": "boolean",
+            "title": "Ativa"
+          },
+          "intencao_prevista": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intencao Prevista"
+          },
+          "intencao_prevista_rotulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intencao Prevista Rotulo"
+          },
+          "proximo_disparo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proximo Disparo"
+          },
+          "criada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criada Em"
+          },
+          "atualizada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizada Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "prompt",
+          "agenda_cron",
+          "timezone",
+          "ativa",
+          "intencao_prevista",
+          "intencao_prevista_rotulo",
+          "proximo_disparo",
+          "criada_em",
+          "atualizada_em"
+        ],
+        "title": "RotinaResposta",
+        "description": "Uma rotina como a tela de gestão a exibe.\n\n`intencao_prevista` vem da validação feita no cadastro e serve para\nmostrar ao usuário o que a rotina vai fazer antes do primeiro disparo.\n`intencao_prevista_rotulo` é o nome legível da mesma intenção, o mesmo\ndo painel de intenções: a tela mostra o rótulo, e não o id técnico.\n`proximo_disparo` é calculado pelo agendador a partir do cron e do\nfuso — é o que confirma visualmente que \"todo dia 5\" foi entendido."
+      },
+      "SerieResposta": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "pontos": {
+            "items": {
+              "$ref": "#/components/schemas/PontoSerieResposta"
+            },
+            "type": "array",
+            "title": "Pontos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "pontos"
+        ],
+        "title": "SerieResposta",
+        "description": "Uma linha de um gráfico temporal."
+      },
+      "StatusExecucao": {
+        "type": "string",
+        "enum": [
+          "em_execucao",
+          "sucesso",
+          "bloqueada",
+          "falha"
+        ],
+        "title": "StatusExecucao",
+        "description": "Estado atual ou resultado final de um disparo de rotina."
+      },
+      "TipoEventoPortfolio": {
+        "type": "string",
+        "enum": [
+          "projeto.status_alterado",
+          "marco.alterado",
+          "risco.alterado"
+        ],
+        "title": "TipoEventoPortfolio",
+        "description": "Eventos que o emissor do WH-02 pode enviar (seção 9.1.2.7.2)."
+      },
+      "TokenResposta": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "regiao": {
+            "type": "string",
+            "title": "Regiao"
+          },
+          "expira_em_segundos": {
+            "type": "integer",
+            "title": "Expira Em Segundos"
+          },
+          "idioma": {
+            "type": "string",
+            "title": "Idioma"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "regiao",
+          "expira_em_segundos",
+          "idioma"
+        ],
+        "title": "TokenResposta",
+        "description": "Credencial temporária para o Speech SDK no navegador.\n\nNão carrega a chave do recurso: apenas um token de validade curta.\nUm token vazado expira sozinho; uma chave vazada exigiria rotação no\ntenant do parceiro."
+      },
+      "TranscricaoResponse": {
+        "properties": {
+          "id_audio": {
+            "type": "string",
+            "title": "Id Audio",
+            "description": "Identificador da submissão"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado",
+            "description": "Estado da submissão: recebido, transcrevendo, concluida ou falhou"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto",
+            "description": "Transcrição produzida (presente apenas no estado 'concluida')"
+          },
+          "idioma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idioma",
+            "description": "Código BCP 47 do idioma detectado (presente apenas no estado 'concluida')"
+          },
+          "confianca": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confianca",
+            "description": "Grau de confiança do serviço de fala, entre 0 e 1 (presente apenas no estado 'concluida')"
+          },
+          "duracao_segundos": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracao Segundos",
+            "description": "Duração do áudio em segundos (presente nos estados 'concluida' e 'falhou')"
+          },
+          "latencia_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latencia Ms",
+            "description": "Tempo entre aceitação e conclusão em milissegundos (presente apenas no estado 'concluida')"
+          },
+          "mensagem_erro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mensagem Erro",
+            "description": "Orientação ao usuário quando a transcrição falha (presente apenas no estado 'falhou')"
+          },
+          "conversa_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversa Id",
+            "description": "Conversa criada ou continuada pelo texto transcrito"
+          },
+          "interacao_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interacao Id",
+            "description": "Registro persistido pelo pipeline para esta fala"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_audio",
+          "estado"
+        ],
+        "title": "TranscricaoResponse",
+        "description": "Resposta à consulta de transcrição de áudio.\n\nO estado varia conforme o progresso: recebido, transcrevendo,\nconcluida ou falhou. Campos específicos dependem do estado."
+      },
+      "TurnoResposta": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "resposta": {
+            "type": "string",
+            "title": "Resposta"
+          },
+          "canal": {
+            "$ref": "#/components/schemas/Canal"
+          },
+          "intencao_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intencao Id"
+          },
+          "desfecho": {
+            "type": "string",
+            "title": "Desfecho"
+          },
+          "bloqueada": {
+            "type": "boolean",
+            "title": "Bloqueada"
+          },
+          "criada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criada Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "prompt",
+          "resposta",
+          "canal",
+          "intencao_id",
+          "desfecho",
+          "bloqueada",
+          "criada_em"
+        ],
+        "title": "TurnoResposta",
+        "description": "Um turno de conversa, como o histórico o exibe.\n\nTraz `desfecho` e `intencao_id` de propósito: quando o usuário reabre\numa conversa antiga e vê uma recusa, é útil saber que foi recusa e\nnão resposta. É a mesma transparência que o /chat oferece ao vivo."
+      },
+      "UsuarioProjeto": {
+        "properties": {
+          "usuario_id": {
+            "type": "string",
+            "title": "Usuario Id"
+          },
+          "projeto_codigo": {
+            "type": "string",
+            "title": "Projeto Codigo"
+          },
+          "papel": {
+            "type": "string",
+            "title": "Papel",
+            "default": "membro"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario_id",
+          "projeto_codigo"
+        ],
+        "title": "UsuarioProjeto",
+        "description": "Relação entre um usuário e um projeto."
+      },
+      "UsuarioResposta": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "perfil": {
+            "type": "string",
+            "title": "Perfil"
+          },
+          "permissoes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissoes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "email",
+          "perfil",
+          "permissoes"
+        ],
+        "title": "UsuarioResposta",
+        "description": "Identidade da sessão atual, para o frontend montar a navegação."
+      },
+      "ValidacaoResposta": {
+        "properties": {
+          "valida": {
+            "type": "boolean",
+            "title": "Valida"
+          },
+          "intencao_prevista": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intencao Prevista"
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Erro"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valida"
+        ],
+        "title": "ValidacaoResposta",
+        "description": "Retorno da validação prévia de um prompt de rotina.\n\nExiste como rota própria para que o formulário valide antes de\nsalvar, sem criar uma rotina que já nasce quebrada."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

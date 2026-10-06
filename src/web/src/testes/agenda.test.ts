@@ -181,16 +181,33 @@ describe("formularioDaAgenda", () => {
     expect(resultado.repeticao).toBe("legada");
   });
 
-  it("interpreta dia numérico (APScheduler 3.x)", () => {
-    const resultado = formularioDaAgenda("0 8 * * 0");
+  it.each([
+    ["0", "sun"],
+    ["1", "mon"],
+    ["2", "tue"],
+    ["3", "wed"],
+    ["4", "thu"],
+    ["5", "fri"],
+    ["6", "sat"],
+    ["7", "sun"],
+  ] as const)("interpreta dia numérico %s como %s no cron padrão", (numero, nome) => {
+    const resultado = formularioDaAgenda(`0 8 * * ${numero}`);
     expect(resultado).toEqual({
       horario: "08:00",
       repeticao: "semanal",
-      dia_semana: "mon",
+      dia_semana: nome,
       dias_selecionados: ["mon", "wed", "fri"],
       dia_mes: "1",
       agenda_legada: "",
     });
+    expect(cronDoFormulario({ ...FORMULARIO_VAZIO, ...resultado })).toBe(`0 8 * * ${nome}`);
+  });
+
+  it("interpreta 1-5 como dias úteis e preserva a frequência na edição", () => {
+    const resultado = formularioDaAgenda("0 8 * * 1-5");
+    expect(resultado.repeticao).toBe("dias_uteis");
+    expect(cronDoFormulario({ ...FORMULARIO_VAZIO, ...resultado })).toBe("0 8 * * mon-fri");
+    expect(descreverAgenda("0 8 * * 1-5")).toBe("de segunda a sexta, às 08:00");
   });
 
   it("trata dia do mês limite 1", () => {

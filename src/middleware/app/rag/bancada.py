@@ -51,6 +51,7 @@ from app.config import settings
 from app.rag.fluxo import FluxoRag, ResultadoRag
 from app.rag.geracao import Situacao
 from app.rag.linguagem.base import ErroGeracao
+from app.rag.recuperacao import Recuperacao
 from app.rag.vetorial.base import Escopo
 from app.schemas.usuario import Perfil
 
@@ -184,8 +185,23 @@ class Avaliacao:
         return not self.respondeu
 
 
-def avaliar_caso(caso: Caso, resultado: ResultadoRag) -> Avaliacao:
-    resposta, recuperacao = resultado.resposta, resultado.recuperacao
+@dataclass(frozen=True)
+class AvaliacaoRecuperacao:
+    """A metade da avaliação que não depende do modelo de geração."""
+
+    documentos_recuperados: tuple[str, ...]
+    recall: float | None
+    # Algum trecho de projeto proibido chegou entre os `k`.
+    projeto_proibido: bool
+
+
+def avaliar_recuperacao(caso: Caso, recuperacao: Recuperacao) -> AvaliacaoRecuperacao:
+    """Recall e vazamento da recuperação, sem chamar o modelo.
+
+    É a mesma regra que `avaliar_caso` aplica, separada para quem quer
+    medir só a recuperação — o notebook de 9.4.6 e uma investigação que
+    não deve gastar geração.
+    """
     documentos = tuple(dict.fromkeys(t.documento_id for t in recuperacao.trechos))
 
     recall = None
@@ -194,6 +210,14 @@ def avaliar_caso(caso: Caso, resultado: ResultadoRag) -> Avaliacao:
             1 for grupo in caso.documentos_esperados if any(d in documentos for d in grupo)
         )
         recall = achados / len(caso.documentos_esperados)
+
+    projeto_proibido = any(t.projeto in caso.projetos_proibidos for t in recuperacao.trechos)
+    return AvaliacaoRecuperacao(documentos, recall, projeto_proibido)
+
+
+def avaliar_caso(caso: Caso, resultado: ResultadoRag) -> Avaliacao:
+    resposta, recuperacao = resultado.resposta, resultado.recuperacao
+    da_recuperacao = avaliar_recuperacao(caso, recuperacao)
 
     proibido_no_texto = resposta.respondida and contem(resposta.texto, caso.nao_deve_conter)
     conteudo_ok = None
@@ -204,16 +228,15 @@ def avaliar_caso(caso: Caso, resultado: ResultadoRag) -> Avaliacao:
             and not proibido_no_texto
         )
 
-    projeto_proibido = any(t.projeto in caso.projetos_proibidos for t in recuperacao.trechos)
-    vazou = projeto_proibido or (not caso.espera_resposta and proibido_no_texto)
+    vazou = da_recuperacao.projeto_proibido or (not caso.espera_resposta and proibido_no_texto)
 
     return Avaliacao(
         caso=caso,
         situacao=resposta.situacao,
         texto=resposta.texto,
-        documentos_recuperados=documentos,
+        documentos_recuperados=da_recuperacao.documentos_recuperados,
         score_topo=recuperacao.trechos[0].score if recuperacao.trechos else None,
-        recall=recall,
+        recall=da_recuperacao.recall,
         conteudo_ok=conteudo_ok,
         vazou=vazou,
         latencia_ms=resultado.latencia_ms,

@@ -1,6 +1,7 @@
 """Casos TF-RF11-01 a TF-RF11-06 — cadastro e execução de rotinas."""
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi import HTTPException
@@ -79,6 +80,10 @@ async def test_tf_rf11_01_cadastro_persiste_agenda_fuso_e_registra_job(monkeypat
     assert criada.timezone == "America/Sao_Paulo"
     assert scheduler.jobs[0][1]["id"] == f"rotina:{criada.id}"
     assert str(scheduler.jobs[0][1]["trigger"].timezone) == "America/Sao_Paulo"
+    # O 1-5 usado neste caso funcional significa segunda a sexta.
+    sexta = datetime(2026, 10, 9, 9, tzinfo=ZoneInfo(criada.timezone))
+    trigger = scheduler.jobs[0][1]["trigger"]
+    assert trigger.get_next_fire_time(None, sexta) == datetime(2026, 10, 12, 8, tzinfo=sexta.tzinfo)
 
 
 async def test_tf_rf11_02_prompt_fora_do_catalogo_nao_cria_rotina(monkeypatch) -> None:

@@ -12,8 +12,9 @@ from fastapi import APIRouter, Depends
 from app.api.deps import UsuarioAtual, obter_orquestrador
 from app.pipeline.orquestrador import Orquestrador
 from app.schemas.chat import ChatRequest, ChatResponse
+from app.schemas.erro import RESPOSTA_401
 
-router = APIRouter()
+router = APIRouter(responses=RESPOSTA_401)
 
 
 @router.post("/chat", response_model=ChatResponse)

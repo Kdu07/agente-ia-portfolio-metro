@@ -31,7 +31,6 @@ from apscheduler.job import Job
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy.engine import make_url
 
@@ -39,6 +38,7 @@ from app.config import settings
 from app.persistence.models import Rotina
 from app.persistence.repository import RotinaRepository
 from app.persistence.sessao import fabrica_de_sessoes
+from app.rotinas.cron import criar_gatilho_cron
 
 # Colapsa disparos acumulados durante uma indisponibilidade num único.
 COALESCE = True
@@ -159,7 +159,7 @@ def agendar(rotina: Rotina) -> None:
         desagendar(rotina.id)
         return
 
-    trigger = CronTrigger.from_crontab(
+    trigger = criar_gatilho_cron(
         rotina.agenda_cron,
         timezone=ZoneInfo(rotina.timezone),
     )

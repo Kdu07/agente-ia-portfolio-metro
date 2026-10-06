@@ -122,13 +122,7 @@ def api_rotinas(monkeypatch: pytest.MonkeyPatch):
             return ResultadoValidacao(False, erro="Prompt não reconhecido.")
         return ResultadoValidacao(True, intencao_prevista="consultar_riscos")
 
-    def validar_agenda(cron: str, timezone: str) -> ResultadoValidacao:
-        if cron == "cron inválido":
-            return ResultadoValidacao(False, erro="Agenda inválida.")
-        return ResultadoValidacao(True)
-
     monkeypatch.setattr(rotas_rotinas, "validar_prompt", validar_prompt)
-    monkeypatch.setattr(rotas_rotinas, "validar_agenda", validar_agenda)
     app.dependency_overrides[deps.obter_usuario_atual] = lambda: USUARIO
     app.dependency_overrides[deps.obter_rotinas] = lambda: rotinas
     app.dependency_overrides[deps.obter_execucoes] = lambda: execucoes
@@ -206,6 +200,59 @@ def test_cria_rotina_com_dono_e_intencao_resolvidos_no_servidor(api_rotinas) -> 
     assert criada.dono_id == USUARIO.id
     assert criada.intencao_prevista == "consultar_riscos"
     assert resposta.json()["proximo_disparo"] is not None
+
+
+@pytest.mark.parametrize(
+    ("dia_semana", "dia_esperado"),
+    [("0", 11), ("1", 5), ("1-5", 5), ("7", 11), ("mon-fri", 5)],
+)
+def test_api_valida_cria_edita_e_lista_com_dias_do_cron_padrao(
+    api_rotinas, monkeypatch, dia_semana, dia_esperado
+) -> None:
+    client, rotinas, _ = api_rotinas
+
+    class RelogioFixo(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 10, 4, 12, tzinfo=UTC).astimezone(tz)
+
+    monkeypatch.setattr(rotas_rotinas, "datetime", RelogioFixo)
+    pedido = _pedido(agenda_cron=f"0 8 * * {dia_semana}")
+    quantidade = len(rotinas.itens)
+    validada = client.post("/rotinas/validar", json=pedido)
+    assert validada.status_code == 200
+    assert validada.json()["valida"] is True
+    assert len(rotinas.itens) == quantidade
+
+    criada = client.post("/rotinas", json=pedido)
+    assert criada.status_code == 201
+    rotina_id = criada.json()["id"]
+    atualizada = client.put(f"/rotinas/{rotina_id}", json=pedido)
+    assert atualizada.status_code == 200
+    listada = next(item for item in client.get("/rotinas").json() if item["id"] == rotina_id)
+    for resposta in (criada.json(), atualizada.json(), listada):
+        assert resposta["agenda_cron"] == pedido["agenda_cron"]
+        assert datetime.fromisoformat(resposta["proximo_disparo"]) == datetime.fromisoformat(
+            f"2026-10-{dia_esperado:02d}T08:00:00-03:00"
+        )
+
+
+@pytest.mark.parametrize("dia_semana", ["8", "-1", "5-1", "1-8", "*/0", "1-5/0"])
+def test_api_recusa_dia_da_semana_invalido_sem_gravar(api_rotinas, dia_semana) -> None:
+    client, rotinas, _ = api_rotinas
+    pedido = _pedido(agenda_cron=f"0 8 * * {dia_semana}")
+    anteriores = dict(rotinas.itens)
+    validada = client.post("/rotinas/validar", json=pedido)
+    assert validada.status_code == 200
+    assert validada.json()["valida"] is False
+    assert "dia da semana" in validada.json()["erro"]
+    for resposta in (
+        client.post("/rotinas", json=pedido),
+        client.put("/rotinas/rotina-a", json=pedido),
+    ):
+        assert resposta.status_code == 422
+        assert "dia da semana" in resposta.json()["detail"]
+    assert rotinas.itens == anteriores
 
 
 def test_criacao_invalida_retorna_422_e_nao_grava(api_rotinas) -> None:

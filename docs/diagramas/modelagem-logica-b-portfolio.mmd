@@ -1,0 +1,107 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
+erDiagram
+    direction LR
+    PROJETO ||--o{ MARCO : planeja
+    PROJETO ||--o{ RISCO : expoe
+    PROJETO ||--o{ INDICADOR : mede
+    USUARIO ||--o{ USUARIO_PROJETO : participa
+    PROJETO ||--o{ USUARIO_PROJETO : reune
+    USUARIO ||--o{ PREFERENCIA_AVISO : escolhe
+    USUARIO ||--o{ AVISO : recebe
+    PROJETO ||..o{ PREFERENCIA_AVISO : "projeto_codigo, sem FK"
+    PROJETO ||..o{ AVISO : "projeto_codigo, sem FK"
+    USUARIO |o..o{ PROJETO : "lider_id, sem FK"
+
+    USUARIO["USUARIO (recorte a)"] {
+        texto id PK "identificador do provedor"
+    }
+
+    PROJETO["PORTFOLIO.PROJETO"] {
+        texto codigo PK "codigo de negocio, ex.: PRJ-2024-018"
+        texto nome
+        texto descricao
+        texto status "CHECK: planejado, em_andamento, suspenso, concluido, cancelado"
+        texto prioridade "CHECK: baixa, media, alta, critica"
+        data data_inicio
+        data data_fim_prevista
+        data data_fim_real
+        decimal orcamento_aprovado "15 digitos, 2 decimais"
+        decimal orcamento_atual "15 digitos, 2 decimais"
+        inteiro avanco_percentual "CHECK: 0 a 100"
+        texto lider_id "sem FK"
+        datahora criado_em
+        datahora atualizado_em
+    }
+
+    MARCO["PORTFOLIO.MARCO"] {
+        texto id PK
+        texto projeto_codigo FK "RESTRICT"
+        texto nome
+        texto descricao
+        data data_prevista "atualizada pelo WH-02"
+        data data_real "atualizada pelo WH-02"
+        texto status "CHECK: nao_iniciado, em_andamento, concluido, atrasado, cancelado"
+        datahora criado_em
+        datahora atualizado_em
+    }
+
+    RISCO["PORTFOLIO.RISCO"] {
+        texto id PK
+        texto projeto_codigo FK "RESTRICT"
+        texto descricao
+        texto categoria
+        inteiro probabilidade "CHECK: 1 a 5"
+        inteiro impacto "CHECK: 1 a 5"
+        texto status "CHECK: identificado, monitorado, mitigado, materializado"
+        texto plano_mitigacao
+        datahora criado_em
+        datahora atualizado_em
+    }
+
+    INDICADOR["PORTFOLIO.INDICADOR"] {
+        texto id PK
+        texto projeto_codigo FK "RESTRICT"
+        texto nome
+        texto descricao
+        decimal valor_atual "15 digitos, 2 decimais"
+        decimal valor_meta "15 digitos, 2 decimais"
+        texto unidade
+        data data_medicao
+        datahora criado_em
+        datahora atualizado_em
+    }
+
+    USUARIO_PROJETO["PORTFOLIO.USUARIO_PROJETO"] {
+        texto usuario_id PK, FK "CASCADE"
+        texto projeto_codigo PK, FK "CASCADE"
+        texto papel "CHECK: lider, membro, observador"
+        datahora criado_em
+    }
+
+    PREFERENCIA_AVISO {
+        texto usuario_id PK, FK "CASCADE"
+        texto projeto_codigo PK "sem FK"
+        texto event_type PK "CHECK: tres tipos de evento"
+        booleano ativa "padrao falso"
+        inteiro severidade_minima "CHECK: 1 a 25, so para risco"
+        datahora atualizada_em
+    }
+
+    AVISO {
+        texto id PK
+        texto usuario_id FK, UK "CASCADE"
+        texto projeto_codigo "sem FK"
+        texto source_id UK "fonte do evento"
+        texto event_id UK "evento na fonte"
+        texto event_type "CHECK: tres tipos de evento"
+        texto entity_id "entidade alterada"
+        inteiro_longo versao
+        json diferencas "valor anterior e novo de cada campo"
+        datahora criado_em
+        datahora lido_em "nulo enquanto nao lido"
+    }
