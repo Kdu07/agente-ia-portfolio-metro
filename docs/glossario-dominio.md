@@ -2,6 +2,17 @@
 
 Documento de apoio à seção 5.7 do `Projeto.md`. Consolida o vocabulário próprio da gestão de portfólio do Metrô de São Paulo cuja transcrição correta é condição para que o pipeline de PLN identifique a intenção e as entidades do enunciado falado.
 
+## Sumário
+
+- [1. Finalidade](#1-finalidade)
+- [2. Como o glossário é consumido](#2-como-o-glossário-é-consumido)
+- [3. Critério de inclusão e de exclusão](#3-critério-de-inclusão-e-de-exclusão)
+- [4. Estrutura do registro](#4-estrutura-do-registro)
+- [5. Termos](#5-termos)
+- [6. Restrições operacionais](#6-restrições-operacionais)
+- [7. Manutenção e rastreabilidade](#7-manutenção-e-rastreabilidade)
+- [8. Verificação empírica do mecanismo](#8-verificação-empírica-do-mecanismo)
+
 ## 1. Finalidade
 
 Este documento não é um dicionário para leitura humana. É um artefato de engenharia com duas funções determinadas: alimentar o mecanismo de vocabulário customizado do serviço de reconhecimento de fala selecionado na seção 5.7.2.5 e servir de conjunto de referência para o cálculo do indicador de acurácia de termos de domínio definido na seção 3.1.5.2. Sua existência é a mitigação declarada do risco **R03** — baixa acurácia no jargão da companhia, severidade 9, registrado como aberto —, e é também a condição de possibilidade do critério C1 da seleção de serviços, ao qual foi atribuído o peso máximo justamente porque o suporte a vocabulário customizado era a única alternativa técnica de tratamento daquele risco.

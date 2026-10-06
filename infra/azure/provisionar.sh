@@ -925,12 +925,14 @@ aguardar_trafego() { # nome do app
 
 # Sem esperar o tráfego, o `saude` de um deploy responderia pela versão
 # anterior. Num `retomar`, sem revisão nova, a espera passa direto.
+# Mesmo com o tráfego na revisão nova, o container ainda sobe a frio e o
+# ingress responde 502 na hora; daí as novas tentativas, até ~4 min.
 fase_saude() {
   local url resposta
   aguardar_trafego "$APP_API"
   aguardar_trafego "$APP_WEB"
   url="https://$(web_fqdn)/api/health/pronto"
-  resposta=$(curl --fail-with-body --show-error --silent --max-time 300 "$url")
+  resposta=$(curl --fail-with-body --show-error --silent --max-time 300     --retry 16 --retry-delay 15 --retry-all-errors "$url")
   echo "  $url -> $resposta"
 }
 

@@ -15,6 +15,19 @@ A visão arquitetural resumida está na seção 13 de
 descartadas, o desenho dos módulos, a bancada de avaliação, a sequência de ondas
 e os riscos do próprio plano.
 
+## Sumário
+
+- [1. Motivação e enquadramento](#1-motivação-e-enquadramento)
+- [2. Decisões](#2-decisões)
+- [3. Desenho](#3-desenho)
+- [4. Segurança](#4-segurança)
+- [5. Bancada de avaliação](#5-bancada-de-avaliação)
+- [6. Ondas de construção](#6-ondas-de-construção)
+- [7. Corpus sintético](#7-corpus-sintético)
+- [8. Riscos do plano](#8-riscos-do-plano)
+- [9. Impacto na documentação](#9-impacto-na-documentação)
+- [10. O que este caminho não resolve](#10-o-que-este-caminho-não-resolve)
+
 ## 1. Motivação e enquadramento
 
 ### 1.1 O problema

@@ -2,6 +2,18 @@
 
 Este documento descreve a estrutura completa do banco de dados PostgreSQL 16 utilizado pelo middleware, incluindo tabelas, índices, tipos de dados e restrições.
 
+## Sumário
+
+- [Visão geral](#visão-geral)
+- [Schema public](#schema-public)
+- [Schema rag](#schema-rag)
+- [Schema portfolio](#schema-portfolio)
+- [Schema webhook](#schema-webhook)
+- [Scripts de criação e população](#scripts-de-criação-e-população)
+- [Boas práticas](#boas-práticas)
+- [Backup e restore](#backup-e-restore)
+- [Considerações de deploy](#considerações-de-deploy)
+
 ## Visão Geral
 
 O banco de dados é dividido em quatro schemas:

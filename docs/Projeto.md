@@ -5616,7 +5616,7 @@ Classificação usada nas tabelas a seguir:
 | Q03 | O site tem 12 listas e 5 bibliotecas. A lista **Projetos** é o eixo, consultada pelas demais. Há listas por projeto (Avanço, Cronograma, Entregas e Marcos, Riscos e problemas, Projetos – Registro de mudanças, Termo de abertura, Termo de encerramento/descontinuidade) e por portfólio (Subportfólio – Base, Situação – Portfólio, Riscos e problemas – Portfólio, Portfólio – Registro de mudanças). O **subportfólio** organiza quase todas as listas. | A base sintética não tem o subportfólio como entidade, nem tabelas de termo de abertura, termo de encerramento e registro de mudanças. O detalhamento campo a campo está no de-para (#485). |
 | Q04 | A biblioteca de documentos tem 5 arquivos. Os cronogramas não estão em colunas: cada item da lista Cronograma guarda o cronograma como anexo `.xlsx`, com nome fora da convenção `CÓDIGO_TIPO_vN_AAAAMMDD`. | O formato é legível pela extração do RAG (`openpyxl`), mas a fonte, anexo de item de lista do SharePoint, não é coberta pela ingestão atual, que consome a pasta do Google Drive (WH-01). |
 | Q05 | Os papéis aparecem como **colunas de pessoa nas listas**, em dois níveis. No projeto: Líder e Diretor responsável (Projetos), Equipe e Representante da diretoria (Termo de abertura). No subportfólio: Responsável, Membro GPM, Aprovador PMO Corporativo e Apoio. O site é um grupo privado do Microsoft 365, e as configurações do site não mostram "Usuários e Permissões" ao perfil de aluno. | O RF01, no ambiente do parceiro, dependeria de a solução ler essas colunas, e não de herdar permissões do SharePoint. Ver 5.5.10.5. |
-| Q06 | Inferido pela interface, sem teste de escrita: as configurações de lista oferecem "Excluir esta lista" e "Criar Coluna", mas não "Permissões para esta lista". O nível é compatível com **Editar**, que permite criar, editar e excluir itens e listas. | Uma ação executada com essa identidade consegue escrever, e também apagar estrutura. Isso reforça o desenho em que o agente propõe a alteração e o usuário confirma (RF05). |
+| Q06 | Inferido pela interface, sem teste de escrita: as configurações de lista oferecem "Excluir esta lista" e "Criar Coluna", mas não "Permissões para esta lista". O nível é compatível com **Editar**, que permite criar, editar e excluir itens e listas. | Se o nível inferido se confirmar, uma ação executada com essa identidade conseguiria escrever e também apagar estrutura. Isso reforça o desenho em que o agente propõe a alteração e o usuário confirma (RF05). |
 
 #### 5.5.10.3 Requisitos funcionais
 
@@ -5626,7 +5626,7 @@ Classificação usada nas tabelas a seguir:
 | RF02 — Interação por texto e voz | Não depende do ambiente | Atendido pela interface e pelo middleware da equipe. O canal do Copilot Studio não está disponível (Q02). |
 | RF03 — Identificação e controle de intenções | Não depende do ambiente | Classificador e catálogo são da solução. |
 | RF04 — Consulta e análise de informações dos projetos | Parcial | Avanço e marcos são sustentados; status, riscos, cronograma e documentos são parciais; faturas e aderência normativa não têm dados (5.5.10.4). |
-| RF05 — Apoio à criação e atualização de projetos | Parcial | Há estrutura e permissão de escrita para projeto, avanço, marcos, riscos, mudanças e termos, mas o ambiente tem fluxos de aprovação (termo de abertura, parecer do subportfólio, deliberação do portfólio) que a solução não modela; os riscos não têm probabilidade e impacto; o cronograma está em anexo. |
+| RF05 — Apoio à criação e atualização de projetos | Parcial | Há estrutura e, pela inferência da Q06 (sem teste de escrita), indício de permissão de escrita para projeto, avanço, marcos, riscos, mudanças e termos, mas o ambiente tem fluxos de aprovação (termo de abertura, parecer do subportfólio, deliberação do portfólio) que a solução não modela; os riscos não têm probabilidade e impacto; o cronograma está em anexo. |
 | RF06 — Alertas e apoio proativo a pendências | Parcial | As datas previstas de marcos e de planos de ação permitem derivar pendências; as regras e a periodicidade do PMO (Q07) seguem abertas. |
 | RF07 — Análise comparativa do portfólio | Sustentado | A lista Avanço guarda, por data de referência, o previsto e o realizado físico e econômico de cada projeto, o que permite comparar projetos e calcular desvio. |
 | RF08 — Relatórios e informações gerenciais | Parcial | O relatório de status combina dados sustentados e parciais; a situação do portfólio é texto livre; o termo de encerramento não tem registros; o Power BI (Q08) não foi verificado. |
@@ -5654,7 +5654,7 @@ Classificação usada nas tabelas a seguir:
 | `gerar_relatorio_status` | Parcial | Combina status, avanço, marcos e riscos, com as limitações de cada um. |
 | `gerar_previa_diretoria` | Parcial | Situação do portfólio em texto livre e avanço por projeto. |
 | `gerar_relatorio_encerramento` | Sem dados | A lista Termo de encerramento existe, mas não tem registros. |
-| `criar_projeto` | Parcial | A lista Projetos aceita escrita, mas o ambiente associa o projeto a um termo de abertura com fluxo de aprovação, que a solução não modela. |
+| `criar_projeto` | Parcial | A lista Projetos, pela inferência da Q06, aceitaria escrita, mas o ambiente associa o projeto a um termo de abertura com fluxo de aprovação, que a solução não modela. |
 | `atualizar_avanco` | Sustentado | Novo registro na lista Avanço. |
 | `atualizar_cronograma` | Sem dados | Não há colunas de cronograma; atualizar exigiria editar o anexo. |
 | `registrar_risco` | Parcial | A lista não tem probabilidade nem impacto, que a solução coleta. |
@@ -5687,7 +5687,7 @@ Duas divergências adicionais: os responsáveis por mudança e por deliberação
 2. **RF01.** Implementar perfis no ambiente do parceiro significa ler as colunas de pessoa das listas, nos dois níveis, e decidir com o PMO como os papéis de subportfólio se traduzem em permissões da solução.
 3. **Modelo de dados.** O subportfólio, os termos de abertura e de encerramento, o registro de mudanças e os fluxos de aprovação não existem na base sintética. Essa distância é a matéria do de-para (#485) e da reavaliação do risco `R01`.
 4. **Ingestão.** Documentos e cronogramas do ambiente estão em bibliotecas e anexos de lista do SharePoint, fonte que a ingestão atual não consome.
-5. **Escrita.** A identidade de teste tem nível de edição. Qualquer escrita do agente deve continuar exigindo confirmação do usuário, e o escopo de escrita deve ser restrito às listas necessárias.
+5. **Escrita.** A identidade de teste tem nível de edição, inferido pela interface na Q06; nenhuma escrita foi testada (5.5.10.1). Qualquer escrita do agente deve continuar exigindo confirmação do usuário, e o escopo de escrita deve ser restrito às listas necessárias.
 
 ### 5.5.11 De-para entre o ambiente de teste do parceiro e a base sintética
 
@@ -7656,7 +7656,7 @@ python -m pytest tests/integration/test_exemplos_nlp.py -v
 
 O teste precisa do e5 no cache do Hugging Face, como o TF-RF03-01, e do
 `ffprobe` no `PATH`. Sem PostgreSQL, os seis casos são pulados. Na CI eles rodam
-no job `middleware:pytest`, que já tem o banco, o `ffmpeg` e o e5.
+no job `middleware`, que já tem o banco, o `ffmpeg` e o e5.
 
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
@@ -10439,7 +10439,7 @@ individualmente ou em sequência:
 
 O inventário atualizado dos casos, com identificadores, cenários, entradas e
 resultados esperados, está na seção 9.5.3; a execução e a cobertura medida estão
-registradas na seção 9.5.5. O job `web:vitest` da integração contínua executa
+registradas na seção 9.5.5. O job `web` da integração contínua executa
 `npm run test:coverage` e publica o relatório Cobertura como artefato
 `coverage_report`, exibido pelo GitLab no merge request. Os limites e resultados
 da medição estão registrados em 9.5.5.
@@ -10707,7 +10707,7 @@ permanece manual.
 
 ## 9.3 Modelo de Recomendação
 
-[Preencher]
+Esta seção ficou sem conteúdo. A solução entregue na Sprint 5 não inclui um modelo de recomendação: o agente classifica intenções e consulta o portfólio, com o RF04 parcial, e a alteração do portfólio pela conversa (RF05) não foi implementada (10.7.3). Recomendações que dependam de um modelo próprio ficam fora do MVP.
 
 ## 9.4 Desenvolvimento de Features
 
@@ -10991,10 +10991,23 @@ Duas execuções foram registradas em 10/09/2026
 | Ponta a ponta, com PostgreSQL real e índice em memória | A primeira execução gravou os 1.883 trechos no banco e no índice; a segunda não baixou nem vetorizou nada; retirar da pasta o arquivo de riscos da Acessibilidade L4 retirou os 22 trechos dele dos dois lugares e marcou o arquivo como `removido` |
 
 O e5 vetorizou 1,2 trecho por segundo na CPU, o que põe a primeira ingestão
-completa em cerca de meia hora. A carga completa do corpus no índice do
-Pinecone não está registrada neste documento: a execução ponta a ponta usou um
-índice em memória no lugar dele, e o Pinecone foi exercitado pelo roteiro de
+completa em cerca de meia hora. As duas execuções acima usaram um índice em
+memória no lugar do Pinecone, e o Pinecone foi exercitado pelo roteiro de
 validação de 9.4.4.5 e pelos casos IT-RAG-05 a IT-RAG-08 (10.5.5.11).
+
+A carga completa no Pinecone foi conferida em 05/10/2026 pelo notebook
+[vetorizacao-e-recuperacao-rag.ipynb](../src/middleware/notebooks/vetorizacao-e-recuperacao-rag.ipynb).
+O notebook lê a pasta do parceiro de novo e refaz a identificação, a vigência,
+as permissões e a divisão com o código da ingestão. Resultados:
+
+- os números da simulação são os da tabela acima;
+- os 1.883 trechos gerados são, texto por texto, os gravados em `rag.trecho`;
+- o *namespace* `bancada-eduardo` tem 1.883 vetores;
+- os 32 vetores de uma amostra, recalculados, coincidem com os gravados
+  (cosseno 1,000000).
+
+Índice, banco e código atual descrevem o mesmo corpus. Na mesma execução, o e5
+vetorizou 1,4 trecho por segundo, na mesma ordem da medição acima.
 
 ### 9.4.4 Índice vetorial no Pinecone
 
@@ -11427,6 +11440,38 @@ A fidelidade segue sem medição automática. O detalhe da execução, com cada
 resposta ao lado dos trechos citados, é gerado pela opção `--saida`, que é o
 material dessa revisão.
 
+**Notebook de vetorização e recuperação.** O notebook
+[vetorizacao-e-recuperacao-rag.ipynb](../src/middleware/notebooks/vetorizacao-e-recuperacao-rag.ipynb)
+chama as mesmas funções desta bancada e acrescenta o que o relatório em texto
+não mostra:
+
+- os cinco trechos recuperados para cada uma das 26 perguntas, com documento,
+  localizador e *score*;
+- a recuperação medida sozinha, sem o modelo de geração, por
+  `bancada.avaliar_recuperacao`;
+- o gráfico das faixas de *score*;
+- o filtro de permissão aplicado ao projeto Restrito;
+- as respostas ao lado das fontes citadas.
+
+**Executado em 05/10/2026 sobre o commit `a3c5404`, ele reproduziu todos os
+números desta seção:** recall@k de 0,975, abstenção correta de 1,00 (6 de 6),
+acerto de conteúdo de 0,95 (19 de 20), nenhum vazamento, nenhuma abstenção
+indevida e nenhuma resposta sem citação válida. As faixas de *score* também
+são as mesmas. O R19 é de novo a única falha, pela mesma razão. A última seção
+do notebook confere esses números e os de 9.4.3.7. A execução para se um
+número determinístico divergir, ou seja, os do corpus, dos trechos e da
+recuperação. Os da geração só são comparados. Fixar outro modelo de geração
+foge do escopo deste notebook.
+
+O notebook também mediu o efeito do prefixo do e5 (9.4.3.5). No par
+pergunta–trecho da R01, usar o mesmo prefixo nos dois lados baixa o cosseno de
+0,894 para 0,875. A queda é de um quarto da largura da faixa de *score* da
+bancada e passa a distância entre o 2º e o 5º trecho recuperados da própria
+R01: o prefixo errado não gera erro, gera outra ordem de trechos. A seção 8 do
+notebook, a da bancada completa, custa 26 chamadas ao modelo de geração. As
+saídas ficam salvas no arquivo, e a forma de execução está no
+[README da pasta](../src/middleware/notebooks/README.md).
+
 ### 9.4.7 Configuração e execução
 
 As dependências do executor próprio ficam no extra `rag` do `pyproject.toml` —
@@ -11465,6 +11510,9 @@ python -m app.rag.ingestao --reindexar               # reindexa todos os documen
 python -m scripts.buscar_trechos "orçamento do Trecho Sul" --perfil lider_projeto --projetos PRJ-2024-018
 python -m scripts.perguntar_rag "Qual o custo total estimado do Trecho Sul?" --perfil lider_projeto --projetos PRJ-2024-018
 python -m app.rag.bancada --saida bancada.md         # mede recuperação e geração (9.4.6)
+
+pip install -e ".[rag,notebook]"                     # notebook de 9.4.3.7 e 9.4.6
+python -m nbconvert --to notebook --execute --inplace notebooks\vetorizacao-e-recuperacao-rag.ipynb
 ```
 
 `buscar_trechos` exercita só a recuperação, sem chamar o modelo, e é o comando
@@ -12102,9 +12150,9 @@ conteúdo e ações do histórico e filtros/estados do painel em
 `testes/autenticacao.test.tsx`, `testes/paginas.test.tsx` e
 `testes/intencoes.test.tsx`.
 
-O terceiro é que **a cobertura não é medida nesta entrega**. A meta de oitenta
-por cento definida em 9.1.8 não era medida na entrega inicial documentada aqui.
-Essa lacuna foi fechada: `npm run test:coverage` mede linhas, ramos e funções,
+O terceiro é que **a cobertura da interface não era medida na entrega
+inicial**. A meta de oitenta por cento definida em 9.1.8 não era medida na
+entrega documentada aqui. Essa lacuna foi fechada: `npm run test:coverage` mede linhas, ramos e funções,
 aplica o limite mínimo de 80% e publica Cobertura no merge request pela pipeline
 da interface (9.2.10). A execução atual superou os três limites; a consolidação
 da cobertura do middleware permanece registrada em 10.7.
@@ -13186,7 +13234,9 @@ A **ausência de um RNF de desempenho** permanece. Os sete casos `TNF-DES` medem
 
 Estabelece essas quatro coisas sob uma condição que prefere declarar a
 omitir: o RNF03 possui medição sobre sua bancada completa, e o RNF04 possui
-somente o indicativo da janela local curta registrado em 10.2.3.4. Os demais
+o indicativo da janela local curta e o da janela implantada de 05/10/2026
+(83,333% de disponibilidade, abaixo da meta preliminar de 99%), ambos
+registrados em 10.2.3.4. Os demais
 procedimentos ainda dependem da construção ou execução de seus instrumentos,
 e três das metas contra as quais eles reportarão são hipóteses da própria
 equipe, que os primeiros resultados deverão recalibrar. A seção não afirma
@@ -14515,7 +14565,7 @@ rota, sem o Entra configurado a consulta ao diretório levanta
 `ConfiguracaoAusente`, que a rota não trata, e a resposta seria 500 em vez
 de indisponibilidade. É defeito a corrigir, não comportamento a fixar em
 teste. Como preparar o ambiente e
-rodar: 10.5.7.2. Na CI: job `integracao:web-middleware` (10.5.8).
+rodar: 10.5.7.2. Na CI: job `middleware`, depois do pytest (10.5.8).
 
 #### 10.5.5.9 IT-CTR — contratos
 
@@ -14932,7 +14982,7 @@ RabbitMQ está saudável; a suíte de integração interna e de webhooks usa o
 banco e o broker reais do Compose; o frontend valida contratos via MSW e
 formatos do FastAPI, e o smoke fecha a ponte `web → proxy → middleware`.
 
-**Limitações atuais (substitui o registro de 23/09):**
+**Limitações registradas em 25/09/2026 (substitui o registro de 23/09), com a cobertura do frontend atualizada em 05/10/2026:**
 
 1. O `.env` local deste ambiente apontava `DATABASE_URL` para a porta **5434**;
    o Compose publica o Postgres em **5432**. Sem alinhar a URL, dezenas de
@@ -14944,8 +14994,10 @@ formatos do FastAPI, e o smoke fecha a ponte `web → proxy → middleware`.
    de arquivo ou o VHS sem bloquear a loopback quando necessário.
 4. Testes `*_real.py` (Content Safety, Direct Line, Gemini, Pinecone) exigem
    credenciais e rede; nesta revisão só o mecanismo VHS foi executado.
-5. Cobertura de linhas do frontend ficou em **77,42%**, abaixo da meta de 80%
-   de 9.1.8; branches em 80,84%.
+5. Em 25/09/2026, a cobertura de linhas do frontend ficou em **77,42%**,
+   abaixo da meta de 80% de 9.1.8, e as branches em 80,84%. Esse número foi
+   superado: a execução de 05/10/2026 aprovou 429 testes em 21 arquivos, com
+   **87,48%** de linhas, acima da meta (introdução da seção 10 e 9.5.5).
 
 #### 10.5.7.4 Restrições conhecidas
 
@@ -14971,31 +15023,39 @@ succeed* ligada no projeto, qualquer job vermelho impede o merge.
 
 | Estágio | Job | Imagem | O que roda |
 |---|---|---|---|
-| `lint` | `middleware:ruff` | `python:3.12-slim` | `ruff check .`, com o ruff na mesma faixa do extra `dev` |
-| `lint` | `web:eslint` | `node:20-alpine` | `npm run lint` |
-| `lint` | `web:tipos` | `node:20-alpine` | `npm run typecheck` (os dois `tsconfig`) |
-| `teste` | `middleware:pytest` | `python:3.12-slim` + serviços `postgres:16-alpine` e `rabbitmq:4.3.6-management-alpine` | `alembic upgrade head` e a suíte inteira com `--block-network` |
-| `teste` | `web:vitest` | `node:20-alpine` | `npm run test:coverage`, com os limiares de 9.1.8 |
-| `teste` | `integracao:web-middleware` | `python:3.12-slim` + Node 20 (tarball oficial) + serviço `postgres:16-alpine` | `alembic upgrade head`, `popular_banco` e `sessoes_integracao`; uvicorn em segundo plano; espera `/health/pronto` e roda `npm run test:integracao` (10.5.5.8) |
+| `teste` | `middleware` | `python:3.12-slim` + Node 20 (tarball oficial) + serviços `postgres:16-alpine` e `rabbitmq:4.3.6-management-alpine` | `ruff check .`; `alembic upgrade head` e a suíte inteira com `--block-network`; num banco novo, `popular_banco` e `sessoes_integracao`, uvicorn em segundo plano, espera por `/health/pronto` e `npm run test:integracao` (10.5.5.8) |
+| `teste` | `web` | `node:20-alpine` | `npm run lint`, `npm run typecheck` (os dois `tsconfig`) e `npm run test:coverage`, com os limiares de 9.1.8 |
 
-Os três jobs de teste publicam relatório JUnit, e o resultado aparece por caso
-na aba de testes do merge request.
+São só dois jobs porque, desde 06/10/2026, a instância do GitLab recusa criar
+a pipeline quando o projeto passaria de 5 jobs em pipelines ativas, e a
+recusa não entra em fila. Até essa data eram seis jobs, um por verificação.
+Para não perder o diagnóstico, cada etapa que falha fica anotada e o job
+segue para a próxima. A última linha reprova o job e lista as etapas que
+falharam (por exemplo, `Falharam: ruff vitest`).
 
-No `integracao:web-middleware`, as telas falam com o middleware de verdade,
-e quatro escolhas merecem registro:
+Os dois jobs publicam relatório JUnit (pytest, integração e Vitest), e o
+resultado aparece por caso na aba de testes do merge request.
+
+Na parte de integração do job `middleware`, as telas falam com o middleware
+de verdade, e cinco escolhas merecem registro:
 
 - **Python e Node no mesmo job.** O servidor precisa estar no ar enquanto a
   suíte roda. A imagem é a do middleware, e o Node 20 entra pelo tarball
   oficial, em versão fixa.
 - **A instalação repete a do Dockerfile:** torch CPU, `.[rag]` e o
-  e5-large na mesma revisão. É o mesmo servidor que vai para a Azure.
+  e5-large na mesma revisão. É o mesmo servidor que vai para a Azure, mais o
+  extra `dev` que o pytest usa.
+- **Banco próprio.** A carga do `popular_banco` exige banco novo, e o pytest
+  já passou pelo `middleware`. Por isso a integração cria o banco
+  `integracao` no mesmo serviço e aponta o `DATABASE_URL` para ele.
 - **Sem segredo no repositório.** O `SESSION_SECRET` é gerado no próprio
   job e descartado com ele. O arquivo de sessões não entra nos artefatos;
   só o JUnit e o `uvicorn.log` entram.
-- **Sem RabbitMQ.** Nenhuma rota usada pela interface publica evento; só os
-  *webhooks* publicam.
+- **Sem RabbitMQ.** O serviço está no job, mas só o pytest aponta para ele.
+  Nenhuma rota usada pela interface publica evento; só os *webhooks*
+  publicam.
 
-No `middleware:pytest`, quatro escolhas merecem registro:
+Na parte do pytest, quatro escolhas merecem registro:
 
 - **PostgreSQL e RabbitMQ vêm de serviços do GitLab**, não do Testcontainers:
   o *runner* já provê os contêineres, e o Docker-in-Docker seria custo
@@ -15009,7 +15069,7 @@ No `middleware:pytest`, quatro escolhas merecem registro:
   Dockerfile. O TF-RF03-01 classifica com o artefato treinado de verdade, que
   depende desse modelo; dentro do pytest o `--block-network` impediria o
   download.
-- **`HF_HUB_OFFLINE=1` a partir do pytest.** Com o modelo já no disco, um teste
+- **`HF_HUB_OFFLINE=1` no pytest.** Com o modelo já no disco, um teste
   que tente baixar outro falha em vez de sair para a rede.
 
 Na primeira execução verde (pipeline 80045 do MR !171), o `middleware:pytest`
@@ -15021,7 +15081,7 @@ execução local — em cerca de 4,5 minutos, contando a instalação. O
 O grupo `externo` roda com as fitas versionadas: **o CI não tem credencial de
 nenhum tenant**, e essa é uma propriedade a preservar.
 
-Na `develop` e na `main`, o mesmo arquivo segue, depois destes dois estágios,
+Na `develop` e na `main`, o mesmo arquivo segue, depois do estágio de teste,
 para a publicação das imagens e a implantação na Azure, descritas em 11.2.3.
 Os jobs de entrega entram na Azure por OIDC, com identidade restrita ao ramo, e
 também não guardam credencial.
@@ -15545,10 +15605,14 @@ depois dos de verificação descritos em 10.5.8:
 
 | Estágio | Job | Quando | O que roda |
 |---|---|---|---|
-| `imagens` | `imagens:dev` | Push na `develop` | `provisionar.sh dev imagens` contra um Docker do serviço `docker:dind` |
-| `imagens` | `imagens:prd` | Push na `main` | `provisionar.sh prd imagens` |
-| `implantar` | `implantar:dev` | Automático, depois do anterior | `implantar.sh dev` |
+| `implantar` | `entrega:dev` | Push na `develop` | `provisionar.sh dev imagens` contra um Docker do serviço `docker:dind`, depois `implantar.sh dev` |
+| `imagens` | `imagens:prd` | Push na `main` | `provisionar.sh prd imagens` contra o mesmo Docker de serviço |
 | `implantar` | `implantar:prd` | **Só com clique** | `implantar.sh prd` |
+
+Até 06/10/2026, o dev também tinha dois jobs, `imagens:dev` e
+`implantar:dev`. Eles viraram um só pelo limite de jobs ativos descrito em
+10.5.8. Na `main`, que roda pouco, a separação continua: as imagens ficam
+prontas antes do clique.
 
 Os jobs de entrega só começam se lint e testes passarem. Eles usam a mesma tag,
 o `$CI_COMMIT_SHORT_SHA`, nas duas pontas, e cada deploy fica registrado em
