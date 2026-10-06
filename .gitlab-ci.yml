@@ -5,6 +5,12 @@
 # atualizado; na main, as imagens são publicadas e o prd espera um clique
 # (Projeto.md 11.2).
 #
+# Poucos jobs por pipeline: desde 06/10/2026 a instância do GitLab recusa
+# criar a pipeline quando o projeto passaria de 5 jobs em pipelines ativas
+# ("pipeline job activity limit"), e a recusa não entra em fila. Por isso as
+# verificações de cada aplicação dividem um job, e cada etapa anota a falha
+# em FALHAS em vez de parar o job: a última linha reprova com a lista.
+#
 # A automação do board não mora aqui: ela vive na branch órfã `ci/agenda-cadu`,
 # que tem o próprio `.gitlab-ci.yml` e nenhum ancestral comum com este.
 
@@ -21,7 +27,6 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api"
 
 stages:
-  - lint
   - teste
   - imagens
   - implantar
@@ -29,32 +34,17 @@ stages:
 default:
   interruptible: true
 
-# === Middleware (Python) ===
+# === Middleware (Python), com a interface contra ele vivo ===
+#
+# Ruff, a suíte do pytest e a integração (#471) num job só. A integração vem
+# junto porque precisa da mesma instalação (torch, e5-large) e do mesmo
+# PostgreSQL; ela usa um banco criado na hora, porque a carga do
+# `popular_banco` exige banco novo e o pytest já passou pelo `middleware`.
 
-.middleware:
+middleware:
   image: python:3.12-slim
-  variables:
-    PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
-  cache:
-    key: pip-$CI_JOB_NAME
-    paths:
-      - .cache/pip
-  before_script:
-    - cd src/middleware
-
-middleware:ruff:
-  extends: .middleware
-  stage: lint
-  script:
-    # Só o ruff, na mesma faixa do extra `dev`: instalar o projeto inteiro
-    # (torch incluso) para rodar um linter custaria minutos.
-    - pip install "ruff>=0.16,<0.17"
-    - ruff check .
-
-middleware:pytest:
-  extends: .middleware
   stage: teste
-  timeout: 30m
+  timeout: 45m
   services:
     - name: postgres:16-alpine
       alias: db
@@ -67,114 +57,14 @@ middleware:pytest:
         RABBITMQ_DEFAULT_PASS: prata-local
         RABBITMQ_DEFAULT_VHOST: prata
   variables:
+    PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
     POSTGRES_USER: middleware
     POSTGRES_PASSWORD: middleware
     POSTGRES_DB: middleware
     DATABASE_URL: "postgresql+asyncpg://middleware:middleware@db:5432/middleware"
     HF_HOME: $CI_PROJECT_DIR/.cache/hf
-  script:
-    # ffmpeg: app/voz/midia.py valida os áudios com ffprobe.
-    - apt-get update && apt-get install -y --no-install-recommends ffmpeg
-    # torch CPU antes do resto, como no Dockerfile: sem isso o
-    # sentence-transformers puxa os wheels CUDA.
-    - pip install --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple "torch>=2.2"
-    - pip install -e ".[dev,rag]"
-    # O TF-RF03-01 classifica com o artefato treinado de verdade, que depende
-    # do modelo de sentenças. Baixado aqui, como no Dockerfile, porque dentro
-    # do pytest o --block-network o impediria. A revisão é a de
-    # REVISAO_EMBEDDINGS em app/pipeline/intencao/modelo.py.
-    - python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large', revision='3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3')"
-    - alembic upgrade head
-    # --block-network barra qualquer chamada real que escape das fitas VHS; os
-    # dois serviços são as únicas exceções. A CI não tem credencial de
-    # provedor, então os testes de tests/integration/externos pulam pela chave
-    # ausente.
-    - DB_IP=$(getent hosts db | cut -d' ' -f1)
-    - RABBITMQ_IP=$(getent hosts rabbitmq | cut -d' ' -f1)
-    # Offline só a partir daqui: o modelo já está em HF_HOME, e um teste que
-    # tente baixar outro falha em vez de sair para a rede.
-    - export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 RABBITMQ_HOST=rabbitmq
-    # `python -m`, e não o executável `pytest`: só assim o diretório atual entra
-    # no sys.path, e os testes importam `tests.apoio_audio`.
-    - python -m pytest --block-network --allowed-hosts="127.0.0.1,$DB_IP,$RABBITMQ_IP"
-      --benchmark-disable -p no:cacheprovider --junitxml=relatorio-pytest.xml
-  artifacts:
-    when: always
-    reports:
-      junit: src/middleware/relatorio-pytest.xml
-
-# === Interface (React) ===
-
-.web:
-  image: node:20-alpine
-  cache:
-    key:
-      files:
-        - src/web/package-lock.json
-    paths:
-      - src/web/.npm
-  before_script:
-    - cd src/web
-    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
-
-web:eslint:
-  extends: .web
-  stage: lint
-  script:
-    - npm run lint
-
-web:tipos:
-  extends: .web
-  stage: lint
-  script:
-    - npm run typecheck
-
-web:vitest:
-  extends: .web
-  stage: teste
-  script:
-    - npm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=relatorio-vitest.xml
-  artifacts:
-    when: always
-    reports:
-      junit: src/web/relatorio-vitest.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: src/web/coverage/cobertura-coverage.xml
-    paths:
-      - src/web/coverage/
-    expire_in: 30 days
-
-# === Interface contra o middleware vivo (#471) ===
-#
-# As telas renderizadas no Vitest falam com um uvicorn de verdade, com
-# PostgreSQL, a carga do `popular_banco` e o pipeline inteiro; uma ponte no
-# MSW faz o papel do proxy do Vite (src/web/src/testes/integracao/ponte.ts).
-# Python e Node no mesmo job, porque o servidor precisa estar no ar durante
-# a suíte: a imagem é a do middleware, e o Node entra pelo tarball oficial.
-# Projeto.md 10.5.5.8.
-
-integracao:web-middleware:
-  extends: .middleware
-  stage: teste
-  timeout: 30m
-  services:
-    - name: postgres:16-alpine
-      alias: db
-  variables:
-    POSTGRES_USER: middleware
-    POSTGRES_PASSWORD: middleware
-    POSTGRES_DB: middleware
-    DATABASE_URL: "postgresql+asyncpg://middleware:middleware@db:5432/middleware"
-    HF_HOME: $CI_PROJECT_DIR/.cache/hf
-    # Executor sintético: o /chat percorre guardas, classificador e
-    # persistência sem gastar provedor de LLM.
-    PERFORMANCE_MODE: "true"
-    # O classificador carrega numa thread e /health/pronto só responde 200
-    # depois; a suíte espera por ele em vez de o primeiro /chat esperar.
-    AQUECER_MODELOS: "true"
-    INTEGRACAO_SESSOES: $CI_PROJECT_DIR/sessoes-integracao.json
     NODE_VERSION: "20.19.5"
+    INTEGRACAO_SESSOES: $CI_PROJECT_DIR/sessoes-integracao.json
   cache:
     - key: pip-$CI_JOB_NAME
       paths:
@@ -184,14 +74,59 @@ integracao:web-middleware:
           - src/web/package-lock.json
       paths:
         - src/web/.npm
+  before_script:
+    - cd src/middleware
   script:
-    - apt-get update && apt-get install -y --no-install-recommends curl xz-utils
+    # ffmpeg: app/voz/midia.py valida os áudios com ffprobe. curl e xz: o
+    # Node da integração entra pelo tarball oficial.
+    - apt-get update && apt-get install -y --no-install-recommends ffmpeg curl xz-utils
     - curl -fsSL "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" | tar -xJ -C /usr/local --strip-components=1
     - node --version
-    # Mesma instalação da imagem do middleware (src/middleware/Dockerfile).
+    # torch CPU antes do resto, como no Dockerfile: sem isso o
+    # sentence-transformers puxa os wheels CUDA.
     - pip install --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple "torch>=2.2"
-    - pip install -e ".[rag]"
+    - pip install -e ".[dev,rag]"
+    # O ruff vem do extra `dev`, na faixa travada ali.
+    - ruff check . || FALHAS="$FALHAS ruff"
+    # O TF-RF03-01 classifica com o artefato treinado de verdade, que depende
+    # do modelo de sentenças. Baixado aqui, como no Dockerfile, porque dentro
+    # do pytest o --block-network o impediria. A revisão é a de
+    # REVISAO_EMBEDDINGS em app/pipeline/intencao/modelo.py.
     - python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large', revision='3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3')"
+    - alembic upgrade head
+    # --block-network barra qualquer chamada real que escape das fitas VHS; os
+    # dois serviços são as únicas exceções. A CI não tem credencial de
+    # provedor, então os testes de tests/integration/externos pulam pela chave
+    # ausente. O modo offline e o RABBITMQ_HOST valem só para o pytest: um
+    # teste que tente baixar outro modelo falha em vez de sair para a rede.
+    - DB_IP=$(getent hosts db | cut -d' ' -f1)
+    - RABBITMQ_IP=$(getent hosts rabbitmq | cut -d' ' -f1)
+    # `python -m`, e não o executável `pytest`: só assim o diretório atual entra
+    # no sys.path, e os testes importam `tests.apoio_audio`.
+    - HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 RABBITMQ_HOST=rabbitmq
+      python -m pytest --block-network --allowed-hosts="127.0.0.1,$DB_IP,$RABBITMQ_IP"
+      --benchmark-disable -p no:cacheprovider --junitxml=relatorio-pytest.xml
+      || FALHAS="$FALHAS pytest"
+
+    # --- Interface contra o middleware vivo (#471, Projeto.md 10.5.5.8) ---
+    # As telas renderizadas no Vitest falam com um uvicorn de verdade, com
+    # PostgreSQL, a carga do `popular_banco` e o pipeline inteiro; uma ponte
+    # no MSW faz o papel do proxy do Vite (src/web/src/testes/integracao/ponte.ts).
+    - |
+      python -c '
+      import asyncio, asyncpg
+      async def criar():
+          conexao = await asyncpg.connect("postgresql://middleware:middleware@db:5432/middleware")
+          await conexao.execute("CREATE DATABASE integracao")
+          await conexao.close()
+      asyncio.run(criar())
+      '
+    - export DATABASE_URL="postgresql+asyncpg://middleware:middleware@db:5432/integracao"
+    # Executor sintético: o /chat percorre guardas, classificador e
+    # persistência sem gastar provedor de LLM. O classificador carrega numa
+    # thread e /health/pronto só responde 200 depois; a suíte espera por ele
+    # em vez de o primeiro /chat esperar.
+    - export PERFORMANCE_MODE=true AQUECER_MODELOS=true
     # Segredo gerado aqui e descartado com o job: nenhum literal no
     # repositório, e o mesmo valor serve às sessões e ao uvicorn.
     - export SESSION_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
@@ -212,13 +147,48 @@ integracao:web-middleware:
     - cd ../web
     - npm ci --cache .npm --prefer-offline --no-audit --no-fund
     - npm run test:integracao -- --reporter=default --reporter=junit --outputFile.junit=relatorio-integracao.xml
+      || FALHAS="$FALHAS integracao"
+    - test -z "$FALHAS" || { echo "Falharam:$FALHAS"; exit 1; }
   artifacts:
     when: always
     reports:
-      junit: src/web/relatorio-integracao.xml
+      junit:
+        - src/middleware/relatorio-pytest.xml
+        - src/web/relatorio-integracao.xml
     # O arquivo de sessões fica de fora: ele carrega os cookies.
     paths:
       - uvicorn.log
+    expire_in: 30 days
+
+# === Interface (React) ===
+
+web:
+  image: node:20-alpine
+  stage: teste
+  cache:
+    key:
+      files:
+        - src/web/package-lock.json
+    paths:
+      - src/web/.npm
+  before_script:
+    - cd src/web
+    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+  script:
+    - npm run lint || FALHAS="$FALHAS eslint"
+    - npm run typecheck || FALHAS="$FALHAS tipos"
+    - npm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=relatorio-vitest.xml
+      || FALHAS="$FALHAS vitest"
+    - test -z "$FALHAS" || { echo "Falharam:$FALHAS"; exit 1; }
+  artifacts:
+    when: always
+    reports:
+      junit: src/web/relatorio-vitest.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: src/web/coverage/cobertura-coverage.xml
+    paths:
+      - src/web/coverage/
     expire_in: 30 days
 
 # === Entrega contínua (Azure) ===
@@ -277,18 +247,6 @@ integracao:web-middleware:
       | tar xz --strip-components=1 -C /usr/local/bin docker/docker
     - bash infra/azure/provisionar.sh "$ESTAGIO" imagens
 
-imagens:dev:
-  extends: [.imagens, .dev]
-  environment:
-    name: dev
-    action: prepare
-
-imagens:prd:
-  extends: [.imagens, .prd]
-  environment:
-    name: prd
-    action: prepare
-
 # Migração, troca de imagem e verificação de saúde. Código 3 é o banco
 # parado: nada foi implantado, e a pipeline mostra aviso em vez de falha.
 .implantar:
@@ -299,12 +257,24 @@ imagens:prd:
   script:
     - bash infra/azure/implantar.sh "$ESTAGIO"
 
-implantar:dev:
-  extends: [.implantar, .dev]
+# No dev, imagens e implantação num job só, pelo limite de jobs ativos.
+entrega:dev:
+  extends: [.imagens, .implantar, .dev]
   resource_group: azure-dev
   environment:
     name: dev
     url: https://ca-web-dev.wittywater-1f84aed4.brazilsouth.azurecontainerapps.io
+  script:
+    - !reference [.imagens, script]
+    - !reference [.implantar, script]
+
+# Na main a pipeline é rara e o prd espera um clique: os dois jobs seguem
+# separados, e as imagens ficam prontas antes do clique.
+imagens:prd:
+  extends: [.imagens, .prd]
+  environment:
+    name: prd
+    action: prepare
 
 # Produção só com clique: a semana é curta, e um deploy a cada merge na main
 # arriscaria derrubar o ambiente de demonstração.

@@ -7,7 +7,15 @@ esse número que vai para o documento.
 """
 
 from app.rag import bancada
-from app.rag.bancada import Caso, avaliar_caso, carregar, contem, executar, resumir
+from app.rag.bancada import (
+    Caso,
+    avaliar_caso,
+    avaliar_recuperacao,
+    carregar,
+    contem,
+    executar,
+    resumir,
+)
 from app.rag.fluxo import ResultadoRag
 from app.rag.geracao import RespostaRag, Situacao, abstencao
 from app.rag.linguagem.base import ErroGeracao
@@ -132,6 +140,22 @@ def test_recuperar_projeto_proibido_e_vazamento_mesmo_abstendo() -> None:
 
     assert avaliacao.vazou
     assert avaliacao.abstencao_correta is True
+
+
+def test_avaliacao_so_da_recuperacao_concorda_com_a_do_caso() -> None:
+    """A mesma regra, sem gerar: é o que o notebook de 9.4.6 mede."""
+    distribuida = caso(
+        documentos_esperados=(("IN-04-2023_NI",), ("PRJ-2025-042_RSP_2026-08",)),
+        projetos_proibidos=frozenset({"PRJ-2024-018"}),
+    )
+    completo = resultado(None, "IN-04-2023_NI", "IN-04-2023_NI")
+
+    so_recuperacao = avaliar_recuperacao(distribuida, completo.recuperacao)
+    do_caso = avaliar_caso(distribuida, completo)
+
+    assert so_recuperacao.documentos_recuperados == ("IN-04-2023_NI",)
+    assert so_recuperacao.recall == do_caso.recall == 0.5
+    assert so_recuperacao.projeto_proibido is do_caso.vazou is True
 
 
 def test_valor_proibido_na_resposta_e_vazamento() -> None:
