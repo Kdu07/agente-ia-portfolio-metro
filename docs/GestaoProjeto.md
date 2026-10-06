@@ -1978,6 +1978,24 @@ A figura da matriz produzida no artefato de entendimento de negócio permanece c
 
 > **Nota de processo (fora do pódio de severidade).** `R02` e `R06`, que ocupavam o pódio desde a Sprint 2, deixam a faixa crítica juntos, e pela mesma razão. A resposta que os tirou de lá — escalar via orientadora e seguir com premissas documentadas — foi a contingência prevista desde a Sprint 1. O aprendizado registrável é que a contingência funcionou, mas a revisão da Sprint 3 não percebeu a mudança: a correção acima existe para isso.
 
+### 4.9 Post-mortem de riscos
+
+Esta seção avalia a gestão de riscos do módulo depois do último merge da Sprint 5: o que se materializou, quanto custou, se as respostas funcionaram, o que se aproveitou e o que ocorreu sem estar na matriz. O post-mortem do projeto como um todo está na seção [6](#6-análise-post-mortem) e não é repetido aqui. A apuração tem como base a `develop` em `0268ceb`, de 06/10/2026, e a matriz da seção [4.2](#42-matriz-de-risco-consolidada--status-final-do-projeto).
+
+A matriz não guarda um impacto realizado separado do estimado: quando um item se materializa, ela em regra eleva a probabilidade e preserva o impacto. A comparação abaixo é, por isso, qualitativa: confronta a nota de entrada (`Projeto.md`, seção 2.6.2, e seção 4.2.1 desta) com o efeito que o repositório registra.
+
+#### 4.9.1 Impacto real e estimado dos riscos materializados
+
+| Risco | Entrada | Estimado (P × I = sev.) | Efeito observado | Leitura |
+|---|---|---|---|---|
+| `R02` | S1 | 3 × 4 = 12 | Acesso ao ambiente do parceiro indisponível da Sprint 2 até 04/09; RF04 a RF08 sem demonstração no ambiente real; desenvolvimento sustentado por executor dublado e, depois, pelo executor próprio (seção 4.4) | O impacto 4 é coerente com o efeito: o entregável foi preservado pela contingência. A demonstração no ambiente do parceiro não tem execução registrada na apuração (#514 em `Backlog` em 06/10) |
+| `R06` | S1 | 2 × 4 = 8 | Premissas sem retorno do parceiro nas Sprints 2 e 3; liberação em 04/09 pela escalada via orientadora; a estrutura dos dados foi confrontada no #485 (`Projeto.md`, 5.5.11) e a validação na demonstração segue pendente | O impacto 4 é coerente com o efeito. A probabilidade de entrada (2, "pouco provável") foi a nota que a realidade contrariou |
+| `R08` | S1 | 3 × 3 = 9 | Ruptura de expectativa de escopo na Sprint 2, com reunião de realinhamento e registro formal do escopo (seção 4.5); sem nova ruptura rastreável da Sprint 3 à 5 (seção 4.3) | O repositório não quantifica o retrabalho da Sprint 2; a resposta registrada é compatível com o impacto 3 |
+| `R11` | S2 | severidade 15 (P e I de entrada não encontrados) | Infraestrutura mantida em conta pessoal de um integrante da Sprint 2 ao encerramento, sem migração para credencial institucional; nenhuma interrupção registrada; a documentação reproduzível sustentou a continuidade (seções 4.2 e 4.4) | O dano realizado foi de exposição, e não de interrupção. A exposição segue aberta e é transferida ao Metrô no handover (seção 4.2) |
+| `R18` | S3 | severidade 12 (P e I de entrada não encontrados) | Feriado de 07/09 sem commits e indisposição na Sprint 3; capacity reduzida em um dia de desenvolvimento e restante da sprint comprimido (seção 3.4.4); plano B (`AM14`) nunca combinado | O efeito registrado foi a perda de um dia útil. Não houve ausência depois, então a resposta não foi posta à prova e sua eficácia não pôde ser medida (seção 4.4) |
+| `R21` | S4 | 5 × 4 = 20 | 141% da capacidade (135,50 h contra 96,00 h); 29% das issues concluídas a três dias úteis do fim; Sprint 4 fechada sem card aberto em 28/09 | O marco da sprint foi cumprido, com a conclusão concentrada no fim do ciclo. No mesmo período o repositório registra razão de 2,25:1 em horas e 82% dos merges em duas pessoas, sem separar quanto disso decorre da compressão |
+| `R22` | S4 | 4 × 3 = 12 | Defeito de `performance_mode` integrado em `d4a82b1` (22/09, #426) pela !136 e corrigido pela #456 (!182) em 28/09 | Dentro do impacto 3 (um defeito integrado é corrigível dentro do módulo): a correção foi efetiva, e a revisão da !136 não barrou o defeito (seção 4.4) |
+
 ## 5. Melhorias de processo
 
 ### 5.1 Ações de melhoria
