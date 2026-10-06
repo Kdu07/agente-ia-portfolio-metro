@@ -5616,7 +5616,7 @@ Classificação usada nas tabelas a seguir:
 | Q03 | O site tem 12 listas e 5 bibliotecas. A lista **Projetos** é o eixo, consultada pelas demais. Há listas por projeto (Avanço, Cronograma, Entregas e Marcos, Riscos e problemas, Projetos – Registro de mudanças, Termo de abertura, Termo de encerramento/descontinuidade) e por portfólio (Subportfólio – Base, Situação – Portfólio, Riscos e problemas – Portfólio, Portfólio – Registro de mudanças). O **subportfólio** organiza quase todas as listas. | A base sintética não tem o subportfólio como entidade, nem tabelas de termo de abertura, termo de encerramento e registro de mudanças. O detalhamento campo a campo está no de-para (#485). |
 | Q04 | A biblioteca de documentos tem 5 arquivos. Os cronogramas não estão em colunas: cada item da lista Cronograma guarda o cronograma como anexo `.xlsx`, com nome fora da convenção `CÓDIGO_TIPO_vN_AAAAMMDD`. | O formato é legível pela extração do RAG (`openpyxl`), mas a fonte, anexo de item de lista do SharePoint, não é coberta pela ingestão atual, que consome a pasta do Google Drive (WH-01). |
 | Q05 | Os papéis aparecem como **colunas de pessoa nas listas**, em dois níveis. No projeto: Líder e Diretor responsável (Projetos), Equipe e Representante da diretoria (Termo de abertura). No subportfólio: Responsável, Membro GPM, Aprovador PMO Corporativo e Apoio. O site é um grupo privado do Microsoft 365, e as configurações do site não mostram "Usuários e Permissões" ao perfil de aluno. | O RF01, no ambiente do parceiro, dependeria de a solução ler essas colunas, e não de herdar permissões do SharePoint. Ver 5.5.10.5. |
-| Q06 | Inferido pela interface, sem teste de escrita: as configurações de lista oferecem "Excluir esta lista" e "Criar Coluna", mas não "Permissões para esta lista". O nível é compatível com **Editar**, que permite criar, editar e excluir itens e listas. | Uma ação executada com essa identidade consegue escrever, e também apagar estrutura. Isso reforça o desenho em que o agente propõe a alteração e o usuário confirma (RF05). |
+| Q06 | Inferido pela interface, sem teste de escrita: as configurações de lista oferecem "Excluir esta lista" e "Criar Coluna", mas não "Permissões para esta lista". O nível é compatível com **Editar**, que permite criar, editar e excluir itens e listas. | Se o nível inferido se confirmar, uma ação executada com essa identidade conseguiria escrever e também apagar estrutura. Isso reforça o desenho em que o agente propõe a alteração e o usuário confirma (RF05). |
 
 #### 5.5.10.3 Requisitos funcionais
 
@@ -5626,7 +5626,7 @@ Classificação usada nas tabelas a seguir:
 | RF02 — Interação por texto e voz | Não depende do ambiente | Atendido pela interface e pelo middleware da equipe. O canal do Copilot Studio não está disponível (Q02). |
 | RF03 — Identificação e controle de intenções | Não depende do ambiente | Classificador e catálogo são da solução. |
 | RF04 — Consulta e análise de informações dos projetos | Parcial | Avanço e marcos são sustentados; status, riscos, cronograma e documentos são parciais; faturas e aderência normativa não têm dados (5.5.10.4). |
-| RF05 — Apoio à criação e atualização de projetos | Parcial | Há estrutura e permissão de escrita para projeto, avanço, marcos, riscos, mudanças e termos, mas o ambiente tem fluxos de aprovação (termo de abertura, parecer do subportfólio, deliberação do portfólio) que a solução não modela; os riscos não têm probabilidade e impacto; o cronograma está em anexo. |
+| RF05 — Apoio à criação e atualização de projetos | Parcial | Há estrutura e, pela inferência da Q06 (sem teste de escrita), indício de permissão de escrita para projeto, avanço, marcos, riscos, mudanças e termos, mas o ambiente tem fluxos de aprovação (termo de abertura, parecer do subportfólio, deliberação do portfólio) que a solução não modela; os riscos não têm probabilidade e impacto; o cronograma está em anexo. |
 | RF06 — Alertas e apoio proativo a pendências | Parcial | As datas previstas de marcos e de planos de ação permitem derivar pendências; as regras e a periodicidade do PMO (Q07) seguem abertas. |
 | RF07 — Análise comparativa do portfólio | Sustentado | A lista Avanço guarda, por data de referência, o previsto e o realizado físico e econômico de cada projeto, o que permite comparar projetos e calcular desvio. |
 | RF08 — Relatórios e informações gerenciais | Parcial | O relatório de status combina dados sustentados e parciais; a situação do portfólio é texto livre; o termo de encerramento não tem registros; o Power BI (Q08) não foi verificado. |
@@ -5654,7 +5654,7 @@ Classificação usada nas tabelas a seguir:
 | `gerar_relatorio_status` | Parcial | Combina status, avanço, marcos e riscos, com as limitações de cada um. |
 | `gerar_previa_diretoria` | Parcial | Situação do portfólio em texto livre e avanço por projeto. |
 | `gerar_relatorio_encerramento` | Sem dados | A lista Termo de encerramento existe, mas não tem registros. |
-| `criar_projeto` | Parcial | A lista Projetos aceita escrita, mas o ambiente associa o projeto a um termo de abertura com fluxo de aprovação, que a solução não modela. |
+| `criar_projeto` | Parcial | A lista Projetos, pela inferência da Q06, aceitaria escrita, mas o ambiente associa o projeto a um termo de abertura com fluxo de aprovação, que a solução não modela. |
 | `atualizar_avanco` | Sustentado | Novo registro na lista Avanço. |
 | `atualizar_cronograma` | Sem dados | Não há colunas de cronograma; atualizar exigiria editar o anexo. |
 | `registrar_risco` | Parcial | A lista não tem probabilidade nem impacto, que a solução coleta. |
@@ -5687,7 +5687,7 @@ Duas divergências adicionais: os responsáveis por mudança e por deliberação
 2. **RF01.** Implementar perfis no ambiente do parceiro significa ler as colunas de pessoa das listas, nos dois níveis, e decidir com o PMO como os papéis de subportfólio se traduzem em permissões da solução.
 3. **Modelo de dados.** O subportfólio, os termos de abertura e de encerramento, o registro de mudanças e os fluxos de aprovação não existem na base sintética. Essa distância é a matéria do de-para (#485) e da reavaliação do risco `R01`.
 4. **Ingestão.** Documentos e cronogramas do ambiente estão em bibliotecas e anexos de lista do SharePoint, fonte que a ingestão atual não consome.
-5. **Escrita.** A identidade de teste tem nível de edição. Qualquer escrita do agente deve continuar exigindo confirmação do usuário, e o escopo de escrita deve ser restrito às listas necessárias.
+5. **Escrita.** A identidade de teste tem nível de edição, inferido pela interface na Q06; nenhuma escrita foi testada (5.5.10.1). Qualquer escrita do agente deve continuar exigindo confirmação do usuário, e o escopo de escrita deve ser restrito às listas necessárias.
 
 ### 5.5.11 De-para entre o ambiente de teste do parceiro e a base sintética
 
@@ -10704,7 +10704,7 @@ permanece manual.
 
 ## 9.3 Modelo de Recomendação
 
-[Preencher]
+Esta seção ficou sem conteúdo. A solução entregue na Sprint 5 não inclui um modelo de recomendação: o agente classifica intenções e consulta o portfólio, com o RF04 parcial, e a alteração do portfólio pela conversa (RF05) não foi implementada (10.7.3). Recomendações que dependam de um modelo próprio ficam fora do MVP.
 
 ## 9.4 Desenvolvimento de Features
 
@@ -12147,9 +12147,9 @@ conteúdo e ações do histórico e filtros/estados do painel em
 `testes/autenticacao.test.tsx`, `testes/paginas.test.tsx` e
 `testes/intencoes.test.tsx`.
 
-O terceiro é que **a cobertura não é medida nesta entrega**. A meta de oitenta
-por cento definida em 9.1.8 não era medida na entrega inicial documentada aqui.
-Essa lacuna foi fechada: `npm run test:coverage` mede linhas, ramos e funções,
+O terceiro é que **a cobertura da interface não era medida na entrega
+inicial**. A meta de oitenta por cento definida em 9.1.8 não era medida na
+entrega documentada aqui. Essa lacuna foi fechada: `npm run test:coverage` mede linhas, ramos e funções,
 aplica o limite mínimo de 80% e publica Cobertura no merge request pela pipeline
 da interface (9.2.10). A execução atual superou os três limites; a consolidação
 da cobertura do middleware permanece registrada em 10.7.
@@ -13229,7 +13229,9 @@ A **ausência de um RNF de desempenho** permanece. Os sete casos `TNF-DES` medem
 
 Estabelece essas quatro coisas sob uma condição que prefere declarar a
 omitir: o RNF03 possui medição sobre sua bancada completa, e o RNF04 possui
-somente o indicativo da janela local curta registrado em 10.2.3.4. Os demais
+o indicativo da janela local curta e o da janela implantada de 05/10/2026
+(83,333% de disponibilidade, abaixo da meta preliminar de 99%), ambos
+registrados em 10.2.3.4. Os demais
 procedimentos ainda dependem da construção ou execução de seus instrumentos,
 e três das metas contra as quais eles reportarão são hipóteses da própria
 equipe, que os primeiros resultados deverão recalibrar. A seção não afirma
@@ -14975,7 +14977,7 @@ RabbitMQ está saudável; a suíte de integração interna e de webhooks usa o
 banco e o broker reais do Compose; o frontend valida contratos via MSW e
 formatos do FastAPI, e o smoke fecha a ponte `web → proxy → middleware`.
 
-**Limitações atuais (substitui o registro de 23/09):**
+**Limitações registradas em 25/09/2026 (substitui o registro de 23/09), com a cobertura do frontend atualizada em 05/10/2026:**
 
 1. O `.env` local deste ambiente apontava `DATABASE_URL` para a porta **5434**;
    o Compose publica o Postgres em **5432**. Sem alinhar a URL, dezenas de
@@ -14987,8 +14989,10 @@ formatos do FastAPI, e o smoke fecha a ponte `web → proxy → middleware`.
    de arquivo ou o VHS sem bloquear a loopback quando necessário.
 4. Testes `*_real.py` (Content Safety, Direct Line, Gemini, Pinecone) exigem
    credenciais e rede; nesta revisão só o mecanismo VHS foi executado.
-5. Cobertura de linhas do frontend ficou em **77,42%**, abaixo da meta de 80%
-   de 9.1.8; branches em 80,84%.
+5. Em 25/09/2026, a cobertura de linhas do frontend ficou em **77,42%**,
+   abaixo da meta de 80% de 9.1.8, e as branches em 80,84%. Esse número foi
+   superado: a execução de 05/10/2026 aprovou 429 testes em 21 arquivos, com
+   **87,48%** de linhas, acima da meta (introdução da seção 10 e 9.5.5).
 
 #### 10.5.7.4 Restrições conhecidas
 
