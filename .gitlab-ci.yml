@@ -12,8 +12,10 @@ workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     # A develop e a main rodam mesmo com MR aberto (a develop → main do fim
-    # da sprint): é a pipeline de branch que implanta. Outras branches só têm
-    # a pipeline do MR, para cada push não rodar tudo duas vezes.
+    # da sprint): é a pipeline de branch que implanta. Reconhecer também a
+    # branch padrão configurada no GitLab mantém a pipeline de push caso ela
+    # mude de nome. As demais branches continuam usando somente a pipeline de MR.
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "main"
     # Disparo manual: "Run pipeline" na interface (web) ou `glab ci run`
     # (api). Com IMPLANTAR=dev, a branch escolhida vai para o dev, se a
