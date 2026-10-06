@@ -9,7 +9,7 @@ import { Historico } from "@/paginas/Historico";
 import { Rotas } from "@/rotas";
 import { servidor } from "./setup";
 import { HttpResponse, http } from "msw";
-import { renderizar } from "./utilitarios";
+import { escolherAcaoDaRotina, renderizar } from "./utilitarios";
 
 afterEach(cleanup);
 
@@ -199,8 +199,8 @@ describe("Página de rotinas", () => {
 
     const cartao = screen.getByText("Riscos da Linha 6").closest("article");
     expect(cartao).not.toBeNull();
-    fireEvent.click(within(cartao!).getByRole("button", { name: "Excluir" }));
-    expect(screen.getByRole("alertdialog", { name: "Excluir rotina?" })).toBeInTheDocument();
+    await escolherAcaoDaRotina(cartao!, "Excluir");
+    expect(await screen.findByRole("alertdialog", { name: "Excluir rotina?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(screen.queryByRole("alertdialog", { name: "Excluir rotina?" })).not.toBeInTheDocument();
   });
@@ -211,16 +211,16 @@ describe("Página de rotinas", () => {
     const cartao = titulo.closest("article");
     expect(cartao).not.toBeNull();
 
-    fireEvent.click(within(cartao!).getByRole("button", { name: "Editar" }));
-    fireEvent.change(screen.getByPlaceholderText("Ex.: Resumo semanal do portfólio"), {
+    await escolherAcaoDaRotina(cartao!, "Editar");
+    fireEvent.change(await screen.findByPlaceholderText("Ex.: Resumo semanal do portfólio"), {
       target: { value: "Riscos críticos atualizados" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
     expect(await screen.findByText("Riscos críticos atualizados")).toBeInTheDocument();
 
     const cartaoAtualizado = screen.getByText("Riscos críticos atualizados").closest("article");
-    fireEvent.click(within(cartaoAtualizado!).getByRole("button", { name: "Excluir" }));
-    fireEvent.click(screen.getByRole("button", { name: "Excluir rotina" }));
+    await escolherAcaoDaRotina(cartaoAtualizado!, "Excluir");
+    fireEvent.click(await screen.findByRole("button", { name: "Excluir rotina" }));
     await waitFor(() => expect(screen.queryByText("Riscos críticos atualizados")).not.toBeInTheDocument());
   });
 
@@ -230,7 +230,8 @@ describe("Página de rotinas", () => {
     const cartao = titulo.closest("article");
     expect(cartao).not.toBeNull();
 
-    fireEvent.click(within(cartao!).getByRole("button", { name: "Resultados" }));
+    // Pela última execução da linha, o outro caminho até os Resultados.
+    fireEvent.click(within(cartao!).getByRole("button", { name: /^Última:/ }));
 
     expect(await screen.findByText(/Resumo consolidado de 12 projetos ativos/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Executar agora" }));
@@ -263,7 +264,7 @@ describe("Página de rotinas", () => {
   it("apresenta o status e o desfecho das execuções em frase", async () => {
     renderizar(<Rotinas />);
     const cartao = (await screen.findByText("Resumo semanal do portfólio")).closest("article");
-    fireEvent.click(within(cartao!).getByRole("button", { name: "Resultados" }));
+    await escolherAcaoDaRotina(cartao!, "Ver resultados");
 
     const dialogo = await screen.findByRole("dialog", { name: "Resumo semanal do portfólio" });
     expect(await within(dialogo).findByText("Concluída")).toBeInTheDocument();
@@ -281,6 +282,15 @@ describe("Página de rotinas", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Banco temporariamente indisponível");
     expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeInTheDocument();
     expect(screen.queryByText("Crie sua primeira rotina")).not.toBeInTheDocument();
+  });
+
+  it("mantém um só botão primário quando ainda não há rotinas", async () => {
+    servidor.use(http.get("/api/rotinas", () => HttpResponse.json([])));
+    renderizar(<Rotinas />);
+
+    await screen.findByText("Crie sua primeira rotina");
+    const primarios = document.querySelectorAll('[data-slot="button"][data-variant="default"]');
+    expect([...primarios].map((botao) => botao.textContent)).toEqual(["Nova rotina"]);
   });
 });
 
@@ -338,6 +348,8 @@ describe("Página de histórico", () => {
     fireEvent.click(screen.getByRole("button", { name: "Arquivar Status do Projeto X" }));
     const confirmacao = screen.getByRole("alertdialog", { name: "Arquivar conversa?" });
     expect(confirmacao).toHaveTextContent("O registro das interações continua guardado.");
+    // Arquivar tira a conversa da lista sem volta pela interface: confirma como remoção.
+    expect(within(confirmacao).getByRole("button", { name: "Arquivar" })).toHaveAttribute("data-variant", "destructive");
     fireEvent.click(within(confirmacao).getByRole("button", { name: "Arquivar" }));
 
     await waitFor(() => expect(screen.queryByRole("link", { name: /Status do Projeto X/ })).not.toBeInTheDocument());

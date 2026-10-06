@@ -202,7 +202,7 @@ export function Rotinas() {
         </span>
         <h2 className="text-base font-semibold">Não foi possível carregar as rotinas</h2>
         <p className="text-sm text-muted-foreground">{mensagemDoErro(consultaRotinas.error, "Tente novamente em instantes.")}</p>
-        <Button type="button" variant="outline" className="mt-2 bg-card" onClick={() => void consultaRotinas.refetch()}>
+        <Button type="button" variant="outline" className="mt-2" onClick={() => void consultaRotinas.refetch()}>
           Tentar novamente
         </Button>
       </div>
@@ -231,15 +231,12 @@ export function Rotinas() {
         descricao="Tente ajustar a busca ou o filtro de situação."
       />
     ) : (
+      // Sem botão próprio: o "Nova rotina" do topo já é o primário da
+      // página, e dois primários para a mesma ação dividem a atenção.
       <EstadoVazio
         icone={IconeRotinas}
         titulo="Crie sua primeira rotina"
-        descricao="Automatize uma consulta recorrente para acompanhar o portfólio sem precisar pedir."
-        acao={
-          <Button type="button" onClick={() => abrirFormulario(null)}>
-            Criar rotina
-          </Button>
-        }
+        descricao="Automatize uma consulta recorrente para acompanhar o portfólio sem precisar pedir. Comece por Nova rotina."
       />
     );
   }
@@ -278,7 +275,7 @@ export function Rotinas() {
             </label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" className="bg-card" aria-label={`Ordenar por ${rotuloDaOrdenacao.toLocaleLowerCase("pt-BR")}`}>
+                <Button type="button" variant="outline" aria-label={`Ordenar por ${rotuloDaOrdenacao.toLocaleLowerCase("pt-BR")}`}>
                   <IconeOrdenar aria-hidden="true" />
                   {rotuloDaOrdenacao}
                 </Button>

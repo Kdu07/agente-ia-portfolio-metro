@@ -3,21 +3,32 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/utilitarios/cn"
 import { Slot } from "radix-ui"
 
+/*
+ * Hierarquia dos botões (9.2.5 do Projeto.md):
+ *
+ * - default (primário): a ação que conclui a tarefa; no máximo um por
+ *   região (barra lateral, conteúdo da página, diálogo).
+ * - outline (secundário): alternativa ao primário — cancelar, fechar,
+ *   tentar de novo, ordenar, ver detalhes.
+ * - ghost (terciário): ações repetidas por linha e utilitárias.
+ * - destructive: só o botão que confirma uma remoção. O gatilho na lista
+ *   é terciário, com o vermelho apenas no hover (`BotaoIcone destrutivo`).
+ *
+ * Os fundos são tokens opacos: o teste de contraste não compõe
+ * transparência, e um `/90` no hover seria um par sem verificação.
+ */
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primario-hover",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+          "bg-destrutivo-fundo text-texto-sobre-cor hover:bg-destrutivo-hover focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border border-borda-forte bg-card text-foreground shadow-xs hover:bg-secondary",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "text-texto hover:bg-secondary hover:text-foreground",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

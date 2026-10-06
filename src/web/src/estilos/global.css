@@ -42,11 +42,26 @@
   --bolha-usuario: #14305C;
   --marinho: #0B1A33;
 
+  /* Texto e ícone sobre cor forte (bolha da pessoa, gravação, destrutivo), igual nos dois temas. */
+  --texto-sobre-cor: #FFFFFF;
+
+  /*
+   * Fundo do botão destrutivo, igual nos dois temas. Fica separado de
+   * `--destructive`, que no escuro é claro para servir de texto sobre o
+   * card e não sustentaria texto branco por cima.
+   */
+  --destrutivo-fundo: #C4322B;
+  --destrutivo-hover: #A82A24;
+
+  /* Véu sob os diálogos e o painel lateral; o anel do avatar da Prata. */
+  --veu: rgb(0 0 0 / 0.5);
+  --anel-avatar: rgb(255 255 255 / 0.1);
+
   /* Prata do avatar da pessoa, com as iniciais em marinho, igual nos dois temas. */
   --prata-claro: #E4E9F0;
   --prata-escuro: #9DA9BA;
 
-  /* Gravação de voz, igual nos dois temas. Só como fundo do botão, sob o ícone branco. */
+  /* Gravação de voz, igual nos dois temas. Só como fundo do botão, sob `--texto-sobre-cor`. */
   --gravacao: #D23B3B;
 
   /* Ícone de sucesso do aviso, que tem fundo invertido: o verde do tema oposto. */
@@ -151,8 +166,8 @@
   --muted-foreground: #8D9AB0;
   --accent: #172338;
   --accent-foreground: #EDF2F9;
-  /* Claro o bastante para texto sobre card (7,6); o botão destrutivo do
-     shadcn usa dark:bg-destructive/60, que dá 4,94 com texto branco. */
+  /* Claro o bastante para texto sobre card (7,6). O botão destrutivo não o
+     usa como fundo: fica em `--destrutivo-fundo`, sob texto branco. */
   --destructive: #FF8B7E;
   --border: #22314A;
   --input: #22314A;
@@ -161,7 +176,9 @@
   --texto: #C3CDDC;
   --borda-forte: #2E4060;
   --controle-desligado: #6A7A95;
-  --primario-hover: #3F7AEE;
+  /* Escurece em vez de clarear: um azul mais claro que o primário não
+     sustenta 4,5:1 com o texto branco (o #3F7AEE dava 4,02). */
+  --primario-hover: #2559C8;
   --primario-texto: #7EAAFF;
   --primario-suave: #12294D;
   --bolha-usuario: #244A86;
@@ -240,6 +257,11 @@
   --color-primario-suave: var(--primario-suave);
   --color-bolha-usuario: var(--bolha-usuario);
   --color-marinho: var(--marinho);
+  --color-texto-sobre-cor: var(--texto-sobre-cor);
+  --color-destrutivo-fundo: var(--destrutivo-fundo);
+  --color-destrutivo-hover: var(--destrutivo-hover);
+  --color-veu: var(--veu);
+  --color-anel-avatar: var(--anel-avatar);
   --color-prata-claro: var(--prata-claro);
   --color-prata-escuro: var(--prata-escuro);
   --color-gravacao: var(--gravacao);

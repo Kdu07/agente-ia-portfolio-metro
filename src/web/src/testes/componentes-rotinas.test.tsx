@@ -5,7 +5,7 @@
  * verificando comportamentos esperados e estados de erro.
  */
 
-import { cleanup, screen, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -231,70 +231,107 @@ describe("LinhaRotina", () => {
     expect(screen.getByText("Descrição da rotina")).toBeInTheDocument();
   });
 
-  it("mostra status Ativa quando rotina está ativa", () => {
+  async function escolherNoMenu(item: string) {
+    await userEvent.click(screen.getByRole("button", { name: "Mais ações para Rotina de teste" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: item }));
+  }
+
+  it("mostra o estado pelo interruptor, sem selo", () => {
     renderizar(<LinhaRotina {...defaultProps} />);
 
-    expect(screen.getByText("Ativa")).toBeInTheDocument();
+    const interruptor = screen.getByRole("switch", { name: "Rotina de teste ativa" });
+    expect(interruptor).toBeChecked();
+    // É o `data-state` que pinta o trilho; a dica não pode sobrescrevê-lo.
+    expect(interruptor).toHaveAttribute("data-state", "checked");
+    expect(screen.queryByText("Ativa")).not.toBeInTheDocument();
   });
 
-  it("mostra status Pausada quando rotina está inativa", () => {
-    renderizar(<LinhaRotina {...defaultProps} rotina={{ ...rotinaMock, ativa: false }} />);
+  it("diz Pausada uma vez só quando a rotina está inativa", () => {
+    renderizar(<LinhaRotina {...defaultProps} rotina={{ ...rotinaMock, ativa: false, proximo_disparo: null }} />);
 
-    const article = screen.getByRole("article");
-    const statusBadge = within(article).getByText("Pausada", { selector: "span" });
-    expect(statusBadge).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Rotina de teste ativa" })).not.toBeChecked();
+    expect(within(screen.getByRole("article")).getAllByText("Pausada")).toHaveLength(1);
   });
 
-  it("chama onAlternar ao clicar em Pausar", async () => {
+  it("chama onAlternar ao desligar o interruptor", async () => {
     const onAlternar = vi.fn();
     renderizar(<LinhaRotina {...defaultProps} onAlternar={onAlternar} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Pausar" }));
+    await userEvent.click(screen.getByRole("switch", { name: "Rotina de teste ativa" }));
 
     expect(onAlternar).toHaveBeenCalledWith(rotinaMock);
   });
 
-  it("chama onAlternar ao clicar em Ativar", async () => {
+  it("chama onAlternar ao ligar o interruptor de uma rotina pausada", async () => {
     const onAlternar = vi.fn();
     const rotinaInativa = { ...rotinaMock, ativa: false };
     renderizar(<LinhaRotina {...defaultProps} rotina={rotinaInativa} onAlternar={onAlternar} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Ativar" }));
+    await userEvent.click(screen.getByRole("switch", { name: "Rotina de teste ativa" }));
 
     expect(onAlternar).toHaveBeenCalledWith(rotinaInativa);
   });
 
-  it("chama onResultados ao clicar em Resultados", async () => {
+  it("chama onResultados pelo menu de ações", async () => {
     const onResultados = vi.fn();
     renderizar(<LinhaRotina {...defaultProps} onResultados={onResultados} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Resultados" }));
+    await escolherNoMenu("Ver resultados");
 
-    expect(onResultados).toHaveBeenCalledWith(rotinaMock);
+    await waitFor(() => expect(onResultados).toHaveBeenCalledWith(rotinaMock));
   });
 
-  it("chama onEditar ao clicar em Editar", async () => {
+  it("chama onEditar pelo menu de ações", async () => {
     const onEditar = vi.fn();
     renderizar(<LinhaRotina {...defaultProps} onEditar={onEditar} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Editar" }));
+    await escolherNoMenu("Editar");
 
-    expect(onEditar).toHaveBeenCalledWith(rotinaMock);
+    await waitFor(() => expect(onEditar).toHaveBeenCalledWith(rotinaMock));
   });
 
-  it("chama onExcluir ao clicar em Excluir", async () => {
+  it("chama onExcluir pelo item destrutivo do menu", async () => {
     const onExcluir = vi.fn();
     renderizar(<LinhaRotina {...defaultProps} onExcluir={onExcluir} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    await userEvent.click(screen.getByRole("button", { name: "Mais ações para Rotina de teste" }));
+    const excluir = await screen.findByRole("menuitem", { name: "Excluir" });
+    expect(excluir).toHaveAttribute("data-variant", "destructive");
+    await userEvent.click(excluir);
 
-    expect(onExcluir).toHaveBeenCalledWith(rotinaMock);
+    await waitFor(() => expect(onExcluir).toHaveBeenCalledWith(rotinaMock));
   });
 
-  it("desabilita botão de alternar durante operação", () => {
+  it("devolve o foco ao menu de ações antes de rodar a ação", async () => {
+    let focadoNaAcao: Element | null = null;
+    renderizar(<LinhaRotina {...defaultProps} onEditar={() => (focadoNaAcao = document.activeElement)} />);
+
+    await escolherNoMenu("Editar");
+
+    await waitFor(() => expect(focadoNaAcao).toBe(screen.getByRole("button", { name: "Mais ações para Rotina de teste" })));
+  });
+
+  it("mostra a última execução e abre os resultados por ela", async () => {
+    const onResultados = vi.fn();
+    const rotina: Rotina = { ...rotinaMock, ultima_execucao: { iniciada_em: "2024-01-01T08:00:00", status: "falha" } };
+    renderizar(<LinhaRotina {...defaultProps} rotina={rotina} onResultados={onResultados} />);
+
+    const ultima = screen.getByRole("button", { name: /^Última: .+ Falhou.*ver resultados$/ });
+    await userEvent.click(ultima);
+
+    expect(onResultados).toHaveBeenCalledWith(rotina);
+  });
+
+  it("diz que a rotina ainda não executou quando não há histórico", () => {
+    renderizar(<LinhaRotina {...defaultProps} rotina={{ ...rotinaMock, ultima_execucao: null }} />);
+
+    expect(screen.getByText("Ainda não executada")).toBeInTheDocument();
+  });
+
+  it("desabilita o interruptor durante operação", () => {
     renderizar(<LinhaRotina {...defaultProps} operacaoEmCurso={true} />);
 
-    expect(screen.getByRole("button", { name: "Pausar" })).toBeDisabled();
+    expect(screen.getByRole("switch", { name: "Rotina de teste ativa" })).toBeDisabled();
   });
 
   it("mostra intenção prevista pelo rótulo", () => {
@@ -390,6 +427,13 @@ describe("ConfirmarExclusao", () => {
 
     expect(screen.getByRole("alertdialog", { name: "Excluir rotina?" })).toBeInTheDocument();
     expect(screen.getByText("Rotina para excluir")).toBeInTheDocument();
+  });
+
+  it("confirma em vermelho e cancela com o botão secundário", () => {
+    renderizar(<ConfirmarExclusao {...defaultProps} />);
+
+    expect(screen.getByRole("button", { name: "Excluir rotina" })).toHaveAttribute("data-variant", "destructive");
+    expect(screen.getByRole("button", { name: "Cancelar" })).toHaveAttribute("data-variant", "outline");
   });
 
   it("não renderiza diálogo quando rotina é null", () => {
