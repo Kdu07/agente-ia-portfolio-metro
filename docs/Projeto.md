@@ -7656,7 +7656,7 @@ python -m pytest tests/integration/test_exemplos_nlp.py -v
 
 O teste precisa do e5 no cache do Hugging Face, como o TF-RF03-01, e do
 `ffprobe` no `PATH`. Sem PostgreSQL, os seis casos são pulados. Na CI eles rodam
-no job `middleware:pytest`, que já tem o banco, o `ffmpeg` e o e5.
+no job `middleware`, que já tem o banco, o `ffmpeg` e o e5.
 
 # 6. Mapeamento Técnico de Infraestrutura e Implantação
 
@@ -10436,7 +10436,7 @@ individualmente ou em sequência:
 
 O inventário atualizado dos casos, com identificadores, cenários, entradas e
 resultados esperados, está na seção 9.5.3; a execução e a cobertura medida estão
-registradas na seção 9.5.5. O job `web:vitest` da integração contínua executa
+registradas na seção 9.5.5. O job `web` da integração contínua executa
 `npm run test:coverage` e publica o relatório Cobertura como artefato
 `coverage_report`, exibido pelo GitLab no merge request. Os limites e resultados
 da medição estão registrados em 9.5.5.
@@ -14560,7 +14560,7 @@ rota, sem o Entra configurado a consulta ao diretório levanta
 `ConfiguracaoAusente`, que a rota não trata, e a resposta seria 500 em vez
 de indisponibilidade. É defeito a corrigir, não comportamento a fixar em
 teste. Como preparar o ambiente e
-rodar: 10.5.7.2. Na CI: job `integracao:web-middleware` (10.5.8).
+rodar: 10.5.7.2. Na CI: job `middleware`, depois do pytest (10.5.8).
 
 #### 10.5.5.9 IT-CTR — contratos
 
@@ -15018,31 +15018,39 @@ succeed* ligada no projeto, qualquer job vermelho impede o merge.
 
 | Estágio | Job | Imagem | O que roda |
 |---|---|---|---|
-| `lint` | `middleware:ruff` | `python:3.12-slim` | `ruff check .`, com o ruff na mesma faixa do extra `dev` |
-| `lint` | `web:eslint` | `node:20-alpine` | `npm run lint` |
-| `lint` | `web:tipos` | `node:20-alpine` | `npm run typecheck` (os dois `tsconfig`) |
-| `teste` | `middleware:pytest` | `python:3.12-slim` + serviços `postgres:16-alpine` e `rabbitmq:4.3.6-management-alpine` | `alembic upgrade head` e a suíte inteira com `--block-network` |
-| `teste` | `web:vitest` | `node:20-alpine` | `npm run test:coverage`, com os limiares de 9.1.8 |
-| `teste` | `integracao:web-middleware` | `python:3.12-slim` + Node 20 (tarball oficial) + serviço `postgres:16-alpine` | `alembic upgrade head`, `popular_banco` e `sessoes_integracao`; uvicorn em segundo plano; espera `/health/pronto` e roda `npm run test:integracao` (10.5.5.8) |
+| `teste` | `middleware` | `python:3.12-slim` + Node 20 (tarball oficial) + serviços `postgres:16-alpine` e `rabbitmq:4.3.6-management-alpine` | `ruff check .`; `alembic upgrade head` e a suíte inteira com `--block-network`; num banco novo, `popular_banco` e `sessoes_integracao`, uvicorn em segundo plano, espera por `/health/pronto` e `npm run test:integracao` (10.5.5.8) |
+| `teste` | `web` | `node:20-alpine` | `npm run lint`, `npm run typecheck` (os dois `tsconfig`) e `npm run test:coverage`, com os limiares de 9.1.8 |
 
-Os três jobs de teste publicam relatório JUnit, e o resultado aparece por caso
-na aba de testes do merge request.
+São só dois jobs porque, desde 06/10/2026, a instância do GitLab recusa criar
+a pipeline quando o projeto passaria de 5 jobs em pipelines ativas, e a
+recusa não entra em fila. Até essa data eram seis jobs, um por verificação.
+Para não perder o diagnóstico, cada etapa que falha fica anotada e o job
+segue para a próxima. A última linha reprova o job e lista as etapas que
+falharam (por exemplo, `Falharam: ruff vitest`).
 
-No `integracao:web-middleware`, as telas falam com o middleware de verdade,
-e quatro escolhas merecem registro:
+Os dois jobs publicam relatório JUnit (pytest, integração e Vitest), e o
+resultado aparece por caso na aba de testes do merge request.
+
+Na parte de integração do job `middleware`, as telas falam com o middleware
+de verdade, e cinco escolhas merecem registro:
 
 - **Python e Node no mesmo job.** O servidor precisa estar no ar enquanto a
   suíte roda. A imagem é a do middleware, e o Node 20 entra pelo tarball
   oficial, em versão fixa.
 - **A instalação repete a do Dockerfile:** torch CPU, `.[rag]` e o
-  e5-large na mesma revisão. É o mesmo servidor que vai para a Azure.
+  e5-large na mesma revisão. É o mesmo servidor que vai para a Azure, mais o
+  extra `dev` que o pytest usa.
+- **Banco próprio.** A carga do `popular_banco` exige banco novo, e o pytest
+  já passou pelo `middleware`. Por isso a integração cria o banco
+  `integracao` no mesmo serviço e aponta o `DATABASE_URL` para ele.
 - **Sem segredo no repositório.** O `SESSION_SECRET` é gerado no próprio
   job e descartado com ele. O arquivo de sessões não entra nos artefatos;
   só o JUnit e o `uvicorn.log` entram.
-- **Sem RabbitMQ.** Nenhuma rota usada pela interface publica evento; só os
-  *webhooks* publicam.
+- **Sem RabbitMQ.** O serviço está no job, mas só o pytest aponta para ele.
+  Nenhuma rota usada pela interface publica evento; só os *webhooks*
+  publicam.
 
-No `middleware:pytest`, quatro escolhas merecem registro:
+Na parte do pytest, quatro escolhas merecem registro:
 
 - **PostgreSQL e RabbitMQ vêm de serviços do GitLab**, não do Testcontainers:
   o *runner* já provê os contêineres, e o Docker-in-Docker seria custo
@@ -15056,7 +15064,7 @@ No `middleware:pytest`, quatro escolhas merecem registro:
   Dockerfile. O TF-RF03-01 classifica com o artefato treinado de verdade, que
   depende desse modelo; dentro do pytest o `--block-network` impediria o
   download.
-- **`HF_HUB_OFFLINE=1` a partir do pytest.** Com o modelo já no disco, um teste
+- **`HF_HUB_OFFLINE=1` no pytest.** Com o modelo já no disco, um teste
   que tente baixar outro falha em vez de sair para a rede.
 
 Na primeira execução verde (pipeline 80045 do MR !171), o `middleware:pytest`
@@ -15068,7 +15076,7 @@ execução local — em cerca de 4,5 minutos, contando a instalação. O
 O grupo `externo` roda com as fitas versionadas: **o CI não tem credencial de
 nenhum tenant**, e essa é uma propriedade a preservar.
 
-Na `develop` e na `main`, o mesmo arquivo segue, depois destes dois estágios,
+Na `develop` e na `main`, o mesmo arquivo segue, depois do estágio de teste,
 para a publicação das imagens e a implantação na Azure, descritas em 11.2.3.
 Os jobs de entrega entram na Azure por OIDC, com identidade restrita ao ramo, e
 também não guardam credencial.
@@ -15588,10 +15596,14 @@ depois dos de verificação descritos em 10.5.8:
 
 | Estágio | Job | Quando | O que roda |
 |---|---|---|---|
-| `imagens` | `imagens:dev` | Push na `develop` | `provisionar.sh dev imagens` contra um Docker do serviço `docker:dind` |
-| `imagens` | `imagens:prd` | Push na `main` | `provisionar.sh prd imagens` |
-| `implantar` | `implantar:dev` | Automático, depois do anterior | `implantar.sh dev` |
+| `implantar` | `entrega:dev` | Push na `develop` | `provisionar.sh dev imagens` contra um Docker do serviço `docker:dind`, depois `implantar.sh dev` |
+| `imagens` | `imagens:prd` | Push na `main` | `provisionar.sh prd imagens` contra o mesmo Docker de serviço |
 | `implantar` | `implantar:prd` | **Só com clique** | `implantar.sh prd` |
+
+Até 06/10/2026, o dev também tinha dois jobs, `imagens:dev` e
+`implantar:dev`. Eles viraram um só pelo limite de jobs ativos descrito em
+10.5.8. Na `main`, que roda pouco, a separação continua: as imagens ficam
+prontas antes do clique.
 
 Os jobs de entrega só começam se lint e testes passarem. Eles usam a mesma tag,
 o `$CI_COMMIT_SHORT_SHA`, nas duas pontas, e cada deploy fica registrado em
