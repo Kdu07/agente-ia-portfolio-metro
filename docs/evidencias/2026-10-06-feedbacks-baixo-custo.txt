@@ -1,0 +1,47 @@
+Evidencias — feedbacks viaveis de baixo custo (#498)
+Data: 2026-10-06
+Branch: docs/revisao-final
+
+S3-04 / S3-05 — testes contra PostgreSQL
+Servico: infra-db-1 (PostgreSQL 16, Docker Compose, estado healthy).
+O DATABASE_URL foi apontado para 127.0.0.1:5432/middleware; a credencial nao
+esta registrada neste arquivo.
+Diretorio: src/middleware
+Comando:
+  python -m pytest -p no:cacheprovider -rs tests/integration/test_persistencia.py
+Resultado:
+  A execucao inicial dos 34 testes existentes passou em 5,22 s.
+  Depois foram adicionados dois testes de AudioRepository e a bateria completa
+  foi reexecutada: 36 passed, 0 failed, 0 skipped, em 4,49 s.
+  test_audio_criado_atualizado_e_recuperado_do_banco verifica criar, atualizar
+  e recuperar estado/texto/idioma/confianca/latencia persistidos.
+  test_audio_so_e_recuperado_pelo_dono_e_enquanto_vigente verifica que o dono
+  recupera a transcricao, outro usuario nao e transcricoes expiradas nao sao
+  retornadas.
+  A fixture reverte as transacoes. Dois avisos SQLAlchemy reportaram transacao
+  ja desassociada da conexao durante testes que provocam violacao de
+  integridade; nao houve falha.
+
+S4-30 — README
+  O README contem agora uma unica imagem, docs/imagens/logo-inteli.png.
+  Essa imagem foi recortada do cabecalho composto ja versionado no repositorio,
+  isolando a marca do Inteli. Os demais elementos visuais e os dois icones
+  remotos da licenca foram removidos do README; texto de atribuicao preservado.
+
+S2-13 — implantacao
+  Projeto.md, secao 11.2.2: criterios observaveis adicionados para as 15 fases
+  de provisionamento, incluindo estado dos recursos, tag de imagens, RBAC,
+  estado do banco/TLS, migracao, carga, apps, Entra, alertas, federacao OIDC,
+  remocao da regra temporaria e verificacao final.
+
+S2-01 — criterio de decisao
+  Projeto.md, secao 7.1.1: definido estudo comparativo de presenca opcional e
+  ambiente, observacoes a registrar e regra de decisao condicionada a ganho
+  relevante e desconforto aceitavel. Nenhum estudo ou resultado foi inventado.
+
+S4-10 — aceitacao do formato
+  Projeto.md, secao 10.1.1: registrada a avaliacao de que o formato atual dos
+  passos, compartilhado por requisito com entrada/pre-condicao e resultado
+  esperado, foi considerado aceitavel.
+
+A issue #498 nao foi atualizada via API do GitLab nesta execucao.

@@ -7894,6 +7894,22 @@ Esta seção apresenta a prototipação exploratória realizada para investigar 
 
 O agente deve viver exclusivamente dentro dos canais digitais que a equipe já utiliza (Teams / Copilot Studio), confinado a interações que o usuário escolhe abrir, ou deve ter presença física e ambiente no espaço de trabalho, manifestando-se por conta própria independentemente de o usuário estar com algum aplicativo aberto?
 
+**Evidência que decidiria entre as alternativas.** A decisão deve ser tomada
+em um teste comparativo com pessoas que representem os usuários do PMO,
+expondo cada participante às duas alternativas em ordem alternada e com
+situações de trabalho equivalentes. Para cada alternativa, registrar se a
+pessoa percebeu o alerta sem ajuda, o tempo até percebê-lo, a conclusão da
+tarefa associada, a preferência declarada e a percepção de interrupção,
+exposição social e controle. Antes da coleta, o parceiro e a equipe devem
+definir qual diferença de percepção ou conclusão seria relevante e qual nível
+de desconforto seria inaceitável; isso evita escolher a alternativa por uma
+diferença trivial ou por uma média que esconda rejeição. A presença ambiente
+só se justifica se melhorar a percepção ou a conclusão em relação ao canal
+opcional sem ultrapassar o limite de desconforto acordado. Se não houver ganho
+relevante, ou se a exposição/interrupção for inaceitável, a evidência favorece
+a presença opcional. O teste ainda não foi realizado, portanto esta seção
+define o critério de decisão e não declara um resultado.
+
 ### 7.1.2 Justificativa
 
 O TAPI define o Copilot Studio e o Teams como plataforma de orquestração (3.1.3), mas não define se o agente deve ser algo que o usuário *procura* ou algo que *o procura*. A seção 2.8.3 já identifica um problema de descoberta e aprendizagem no canal puramente conversacional, e o RF06 exige proatividade - mas proatividade dentro de um app fechado é diferente de proatividade que ocupa o espaço físico do escritório. Essa tensão entre presença opcional e presença ambiente nunca foi resolvida nos artefatos do parceiro, e muda diretamente como as três personas percebem o agente: como ferramenta ou como colega presente.
@@ -12592,6 +12608,11 @@ Cada requisito é apresentado em três partes, sempre na mesma ordem: uma abertu
 
 O bloco de execução é escrito uma vez por requisito, e não por linha da tabela. Repetir a mesma instrução de ferramenta e de dublê em cada caso engordaria o documento sem acrescentar informação, porque a decisão de execução é a mesma para o conjunto: o que muda de um caso para outro é a entrada e a asserção, e as duas já estão na tabela.
 
+Na avaliação da entrega, o avaliador considerou aceitável esse formato de
+execução compartilhado por requisito. Os casos com várias etapas permanecem
+descritos pela entrada/pré-condição e pelo resultado esperado; não foi exigida
+uma lista numerada repetida em cada caso.
+
 As ferramentas são as declaradas em 5.1.2, acrescidas de três adições que esta seção introduz e que precisam ser lidas como adições.
 
 | Ferramenta | Uso | Situação na pilha |
@@ -15780,23 +15801,29 @@ bash infra/azure/provisionar.sh dev tudo
 
 O `tudo` executa as fases abaixo, nesta ordem. Cada uma também roda sozinha:
 
-| Fase | O que faz |
-|---|---|
-| `fundacao` | Registra os provedores, cria o grupo, o Log Analytics (retenção de 30 dias) e o registro de imagens |
-| `imagens` | Constrói e publica as duas imagens com a tag do commit |
-| `cofre` | Identidade gerenciada do estágio, Key Vault com RBAC e os papéis de leitura de segredo e de *pull* no registro |
-| `banco` | Servidor, banco e usuário do estágio (11.1.2) |
-| `cognitivos` | Content Safety e Speech no nível gratuito, na mesma região |
-| `segredos` | Grava no cofre os valores do `.env` e as chaves dos recursos cognitivos, sem exibi-los |
-| `ambiente` | Container Apps Environment com logs no Log Analytics |
-| `migracao` | Job do Alembic (11.1.4) |
-| `dados` | Carga inicial (11.1.5) |
-| `apps` | Middleware e web; com `RECONFIGURAR=1`, regrava a configuração inteira |
-| `entra` | Registra a URI de retorno do login no registro de aplicativo do Entra ID |
-| `alertas` | Grupo de ação, alertas e orçamento (11.3.3) |
-| `pipeline` | Identidade da entrega contínua (11.2.3) |
-| `fechar` | Remove o acesso temporário ao banco |
-| `conferir` | Verificação final, só leitura (11.1.7) |
+| Fase | O que faz | Critério de validação |
+|---|---|---|
+| `fundacao` | Registra os provedores, cria o grupo, o Log Analytics (retenção de 30 dias) e o registro de imagens | Provedores em estado `Registered`; grupo, workspace com retenção de 30 dias e ACR existem na região prevista. |
+| `imagens` | Constrói e publica as duas imagens com a tag do commit | As imagens de middleware e web com a mesma tag do commit existem no ACR e podem ser baixadas. |
+| `cofre` | Identidade gerenciada do estágio, Key Vault com RBAC e os papéis de leitura de segredo e de *pull* no registro | Identidade e cofre existem com RBAC; a identidade do estágio consegue ler segredos e baixar imagens, sem permissões fora do escopo do estágio. |
+| `banco` | Servidor, banco e usuário do estágio (11.1.2) | Servidor em estado `Ready`; banco e usuário próprios do estágio existem; `require_secure_transport` está ativo e a conexão TLS funciona. |
+| `cognitivos` | Content Safety e Speech no nível gratuito, na mesma região | Os dois recursos estão no nível F0, na região do estágio, e retornam endpoint não vazio. |
+| `segredos` | Grava no cofre os valores do `.env` e as chaves dos recursos cognitivos, sem exibi-los | Segredos obrigatórios existem no Key Vault, sem imprimir valores; cada configuração sensível consumida pela aplicação usa referência ao cofre. |
+| `ambiente` | Container Apps Environment com logs no Log Analytics | O ambiente está provisionado e associado ao workspace de Log Analytics criado para o estágio. |
+| `migracao` | Job do Alembic (11.1.4) | A execução do job termina em `Succeeded` e `alembic current` no banco aponta para a revisão `head` da imagem publicada. |
+| `dados` | Carga inicial (11.1.5) | As tabelas `rag.trecho` e `portfolio.projeto` contêm os dados esperados da origem; a tabela `portfolio.usuario_projeto` permanece fora da cópia por depender das identidades reais do Entra ID. |
+| `apps` | Middleware e web; com `RECONFIGURAR=1`, regrava a configuração inteira | Middleware e web têm revisões provisionadas; o endpoint de prontidão do middleware responde com sucesso. Se configurado, o worker também inicia sem erro. |
+| `entra` | Registra a URI de retorno do login no registro de aplicativo do Entra ID | A URI `https://<web>/api/auth/callback` aparece nas URIs de retorno do aplicativo Entra ID do estágio. |
+| `alertas` | Grupo de ação, alertas e orçamento (11.3.3) | Grupo de ação, alertas de reinício e indisponibilidade e orçamento com notificações em 50%, 80% e 100% existem e estão habilitados. |
+| `pipeline` | Identidade da entrega contínua (11.2.3) | A credencial federada restringe emissor, projeto e branch do estágio; a identidade tem os papéis necessários nos recursos daquele estágio, sem segredo estático no GitLab. |
+| `fechar` | Remove o acesso temporário ao banco | A regra de firewall `provisionamento` não existe após a fase; permanece apenas a regra de conectividade descrita em 6. |
+| `conferir` | Verificação final, só leitura (11.1.7) | A execução termina sem falhas; segredos não estão em texto claro nos apps, as referências obrigatórias ao cofre existem e o banco exige TLS sem regra temporária de acesso externo. |
+
+Os critérios são observáveis nos recursos, saídas e verificações do
+provisionamento; não substituem a checagem final de `conferir`/`saude`. Nas
+fases `migracao` e `dados`, registrar também a revisão atual do Alembic e as
+contagens de `rag.trecho` e `portfolio.projeto` ajuda a comprovar que a imagem
+e a carga correspondem ao estágio, sem expor conteúdo do corpus.
 
 O `dev` foi criado em 22/09/2026 e o `prd` em 24/09/2026. A criação do `prd`
 revelou o limite de um único Container Apps Environment por região na
