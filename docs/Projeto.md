@@ -4033,12 +4033,12 @@ passam pelas filas de retentativa e falhas definitivas chegam a
 | Sessão, Entra ID e permissões | RF01 e RNF05: autenticação e autorização ocorrem antes do acesso aos dados. |
 | Guardas de injeção, abuso e saída | RF09 e RNF06: barram manipulação, uso indevido e injeção indireta, com detecção e falso positivo medidos por barreira. |
 | Catálogo e classificação de intenção | RF02, RF03 e RNF03: direcionam a solicitação e permitem recusar intenções fora do escopo. |
-| Porta `Executor` e dois adaptadores | O middleware controla o ponto de execução sem acoplar o pipeline ao Copilot ou ao RAG; a PoC usa o executor próprio e preserva o Direct Line como integração prevista. |
+| Porta `Executor` e dois adaptadores | O middleware controla o ponto de execução sem acoplar o pipeline ao Copilot ou ao RAG; a PoC usa o executor próprio e preserva o Direct Line como integração prevista. Os RF04 a RF08 são os requisitos executados por essa integração (INT-02, em 5.5.5.1 e 5.5.6); na PoC, o executor próprio ocupa o lugar do Direct Line. |
 | Persistência e registro de desfechos | RF10, RNF02 e RNF07: uma linha por solicitação, com retenção declarada e cifra em repouso. |
 | Histórico e retomada de conversas | RF12: a conversa agrupa as interações e o acesso é restrito ao seu autor. |
 | Worker usando o orquestrador | RF11 e RF06: mantém as rotinas agendadas sujeitas às mesmas regras de segurança do chat, incluindo a varredura periódica de pendências. |
 | Analytics somente leitura | RF10: permite acompanhar volume, confiança e bloqueios sem conceder à camada de indicadores permissão de escrita. |
-| Webhooks, RabbitMQ e consumidor no worker | Atualizam portfólio e corpus fora do tempo da requisição, com confirmação, idempotência, retentativas e fila de falhas. |
+| Webhooks, RabbitMQ e consumidor no worker | Os webhooks se associam a RF04 e RF01 (9.1.2.7): uma alteração em documento da pasta pode afetar a consulta (RF04), e os filtros de acesso (RF01) continuam obrigatórios. O conjunto atualiza portfólio e corpus fora do tempo da requisição, com confirmação, idempotência, retentativas e fila de falhas. |
 | Alocação de tenant dos serviços externos | RNF01: o perímetro declarado em 3.3.1.1 nomeia cada serviço e o tenant em que ele executa. |
 
 Esta é a referência arquitetural vigente para a implementação do MVP.
@@ -8107,7 +8107,7 @@ Os protótipos físicos foram apresentados a colegas de outras turmas do Inteli,
 
 ### 7.6.1 O que cada protótipo tornou visível
 
-O Protótipo A tornou visíveis lacunas do fluxo de conversa, como o tratamento de múltiplas pendências e a mudança de assunto durante uma interação. O Protótipo B revelou uma dimensão social e emocional ausente do protótipo digital: a exposição perante colegas. Enquanto uma notificação no Teams é normalmente privada, o crachá ocupa um espaço compartilhado e pode comunicar a existência de uma pendência mesmo sem revelar seu conteúdo.
+O Protótipo A tornou visíveis lacunas do fluxo de conversa, como o tratamento de múltiplas pendências e a mudança de assunto durante uma interação. Os achados de 7.5.3 acrescentam três pontos: o caminho "Ignorar" do pop-up de pendência não foi desenhado, e o protótipo só permitiu testar o caminho "Ver detalhes"; o mockup estático não permite avaliar se o agente interpretaria respostas ambíguas ou incompletas; e, na mudança de assunto no meio de uma conversa sobre uma pendência, o "roteirista" precisou interromper, o que expôs uma lacuna do RF03 em contexto multi-turno. O Protótipo B revelou uma dimensão social e emocional ausente do protótipo digital: a exposição perante colegas. Enquanto uma notificação no Teams é normalmente privada, o crachá ocupa um espaço compartilhado e pode comunicar a existência de uma pendência mesmo sem revelar seu conteúdo.
 
 ### 7.6.2 O que surpreendeu o grupo
 
@@ -8138,6 +8138,9 @@ Nenhum dos dois protótipos permite afirmar qual alternativa reduziria de fato o
 - Colega que não é responsável pela pendência percebe o sinal e questiona diretamente a pessoa que utiliza o crachá, criando uma situação social não coberta pelos requisitos funcionais atuais.
 - Alerta que permanece ativo até a resolução e pode produzir fadiga, constrangimento ou habituação ao longo do tempo.
 - Usuário em reunião ou atividade que não pode ser interrompida, mas cujo crachá continua sinalizando uma pendência no ambiente compartilhado.
+- Usuária que ignora o aviso de pendência: o protótipo desenhou só o caminho "Ver detalhes", e o comportamento do agente quando ela escolhe "Ignorar" não foi desenhado nem testado (7.5.3).
+- Mudança brusca de assunto no meio de uma conversa sobre uma pendência: o fluxo não havia sido desenhado, o "roteirista" precisou interromper e o agente não tem comportamento definido para essa situação em contexto multi-turno, o que expõe uma lacuna do RF03 (7.5.3).
+- Resposta livre ambígua ou incompleta ao motivo de um atraso: o mockup estático não permitiu avaliar se o agente a interpretaria (7.5.3).
 
 ## 7.8 Documentação Visual
 
@@ -12580,12 +12583,12 @@ As ferramentas são as declaradas em 5.1.2, acrescidas de três adições que es
 | `pytest` e `pytest-asyncio` | Execução dos casos de *backend*, incluindo os assíncronos | Declarados em 5.1.2 |
 | `pytest-cov` | Cobertura, consolidada em 10.7 contra a meta de 80% de 9.1.8 | Declarado em 5.1.2 |
 | Vitest e Testing Library | Casos cuja asserção é sobre componente de interface | Declaradas em 5.1.2 |
-| `httpx.AsyncClient` com `ASGITransport` | Chamada às rotas da API dentro do processo de teste, sem subir servidor nem rede | Adição desta seção |
+| `TestClient` ou chamada direta à função da rota e ao `Orquestrador` | Chamada às rotas da API dentro do processo de teste, sem subir servidor nem rede | Adição desta seção |
 | `pytest-benchmark` | Micro-latência isolada das guardas e do classificador | Configurado no extra `dev`, usado em 10.2 |
 | Locust | Carga e concorrência | Configurado no extra `dev`, usado em 10.2 |
-| PostgreSQL 16 em contêiner de teste | Banco real, com esquema aplicado por Alembic | Declarado em 5.1.2 como banco da solução |
+| Repositórios e dublês em memória | Colaboradores em memória, definidos em `conftest.py` e nos scripts de `tests/funcionais/`; os scripts não referenciam banco de dados, e o que o `TestClient` faz ao iniciar a aplicação não foi verificado | Leitura dos scripts em 06/10/2026 |
 
-O `httpx.AsyncClient` com `ASGITransport` não é uma quarta biblioteca de teste: `httpx` já é dependência do middleware, e o transporte ASGI apenas dispensa o servidor. A escolha do banco real em contêiner, em vez de um substituto em memória, decorre de os testes precisarem observar restrições de integridade e comportamento transacional que só existem no PostgreSQL — testar contra um banco diferente do de produção verificaria outro sistema.
+O `TestClient` não acrescenta uma biblioteca de teste ao projeto: ele chama a aplicação dentro do processo de teste, sem servidor nem rede. Nem todos os scripts de `tests/funcionais/` o usam: alguns chamam diretamente a função da rota ou o `Orquestrador`, e outros conferem módulos com `find_spec`.
 
 **Estado das ferramentas.** O card #440 incorporou Locust e `pytest-benchmark` ao extra `dev` do middleware e à matriz consolidada de 5.1.5. `pytest-cov` mede o backend e `@vitest/coverage-v8` mede a interface. A execução atual do frontend e sua comparação com a meta estão em 9.5.5; a consolidação do backend e das lacunas por requisito permanece em 10.7.
 
@@ -12600,10 +12603,10 @@ Este conjunto verifica que a identidade resolvida no servidor determina o que o 
 | `TF-RF01-01` | Positivo | Líder consulta projeto sob sua responsabilidade | Sessão válida, com *claim* de grupo que resolve no perfil de Líder de Projeto.<br>Enunciado sobre o avanço de um projeto da própria carteira | Resposta com o dado solicitado e desfecho de sucesso; o escopo consultado é o da carteira do perfil | US01, UC01, UC04 | Onda 1 |
 | `TF-RF01-02` | Negativo | Membro pede projeto alheio | Sessão válida com perfil de Membro de Equipe, sem vínculo com o projeto consultado.<br>Enunciado sobre o status desse projeto | Recusa que não confirma nem nega a existência do projeto; a resposta não contém código, nome nem qualquer atributo do recurso, e a interação é registrada | US01, UC04 (3a), 5.4.6 | Onda 1 |
 | `TF-RF01-03` | Negativo | Sessão ausente ou expirada | Requisição à rota de conversação sem cookie de sessão, e a mesma requisição com cookie expirado | Recusa de autenticação antes de qualquer processamento; nenhuma guarda, classificação ou chamada ao executor é acionada | UC01 (3a), 5.7.3.8 | Onda 1 |
-| `TF-RF01-04` | Negativo | *Claim* de grupo sem perfil correspondente | Autenticação concluída no dublê do Entra ID, devolvendo *claims* que não resolvem em nenhum dos perfis de 3.5.1 | Acesso negado e evento registrado; a aplicação não atribui perfil padrão nem segue com escopo vazio silencioso | UC01 (exceção 4a) | Onda 1 |
+| `TF-RF01-04` | Negativo | *Claim* de grupo sem perfil correspondente | Autenticação concluída no dublê do Entra ID, devolvendo *claims* que não resolvem em nenhum dos perfis de 3.5.1 | A identidade recebe o perfil `MEMBRO_EQUIPE`, o mais restritivo, sem projetos e sem permissões, conforme a política vigente (10.7.1 e IT-AUTH-07, em 10.5.5.3); o UC01 (3.5.3.1, exceção 4a) ainda descreve o acesso negado com evento registrado | UC01 (exceção 4a) | Onda 1 |
 | `TF-RF01-05` | Positivo | O mesmo enunciado, dois perfis | Enunciado idêntico submetido por Membro de Equipe e por Diretoria, ambos com sessão válida | Ambos recebem resposta, e o conjunto de projetos considerado é diferente entre os dois, com o escopo do Membro contido no da Diretoria | US01, UC01, 2.4 | Onda 1 |
 
-**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no arquivo de teste `src/middleware/tests/funcionais/test_rf01_acesso.py`, contra o PostgreSQL 16 do contêiner de teste com o esquema aplicado por Alembic. O Entra ID é dublado: a dependência que resolve sessão e permissões é substituída por outra que devolve os *claims* do caso, o que permite construir os perfis sem depender do provisionamento pendente registrado como risco R02 em 9.1.6. O Copilot Studio também é dublado, com resposta fixa, porque o objeto do teste é o escopo de dados e não o conteúdo devolvido pelo executor. A asserção de `TF-RF01-02` é feita por comparação de ausência: o texto da resposta é confrontado com a lista de atributos do projeto protegido, e o caso reprova se qualquer um deles aparecer.
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `TestClient`, chamada direta à função da rota ou ao `Orquestrador`, ou verificação de módulo com `find_spec`, conforme o script, no arquivo de teste `src/middleware/tests/funcionais/test_rf01_acesso.py`; o script não referencia banco de dados. O Entra ID é dublado: a dependência que resolve sessão e permissões é substituída por outra que devolve os *claims* do caso, o que permite construir os perfis sem depender do provisionamento pendente registrado como risco R02 em 9.1.6. O Copilot Studio também é dublado, com resposta fixa, porque o objeto do teste é o escopo de dados e não o conteúdo devolvido pelo executor. A asserção de `TF-RF01-02` é feita por comparação de ausência: o texto da resposta é confrontado com a lista de atributos do projeto protegido, e o caso reprova se qualquer um deles aparecer.
 
 ```powershell
 cd src\middleware
@@ -12626,7 +12629,7 @@ Este conjunto verifica que os dois canais de entrada chegam ao mesmo lugar. Os c
 
 `TF-RF02-07` é o caso que sustenta o requisito. A arquitetura afirma, em 5.2.3.2 e em 5.7.3.5, que a voz não cria caminho alternativo de autorização nem de registro. A API de ingestão aciona o pipeline depois do STT, mas não o contorna: a asserção verifica a classificação, a chamada ao executor, o canal `voz`, a linha única de interação e seu vínculo com `transcricao_audio`.
 
-**Execução.** Os casos de *backend* rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no arquivo de teste `src/middleware/tests/funcionais/test_rf02_canais.py`. O Azure Speech é dublado em todos eles: os áudios do conjunto são fixos e pequenos, e a transcrição devolvida é controlada pelo dublê, porque o objeto do teste é o trajeto e o tratamento de erro, não a qualidade do reconhecimento — essa é medida sobre o corpus de 5.7.6, pelos indicadores de 3.1.5.2. A verificação de ordem de `TF-RF02-07` é feita registrando as chamadas ao orquestrador e comparando as duas execuções. A apresentação da transcrição no campo de mensagem antes do envio, prevista em 5.7.3.5, é asserção de interface e roda com Vitest e Testing Library em `src/web/src/testes/`.
+**Execução.** Os casos de *backend* rodam com `pytest` e `pytest-asyncio` sobre `TestClient`, chamada direta à função da rota ou ao `Orquestrador`, ou verificação de módulo com `find_spec`, conforme o script, no arquivo de teste `src/middleware/tests/funcionais/test_rf02_canais.py`. O Azure Speech é dublado em todos eles: os áudios do conjunto são fixos e pequenos, e a transcrição devolvida é controlada pelo dublê, porque o objeto do teste é o trajeto e o tratamento de erro, não a qualidade do reconhecimento — essa é medida sobre o corpus de 5.7.6, pelos indicadores de 3.1.5.2. A verificação de ordem de `TF-RF02-07` é feita registrando as chamadas ao orquestrador e comparando as duas execuções. A apresentação da transcrição no campo de mensagem antes do envio, prevista em 5.7.3.5, é asserção de interface e roda com Vitest e Testing Library em `src/web/src/testes/`.
 
 ```powershell
 cd src\middleware
@@ -12645,7 +12648,7 @@ Este conjunto verifica que a solicitação é classificada contra o catálogo fe
 | `TF-RF03-04` | Negativo | Confiança abaixo do limiar pede reformulação | Enunciado ambíguo cuja confiança fica abaixo do limiar da intenção candidata | Pedido de reformulação com desfecho `RECUSADA_BAIXA_CONFIANCA`; nenhuma execução é disparada, em particular nenhuma transação | US03, UC02 (4b), 5.4.6, 5.4.11.4 | Onda 3 |
 | `TF-RF03-05` | Negativo | Recusa por escopo e recusa por permissão são desfechos distintos | Enunciado legítimo do catálogo, submetido por perfil sem permissão sobre o projeto | A solicitação classifica na intenção correta do catálogo e é barrada pela checagem de perfil, com desfecho distinto de `RECUSADA_FORA_ESCOPO`; o registro atribui a recusa à permissão, e não ao escopo | 5.4.5, 5.4.6, UC04 (3a) | Onda 3 |
 | `TF-RF03-06` | Negativo | Entidade obrigatória ausente | Enunciado que classifica em intenção do catálogo sem informar a entidade exigida em 5.4.4 | Pergunta de complemento, com a sessão retendo o contexto; nenhuma execução ocorre e o caso não é tratado como fora de escopo | 5.4.6, 5.4.4 | Onda 3 |
-| `TF-RF03-07` | Positivo | A solicitação recusada fica registrada | Qualquer um dos casos negativos acima, executado com o banco de teste disponível | Existe uma linha de registro para a solicitação recusada, com o desfecho correspondente | US03, UC11 | Onda 3 |
+| `TF-RF03-07` | Positivo | A solicitação recusada fica registrada | Qualquer um dos casos negativos acima, executado com o repositório de registro disponível (em memória nesta bateria) | Existe uma linha de registro para a solicitação recusada, com o desfecho correspondente | US03, UC11 | Onda 3 |
 | `TF-RF03-08` | Positivo | A classe negativa de manipulação é capturada pelo classificador | Enunciado da classe `tentativa_injecao` de 5.4.4.6, com as guardas de entrada dubladas para permitir a passagem | O classificador atribui a classe e o desfecho é o bloqueio seco previsto em 5.4.4.6, sem revelar o motivo a quem enviou | 5.4.4.6, 5.4.11.2 | Onda 3 |
 
 Dois casos pedem leitura cuidadosa. `TF-RF03-07` verifica apenas a **existência** da linha para uma solicitação recusada, que é o quarto critério de aceitação de US03; a completude do conteúdo desse registro — intenção, confiança, perfil, canal e desfecho — e a unicidade da linha são exigências do RF10, verificadas em 10.1.5. `TF-RF03-08` exercita a classe `tentativa_injecao` como **rede de segurança atrás da guarda de injeção**, na leitura que 5.4.4.6 estabelece: as guardas são dubladas para deixar o enunciado passar, justamente para que o teste observe a camada que só age quando as anteriores falharam. A eficácia do conjunto de barreiras não se mede aqui, e sim pelo RNF06, em 10.2.
@@ -12679,7 +12682,7 @@ A decisão difícil deste requisito aparece na comparação entre dois casos neg
 
 A intenção `consultar_faturas_vencidas` **não** integra este conjunto. Ela consta do catálogo por rastreabilidade com o TAPI, mas está classificada como pendente de validação com o parceiro em 5.4.7 e, enquanto isso, fora do conjunto de treino do MVP. Testá-la aqui cobraria do sistema um comportamento que a especificação ainda não decidiu. A exclusão é retomada em 10.1.6.
 
-**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no arquivo de teste `src/middleware/tests/funcionais/test_rf04_consulta.py`. O Copilot Studio é dublado e devolve respostas fixas construídas para cada caso, incluindo a resposta com referência de origem e a resposta de campo vazio — o dublê é indispensável enquanto o provisionamento do risco R02 de 9.1.6 não ocorre, e continua útil depois, porque um dublê determinístico permite asserções que um executor real não permitiria repetir. A comparação de `TF-RF04-03` com `TF-RF04-04` é feita sobre o corpo devolvido pelas duas execuções, que precisam ser iguais.
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `TestClient`, chamada direta à função da rota ou ao `Orquestrador`, ou verificação de módulo com `find_spec`, conforme o script, no arquivo de teste `src/middleware/tests/funcionais/test_rf04_consulta.py`. O Copilot Studio é dublado e devolve respostas fixas construídas para cada caso, incluindo a resposta com referência de origem e a resposta de campo vazio — o dublê é indispensável enquanto o provisionamento do risco R02 de 9.1.6 não ocorre, e continua útil depois, porque um dublê determinístico permite asserções que um executor real não permitiria repetir. A comparação de `TF-RF04-03` com `TF-RF04-04` é feita sobre o corpo devolvido pelas duas execuções, que precisam ser iguais.
 
 ```powershell
 cd src\middleware
@@ -12703,7 +12706,7 @@ A decisão difícil deste requisito é a distinção entre permissão de leitura
 
 `TF-RF05-04` verifica a **existência** dos três elementos de rastreabilidade em uma alteração efetivada. A cobertura de 100% sobre o conjunto de alterações, que é a métrica do RNF02, é medida em 10.2: aqui basta que o mecanismo exista, lá se verifica que ele não falha em nenhum caso. A separação é deliberada, porque um mecanismo que funciona no caminho feliz e falha na alteração originada por rotina agendada passaria neste conjunto e reprovaria no do RNF02, que é onde essa asserção pertence.
 
-**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no arquivo de teste `src/middleware/tests/funcionais/test_rf05_transacoes.py`, contra o PostgreSQL 16 do contêiner de teste. O Copilot Studio é dublado e devolve, conforme o caso, gravação bem-sucedida ou falha de gravação, o que permite exercitar `TF-RF05-05` sem depender de provocar erro em serviço real. A asserção de `TF-RF05-03` é feita sobre as chamadas registradas no dublê: o caso reprova se qualquer leitura do projeto tiver sido emitida antes da recusa.
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `TestClient`, chamada direta à função da rota ou ao `Orquestrador`, ou verificação de módulo com `find_spec`, conforme o script, no arquivo de teste `src/middleware/tests/funcionais/test_rf05_transacoes.py`, sem banco de dados. O Copilot Studio é dublado e devolve, conforme o caso, gravação bem-sucedida ou falha de gravação, o que permite exercitar `TF-RF05-05` sem depender de provocar erro em serviço real. A asserção de `TF-RF05-03` é feita sobre as chamadas registradas no dublê: o caso reprova se qualquer leitura do projeto tiver sido emitida antes da recusa.
 
 ```powershell
 cd src\middleware
@@ -12724,7 +12727,7 @@ Este conjunto verifica a única capacidade do agente que não começa com uma pe
 
 `TF-RF06-05` merece destaque porque é a garantia mais fácil de perder na implementação. O alerta convida à correção, mas não a autoriza, e 5.3.5 registra isso ao determinar que a resposta ao alerta retorne ao fluxo transacional de DS03. Um atalho que gravasse direto a partir da resposta seria mais fluido para o usuário e removeria a confirmação exigida pelo RF05 e o registro exigido pelo RNF02 — exatamente as duas garantias que o contato ter partido do sistema não deveria enfraquecer.
 
-**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no arquivo de teste `src/middleware/tests/funcionais/test_rf06_pendencias.py`, contra o PostgreSQL 16 do contêiner de teste, cujo conteúdo é preparado por *fixture* com os projetos completos e incompletos de cada caso. A varredura é acionada diretamente pelo teste, sem esperar o horário programado: o que se verifica aqui é a regra de pendência e o destinatário do alerta, enquanto o comportamento do agendador no tempo é objeto dos casos do RF11. O canal de entrega é dublado, e a asserção de `TF-RF06-04` é feita sobre os destinatários que o dublê recebeu.
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no arquivo de teste `src/middleware/tests/funcionais/test_rf06_pendencias.py`, sem banco de dados. A varredura é acionada diretamente pelo teste, sem esperar o horário programado: o que se verifica aqui é a regra de pendência e o destinatário do alerta, enquanto o comportamento do agendador no tempo é objeto dos casos do RF11. O canal de entrega é dublado, e a asserção de `TF-RF06-04` é feita sobre os destinatários que o dublê recebeu.
 
 ```powershell
 cd src\middleware
@@ -12764,7 +12767,7 @@ Este conjunto verifica o que o middleware exige e entrega em torno da geração 
 
 `TF-RF08-02` verifica que o perfil chega ao executor e que a saída difere. A **taxa de adequação** dessa diferença — se o material entregue é de fato apropriado ao perfil, medida sobre um conjunto por perfil com meta de 90% — é o RNF05, e está em 10.2. A separação evita que este conjunto funcional passe a julgar qualidade de conteúdo, que não é o que ele sabe medir.
 
-**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no arquivo de teste `src/middleware/tests/funcionais/test_rf08_relatorios.py`. O Copilot Studio é dublado e devolve prévias fixas, diferenciadas por perfil, e uma resposta de dados insuficientes para `TF-RF08-03`. Enquanto os tópicos das três intenções não forem configurados, o dublê é a única forma de exercitar o trajeto; quando forem, os mesmos casos passam a valer como verificação de contrato em 10.4, sem reescrita.
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `TestClient`, chamada direta à função da rota ou ao `Orquestrador`, ou verificação de módulo com `find_spec`, conforme o script, no arquivo de teste `src/middleware/tests/funcionais/test_rf08_relatorios.py`. O Copilot Studio é dublado e devolve prévias fixas, diferenciadas por perfil, e uma resposta de dados insuficientes para `TF-RF08-03`. Enquanto os tópicos das três intenções não forem configurados, o dublê é a única forma de exercitar o trajeto; quando forem, os mesmos casos passam a valer como verificação de contrato em 10.4, sem reescrita.
 
 ```powershell
 cd src\middleware
@@ -12812,13 +12815,13 @@ Este conjunto verifica a invariante mais simples e mais forte da aplicação: to
 
 | ID | Tipo | Cenário | Entrada e pré-condição | Resultado esperado | Rastreabilidade | Onda |
 |---|---|---|---|---|---|---|
-| `TF-RF10-01` | Positivo | Uma linha por solicitação, qualquer que seja o desfecho | Base de teste limpa.<br>N solicitações cobrindo todos os desfechos previstos, incluindo os bloqueados | Exatamente N linhas persistidas, sem duplicata e sem ausência, e cada desfecho previsto aparece ao menos uma vez | US10, UC11, 3.6 | Onda 3 |
+| `TF-RF10-01` | Positivo | Uma linha por solicitação, qualquer que seja o desfecho | Repositório de registro vazio.<br>N solicitações cobrindo todos os desfechos previstos, incluindo os bloqueados | Exatamente N linhas persistidas, sem duplicata e sem ausência, e cada desfecho previsto aparece ao menos uma vez | US10, UC11, 3.6 | Onda 3 |
 | `TF-RF10-02` | Positivo | Cada linha carrega os cinco campos exigidos | As solicitações do caso anterior | Toda linha contém intenção, confiança, perfil, canal e desfecho; nas bloqueadas antes da classificação, os campos de intenção e confiança são explicitamente nulos, e não omitidos | US10, UC11 | Onda 3 |
 | `TF-RF10-03` | Negativo | Perfil sem permissão não acessa os recortes | Sessão válida sem a permissão `VER_INTENCOES` | O acesso aos recortes analíticos é negado, e nenhum agregado é devolvido | US10, UC09 (exceção 1a) | Onda 4 |
 | `TF-RF10-04` | Negativo | Acesso direto à rota, sem passar pela interface | Requisição à rota de análise feita fora da interface, com sessão sem `VER_INTENCOES` | A recusa ocorre no servidor; esconder a rota no frontend não é considerado atendimento do critério | US10, UC09 | Onda 4 |
 | `TF-RF10-05` | Positivo | Os recortes previstos são produzidos | Base com interações de desfechos variados e perfil com `VER_INTENCOES` | São devolvidos volume por intenção, distribuição de desfechos, série de bloqueios por barreira e agrupamento das solicitações fora de escopo | US10, UC09 | Onda 4 |
 
-**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no arquivo de teste `src/middleware/tests/funcionais/test_rf10_registro.py`, contra o PostgreSQL 16 do contêiner de teste, com o esquema aplicado por Alembic e a base truncada entre casos — `TF-RF10-01` conta linhas, e uma base suja invalidaria a contagem. Guardas, classificador e executor são dublados para produzir cada desfecho de forma determinística, já que reproduzir sete desfechos distintos por entrada real seria frágil. O par `TF-RF10-03` e `TF-RF10-04` é executado contra a rota, e não contra a camada de serviço, porque o critério de US10 é explícito quanto à verificação ocorrer no servidor.
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no arquivo de teste `src/middleware/tests/funcionais/test_rf10_registro.py`, com repositório em memória; o script não referencia banco de dados. Guardas, classificador e executor são dublados para produzir cada desfecho de forma determinística, já que reproduzir sete desfechos distintos por entrada real seria frágil. O par `TF-RF10-03` e `TF-RF10-04` é executado contra a rota, e não contra a camada de serviço, porque o critério de US10 é explícito quanto à verificação ocorrer no servidor.
 
 ```powershell
 cd src\middleware
@@ -12840,7 +12843,7 @@ Este conjunto é derivado do cenário 5 de 5.3.8, que modela o cadastro validado
 
 `TF-RF11-04` é o caso que justifica a decisão de resolver permissão no disparo, e não no cadastro. Uma rotina cadastrada em agosto por uma líder que muda de área em setembro continuaria executando com o acesso de agosto se a permissão tivesse sido congelada no cadastro — uma escalação de privilégio que ninguém precisaria provocar, bastando o tempo passar. O caso é o que impede que essa implementação, mais simples e mais rápida, seja adotada sem que alguém perceba.
 
-**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no arquivo de teste `src/middleware/tests/funcionais/test_rf11_rotinas.py`, contra o PostgreSQL 16 do contêiner de teste, que também é o *jobstore* do APScheduler. O disparo é acionado diretamente pelo teste, e não pela passagem do tempo: esperar o horário programado tornaria a suíte lenta e intermitente, e o que se verifica aqui é o comportamento da execução, não a precisão do relógio. O tratamento de disparo perdido e o comportamento sob rotinas concorrentes ficam fora deste conjunto — o primeiro é regra de negócio do agendador, o segundo é cenário de carga, tratado em 10.2.
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` no arquivo de teste `src/middleware/tests/funcionais/test_rf11_rotinas.py`, com repositório de rotinas em memória; o script não referencia banco de dados. O disparo é acionado diretamente pelo teste, e não pela passagem do tempo: esperar o horário programado tornaria a suíte lenta e intermitente, e o que se verifica aqui é o comportamento da execução, não a precisão do relógio. O tratamento de disparo perdido e o comportamento sob rotinas concorrentes ficam fora deste conjunto — o primeiro é regra de negócio do agendador, o segundo é cenário de carga, tratado em 10.2.
 
 ```powershell
 cd src\middleware
@@ -12860,7 +12863,7 @@ Resta decidir **qual** recusa o servidor devolve, e a escolha não é indiferent
 | `TF-RF12-03` | Negativo | Segundo usuário tenta acessar conversa alheia | Identificador de conversa pertencente a outro usuário | A resposta é de recurso inexistente, e não de acesso proibido; nenhum turno, título ou metadado da conversa é devolvido | US12, UC06 (exceção 3a), 5.7.3.4 | Onda 1 |
 | `TF-RF12-04` | Negativo | Identificador inexistente e identificador alheio são indistinguíveis | Duas requisições, uma com identificador que não existe e outra com identificador de conversa alheia | As duas respostas são iguais em código e em corpo, de modo que a diferença entre elas não confirme a existência da segunda | US12, RF01 | Onda 1 |
 
-**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `httpx.AsyncClient` com `ASGITransport`, no arquivo de teste `src/middleware/tests/funcionais/test_rf12_historico.py`, contra o PostgreSQL 16 do contêiner de teste, com duas sessões de usuários distintos construídas por *fixture*. As requisições de `TF-RF12-03` e `TF-RF12-04` são feitas diretamente à rota, porque a garantia é de servidor: uma listagem que omita a conversa alheia na interface e a devolva quando solicitada por identificador atenderia à aparência do requisito e não ao requisito. A geração do título a partir do primeiro turno é verificada como identificação reconhecível, sem asserção sobre o texto produzido, que depende do executor.
+**Execução.** Os casos rodam com `pytest` e `pytest-asyncio` sobre `TestClient`, chamada direta à função da rota ou ao `Orquestrador`, ou verificação de módulo com `find_spec`, conforme o script, no arquivo de teste `src/middleware/tests/funcionais/test_rf12_historico.py`, sem banco de dados, com duas sessões de usuários distintos. As requisições de `TF-RF12-03` e `TF-RF12-04` são feitas diretamente à rota, porque a garantia é de servidor: uma listagem que omita a conversa alheia na interface e a devolva quando solicitada por identificador atenderia à aparência do requisito e não ao requisito. A geração do título a partir do primeiro turno é verificada como identificação reconhecível, sem asserção sobre o texto produzido, que depende do executor.
 
 ```powershell
 cd src\middleware
@@ -12922,6 +12925,8 @@ cd src\middleware
 
 Foram coletadas **68 execuções** para os 65 identificadores planejados; a diferença decorre de casos parametrizados. O resultado foi **43 aprovações, 22 falhas esperadas (`xfail`) e 3 casos ignorados (`skip`)**. Portanto, o código de saída zero comprova que a suíte é reproduzível e que os comportamentos já implementados não regrediram, mas não significa que todos os requisitos estejam concluídos. Os `xfail` registram, de maneira executável, diferenças ainda existentes entre a especificação e o sistema.
 
+Os números desta tabela são os da rodada de 25/09/2026. As reexecuções posteriores estão em 10.1.7.1 e na seção 10.7.
+
 | RF | Aprovadas | `xfail` | `skip` | Leitura do resultado |
 |---|---:|---:|---:|---|
 | RF01 | 5 | 1 | 0 | Fluxos principais aprovados; perfil padrão para grupo desconhecido permanece como lacuna. |
@@ -12938,7 +12943,7 @@ Foram coletadas **68 execuções** para os 65 identificadores planejados; a dife
 | RF12 | 4 | 0 | 0 | Histórico e isolamento entre usuários aprovados nos cenários automatizados. |
 | **Total** | **43** | **22** | **3** | **Execução concluída, com cobertura funcional ainda parcial.** |
 
-Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente utilizado estão preservados em [`docs/evidencias/2026-09-25-testes-funcionais.txt`](evidencias/2026-09-25-testes-funcionais.txt). A execução utilizou `ASGITransport` e dublês nas fronteiras previstas pelos scripts; por isso, esta evidência não deve ser interpretada como comprovação de integração real com PostgreSQL, Entra ID, Copilot Studio, Azure Speech ou Content Safety.
+Os resultados detalhados, os motivos de cada `xfail`, os avisos e o ambiente utilizado estão preservados em [`docs/evidencias/2026-09-25-testes-funcionais.txt`](evidencias/2026-09-25-testes-funcionais.txt). A execução utilizou `TestClient` ou chamadas diretas, conforme o script, e dublês nas fronteiras previstas pelos scripts; por isso, esta evidência não deve ser interpretada como comprovação de integração real com PostgreSQL, Entra ID, Copilot Studio, Azure Speech ou Content Safety.
 
 > **Comparação com a execução anterior.** Os sete casos de `test_rf02_canais.py` passaram nesta execução integral. Os dois casos antes marcados `xfail` foram resolvidos; os totais acima foram recalculados com toda a suíte.
 
@@ -13389,10 +13394,10 @@ A seção 10.2 reúne **37 casos**: 30 distribuídos pelos sete requisitos não 
 |---|---|:-:|:-:|---|---|
 | RNF01 | 10.2.3.1 | 3 | 1 | Inspeção de `.env.example`, `docker-compose.yml` e conectores contra a tabela de 3.3.1.1 | Disponível |
 | RNF02 | 10.2.3.2 | 1 | 3 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Executado localmente; conferência PostgreSQL real permanece fora desta execução |
-| RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11 |
-| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Executado localmente e no `dev` implantado; janela de 05/10 com 83,333%, abaixo da meta preliminar de 99% |
+| RNF03 | 10.2.3.3 | 3 | 1 | Bancada `avaliacao.py`, *feature* F21, sobre o conjunto de 431 casos | Disponível e **já executado**, com evidência em 5.4.11, reproduzida em 05/10/2026 (5.4.11.1) |
+| RNF04 | 10.2.3.4 | 2 | 2 | Sonda sintética por chat e conferência do turno persistido, sobre janela declarada | Executado localmente e no `dev` implantado; janela de 05/10 com 83,333%, abaixo da meta preliminar de 99% (evidência em `2026-10-05-rnf04-disponibilidade-implantada.txt`) |
 | RNF05 | 10.2.3.5 | 2 | 2 | `tests/rnf/test_rnf05_perfil.py` | Executado: 6 aprovados na bancada sintética; validação humana ainda pendente |
-| RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte |
+| RNF06 | 10.2.3.6 | 3 | 3 | `tests/rnf/test_rnf06_barreiras.py` e conjunto em `dados/adversarial/`, contra o Content Safety real | Executado: saída aprovada; injeção e abuso abaixo da meta, portanto RNF06 reprovado neste corte; rodada de 23/09/2026 (`2026-09-23-rnf06-content-safety.txt`) |
 | RNF07 | 10.2.3.7 | 2 | 2 | `tests/rnf/test_rnf02_07_auditoria.py` + `app/persistence/auditoria.py` | Parcial: acesso, retenção e expurgo executados; cifra pendente |
 | Desempenho | 10.2.2 | 5 | 2 | Locust para carga e `pytest-benchmark` para micro-latência | Executado: baseline aprovado; após #529, 10 usuários aprovaram p95 e reprovaram p50 sem falhas, enquanto 30 usuários mantiveram reprovação com contrapressão controlada e sem HTTP 500; `TNF-DES-05` aprovou a unicidade, com latência durante o disparo inconclusiva |
 | **Total** | — | **21** | **16** | — | — |
@@ -15328,14 +15333,16 @@ Esta seção relaciona regras já implementadas e verificadas por testes existen
 não acrescenta cenários artificiais. As evidências detalhadas e a execução funcional
 integral estão em 10.1.7; os testes de retenção e disponibilidade estão em 10.2.3.
 
+Esta tabela não tem rodada própria. Onde ela diverge da 10.7.3, prevalece a rodada posterior, pela regra de consolidação da 10.7.2.
+
 | Regra de negócio | Testes reais | Resultado observado nesta revisão | Lacuna ou limite |
 |---|---|---|---|
-| Controle de acesso e autorização antes do pipeline | `tests/funcionais/test_rf01_acesso.py`; `tests/funcionais/test_rf04_consulta.py` | Acesso autorizado, recusa de sessão ausente/expirada e proteção de projeto alheio aprovados; ver totais por RF em 10.1.7 | Claim sem perfil correspondente continua `xfail`; RF04 tem casos ainda pendentes conforme a tabela funcional |
+| Controle de acesso e autorização antes do pipeline | `tests/funcionais/test_rf01_acesso.py`; `tests/funcionais/test_rf04_consulta.py` | Acesso autorizado, recusa de sessão ausente/expirada e proteção de projeto alheio aprovados; ver totais por RF em 10.1.7 | O teste do claim sem perfil correspondente foi corrigido na #458 e reexecutado em 28/09 (10.7.1); RF04 tem casos ainda pendentes conforme a tabela funcional |
 | Isolamento entre usuários no histórico | `tests/funcionais/test_rf12_historico.py` | Casos de histórico e isolamento aprovados na execução funcional | Exercitado com dependências isoladas; não substitui teste de integração implantado |
-| Registro único por solicitação e registro dos desfechos | `tests/funcionais/test_rf10_registro.py`; `tests/rnf/test_rnf02_07_auditoria.py` | Fluxos funcionais de registro aprovados; TNF-RNF02-01 a 04 aprovados | Execução local; persistência PostgreSQL de produção não é demonstrada por estes testes unitários/funcionais |
+| Registro único por solicitação e registro dos desfechos | `tests/funcionais/test_rf10_registro.py`; `tests/rnf/test_rnf02_07_auditoria.py` | Fluxos funcionais de registro aprovados; TNF-RNF02-01 a 04 aprovados | Execução local; persistência PostgreSQL de produção não é demonstrada por estes testes unitários/funcionais; a persistência real foi verificada à parte por integração (10.7.3) |
 | Confirmação antes de alterações | `tests/funcionais/test_rf05_transacoes.py` | Casos presentes, mas marcados `xfail` | Fluxo de alteração com prévia e confirmação não implementado |
 | Idempotência | `tests/funcionais/test_rf10_registro.py`; `tests/funcionais/test_rf11_rotinas.py`; verificações de integração `tests/integration/test_agendador_persistencia.py` | Os testes funcionais de RF10/RF11 passaram | Os testes de integração com armazenamento/agendador real não fazem parte das suítes executadas nesta rodada |
-| Guardas e invariantes da ordem do pipeline | `tests/funcionais/test_rf09_guardas.py`; `tests/rnf/test_rnf06_barreiras.py` | Ordem/invariantes funcionais aprovadas; TNF-RNF06 manteve reprovação parcial conforme 10.2.3.6 | Falha da guarda de injeção ainda é `xfail`; eficácia real de injeção e abuso abaixo da meta |
+| Guardas e invariantes da ordem do pipeline | `tests/funcionais/test_rf09_guardas.py`; `tests/rnf/test_rnf06_barreiras.py` | Ordem/invariantes funcionais aprovadas; TNF-RNF06 manteve reprovação parcial conforme 10.2.3.6 | Falha da guarda de injeção foi resolvida pela #457 (10.7.1); eficácia real de injeção e abuso abaixo da meta |
 | Agendamento e execução de rotinas | `tests/funcionais/test_rf11_rotinas.py`; `tests/unit/test_agendador_rotinas.py`; `tests/unit/test_worker.py`; `TNF-DES-05` | Cadastro, agenda/fuso, execução e histórico cobertos; na bancada real, cinco rotinas concorrentes produziram exatamente uma execução cada | `TNF-DES-05` aprovou a unicidade com uma réplica de cada processo; a latência durante o disparo ficou inconclusiva e a causa do bloqueio de duas rotinas não foi determinada; ver 10.2.2.3 |
 | Retenção e expurgo | `tests/rnf/test_rnf02_07_auditoria.py` | Quatro casos de RNF07 aprovados, incluindo acesso e limites de expurgo | Cifra em repouso não comprovada; prazo segue provisório e depende de validação com o parceiro |
 
@@ -15415,6 +15422,8 @@ rodada posterior amplia a anterior.
 
 ### 10.7.3 Matriz de requisito, resultado, evidência e lacuna
 
+Cada linha cita a rodada da sua evidência: os totais não vêm de uma única execução, e a data da consolidação é 05/10/2026 (10.7.2).
+
 | Requisito | Script / seção | Casos planejados | Resultado | Evidência | Lacuna |
 |---|---|:-:|---|---|---|
 | RF01 — acesso | `tests/funcionais/test_rf01_acesso.py` | 5 | Aprovado: 5 casos no recorte reexecutado | evidência original; reexecução da #458 em 28/09 | Perfil seguro padrão, escopo e permissões verificados |
@@ -15431,10 +15440,10 @@ rodada posterior amplia a anterior.
 | RF12 — histórico | `tests/funcionais/test_rf12_historico.py` | 4 | Aprovado na bateria funcional | evidência funcional | Integração implantada fora desta execução |
 | RNF01 — perímetro | `tests/perimetro/test_perimetro_declarado.py` | 4 | Aprovado: 5 casos | `2026-09-25-testes-rnf-perimetro.txt` | Inspeção do perímetro não comprova configuração implantada |
 | RNF02 — rastreabilidade | `tests/rnf/test_rnf02_07_auditoria.py` | 4 | Aprovado nos casos executados, inclusive na bateria integral com PostgreSQL | `2026-09-25-testes-rnf-perimetro.txt`; `2026-09-29-cobertura-integral-middleware.txt` | A execução local não substitui validação no ambiente implantado |
-| RNF03 — precisão | `app/pipeline/intencao/avaliacao.py` | 4 | Resultado já registrado em 5.4.11 | 5.4.11 | Reproduzir na mudança do modelo/conjunto |
-| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py`; `app/rotinas/sonda.py` | 4 | Reprovado na janela implantada: 10 de 12 amostras disponíveis, ou 83,333%, contra meta preliminar de 99% | `2026-10-05-rnf04-disponibilidade-implantada.txt`; evidências locais anteriores | Janela curta no `dev`; operação continuada e meta/horário pactuados com o parceiro permanecem pendentes |
+| RNF03 — precisão | `app/pipeline/intencao/avaliacao.py` | 4 | Resultado registrado em 5.4.11, reproduzido em 05/10/2026: 66 de 66 números (5.4.11.1) | 5.4.11 e 5.4.11.1 (modelo treinado em 27/08/2026) | Reproduzir na mudança do modelo/conjunto |
+| RNF04 — disponibilidade | `tests/rnf/test_rnf04_disponibilidade.py`; `app/rotinas/sonda.py` | 4 | Reprovado na janela implantada: 10 de 12 amostras disponíveis, ou 83,333%, contra meta preliminar de 99% | `2026-10-05-rnf04-disponibilidade-implantada.txt`; execução local de 22/09/2026 (10.2.3.4) | Janela curta no `dev`; operação continuada e meta/horário pactuados com o parceiro permanecem pendentes |
 | RNF05 — adequação por perfil | `tests/rnf/test_rnf05_perfil.py` | 4 | Aprovado na bancada sintética: 6 casos; ver 10.2.3.5 | mesma evidência | Avaliação humana com conteúdo do parceiro ainda necessária |
-| RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | 6 | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | resultado externo anterior; execução atual ignorada sem credenciais | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
+| RNF06 — barreiras | `tests/rnf/test_rnf06_barreiras.py` | 6 | Reprovado parcialmente; manter resultado sistêmico real de 10.2.3.6 | rodada de 23/09/2026 (`2026-09-23-rnf06-content-safety.txt`); a rodada de 25/09 foi ignorada sem credenciais (10.2.3.6) | Injeção e abuso abaixo de 90%; não generalizar aprovação da saída |
 | RNF07 — retenção/proteção | `tests/rnf/test_rnf02_07_auditoria.py` | 4 | Parcial: 4 casos aprovados | evidência RNF/perímetro | Cifra ausente e prazo provisório |
 | Desempenho | `tests/desempenho/test_micro_latencia.py`; `tests/desempenho/locustfile.py` | 7 | Baseline de 1 usuário aprovado; após #529, 10 usuários: p50 5,6 s reprovado, p95 6,4 s aprovado e 0 falhas; 30 usuários: p50 16 s, p95 17 s e 30,90% de falhas semânticas, sem HTTP 500/pool; `TNF-DES-05` aprovou a unicidade com latência durante o disparo inconclusiva | `2026-09-30-locust-api-ativa.txt`; `2026-09-30-tnf-des-05-rotinas-chat.txt`; `2026-10-05-saturacao-pipeline-chat.txt`; seção 10.2.2 | Otimizar o p50 nominal; dimensionar contrapressão/cota por réplica; repetir no ambiente implantado e reexecutar a concorrência entre worker e chat |
 | Cobertura de código | `python -m pytest ... --cov=app --cov-report=term-missing` | — | 85,71% na execução ampliada das suítes unitária, funcional, RNF, perímetro e integração; meta de 80% atingida | `2026-09-29-cobertura-80-middleware.txt`; baseline em `2026-09-29-cobertura-integral-middleware.txt` | Provedores comerciais reais permaneceram isolados e os 17 `xfail` continuam visíveis |
