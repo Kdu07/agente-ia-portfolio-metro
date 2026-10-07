@@ -23,9 +23,9 @@ cp src/middleware/.env.example src/middleware/.env
 # Preencha os valores obrigatórios no arquivo .env gerado
 
 # Subir todos os serviços (Banco de Dados, RabbitMQ, Middleware, Worker e Web)
-docker compose -f infra/docker-compose.yml up --build
+docker compose --env-file src/middleware/.env -f infra/docker-compose.yml up --build
 ```
-A aplicação estará disponível em `http://localhost:5173`.
+A aplicação estará disponível em `http://localhost:5173`. A carga dos dados e o primeiro acesso estão na seção 3 do [Manual de implantação e uso](../docs/Manual-instalacao.md).
 
 ### Opção 2: Execução Local Nativa
 
@@ -69,7 +69,7 @@ python -m app.worker
 ```
 
 **3. Frontend Web**
-Exige Node.js 18+. Em um novo terminal:
+Exige Node.js 20+. Em um novo terminal:
 
 ```powershell
 cd web
@@ -89,4 +89,4 @@ npm run dev
 
 - [README do Middleware](middleware/README.md): Detalhes de configuração avançada, classificador, testes de avaliação e pipeline do FastAPI.
 - [README do Emissor do Portfólio](emissor-portfolio/README.md): Uso da ferramenta utilitária.
-- [Manual de Instalação e Implantação em Nuvem](../docs/Manual-instalacao.md): Guia focado na implantação produtiva e arquitetura Azure (Container Apps, PostgreSQL, etc).
+- [Manual de implantação e uso](../docs/Manual-instalacao.md): instalação local do zero com Docker Compose, implantação na Azure com os scripts de `infra/azure` e uso da prova de conceito por perfil.

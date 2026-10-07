@@ -15564,7 +15564,9 @@ Todo o procedimento está em três scripts versionados em
 | `implantar.sh <estágio>` | Publica uma versão: migração do banco, troca das imagens e verificação de saúde |
 
 O [`README.md`](../infra/azure/README.md) da pasta é a referência de operação
-do dia a dia. As decisões, os comandos e as evidências ficam neste capítulo.
+do dia a dia. As decisões, os comandos e as evidências ficam neste capítulo. O
+passo a passo para quem parte do zero, inclusive a instalação local e o uso
+por perfil, está no [Manual de implantação e uso](Manual-instalacao.md).
 
 A assinatura é do tipo FreeTrial e admite um único Container Apps Environment
 por região e um único recurso gratuito de cada serviço cognitivo. Por isso os
@@ -15620,8 +15622,12 @@ Para executar os scripts, a máquina de quem provisiona precisa de:
   assinatura de crédito.
 - **Git Bash**, no Windows. Os scripts exportam `MSYS_NO_PATHCONV=1` e convertem
   caminhos com `cygpath` quando a CLI os recebe.
-- O `src/middleware/.env` preenchido. A fase `segredos` lê dele os valores e os
-  grava no Key Vault sem imprimi-los.
+- **`jq`**, usado pelas fases `conferir` e `metricas`, e **`openssl`**, que gera
+  as senhas.
+- O `src/middleware/.env` preenchido. As fases `segredos`, `apps` e `entra` leem
+  dele por um ambiente virtual em `src/middleware/.venv`, que só precisa do
+  pacote `pydantic-settings`. A `segredos` grava os valores no Key Vault sem
+  imprimi-los.
 - Para a carga inicial (11.1.5), o banco local da porta 5434 com o corpus já
   ingerido.
 
