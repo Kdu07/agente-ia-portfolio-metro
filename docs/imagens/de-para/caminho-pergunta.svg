@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 176" width="1000" height="176" role="img" aria-label="O caminho de uma pergunta, em cinco etapas">
+<defs>
+<marker id="ponta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2D3748"/></marker>
+</defs>
+<rect x="0" y="0" width="1000" height="176" fill="#FFFFFF"/>
+<rect x="10" y="24" width="170" height="128" rx="10" fill="#E3EEFA" stroke="#2B6CB0" stroke-width="1.6"/>
+<circle cx="32" cy="48" r="13" fill="#2B6CB0"/>
+<text x="32" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="52" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">Login</text>
+<text x="22" y="76" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">corporativo</text>
+<text x="22" y="100" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">Quem é a pessoa</text>
+<text x="22" y="116" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">e qual o seu perfil</text>
+<line x1="182" y1="88.0" x2="200" y2="88.0" stroke="#2D3748" stroke-width="2" marker-end="url(#ponta)"/>
+<rect x="202" y="24" width="170" height="128" rx="10" fill="#E3EEFA" stroke="#2B6CB0" stroke-width="1.6"/>
+<circle cx="224" cy="48" r="13" fill="#2B6CB0"/>
+<text x="224" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="244" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">Barreiras</text>
+<text x="214" y="76" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">de segurança</text>
+<text x="214" y="100" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">Barram manipulação</text>
+<text x="214" y="116" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">e pedidos impróprios</text>
+<line x1="374" y1="88.0" x2="392" y2="88.0" stroke="#2D3748" stroke-width="2" marker-end="url(#ponta)"/>
+<rect x="394" y="24" width="170" height="128" rx="10" fill="#E3EEFA" stroke="#2B6CB0" stroke-width="1.6"/>
+<circle cx="416" cy="48" r="13" fill="#2B6CB0"/>
+<text x="416" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="436" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">Entendimento</text>
+<text x="406" y="76" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">do pedido</text>
+<text x="406" y="100" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">Identifica a intenção;</text>
+<text x="406" y="116" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">fora do catálogo, recusa</text>
+<text x="406" y="132" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">com orientação</text>
+<line x1="566" y1="88.0" x2="584" y2="88.0" stroke="#2D3748" stroke-width="2" marker-end="url(#ponta)"/>
+<rect x="586" y="24" width="170" height="128" rx="10" fill="#E3EEFA" stroke="#2B6CB0" stroke-width="1.6"/>
+<circle cx="608" cy="48" r="13" fill="#2B6CB0"/>
+<text x="608" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="628" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">Busca</text>
+<text x="598" y="76" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">e resposta</text>
+<text x="598" y="100" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">Trechos que o perfil</text>
+<text x="598" y="116" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">pode ver; resposta</text>
+<text x="598" y="132" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">com as fontes</text>
+<line x1="758" y1="88.0" x2="776" y2="88.0" stroke="#2D3748" stroke-width="2" marker-end="url(#ponta)"/>
+<rect x="778" y="24" width="170" height="128" rx="10" fill="#E3EEFA" stroke="#2B6CB0" stroke-width="1.6"/>
+<circle cx="800" cy="48" r="13" fill="#2B6CB0"/>
+<text x="800" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#FFFFFF" text-anchor="middle">5</text>
+<text x="820" y="53" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">Conferência</text>
+<text x="790" y="76" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" font-style="normal" fill="#1A202C" text-anchor="start">e registro</text>
+<text x="790" y="100" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">Confere a resposta</text>
+<text x="790" y="116" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#4A5568" text-anchor="start">e registra tudo</text>
+<line x1="950" y1="88.0" x2="996" y2="88.0" stroke="#2D3748" stroke-width="2" marker-end="url(#ponta)"/>
+<text x="990" y="170" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" font-style="normal" fill="#1F3A5F" text-anchor="end">Resposta</text>
+</svg>
