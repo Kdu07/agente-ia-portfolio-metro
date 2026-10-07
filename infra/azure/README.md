@@ -16,6 +16,18 @@ o Container Apps Environment `cae-prata-dev`. A assinatura FreeTrial não
 admite um segundo ambiente na mesma região. Cada estágio tem identidade, Key
 Vault, banco, usuário de banco e apps próprios, com o sufixo `-dev` ou `-prd`.
 
+## Sumário
+
+- [Pré-requisitos](#pré-requisitos)
+- [Uso](#uso)
+- [Conferir segredos e rede do banco](#conferir-segredos-e-rede-do-banco)
+- [Content Safety e Speech](#content-safety-e-speech)
+- [Parar e retomar](#parar-e-retomar)
+- [Entrega contínua](#entrega-contínua)
+- [Monitoramento](#monitoramento)
+- [Voltar a uma versão anterior](#voltar-a-uma-versão-anterior)
+- [O que continua manual](#o-que-continua-manual)
+
 ## Pré-requisitos
 
 - Azure CLI com a extensão `containerapp` (`az extension add -n containerapp --upgrade`).

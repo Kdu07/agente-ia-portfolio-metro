@@ -9253,7 +9253,7 @@ A qualidade é garantida através de uma pirâmide de testes bem definida:
 - Builds de frontend e backend gerados automaticamente
 
 **Rollback:**
-- Cada release é tagada no Git (ex: `v3.0.0` para Sprint 3)
+- Cada entrega na `main` recebe uma tag no Git (ex.: `sprint-3` para a Sprint 3)
 - Migrações do banco são versionadas com Alembic
 - Capacidade de reverter para versão anterior em caso de problema crítico
 - Procedimento documentado no [GestaoConfiguracao.md](GestaoConfiguracao.md)
@@ -16378,30 +16378,33 @@ A ordem abaixo segue as dependências entre os itens, e não só a prioridade.
 
 # Referências
 
-- DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot
+- DATACAMP. *Power BI Copilot: tutorial*. Disponível em: https://www.datacamp.com/pt/tutorial/power-bi-copilot. Acesso em: 7 out. 2026.
+- INTERNATIONAL ORGANIZATION FOR STANDARDIZATION; INTERNATIONAL ELECTROTECHNICAL COMMISSION. *ISO/IEC 25010:2023: Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — Product quality model*. Genebra: ISO, 2023. Disponível em: https://www.iso.org/standard/78176.html. Acesso em: 7 out. 2026.
+- INTERNATIONAL ORGANIZATION FOR STANDARDIZATION; INTERNATIONAL ELECTROTECHNICAL COMMISSION. *ISO/IEC 25059:2023: Software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — Quality model for AI systems*. Genebra: ISO, 2023. Disponível em: https://www.iso.org/standard/80655.html. Acesso em: 7 out. 2026.
+- INTERNATIONAL ORGANIZATION FOR STANDARDIZATION; INTERNATIONAL ELECTROTECHNICAL COMMISSION. *ISO/IEC 27001:2022: Information security, cybersecurity and privacy protection — Information security management systems — Requirements*. Genebra: ISO, 2022. Disponível em: https://www.iso.org/standard/27001. Acesso em: 7 out. 2026.
+- JURAFSKY, D.; MARTIN, J. H. *Speech and Language Processing*. 3. ed. (rascunho). Cap. 4 (avaliação de classificadores: precisão, recall e F1) e Cap. 16 (reconhecimento automático de fala e *Word Error Rate*). Disponível em: https://web.stanford.edu/~jurafsky/slp3/. Acesso em: 7 out. 2026.
 - LEWIS, P. et al. *Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*. In: Advances in Neural Information Processing Systems (NeurIPS), v. 33, p. 9459-9474, 2020. Disponível em: https://arxiv.org/abs/2005.11401. Acesso em: 28 set. 2026.
-- JURAFSKY, D.; MARTIN, J. H. *Speech and Language Processing*. 3. ed. (rascunho). Cap. 4 (avaliação de classificadores: precisão, recall e F1) e Cap. 16 (reconhecimento automático de fala e *Word Error Rate*). Disponível em: https://web.stanford.edu/~jurafsky/slp3/
-- MICROSOFT. *Azure AI Content Safety — detecção de ataques por prompt (Prompt Shields)*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/content-safety/concepts/jailbreak-detection
-- MICROSOFT. *Azure AI Speech — documentação do serviço de fala*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/speech-service/
+- MICROSOFT. *Azure AI Content Safety — detecção de ataques por prompt (Prompt Shields)*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/content-safety/concepts/jailbreak-detection. Acesso em: 7 out. 2026.
+- MICROSOFT. *Azure AI Speech — documentação do serviço de fala*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/speech-service/. Acesso em: 7 out. 2026.
 - MICROSOFT. *Azure AI Speech — obter token de autorização*. Disponível em: https://learn.microsoft.com/pt-br/azure/ai-services/speech-service/rest-speech-to-text-short. Acesso em: 2 set. 2026.
-- MICROSOFT. *Conectar o agente do Copilot Studio a um aplicativo próprio (canal Direct Line)*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/publication-connect-bot-to-custom-application
-- MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/
-- MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report
+- MICROSOFT. *Conectar o agente do Copilot Studio a um aplicativo próprio (canal Direct Line)*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/publication-connect-bot-to-custom-application. Acesso em: 7 out. 2026.
+- MICROSOFT. *Conectores do Power Platform — SharePoint*. Disponível em: https://learn.microsoft.com/pt-br/connectors/sharepointonline/. Acesso em: 7 out. 2026.
+- MICROSOFT. *Criar relatórios com o Copilot no Power BI Desktop*. Disponível em: https://learn.microsoft.com/pt-br/power-bi/create-reports/copilot-create-desktop-report. Acesso em: 7 out. 2026.
 - MICROSOFT. *Direct Line API 3.0 — enviar atividade ao bot*. Disponível em: https://learn.microsoft.com/pt-br/azure/bot-service/rest-api/bot-framework-rest-direct-line-3-0-send-activity. Acesso em: 2 set. 2026.
-- MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/
-- MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/
+- MICROSOFT. *Documentação do Microsoft Copilot Studio*. Disponível em: https://learn.microsoft.com/pt-br/microsoft-copilot-studio/. Acesso em: 7 out. 2026.
+- MICROSOFT. *Documentação do Power Automate*. Disponível em: https://learn.microsoft.com/pt-br/power-automate/. Acesso em: 7 out. 2026.
 - MICROSOFT. *Microsoft identity platform — fluxo de código de autorização com PKCE*. Disponível em: https://learn.microsoft.com/pt-br/entra/identity-platform/v2-oauth2-auth-code-flow. Acesso em: 2 set. 2026.
-- MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention
-- PEDREGOSA, F. et al. *Scikit-learn: Machine Learning in Python*. Journal of Machine Learning Research, v. 12, p. 2825-2830, 2011. Disponível em: https://www.jmlr.org/papers/v12/pedregosa11a.html. Acesso em: 28 set. 2026.
+- MICROSOFT. *Políticas de prevenção contra perda de dados no Power Platform*. Disponível em: https://learn.microsoft.com/pt-br/power-platform/admin/wp-data-loss-prevention. Acesso em: 7 out. 2026.
 - MOCK SERVICE WORKER. *Documentação do MSW*. Disponível em: https://mswjs.io/docs/. Acesso em: 2 set. 2026.
 - NAÇÕES UNIDAS BRASIL. *Objetivos de Desenvolvimento Sustentável*. Disponível em: https://brasil.un.org/pt-br/sdgs. Acesso em: 28 set. 2026.
 - OPENROUTER. *google/gemini-3.5-flash: preços por token*. Disponível em: https://openrouter.ai/google/gemini-3.5-flash. Acesso em: 28 set. 2026.
+- PEDREGOSA, F. et al. *Scikit-learn: Machine Learning in Python*. Journal of Machine Learning Research, v. 12, p. 2825-2830, 2011. Disponível em: https://www.jmlr.org/papers/v12/pedregosa11a.html. Acesso em: 28 set. 2026.
 - PINECONE. *Pricing*. Disponível em: https://www.pinecone.io/pricing/. Acesso em: 28 set. 2026.
-- REIMERS, N.; GUREVYCH, I. *Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks*. In: Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP-IJCNLP), p. 3982-3992, 2019. Disponível em: https://arxiv.org/abs/1908.10084. Acesso em: 28 set. 2026.
 - PYTEST-RECORDING. *Plugin de gravação e reprodução para pytest*. Disponível em: https://github.com/kiwicom/pytest-recording. Acesso em: 2 set. 2026.
-- SCHEMATHESIS. *Property-based testing para APIs descritas em OpenAPI*. Disponível em: https://schemathesis.readthedocs.io/. Acesso em: 2 set. 2026.
+- REIMERS, N.; GUREVYCH, I. *Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks*. In: Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP-IJCNLP), p. 3982-3992, 2019. Disponível em: https://arxiv.org/abs/1908.10084. Acesso em: 28 set. 2026.
 - SALTON, G.; BUCKLEY, C. *Term-weighting approaches in automatic text retrieval*. Information Processing & Management, v. 24, n. 5, p. 513-523, 1988. Disponível em: https://doi.org/10.1016/0306-4573(88)90021-0. Acesso em: 28 set. 2026.
-- SCIKIT-LEARN. *Metrics and scoring: quantifying the quality of predictions*. Disponível em: https://scikit-learn.org/stable/modules/model_evaluation.html
+- SCHEMATHESIS. *Property-based testing para APIs descritas em OpenAPI*. Disponível em: https://schemathesis.readthedocs.io/. Acesso em: 2 set. 2026.
+- SCIKIT-LEARN. *Metrics and scoring: quantifying the quality of predictions*. Disponível em: https://scikit-learn.org/stable/modules/model_evaluation.html. Acesso em: 7 out. 2026.
 - TESTCONTAINERS. *Testcontainers para Python*. Disponível em: https://testcontainers-python.readthedocs.io/. Acesso em: 2 set. 2026.
-- WANG, L. et al. *Multilingual E5 Text Embeddings: A Technical Report*. 2024. Disponível em: https://arxiv.org/abs/2402.05672. Acesso em: 28 set. 2026.
 - VCR.PY. *Gravação e reprodução de interações HTTP em fitas*. Disponível em: https://vcrpy.readthedocs.io/. Acesso em: 2 set. 2026.
+- WANG, L. et al. *Multilingual E5 Text Embeddings: A Technical Report*. 2024. Disponível em: https://arxiv.org/abs/2402.05672. Acesso em: 28 set. 2026.

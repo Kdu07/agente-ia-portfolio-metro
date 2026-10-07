@@ -4,6 +4,21 @@ Backend FastAPI que orquestra o pipeline de segurança e a classificação de
 intenção antes de acionar o Copilot Studio. A ordem das etapas está descrita em
 [Arquitetura.md](../../docs/Arquitetura.md) e é fixa.
 
+## Sumário
+
+- [Ambiente](#ambiente)
+- [Classificador de intenção](#classificador-de-intenção)
+- [Banco de dados](#banco-de-dados)
+- [Mensageria (RabbitMQ)](#mensageria-rabbitmq)
+- [Testes](#testes)
+- [Aplicação](#aplicação)
+  - [Interface contra esta API, sem dublês](#interface-contra-esta-api-sem-dublês)
+- [Banco vetorial (Pinecone)](#banco-vetorial-pinecone)
+- [Ingestão do corpus (Drive → índice)](#ingestão-do-corpus-drive--índice)
+- [Resposta com RAG (recuperação + geração)](#resposta-com-rag-recuperação--geração)
+- [Validação isolada do Speech-to-Text](#validação-isolada-do-speech-to-text)
+- [Conversão de áudio enviado](#conversão-de-áudio-enviado)
+
 ## Ambiente
 
 Todos os comandos abaixo rodam **a partir deste diretório** (`src/middleware`),

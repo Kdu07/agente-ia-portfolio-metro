@@ -31,9 +31,9 @@
 
 **Anexos**
 
-- [Anexo A — Glossário](#anexo-a-glossário): os termos técnicos em linguagem simples.
-- [Anexo B — Resumo do de-para de dados](#anexo-b-resumo-do-de-para-de-dados): como as listas do SharePoint se encaixam no banco do sistema.
-- [Anexo C — Referências](#anexo-c-referências): onde está o detalhe técnico no repositório.
+- [Anexo A — Glossário](#anexo-a--glossário): os termos técnicos em linguagem simples.
+- [Anexo B — Resumo do de-para de dados](#anexo-b--resumo-do-de-para-de-dados): como as listas do SharePoint se encaixam no banco do sistema.
+- [Anexo C — Referências](#anexo-c--referências): onde está o detalhe técnico no repositório.
 
 <!-- quebra -->
 
@@ -55,7 +55,7 @@ Cada peça recebe um dos cinco tipos de mudança abaixo. Nas tabelas, nas fichas
 | **Decisão do Metrô** | Há mais de uma opção válida, e a escolha cabe ao Metrô. |
 | **Não leva** | Existe só por causa da estrutura provisória e não vai para o Metrô. |
 
-**Quem lê o quê.** A Parte 1 (seções 1 a 9) serve para decidir: explica o sistema, o que muda, o que o Metrô precisa providenciar e quanto custa, sem jargão. A Parte 2 (seções 10 a 14) é o guia do TI para montar e operar o sistema. Os termos técnicos são explicados na primeira vez em que aparecem e estão reunidos no [Anexo A](#anexo-a-glossário).
+**Quem lê o quê.** A Parte 1 (seções 1 a 9) serve para decidir: explica o sistema, o que muda, o que o Metrô precisa providenciar e quanto custa, sem jargão. A Parte 2 (seções 10 a 14) é o guia do TI para montar e operar o sistema. Os termos técnicos são explicados na primeira vez em que aparecem e estão reunidos no [Anexo A](#anexo-a--glossário).
 
 **O que fica de fora.** Este de-para não trata do pipeline de integração e entrega contínua, a automação que testa e publica cada versão do código. O passo a passo técnico da estrutura atual está no capítulo 11 do `Projeto.md`, e este documento aponta para ele quando é útil. Nenhuma senha, chave ou identificador sigiloso aparece aqui.
 

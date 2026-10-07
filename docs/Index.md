@@ -10,7 +10,7 @@
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/CaduQuaglia">
+      <a href="https://www.linkedin.com/in/carlos-quaglia-309088357/">
         <img src="imagens/cadu.png" width="90" alt="Carlos Eduardo">
       </a>
     </td>
@@ -114,6 +114,7 @@ Este índice lista os documentos da pasta `docs` e diz, em uma linha, o que cada
 | [glossario-dominio.md](glossario-dominio.md) | Vocabulário do portfólio do Metrô que alimenta o reconhecimento de fala e serve de referência para medir a acurácia de termos de domínio no canal de voz. |
 | [plano-executor-proprio.md](plano-executor-proprio.md) | Plano de construção do executor próprio com recuperação e geração, que demonstra a solução ponta a ponta sem depender do Copilot Studio do parceiro. |
 | [Manual-instalacao.md](Manual-instalacao.md) | Manual de instalação, implantação e uso da prova de conceito. |
+| [de-para-ambiente-metro.md](de-para-ambiente-metro.md) | De-para do ambiente para o Metrô: de onde cada peça do sistema está hoje para onde ela vai na assinatura e no tenant do Metrô, com o que decidir, o que providenciar e o guia de montagem para o TI. Também disponível em [PDF](de-para-ambiente-metro.pdf). |
 
 ## 2. Gestão do projeto
 
@@ -155,6 +156,7 @@ Documentos que ficam ao lado do código que descrevem, citados pelo `README.md` 
 | [src/README.md](../src/README.md) | Organização da pasta `src` e execução local dos serviços. |
 | [src/middleware/README.md](../src/middleware/README.md) | Guia de execução do middleware: ambiente, treino e avaliação do classificador, testes e execução da API. |
 | [src/middleware/migrations/README.md](../src/middleware/migrations/README.md) | Versionamento do esquema do PostgreSQL com Alembic. |
+| [src/middleware/notebooks/README.md](../src/middleware/notebooks/README.md) | Notebooks que reproduzem a avaliação do classificador de intenções e a vetorização e recuperação do RAG, conferidos contra os números do `Projeto.md`. |
 | [src/middleware/tests/integration/fitas/README.md](../src/middleware/tests/integration/fitas/README.md) | Fitas VHS: respostas gravadas dos serviços externos usadas nos testes de integração. |
 | [src/web/src/componentes/graficos/README.md](../src/web/src/componentes/graficos/README.md) | Componentes de gráfico do painel de intenções. |
 | [src/emissor-portfolio/README.md](../src/emissor-portfolio/README.md) | Emissor do webhook de portfólio (WH-02), em Google Apps Script. |
