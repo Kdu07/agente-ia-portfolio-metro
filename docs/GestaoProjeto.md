@@ -152,6 +152,7 @@
 - [5. Melhorias de processo](#5-melhorias-de-processo)
   - [5.1 Ações de melhoria](#51-ações-de-melhoria)
   - [5.2 Indicadores de processo](#52-indicadores-de-processo)
+    - [5.2.1 SLA de primeira revisão dos merge requests](#521-sla-de-primeira-revisão-dos-merge-requests)
 - [6. Análise post-mortem](#6-análise-post-mortem)
   - [6.1 Sucessos do projeto](#61-sucessos-do-projeto)
   - [6.2 Oportunidades de melhoria](#62-oportunidades-de-melhoria)
@@ -2231,6 +2232,42 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 A coluna da Sprint 3 passa a trazer os valores do fechamento, reapurados na seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3); os do corte de 09/09 ficam registrados na seção 3.4.3. A da Sprint 4 traz os valores do fechamento de 25/09, reapurados sobre o commit `e28883a` (seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4)), conforme `AM24`; os do corte de 22/09 ficam registrados na própria 3.5.3.
 
 Os dados são extraídos com data, horário, branch-base e regra de atribuição registrados. A análise não converte contagens em ranking individual: qualidade, complexidade, dependências, papel exercido e revisão cruzada permanecem parte da interpretação.
+
+#### 5.2.1 SLA de primeira revisão dos merge requests
+
+Esta subseção instrumenta o SLA de 24 horas úteis para a primeira revisão de merge request, regra do contrato de convivência (seções 2.1.2 e 2.2.3) que figurava como não medida na tabela da seção 5.2 desde a Sprint 2. A medição cumpre a ação `AM23` e cobre as Sprints 3, 4 e 5.
+
+**Método, corte e fonte.** Os dados vêm da API REST do GitLab do projeto (recursos `merge_requests`, `notes` e `approvals` de cada merge request), extraídos em 06/10/2026, às 23h33 (UTC−03:00). A primeira manifestação do revisor é o primeiro comentário ou a primeira aprovação registrada por alguém que não seja o autor do merge request; eventos do sistema, como atribuição, pedido de revisão e menção em commit, não contam. A espera é o tempo corrido entre a abertura do merge request e essa manifestação, descontados sábados, domingos e o feriado de 07/09, sem janela de horário comercial, porque o contrato não define uma. O universo são os merge requests criados no período de cada sprint com destino na `develop`: Sprint 3 de 31/08 a 11/09, Sprint 4 de 14/09 a 25/09 e Sprint 5 de 28/09 até o corte. Ficam fora os merge requests de release para a `main` (!88, !110 e !177) e o !188, cujo destino é uma branch de documentação, porque não passam pela revisão por pares que o SLA mede.
+
+| Sprint | MRs no universo | MRs medidos | Mediana | Maior espera | Até 24 h úteis | Acima de 24 h úteis |
+|---|---:|---:|---:|---:|---:|---:|
+| Sprint 3 (31/08 a 11/09) | 34 | 32 | 2,9 h | 72,1 h (!91) | 30 de 32 (94%) | 2 |
+| Sprint 4 (14/09 a 25/09) | 68 | 67 | 3,1 h | 48,3 h (!115) | 62 de 67 (93%) | 5 |
+| Sprint 5 (28/09 a 06/10, parcial) | 62 | 61 | 3,1 h | 88,2 h (!203) | 55 de 61 (90%) | 6 |
+
+Não entram no cálculo, por não terem recebido manifestação: os !77 e !105 (Sprint 3) e o !129 (Sprint 4), fechados sem revisão, e o !242 (Sprint 5), aberto às 19h50 de 06/10 e ainda sem resposta no corte. Os valores da Sprint 5 são parciais e serão refeitos depois do último merge do ciclo, conforme `AM24`.
+
+Os merge requests com espera acima de 24 horas úteis, nas três sprints, são os seguintes.
+
+| Sprint | Merge request | Espera | Aberto em | Primeira manifestação |
+|---|---|---:|---|---|
+| 3 | !91 | 72,1 h | 08/09, 17h50 | 11/09, 17h55 |
+| 3 | !94 | 33,6 h | 09/09, 11h32 | 10/09, 21h08 |
+| 4 | !115 | 48,3 h | 16/09, 23h40 | 19/09, 10h06 |
+| 4 | !148 | 47,9 h | 23/09, 23h19 | 25/09, 23h12 |
+| 4 | !118 | 38,3 h | 20/09, 16h18 | 22/09, 14h19 |
+| 4 | !114 | 37,8 h | 16/09, 00h54 | 17/09, 14h41 |
+| 4 | !132 | 28,2 h | 22/09, 17h41 | 23/09, 21h54 |
+| 5 | !203 | 88,2 h | 29/09, 21h35 | 05/10, 13h47 |
+| 5 | !186 | 41,9 h | 28/09, 16h55 | 30/09, 10h49 |
+| 5 | !195 | 25,0 h | 29/09, 10h17 | 30/09, 11h16 |
+| 5 | !191 | 24,3 h | 28/09, 17h48 | 29/09, 18h05 |
+| 5 | !208 | 24,1 h | 30/09, 10h51 | 01/10, 10h59 |
+| 5 | !218 | 24,1 h | 05/10, 14h08 | 06/10, 14h13 |
+
+**Leitura.** A mediana é estável, perto de 3 horas nas três sprints, e cumpre o SLA como o contrato o define, pela mediana. A cauda é que cresce: a fração de merge requests acima de 24 horas úteis passa de 6% na Sprint 3 para 7% na Sprint 4 e 10% na Sprint 5. Na Sprint 5, quatro das seis esperas excedem o prazo em menos de uma hora; as outras duas, !203 e !186, passam de 40 horas e concentram o atraso real. Dois dos casos acima de 24 horas úteis (!115 e !118) tiveram a primeira manifestação em fim de semana, o que mostra que a revisão depende de disponibilidade fora do horário de aula.
+
+**Limites declarados.** A medição vê somente manifestações registradas no GitLab; combinados feitos no Slack, na daily ou presencialmente não entram, e por isso a espera real pode ser menor que a medida. A espera não distingue merge requests pequenos de grandes, nem pedidos de revisão que ficaram sem atribuição por algum tempo. A causa individual de cada espera acima de 24 horas úteis não foi levantada nesta medição.
 
 ## 6. Análise post-mortem
 
