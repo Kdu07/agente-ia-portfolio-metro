@@ -65,7 +65,9 @@ g02/
 
 ## Como executar
 
-**Pré-requisitos.** Para a execução em contêiner, apenas Docker. Para a execução local, Python 3.11 ou superior e Node 18 ou superior.
+O passo a passo completo (contas externas, variáveis, carga dos dados, implantação na Azure e uso por perfil) está no [Manual de implantação e uso](docs/Manual-instalacao.md). Os comandos abaixo são o resumo.
+
+**Pré-requisitos.** Para a execução em contêiner, apenas Docker. Para a execução local, Python 3.11 ou superior e Node 20 ou superior.
 
 Em ambos os casos, crie antes o arquivo de variáveis de ambiente a partir do modelo e preencha os valores. O `.env` não é versionado:
 
@@ -76,19 +78,19 @@ cp src/middleware/.env.example src/middleware/.env
 ### Em contêiner
 
 ```powershell
-docker compose -f infra/docker-compose.yml up --build
+docker compose --env-file src/middleware/.env -f infra/docker-compose.yml up --build
 ```
 
-A interface fica disponível em `http://localhost:5173`.
+A interface fica disponível em `http://localhost:5173`. O login exige um registro de aplicativo no Microsoft Entra ID, e o chat só responde depois da ingestão do corpus: as duas etapas estão nas seções 2 e 3 do manual.
 
 ### Localmente
 
-O backend tem exigências próprias de ambiente e depende de um modelo que precisa ser treinado uma vez após o clone. O passo a passo está em [src/middleware/README.md](src/middleware/README.md) — comece por ele.
+O backend tem exigências próprias de ambiente. O passo a passo está em [src/middleware/README.md](src/middleware/README.md). Comece por ele.
 
 O frontend, a partir de `src/web/`:
 
 ```powershell
-npm install
+npm ci
 npm run dev            # interface em http://localhost:5173
 npm run test           # suíte de testes
 npm run test:coverage  # suíte com relatório em src/web/coverage/

@@ -675,7 +675,7 @@ A imagem da interface é construída em dois estágios. O Node existe apenas par
 
 A instalação de dependências dentro das imagens utiliza os arquivos de trava do repositório, e não resolução livre de versões, para que a imagem construída na nuvem corresponda à exercitada localmente.
 
-A validação desses artefatos consiste em construir as duas imagens e levantar a composição em máquina limpa, confirmando que a aplicação responde sem configuração manual adicional.
+A validação desses artefatos consiste em construir as duas imagens e levantar a composição em máquina limpa, confirmando que a aplicação responde. A única configuração manual é o `src/middleware/.env`, que o Compose exige e que o [Manual de implantação e uso](Manual-instalacao.md) descreve na seção 3.2.
 
 **Implantação e entrega contínua.** Desde a Sprint 4, os estágios `dev` e `prd` rodam no Azure Container Apps e são criados pelos scripts de `infra/azure/`, sem passo manual no portal. O `.gitlab-ci.yml` verifica cada merge request. Na `develop`, depois dos testes, ele publica as imagens com a tag do commit e implanta no `dev`. Na `main`, publica as imagens e deixa a implantação no `prd` à espera de um clique. O procedimento completo, com a verificação e o monitoramento, está no capítulo 11 do [Projeto.md](Projeto.md).
 

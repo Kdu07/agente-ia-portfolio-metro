@@ -248,17 +248,18 @@ ao tenant configurado. Não copie o token ou o segredo para logs e evidências.
 
 ### Interface contra esta API, sem dublês
 
-Em desenvolvimento a interface responde com os dublês do MSW
-(`src/web/src/mocks/handlers.ts`), e nenhuma chamada chega aqui. Para exercitar
-o caminho real — login no Entra, cookie de sessão, proxy de `/api` e os
-contratos das rotas:
+A interface não usa mais dublês no navegador: os do MSW
+(`src/web/src/mocks/handlers.ts`) só atendem aos testes do Vitest, e o
+`npm run dev` fala com esta API pelo proxy de `/api`. Para exercitar o caminho
+real: login no Entra, cookie de sessão, proxy de `/api` e os contratos das
+rotas:
 
 ```powershell
 # 1. banco com esquema e carga de demonstração (seção "Banco de dados")
 # 2. a API, nesta pasta
 uvicorn app.main:app --port 8000
-# 3. a interface, em src/web, com os dublês desligados
-$env:VITE_SEM_DUBLES = "true"; npm run dev
+# 3. a interface, em src/web
+npm run dev
 ```
 
 Quatro cuidados que não se leem no código:
