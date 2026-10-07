@@ -84,6 +84,16 @@ class ExecucoesMemoria:
             registro for registro in self.registros.values() if registro[0].rotina_id == rotina_id
         ][:limite]
 
+    async def ultimas_por_rotina(self, rotina_ids: list[str]) -> dict[str, ExecucaoRotina]:
+        ultimas: dict[str, ExecucaoRotina] = {}
+        for execucao, _ in self.registros.values():
+            atual = ultimas.get(execucao.rotina_id)
+            if execucao.rotina_id in rotina_ids and (
+                atual is None or execucao.iniciada_em > atual.iniciada_em
+            ):
+                ultimas[execucao.rotina_id] = execucao
+        return ultimas
+
 
 def _registrar_execucao(repositorio: ExecucoesMemoria, rotina_id: str = "rotina-a") -> None:
     interacao = Interacao(
@@ -171,6 +181,31 @@ def test_devolve_o_rotulo_legivel_da_intencao_prevista(api_rotinas) -> None:
     assert itens["rotina-inativa"]["intencao_prevista"] == "consultar_riscos"
     assert itens["rotina-inativa"]["intencao_prevista_rotulo"] == "Consultar riscos"
     assert itens["rotina-a"]["intencao_prevista_rotulo"] == "Intencao sem rotulo"
+
+
+def test_lista_o_ultimo_disparo_de_cada_rotina(api_rotinas) -> None:
+    """A lista diz como foi o último disparo sem abrir o histórico.
+
+    A rotina que nunca disparou vem com `ultima_execucao` nula, e não com
+    um disparo inventado.
+    """
+    client, _, execucoes = api_rotinas
+    _registrar_execucao(execucoes)
+
+    itens = {item["id"]: item for item in client.get("/rotinas").json()}
+
+    assert itens["rotina-a"]["ultima_execucao"]["status"] == "sucesso"
+    assert itens["rotina-a"]["ultima_execucao"]["iniciada_em"].startswith(AGORA.date().isoformat())
+    assert itens["rotina-inativa"]["ultima_execucao"] is None
+
+
+def test_edicao_preserva_o_ultimo_disparo_na_resposta(api_rotinas) -> None:
+    client, _, execucoes = api_rotinas
+    _registrar_execucao(execucoes)
+
+    resposta = client.put("/rotinas/rotina-a", json=_pedido(nome="Novo nome"))
+
+    assert resposta.json()["ultima_execucao"]["status"] == "sucesso"
 
 
 def test_valida_prompt_e_agenda_sem_persistir(api_rotinas) -> None:

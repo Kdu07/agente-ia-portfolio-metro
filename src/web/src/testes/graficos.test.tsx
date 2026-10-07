@@ -137,7 +137,7 @@ describe("Componentes", () => {
     expect(cores).toContain(COR.injecao);
     expect(cores).toContain(COR.falha);
     // As atendidas saem das barras e viram numero no titulo; na tabela
-    // acessivel continuam as oito linhas.
+    // acessivel continuam as nove linhas.
     expect(cores).not.toContain(COR.ok);
     expect(cores).toHaveLength(DISTRIBUICAO_DESFECHOS.length - 1);
     expect(screen.getByText(/Atendidas:/)).toHaveTextContent("Atendidas: 495 de 596 (83,1%)");

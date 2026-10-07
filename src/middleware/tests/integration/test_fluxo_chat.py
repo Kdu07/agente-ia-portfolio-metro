@@ -156,7 +156,6 @@ def test_executor_proprio_responde_o_chat(dublar_pipeline, monkeypatch) -> None:
     vínculo externo.
     """
     from app.config import settings
-    from app.persistence.sessao import obter_sessao
     from app.rag import executor as rag_executor
     from app.rag.fluxo import ResultadoRag
     from app.rag.geracao import Fonte, RespostaRag, Situacao
@@ -189,10 +188,12 @@ def test_executor_proprio_responde_o_chat(dublar_pipeline, monkeypatch) -> None:
     monkeypatch.setattr(rag_executor, "montar_fluxo", lambda sessao: FluxoFalso())
 
     repositorio = RepositorioMemoria()
-    app.dependency_overrides[obter_sessao] = lambda: None
     app.dependency_overrides[deps.obter_usuario_atual] = lambda: USUARIO
-    app.dependency_overrides[deps.obter_interacoes] = lambda: repositorio
-    app.dependency_overrides[deps.obter_conversas] = lambda: repositorio
+    app.dependency_overrides[deps.obter_orquestrador] = lambda: Orquestrador(
+        executor=deps.obter_executor(None, USUARIO),
+        interacoes=repositorio,
+        conversas=repositorio,
+    )
     try:
         with TestClient(app) as client:
             resultado = client.post("/chat", json={"mensagem": "Qual o custo do Trecho Sul?"})

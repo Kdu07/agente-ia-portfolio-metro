@@ -1601,7 +1601,7 @@
           "rotinas"
         ],
         "summary": "Listar",
-        "description": "Rotinas do usuário, com o próximo disparo calculado.",
+        "description": "Rotinas do usuário, com o próximo disparo calculado e o último realizado.",
         "operationId": "listar_rotinas_get",
         "parameters": [
           {
@@ -4484,6 +4484,16 @@
             "type": "string",
             "format": "date-time",
             "title": "Atualizada Em"
+          },
+          "ultima_execucao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UltimaExecucao"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -4501,7 +4511,7 @@
           "atualizada_em"
         ],
         "title": "RotinaResposta",
-        "description": "Uma rotina como a tela de gestão a exibe.\n\n`intencao_prevista` vem da validação feita no cadastro e serve para\nmostrar ao usuário o que a rotina vai fazer antes do primeiro disparo.\n`intencao_prevista_rotulo` é o nome legível da mesma intenção, o mesmo\ndo painel de intenções: a tela mostra o rótulo, e não o id técnico.\n`proximo_disparo` é calculado pelo agendador a partir do cron e do\nfuso — é o que confirma visualmente que \"todo dia 5\" foi entendido."
+        "description": "Uma rotina como a tela de gestão a exibe.\n\n`intencao_prevista` vem da validação feita no cadastro e serve para\nmostrar ao usuário o que a rotina vai fazer antes do primeiro disparo.\n`intencao_prevista_rotulo` é o nome legível da mesma intenção, o mesmo\ndo painel de intenções: a tela mostra o rótulo, e não o id técnico.\n`proximo_disparo` é calculado pelo agendador a partir do cron e do\nfuso — é o que confirma visualmente que \"todo dia 5\" foi entendido.\n`ultima_execucao` é nula enquanto a rotina nunca disparou; com ela, a\nlista mostra se o último disparo deu certo sem abrir o histórico."
       },
       "SerieResposta": {
         "properties": {
@@ -4747,6 +4757,25 @@
         ],
         "title": "TurnoResposta",
         "description": "Um turno de conversa, como o histórico o exibe.\n\nTraz `desfecho` e `intencao_id` de propósito: quando o usuário reabre\numa conversa antiga e vê uma recusa, é útil saber que foi recusa e\nnão resposta. É a mesma transparência que o /chat oferece ao vivo."
+      },
+      "UltimaExecucao": {
+        "properties": {
+          "iniciada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Iniciada Em"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusExecucao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "iniciada_em",
+          "status"
+        ],
+        "title": "UltimaExecucao",
+        "description": "O disparo mais recente de uma rotina, para a lista dizer como foi.\n\nSó o que a linha da lista mostra: quando começou e o status. A\nresposta e o desfecho ficam em `GET /rotinas/{id}/execucoes`."
       },
       "UsuarioProjeto": {
         "properties": {

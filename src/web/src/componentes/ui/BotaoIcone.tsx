@@ -5,6 +5,9 @@
  * aparece na dica ao passar o mouse ou focar pelo teclado: quem enxerga o
  * ícone e não reconhece o desenho lê o que ele faz, e o leitor de tela
  * anuncia a mesma coisa.
+ *
+ * É terciário. Com `destrutivo`, abre a confirmação de uma remoção e só
+ * mostra o vermelho no hover: quem confirma em vermelho é o diálogo.
  */
 
 import type { ComponentProps } from "react";
@@ -18,9 +21,10 @@ interface Props extends Omit<ComponentProps<typeof Button>, "children"> {
   rotulo: string;
   icone: Icone;
   lado?: "top" | "right" | "bottom" | "left";
+  destrutivo?: boolean;
 }
 
-export function BotaoIcone({ rotulo, icone: Desenho, lado = "bottom", className, ...props }: Props) {
+export function BotaoIcone({ rotulo, icone: Desenho, lado = "bottom", destrutivo = false, className, ...props }: Props) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -30,7 +34,8 @@ export function BotaoIcone({ rotulo, icone: Desenho, lado = "bottom", className,
           size="icon"
           aria-label={rotulo}
           className={cn(
-            "rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95 [&_svg:not([class*='size-'])]:size-5",
+            "rounded-md text-muted-foreground active:scale-95 [&_svg:not([class*='size-'])]:size-5",
+            destrutivo && "hover:bg-destructive/10 hover:text-destructive",
             className,
           )}
           {...props}

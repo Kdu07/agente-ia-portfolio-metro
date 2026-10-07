@@ -134,7 +134,7 @@ export function Composer({ valor, estadoVoz, parcial, onAlterar, onEnviar, onAlt
               size="icon"
               aria-label="Enviar mensagem"
               disabled={!podeEnviar}
-              className="rounded-[11px] bg-primary text-primary-foreground transition-[background-color,color,scale,box-shadow] duration-280 ease-saida hover:bg-primario-hover active:scale-95 disabled:scale-[.92] disabled:bg-secondary disabled:text-muted-foreground disabled:opacity-100 [&_svg:not([class*='size-'])]:size-4.5"
+              className="rounded-[11px] transition-[background-color,color,scale,box-shadow] duration-280 ease-saida active:scale-95 disabled:scale-[.92] disabled:bg-secondary disabled:text-muted-foreground disabled:opacity-100 [&_svg:not([class*='size-'])]:size-4.5"
             >
               <IconeEnviar aria-hidden="true" />
             </Button>

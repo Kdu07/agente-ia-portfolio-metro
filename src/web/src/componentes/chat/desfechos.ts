@@ -102,6 +102,16 @@ export const APARENCIA: Record<Desfecho, Aparencia> = {
     etiqueta: `${ETIQUETA_BASE} border-desfecho-injecao/25 bg-desfecho-injecao/10 text-desfecho-injecao`,
     barra: `${BARRA_BASE} before:bg-desfecho-injecao`,
   },
+  // Verificacao sem resposta do servico: para quem perguntou e o mesmo caso
+  // da falha do executor, vale tentar de novo. O rotulo nao conta que existe
+  // uma verificacao.
+  falha_guarda: {
+    rotulo: "Indisponível",
+    cor: "falha",
+    icone: IconeIndisponivel,
+    etiqueta: `${ETIQUETA_BASE} border-desfecho-falha/25 bg-desfecho-falha/10 text-desfecho-falha`,
+    barra: `${BARRA_BASE} before:bg-desfecho-falha`,
+  },
   falha_executor: {
     rotulo: "Indisponível",
     cor: "falha",

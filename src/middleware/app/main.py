@@ -16,7 +16,9 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import TimeoutError as SQLAlchemyTimeoutError
 
 from app.api.routes import (
     auth,
@@ -33,6 +35,7 @@ from app.api.routes import (
 from app.config import settings
 from app.mensageria.produtor import ProdutorEventos
 from app.persistence import sessao as db
+from app.pipeline.guardas import content_safety
 from app.pipeline.intencao import classificador
 
 FORMATO_LOG = "%(levelname)s:     %(name)s: %(message)s"
@@ -81,6 +84,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     transitório até ele voltar.
     """
     db.iniciar()
+    await content_safety.iniciar()
     app.state.produtor_eventos = ProdutorEventos.a_partir_de(settings)
     app.state.aquecimento = (
         asyncio.create_task(asyncio.to_thread(classificador.aquecer))
@@ -89,6 +93,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     yield
     await app.state.produtor_eventos.encerrar()
+    await content_safety.encerrar()
     await db.encerrar()
 
 
@@ -103,8 +108,30 @@ app = FastAPI(
     version="0.2.0",
 )
 
+
+async def tratar_pool_esgotado(request: Request, erro: SQLAlchemyTimeoutError) -> JSONResponse:
+    """Transforma saturação do pool em indisponibilidade temporária controlada.
+
+    A causa detalhada fica somente no log; a resposta não expõe DSN, tamanho
+    do pool nem mensagem interna do driver. O cliente recebe um erro transitório
+    e pode repetir a solicitação depois do intervalo indicado.
+    """
+    logging.getLogger(__name__).warning(
+        "Pool de banco esgotado em %s %s: %s",
+        request.method,
+        request.url.path,
+        type(erro).__name__,
+    )
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Serviço temporariamente ocupado. Tente novamente em instantes."},
+        headers={"Retry-After": "2"},
+    )
+
+
 app.add_exception_handler(voz.ErroAudioApi, voz.tratar_erro_audio)
 app.add_exception_handler(HTTPException, voz.tratar_http_exception)
+app.add_exception_handler(SQLAlchemyTimeoutError, tratar_pool_esgotado)
 
 app.include_router(health.router, tags=["infra"])
 app.include_router(auth.router, tags=["auth"])

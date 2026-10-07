@@ -7,7 +7,7 @@
  * de forma distinta.
  */
 
-const FUSO = "America/Sao_Paulo";
+export const FUSO = "America/Sao_Paulo";
 const UM_DIA = 86_400_000;
 
 export function horaCurta(iso: string): string {
@@ -51,6 +51,35 @@ export function quandoFoi(iso: string, agora = new Date()): string {
   if (dias <= 0) return `Hoje, ${horaCurta(iso)}`;
   if (dias === 1) return `Ontem, ${horaCurta(iso)}`;
   return `${dataCurta(iso)}, ${horaCurta(iso)}`;
+}
+
+/**
+ * Quando, em linguagem de agenda, para o passado e o futuro: "hoje, 08:00",
+ * "amanhã, 08:00", "ontem, 23:00", "quinta, 09:00" nos dias seguintes da
+ * semana e "5 de nov., 17:00" alem disso, com o ano so quando nao e o
+ * corrente. Na lista de rotinas, quem le quer saber quando, e nao decifrar
+ * "07 de out. de 2026". Conta dias do calendario em Sao Paulo, como
+ * `quandoFoi`: 23h59 de hoje e 0h01 de amanha sao dias diferentes.
+ */
+export function formatarQuando(iso: string, agora = new Date()): string {
+  const hora = horaCurta(iso);
+  const dias = -diasAtras(iso, agora);
+  if (dias === 0) return `hoje, ${hora}`;
+  if (dias === 1) return `amanhã, ${hora}`;
+  if (dias === -1) return `ontem, ${hora}`;
+  const data = new Date(iso);
+  if (dias > 1 && dias < 7) {
+    const semana = new Intl.DateTimeFormat("pt-BR", { weekday: "long", timeZone: FUSO }).format(data).replace("-feira", "");
+    return `${semana}, ${hora}`;
+  }
+  const outroAno = new Date(diaEmSaoPaulo(data)).getUTCFullYear() !== new Date(diaEmSaoPaulo(agora)).getUTCFullYear();
+  const dia = new Intl.DateTimeFormat("pt-BR", {
+    day: "numeric",
+    month: "short",
+    timeZone: FUSO,
+    ...(outroAno ? { year: "numeric" as const } : {}),
+  }).format(data);
+  return `${dia}, ${hora}`;
 }
 
 export type GrupoDeData = "Hoje" | "Ontem" | "Esta semana" | "Anteriores";

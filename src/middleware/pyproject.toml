@@ -23,8 +23,10 @@ dependencies = [
     "python-multipart>=0.0.9",
     # Persistência: interações, conversas, rotinas e jobstore do agendador.
     # O extra `asyncio` traz o greenlet: a partir da 2.1 ele deixou de vir
-    # junto, e sem ele o alembic e a API assíncrona quebram no import.
-    "sqlalchemy[asyncio]>=2.0",
+    # junto, e sem ele o alembic e a API assíncrona quebram no import. O
+    # piso é a 2.1 porque o último disparo de cada rotina usa
+    # `postgresql.distinct_on`, que não existe antes dela.
+    "sqlalchemy[asyncio]>=2.1",
     "asyncpg>=0.29",
     # O SQLAlchemyJobStore do APScheduler 3 é síncrono. A aplicação segue
     # usando asyncpg; somente o jobstore abre conexões com psycopg.

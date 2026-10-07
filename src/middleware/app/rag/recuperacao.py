@@ -49,10 +49,12 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from app.config import settings
 from app.rag.embeddings import codificar_consulta
 from app.rag.ingestao.registro import TrechoLido
-from app.rag.vetorial.base import Escopo, RepositorioVetorial
+from app.rag.vetorial.base import Acerto, Escopo, RepositorioVetorial
 
 logger = logging.getLogger(__name__)
 
@@ -282,12 +284,57 @@ class Recuperador:
         )
 
 
+class _BuscaPorOperacao:
+    """Busca vetorial numa sessão aberta só para ela.
+
+    Com o pgvector, a busca consulta o PostgreSQL; com o Pinecone, a sessão
+    nem chega a pedir conexão. Nos dois casos, nada fica preso ao pool
+    enquanto o modelo de geração responde.
+    """
+
+    def __init__(self, fabrica: async_sessionmaker[AsyncSession]) -> None:
+        self._fabrica = fabrica
+
+    async def buscar(self, vetor: Sequence[float], **kwargs: Any) -> tuple[Acerto, ...]:
+        from app.rag.vetorial.fabrica import obter_repositorio_vetorial
+
+        async with self._fabrica() as sessao:
+            return await obter_repositorio_vetorial(sessao).buscar(vetor, **kwargs)
+
+
+class _LeitorPorOperacao:
+    """Leitura do texto dos trechos numa sessão aberta só para ela."""
+
+    def __init__(self, fabrica: async_sessionmaker[AsyncSession]) -> None:
+        self._fabrica = fabrica
+
+    async def textos(self, trecho_ids: Sequence[str]) -> Mapping[str, TrechoLido]:
+        from app.rag.ingestao.registro import RegistroIngestao
+
+        async with self._fabrica() as sessao:
+            return await RegistroIngestao(sessao).textos(trecho_ids)
+
+
 def montar_recuperador(sessao: Any) -> Recuperador:
     """Recuperador com os colaboradores e os parâmetros do `.env`.
 
     Recebe a `AsyncSession` porque o texto dos trechos vive no
     PostgreSQL — e o adaptador pgvector, se acionado, também a usa.
+
+    O `/chat` passa a fábrica de sessões no lugar da sessão. As duas
+    leituras são do corpus e não pertencem à transação do turno; cada uma
+    abre e fecha a própria sessão, e a conexão volta ao pool antes da
+    geração, que é a espera mais longa do executor. Áudio, worker e
+    scripts continuam passando a sessão que já têm aberta.
     """
+    if isinstance(sessao, async_sessionmaker):
+        return Recuperador(
+            _BuscaPorOperacao(sessao),
+            _LeitorPorOperacao(sessao),
+            k=settings.rag_top_k,
+            score_minimo=settings.rag_score_minimo,
+        )
+
     from app.rag.ingestao.registro import RegistroIngestao
     from app.rag.vetorial.fabrica import obter_repositorio_vetorial
 

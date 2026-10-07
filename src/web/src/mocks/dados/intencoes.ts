@@ -47,7 +47,8 @@ export const DISTRIBUICAO_DESFECHOS: Contagem[] = [
   { chave: "bloqueada_injecao_modelo", rotulo: "Bloqueada por modelo", total: 5 },
   { chave: "bloqueada_abuso", rotulo: "Bloqueada por uso indevido", total: 7 },
   { chave: "bloqueada_saida", rotulo: "Resposta não entregue", total: 2 },
-  { chave: "falha_executor", rotulo: "Falha do executor", total: 14 },
+  { chave: "falha_guarda", rotulo: "Verificação indisponível", total: 3 },
+  { chave: "falha_executor", rotulo: "Falha do executor", total: 11 },
 ];
 
 export const RESUMO_SEGURANCA: ResumoSeguranca = {

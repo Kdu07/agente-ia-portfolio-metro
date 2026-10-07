@@ -47,7 +47,7 @@ export function BotaoMicrofone({ estado, onAlternar }: Props) {
           onClick={onAlternar}
           className={cn(
             "rounded-md bg-secondary text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95 disabled:opacity-100",
-            ativo && "bg-gravacao text-white hover:bg-gravacao hover:text-white motion-safe:animate-pulso",
+            ativo && "bg-gravacao text-texto-sobre-cor hover:bg-gravacao hover:text-texto-sobre-cor motion-safe:animate-pulso",
           )}
         >
           <Desenho aria-hidden="true" className={cn("size-5", estado === "processando" && "motion-safe:animate-spin")} />

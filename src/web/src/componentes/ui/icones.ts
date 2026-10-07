@@ -59,6 +59,7 @@ export { PauseIcon as IconePausar } from "@phosphor-icons/react/dist/csr/Pause";
 export { PlayIcon as IconeAtivar, PlayIcon as IconeExecutar } from "@phosphor-icons/react/dist/csr/Play";
 export { PencilSimpleIcon as IconeEditar, PencilSimpleIcon as IconeRegistrar } from "@phosphor-icons/react/dist/csr/PencilSimple";
 export { TrashIcon as IconeExcluir } from "@phosphor-icons/react/dist/csr/Trash";
+export { DotsThreeIcon as IconeMaisAcoes } from "@phosphor-icons/react/dist/csr/DotsThree";
 
 // Avisos e estados
 export { BellRingingIcon as IconeAlerta } from "@phosphor-icons/react/dist/csr/BellRinging";

@@ -30,6 +30,17 @@ class RotinaRequest(BaseModel):
     ativa: bool = True
 
 
+class UltimaExecucao(BaseModel):
+    """O disparo mais recente de uma rotina, para a lista dizer como foi.
+
+    Só o que a linha da lista mostra: quando começou e o status. A
+    resposta e o desfecho ficam em `GET /rotinas/{id}/execucoes`.
+    """
+
+    iniciada_em: datetime
+    status: StatusExecucao
+
+
 class RotinaResposta(BaseModel):
     """Uma rotina como a tela de gestão a exibe.
 
@@ -39,6 +50,8 @@ class RotinaResposta(BaseModel):
     do painel de intenções: a tela mostra o rótulo, e não o id técnico.
     `proximo_disparo` é calculado pelo agendador a partir do cron e do
     fuso — é o que confirma visualmente que "todo dia 5" foi entendido.
+    `ultima_execucao` é nula enquanto a rotina nunca disparou; com ela, a
+    lista mostra se o último disparo deu certo sem abrir o histórico.
     """
 
     id: str
@@ -52,6 +65,7 @@ class RotinaResposta(BaseModel):
     proximo_disparo: datetime | None
     criada_em: datetime
     atualizada_em: datetime
+    ultima_execucao: UltimaExecucao | None = None
 
 
 class ExecucaoResposta(BaseModel):

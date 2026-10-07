@@ -30,7 +30,7 @@ from dataclasses import dataclass, field
 import httpx
 import pytest
 from sqlalchemy import inspect
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.api import deps
 from app.api.routes import voz
@@ -209,6 +209,13 @@ async def cliente(banco_real, usuario, executor, monkeypatch, tmp_path):
         yield banco_real
 
     app.dependency_overrides[obter_sessao] = fornecer_banco
+    # O chat grava conversa e interação em transações curtas, abertas pela
+    # fábrica de sessões. Ligada à conexão do teste, a fábrica enxerga o
+    # usuário ainda não confirmado e tudo some no rollback do fim.
+    app.dependency_overrides[deps.obter_fabrica_sessoes] = lambda: async_sessionmaker(
+        bind=banco_real.bind,
+        expire_on_commit=False,
+    )
     app.dependency_overrides[deps.obter_executor] = lambda: executor
     try:
         async with httpx.AsyncClient(

@@ -481,7 +481,8 @@ describe("formularioDaRotina", () => {
 
 describe("formatarData", () => {
   it("formata data válida", () => {
-    const data = "2024-01-15T14:30:00";
+    // Com offset, como o backend manda: o horário sai em São Paulo, e não no fuso da máquina.
+    const data = "2024-01-15T14:30:00-03:00";
     const resultado = formatarData(data);
     expect(resultado).toMatch(/15 de jan/);
     expect(resultado).toMatch(/14:30/);

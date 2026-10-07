@@ -496,6 +496,38 @@ async def test_guarda_de_saida_retem_resposta_envenenada(etapas: dict) -> None:
     assert interacoes.unica.desfecho is Desfecho.BLOQUEADA_SAIDA
 
 
+async def test_injecao_sem_servico_falha_fechada_sem_contar_como_ataque(etapas: dict) -> None:
+    """Cota ou fila esgotada barra a mensagem, mas não vira bloqueio de ataque."""
+    etapas["injecao"] = ResultadoInjection(
+        suspeita=True, confianca=1.0, motivo="servico_indisponivel", indisponivel=True
+    )
+    pipeline, copilot, interacoes, _ = montar()
+
+    resposta = await pipeline.processar(pedido(), USUARIO)
+
+    assert resposta.desfecho == Desfecho.FALHA_GUARDA.value
+    assert resposta.bloqueada is True
+    assert copilot.chamadas == []
+    assert "abuso" not in etapas["ordem"]
+    assert resposta.resposta == orq.respostas.para(Desfecho.FALHA_GUARDA)
+    assert interacoes.unica.desfecho is Desfecho.FALHA_GUARDA
+
+
+async def test_saida_sem_servico_retem_resposta_sem_contar_como_ataque(etapas: dict) -> None:
+    """A resposta já produzida continua retida quando a guarda fica sem veredito."""
+    etapas["saida"] = ResultadoSaida(
+        suspeita=True, confianca=1.0, motivo="servico_indisponivel", indisponivel=True
+    )
+    pipeline, copilot, interacoes, _ = montar()
+
+    resposta = await pipeline.processar(pedido(), USUARIO)
+
+    assert resposta.desfecho == Desfecho.FALHA_GUARDA.value
+    assert len(copilot.chamadas) == 1
+    assert "em andamento" not in resposta.resposta
+    assert interacoes.unica.desfecho is Desfecho.FALHA_GUARDA
+
+
 # --- Invariantes ---------------------------------------------------------
 
 
@@ -525,6 +557,7 @@ async def test_incidentes_de_seguranca_sao_apenas_os_ataques(etapas: dict) -> No
     assert Desfecho.BLOQUEADA_SAIDA.e_incidente_seguranca
 
     assert not Desfecho.BLOQUEADA_ABUSO.e_incidente_seguranca
+    assert not Desfecho.FALHA_GUARDA.e_incidente_seguranca
     assert not Desfecho.RECUSADA_FORA_ESCOPO.e_incidente_seguranca
     assert not Desfecho.ENCAMINHADA.e_incidente_seguranca
 
@@ -549,6 +582,10 @@ async def test_incidentes_de_seguranca_sao_apenas_os_ataques(etapas: dict) -> No
         (
             {"saida": ResultadoSaida(suspeita=True, confianca=0.9, motivo="x")},
             Desfecho.BLOQUEADA_SAIDA,
+        ),
+        (
+            {"saida": ResultadoSaida(suspeita=True, confianca=1.0, motivo="x", indisponivel=True)},
+            Desfecho.FALHA_GUARDA,
         ),
         ({}, Desfecho.ENCAMINHADA),
     ],
