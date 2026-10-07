@@ -7,7 +7,7 @@ repetir a mesma requisição a cada rodada da suíte.
 
 O mecanismo está em [`../vhs.py`](../vhs.py), a fiação no pytest em
 [`../conftest.py`](../conftest.py), e o plano completo na seção **10.5.4
-de [Projeto.md](../../../../docs/Projeto.md)**.
+de [Projeto.md](../../../../../docs/Projeto.md)**.
 
 ## Organização
 
@@ -46,7 +46,7 @@ marca `REDIGIDO-PELO-VHS`, que se acha com um `grep`.
 
 Isso **não** dispensa a leitura do diff. Toda merge request que
 adiciona ou altera fita tem o item próprio no checklist de
-[GestaoConfiguracao.md](../../../../docs/GestaoConfiguracao.md) §4.1:
+[GestaoConfiguracao.md](../../../../../docs/GestaoConfiguracao.md) §4.1:
 *"li o `git diff` da fita linha a linha"*. Fita é código.
 
 ## Fita provisória

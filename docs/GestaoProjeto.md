@@ -10,7 +10,7 @@
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/CaduQuaglia">
+      <a href="https://www.linkedin.com/in/carlos-quaglia-309088357/">
         <img src="imagens/cadu.png" width="90" alt="Carlos Eduardo">
       </a>
     </td>

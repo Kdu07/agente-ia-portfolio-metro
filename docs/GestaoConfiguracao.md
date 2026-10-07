@@ -10,7 +10,7 @@
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/CaduQuaglia">
+      <a href="https://www.linkedin.com/in/carlos-quaglia-309088357/">
         <img src="imagens/cadu.png" width="90" alt="Carlos Eduardo">
       </a>
     </td>
@@ -463,13 +463,13 @@ git switch -c release/v1.0.0
 git push --set-upstream origin release/v1.0.0
 ```
 
-Durante a estabilização, somente correções necessárias à entrega devem entrar na branch. Quando a versão estiver validada, devem ser abertos MRs de `release/v1.0.0` para `main` e para `develop`, ambos sujeitos à revisão. Após o merge em `main`, a versão pode receber uma tag rastreável:
+Durante a estabilização, somente correções necessárias à entrega devem entrar na branch. Quando a versão estiver validada, devem ser abertos MRs de `release/v1.0.0` para `main` e para `develop`, ambos sujeitos à revisão. Após o merge em `main`, a versão recebe a mesma tag rastreável do caminho padrão, com o número da sprint. A versão SemVer correspondente (`v<n>.0.0`) fica registrada no histórico de versões do `README.md`:
 
 ```bash
 git switch main
 git pull --ff-only origin main
-git tag -a v1.0.0 -m "Entrega v1.0.0"
-git push origin v1.0.0
+git tag -a sprint-5 -m "Entrega da Sprint 5"
+git push origin sprint-5
 ```
 
 #### Correção urgente com hotfix
