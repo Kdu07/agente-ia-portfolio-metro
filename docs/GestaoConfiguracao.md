@@ -745,11 +745,12 @@ Registram-se aqui apenas os nomes e as finalidades. Nenhum valor real deve const
 | Grupo | Variáveis | Finalidade |
 |---|---|---|
 | Copilot Studio | `DIRECTLINE_ENDPOINT`, `DIRECTLINE_SECRET`, `COPILOT_TIMEOUT_SECONDS` | Endereço, credencial e tempo limite da comunicação com o agente do Copilot Studio |
-| Banco de dados | `DATABASE_URL` | Cadeia de conexão do PostgreSQL |
+| Banco de dados | `DATABASE_URL`, `DATABASE_POOL_SIZE`, `DATABASE_MAX_OVERFLOW`, `DATABASE_POOL_TIMEOUT_SECONDS` | Cadeia de conexão do PostgreSQL e limites do pool de conexões de cada processo: conexões fixas, excedentes e quanto uma requisição espera por uma conexão livre; esgotada a espera, a API responde 503 |
 | Identidade | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, `ENTRA_REDIRECT_URI` | Parâmetros do fluxo de autenticação corporativa |
 | Perfis e permissões | `ENTRA_GRUPO_DIRETORIA`, `ENTRA_GRUPO_LIDER_PROJETO`, `ENTRA_GRUPO_MEMBRO_EQUIPE`, `ENTRA_GRUPO_VER_INTENCOES`, `ENTRA_GRUPO_GERIR_ROTINAS` | Identificadores dos grupos que determinam perfil e permissões do usuário |
 | Sessão | `SESSION_SECRET`, `SESSION_MAX_AGE_SECONDS`, `SESSION_COOKIE_SECURE` | Assinatura, validade e política de transporte do cookie de sessão |
 | Barreiras de segurança | `CONTENT_SAFETY_ENDPOINT`, `CONTENT_SAFETY_KEY`, `CONTENT_SAFETY_LIMIAR_SEVERIDADE`, `SAIDA_DOMINIOS_PERMITIDOS` | Serviço e limiar de severidade das guardas de conteúdo, e domínios que a resposta pode citar em link; fora deles, a guarda de saída trata a URL como possível exfiltração |
+| Contrapressão do Content Safety | `CONTENT_SAFETY_MAX_CONCORRENCIA`, `CONTENT_SAFETY_REQUISICOES_POR_SEGUNDO`, `CONTENT_SAFETY_FILA_TIMEOUT_SECONDS`, `CONTENT_SAFETY_TIMEOUT_SECONDS`, `CONTENT_SAFETY_MAX_TENTATIVAS`, `CONTENT_SAFETY_ESPERA_BASE_SECONDS` | Limites do cliente compartilhado pelas guardas, por processo: chamadas simultâneas, taxa por segundo, espera na fila local antes de a guarda falhar, tempo limite de cada chamada e tentativas e recuo das repetições de 429 e 5xx. Na Azure, o `infra/azure/provisionar.sh` define a taxa de cada processo dividindo a cota do estágio, 1,5 chamada por segundo no dev e 2,5 no prd, entre o middleware e o worker |
 | Conversa | `HISTORICO_MAX_TURNOS` | Quantos turnos anteriores entram no prompt; zero desliga o histórico sem desligar a persistência |
 | Executor | `EXECUTOR` | Caminho que responde ao chat: `copilot`, o Copilot Studio via Direct Line, ou `proprio`, o RAG sobre o corpus |
 | Busca vetorial | `VETORIAL_BACKEND`, `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_NAMESPACE` | Provedor e credenciais do índice vetorial da camada de recuperação |

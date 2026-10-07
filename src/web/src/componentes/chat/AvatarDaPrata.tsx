@@ -12,7 +12,7 @@ export function AvatarDaPrata() {
   return (
     <span
       aria-hidden="true"
-      className="marca-prata mt-0.5 grid size-8 shrink-0 place-items-center rounded-[10px] bg-marinho ring-1 ring-white/10 ring-inset"
+      className="marca-prata mt-0.5 grid size-8 shrink-0 place-items-center rounded-[10px] bg-marinho ring-1 ring-anel-avatar ring-inset"
     >
       <SimboloPrata decorativa className="h-5 w-[22px]" />
     </span>

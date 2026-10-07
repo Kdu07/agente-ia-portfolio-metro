@@ -31,6 +31,7 @@ export type Desfecho =
   | "recusada_fora_escopo"
   | "recusada_baixa_confianca"
   | "bloqueada_saida"
+  | "falha_guarda"
   | "falha_executor";
 
 export interface Usuario {
@@ -95,6 +96,12 @@ export interface ValidacaoRotina {
 
 export type StatusExecucao = "em_execucao" | "sucesso" | "bloqueada" | "falha";
 
+/** O disparo mais recente, só com o que a linha da lista mostra. */
+export interface UltimaExecucao {
+  iniciada_em: string;
+  status: StatusExecucao;
+}
+
 export interface Rotina {
   id: string;
   nome: string;
@@ -108,6 +115,8 @@ export interface Rotina {
   proximo_disparo: string | null;
   criada_em: string;
   atualizada_em: string;
+  /** Nula enquanto a rotina nunca disparou; ausente em backend antigo. */
+  ultima_execucao?: UltimaExecucao | null;
 }
 
 export interface Execucao {

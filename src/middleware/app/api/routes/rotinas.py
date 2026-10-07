@@ -41,6 +41,7 @@ from app.schemas.rotina import (
     ExecucaoResposta,
     RotinaRequest,
     RotinaResposta,
+    UltimaExecucao,
     ValidacaoResposta,
 )
 from app.schemas.usuario import Permissao
@@ -56,9 +57,12 @@ router = APIRouter(
 async def listar(
     usuario: UsuarioAtual,
     rotinas: Annotated[RotinaRepository, Depends(obter_rotinas)],
+    execucoes: Annotated[ExecucaoRepository, Depends(obter_execucoes)],
 ) -> list[RotinaResposta]:
-    """Rotinas do usuário, com o próximo disparo calculado."""
-    return [_resposta_rotina(rotina) for rotina in await rotinas.listar_por_dono(usuario.id)]
+    """Rotinas do usuário, com o próximo disparo calculado e o último realizado."""
+    lista = await rotinas.listar_por_dono(usuario.id)
+    ultimas = await execucoes.ultimas_por_rotina([rotina.id for rotina in lista])
+    return [_resposta_rotina(rotina, ultimas.get(rotina.id)) for rotina in lista]
 
 
 @router.post("/validar", response_model=ValidacaoResposta)
@@ -126,6 +130,7 @@ async def atualizar(
     pedido: RotinaRequest,
     usuario: UsuarioAtual,
     rotinas: Annotated[RotinaRepository, Depends(obter_rotinas)],
+    execucoes: Annotated[ExecucaoRepository, Depends(obter_execucoes)],
 ) -> RotinaResposta:
     """Edita uma rotina do próprio usuário, revalidando o prompt.
 
@@ -149,7 +154,10 @@ async def atualizar(
         intencao_prevista=validacao.intencao_prevista,
     )
     await rotinas.atualizar(atualizada)
-    return _resposta_rotina(atualizada)
+    # Editar não apaga o histórico: a resposta traz o último disparo como
+    # a listagem, para quem lê só a resposta da edição não ver "nunca".
+    ultimas = await execucoes.ultimas_por_rotina([atualizada.id])
+    return _resposta_rotina(atualizada, ultimas.get(atualizada.id))
 
 
 @router.delete(
@@ -273,7 +281,7 @@ async def _rotina_do_usuario(
     return rotina
 
 
-def _resposta_rotina(rotina: Rotina) -> RotinaResposta:
+def _resposta_rotina(rotina: Rotina, ultima: ExecucaoRotina | None = None) -> RotinaResposta:
     proximo = None
     if rotina.ativa:
         gatilho = criar_gatilho_cron(
@@ -295,6 +303,9 @@ def _resposta_rotina(rotina: Rotina) -> RotinaResposta:
         proximo_disparo=proximo,
         criada_em=rotina.criada_em,
         atualizada_em=rotina.atualizada_em,
+        ultima_execucao=(
+            UltimaExecucao(iniciada_em=ultima.iniciada_em, status=ultima.status) if ultima else None
+        ),
     )
 
 

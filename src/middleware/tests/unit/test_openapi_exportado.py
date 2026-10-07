@@ -27,6 +27,18 @@ def test_rotas_restritas_declaram_401_e_403():
     assert "403" not in caminhos["/chat"]["post"]["responses"]
 
 
+def test_rotas_de_voz_declaram_401_no_catalogo():
+    caminhos = json.loads(gerar())["paths"]
+    for caminho, metodo in (
+        ("/voz/token", "get"),
+        ("/voz/audios", "post"),
+        ("/voz/audios/{id_audio}/transcricao", "get"),
+    ):
+        resposta = caminhos[caminho][metodo]["responses"]["401"]
+        schema = resposta["content"]["application/json"]["schema"]
+        assert schema["$ref"].endswith("/ErroAudioResponse")
+
+
 def test_corpo_de_erro_declarado_e_o_do_http_exception():
     esquemas = json.loads(gerar())["components"]["schemas"]
     assert esquemas["ErroResposta"]["required"] == ["detail"]

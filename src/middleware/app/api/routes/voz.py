@@ -15,11 +15,13 @@ from fastapi import (
     Depends,
     File,
     Form,
+    HTTPException,
     Request,
     Response,
     UploadFile,
     status,
 )
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -53,7 +55,15 @@ from app.voz.speech import (
     emitir_token,
 )
 
-router = APIRouter(prefix="/voz")
+router = APIRouter(
+    prefix="/voz",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErroAudioResponse,
+            "description": "Sessão ausente, inválida ou expirada",
+        }
+    },
+)
 logger = logging.getLogger(__name__)
 
 # Instância do serviço de áudio
@@ -86,6 +96,20 @@ async def tratar_erro_audio(_request: Request, erro: ErroAudioApi) -> JSONRespon
     )
 
 
+async def tratar_http_exception(request: Request, erro: HTTPException) -> JSONResponse:
+    """Mantém os 401 de voz no envelope do catálogo sem alterar outras APIs."""
+    if request.url.path.startswith("/voz/") and erro.status_code == status.HTTP_401_UNAUTHORIZED:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content=ErroAudioResponse(
+                codigo="NAO_AUTENTICADO",
+                mensagem="Sua sessão expirou. Entre novamente para continuar.",
+            ).model_dump(exclude_none=True),
+            headers=erro.headers,
+        )
+    return await http_exception_handler(request, erro)
+
+
 class TokenResposta(BaseModel):
     """Credencial temporária para o Speech SDK no navegador.
 
@@ -104,7 +128,10 @@ class TokenResposta(BaseModel):
     "/token",
     response_model=TokenResposta,
     responses={
-        status.HTTP_401_UNAUTHORIZED: {"description": "Sessão ausente ou expirada"},
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErroAudioResponse,
+            "description": "Sessão ausente, inválida ou expirada",
+        },
         status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Cota temporária excedida"},
         status.HTTP_503_SERVICE_UNAVAILABLE: {
             "description": "Serviço de fala não configurado ou indisponível"

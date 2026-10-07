@@ -66,7 +66,7 @@ function Pergunta({ texto, horario, canal, local }: Omit<Props, "autor" | "desfe
     <m.div className="flex justify-end" {...(local ? ENTRADA_PERGUNTA : {})}>
       <div className="grid max-w-[min(520px,86%)] min-w-0 justify-items-end gap-1.5">
         <span className="sr-only">Você:</span>
-        <article className="rounded-[18px_18px_6px_18px] bg-bolha-usuario px-3.75 py-2.5 whitespace-pre-line text-white shadow-2 wrap-anywhere">
+        <article className="rounded-[18px_18px_6px_18px] bg-bolha-usuario px-3.75 py-2.5 whitespace-pre-line text-texto-sobre-cor shadow-2 wrap-anywhere">
           {texto}
         </article>
         <div className="flex min-h-6.5 items-center justify-end gap-2 text-xs text-muted-foreground">

@@ -105,6 +105,9 @@ class ResultadoSaida:
     suspeita: bool
     confianca: float  # 0.0 a 1.0
     motivo: str  # para o registro e o alerta; nunca devolvido ao usuário
+    # True quando a retenção vem da falta do serviço, e não de detecção. A
+    # resposta continua retida; muda só o desfecho registrado.
+    indisponivel: bool = False
 
 
 async def verificar(
@@ -209,4 +212,6 @@ def _analises_de(dados: dict) -> list[dict] | None:
 def _indisponivel(detalhe: str) -> ResultadoSaida:
     """Falha fechado: na dúvida, a resposta não é entregue."""
     logger.warning("Content Safety indisponível na guarda de saída (%s)", detalhe)
-    return ResultadoSaida(suspeita=True, confianca=1.0, motivo="servico_indisponivel")
+    return ResultadoSaida(
+        suspeita=True, confianca=1.0, motivo="servico_indisponivel", indisponivel=True
+    )

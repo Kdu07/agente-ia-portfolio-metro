@@ -11,11 +11,12 @@ const TODOS: Desfecho[] = [
   "recusada_fora_escopo",
   "recusada_baixa_confianca",
   "bloqueada_saida",
+  "falha_guarda",
   "falha_executor",
 ];
 
 describe("Aparência dos desfechos", () => {
-  it("cobre os oito desfechos do vocabulário fechado", () => {
+  it("cobre os nove desfechos do vocabulário fechado", () => {
     for (const desfecho of TODOS) {
       expect(APARENCIA[desfecho], `desfecho sem aparência: ${desfecho}`).toBeDefined();
     }

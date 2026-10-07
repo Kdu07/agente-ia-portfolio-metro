@@ -250,12 +250,11 @@ export function FormularioRotina({ aberto, modo, inicial, salvando, erro, onFech
             onCheckedChange={(ativa) => setFormulario({ ...formulario, ativa })}
             aria-labelledby="rotulo-ativa"
             aria-describedby="ajuda-ativa"
-            className="data-[state=unchecked]:bg-controle-desligado"
           />
         </div>
 
         <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" onClick={onFechar} className="bg-card">
+          <Button type="button" variant="outline" onClick={onFechar}>
             Cancelar
           </Button>
           <Button type="submit" disabled={salvando}>

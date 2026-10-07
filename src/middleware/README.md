@@ -80,7 +80,7 @@ docker compose -f ../../infra/docker-compose.yml up -d db
 # 2. criar o esquema (aplica as migrações até a última revisão)
 python -m scripts.criar_banco
 
-# 3. carga de demonstração: usuários, conversas, os oito desfechos e rotinas
+# 3. carga de demonstração: usuários, conversas, os nove desfechos e rotinas
 python -m scripts.popular_banco
 ```
 

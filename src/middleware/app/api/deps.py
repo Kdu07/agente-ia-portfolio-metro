@@ -31,8 +31,10 @@ from app.mensageria.produtor import ProdutorEventos
 from app.persistence.repository import (
     AudioRepository,
     ConversaRepository,
+    ConversaRepositoryTransacional,
     ExecucaoRepository,
     InteracaoRepository,
+    InteracaoRepositoryTransacional,
     RotinaRepository,
     UsuarioRepository,
 )
@@ -78,6 +80,14 @@ __all__ = [
 SessaoBanco = Annotated[AsyncSession, Depends(obter_sessao)]
 
 
+def obter_fabrica_sessoes() -> async_sessionmaker[AsyncSession]:
+    """Fábrica para operações que precisam delimitar a própria transação."""
+    return fabrica_de_sessoes()
+
+
+FabricaSessoes = Annotated[async_sessionmaker[AsyncSession], Depends(obter_fabrica_sessoes)]
+
+
 async def obter_usuario_atual(
     banco: SessaoBanco,
     sessao: Annotated[str | None, Cookie(alias=auth_sessao.NOME_COOKIE)] = None,
@@ -110,6 +120,11 @@ async def obter_usuario_atual(
         perfil=usuario.perfil.value,
         email=usuario.email,
     )
+    # A autenticação é a primeira consulta do /chat. Confirmar aqui devolve
+    # a conexão ao pool antes de Content Safety, classificador e executor.
+    # A AsyncSession continua utilizável caso outra dependência realmente
+    # precise dela depois.
+    await banco.commit()
     return usuario
 
 
@@ -138,7 +153,7 @@ def exige_permissao(permissao: Permissao) -> Callable[..., UsuarioAutenticado]:
     return verificar
 
 
-def obter_executor(banco: SessaoBanco, usuario: UsuarioAtual) -> Executor:
+def obter_executor(fabrica: FabricaSessoes, usuario: UsuarioAtual) -> Executor:
     """Entrega à rota o executor montado pela fábrica compartilhada.
 
     O executor próprio é montado por requisição porque recupera no
@@ -147,11 +162,16 @@ def obter_executor(banco: SessaoBanco, usuario: UsuarioAtual) -> Executor:
     deduzido em nenhum lugar adiante. O `usuario` é o mesmo da rota — o
     FastAPI resolve a dependência uma vez por requisição.
 
+    Recebe a fábrica de sessões, e não a sessão da requisição: com a
+    sessão, a leitura dos trechos do RAG reabria uma transação que só
+    terminava no fim da requisição, e a conexão ficava presa durante a
+    geração e a guarda de saída (`recuperacao.montar_recuperador`).
+
     As decisões por `settings.executor` e pelo executor sintético ficam em
     `executor/fabrica.py`, também usada por áudio e worker. Assim os canais
     não criam caminhos divergentes.
     """
-    return montar_executor(banco, usuario)
+    return montar_executor(fabrica, usuario)
 
 
 def obter_interacoes(banco: SessaoBanco) -> InteracaoRepository:
@@ -210,21 +230,20 @@ def obter_usuario_projeto(banco: SessaoBanco) -> UsuarioProjetoRepository:
 
 
 def obter_orquestrador(
-    interacoes: Annotated[InteracaoRepository, Depends(obter_interacoes)],
-    conversas: Annotated[ConversaRepository, Depends(obter_conversas)],
     executor: Annotated[Executor, Depends(obter_executor)],
+    fabrica: FabricaSessoes,
 ) -> Orquestrador:
     """Monta o orquestrador com seus colaboradores.
 
-    Os repositórios chegam por `Depends` e compartilham a sessão da
-    requisição: a conversa criada no início do turno e a interação
-    gravada no fim são a mesma transação, e um erro entre as duas não
-    deixa conversa órfã.
+    Cada operação de persistência recebe uma transação curta. Assim a conexão
+    usada para resolver a conversa ou ler o histórico volta ao pool antes das
+    esperas externas do pipeline. A interação final continua sendo confirmada
+    antes de a resposta HTTP ser entregue.
     """
     return Orquestrador(
         executor=executor,
-        interacoes=interacoes,
-        conversas=conversas,
+        interacoes=InteracaoRepositoryTransacional(fabrica),
+        conversas=ConversaRepositoryTransacional(fabrica),
     )
 
 
@@ -238,16 +257,3 @@ def obter_produtor(request: Request) -> ProdutorEventos:
 
 
 Produtor = Annotated[ProdutorEventos, Depends(obter_produtor)]
-
-
-def obter_fabrica_sessoes() -> async_sessionmaker[AsyncSession]:
-    """Fábrica de sessões para quem precisa de mais de uma transação.
-
-    O recebimento de webhook confirma o registro antes de publicar e
-    marca a publicação depois, em transações separadas; a sessão única
-    de `obter_sessao`, confirmada só no fim da requisição, não serve.
-    """
-    return fabrica_de_sessoes()
-
-
-FabricaSessoes = Annotated[async_sessionmaker[AsyncSession], Depends(obter_fabrica_sessoes)]

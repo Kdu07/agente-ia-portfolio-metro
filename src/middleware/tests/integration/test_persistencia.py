@@ -691,6 +691,42 @@ async def test_permissao_revogada_persiste_falha_e_desativa_rotina(
     assert atualizada.ativa is False
 
 
+async def test_ultimas_por_rotina_traz_so_o_disparo_mais_recente_de_cada_uma(
+    sessao: AsyncSession,
+) -> None:
+    """O `DISTINCT ON` é do PostgreSQL; só o servidor confirma a escolha.
+
+    Cada rotina aparece uma vez, com o disparo de `iniciada_em` mais
+    recente, e a que nunca disparou fica fora do dicionário.
+    """
+    dono = await _usuario(sessao)
+    com_dois = await _rotina(sessao, dono)
+    com_um = await _rotina(sessao, dono)
+    sem_disparo = await _rotina(sessao, dono)
+    execucoes = ExecucaoRepository(sessao)
+    for rotina_id, quando, status in (
+        (com_dois.id, AGORA - timedelta(days=2), StatusExecucao.SUCESSO),
+        (com_dois.id, AGORA - timedelta(hours=1), StatusExecucao.FALHA),
+        (com_um.id, AGORA - timedelta(days=1), StatusExecucao.BLOQUEADA),
+    ):
+        await execucoes.registrar_inicio(
+            ExecucaoRotina(
+                id=_id("execucao"),
+                rotina_id=rotina_id,
+                iniciada_em=quando,
+                concluida_em=quando,
+                status=status,
+            )
+        )
+
+    ultimas = await execucoes.ultimas_por_rotina([com_dois.id, com_um.id, sem_disparo.id])
+
+    assert set(ultimas) == {com_dois.id, com_um.id}
+    assert ultimas[com_dois.id].status is StatusExecucao.FALHA
+    assert ultimas[com_um.id].status is StatusExecucao.BLOQUEADA
+    assert await execucoes.ultimas_por_rotina([]) == {}
+
+
 async def test_remover_rotina_com_execucao_e_recusado(sessao: AsyncSession) -> None:
     """Apagar uma rotina que já disparou levaria a trilha junto.
 

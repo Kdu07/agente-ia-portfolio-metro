@@ -11,6 +11,7 @@
  */
 
 import type { Rotina } from "@/tipos";
+import { FUSO } from "@/utilitarios/formato";
 
 export type Repeticao = "diaria" | "dias_uteis" | "semanal" | "mensal" | "dias_personalizados" | "legada";
 export type DiaSemana = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
@@ -165,6 +166,7 @@ export function formatarData(valor: string | null) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: FUSO,
   }).format(new Date(valor));
 }
 
