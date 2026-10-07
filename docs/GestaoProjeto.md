@@ -137,7 +137,8 @@
     - [3.5.6 Melhorias para a Sprint 5](#356-melhorias-para-a-sprint-5)
   - [3.6 Sprint 5](#36-sprint-5)
     - [3.6.1 Planejamento da Sprint 5](#361-planejamento-da-sprint-5)
-    - [3.6.2 Retrospectiva da Sprint 5](#362-retrospectiva-da-sprint-5)
+    - [3.6.2 Matriz de papéis e responsabilidades da Sprint 5](#362-matriz-de-papéis-e-responsabilidades-da-sprint-5)
+    - [3.6.3 Retrospectiva da Sprint 5](#363-retrospectiva-da-sprint-5)
 - [4. Gestão de riscos e oportunidades](#4-gestão-de-riscos-e-oportunidades)
   - [4.1 Metodologia de avaliação](#41-metodologia-de-avaliação)
   - [4.2 Matriz de risco consolidada — status final do projeto](#42-matriz-de-risco-consolidada--status-final-do-projeto)
@@ -1768,7 +1769,52 @@ flowchart LR
 
 Em horas, a cadeia mais longa soma 7,00 h: a dos testes de carga (#456 → #461 → #462 → #475 → #502). Ela não depende do calendário e termina até o sábado, 03/10. O caminho crítico é a cadeia de fechamento — #504 → #505 → #510 → #512, 6,00 h em série —, porque é a única presa ao calendário: #505 depende do corte de 05/10, e #510 e #512 acontecem em 06/10, véspera da apresentação. Qualquer atraso nela atrasa o fechamento do módulo. Todas as tasks de documentação do `Projeto.md` precisam estar integradas até 03/10, porque a revisão de coerência (#502) acontece em 05/10.
 
-#### 3.6.2 Retrospectiva da Sprint 5
+#### 3.6.2 Matriz de papéis e responsabilidades da Sprint 5
+
+Esta matriz fecha a rotação iniciada na Sprint 1. O papel principal foi derivado da frente que concentrou as issues atribuídas no planejamento da seção 3.6.1 e conferido contra as entregas integradas à `develop` até 07/10/2026. Os números dos cards identificam responsabilidade e rastreabilidade, não autoria exclusiva: revisão cruzada, correções em merge requests e pareamento continuaram sendo trabalho coletivo.
+
+O planejamento de abertura mantém a #509 atribuída a Eduardo Casarini, como estava em 28/09. No fechamento, a execução da consolidação foi transferida para Mariana Reis. A diferença é preservada porque a seção 3.6.1 registra o plano, enquanto esta seção registra a responsabilidade efetivamente exercida.
+
+##### Integrantes, papéis e entregas
+
+| Integrante | Papel principal na Sprint 5 | Tasks sob responsabilidade | Principais responsabilidades e entregas | Situação no corte de 07/10 |
+|---|---|---|---|---|
+| Alexsander Barbosa | Governança de riscos, validação com o parceiro e coerência documental | #485, #497, #498, #502, #507, #508, #511, #519, #520 e correções derivadas, como #531 | Confrontar requisitos e dados do ambiente do parceiro; consolidar feedbacks e coerência do `Projeto.md`; fechar a matriz e o post-mortem de riscos; avaliar o contrato de convivência | Entregas documentais integradas; o acesso ao ambiente do parceiro é evidência externa ao Git |
+| Carlos Eduardo Serrano Quaglia | Consolidação técnica, dados, NLP e implantação | #471, #476–#480, #482, #499, #500, #513, #514 e #516, além das correções técnicas #529, #530, #536 e #538 | Atualizar NLP, modelos de dados, OpenAPI e manuais; produzir notebooks reproduzíveis do classificador e do RAG; estabilizar desempenho, interface e integração; preparar o ambiente e a demonstração final | Documentação, notebooks e correções integrados; #514 ainda constava em `Backlog` no corte de 06/10, e #516 corresponde à apresentação de 07/10 |
+| Celso Rocha | Documentação técnica final, adoção e viabilidade | #484, #486, #489–#496, #521, #526 e #528 | Consolidar tecnologias, benefícios, aperfeiçoamentos, custos, Canvas, ODS e plano de adoção; alinhar o README aos critérios da entrega; manter o planejamento da Sprint 5 rastreável | Entregas documentais integradas; #484 e #526 dependem também de evidência de execução ou acesso externo |
+| Eduardo Casarini | Gestão do fechamento, métricas e apresentação final | #501, #503–#506, #510, #512, #515 e #522 | Reapurar indicadores, analisar a evolução das cinco sprints, conduzir retrospectiva e post-mortem, conferir critérios do Escritório de Projetos e organizar a comunicação da entrega final | #503 integrado; #505, #510 e #512 ainda não estavam consolidados no documento neste corte, e #515 é artefato externo ao repositório |
+| Mariana Reis | Qualidade do middleware, arquitetura e rastreabilidade de requisitos | #456–#463, #475, #487, #488, #509 e #525, além da consolidação de requisitos #535 | Corrigir falhas de segurança e desempenho; medir cobertura, carga, concorrência e disponibilidade; documentar resultados, arquitetura e funcionalidades; consolidar os papéis do módulo e o balanço dos requisitos do parceiro | Testes e documentação integrados; #509 é concluída por esta seção |
+| Mirela Bianchi | Qualidade da interface, acessibilidade e padrões de desenvolvimento | #464–#470, #472–#474, #481, #524 e #527, além das correções #532 e #533 | Ampliar testes e cobertura da interface; auditar e corrigir acessibilidade e responsividade; documentar navegação, estratégia de código, padrões e instalação; apoiar a estabilização final de áudio e integração contínua | Testes, correções e documentação integrados à `develop` |
+
+Os papéis de condução formal do ciclo permaneceram separados das frentes técnicas: o planejamento e a retrospectiva registram quem conduziu as cerimônias, enquanto esta matriz usa a frente com maior concentração de entregas para permitir comparação homogênea com as quatro sprints anteriores.
+
+##### Consolidação dos papéis nas cinco sprints
+
+| Integrante | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Sprint 5 |
+|---|---|---|---|---|---|
+| Alexsander Barbosa | Negócio e BPMN | Pilha tecnológica e dados | Qualidade, usabilidade e apresentação | Viabilidade financeira e comunicação | Riscos, parceiro e coerência documental |
+| Carlos Eduardo Serrano Quaglia | Arquitetura e riscos | Scrum Master e PLN | Dados, integração e infraestrutura | Implantação em nuvem e integração contínua | Consolidação técnica, NLP, dados e implantação |
+| Celso Rocha | Gestão de configuração e requisitos | Pré-processamento e catálogo de intenções | Qualidade e testes de requisitos | Painel de intenções e gestão evolutiva | Documentação final, adoção e viabilidade |
+| Eduardo Casarini | Features, Canvas e modelagem | Canal de voz e contratos de API | Frontend e gestão do processo | Integrações assíncronas e voz real | Gestão do fechamento, métricas e apresentação |
+| Mariana Reis | Scrum Master e requisitos | Projeto visual e implantação | NLP e integração do canal de voz | Rotinas e testes funcionais e não funcionais | Qualidade do middleware, arquitetura e requisitos |
+| Mirela Bianchi | Tech Lead e apresentação | Prototipação e UML | API de áudio, mensageria e Scrum Master | Dados, histórico e testes de integração | Qualidade da interface, acessibilidade e padrões |
+
+##### Rotação efetiva e competências desenvolvidas
+
+A rotação foi efetiva porque nenhum integrante manteve a mesma frente principal em duas sprints consecutivas. As continuidades que existem representam evolução de profundidade, e não repetição do mesmo trabalho: voz passou de contrato na Sprint 2 para integração real na Sprint 4; nuvem passou de preparação na Sprint 2 para implantação e operação na Sprint 4; testes passaram de planejamento na Sprint 3 para execução sistêmica nas Sprints 4 e 5. Assim, o histórico mostra deslocamento entre negócio, design, desenvolvimento, dados, infraestrutura, qualidade e gestão, sem apagar a especialização adquirida.
+
+| Integrante | Competências desenvolvidas ao longo do módulo | Evidência rastreável |
+|---|---|---|
+| Alexsander Barbosa | Modelagem de negócio; decisões de dados; usabilidade; análise financeira; gestão de riscos e validação com o parceiro | Matrizes das seções 3.2.1 a 3.5.1; #485, #497, #498, #502, #507, #508, #519, #520 e #531 |
+| Carlos Eduardo Serrano Quaglia | Arquitetura; PLN e avaliação de modelos; persistência e integração; Azure e CI/CD; documentação técnica reproduzível | Matrizes das seções 3.2.1 a 3.5.1; #476–#480, #482, #499, #500, #513, #529, #530 e #536 |
+| Celso Rocha | Gestão de configuração; pré-processamento e intenções; testes de requisitos; analytics; custos, benefícios e adoção | Matrizes das seções 3.2.1 a 3.5.1; #486, #489–#496, #521, #526 e #528 |
+| Eduardo Casarini | Ideação e modelagem; serviços de voz; frontend; webhooks e mensageria; métricas e gestão de encerramento | Matrizes das seções 3.2.1 a 3.5.1; #501, #503–#506, #510, #512, #515 e #522 |
+| Mariana Reis | Requisitos e facilitação; UX e nuvem; classificação de intenções e voz; agendamento e testes sistêmicos; desempenho, arquitetura e rastreabilidade | Matrizes das seções 3.2.1 a 3.5.1; #456–#463, #475, #487, #488, #525, #535 e esta consolidação (#509) |
+| Mirela Bianchi | Liderança técnica; prototipação e UML; APIs e mensageria; dados e integração; testes de interface, acessibilidade e documentação de padrões | Matrizes das seções 3.2.1 a 3.5.1; #464–#470, #472–#474, #481, #524, #527, #532 e #533 |
+
+O quadro evidencia tanto a **amplitude** — todos passaram por mais de uma natureza de trabalho — quanto a **progressão**: as primeiras sprints concentraram entendimento, requisitos e projeto; as intermediárias converteram essas decisões em código e integrações; a última exigiu medição, estabilização, rastreabilidade e transferência do conhecimento produzido.
+
+#### 3.6.3 Retrospectiva da Sprint 5
 
 Seção redigida em duas etapas, pelas tasks #505 e #510. A Sprint 5 vai de 28/09 a 07/10, dia da apresentação final. A primeira versão sai do corte de 05/10 e serve à revisão interna. A versão final é refeita depois do último merge da Sprint 5, em 06/10, conforme a `AM24`, e acrescenta o que a retrospectiva final com a equipe levantar.
 
