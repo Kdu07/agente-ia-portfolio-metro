@@ -265,17 +265,17 @@ comunicam está no [documento de arquitetura](Arquitetura.md).
 
 ## 5. Análise estática e verificações
 
-Executar as verificações da área alterada antes de solicitar revisão. Cada
-comando corresponde a um job da CI em `.gitlab-ci.yml`, que roda as mesmas
-verificações em todo merge request:
+Executar as verificações da área alterada antes de solicitar revisão. A CI
+em `.gitlab-ci.yml` roda as mesmas verificações em todo merge request, em dois
+jobs, um por aplicação. O log do job lista as etapas que falharam:
 
 | Área | Comando local | Job da CI | Observação |
 | --- | --- | --- | --- |
-| Middleware | `python -m ruff check .`, em `src/middleware` | `middleware:ruff` | Verifica o diretório inteiro, inclusive `scripts/`. |
-| Middleware | `python -m pytest`, em `src/middleware` | `middleware:pytest` | `tests/unit` roda sem serviços. A suíte completa exige PostgreSQL e RabbitMQ, que o `infra/docker-compose.yml` levanta, o ffmpeg e `alembic upgrade head`. A CI roda com `--block-network`, e só o banco e o broker ficam liberados. |
-| Interface | `npm run lint`, em `src/web` | `web:eslint` | |
-| Interface | `npm run typecheck`, em `src/web` | `web:tipos` | Verifica `tsconfig.json` e `tsconfig.node.json`. |
-| Interface | `npm run test:coverage`, em `src/web` | `web:vitest` | Reprova abaixo de 80% em linhas, ramos e funções. `npm test` roda os testes sem a cobertura. |
+| Middleware | `python -m ruff check .`, em `src/middleware` | `middleware` | Verifica o diretório inteiro, inclusive `scripts/`. |
+| Middleware | `python -m pytest`, em `src/middleware` | `middleware` | `tests/unit` roda sem serviços. A suíte completa exige PostgreSQL e RabbitMQ, que o `infra/docker-compose.yml` levanta, o ffmpeg e `alembic upgrade head`. A CI roda com `--block-network`, e só o banco e o broker ficam liberados. |
+| Interface | `npm run lint`, em `src/web` | `web` | |
+| Interface | `npm run typecheck`, em `src/web` | `web` | Verifica `tsconfig.json` e `tsconfig.node.json`. |
+| Interface | `npm run test:coverage`, em `src/web` | `web` | Reprova abaixo de 80% em linhas, ramos e funções. `npm test` roda os testes sem a cobertura. |
 | Interface | `npm run build`, em `src/web` | Imagens de implantação | Verifica os tipos e gera o build de produção. |
 | Interface | `npm run audit:a11y`, em `src/web` | Execução manual | Auditoria WCAG 2.1 A/AA das telas (seção 9.2.18 do [Projeto](Projeto.md)). |
 
@@ -347,8 +347,8 @@ documentação diretamente relacionada no mesmo merge request.
 | --- | --- | --- |
 | Python | 3.12 (o projeto aceita a partir de 3.11) | Imagens `python:3.12-slim` do `Dockerfile` e da CI; `requires-python` em `pyproject.toml` |
 | FastAPI, SQLAlchemy, Alembic e pytest | Faixas declaradas | `src/middleware/pyproject.toml` |
-| Ruff | `>=0.16,<0.17` | Extra `dev` de `pyproject.toml` e job `middleware:ruff` |
+| Ruff | `>=0.16,<0.17` | Extra `dev` de `pyproject.toml`, que o job `middleware` instala |
 | Node.js | 20 | Imagem `node:20-alpine` do `Dockerfile` da interface e da CI |
 | React, Vite, Vitest e ESLint | Faixas em `package.json`, travadas no `package-lock.json` | `src/web/package.json` e `src/web/package-lock.json` |
-| PostgreSQL e RabbitMQ | 16 e 4.3.6 | `infra/docker-compose.yml` e serviços do job `middleware:pytest` |
+| PostgreSQL e RabbitMQ | 16 e 4.3.6 | `infra/docker-compose.yml` e serviços do job `middleware` |
 | Docker e Docker Compose | Não fixada no repositório | Ambiente local completo (`infra/docker-compose.yml`) |
