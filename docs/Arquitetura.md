@@ -1,20 +1,54 @@
 # Arquitetura da Solução — Agente de Portfólio do Metrô
 
 Este documento descreve a arquitetura da solução e a estrutura de pastas que a
-implementa. A proposta posiciona um **middleware próprio** entre o usuário e o
-**Copilot Studio**, que atua como executor de ações no ecossistema Microsoft do
-Metrô (SharePoint, Power BI, Power Automate).
+implementa. A solução posiciona um **middleware próprio** entre o usuário e o
+executor configurado. A porta `Executor` permite selecionar o **Copilot Studio**
+por Direct Line ou o **executor próprio**, que implementa recuperação de
+documentos por RAG (*Retrieval-Augmented Generation*). A API também expõe o
+portfólio estruturado no PostgreSQL por repositórios próprios; ele ainda não é
+roteado pelo `ExecutorRag`. A prova de conceito executável usa o segundo
+caminho; o primeiro depende de habilitação no tenant do parceiro.
 
 O escopo foi revisado: o middleware deixa de ser uma camada de passagem
 invisível e passa a ser o produto, com interface web própria, dados que são
 consultados e não apenas escritos, e um processo que executa sem ninguém na
 frente da tela.
 
+## Sumário
+
+- [1. Visão geral](#1-visão-geral)
+  - [1.1 Trajeto de uma mensagem](#11-trajeto-de-uma-mensagem)
+  - [1.2 Componentes e serviços](#12-componentes-e-serviços)
+  - [1.3 Por que essa separação](#13-por-que-essa-separação)
+- [2. As barreiras de segurança](#2-as-barreiras-de-segurança)
+  - [2.1 A guarda de saída](#21-a-guarda-de-saída)
+- [3. Ordem das etapas](#3-ordem-das-etapas)
+- [4. Rotinas agendadas](#4-rotinas-agendadas)
+- [5. Registro e análise de intenções](#5-registro-e-análise-de-intenções)
+- [6. Perfis e permissões](#6-perfis-e-permissões)
+- [7. Tecnologias](#7-tecnologias)
+- [8. Estrutura de pastas](#8-estrutura-de-pastas)
+  - [8.1 Backend](#81-srcmiddleware--o-backend)
+  - [8.2 Interface](#82-srcweb--a-interface)
+  - [8.3 Configuração do executor](#83-copilot--configuração-versionada-do-executor)
+  - [8.4 Ambiente de desenvolvimento](#84-infra--ambiente-de-desenvolvimento)
+- [9. Modelo de dados](#9-modelo-de-dados)
+- [10. Decisões de segurança](#10-decisões-de-segurança-embutidas-na-estrutura)
+- [11. Consequências em aberto](#11-consequências-em-aberto)
+- [12. Estado atual e próximos passos](#12-estado-atual-e-próximos-passos)
+  - [12.1 Ordem de construção](#121-ordem-de-construção)
+  - [12.2 Dependências externas](#122-dependências-externas-em-caminho-crítico)
+- [13. Caminho alternativo: executor próprio](#13-caminho-alternativo-executor-próprio)
+  - [13.1 A porta e os dois adaptadores](#131-a-porta-e-os-dois-adaptadores)
+  - [13.2 O que muda nas barreiras](#132-o-que-muda-nas-barreiras)
+  - [13.3 Tecnologias do caminho alternativo](#133-tecnologias-do-caminho-alternativo)
+  - [13.4 Perímetro e limites](#134-perímetro-e-limites)
+
 ## 1. Visão geral
 
-O usuário nunca fala diretamente com o Copilot. Toda entrada — digitada,
+O usuário nunca fala diretamente com o executor. Toda entrada — digitada,
 ditada ou disparada por uma rotina agendada — passa pelo middleware, que cumpre
-cinco papéis:
+seis papéis:
 
 1. **Proteger contra prompt injection** — barra tentativas de manipular o
    agente, combinando filtros por padrões conhecidos, um classificador por
@@ -30,11 +64,17 @@ cinco papéis:
    apenas a quem tem permissão para vê-los.
 5. **Executar rotinas** — prompts pré-programados que disparam em datas
    planejadas, como um relatório para a diretoria todo dia 5.
+6. **Receber integrações assíncronas** — valida os dois webhooks, garante os
+   eventos no RabbitMQ e deixa o `worker` atualizar o portfólio ou o índice RAG
+   fora do tempo da requisição HTTP.
 
-O Copilot Studio, configurado no tenant Microsoft do parceiro, recebe o prompt
-já validado com a intenção resolvida e executa a ação correspondente (buscar e
-escrever documentos, consultar dados, disparar fluxos) por meio de conectores
-com permissões mínimas.
+Depois das guardas e da classificação, a fábrica em
+`app/executor/fabrica.py` monta o adaptador selecionado por `EXECUTOR`. O
+Copilot Studio recebe o prompt validado por Direct Line; o executor próprio
+recupera trechos do corpus no Pinecone, mantém texto e metadados no PostgreSQL
+e usa Gemini ou OpenRouter para compor a resposta. As consultas estruturadas do
+portfólio são atendidas pelas rotas `portfolio/`. Ambos os executores obedecem
+ao mesmo contrato e devolvem a resposta ao mesmo pipeline.
 
 ### 1.1 Trajeto de uma mensagem
 
@@ -50,8 +90,11 @@ flowchart TB
     A["1. Sessão, perfil e permissões"] --> B["2. Guarda de injeção"]
     B --> C["3. Guarda de abuso"]
     C --> D["4. Classificação de intenção"]
-    D --> E["5. Execução no Copilot Studio"]
-    E --> F["6. Guarda de saída"]
+    D --> E["5. Fábrica do executor"]
+    E --> EC["Copilot Studio<br/>(Direct Line)"]
+    E --> ER["Executor próprio<br/>(RAG documental)"]
+    EC --> F["6. Guarda de saída"]
+    ER --> F
     F --> G["7. Registro da interação"]
     G --> R["Resposta ao usuário"]
 
@@ -67,55 +110,87 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    WEB["src/web<br/>React + Vite"]
+    USER(["Usuário"])
+    DRIVE["Google Drive<br/><i>WH-01 + corpus</i>"]
+    APPS["Google Apps Script<br/><i>WH-02 · HMAC</i>"]
 
     subgraph LOCAL["docker compose"]
-        NGX["web — Nginx"]
-        API["middleware — FastAPI"]
-        WRK["worker — APScheduler"]
-        DB[("db — PostgreSQL")]
+        WEB["web<br/>React + Nginx"]
+        API["middleware<br/>FastAPI + pipeline"]
+        WRK["worker<br/>APScheduler + consumidor"]
+        MQ[("rabbitmq<br/>RabbitMQ 4.3")]
+        DB[("db<br/>PostgreSQL 16")]
     end
 
-    subgraph TENANT["Tenant Microsoft"]
+    subgraph AZURE_EQUIPE["Tenant Azure da equipe"]
         ENTRA["Entra ID"]
         SAFE["Azure AI Content Safety"]
         SPEECH["Azure Speech"]
-        CS["Copilot Studio (Direct Line)"]
-        CN["SharePoint · Power BI · Power Automate"]
     end
 
-    WEB --> NGX
-    NGX -->|"/api"| API
-    API --> DB
-    API --> ENTRA
-    API --> SAFE
-    API --> CS
-    WRK --> DB
-    WRK --> SAFE
-    WRK --> CS
-    CS --> CN
-    API -.->|"emite token efêmero"| SPEECH
-    WEB -.->|"áudio"| SPEECH
+    subgraph EXECUTORES["Executores selecionados por configuração"]
+        CS["Copilot Studio (Direct Line)"]
+        RAG["Executor próprio (RAG)"]
+    end
+
+    subgraph TERCEIROS["Serviços externos do executor próprio"]
+        PINE["Pinecone"]
+        LLM["Gemini / OpenRouter"]
+    end
+
+    USER -->|"HTTPS"| WEB
+    WEB -->|"HTTPS /api"| API
+    API -->|"OAuth 2.0 / OIDC"| ENTRA
+    API -->|"SQL / TLS"| DB
+    WRK -->|"SQL / TLS"| DB
+    API -->|"HTTPS"| SAFE
+    WRK -->|"HTTPS"| SAFE
+    API -.->|"HTTPS · Direct Line (previsto)"| CS
+    API -->|"chamada interna · contrato Executor"| RAG
+    WRK -.->|"HTTPS · Direct Line (previsto)"| CS
+    WRK -->|"chamada interna · contrato Executor"| RAG
+    RAG -->|"HTTPS · busca vetorial"| PINE
+    RAG -->|"HTTPS · geração"| LLM
+    RAG -->|"SQL · textos e metadados"| DB
+    API -->|"AMQP 0-9-1 · publica"| MQ
+    MQ -->|"AMQP 0-9-1 · consome"| WRK
+    DRIVE -->|"HTTPS · WH-01"| API
+    APPS -->|"HTTPS · WH-02"| API
+    WRK -->|"HTTPS · leitura incremental"| DRIVE
+    API -.->|"HTTPS · token / transcrição"| SPEECH
+    WEB -.->|"WebSocket/HTTPS · áudio contínuo"| SPEECH
 ```
 
 O `worker` não chama a API por HTTP: ele importa o mesmo orquestrador em
 processo. É o mesmo código, acionado por um gatilho diferente — ver
-[seção 4](#4-rotinas-agendadas).
+[seção 4](#4-rotinas-agendadas). Ele também consome
+`prata.webhooks.incoming`; os webhooks só respondem `202` depois da confirmação
+de publicação no RabbitMQ.
+
+O diagrama é uma **visão lógica da solução em execução**, não a afirmação de
+que todos os blocos estão hospedados na Azure. Localmente, os cinco serviços
+do retângulo `docker compose` sobem juntos. Na nuvem, `web`, `middleware` e o
+job de migração têm configuração de implantação; o `worker` é opcional e o
+RabbitMQ ainda não foi provisionado. O detalhamento está na seção 6 de
+[Projeto.md](Projeto.md).
 
 ### 1.3 Por que essa separação
 
 | Ganho | Custo assumido |
 |---|---|
-| Controle e auditoria totais sobre o que entra e sai do Copilot | Latência extra (dois saltos de rede + inferência) |
+| Controle e auditoria totais sobre o que entra e sai do executor | Latência extra (saltos de rede + inferência) |
 | Catálogo de intenções como ativo próprio, independente do executor | Classificação de intenção duplicada com o *topic matching* do Copilot |
 | Controle de acesso por perfil aplicado antes de qualquer ação | Dois ambientes para operar e versionar |
 | Registro completo das interações, base para a análise de intenções | Banco próprio para manter, migrar e proteger |
 | Interface própria: rotinas, histórico e dashboard que o Copilot não oferece | Experiência nativa do Copilot (ex.: canal Teams) deixa de ser aproveitada |
 
 Sobre a duplicação de classificação: a decisão é que **o middleware é a fonte de
-verdade** — ele classifica e envia a intenção já resolvida; os tópicos do
-Copilot funcionam apenas como mapeamento de ação (ver
-[copilot/topicos.md](../copilot/topicos.md)).
+verdade** — ele classifica e envia a intenção já resolvida ao adaptador
+selecionado. Quando o Copilot estiver ativo, seus tópicos funcionarão apenas
+como mapeamento de ação (ver [copilot/topicos.md](../copilot/topicos.md)); no
+executor próprio, o escopo do usuário filtra a recuperação documental. O
+portfólio estruturado permanece acessível pelas rotas e repositórios próprios,
+sem atribuir ao `ExecutorRag` um roteamento que ainda não existe.
 
 ## 2. As barreiras de segurança
 
@@ -280,22 +355,31 @@ controle de acesso.
 
 ## 7. Tecnologias
 
+A tabela resume as escolhas da versão final. A matriz completa, com a versão,
+a justificativa e a situação de cada tecnologia, inclusive das previstas e não
+usadas, está em 5.1.5 de [Projeto.md](Projeto.md).
+
 | Camada | Escolha | Por quê |
 |---|---|---|
-| Interface | React 19 + TypeScript + Vite (SPA estática) | Nenhum runtime JS em produção; o Python segue sendo o único servidor de aplicação da equipe |
-| Estilo e componentes | Tailwind CSS + shadcn/ui sobre os primitivos acessíveis do Radix | Responsivo por breakpoint, exigência de mobile e desktop; tema claro e escuro por tokens |
-| Estado de servidor | TanStack Query | Cache e revalidação do histórico e das execuções de rotina |
-| Gráficos | Recharts | Dashboard de intenções |
+| Interface | React 19 + TypeScript 5.9 + Vite 5.4 (SPA estática) | Nenhum runtime JS em produção; o Python segue sendo o único servidor de aplicação da equipe |
+| Estilo e componentes | Tailwind CSS 4 + shadcn/ui sobre os primitivos acessíveis do Radix | Responsivo por breakpoint, exigência de mobile e desktop; tema claro e escuro por tokens |
+| Roteamento | React Router 6 | Rotas aninhadas deixam a tela de entrada fora da moldura da aplicação |
+| Estado de servidor | TanStack Query 5 | Cache e revalidação do histórico e das execuções de rotina |
+| Gráficos | Recharts 3 | Dashboard de intenções |
 | API | FastAPI (Python 3.12) + Pydantic v2 | Base já existente do middleware |
-| Autenticação | Entra ID, Authorization Code + PKCE no FastAPI | Token fora do navegador sem o custo de um segundo runtime |
+| Autenticação | Entra ID, Authorization Code + PKCE no FastAPI, com httpx e PyJWT | Token fora do navegador sem o custo de um segundo runtime; o MSAL foi descartado por ser síncrono e não conferir a assinatura do `id_token` |
 | Persistência | SQLAlchemy 2 (async) + asyncpg + Alembic | O esquema passa a mudar em várias frentes; versionar é o que permite reverter |
-| Banco | PostgreSQL 16 | Registro de interações e agregações do dashboard |
-| Agendador | APScheduler 3, jobstore SQLAlchemy | Agenda persistida no banco que já existe; sem Redis, sem broker |
-| Guardas (modelo) | Azure AI Content Safety | Prompt Shields cobre injeção direta e indireta; as categorias de conteúdo cobrem abuso. Uma API para as duas features, dentro do tenant homologado |
+| Banco | PostgreSQL 16, gerenciado na Azure pelo Flexible Server | Registro de interações, agregações do dashboard, dados estruturados do portfólio e texto do corpus |
+| Agendador | APScheduler 3, jobstore SQLAlchemy | Agenda persistida no banco que já existe; sem Redis nem broker para a agenda |
+| Mensageria | RabbitMQ 4.3 + aio-pika 9 | Fila durável dos eventos dos webhooks, com novas tentativas e fila de falhas; existe apenas no Compose (9.1.2.6 de [Projeto.md](Projeto.md)) |
+| Webhooks | Rotas FastAPI + emissor em Google Apps Script | Notificações do Google Drive (WH-01) e eventos do portfólio assinados com HMAC (WH-02), descritos em 9.1.2.7 de [Projeto.md](Projeto.md) |
+| Guardas (modelo) | Azure AI Content Safety | Prompt Shields cobre injeção direta e indireta; as categorias de conteúdo cobrem abuso. Uma API para as duas features, provisionada no tenant da equipe (risco R12) |
 | Classificação de intenção | Ensemble: TF-IDF (palavra + caractere) e embeddings `multilingual-e5-large`, ambos com regressão logística | Devolve probabilidade *calibrada*, requisito do limiar por intenção já previsto no catálogo. Escolhido por medição, não por preferência — ver 5.4.11 de [Projeto.md](Projeto.md) |
-| Voz | Azure Speech, token efêmero emitido pelo backend | Transcrição parcial em tempo real, chave nunca exposta, áudio dentro do perímetro do parceiro |
-| Executor | Copilot Studio via Direct Line | Inalterado em relação ao escopo anterior |
-| Testes | pytest, pytest-asyncio, Vitest, Testing Library | Espelham a separação backend/frontend |
+| Voz | Azure Speech: token efêmero emitido pelo backend para o microfone e transcrição dos arquivos de áudio no backend | Transcrição parcial em tempo real e chave nunca exposta; o serviço fica no tenant da equipe e é reprovisionável no do parceiro por configuração (seção 12.2) |
+| Executor | Executor próprio (Google Drive, Pinecone e Gemini) atrás da porta `Executor`; Copilot Studio via Direct Line previsto | O Direct Line depende de habilitação no tenant do parceiro, ainda pendente (seção 12.2); a porta mantém os dois caminhos, trocados pela variável `EXECUTOR` (seção 13) |
+| Nuvem | Azure Container Apps, Container Registry, Key Vault e Log Analytics | Contêineres e um PostgreSQL padrão preservam a portabilidade; a escala a zero cabe no teto de R$ 300 por ano (11.2.6 de [Projeto.md](Projeto.md)) |
+| Integração contínua | GitLab CI com OIDC | Verificação de cada merge request e implantação sem segredo guardado no GitLab |
+| Testes | pytest, pytest-asyncio, pytest-cov, Locust, pytest-recording, Vitest, Testing Library e MSW | Espelham a separação backend/frontend |
 
 Duas escolhas merecem justificativa mais longa, porque a alternativa óbvia foi
 descartada.
@@ -372,7 +456,7 @@ g02/
 │       └── nginx.conf                # Estáticos + proxy /api -> middleware
 │
 ├── copilot/                          # Lado Copilot Studio (configuração versionada)
-│   ├── solucao/                      # Exports da solution do Copilot Studio
+│   ├── solucao/                      # Sem exports: proibidos pelo parceiro (R23)
 │   ├── topicos.md                    # Contrato intenção -> tópico/ação
 │   └── conectores.md                 # Conectores habilitados e permissões (governança)
 │
@@ -410,8 +494,9 @@ Cada pasta responde a uma pergunta distinta:
   Separado de `persistence/` porque as perguntas do dashboard mudam com muito
   mais frequência que o esquema.
 - **`voz/`** — *como transcrevo áudio?* Emite o token de curta duração que o
-  navegador usa para falar com o Azure Speech. A chave do recurso não sai
-  daqui.
+  navegador usa para falar com o Azure Speech e transcreve os arquivos
+  enviados pela Fast Transcription, depois de o `ffprobe` confirmar a trilha
+  de áudio e a duração. A chave do recurso não sai daqui.
 - **`copilot/`** — *como executo a ação?* O `client.py` é o único ponto do
   middleware que conhece o Copilot (via API Direct Line). Trocar o executor no
   futuro significa substituir apenas este módulo.
@@ -440,7 +525,11 @@ cookie de sessão viaja sem CORS e sem exceção de `SameSite`.
 O Copilot Studio é configurado por interface no tenant do parceiro e não gera
 código-fonte; o que se versiona são os artefatos de rastreabilidade:
 
-- **`solucao/`** — exports da *solution* (backup/migração da configuração);
+- **`solucao/`** — deliberadamente vazia. O parceiro proíbe versionar o export
+  da *solution*, porque ele carrega links do SharePoint e conexões do ambiente
+  restrito (`R23` em [GestaoProjeto.md](GestaoProjeto.md)). O README da pasta
+  registra a proibição, e o `.gitignore` barra o que for colocado ali; backup e
+  migração ficam no ambiente do parceiro;
 - **`topicos.md`** — o contrato entre os dois mundos: qual intenção do catálogo
   dispara qual tópico/ação. Deve evoluir junto com
   `src/middleware/app/pipeline/intencao/catalogo.py`;
@@ -454,26 +543,28 @@ código da equipe.
 
 ### 8.4 `infra/` — ambiente de desenvolvimento
 
-O `docker-compose.yml` sobe os quatro serviços com um comando, permitindo que
-qualquer integrante rode a solução localmente apenas com Docker instalado. O
-`worker` é contêiner separado da `api` por duas razões: mantém a API sem estado
-e evita disparo duplicado de rotinas quando ela reinicia ou escala.
+O `docker-compose.yml` sobe os cinco serviços (`web`, `middleware`, `worker`,
+`db` e `rabbitmq`) com um comando, permitindo que qualquer integrante rode a
+solução localmente apenas com Docker instalado. O `worker` é contêiner separado
+da `api` por duas razões: mantém a API sem estado e evita disparo duplicado de
+rotinas quando ela reinicia ou escala. A implantação na Azure está na seção 6
+de [Projeto.md](Projeto.md).
 
 ## 9. Modelo de dados
 
-O esquema versionado tem **oito tabelas**. O capítulo 4 de
-[Projeto.md](Projeto.md) detalha o núcleo inicial e delimita as adições de autenticação e RAG:
+O esquema versionado tem **22 tabelas em quatro *schemas***, criadas por 12
+migrações Alembic. O capítulo 4 de [Projeto.md](Projeto.md) traz os modelos
+conceitual, lógico e físico, o dicionário de cada tabela e o DDL conferido
+contra o banco; o [banco-de-dados.md](banco-de-dados.md) lista, para cada
+índice, a consulta que ele sustenta.
 
-| Entidade | Papel |
-|---|---|
-| `usuario` | Identidade projetada do Entra ID: `id` do provedor, `nome`, `email`, `perfil` e `visto_em` |
-| `conversa` | Sessão de diálogo: título, vínculo com o Direct Line e arquivamento |
-| `interacao` | Uma mensagem processada: prompt, resposta, canal, intenção, confiança, desfecho e latência |
-| `rotina` | Prompt agendado, com recorrência, fuso e o usuário sob cuja identidade executa |
-| `execucao_rotina` | Um disparo e seu resultado, com início e fim gravados separadamente |
-| `sessao_usuario` | Sessão de login, perfil e permissões observados no login, com expiração |
-| `rag.arquivo` | Proveniência e controle dos arquivos ingeridos para recuperação documental |
-| `rag.trecho` | Trechos dos arquivos ingeridos e vínculo com sua origem |
+| Grupo | Tabelas | Papel |
+|---|---|---|
+| Núcleo (`public`) | `usuario`, `sessao_usuario`, `conversa`, `interacao`, `rotina`, `execucao_rotina`, `transcricao_audio` | Identidade projetada do Entra ID, sessão de login, diálogo, registro de cada mensagem processada, rotinas e seus disparos, e o ciclo das transcrições de voz |
+| Portfólio (`portfolio`) | `projeto`, `marco`, `risco`, `indicador`, `usuario_projeto` | Cópia estruturada do portfólio, criada pela carga e mantida pelo WH-02, e a participação de cada usuário nos projetos |
+| Avisos (`public`) | `preferencia_aviso`, `aviso` | Adesões aos avisos de cada projeto e tipo de evento, e os avisos privados gerados pelos eventos do portfólio |
+| Webhooks (`webhook`) | `canal_drive`, `recebimento`, `sincronizacao_fonte`, `fonte_portfolio`, `versao_entidade`, `auditoria_portfolio` | Entrada das notificações do Drive e dos eventos da planilha, com idempotência, controle de versão por entidade e auditoria |
+| Corpus (`rag`) | `arquivo`, `trecho` | Proveniência e destino dos arquivos ingeridos e o texto dos trechos indexados |
 
 A modelagem entregue na Sprint 2 tinha três entidades e antecipava, por escrito,
 os desdobramentos que faltavam: a conversa como entidade própria, o histórico de
@@ -491,9 +582,10 @@ Uma linha de `interacao` é gravada em **todos** os desfechos, inclusive nos
 bloqueios. As tentativas de ataque são justamente o dado mais valioso do
 recorte de segurança do dashboard.
 
-As permissões não são persistidas: resolvem-se dos *claims* de grupo a cada
-requisição. Projetá-las no banco criaria uma segunda fonte de verdade capaz de
-conceder um acesso que o Entra já revogou.
+As permissões não são coluna de `usuario`: resolvem-se dos *claims* de grupo
+no login e ficam gravadas na `sessao_usuario`, junto com o perfil e os projetos
+acessíveis, até a sessão expirar. Uma mudança de grupo no Entra só chega no
+login seguinte, e o logout apaga a sessão na hora.
 
 ## 10. Decisões de segurança embutidas na estrutura
 
@@ -639,11 +731,12 @@ um **segundo executor**, construído sobre serviços que a equipe provisiona
 sozinha.
 
 Ele não substitui esta arquitetura. A coexistência atrás de uma porta comum e a
-seleção por configuração são **planejadas**: o fluxo RAG existe em `app/rag/` e
-nos scripts de bancada, mas `executor/base.py`, `rag/executor.py` e a seleção
-`EXECUTOR` mostrados abaixo ainda não estão implementados no `/chat`.
-O diagrama da seção 13.1 representa essa integração prevista, não um segundo
-fluxo já conectado à API. O plano de construção, com as decisões e suas alternativas descartadas, está em
+seleção por configuração estão **implementadas**: `executor/base.py` define a
+porta, `executor/fabrica.py` escolhe entre os dois executores pelo valor de
+`EXECUTOR` e `rag/executor.py` atende o `/chat` quando esse valor é `proprio`.
+O diagrama da seção 13.1 representa a integração vigente nessa configuração;
+com o valor padrão `copilot`, o executor é o cliente do Direct Line, que segue
+sendo um esqueleto. O plano de construção, com as decisões e suas alternativas descartadas, está em
 [plano-executor-proprio.md](plano-executor-proprio.md).
 
 ### 13.1 A porta e os dois adaptadores
@@ -734,7 +827,7 @@ mensagem, para que a recusa não revele se a informação não existe ou apenas 
 | Repositório documental | Google Drive, pasta controlada por conta de serviço | Provisionamento imediato pela equipe; a ingestão é um job no `worker` que já existe, sem serviço novo no compose |
 | Embeddings | `intfloat/multilingual-e5-large`, local | Já carregado pelo ramo de embeddings do classificador, com os prefixos de assimetria da família e5 já tratados. Custo zero e, sobretudo, o corpus não sai da máquina para ser indexado |
 | Banco vetorial | Pinecone, atrás de uma porta `RepositorioVetorial` | O adaptador pgvector sobre o PostgreSQL existente fica como reserva: esgotar a camada gratuita ou desistir de enviar vetores para fora vira mudança de `.env`, não refatoração |
-| Geração | Gemini, atrás de uma porta `ModeloLinguagem` | Provisionamento imediato e camada gratuita suficiente para dado sintético. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação; se chegar, a troca é um adaptador em `rag/linguagem/` e uma linha no `.env` |
+| Geração | Gemini, atrás de uma porta `ModeloLinguagem`, pelo SDK do Google ou pelo OpenRouter | Provisionamento imediato e camada gratuita suficiente para dado sintético; o OpenRouter serve o mesmo modelo cobrando por uso, sem depender da cota gratuita. Azure OpenAI no tenant da equipe manteria o perímetro intacto e foi preterido pelo prazo de liberação; se chegar, a troca é um adaptador em `rag/linguagem/` e uma linha no `.env` |
 | Base estruturada | PostgreSQL, *schema* `portfolio`, por migração Alembic | Dá destino às 10 intenções de transação e às agregações que caberiam ao Power BI, sem banco novo |
 
 ### 13.4 Perímetro e limites

@@ -66,7 +66,7 @@ const LATENCIA_CONSULTA = import.meta.env.MODE === "test" ? 0 : 350;
  * Como o duble escolhe o desfecho de uma mensagem.
  *
  * O pipeline real decide por guardas e classificador. Aqui a decisao vem
- * de palavras-chave, apenas para que os oito desfechos sejam alcancaveis
+ * de palavras-chave, apenas para que os nove desfechos sejam alcancaveis
  * a mao durante o desenvolvimento e o teste manual. A ordem reproduz a
  * ordem do orquestrador: injecao, abuso, escopo, confianca, execucao.
  *
@@ -102,6 +102,13 @@ const GATILHOS: { padrao: RegExp; desfecho: Desfecho; resposta: string }[] = [
     padrao: /^.{0,12}$|daquele|por l[aá]|aquela coisa/i,
     desfecho: "recusada_baixa_confianca",
     resposta: `Não tenho certeza do que você precisa. Pode reformular com mais detalhes? ${CAPACIDADES}`,
+  },
+  {
+    // Guarda sem resposta do Content Safety: mesmo texto da falha do
+    // executor, porque para quem perguntou o caso e o mesmo.
+    padrao: /simular cota|verifica[cç][aã]o fora do ar/i,
+    desfecho: "falha_guarda",
+    resposta: "Não consegui completar a ação agora. Tente novamente em instantes.",
   },
   {
     padrao: /simular falha|forcar erro|for[cç]ar erro/i,
@@ -223,6 +230,7 @@ const handlersComRotaReal = [
       proximo_disparo: new Date(Date.now() + 86_400_000).toISOString(),
       criada_em: agora,
       atualizada_em: agora,
+      ultima_execucao: null,
     };
     rotinas = [nova, ...rotinas];
     return HttpResponse.json(nova, { status: 201 });
@@ -264,6 +272,9 @@ const handlersComRotaReal = [
       desfecho: "encaminhada",
       erro: null,
     };
+    rotinas = rotinas.map((rotina) =>
+      rotina.id === id ? { ...rotina, ultima_execucao: { iniciada_em: agora, status: execucao.status } } : rotina,
+    );
     return HttpResponse.json(execucao);
   }),
 

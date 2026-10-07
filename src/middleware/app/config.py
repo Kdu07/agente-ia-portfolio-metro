@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # APScheduler. Um único PostgreSQL evita um broker separado só para a
     # agenda.
     database_url: str = "postgresql+asyncpg://middleware:middleware@localhost:5432/middleware"
+    database_pool_size: int = Field(default=5, ge=1)
+    database_max_overflow: int = Field(default=10, ge=0)
+    database_pool_timeout_seconds: float = Field(default=5.0, gt=0)
     # Intervalo em que o worker reconcilia a tabela `rotina` com o
     # jobstore. A API e o worker são processos distintos; essa leitura
     # periódica faz uma edição chegar ao agendador sem reiniciar o worker.
@@ -96,6 +99,18 @@ class Settings(BaseSettings):
     # bancada da issue #411: entre 2, 4 e 6, apresentou a menor passagem
     # indevida sem bloquear os enunciados legítimos do conjunto.
     content_safety_limiar_severidade: int = 2
+    # Uma mensagem encaminhada faz três avaliações sequenciais. O cliente é
+    # compartilhado e este limite impede uma rajada de abrir conexões sem
+    # controle e consumir a quota inteira do recurso.
+    content_safety_max_concorrencia: int = Field(default=3, ge=1)
+    # O recurso de bancada aceita cinco chamadas por segundo. Manter uma
+    # unidade de folga absorve variação de relógio e chamadas administrativas
+    # sem transformar 429 em bloqueio de usuário legítimo.
+    content_safety_requisicoes_por_segundo: float = Field(default=4.0, gt=0)
+    content_safety_fila_timeout_seconds: float = Field(default=5.0, gt=0)
+    content_safety_timeout_seconds: float = Field(default=3.0, gt=0)
+    content_safety_max_tentativas: int = Field(default=3, ge=1, le=5)
+    content_safety_espera_base_seconds: float = Field(default=0.25, ge=0)
     # Domínios que a resposta do executor pode citar em link. Fora deles, a
     # guarda de saída trata a URL como possível exfiltração. Subdomínios
     # valem (`contoso.sharepoint.com`). Os dois do Google cobrem o link das
@@ -111,8 +126,10 @@ class Settings(BaseSettings):
     # A única chave que troca o caminho (seção 3.7 de
     # docs/plano-executor-proprio.md): `copilot` é o Copilot Studio via
     # Direct Line, o caminho oficial; `proprio` é o RAG sobre o corpus do
-    # Drive. Lida só em api/deps.py — o orquestrador conhece a porta, não a
-    # escolha.
+    # Drive. A fábrica compartilhada de executor lê estas chaves; o
+    # orquestrador conhece a porta, não a escolha. `performance_mode` troca
+    # somente essa porta pelo executor sintético, sem desativar guardas nem
+    # classificação.
     executor: str = "copilot"
     performance_mode: bool = False
     performance_executor_delay_ms: int = 50
@@ -236,18 +253,24 @@ class Settings(BaseSettings):
     def configurar_conexao_rabbitmq(self) -> Self:
         try:
             explicita = self.rabbitmq_url.get_secret_value()
-            url = AmqpDsn(explicita) if explicita else AmqpDsn.build(
-                scheme="amqp",
-                username=quote(self.rabbitmq_user, safe=""),
-                password=quote(self.rabbitmq_password.get_secret_value(), safe=""),
-                host=self.rabbitmq_host,
-                port=self.rabbitmq_port,
-                path=quote(self.rabbitmq_vhost, safe=""),
+            url = (
+                AmqpDsn(explicita)
+                if explicita
+                else AmqpDsn.build(
+                    scheme="amqp",
+                    username=quote(self.rabbitmq_user, safe=""),
+                    password=quote(self.rabbitmq_password.get_secret_value(), safe=""),
+                    host=self.rabbitmq_host,
+                    port=self.rabbitmq_port,
+                    path=quote(self.rabbitmq_vhost, safe=""),
+                )
             )
             if not url.host:
                 raise ValueError("Host AMQP ausente")
         except ValueError:
-            raise ValueError("Configuracao RabbitMQ invalida: usar amqp ou amqps com host") from None
+            raise ValueError(
+                "Configuracao RabbitMQ invalida: usar amqp ou amqps com host"
+            ) from None
         self.rabbitmq_url = SecretStr(str(url))
         return self
 

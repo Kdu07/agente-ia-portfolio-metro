@@ -16,21 +16,32 @@ from datetime import UTC, datetime
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from apscheduler.triggers.cron import CronTrigger
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.analytics.metricas import rotulo_de_intencao
-from app.api.deps import UsuarioAtual, exige_permissao, obter_execucoes, obter_rotinas
+from app.api.deps import SessaoBanco, UsuarioAtual, exige_permissao, obter_execucoes, obter_rotinas
 from app.auth.entra import FalhaConsultaDiretorio, UsuarioEntraInativo
 from app.persistence.models import ExecucaoRotina, Interacao, Rotina
 from app.persistence.repository import ExecucaoRepository, RotinaRepository
 from app.rotinas import execucao as execucao_rotina
+from app.rotinas.cron import criar_gatilho_cron
 from app.rotinas.execucao import ExecucaoNaoAutorizada, PermissaoRotinaRevogada, RotinaNaoEncontrada
 from app.rotinas.validacao import ResultadoValidacao, validar_agenda, validar_prompt
+from app.schemas.erro import (
+    RESPOSTA_401,
+    RESPOSTA_403,
+    RESPOSTA_403_DISPARO,
+    RESPOSTA_404_ROTINA,
+    RESPOSTA_409_ROTINA,
+    RESPOSTA_422_ROTINA,
+    RESPOSTA_500_EXECUCAO,
+    RESPOSTA_503_ENTRA,
+)
 from app.schemas.rotina import (
     ExecucaoResposta,
     RotinaRequest,
     RotinaResposta,
+    UltimaExecucao,
     ValidacaoResposta,
 )
 from app.schemas.usuario import Permissao
@@ -38,6 +49,7 @@ from app.schemas.usuario import Permissao
 router = APIRouter(
     prefix="/rotinas",
     dependencies=[Depends(exige_permissao(Permissao.GERIR_ROTINAS))],
+    responses={**RESPOSTA_401, **RESPOSTA_403},
 )
 
 
@@ -45,9 +57,12 @@ router = APIRouter(
 async def listar(
     usuario: UsuarioAtual,
     rotinas: Annotated[RotinaRepository, Depends(obter_rotinas)],
+    execucoes: Annotated[ExecucaoRepository, Depends(obter_execucoes)],
 ) -> list[RotinaResposta]:
-    """Rotinas do usuário, com o próximo disparo calculado."""
-    return [_resposta_rotina(rotina) for rotina in await rotinas.listar_por_dono(usuario.id)]
+    """Rotinas do usuário, com o próximo disparo calculado e o último realizado."""
+    lista = await rotinas.listar_por_dono(usuario.id)
+    ultimas = await execucoes.ultimas_por_rotina([rotina.id for rotina in lista])
+    return [_resposta_rotina(rotina, ultimas.get(rotina.id)) for rotina in lista]
 
 
 @router.post("/validar", response_model=ValidacaoResposta)
@@ -66,7 +81,12 @@ async def validar(pedido: RotinaRequest, usuario: UsuarioAtual) -> ValidacaoResp
     )
 
 
-@router.post("", response_model=RotinaResposta, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=RotinaResposta,
+    status_code=status.HTTP_201_CREATED,
+    responses=RESPOSTA_422_ROTINA,
+)
 async def criar(
     pedido: RotinaRequest,
     usuario: UsuarioAtual,
@@ -100,12 +120,17 @@ async def criar(
     return _resposta_rotina(rotina)
 
 
-@router.put("/{rotina_id}", response_model=RotinaResposta)
+@router.put(
+    "/{rotina_id}",
+    response_model=RotinaResposta,
+    responses={**RESPOSTA_404_ROTINA, **RESPOSTA_422_ROTINA},
+)
 async def atualizar(
     rotina_id: str,
     pedido: RotinaRequest,
     usuario: UsuarioAtual,
     rotinas: Annotated[RotinaRepository, Depends(obter_rotinas)],
+    execucoes: Annotated[ExecucaoRepository, Depends(obter_execucoes)],
 ) -> RotinaResposta:
     """Edita uma rotina do próprio usuário, revalidando o prompt.
 
@@ -129,10 +154,17 @@ async def atualizar(
         intencao_prevista=validacao.intencao_prevista,
     )
     await rotinas.atualizar(atualizada)
-    return _resposta_rotina(atualizada)
+    # Editar não apaga o histórico: a resposta traz o último disparo como
+    # a listagem, para quem lê só a resposta da edição não ver "nunca".
+    ultimas = await execucoes.ultimas_por_rotina([atualizada.id])
+    return _resposta_rotina(atualizada, ultimas.get(atualizada.id))
 
 
-@router.delete("/{rotina_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{rotina_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={**RESPOSTA_404_ROTINA, **RESPOSTA_409_ROTINA},
+)
 async def remover(
     rotina_id: str,
     usuario: UsuarioAtual,
@@ -150,10 +182,20 @@ async def remover(
         raise HTTPException(status.HTTP_409_CONFLICT, str(erro)) from erro
 
 
-@router.post("/{rotina_id}/executar", response_model=ExecucaoResposta)
+@router.post(
+    "/{rotina_id}/executar",
+    response_model=ExecucaoResposta,
+    responses={
+        **RESPOSTA_403_DISPARO,
+        **RESPOSTA_404_ROTINA,
+        **RESPOSTA_500_EXECUCAO,
+        **RESPOSTA_503_ENTRA,
+    },
+)
 async def executar_agora(
     rotina_id: str,
     usuario: UsuarioAtual,
+    banco: SessaoBanco,
     execucoes: Annotated[ExecucaoRepository, Depends(obter_execucoes)],
 ) -> ExecucaoResposta:
     """Dispara a rotina sob demanda, para o usuário testá-la.
@@ -162,6 +204,11 @@ async def executar_agora(
     que o solicitante é o dono não é formalidade: disparar a rotina de
     outra pessoa executaria com as permissões dela.
     """
+    # A autenticação atualizou `usuario` nesta transação. O executor confirma
+    # o dono no Entra e repete o upsert em sessão própria; liberar esse lock
+    # antes de aguardá-lo evita a espera circular entre as duas sessões.
+    # Até aqui há apenas a projeção da identidade, sem escrita de execução.
+    await banco.commit()
     try:
         resultado = await execucao_rotina.executar_agora(rotina_id, usuario.id)
     except (RotinaNaoEncontrada, ExecucaoNaoAutorizada) as erro:
@@ -187,7 +234,11 @@ async def executar_agora(
     return _resposta_execucao(*registro)
 
 
-@router.get("/{rotina_id}/execucoes", response_model=list[ExecucaoResposta])
+@router.get(
+    "/{rotina_id}/execucoes",
+    response_model=list[ExecucaoResposta],
+    responses=RESPOSTA_404_ROTINA,
+)
 async def listar_execucoes(
     rotina_id: str,
     usuario: UsuarioAtual,
@@ -230,10 +281,10 @@ async def _rotina_do_usuario(
     return rotina
 
 
-def _resposta_rotina(rotina: Rotina) -> RotinaResposta:
+def _resposta_rotina(rotina: Rotina, ultima: ExecucaoRotina | None = None) -> RotinaResposta:
     proximo = None
     if rotina.ativa:
-        gatilho = CronTrigger.from_crontab(
+        gatilho = criar_gatilho_cron(
             rotina.agenda_cron,
             timezone=ZoneInfo(rotina.timezone),
         )
@@ -252,6 +303,9 @@ def _resposta_rotina(rotina: Rotina) -> RotinaResposta:
         proximo_disparo=proximo,
         criada_em=rotina.criada_em,
         atualizada_em=rotina.atualizada_em,
+        ultima_execucao=(
+            UltimaExecucao(iniciada_em=ultima.iniciada_em, status=ultima.status) if ultima else None
+        ),
     )
 
 

@@ -33,12 +33,15 @@ import app.rag.tabelas  # noqa: F401
 from app.persistence.models import (
     Canal,
     Conversa,
+    EstadoTranscricao,
     ExecucaoRotina,
     Interacao,
     Rotina,
     StatusExecucao,
+    TranscricaoAudio,
 )
 from app.persistence.repository import (
+    AudioRepository,
     ConversaRepository,
     ExecucaoRepository,
     InteracaoRepository,
@@ -183,6 +186,79 @@ async def test_indice_parcial_de_interacoes_sem_intencao_existe(
     )
     assert definicao is not None
     assert "WHERE (intencao_id IS NULL)" in definicao
+
+
+# --- Áudio ---------------------------------------------------------------
+
+
+async def test_audio_criado_atualizado_e_recuperado_do_banco(
+    sessao: AsyncSession,
+) -> None:
+    usuario_id = await _usuario(sessao)
+    agora = datetime.now(UTC)
+    audio = TranscricaoAudio(
+        id=_id("audio"),
+        usuario_id=usuario_id,
+        estado=EstadoTranscricao.RECEBIDO,
+        formato="audio/wav",
+        duracao_segundos=1.25,
+        criada_em=agora,
+        expira_em=agora + timedelta(hours=1),
+    )
+    repositorio = AudioRepository(sessao)
+
+    await repositorio.criar(audio)
+    await repositorio.atualizar(
+        audio.id,
+        estado=EstadoTranscricao.CONCLUIDA,
+        texto="Transcrição persistida",
+        idioma="pt-BR",
+        confianca=0.98,
+        duracao_segundos=1.3,
+        latencia_ms=425,
+    )
+    recuperado = await repositorio.obter(audio.id, usuario_id)
+
+    assert recuperado is not None
+    assert recuperado.estado is EstadoTranscricao.CONCLUIDA
+    assert recuperado.texto == "Transcrição persistida"
+    assert recuperado.idioma == "pt-BR"
+    assert recuperado.confianca == pytest.approx(0.98)
+    assert recuperado.duracao_segundos == pytest.approx(1.3)
+    assert recuperado.latencia_ms == 425
+
+
+async def test_audio_so_e_recuperado_pelo_dono_e_enquanto_vigente(
+    sessao: AsyncSession,
+) -> None:
+    dono_id = await _usuario(sessao)
+    outro_usuario_id = await _usuario(sessao)
+    agora = datetime.now(UTC)
+    vigente = TranscricaoAudio(
+        id=_id("audio"),
+        usuario_id=dono_id,
+        estado=EstadoTranscricao.RECEBIDO,
+        formato="audio/wav",
+        duracao_segundos=1.0,
+        criada_em=agora,
+        expira_em=agora + timedelta(hours=1),
+    )
+    expirado = TranscricaoAudio(
+        id=_id("audio"),
+        usuario_id=dono_id,
+        estado=EstadoTranscricao.CONCLUIDA,
+        formato="audio/wav",
+        duracao_segundos=1.0,
+        criada_em=agora - timedelta(hours=2),
+        expira_em=agora - timedelta(hours=1),
+    )
+    repositorio = AudioRepository(sessao)
+    await repositorio.criar(vigente)
+    await repositorio.criar(expirado)
+
+    assert await repositorio.obter(vigente.id, dono_id) is not None
+    assert await repositorio.obter(vigente.id, outro_usuario_id) is None
+    assert await repositorio.obter(expirado.id, dono_id) is None
 
 
 # --- Usuário -------------------------------------------------------------
@@ -613,6 +689,42 @@ async def test_permissao_revogada_persiste_falha_e_desativa_rotina(
     assert registradas[0].erro == "Dono sem permissão atual para executar rotinas"
     assert atualizada is not None
     assert atualizada.ativa is False
+
+
+async def test_ultimas_por_rotina_traz_so_o_disparo_mais_recente_de_cada_uma(
+    sessao: AsyncSession,
+) -> None:
+    """O `DISTINCT ON` é do PostgreSQL; só o servidor confirma a escolha.
+
+    Cada rotina aparece uma vez, com o disparo de `iniciada_em` mais
+    recente, e a que nunca disparou fica fora do dicionário.
+    """
+    dono = await _usuario(sessao)
+    com_dois = await _rotina(sessao, dono)
+    com_um = await _rotina(sessao, dono)
+    sem_disparo = await _rotina(sessao, dono)
+    execucoes = ExecucaoRepository(sessao)
+    for rotina_id, quando, status in (
+        (com_dois.id, AGORA - timedelta(days=2), StatusExecucao.SUCESSO),
+        (com_dois.id, AGORA - timedelta(hours=1), StatusExecucao.FALHA),
+        (com_um.id, AGORA - timedelta(days=1), StatusExecucao.BLOQUEADA),
+    ):
+        await execucoes.registrar_inicio(
+            ExecucaoRotina(
+                id=_id("execucao"),
+                rotina_id=rotina_id,
+                iniciada_em=quando,
+                concluida_em=quando,
+                status=status,
+            )
+        )
+
+    ultimas = await execucoes.ultimas_por_rotina([com_dois.id, com_um.id, sem_disparo.id])
+
+    assert set(ultimas) == {com_dois.id, com_um.id}
+    assert ultimas[com_dois.id].status is StatusExecucao.FALHA
+    assert ultimas[com_um.id].status is StatusExecucao.BLOQUEADA
+    assert await execucoes.ultimas_por_rotina([]) == {}
 
 
 async def test_remover_rotina_com_execucao_e_recusado(sessao: AsyncSession) -> None:

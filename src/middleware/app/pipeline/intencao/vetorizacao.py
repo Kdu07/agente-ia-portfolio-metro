@@ -45,7 +45,7 @@ def tokenizar_para_vetorizacao(texto: str) -> list[str]:
 
 @dataclass(frozen=True)
 class ConfiguracaoVetorizador:
-    """Parâmetros expostos para exploração — ver seção 5.1.5 de Projeto.md.
+    """Parâmetros expostos para exploração — ver seção 5.1.6 de Projeto.md.
 
     `ngram_range` amplia o vocabulário para capturar padrões de duas
     palavras (ex.: "quando termina" vs. "quando vence"); `min_df` descarta

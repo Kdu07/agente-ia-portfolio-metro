@@ -2,7 +2,7 @@ import { rm } from "node:fs/promises";
 import { fileURLToPath, URL } from "node:url";
 
 import type { Plugin } from "vite";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
@@ -55,13 +55,21 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    setupFiles: ["./src/testes/setup.ts"],
+    setupFiles: ["./src/testes/ambiente.ts", "./src/testes/setup.ts"],
+    // A suíte de integração precisa do middleware em execução e roda à
+    // parte, por `npm run test:integracao` (vitest.integracao.config.ts).
+    exclude: [...configDefaults.exclude, "src/testes/integracao/**"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html", "json-summary"],
+      reporter: ["text", "html", "json-summary", "cobertura"],
       reportsDirectory: "coverage",
       include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/**/*.d.ts", "src/testes/**", "src/mocks/**"],
+      thresholds: {
+        lines: 80,
+        branches: 80,
+        functions: 80,
+      },
     },
   },
 });

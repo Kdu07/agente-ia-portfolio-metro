@@ -175,9 +175,29 @@ class Orquestrador:
         if suspeita_por_regra:
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_REGRA)
 
-        with _cronometrar(ctx, ETAPA_INJECAO):
-            veredito = await injecao_classificador.classificar(ctx.prompt)
+        try:
+            with _cronometrar(ctx, ETAPA_INJECAO):
+                veredito = await injecao_classificador.classificar(ctx.prompt)
+        except Exception:  # noqa: BLE001 - guarda de injeção deve falhar fechada
+            # O adaptador converte as falhas conhecidas do Content Safety em
+            # veredito suspeito. Esta contenção é a última barreira caso a
+            # própria guarda falhe antes de produzir esse veredito: uma
+            # exceção inesperada não pode virar janela de ataque nem 500.
+            # Não registrar a exceção evita que clientes HTTP incluam o
+            # prompt ou dados do provedor no log.
+            logger.warning(
+                "Falha inesperada na guarda de injeção; bloqueando a mensagem "
+                "(interacao=%s, usuario=%s)",
+                ctx.interacao_id,
+                ctx.usuario.id,
+            )
+            return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
         if veredito.suspeita:
+            # Sem o serviço, a guarda falha fechada do mesmo jeito, mas o
+            # registro não pode chamar de ataque o que foi falta de cota ou
+            # fila cheia: isso inflaria os bloqueios do painel e do RNF06.
+            if veredito.indisponivel:
+                return await self._encerrar(ctx, Desfecho.FALHA_GUARDA)
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_INJECAO_MODELO)
 
         # --- 2. Guarda de abuso -------------------------------------------
@@ -303,6 +323,8 @@ class Orquestrador:
                 ctx.interacao_id,
                 veredito_saida.motivo,
             )
+            if veredito_saida.indisponivel:
+                return await self._encerrar(ctx, Desfecho.FALHA_GUARDA)
             return await self._encerrar(ctx, Desfecho.BLOQUEADA_SAIDA)
 
         # --- 6. Registro ---------------------------------------------------
@@ -388,7 +410,15 @@ class Orquestrador:
         )
 
     async def _historico_seguro(self, ctx: _Contexto) -> tuple[TurnoContexto, ...]:
-        """Carrega e filtra os turnos do dono antes de compor o prompt."""
+        """Carrega e filtra os turnos do dono antes de compor o prompt.
+
+        Só interações efetivamente encaminhadas podem voltar ao contexto: nelas,
+        o prompt atravessou a guarda de entrada e a resposta atravessou a guarda
+        de saída quando o turno foi produzido. Repetir Prompt Shields para cada
+        item do histórico multiplicava as chamadas externas e fazia mensagens
+        legítimas disputarem a quota. A defesa em profundidade permanece por
+        regra local, determinística e sem pressão adicional sobre o serviço.
+        """
         limite = settings.historico_max_turnos
         if limite == 0:
             return ()
@@ -398,11 +428,10 @@ class Orquestrador:
         )
         seguros: list[TurnoContexto] = []
         for interacao in interacoes:
+            if interacao.desfecho is not Desfecho.ENCAMINHADA:
+                continue
             textos = (interacao.prompt, interacao.resposta)
             suspeita = any(injecao_regras.contem_padrao_suspeito(texto) for texto in textos)
-            if not suspeita:
-                vereditos = [await injecao_classificador.classificar(texto) for texto in textos]
-                suspeita = any(veredito.suspeita for veredito in vereditos)
             if suspeita:
                 logger.warning(
                     "Turno anterior removido do contexto por suspeita de injeção "

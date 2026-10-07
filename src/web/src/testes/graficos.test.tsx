@@ -55,12 +55,15 @@ describe("Regra 1: conteiner responsivo", () => {
     expect(container.querySelectorAll('[aria-hidden="true"] [tabindex]:not([tabindex="-1"])')).toHaveLength(0);
   });
 
-  it("a tabela de enunciados rola dentro do cartao em tela estreita", () => {
-    const { container } = render(
+  it("a tabela de enunciados permite foco para rolagem por teclado", () => {
+    render(
       <TabelaEnunciados titulo="Pedidos" enunciados={BAIXA_CONFIANCA} mensagemVazia="Nada" />,
     );
 
-    expect(container.querySelector(".overflow-x-auto table")).not.toBeNull();
+    const regiaoRolavel = screen.getByRole("group", { name: "Tabela rolável: Pedidos" });
+    expect(regiaoRolavel).toHaveAttribute("tabindex", "0");
+    expect(regiaoRolavel).toHaveClass("overflow-x-auto");
+    expect(within(regiaoRolavel).getByRole("table", { name: "Pedidos" })).toBeInTheDocument();
   });
 });
 
@@ -134,7 +137,7 @@ describe("Componentes", () => {
     expect(cores).toContain(COR.injecao);
     expect(cores).toContain(COR.falha);
     // As atendidas saem das barras e viram numero no titulo; na tabela
-    // acessivel continuam as oito linhas.
+    // acessivel continuam as nove linhas.
     expect(cores).not.toContain(COR.ok);
     expect(cores).toHaveLength(DISTRIBUICAO_DESFECHOS.length - 1);
     expect(screen.getByText(/Atendidas:/)).toHaveTextContent("Atendidas: 495 de 596 (83,1%)");

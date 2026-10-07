@@ -25,7 +25,9 @@ export function LogoPrata({ className, titulo = "Prata Agent", decorativa = fals
     <svg
       viewBox="104 150 1740 440"
       className={className}
-      {...(decorativa ? { "aria-hidden": true } : { role: "img", "aria-label": titulo })}
+      role={decorativa ? "none" : "img"}
+      aria-label={decorativa ? undefined : titulo}
+      aria-hidden={decorativa}
     >
       <defs>
         <DegradeDaLogo id={id} />

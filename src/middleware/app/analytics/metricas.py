@@ -67,6 +67,7 @@ ROTULO_DE_DESFECHO: dict[Desfecho, str] = {
     Desfecho.RECUSADA_FORA_ESCOPO: "Fora do escopo",
     Desfecho.RECUSADA_BAIXA_CONFIANCA: "Baixa confiança",
     Desfecho.BLOQUEADA_SAIDA: "Resposta não entregue",
+    Desfecho.FALHA_GUARDA: "Verificação indisponível",
     Desfecho.FALHA_EXECUTOR: "Falha do executor",
 }
 

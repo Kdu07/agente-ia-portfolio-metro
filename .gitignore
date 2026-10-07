@@ -4,6 +4,9 @@
 .env.gravacao
 # Chave da conta de serviço do Drive (ingestão do executor próprio)
 credenciais/
+# Export da solution do Copilot Studio: proibido pelo parceiro (R23)
+copilot/solucao/*
+!copilot/solucao/README.md
 
 # Resíduo de testes: um MagicMock usado como caminho vira diretório real
 # quando o código sob teste escreve nele (uploads de áudio).
@@ -17,13 +20,13 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 .coverage
+coverage/
 coverage.xml
 htmlcov/
 
 # Node / frontend
 node_modules/
 dist/
-coverage/
 *.tsbuildinfo
 *.local
 .eslintcache

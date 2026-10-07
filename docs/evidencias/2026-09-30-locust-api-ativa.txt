@@ -1,0 +1,155 @@
+EVIDÊNCIA — TNF-DES-01, TNF-DES-03, TNF-DES-04 E TNF-DES-07 COM A API ATIVA
+Issue: #461
+Execução: 29–30/09/2026
+Commit de base: 260ec4c
+Commit das rodadas complementares: d0d223a
+
+AMBIENTE
+
+- Host: Windows 11; Intel Core i5-1334U, 10 núcleos e 12 processadores
+  lógicos; aproximadamente 16,8 GB de RAM.
+- Docker Desktop 29.2.1: 12 CPUs lógicas e aproximadamente 8,2 GB de RAM.
+- API: uma instância Uvicorn/Python 3.12, em contêiner construído do
+  middleware do repositório e publicado apenas em 127.0.0.1:8000.
+- PostgreSQL: imagem postgres:16-alpine, banco local real.
+- Gerador de carga: Locust 2.42.6 em contêiner temporário construído a
+  partir da mesma imagem local do middleware. O gerador e o alvo
+  compartilharam o mesmo Docker Desktop.
+- Sessão: identidade sintética persistida no PostgreSQL local. Nenhum
+  cookie ou segredo foi registrado nesta evidência.
+- Pipeline: PERFORMANCE_MODE=true; somente o executor final foi trocado
+  por ExecutorDesempenho, com atraso configurado em 50 ms. Autenticação,
+  guardas, classificação e persistência permaneceram ativas. O Content
+  Safety estava configurado no ambiente.
+- Modelo de intenções aquecido antes das duas execuções válidas.
+
+CORREÇÃO DO ORÁCULO DE CARGA
+
+A mensagem padrão anterior, "Qual o status do projeto PRJ-2024-018?",
+foi recusada por baixa confiança pelo modelo carregado. Como o script
+aceitava qualquer campo `desfecho`, uma resposta HTTP 200 de recusa era
+contada como sucesso, embora o executor sintético não fosse alcançado.
+
+O locustfile passou a usar a frase canônica do catálogo "Qual o status do
+projeto XPTO?" e a exigir `desfecho=encaminhada`. Uma rodada de controle
+persistiu o desfecho `encaminhada`, comprovando a passagem pelo executor.
+As medições abaixo foram realizadas depois dessa correção. As rodadas
+diagnósticas anteriores não são usadas como resultado da issue.
+
+COMANDOS E PARÂMETROS
+
+Nominal (TNF-DES-03):
+
+  python -m locust -f tests/desempenho/locustfile.py \
+    --headless -u 10 -r 2 -t 5m --only-summary
+
+Pico (TNF-DES-04):
+
+  python -m locust -f tests/desempenho/locustfile.py \
+    --headless -u 30 -r 6 -t 5m --only-summary
+
+Nos dois casos, o intervalo entre solicitações foi de 1 a 3 segundos, o
+alvo foi POST /chat e o critério semântico exigiu `encaminhada`.
+
+Rodadas complementares solicitadas na revisão: Locust 2.46.6/Python
+3.14.2 no host Windows, API e PostgreSQL nos mesmos contêineres locais,
+acesso pelo proxy do frontend em http://localhost:5173/api/chat, intervalo
+de 1 a 3 segundos e o mesmo critério semântico. Antes dos comandos, foram
+definidos `PERF_TARGET=http://localhost:5173`,
+`PERF_CHAT_PATH=/api/chat` e `PERF_SESSION_COOKIE` com uma sessão sintética
+gerada para a bancada; o valor do cookie não integra a evidência.
+
+Baseline (TNF-DES-01):
+
+  python -m locust -f tests/desempenho/locustfile.py \
+    --headless -u 1 -r 1 -t 2m --stop-timeout 180 --only-summary
+
+Intermediário para delimitar a saturação:
+
+  python -m locust -f tests/desempenho/locustfile.py \
+    --headless -u 5 -r 1 -t 2m --stop-timeout 180 --only-summary
+
+RESULTADOS
+
+| Cenário | Usuários | Requisições | Falhas | Taxa de falha | p50 | p95 | p99 | Máximo |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Baseline | 1 | 21 | 0 | 0% | 2,6 s | 4,2 s | 25 s | 24,8 s |
+| Intermediário | 5 | 69 | 5 | 7,25% | 4,7 s | 19 s | 24 s | 24,2 s |
+| Nominal | 10 | 137 | 27 | 19,71% | 8,3 s | 56 s | 80 s | 126,3 s |
+| Pico | 30 | 159 | 18 | 11,32% | 34 s | 106 s | 174 s | 205,9 s |
+
+Os limites operacionais da seção 9.1.8 são p50 < 3 s e p95 < 8 s.
+Não há limite de aprovação definido para p99 nem uma taxa geral de erros
+HTTP; esses valores são registrados sem criar um critério inexistente.
+Como as mensagens eram consultas legítimas, bloqueios semânticos também
+são comparados à meta de falsos positivos < 5% da mesma seção. Logo:
+
+- TNF-DES-01: APROVADO nos limites definidos. O baseline teve p50 de
+  2,6 s, p95 de 4,2 s e nenhuma falha.
+- Intermediário: REPROVADO. O p50 de 4,7 s e o p95 de 19 s excederam os
+  limites, e 7,25% das consultas legítimas tiveram `bloqueada_saida`,
+  acima da meta de falsos positivos.
+- TNF-DES-03: REPROVADO. O p50 de 8,3 s e o p95 de 56 s excederam os
+  limites, e houve 19,71% de falhas semânticas.
+- TNF-DES-04: REPROVADO. O p50 de 34 s e o p95 de 106 s excederam os
+  limites; também houve 11,32% de falhas HTTP 500. Essa taxa mede
+  indisponibilidade, não falsos positivos, e não possui limite próprio em
+  9.1.8.
+- TNF-DES-07: REPROVADO, pois os cenários concorrentes ultrapassaram os
+  dois limites.
+
+SATURAÇÃO E CAUSA OBSERVADA
+
+O baseline com um usuário atendeu aos dois limites, mas a rodada
+intermediária com cinco usuários já os violou. A transição para
+saturação está, portanto, entre um e cinco usuários neste ambiente. O
+menor ponto reprovado medido foi cinco; como dois, três e quatro usuários
+não foram ensaiados, não se afirma um ponto exato. Dez e trinta usuários
+confirmaram a degradação, e o pico esgotou o pool do banco.
+
+No nominal, 26 falhas foram respostas 200 com
+`bloqueada_injecao_modelo` e uma com `bloqueada_saida`. Os logs registram
+HTTP 429 do Content Safety durante a janela. A API permaneceu ativa, mas
+o contrato funcional não foi cumprido para essas solicitações. Ao fim da
+janela configurada, requisições em voo não drenaram e o processo Locust
+precisou receber SIGINT. As requisições ainda em voo não entram nas
+estatísticas; portanto, p95 e p99 do nominal são limites inferiores da
+cauda observável, e não uma medição completa das solicitações pendentes.
+As rodadas complementares usaram `--stop-timeout 180` e terminaram sem
+interrupção manual.
+
+No pico, as 18 falhas foram HTTP 500. O traceback da API identifica
+`sqlalchemy.exc.TimeoutError`: pool de tamanho 5, overflow máximo 10 e
+timeout de aquisição de 30 s. O PostgreSQL continuou ativo; foi a fila de
+conexões da aplicação que se esgotou. O Locust registrou 159 respostas,
+18 falhas e, por diferença, 141 sucessos na janela do pico.
+
+A contagem anterior de 154 interações `encaminhada` era uma consulta
+absoluta da identidade sintética, reutilizada também em controles e
+diagnósticos, e não um delta isolado da janela do pico. Ela foi retirada
+como evidência da rodada. A base anterior não preserva a separação que
+permitiria atribuir individualmente as 13 linhas excedentes a controles
+anteriores ou a persistência concluída antes de uma resposta HTTP 500;
+por isso, para o resultado da janela prevalece a estatística do Locust.
+
+LIMITAÇÕES
+
+- O gerador e o alvo compartilharam CPU, memória e rede do Docker
+  Desktop; os números caracterizam esta bancada, não a capacidade do
+  Azure Container Apps.
+- O Content Safety é externo e seu 429 participou do resultado. Repetir
+  com quota e limites conhecidos é necessário para separar capacidade
+  do middleware de capacidade contratada do provedor.
+- O ensaio delimita a transição para saturação entre um e cinco usuários,
+  mas não faz busca fina com dois, três e quatro usuários.
+- O executor foi sintético de propósito; o resultado não mede Copilot
+  Studio nem o executor RAG real.
+
+CONCLUSÃO
+
+A reexecução é válida e reproduzível. O baseline com um usuário aprova os
+limites definidos, mas o desempenho concorrente reprova a partir do
+primeiro ponto complementar medido, cinco usuários. A medição do pipeline
+ativo revela dois riscos concretos antes da liberação: quota das guardas
+externas e dimensionamento/tempo de retenção das conexões do banco sob
+chamadas longas.

@@ -1,0 +1,67 @@
+EVIDÊNCIA — AMPLIAÇÃO DA COBERTURA DO MIDDLEWARE (#460)
+Data: 2026-09-29
+Branch: test/cobertura-80-middleware
+Commit-base: 269a0ec
+
+OBJETIVO
+Acrescentar testes com resultados observáveis aos módulos prioritários
+identificados pela medição integral da issue #459 e confirmar que a cobertura
+consolidada permanece acima da meta de 80% da seção 9.1.8 do Projeto.md.
+
+ESCOPO DOS TESTES NOVOS
+- app/api/routes/portfolio.py: respostas, filtro por projeto e recusas de
+  autorização nas consultas e nos vínculos entre usuários e projetos.
+- app/pipeline/intencao/avaliacao.py: rejeição total, separação entre texto
+  canônico e ruidoso, confusões, metas e comparação de configurações.
+- app/rag/vetorial/provisionar.py: verificação do índice, namespaces,
+  metadados dos trechos, convergência eventual, timeout e erro de configuração.
+
+Foram acrescentadas 26 funções de teste. Com as parametrizações, os três
+arquivos executam 57 casos, todos aprovados. Cada caso observa retorno, estado,
+chamada assíncrona ou exceção; nenhum existe apenas para executar uma linha.
+
+AMBIENTE
+- Executor: contêiner Linux, Python 3.12.14 e pytest 9.1.1.
+- Banco: PostgreSQL 16 real do Docker Compose, com migrações aplicadas.
+- Mensageria: RabbitMQ 4.3.6 real do Docker Compose.
+- TESTES_EXTERNOS_REAIS=0: provedores comerciais reais não foram acionados.
+- AQUECER_MODELOS=false: a execução não dependeu do aquecimento da aplicação.
+- O contêiner montou src/middleware, src/emissor-portfolio, infra e copilot nos
+  caminhos esperados pelos testes de contrato e de perímetro.
+
+COMANDO DE TESTE
+python -m pytest tests/unit tests/funcionais tests/rnf tests/perimetro \
+  tests/integration --cov=app --cov-report=term:skip-covered -q -ra \
+  -p no:cacheprovider --basetemp /tmp/g02-pytest-460-final
+
+RESULTADO FINAL
+- Exit code: 0.
+- 1246 passed.
+- 8 skipped.
+- 17 xfailed.
+- 16 warnings.
+- Tempo: 393,77 s (6 min 33 s).
+- Instruções: 7514; não cobertas: 916.
+- Branches: 1450; parciais: 199.
+- Cobertura total: 85,71%.
+- Meta do projeto: 80%; resultado: atingida.
+
+COMPARAÇÃO COM A MEDIÇÃO DA #459
+- Cobertura total: 84,06% -> 85,71% (+1,65 ponto percentual).
+- app/api/routes/portfolio.py: 41,46% -> 97,56%.
+- app/pipeline/intencao/avaliacao.py: 47,78% -> 57,41%.
+- app/rag/vetorial/provisionar.py: 39,25% -> 73,66%.
+
+LIMITAÇÕES PRESERVADAS
+- Gemini e Pinecone reais exigem TESTES_EXTERNOS_REAIS=1 e credenciais.
+- O Content Safety real exige EXECUTAR_RNF06_REAL=1 e credenciais.
+- Dois casos Direct Line continuam ignorados porque o cliente não foi implementado.
+- Três casos do RF07 continuam fora do MVP.
+- Os 17 xfails continuam visíveis e representam lacunas conhecidas; não foram
+  convertidos artificialmente em aprovação para elevar a cobertura.
+- A cobertura acima da meta não comprova os provedores comerciais reais nem
+  substitui a validação da pipeline do Merge Request.
+
+VALIDAÇÕES COMPLEMENTARES
+- 57 casos focados: aprovados em 4,31 s no ambiente local.
+- Ruff nos três arquivos de teste alterados: aprovado.

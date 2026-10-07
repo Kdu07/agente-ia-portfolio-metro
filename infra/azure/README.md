@@ -16,15 +16,37 @@ o Container Apps Environment `cae-prata-dev`. A assinatura FreeTrial não
 admite um segundo ambiente na mesma região. Cada estágio tem identidade, Key
 Vault, banco, usuário de banco e apps próprios, com o sufixo `-dev` ou `-prd`.
 
+## Sumário
+
+- [Pré-requisitos](#pré-requisitos)
+- [Uso](#uso)
+- [Conferir segredos e rede do banco](#conferir-segredos-e-rede-do-banco)
+- [Content Safety e Speech](#content-safety-e-speech)
+- [Parar e retomar](#parar-e-retomar)
+- [Entrega contínua](#entrega-contínua)
+- [Monitoramento](#monitoramento)
+- [Voltar a uma versão anterior](#voltar-a-uma-versão-anterior)
+- [O que continua manual](#o-que-continua-manual)
+
 ## Pré-requisitos
 
-- Azure CLI com a extensão `containerapp` (`az extension add -n containerapp --upgrade`).
+O passo a passo para quem parte do zero, com as contas externas e a adaptação
+dos nomes a outra assinatura, está na seção 4 do
+[Manual de implantação e uso](../../docs/Manual-instalacao.md).
+
+- Papel *Owner* na assinatura, porque o script atribui papéis às identidades.
+- Azure CLI 2.90 ou superior, sem a extensão `containerapp`: os comandos
+  usados estão no núcleo da CLI. Os scripts usam a assinatura padrão, então
+  rode `az account set` antes.
 - Docker ligado: as imagens são construídas na máquina, porque o
   `az acr build` não roda em assinatura de crédito.
 - Git Bash no Windows. Os scripts já exportam `MSYS_NO_PATHCONV=1`.
-- O `.env` do middleware preenchido: a fase `segredos` lê dele os valores e
-  os grava no Key Vault sem imprimi-los. As chaves do Content Safety e do
-  Speech são a exceção: vêm dos recursos que a fase `cognitivos` cria.
+- `jq`, `openssl` e `curl`. O `jq` não vem com o Git Bash.
+- O `.env` do middleware preenchido. As fases `segredos`, `apps` e `entra`
+  leem dele por um ambiente virtual em `src/middleware/.venv`, que só precisa
+  do pacote `pydantic-settings`. A `segredos` grava os valores no Key Vault
+  sem imprimi-los. As chaves do Content Safety e do Speech são a exceção: vêm
+  dos recursos que a fase `cognitivos` cria.
 
 ## Uso
 
@@ -69,6 +91,12 @@ então os dois estágios usam os mesmos recursos. A fase `segredos` lê as chave
 direto deles. Depois de trocar uma chave, rode `segredos` e
 `RECONFIGURAR=1 ... apps` em cada estágio.
 
+O F0 do Content Safety aceita 5 chamadas por segundo, somados os dois estágios.
+O `variaveis.sh` reserva 1,5 ao dev e 2,5 ao prd (`CS_RPS`), e a fase `apps`
+divide a cota do estágio entre o middleware e o worker, quando ele existe, em
+`CONTENT_SAFETY_REQUISICOES_POR_SEGUNDO`. Como o deploy contínuo só troca a
+imagem, um valor novo só chega aos contêineres com `RECONFIGURAR=1 ... apps`.
+
 Para o middleware local usar os mesmos recursos:
 
 ```bash
@@ -100,6 +128,9 @@ configuração completa com:
 RECONFIGURAR=1 bash infra/azure/provisionar.sh dev apps
 ```
 
+A reconfiguração devolve o middleware a zero réplica mínima. Se o estágio
+estava ligado, rode `ligar` em seguida.
+
 ## Parar e retomar
 
 Entre um uso e outro, o ambiente inteiro pode ficar parado. São dois comandos:
@@ -109,10 +140,12 @@ bash infra/azure/provisionar.sh dev parar     # apps a zero e banco desligado
 bash infra/azure/provisionar.sh dev retomar   # banco, apps e verificação de saúde
 ```
 
-O `parar` leva uns 4 minutos e o `retomar`, uns 10. O servidor parado guarda os
-dados e não cobra computação, mas a Azure o religa sozinha depois de 7 dias —
-basta rodar `parar` de novo quando isso acontecer. Como o servidor é um só,
-`parar` em um estágio desliga também o banco do outro.
+O `parar` leva uns 4 minutos e o `retomar`, de 10 a 20. O `retomar` termina
+com `ligar`, e a réplica fica ligada, consumindo crédito, até um `desligar` ou
+`parar`. O servidor parado guarda os dados e não cobra computação, mas a Azure
+o religa sozinha depois de 7 dias; basta rodar `parar` de novo quando isso
+acontecer. Como o servidor é um só, `parar` em um estágio desliga também o
+banco do outro.
 
 Com o banco já no ar, `ligar` e `desligar` mexem nos apps do estágio:
 
@@ -190,6 +223,10 @@ O passo a passo está no capítulo 11.4 do Projeto.md.
 - `az login` de quem provisiona.
 - O teste de login com um usuário real do Entra, que só ele pode fazer.
 - A cópia de dados (`dados`) lê o banco local da porta 5434, onde a ingestão
-  do corpus já rodou. Em outra máquina, aponte `ORIGEM_HOST`, `ORIGEM_PORTA`
-  e `ORIGEM_SENHA` para um banco com os esquemas `rag` e `portfolio`
-  carregados.
+  do corpus já rodou. Com o PostgreSQL do Compose, use `ORIGEM_PORTA=5432`.
+  Em outra máquina, aponte `ORIGEM_HOST`, `ORIGEM_PORTA` e `ORIGEM_SENHA`
+  para um banco com os esquemas `rag` e `portfolio` carregados, como descreve
+  a seção 3.4 do manual.
+- O vínculo de usuários reais a projetos, que a cópia deixa de fora: pela rota
+  `POST /api/portfolio/projetos/{codigo}/usuarios/{id}`, com a sessão da
+  diretoria (seção 4.7 do manual).

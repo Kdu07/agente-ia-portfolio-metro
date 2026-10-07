@@ -36,10 +36,13 @@ from pathlib import Path
 
 from sqlalchemy import delete
 
+from app.avisos.repositorio import AvisoRepository, PreferenciaRepository
+from app.avisos.tabelas import AvisoTabela, PreferenciaAvisoTabela
 from app.config import settings
 from app.persistence.models import (
     Canal,
     Conversa,
+    EstadoTranscricao,
     ExecucaoRotina,
     Indicador,
     Interacao,
@@ -53,9 +56,11 @@ from app.persistence.models import (
     StatusMarco,
     StatusProjeto,
     StatusRisco,
+    TranscricaoAudio,
     UsuarioProjeto,
 )
 from app.persistence.repository import (
+    AudioRepository,
     ConversaRepository,
     ExecucaoRepository,
     InteracaoRepository,
@@ -75,6 +80,7 @@ from app.persistence.tabelas import (
     ExecucaoRotinaTabela,
     InteracaoTabela,
     RotinaTabela,
+    TranscricaoAudioTabela,
     UsuarioTabela,
 )
 from app.persistence.tabelas_portfolio import (
@@ -87,6 +93,9 @@ from app.persistence.tabelas_portfolio import (
 from app.pipeline.desfechos import Desfecho
 from app.pipeline.intencao.catalogo import FORA_DE_ESCOPO, TENTATIVA_INJECAO
 from app.schemas.usuario import Perfil
+from app.webhooks.modelos import TipoEventoPortfolio
+from app.webhooks.repositorio import FontePortfolioRepository
+from app.webhooks.tabelas import FontePortfolioTabela
 
 CSV_ENUNCIADOS = Path(__file__).resolve().parent.parent / "dados" / "testes-catalogo-intencoes.csv"
 
@@ -193,6 +202,11 @@ ENUNCIADOS_NEGATIVOS = {
         "Quais marcos vencem esta semana?",
         "consultar_marcos",
     ),
+    # Por último, para não deslocar o id ordinal das linhas já semeadas.
+    Desfecho.FALHA_GUARDA: (
+        "Qual o status do projeto Linha Verde?",
+        None,
+    ),
 }
 
 RESPOSTAS_DE_RECUSA = {
@@ -213,6 +227,9 @@ RESPOSTAS_DE_RECUSA = {
     ),
     Desfecho.FALHA_EXECUTOR: (
         "Não consegui consultar o portfólio agora. Tente novamente em instantes."
+    ),
+    Desfecho.FALHA_GUARDA: (
+        "Não consegui completar a ação agora. Tente novamente em instantes."
     ),
 }
 
@@ -254,6 +271,22 @@ async def _limpar(sessao) -> None:
         delete(UsuarioProjetoTabela).where(UsuarioProjetoTabela.usuario_id.like(f"{PREFIXO}%"))
     )
 
+    # Limpa avisos, adesões e transcrições antes dos donos. Aqui o filtro
+    # é o usuário, e não o id: o id do aviso é gerado pelo repositório, e
+    # o da transcrição só existe porque esta carga o escolhe.
+    await sessao.execute(delete(AvisoTabela).where(AvisoTabela.usuario_id.like(f"{PREFIXO}%")))
+    await sessao.execute(
+        delete(PreferenciaAvisoTabela).where(
+            PreferenciaAvisoTabela.usuario_id.like(f"{PREFIXO}%")
+        )
+    )
+    await sessao.execute(
+        delete(TranscricaoAudioTabela).where(TranscricaoAudioTabela.id.like(f"{PREFIXO}%"))
+    )
+    await sessao.execute(
+        delete(FontePortfolioTabela).where(FontePortfolioTabela.source_id.like(f"{PREFIXO}%"))
+    )
+
     # Limpa tabelas do schema public (ordem reversa das dependências)
     await sessao.execute(
         delete(ExecucaoRotinaTabela).where(ExecucaoRotinaTabela.id.like(f"{PREFIXO}%"))
@@ -280,6 +313,10 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
     marcos_repo = MarcoRepository(sessao)
     indicadores_repo = IndicadorRepository(sessao)
     usuario_projeto_repo = UsuarioProjetoRepository(sessao)
+    fontes_repo = FontePortfolioRepository(sessao)
+    preferencias_repo = PreferenciaRepository(sessao)
+    avisos_repo = AvisoRepository(sessao)
+    audios_repo = AudioRepository(sessao)
 
     agora = datetime.now(UTC)
     enunciados = _enunciados_por_intencao()
@@ -288,11 +325,15 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
     for usuario_id, nome, perfil, email in USUARIOS:
         await usuarios.garantir(usuario_id, nome, perfil.value, email)
 
-    contagem = {"conversas": 0, "interacoes": 0, "rotinas": 0, "execucoes": 0, "projetos": 0, "riscos": 0, "marcos": 0, "indicadores": 0, "usuario_projetos": 0}
+    contagem = {"conversas": 0, "interacoes": 0, "rotinas": 0, "execucoes": 0, "projetos": 0, "riscos": 0, "marcos": 0, "indicadores": 0, "usuario_projetos": 0, "fontes_portfolio": 0, "preferencias_aviso": 0, "avisos": 0, "transcricoes": 0}
 
     # --- Conversas com turnos bem-sucedidos ------------------------------
     # Uma conversa por usuário, mais uma arquivada, para que a tela de
     # histórico tenha os dois estados desde o primeiro acesso.
+    # O turno de voz de cada conversa fica guardado para que a transcrição
+    # semeada adiante repita o enunciado da interação que a originou, em
+    # vez de inventar um texto que não corresponde a nada.
+    voz_por_conversa: dict[int, tuple[str, datetime]] = {}
     for indice, (usuario_id, _, perfil, _) in enumerate(USUARIOS):
         criada = agora - timedelta(days=indice + 1, hours=2)
         conversa = Conversa(
@@ -311,6 +352,8 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
             prompt = aleatorio.choice(enunciados[intencao])
             momento = criada + timedelta(minutes=turno * 3)
             canal = Canal.VOZ if turno == 1 else Canal.CHAT
+            if canal is Canal.VOZ:
+                voz_por_conversa[indice] = (prompt, momento)
             await interacoes.salvar(
                 Interacao(
                     id=f"{PREFIXO}interacao-{indice}-{turno}",
@@ -595,6 +638,81 @@ async def _semear(sessao, aleatorio: random.Random) -> dict[str, int]:
                     )
                 )
                 contagem["usuario_projetos"] += 1
+
+    # --- Fonte do portfólio, adesões, avisos e transcrições ----------------
+    # As tabelas da Sprint 4 que alimentam tela. As de trilha do schema
+    # `webhook` — recebimento, canal, sincronização, versão e auditoria —
+    # ficam vazias de propósito: quem as escreve é o fluxo de notificações,
+    # e linha semeada numa trilha de auditoria não se distingue depois de
+    # uso real, que é o mesmo motivo da verificação de banco local acima.
+    source_id = f"{PREFIXO}fonte-portfolio"
+    await fontes_repo.salvar(
+        source_id=source_id,
+        planilha_id=f"{PREFIXO}planilha-portfolio",
+        projetos=set(projeto_codigos),
+        tipos=set(TipoEventoPortfolio),
+        agora=agora,
+    )
+    contagem["fontes_portfolio"] += 1
+
+    for indice, (usuario_id, _, _, _) in enumerate(USUARIOS):
+        projeto_codigo = projeto_codigos[indice % len(projeto_codigos)]
+
+        # Uma adesão por tipo de evento, com um tipo desligado, para que a
+        # tela de preferências mostre os dois estados. A severidade mínima
+        # só é aceita no evento de risco (ck_preferencia_aviso_severidade_minima).
+        for evento in TipoEventoPortfolio:
+            await preferencias_repo.salvar(
+                usuario_id=usuario_id,
+                projeto_codigo=projeto_codigo,
+                event_type=evento,
+                ativa=evento is not TipoEventoPortfolio.MARCO,
+                severidade_minima=12 if evento is TipoEventoPortfolio.RISCO else None,
+                agora=agora - timedelta(days=indice + 1),
+            )
+            contagem["preferencias_aviso"] += 1
+
+        criado = await avisos_repo.criar(
+            usuario_id=usuario_id,
+            projeto_codigo=projeto_codigo,
+            source_id=source_id,
+            event_id=f"{PREFIXO}evento-{indice}",
+            event_type=TipoEventoPortfolio.PROJETO_STATUS,
+            entity_id=projeto_codigo,
+            versao=1,
+            diferencas={
+                "status": {
+                    "anterior": StatusProjeto.PLANEJADO.value,
+                    "novo": StatusProjeto.EM_ANDAMENTO.value,
+                }
+            },
+            agora=agora - timedelta(hours=indice + 1),
+        )
+        if criado:
+            contagem["avisos"] += 1
+
+        # A transcrição repete o enunciado do turno de voz da conversa e
+        # aponta para aquela interação. O `expira_em` fica à frente de
+        # `agora` porque a leitura descarta o que já expirou.
+        prompt_voz, momento_voz = voz_por_conversa[indice]
+        await audios_repo.criar(
+            TranscricaoAudio(
+                id=f"{PREFIXO}audio-{indice}",
+                usuario_id=usuario_id,
+                estado=EstadoTranscricao.CONCLUIDA,
+                formato="webm",
+                duracao_segundos=round(aleatorio.uniform(2.5, 11.0), 1),
+                criada_em=momento_voz,
+                expira_em=agora + timedelta(hours=24),
+                conversa_id=f"{PREFIXO}conversa-{indice}",
+                interacao_id=f"{PREFIXO}interacao-{indice}-1",
+                texto=prompt_voz,
+                idioma="pt-BR",
+                confianca=round(aleatorio.uniform(0.78, 0.97), 3),
+                latencia_ms=aleatorio.randint(400, 1800),
+            )
+        )
+        contagem["transcricoes"] += 1
 
     return contagem
 

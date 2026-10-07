@@ -25,7 +25,6 @@ from dataclasses import dataclass
 
 import httpx
 
-from app.config import settings
 from app.pipeline.guardas import content_safety
 
 logger = logging.getLogger(__name__)
@@ -38,6 +37,9 @@ class ResultadoInjection:
     suspeita: bool
     confianca: float  # 0.0 a 1.0
     motivo: str  # descrição curta para o registro; nunca devolvida ao usuário
+    # True quando a suspeita vem da falta do serviço, e não de detecção. A
+    # mensagem continua barrada; muda só o desfecho registrado.
+    indisponivel: bool = False
 
 
 async def classificar(
@@ -55,9 +57,6 @@ async def classificar(
         # corpo — o que, falhando fechado, viraria um bloqueio absurdo.
         # O orquestrador já trata a vazia como fora de escopo na etapa 3.
         return ResultadoInjection(suspeita=False, confianca=0.0, motivo="vazio")
-
-    if settings.performance_mode:
-        return ResultadoInjection(suspeita=False, confianca=0.0, motivo="duble_desempenho")
 
     if not content_safety.configurado():
         logger.warning("Guarda de injeção sem Content Safety configurado; só as regras valem")
@@ -92,4 +91,6 @@ async def classificar(
 def _indisponivel(detalhe: str) -> ResultadoInjection:
     """Falha fechado: na dúvida, o executor não é acionado."""
     logger.warning("Content Safety indisponível na guarda de injeção (%s)", detalhe)
-    return ResultadoInjection(suspeita=True, confianca=1.0, motivo="servico_indisponivel")
+    return ResultadoInjection(
+        suspeita=True, confianca=1.0, motivo="servico_indisponivel", indisponivel=True
+    )

@@ -169,7 +169,7 @@ export function Principal() {
               <IconeAviso aria-hidden="true" className="shrink-0 text-destructive" />
               {erroAoCarregar}
             </span>
-            <Button type="button" variant="outline" size="sm" onClick={recarregar} className="shrink-0 bg-card">
+            <Button type="button" variant="outline" size="sm" onClick={recarregar} className="shrink-0">
               Recarregar conversa
             </Button>
           </div>
@@ -185,7 +185,7 @@ export function Principal() {
               {erro}
             </span>
             {podeReenviar ? (
-              <Button type="button" variant="outline" size="sm" onClick={reenviarUltima} className="shrink-0 bg-card">
+              <Button type="button" variant="outline" size="sm" onClick={reenviarUltima} className="shrink-0">
                 Tentar novamente
               </Button>
             ) : null}

@@ -5,9 +5,9 @@
  * esta logado nem quais permissoes tem. Esta e a unica forma de saber,
  * perguntando ao servidor via GET /auth/eu.
  *
- * Nao ha mais ramo de demonstracao aqui. Em desenvolvimento quem responde
- * a esta chamada e o duble em `mocks/handlers.ts`, o que faz a tela
- * exercitar exatamente o mesmo caminho que usara em producao.
+ * Nao ha ramo de demonstracao aqui: em desenvolvimento esta chamada chega
+ * ao middleware real pelo proxy `/api`. Nos testes, o MSW pode intercepta-la
+ * com uma resposta deterministica sem alterar o caminho usado pela tela.
  */
 
 import { useQuery } from "@tanstack/react-query";

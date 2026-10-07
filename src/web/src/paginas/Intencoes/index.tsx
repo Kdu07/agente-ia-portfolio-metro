@@ -74,7 +74,7 @@ export function Intencoes() {
         </span>
         <h2 className="text-base font-semibold">Não foi possível carregar o painel</h2>
         <p className="text-sm text-muted-foreground">{painel.erro}</p>
-        <Button type="button" variant="outline" className="mt-2 bg-card" onClick={painel.tentarNovamente}>
+        <Button type="button" variant="outline" className="mt-2" onClick={painel.tentarNovamente}>
           Tentar novamente
         </Button>
       </div>

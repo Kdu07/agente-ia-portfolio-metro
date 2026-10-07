@@ -8,8 +8,9 @@ from datetime import UTC, datetime, timedelta
 import httpx
 import pytest
 from sqlalchemy import func, inspect, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.api import deps
 from app.auth import sessao as auth_sessao
 from app.config import settings
 from app.main import app
@@ -220,6 +221,10 @@ async def test_janela_local_atravessa_sessao_chat_e_postgresql(
         yield banco_real
 
     app.dependency_overrides[obter_sessao] = fornecer_banco
+    app.dependency_overrides[deps.obter_fabrica_sessoes] = lambda: async_sessionmaker(
+        bind=banco_real.bind,
+        expire_on_commit=False,
+    )
     transporte = httpx.ASGITransport(app=app, raise_app_exceptions=False)
     try:
         async with httpx.AsyncClient(

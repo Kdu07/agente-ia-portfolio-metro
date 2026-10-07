@@ -4,6 +4,21 @@ Backend FastAPI que orquestra o pipeline de segurança e a classificação de
 intenção antes de acionar o Copilot Studio. A ordem das etapas está descrita em
 [Arquitetura.md](../../docs/Arquitetura.md) e é fixa.
 
+## Sumário
+
+- [Ambiente](#ambiente)
+- [Classificador de intenção](#classificador-de-intenção)
+- [Banco de dados](#banco-de-dados)
+- [Mensageria (RabbitMQ)](#mensageria-rabbitmq)
+- [Testes](#testes)
+- [Aplicação](#aplicação)
+  - [Interface contra esta API, sem dublês](#interface-contra-esta-api-sem-dublês)
+- [Banco vetorial (Pinecone)](#banco-vetorial-pinecone)
+- [Ingestão do corpus (Drive → índice)](#ingestão-do-corpus-drive--índice)
+- [Resposta com RAG (recuperação + geração)](#resposta-com-rag-recuperação--geração)
+- [Validação isolada do Speech-to-Text](#validação-isolada-do-speech-to-text)
+- [Conversão de áudio enviado](#conversão-de-áudio-enviado)
+
 ## Ambiente
 
 Todos os comandos abaixo rodam **a partir deste diretório** (`src/middleware`),
@@ -60,7 +75,10 @@ para `dados/classificador.joblib`.
 | `python -m app.pipeline.intencao.avaliacao --f22` | Comparação entre estratégias (F22) — treina todas as configurações do zero |
 
 O relatório da bancada é a evidência do RNF03; os números correntes e sua leitura
-estão na seção 5.4.11 de [Projeto.md](../../docs/Projeto.md).
+estão na seção 5.4.11 de [Projeto.md](../../docs/Projeto.md). O notebook
+[avaliacao-classificador-intencoes.ipynb](notebooks/avaliacao-classificador-intencoes.ipynb)
+reproduz a mesma bancada com a matriz de confusão completa e confere cada número
+com a 5.4.11; como executá-lo está em [notebooks/README.md](notebooks/README.md).
 
 ## Banco de dados
 
@@ -77,7 +95,7 @@ docker compose -f ../../infra/docker-compose.yml up -d db
 # 2. criar o esquema (aplica as migrações até a última revisão)
 python -m scripts.criar_banco
 
-# 3. carga de demonstração: usuários, conversas, os oito desfechos e rotinas
+# 3. carga de demonstração: usuários, conversas, os nove desfechos e rotinas
 python -m scripts.popular_banco
 ```
 
@@ -230,17 +248,18 @@ ao tenant configurado. Não copie o token ou o segredo para logs e evidências.
 
 ### Interface contra esta API, sem dublês
 
-Em desenvolvimento a interface responde com os dublês do MSW
-(`src/web/src/mocks/handlers.ts`), e nenhuma chamada chega aqui. Para exercitar
-o caminho real — login no Entra, cookie de sessão, proxy de `/api` e os
-contratos das rotas:
+A interface não usa mais dublês no navegador: os do MSW
+(`src/web/src/mocks/handlers.ts`) só atendem aos testes do Vitest, e o
+`npm run dev` fala com esta API pelo proxy de `/api`. Para exercitar o caminho
+real: login no Entra, cookie de sessão, proxy de `/api` e os contratos das
+rotas:
 
 ```powershell
 # 1. banco com esquema e carga de demonstração (seção "Banco de dados")
 # 2. a API, nesta pasta
 uvicorn app.main:app --port 8000
-# 3. a interface, em src/web, com os dublês desligados
-$env:VITE_SEM_DUBLES = "true"; npm run dev
+# 3. a interface, em src/web
+npm run dev
 ```
 
 Quatro cuidados que não se leem no código:

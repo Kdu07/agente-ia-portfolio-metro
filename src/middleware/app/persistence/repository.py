@@ -10,10 +10,11 @@ interações, incluindo o histórico; as agregações do dashboard ficam em
 `analytics/consultas.py`, porque as perguntas da análise mudam com muito
 mais frequência que o esquema e não devem arrastar este módulo junto.
 
-**Sobre o commit.** Nenhum método aqui faz commit. Quem fecha a
+**Sobre o commit.** Os repositórios básicos não fazem commit. Quem fecha a
 transação é `sessao.obter_sessao` no fim da requisição, ou o chamador que
-abriu a sessão. É o que permite gravar a conversa e a interação de um
-mesmo turno numa transação só: um erro no meio não deixa metade gravada.
+abriu a sessão. Os adaptadores `*Transacional` são a exceção explícita do
+chat: cada operação recebe uma sessão curta para não reter conexão enquanto
+o pipeline espera serviços externos.
 
 **Sobre o controle de acesso.** Onde há `usuario_id` na assinatura, ele
 entra no `WHERE` da consulta e não num filtro em Python depois. A
@@ -24,8 +25,9 @@ dado de outra pessoa, e basta um `return` mal colocado para vazá-lo.
 from datetime import UTC, datetime
 
 from sqlalchemy import func, select, update
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.persistence.models import (
     Conversa,
@@ -273,6 +275,66 @@ class InteracaoRepository(_RepositorioBase):
         return [linha.to_dominio() for linha in resultado.scalars()]
 
 
+class _RepositorioTransacional:
+    """Abre uma transação curta para cada operação do pipeline de chat.
+
+    O chat espera Content Safety, classificador e executor externos. Manter a
+    conexão obtida no primeiro acesso ao banco até o fim dessas esperas esgota
+    o pool sob concorrência. Este adaptador conserva os repositórios existentes,
+    mas confirma e devolve a conexão ao pool assim que cada leitura ou escrita
+    termina.
+    """
+
+    def __init__(self, fabrica: async_sessionmaker[AsyncSession]) -> None:
+        self._fabrica = fabrica
+
+    async def _executar(self, repositorio, metodo: str, *args, **kwargs):
+        async with self._fabrica() as sessao:
+            try:
+                resultado = await getattr(repositorio(sessao), metodo)(*args, **kwargs)
+                await sessao.commit()
+                return resultado
+            except Exception:
+                await sessao.rollback()
+                raise
+
+
+class ConversaRepositoryTransacional(_RepositorioTransacional):
+    """Operações de conversa sem reter conexão durante chamadas externas."""
+
+    async def obter(self, conversa_id: str, usuario_id: str) -> Conversa | None:
+        return await self._executar(ConversaRepository, "obter", conversa_id, usuario_id)
+
+    async def criar(self, conversa: Conversa) -> None:
+        await self._executar(ConversaRepository, "criar", conversa)
+
+    async def vincular_externa(self, conversa_id: str, conversa_externa_id: str) -> None:
+        await self._executar(
+            ConversaRepository,
+            "vincular_externa",
+            conversa_id,
+            conversa_externa_id,
+        )
+
+
+class InteracaoRepositoryTransacional(_RepositorioTransacional):
+    """Operações de interação delimitadas à duração da consulta SQL."""
+
+    async def salvar(self, interacao: Interacao) -> None:
+        await self._executar(InteracaoRepository, "salvar", interacao)
+
+    async def listar_por_conversa(
+        self, conversa_id: str, usuario_id: str, *, limite: int | None = None
+    ) -> list[Interacao]:
+        return await self._executar(
+            InteracaoRepository,
+            "listar_por_conversa",
+            conversa_id,
+            usuario_id,
+            limite=limite,
+        )
+
+
 class AudioRepository(_RepositorioBase):
     """Persistencia e controle de propriedade das submissoes de voz."""
 
@@ -440,6 +502,23 @@ class ExecucaoRepository(_RepositorioBase):
                 erro=erro,
             )
         )
+
+    async def ultimas_por_rotina(self, rotina_ids: list[str]) -> dict[str, ExecucaoRotina]:
+        """O disparo mais recente de cada rotina, numa consulta só.
+
+        É o que a lista de rotinas mostra em cada linha. Uma consulta por
+        rotina multiplicaria as idas ao banco pelo tamanho da lista; o
+        `DISTINCT ON` usa o índice `(rotina_id, iniciada_em DESC)`.
+        """
+        if not rotina_ids:
+            return {}
+        resultado = await self._sessao.execute(
+            select(ExecucaoRotinaTabela)
+            .where(ExecucaoRotinaTabela.rotina_id.in_(rotina_ids))
+            .order_by(ExecucaoRotinaTabela.rotina_id, ExecucaoRotinaTabela.iniciada_em.desc())
+            .ext(distinct_on(ExecucaoRotinaTabela.rotina_id))
+        )
+        return {linha.rotina_id: linha.to_dominio() for linha in resultado.scalars()}
 
     async def listar_por_rotina(self, rotina_id: str, *, limite: int = 20) -> list[ExecucaoRotina]:
         """Disparos recentes de uma rotina, mais recente primeiro."""

@@ -105,6 +105,9 @@ class ResultadoSaida:
     suspeita: bool
     confianca: float  # 0.0 a 1.0
     motivo: str  # para o registro e o alerta; nunca devolvido ao usuário
+    # True quando a retenção vem da falta do serviço, e não de detecção. A
+    # resposta continua retida; muda só o desfecho registrado.
+    indisponivel: bool = False
 
 
 async def verificar(
@@ -129,9 +132,6 @@ async def verificar(
     motivo = _avaliar_regras(texto)
     if motivo is not None:
         return ResultadoSaida(suspeita=True, confianca=1.0, motivo=f"{motivo}@{intencao_id}")
-
-    if settings.performance_mode:
-        return ResultadoSaida(suspeita=False, confianca=0.0, motivo="duble_desempenho")
 
     if not content_safety.configurado():
         logger.warning("Guarda de saída sem Content Safety configurado; só as regras valem")
@@ -204,9 +204,7 @@ def _analises_de(dados: dict) -> list[dict] | None:
     analises = dados.get("documentsAnalysis")
     if not isinstance(analises, list) or len(analises) != 1:
         return None
-    if not all(
-        isinstance(a, dict) and isinstance(a.get("attackDetected"), bool) for a in analises
-    ):
+    if not all(isinstance(a, dict) and isinstance(a.get("attackDetected"), bool) for a in analises):
         return None
     return analises
 
@@ -214,4 +212,6 @@ def _analises_de(dados: dict) -> list[dict] | None:
 def _indisponivel(detalhe: str) -> ResultadoSaida:
     """Falha fechado: na dúvida, a resposta não é entregue."""
     logger.warning("Content Safety indisponível na guarda de saída (%s)", detalhe)
-    return ResultadoSaida(suspeita=True, confianca=1.0, motivo="servico_indisponivel")
+    return ResultadoSaida(
+        suspeita=True, confianca=1.0, motivo="servico_indisponivel", indisponivel=True
+    )

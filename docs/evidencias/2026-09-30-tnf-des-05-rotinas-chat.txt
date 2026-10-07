@@ -1,0 +1,255 @@
+EVIDÊNCIA — TNF-DES-05: ROTINAS CONCORRENTES COM TRÁFEGO DE CHAT
+Issue: #462
+Execução: 30/09/2026
+Commit de base: 9b2555d
+Ajuste: 30/09/2026, após a revisão do !214 (conclusão, reprodução e pendências)
+
+OBJETIVO
+
+Verificar a promessa arquitetural de que o worker de agenda, separado da
+API, dispara várias rotinas com o mesmo vencimento sem perder ou duplicar
+execuções e sem fazer a latência do chat ultrapassar os limites da seção
+9.1.8: p50 < 3 s e p95 < 8 s.
+
+AMBIENTE
+
+- Host Windows 11 e Docker Desktop 29.2.1.
+- PostgreSQL 16, middleware, worker e RabbitMQ em contêineres separados.
+- Uma réplica da API e uma do worker.
+- Proxy web local usado apenas para encaminhar /api/chat ao middleware.
+- Locust 2.46.6 no host, com um usuário contínuo, rampa de 1 usuário/s,
+  espera de 1 a 2 s e duração de 159 s.
+- PERFORMANCE_MODE=true na API e no worker. Somente o executor final foi
+  substituído pelo ExecutorDesempenho, com atraso de 50 ms. Sessão,
+  Microsoft Entra ID, guardas, classificador e PostgreSQL permaneceram no
+  caminho real.
+- API e worker chamam o mesmo recurso do Content Safety, com a mesma chave:
+  no Compose do repositório, os dois serviços leem o mesmo
+  src/middleware/.env. A cota do recurso é dividida entre o chat e as
+  rotinas.
+- A aplicação do Entra ID possuía User.Read.All do tipo Application, com
+  consentimento administrativo. Nenhum identificador, cookie, token ou
+  segredo integra esta evidência.
+
+PREPARAÇÃO E EXECUÇÃO
+
+Foram persistidas cinco rotinas identificadas pelo prefixo TNF-DES-05,
+todas com o prompt canônico "Qual o status do projeto XPTO?", fuso
+America/Sao_Paulo e o mesmo cron para 30/09/2026 às 19:26. O worker
+reconciliou as cinco entradas antes do vencimento. O Locust começou às
+19:24:56 e permaneceu ativo antes, durante e depois dos disparos.
+
+Comando de carga, depois da criação de uma sessão sintética no banco:
+
+  python -m locust -f tests/desempenho/locustfile.py \
+    --headless -u 1 -r 1 -t 159s --stop-timeout 60 --only-summary
+
+O alvo foi http://localhost:5173/api/chat, com espera de 1 a 2 segundos,
+mensagem canônica do catálogo e oráculo exigindo desfecho=encaminhada. O
+cookie da sessão foi fornecido apenas por variável de ambiente no processo.
+Com o locustfile.py do commit de base, essa configuração equivale a
+PERF_TARGET=http://localhost:5173, PERF_CHAT_PATH=/api/chat,
+PERF_MAX_WAIT_SECONDS=2 e PERF_SESSION_COOKIE com a sessão sintética;
+PERF_MIN_WAIT_SECONDS, PERF_MESSAGE e PERF_EXPECTED_DESFECHO ficam nos
+padrões do arquivo (1, a mensagem canônica e encaminhada). Sem essas
+variáveis, o comando acima usa espera de 1 a 3 s contra
+http://localhost:8000/chat. O resumo impresso pelo Locust não foi
+registrado.
+
+O console do worker confirmou que as cinco rotinas começaram no mesmo
+instante e que os cinco jobs terminaram sem exceção do agendador. Depois da
+janela, uma consulta ao PostgreSQL contou as execuções e calculou os
+percentis a partir de interacao.latencia_ms. Esse campo mede o tempo do
+pipeline no servidor; não inclui o caminho entre o Locust, o proxy e a
+API, nem o que acontece com a requisição antes de o pipeline começar.
+
+RESULTADOS DE CHAT
+
+| Recorte | Amostras | p50 | p95 | p99 | Máximo | Comparação com 9.1.8 |
+|---|---:|---:|---:|---:|---:|---|
+| Janela completa de 159 s | 42 | 1.498 ms | 2.827 ms | 3.140 ms | 3.140 ms | p50 e p95 aprovados |
+| Intervalo das rotinas, 22,19 s | 2 | 125 ms | 1.274 ms | 1.274 ms | 1.274 ms | inconclusivo: duas amostras |
+
+Na janela completa, 31 mensagens foram encaminhadas, uma foi bloqueada
+pela guarda de injeção e dez pela guarda de saída. As 42 entradas eram
+legítimas e iguais, então os 11 bloqueios recusaram mensagens legítimas:
+26,19%. O desfecho, sozinho, não permite chamá-los de falsos positivos no
+sentido da seção 9.1.8. As guardas de injeção e de saída falham fechado:
+um 429, um tempo esgotado ou uma falha de rede do Content Safety produz o
+mesmo desfecho de uma detecção, e só o log diferencia os dois casos, com
+a mensagem "Content Safety indisponível na guarda de injeção" ou "de
+saída". A guarda de saída avaliou 42 vezes o mesmo texto, a resposta fixa
+do ExecutorDesempenho, o que torna improvável um veredito semântico que
+mude dez vezes. Na rodada nominal da seção 10.2.2.2, o mesmo desfecho veio
+acompanhado de respostas 429 nos logs. Os logs desta janela não foram
+consultados. Por isso, 26,19% é um teto para a taxa de falsos positivos,
+e não uma medida dela.
+
+O intervalo das rotinas, de 22,19 s, registrou só duas interações de
+chat. Os três trechos entre o início do intervalo, as duas conclusões e o
+fim somam 22,19 s, então pelo menos um deles passou de 7,3 s, e cada
+trecho cabe dentro de um único ciclo do usuário: espera de no máximo 2 s
+mais o tempo de resposta. Com um usuário em ciclo fechado, isso exige uma
+resposta de mais de 5,3 s no cliente ou requisições encerradas sem gravar
+interação, como um erro HTTP. Nos dois casos, o intervalo teve um
+comportamento que latencia_ms não mostra: o maior valor do campo na
+janela completa foi 3,14 s. Como o Locust só envia a mensagem seguinte
+depois da resposta, a lentidão também reduz o número de amostras
+justamente no intervalo que importa. A latência do chat durante o disparo
+é, portanto, inconclusiva. A janela completa de 159 s, que aprova, é na
+maior parte tempo sem rotina em execução.
+
+RESULTADOS DAS ROTINAS
+
+- Rotinas cadastradas: 5.
+- Linhas em execucao_rotina: 5.
+- Rotinas com exatamente uma linha: 5 de 5.
+- Execuções concluídas: 5 de 5.
+- Status sucesso: 3.
+- Status bloqueada: 2.
+- Status falha: 0.
+- Menor duração individual: 20,878 s.
+- Maior duração individual: 22,186 s.
+
+As duas rotinas bloqueadas receberam bloqueada_injecao_modelo; as outras
+três foram encaminhadas. O status bloqueada representa decisão do pipeline,
+não falha do worker. Como no chat, esse desfecho não distingue detecção de
+indisponibilidade do Content Safety; a diferença fica no log do worker. As
+cinco rotinas de teste foram desativadas depois da consulta, preservando o
+histórico local usado nesta evidência.
+
+As rotinas levaram de 20,9 a 22,2 s, enquanto a mesma mensagem no chat
+teve p50 de 1,5 s, e esta evidência não decompõe esse tempo. Há duas
+contribuições plausíveis no código. A duração em execucao_rotina inclui a
+consulta ao Microsoft Graph que resolve o dono, feita antes do pipeline e
+comum às cinco. O worker também não aquece o classificador: o aquecimento
+existe só na subida da API (app/main.py), então a primeira classificação
+no worker carrega o encoder, custo que pesa apenas para as rotinas que
+chegam à classificação. A decomposição está em interacao.latencia_etapas,
+ligada a cada execução por execucao_rotina.interacao_id (consulta 4).
+
+CONSULTAS DE CONFERÊNCIA
+
+A consulta usada na execução não foi registrada. As consultas abaixo
+refazem as contagens com as definições desta evidência: janela completa de
+19:24:56 a 19:27:35, intervalo das rotinas do primeiro início à última
+conclusão e percentil discreto. Elas precisam ser rodadas no banco da
+bancada para que a saída seja anexada.
+
+1. Unicidade: uma linha por rotina, com execucoes = 1.
+
+  SELECT r.nome,
+         count(e.id) AS execucoes,
+         string_agg(e.status, ',') AS status,
+         max(e.concluida_em - e.iniciada_em) AS duracao
+  FROM rotina r
+  LEFT JOIN execucao_rotina e ON e.rotina_id = r.id
+  WHERE r.nome LIKE 'TNF-DES-05%'
+  GROUP BY r.nome
+  ORDER BY r.nome;
+
+2. Chat na janela completa: desfechos e percentis.
+
+  SELECT desfecho, count(*) AS n
+  FROM interacao
+  WHERE canal <> 'rotina'
+    AND criada_em BETWEEN '2026-09-30 19:24:56-03' AND '2026-09-30 19:27:35-03'
+  GROUP BY desfecho;
+
+  SELECT count(*) AS amostras,
+         percentile_disc(0.50) WITHIN GROUP (ORDER BY latencia_ms) AS p50_ms,
+         percentile_disc(0.95) WITHIN GROUP (ORDER BY latencia_ms) AS p95_ms,
+         percentile_disc(0.99) WITHIN GROUP (ORDER BY latencia_ms) AS p99_ms,
+         max(latencia_ms) AS max_ms
+  FROM interacao
+  WHERE canal <> 'rotina'
+    AND criada_em BETWEEN '2026-09-30 19:24:56-03' AND '2026-09-30 19:27:35-03';
+
+3. Chat no intervalo das rotinas.
+
+  WITH disparo AS (
+    SELECT min(e.iniciada_em) AS inicio, max(e.concluida_em) AS fim
+    FROM execucao_rotina e
+    JOIN rotina r ON r.id = e.rotina_id
+    WHERE r.nome LIKE 'TNF-DES-05%'
+  )
+  SELECT count(*) AS amostras,
+         percentile_disc(0.50) WITHIN GROUP (ORDER BY i.latencia_ms) AS p50_ms,
+         percentile_disc(0.95) WITHIN GROUP (ORDER BY i.latencia_ms) AS p95_ms
+  FROM interacao i, disparo d
+  WHERE i.canal <> 'rotina'
+    AND i.criada_em BETWEEN d.inicio AND d.fim;
+
+4. Tempo por etapa de cada rotina.
+
+  SELECT r.nome, e.status, i.desfecho, i.latencia_ms, i.latencia_etapas
+  FROM execucao_rotina e
+  JOIN rotina r ON r.id = e.rotina_id
+  LEFT JOIN interacao i ON i.id = e.interacao_id
+  WHERE r.nome LIKE 'TNF-DES-05%'
+  ORDER BY r.nome;
+
+O motivo de cada bloqueio fica no log dos dois serviços. No Compose:
+
+  docker compose -f infra/docker-compose.yml logs \
+    --since 2026-09-30T19:24:56-03:00 --until 2026-09-30T19:27:40-03:00 \
+    middleware worker \
+    | grep -E "Content Safety indisponível|Resposta retida|Falha inesperada|Injeção detectada"
+
+No caminho da injeção, só a detecção pelo Prompt Shields não gera linha;
+a indisponibilidade do serviço, a falha inesperada da guarda e a detecção
+pelo classificador de intenção geram. A guarda de saída registra todo
+bloqueio com o motivo.
+
+CONCLUSÃO
+
+TNF-DES-05 aprova a unicidade: com API, worker e PostgreSQL em contêineres
+separados, cada uma das cinco rotinas produziu exatamente uma execução
+concluída, sem perda e sem falha do worker. Os outros dois pontos do
+cenário ficam em aberto.
+
+A latência do chat durante o disparo é inconclusiva. O intervalo das
+rotinas tem duas amostras, e a contagem de interações mostra um
+comportamento que latencia_ms não registra.
+
+A causa dos 13 bloqueios, 11 no chat e 2 nas rotinas, não foi
+determinada. Se forem indisponibilidade do Content Safety, eles são o
+efeito que o cenário procura: o disparo das rotinas aparecendo para quem
+usa o chat, como recusa em vez de latência, porque API e worker dividem o
+mesmo recurso. Em TNF-DES-01, com um usuário e sem rotinas, nenhuma das 21
+requisições foi bloqueada.
+
+Este ensaio, portanto, não comprova a separação entre worker e API
+prometida na seção 5.1.4. Ele comprova a unicidade com uma réplica de cada
+processo e delimita o que falta medir, listado em PENDÊNCIAS.
+
+LIMITAÇÕES
+
+- A bancada local não mede a capacidade do Azure Container Apps.
+- Um usuário contínuo comprova concorrência com o worker, mas não substitui
+  os cenários de 5, 10 e 30 usuários registrados na evidência de carga.
+- O intervalo exato das rotinas contém apenas duas respostas de chat. A
+  janela completa tem 42 amostras, mas é na maior parte tempo sem rotina
+  em execução e não substitui a medição durante o disparo.
+- Uma réplica da API e uma do worker: a escala horizontal sem duplicar
+  rotinas, prometida na seção 5.1.4, não foi exercitada.
+- Os percentis vêm de interacao.latencia_ms, medido no servidor, e não se
+  comparam aos da seção 10.2.2.2, medidos pelo Locust no cliente.
+- O mesmo recurso do Content Safety também atende os estágios dev e prd
+  (GestaoConfiguracao.md, seção 8.1); tráfego deles durante a janela
+  também consome a cota.
+- O executor foi sintético; Entra ID, Content Safety, classificação,
+  persistência e agenda foram reais.
+
+PENDÊNCIAS
+
+Os itens abaixo dependem do banco e dos logs da bancada.
+
+- Separar os 13 bloqueios por motivo, detecção ou indisponibilidade, com
+  o horário de cada um em relação ao intervalo das rotinas.
+- Decompor a duração das cinco rotinas pela consulta 4.
+- Anexar a saída das consultas 1 a 3 e o resumo do Locust, se o console
+  ainda o tiver.
+- Se a latência durante o disparo precisar de veredito, repetir o cenário
+  com o Locust gravando a série no tempo (--csv com --csv-full-history) e
+  com mais mensagens dentro do intervalo das rotinas.

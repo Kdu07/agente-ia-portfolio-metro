@@ -224,7 +224,7 @@ export function FormularioRotina({ aberto, modo, inicial, salvando, erro, onFech
         ) : null}
 
         {formulario.repeticao === "legada" ? (
-          <div role="note" className="rounded-md border border-desfecho-abuso/30 bg-desfecho-abuso/10 px-3.5 py-3 text-[13px] leading-relaxed text-foreground">
+          <div role="alert" className="rounded-md border border-desfecho-abuso/30 bg-desfecho-abuso/10 px-3.5 py-3 text-[13px] leading-relaxed text-foreground">
             Este agendamento foi criado em um formato antigo (
             <code className="font-mono text-[13.5px]">{formulario.agenda_legada}</code>) e será preservado. Para
             modificá-lo, escolha uma nova opção em <strong>Repetir</strong>.
@@ -250,12 +250,11 @@ export function FormularioRotina({ aberto, modo, inicial, salvando, erro, onFech
             onCheckedChange={(ativa) => setFormulario({ ...formulario, ativa })}
             aria-labelledby="rotulo-ativa"
             aria-describedby="ajuda-ativa"
-            className="data-[state=unchecked]:bg-controle-desligado"
           />
         </div>
 
         <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" onClick={onFechar} className="bg-card">
+          <Button type="button" variant="outline" onClick={onFechar}>
             Cancelar
           </Button>
           <Button type="submit" disabled={salvando}>

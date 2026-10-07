@@ -29,6 +29,8 @@ export const ROTINAS: Rotina[] = [
     proximo_disparo: diasAFrente(3),
     criada_em: diasAtras(20),
     atualizada_em: diasAtras(6),
+    // Espelha a primeira execução de EXECUCOES, a mais recente.
+    ultima_execucao: { iniciada_em: diasAtras(4), status: "sucesso" },
   },
   {
     id: "rotina-riscos",
@@ -42,6 +44,7 @@ export const ROTINAS: Rotina[] = [
     proximo_disparo: diasAFrente(1),
     criada_em: diasAtras(18),
     atualizada_em: diasAtras(8),
+    ultima_execucao: { iniciada_em: diasAtras(1), status: "sucesso" },
   },
   {
     id: "rotina-marcos",
@@ -55,6 +58,7 @@ export const ROTINAS: Rotina[] = [
     proximo_disparo: null,
     criada_em: diasAtras(24),
     atualizada_em: diasAtras(12),
+    ultima_execucao: null,
   },
 ];
 

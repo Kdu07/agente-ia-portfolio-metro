@@ -32,6 +32,7 @@ from app.auth import entra, permissoes
 from app.auth import sessao as auth_sessao
 from app.config import settings
 from app.persistence.repository import UsuarioRepository
+from app.schemas.erro import RESPOSTA_401
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +189,7 @@ async def logout(
     return resposta
 
 
-@router.get("/eu", response_model=UsuarioResposta)
+@router.get("/eu", response_model=UsuarioResposta, responses=RESPOSTA_401)
 async def eu(usuario: UsuarioAtual) -> UsuarioResposta:
     """Devolve a identidade da sessão atual."""
     return UsuarioResposta(

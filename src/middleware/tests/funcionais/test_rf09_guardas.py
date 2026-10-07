@@ -1,7 +1,5 @@
 """Casos TF-RF09-01 a TF-RF09-07 — guardas e ordem do pipeline."""
 
-import pytest
-
 from app.executor.base import RespostaExecutor
 from app.pipeline import orquestrador as orq
 from app.pipeline.desfechos import Desfecho
@@ -80,7 +78,6 @@ async def test_tf_rf09_05_enunciado_legitimo_proximo_ao_limite_nao_e_bloqueado(
     assert len(executor_espiao.chamadas) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="falha do serviço da guarda de injeção ainda propaga exceção")
 async def test_tf_rf09_06_indisponibilidade_da_guarda_falha_de_modo_seguro(
     pipeline_controlado, monkeypatch, executor_espiao, repositorio_memoria
 ) -> None:
@@ -92,12 +89,13 @@ async def test_tf_rf09_06_indisponibilidade_da_guarda_falha_de_modo_seguro(
         executor_espiao, repositorio_memoria, repositorio_memoria
     ).processar(ChatRequest(mensagem="Consulta legítima"), USUARIO)
     assert resposta.bloqueada
+    assert resposta.desfecho == Desfecho.BLOQUEADA_INJECAO_MODELO.value
     assert executor_espiao.chamadas == []
+    assert len(repositorio_memoria.interacoes) == 1
+    assert repositorio_memoria.interacoes[0].desfecho is Desfecho.BLOQUEADA_INJECAO_MODELO
 
 
-async def test_tf_rf09_07_ordem_das_guardas_e_invariante(
-    monkeypatch, repositorio_memoria
-) -> None:
+async def test_tf_rf09_07_ordem_das_guardas_e_invariante(monkeypatch, repositorio_memoria) -> None:
     eventos: list[str] = []
 
     def regra(_: str) -> bool:

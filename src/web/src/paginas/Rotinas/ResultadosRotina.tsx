@@ -45,8 +45,10 @@ export function ResultadosRotina({ rotina, onFechar }: { rotina: Rotina | null; 
 
   const executar = useMutation({
     mutationFn: (id: string) => api.post<Execucao>(`/rotinas/${id}/executar`),
-    onSuccess: async (_execucao, id) => {
-      await clienteQuery.invalidateQueries({ queryKey: chaves.execucoesDaRotina(id) });
+    // O prefixo `rotinas` cobre o histórico deste diálogo e a lista, que
+    // mostra a última execução de cada rotina.
+    onSuccess: async () => {
+      await clienteQuery.invalidateQueries({ queryKey: chaves.rotinas });
     },
   });
 
@@ -147,7 +149,7 @@ export function ResultadosRotina({ rotina, onFechar }: { rotina: Rotina | null; 
       )}
 
       <div className="flex justify-end">
-        <Button type="button" variant="outline" onClick={fechar} className="bg-card">
+        <Button type="button" variant="outline" onClick={fechar}>
           Fechar
         </Button>
       </div>

@@ -30,6 +30,8 @@ async def _produzir_todos_os_desfechos(monkeypatch, repositorio_memoria) -> None
         return estado["modo"] == "injecao_regra"
 
     async def injecao(_: str) -> ResultadoInjection:
+        if estado["modo"] == "falha_guarda":
+            return ResultadoInjection(True, 1.0, "servico_indisponivel", indisponivel=True)
         return ResultadoInjection(estado["modo"] == "injecao_modelo", 0.99, "teste")
 
     async def abuso(_: str) -> ResultadoAbuso:
@@ -66,6 +68,7 @@ async def _produzir_todos_os_desfechos(monkeypatch, repositorio_memoria) -> None
         "fora_escopo",
         "baixa_confianca",
         "saida",
+        "falha_guarda",
         "falha_executor",
     ):
         estado["modo"] = modo
@@ -77,8 +80,8 @@ async def test_tf_rf10_01_uma_linha_por_solicitacao_sem_duplicidade(
 ) -> None:
     await _produzir_todos_os_desfechos(monkeypatch, repositorio_memoria)
     registros = repositorio_memoria.interacoes
-    assert len(registros) == len(Desfecho) == 8
-    assert len({registro.id for registro in registros}) == 8
+    assert len(registros) == len(Desfecho) == 9
+    assert len({registro.id for registro in registros}) == 9
     assert {registro.desfecho for registro in registros} == set(Desfecho)
 
 

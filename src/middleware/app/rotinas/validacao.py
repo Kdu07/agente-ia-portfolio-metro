@@ -22,13 +22,12 @@ nunca roda, sem sinal para o dono.
 from dataclasses import dataclass
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from apscheduler.triggers.cron import CronTrigger
-
 from app.pipeline.guardas.abuso import classificador as abuso_classificador
 from app.pipeline.guardas.injecao import classificador as injecao_classificador
 from app.pipeline.guardas.injecao import regras as injecao_regras
 from app.pipeline.intencao import catalogo
 from app.pipeline.intencao import classificador as intencao_classificador
+from app.rotinas.cron import DiaSemanaInvalido, criar_gatilho_cron
 
 
 @dataclass(frozen=True)
@@ -111,7 +110,9 @@ def validar_agenda(agenda_cron: str, timezone: str) -> ResultadoValidacao:
         return ResultadoValidacao(False, erro="O fuso horário informado não é válido.")
 
     try:
-        CronTrigger.from_crontab(agenda_cron.strip(), timezone=fuso)
+        criar_gatilho_cron(agenda_cron, timezone=fuso)
+    except DiaSemanaInvalido as erro:
+        return ResultadoValidacao(False, erro=str(erro))
     except (TypeError, ValueError):
         return ResultadoValidacao(
             False,

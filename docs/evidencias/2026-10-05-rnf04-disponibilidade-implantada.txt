@@ -1,0 +1,112 @@
+EVIDÊNCIA — RNF04 — DISPONIBILIDADE DO AGENTE NO AMBIENTE IMPLANTADO
+Data da execução: 05/10/2026
+Branch: test/disponibilidade-agente
+Commit-base da develop: 5267c2c
+Ambiente: dev — Azure Container Apps, Brazil South
+Endereço observado: https://ca-web-dev.wittywater-1f84aed4.brazilsouth.azurecontainerapps.io/api
+
+OBJETIVO
+
+Medir um indicativo de disponibilidade ponta a ponta do agente sobre uma janela
+declarada, exercitando autenticação, POST /chat e a recuperação do turno
+persistido por GET /conversas/{id}. A meta preliminar do RNF04 é 99%.
+
+SEGURANÇA E PRÉ-CONDIÇÕES
+
+- O cookie `sessao` foi obtido pelo login real no Entra ID e lido somente da
+  variável local RNF04_SESSION_COOKIE.
+- O valor do cookie não foi escrito neste arquivo, no comando versionado ou no
+  repositório.
+- Antes da janela, GET /api/health/pronto respondeu HTTP 200 com estado `pronto`.
+- GET /api/auth/eu respondeu HTTP 200, confirmando que a sessão usada pela sonda
+  estava válida.
+- Não houve parada programada durante a janela.
+
+COMANDO REPRODUZÍVEL
+
+cd src\middleware
+$env:RNF04_SESSION_COOKIE = "<cookie-sintetico-obtido-pelo-login>"
+.\.venv\Scripts\python.exe -m app.rotinas.sonda `
+  --url "https://ca-web-dev.wittywater-1f84aed4.brazilsouth.azurecontainerapps.io/api" `
+  --amostras 12 `
+  --intervalo 30 `
+  --timeout 180
+
+O valor real de RNF04_SESSION_COOKIE é secreto e não integra esta evidência.
+
+JANELA OFICIAL
+
+- Início UTC: 2026-10-05T18:42:17.138435+00:00
+- Fim UTC: 2026-10-05T18:53:12.490129+00:00
+- Início America/Sao_Paulo: 05/10/2026 15:42:17
+- Fim America/Sao_Paulo: 05/10/2026 15:53:12
+- Duração observada: 10 min 55,352 s
+- Intervalo nominal entre amostras: 30 s
+- Timeout individual: 180 s
+- Total de amostras: 12
+- Amostras válidas: 12
+- Disponíveis: 10
+- Indisponíveis: 2
+- Inconclusivas: 0
+- Paradas programadas: 0
+- Disponibilidade observada: 83,333%
+- Meta preliminar do RNF04: 99%
+- Distância para a meta: -15,667 pontos percentuais
+- Resultado da janela: REPROVADO
+
+AMOSTRAS
+
+1.  18:42:17Z — indisponível — 1.523 ms — recusada_baixa_confianca
+2.  18:42:48Z — indisponível — 1.521 ms — recusada_baixa_confianca
+3.  18:43:20Z — disponível   — 28.525 ms
+4.  18:44:18Z — disponível   — 23.222 ms
+5.  18:45:11Z — disponível   — 21.300 ms
+6.  18:46:03Z — disponível   — 24.371 ms
+7.  18:46:57Z — disponível   — 33.889 ms
+8.  18:49:24Z — disponível   — 12.701 ms
+9.  18:50:07Z — disponível   — 14.983 ms
+10. 18:50:52Z — disponível   — 12.773 ms
+11. 18:51:34Z — disponível   — 23.947 ms
+12. 18:52:28Z — disponível   — 43.718 ms
+
+Nas dez amostras disponíveis, a latência mínima foi 12,701 s, a máxima foi
+43,718 s, a média foi 23,943 s e a mediana foi 23,585 s.
+
+ANÁLISE
+
+As duas indisponibilidades não foram falhas do observador, da autenticação ou do
+proxy. O agente respondeu rapidamente, mas recusou o enunciado benigno da sonda
+com `desfecho=recusada_baixa_confianca` e `bloqueada=True`. Como o RNF04 mede o
+caminho útil percebido pelo usuário, uma resposta tecnicamente ativa que não
+conclui a solicitação legítima permanece indisponível para este instrumento.
+
+Uma amostra de preparação anterior, ainda com o ambiente frio, excedeu o timeout
+de 90 s. Depois do aquecimento, uma amostra de validação passou em 23,093 s. As
+duas observações ficaram fora do denominador oficial para preservar a janela
+declarada de 12 amostras.
+
+LIMITAÇÕES
+
+- A janela de aproximadamente 11 minutos produz um indicativo do ambiente dev;
+  não certifica disponibilidade mensal, operação continuada ou produção.
+- A sonda é sequencial: o intervalo de 30 s começa depois da resposta anterior,
+  portanto a cadência efetiva inclui a latência do agente. Houve ainda um hiato
+  do observador entre as amostras 7 e 8, sem geração de amostra inconclusiva.
+- O marcador UUID anexado ao enunciado permite localizar o turno persistido,
+  mas também integra o texto classificado. As duas recusas mostram que a
+  estabilidade dessa formulação deve ser investigada antes de ampliar a janela.
+- A meta de 99% e o horário de operação ainda são hipóteses da equipe, não
+  valores pactuados com o parceiro.
+
+VALIDAÇÃO LOCAL DO INSTRUMENTO
+
+Comando:
+.\.venv\Scripts\python.exe -m pytest tests\rnf\test_rnf04_disponibilidade.py -m "not integracao" -q -p no:cacheprovider --basetemp .test-temp-463-unit2
+
+Resultado: 7 passed, 1 deselected, 1 warning em 8,19 s.
+
+Ruff:
+- python -m ruff check app\rotinas\sonda.py tests\rnf\test_rnf04_disponibilidade.py
+- python -m ruff format --check app\rotinas\sonda.py tests\rnf\test_rnf04_disponibilidade.py
+
+Resultado: aprovado; dois arquivos já formatados.

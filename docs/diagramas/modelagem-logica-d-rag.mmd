@@ -1,0 +1,46 @@
+---
+config:
+  layout: elk
+  er:
+    useMaxWidth: false
+---
+erDiagram
+    ARQUIVO ||--o{ TRECHO : divide
+
+    ARQUIVO["RAG.ARQUIVO"] {
+        texto origem_id PK "id no Drive, estavel a renomeacoes"
+        texto nome
+        texto mime
+        texto md5
+        datahora modificado_em
+        texto link
+        texto documento_id UK "unico entre os indexados"
+        texto codigo "ficha: nula se nao identificado"
+        texto tipo
+        inteiro versao
+        texto periodo
+        data data_referencia
+        texto projeto
+        texto classificacao
+        lista_texto perfis "CHECK: perfis do codigo; nulo no consolidado"
+        texto situacao "CHECK: seis destinos da ingestao"
+        texto motivo
+        lista_texto observacoes "padrao vazio"
+        json metadados "ficha completa; padrao vazio"
+        texto assinatura "md5, versao do pipeline, permissao e contexto"
+        inteiro total_trechos "padrao 0"
+        datahora visto_em
+        datahora indexado_em
+    }
+
+    TRECHO["RAG.TRECHO"] {
+        texto trecho_id PK
+        texto documento_id "documento logico"
+        texto origem_id FK "RESTRICT"
+        inteiro ordinal "ordem no documento"
+        texto texto "exatamente o que foi vetorizado"
+        inteiro tokens
+        texto localizador "secao, aba ou slide"
+        texto projeto
+        lista_texto perfis "CHECK: permissao que foi para o indice"
+    }

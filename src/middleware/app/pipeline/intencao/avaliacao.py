@@ -174,10 +174,12 @@ def curva_de_rejeicao(
             PontoRejeicao(
                 limiar=limiar,
                 cobertura=float(aceitos.mean()),
+                # Sem mensagem aceita não há acurácia a medir; 0.0, e não
+                # 1.0, pelo mesmo critério de `avaliar_com_limiares`.
                 acuracia_aceitos=(
                     float((previstos[aceitos] == verdadeiros[aceitos]).mean())
                     if aceitos.any()
-                    else 1.0
+                    else 0.0
                 ),
             )
         )
@@ -274,14 +276,43 @@ class ResultadoComRejeicao:
     precisao_por_intencao: dict[str, float]
     rejeitados: int
     total: int
+    # Previsões aceitas por classe: o denominador da precisão de cada uma.
+    amostras_por_intencao: dict[str, int] = field(default_factory=dict)
+
+    def _medida(self, intencao_id: str) -> bool:
+        return self.amostras_por_intencao.get(intencao_id, 1) > 0
 
     def precisao_media(self, categoria: Categoria) -> float:
+        """Macro-média das precisões medidas numa categoria.
+
+        Classe sem previsão aceita fica de fora: precisão mede execução
+        errada, e quem não executou nada não errou nem acertou. Contar o
+        0.0 dela derrubaria a média sem erro nenhum; contar 1.0 (o valor
+        antigo) aprovaria a meta com cobertura zero. Se nenhuma classe da
+        categoria foi medida, a média é 0.0 e a meta não é atingida.
+        """
         alvos = [
             self.precisao_por_intencao[i.id]
             for i in catalogo.intencoes_por_categoria(categoria)
-            if i.id in self.precisao_por_intencao
+            if i.id in self.precisao_por_intencao and self._medida(i.id)
         ]
         return float(np.mean(alvos)) if alvos else 0.0
+
+    def medidas(self, categoria: Categoria) -> list[str]:
+        """Classes da categoria com ao menos uma previsão aceita."""
+        return [
+            i.id
+            for i in catalogo.intencoes_por_categoria(categoria)
+            if i.id in self.precisao_por_intencao and self._medida(i.id)
+        ]
+
+    def sem_amostras(self, categoria: Categoria) -> list[str]:
+        """Classes da categoria avaliadas, mas sem nenhuma previsão aceita."""
+        return [
+            i.id
+            for i in catalogo.intencoes_por_categoria(categoria)
+            if i.id in self.precisao_por_intencao and not self._medida(i.id)
+        ]
 
 
 def avaliar_com_limiares(
@@ -307,10 +338,12 @@ def avaliar_com_limiares(
     aceitos = confiancas >= corte
 
     precisao: dict[str, float] = {}
+    amostras: dict[str, int] = {}
     for classe in sorted(set(map(str, previstos)) | set(map(str, verdadeiros))):
         marcados = aceitos & (previstos == classe)
+        amostras[classe] = int(marcados.sum())
         precisao[classe] = (
-            float((verdadeiros[marcados] == classe).mean()) if marcados.any() else 1.0
+            float((verdadeiros[marcados] == classe).mean()) if marcados.any() else 0.0
         )
 
     return ResultadoComRejeicao(
@@ -324,6 +357,7 @@ def avaliar_com_limiares(
         precisao_por_intencao=precisao,
         rejeitados=int((~aceitos).sum()),
         total=len(enunciados),
+        amostras_por_intencao=amostras,
     )
 
 
@@ -417,6 +451,38 @@ def _linha(rotulo: str, valor: str) -> str:
     return f"  {rotulo:<38} {valor}"
 
 
+SEM_AMOSTRAS = "sem amostras (n=0)"
+
+
+def _linhas_com_limiares(com_corte: ResultadoComRejeicao) -> list[str]:
+    """Seção do relatório com os limiares aplicados.
+
+    Separa o que foi medido do que não teve amostra: um 0.000 impresso
+    não diz se a classe errou tudo o que aceitou ou se não aceitou nada.
+    """
+    aceitas = f"{com_corte.acuracia_aceitos:.3f}" if com_corte.cobertura > 0 else SEM_AMOSTRAS
+    medidas = com_corte.medidas(Categoria.TRANSACAO)
+    sem_amostras = com_corte.sem_amostras(Categoria.TRANSACAO)
+    avaliadas = len(medidas) + len(sem_amostras)
+    precisao = (
+        f"{com_corte.precisao_media(Categoria.TRANSACAO):.3f} "
+        f"({len(medidas)}/{avaliadas} transações medidas)"
+        if medidas
+        else SEM_AMOSTRAS
+    )
+    linhas = [
+        _linha("cobertura", f"{com_corte.cobertura:.3f}"),
+        _linha("acurácia entre as aceitas", aceitas),
+        _linha("precisão média nas transações", precisao),
+    ]
+    if sem_amostras:
+        linhas.append(_linha("transações sem amostras aceitas", ", ".join(sem_amostras)))
+    linhas.append(
+        _linha("rejeitadas (pedido de reformulação)", f"{com_corte.rejeitados}/{com_corte.total}")
+    )
+    return linhas
+
+
 def relatorio(artefato) -> str:
     """Monta o relatório completo da bancada, em texto.
 
@@ -464,17 +530,7 @@ def relatorio(artefato) -> str:
     if artefato.limiares:
         partes.append("\n=== Com os limiares calibrados aplicados ===")
         com_corte = avaliar_com_limiares(modelo, teste, artefato.limiares)
-        partes.append(_linha("cobertura", f"{com_corte.cobertura:.3f}"))
-        partes.append(_linha("acurácia entre as aceitas", f"{com_corte.acuracia_aceitos:.3f}"))
-        partes.append(
-            _linha(
-                "precisão média nas transações",
-                f"{com_corte.precisao_media(Categoria.TRANSACAO):.3f}",
-            )
-        )
-        partes.append(
-            _linha("rejeitadas (pedido de reformulação)", f"{com_corte.rejeitados}/{com_corte.total}")
-        )
+        partes.extend(_linhas_com_limiares(com_corte))
 
     partes.append("\n=== Piores classes por F1 ===")
     piores = sorted(resultado.por_intencao.values(), key=lambda m: m.f1)[:8]
@@ -493,10 +549,11 @@ def relatorio(artefato) -> str:
 
     partes.append("\n=== Curva de rejeição ===")
     for ponto in curva_de_rejeicao(modelo, teste, tuple(round(0.1 * i, 1) for i in range(10))):
+        acuracia = f"{ponto.acuracia_aceitos:.3f}" if ponto.cobertura > 0 else SEM_AMOSTRAS
         partes.append(
             _linha(
                 f"limiar {ponto.limiar:.1f}",
-                f"cobertura={ponto.cobertura:.3f} acurácia={ponto.acuracia_aceitos:.3f}",
+                f"cobertura={ponto.cobertura:.3f} acurácia={acuracia}",
             )
         )
 
