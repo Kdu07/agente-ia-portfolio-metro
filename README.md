@@ -224,17 +224,19 @@ npm run audit:a11y
 
 O projeto segue [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-BR/), no formato `MAJOR.MINOR.PATCH`, conforme detalhado na [Gestão de configuração](docs/GestaoConfiguracao.md#2-política-de-branches):
 
-- **MAJOR**: entrega consolidada ao final de cada sprint, mesclada de `release/<versão>` para `main` e marcada com uma tag anotada (ex.: `v1.0.0`).
+- **MAJOR**: entrega consolidada ao final de cada sprint, integrada da `develop` na `main` por merge request revisado e marcada com uma tag anotada `sprint-<n>` (ex.: `sprint-4`), conforme a [seção 2.5 da Gestão de configuração](docs/GestaoConfiguracao.md#25-procedimentos-de-integração-na-main-hotfix-e-exclusão).
 - **MINOR**: incremento de escopo relevante integrado a uma versão já entregue.
 - **PATCH**: correção urgente aplicada via `hotfix/<nome>` sobre uma versão em `main`.
 
-| Versão | Sprint | Status | Escopo |
-|---|---|---|---|
-| `v1.0.0` | Sprint 1 | Lançada | Entendimento do negócio, visão do produto, personas, jornadas, requisitos (RF/RNF), modelagem estática, diagramas UML e artefatos de gestão do projeto. |
-| `v2.0.0` | Sprint 2 | Lançada | Arquitetura da solução revisada, pipeline de PLN com classificador treinado e avaliado, catálogo de intenções, wireframes, mockups e protótipos, canal de voz, modelagem de dados, implantação em nuvem e planejamento das Sprints 3 a 5. |
-| `v3.0.0` | Sprint 3 | Lançada | Orquestração do pipeline integrada e testada, pré-processamento e vetorização, executores dublês, canal de voz integrado ao NLP, testes de integração, autenticação e autorização, e planejamento da Sprint 4. |
-| `v4.0.0` | Sprint 4 | Lançada | Implantação em nuvem com Container Apps e PostgreSQL gerenciado, pipelines de CI/CD, executor próprio com RAG, webhooks e sistema de mensageria assíncrona (RabbitMQ), rotinas agendadas, painel de análise de intenções, histórico de conversas, testes funcionais e de desempenho, persistência completa com banco de dados, e guardas com Content Safety. |
-| `v5.0.0` | Sprint 5 | ⏳ A definir | Escopo a ser detalhado no planejamento da Sprint 5. |
+| Versão | Sprint | Status | Tag | Commit na `main` | Escopo |
+|---|---|---|---|---|---|
+| `v1.0.0` | Sprint 1 | Lançada | `sprint-1` | `e24d15e` (14/08/2026) | Entendimento do negócio, visão do produto, personas, jornadas, requisitos (RF/RNF), modelagem estática, diagramas UML e artefatos de gestão do projeto. |
+| `v2.0.0` | Sprint 2 | Lançada | `sprint-2` | `5f48970` (28/08/2026) | Arquitetura da solução revisada, pipeline de PLN com classificador treinado e avaliado, catálogo de intenções, wireframes, mockups e protótipos, canal de voz, modelagem de dados, implantação em nuvem e planejamento das Sprints 3 a 5. |
+| `v3.0.0` | Sprint 3 | Lançada | `sprint-3` | `9b9a5fd` (!110, 11/09/2026) | Orquestração do pipeline integrada e testada, pré-processamento e vetorização, executores dublês, canal de voz integrado ao NLP, testes de integração, autenticação e autorização, e planejamento da Sprint 4. |
+| `v4.0.0` | Sprint 4 | Lançada | `sprint-4` | `3091f96` (!177, 25/09/2026) | Implantação em nuvem com Container Apps e PostgreSQL gerenciado, pipelines de CI/CD, executor próprio com RAG, webhooks e sistema de mensageria assíncrona (RabbitMQ), rotinas agendadas, painel de análise de intenções, histórico de conversas, testes funcionais e de desempenho, persistência completa com banco de dados, e guardas com Content Safety. |
+| `v5.0.0` | Sprint 5 | Em andamento | `sprint-5`, a criar após a integração da `develop` na `main` | pendente | Escopo do planejamento da Sprint 5 (seção 3.6.1 da [Gestão do projeto](docs/GestaoProjeto.md#361-planejamento-da-sprint-5)): correções de defeitos do middleware encontrados nos testes de carga e nas rotinas agendadas, notebooks de teste da vetorização e da recuperação, exploração do ambiente de teste do parceiro, documentação técnica final (banco de dados, testes, manual de implantação e uso, de-para com o ambiente do parceiro e plano de adoção), análise dos ODS, gestão de projetos evolutiva e apresentação final. O escopo efetivamente entregue é conferido no fechamento da sprint. |
+
+As tags são anotadas e apontam para o commit de merge da `main` que consolida cada sprint. Na Sprint 3 houve duas integrações, !88 (05/09/2026) e !110 (11/09/2026), e a tag marca a última. A tag `release-sprint-2`, anterior a este padrão, aponta para o merge da `release-sprint-1` (`e24d15e`, 14/08/2026), isto é, para a entrega da Sprint 1, e não da Sprint 2; ela é mantida para preservar o histórico, e a entrega da Sprint 2 é a tag `sprint-2`.
 
 O histórico detalhado de cada entrega — incluindo métricas, retrospectivas e planejamento da sprint seguinte — é registrado em [Gestão do projeto](docs/GestaoProjeto.md#3-avaliação-das-sprints).
 
