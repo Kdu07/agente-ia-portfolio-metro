@@ -48,7 +48,7 @@ A arquitetura da solução, as tecnologias adotadas e as decisões que as susten
 g02/
 ├── src/
 │   ├── middleware/          # Backend: API, pipeline de PLN, guardas, executor próprio (RAG), rotinas, webhooks, mensageria e persistência
-│   ├── web/                 # Frontend: chat, histórico, intenções, rotinas e avisos
+│   ├── web/                 # Frontend: chat, histórico, intenções e rotinas
 │   └── emissor-portfolio/   # Google Apps Script que envia os eventos do portfólio ao webhook do middleware
 ├── copilot/                 # Configuração versionada do Copilot Studio: tópicos, conectores e solução
 ├── infra/
@@ -116,7 +116,7 @@ npm run audit:a11y
 | Interface — Chat, Histórico, Intenções e Rotinas | Implementadas |
 | Autenticação, persistência, guardas, análise de intenções e voz | Implementadas |
 | Webhooks para integrações externas | Implementados |
-| Sistema de mensageria assíncrona (RabbitMQ) | Implementado |
+| Sistema de mensageria assíncrona (RabbitMQ) | Implementado para os webhooks; as filas de áudio e de rotinas estão reservadas na topologia, sem produtor nem consumidor |
 | Implantação em nuvem (Azure Container Apps, PostgreSQL, CI/CD) | Implementada |
 | Executor próprio (recuperação com citação sobre corpus sintético) | Implementado |
 | Integração com o Copilot Studio (Direct Line) | Prevista; depende do tenant do parceiro |
