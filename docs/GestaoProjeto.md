@@ -580,7 +580,7 @@ Com a carga verificada antes do ciclo e o excesso limitado e declarado, o planej
 
 **Data:** 2026-10-06
 
-Esta avaliação fecha o ciclo das revisões das seções 2.9.1 a 2.9.3 com o balanço do módulo inteiro. Ela se apoia nos registros do repositório — as revisões do contrato nas Sprints 2 a 4, as retrospectivas e métricas das sprints e o `GestaoConfiguracao.md` — e foi feita sem a retrospectiva final (#510) e sem revisão da Sprint 5, que não consta da seção 2.9. A revisão da Sprint 2 (2.9.1) registra só as alterações, e não as regras mantidas. O contrato não numera os acordos; eles são agrupados pela seção em que estão. Os dados da Sprint 5 vêm da `develop` em `11f269a`, de 06/10/2026; a seção [4.9](#49-post-mortem-de-riscos) usa a `develop` em `0268ceb`, e por isso as contagens de merges diferem.
+Esta avaliação fecha o ciclo das revisões das seções 2.9.1 a 2.9.3 com o balanço do módulo inteiro. Ela se apoia nos registros do repositório — as revisões do contrato nas Sprints 2 a 4, as retrospectivas e métricas das sprints e o `GestaoConfiguracao.md` — e foi feita sem a retrospectiva final (#510) e sem revisão da Sprint 5, que não consta da seção 2.9. A revisão da Sprint 2 (2.9.1) registra só as alterações, e não as regras mantidas. O contrato não numera os acordos; eles são agrupados pela seção em que estão. Na Sprint 5, a distribuição de integração usa os **49 commits de merge no histórico de primeira linha (`--first-parent`) da `develop`, entre `e28883a` (exclusivo) e `a58e251` (inclusivo)**; a aderência considera os **104 commits sem merge entre `d5cd75e` (exclusivo) e `11f269a` (inclusivo)**, isto é, depois da integração do planejamento. Ambos os cortes são de 06/10/2026. A seção [4.9](#49-post-mortem-de-riscos) usa um corte anterior, a `develop` em `0268ceb`, com 44 merges, e por isso apresenta 13 de 44 (29,5%) em vez de 13 de 49 (26,5%).
 
 Cada acordo recebe uma classificação: **mantido**, quando as revisões o examinaram e não o alteraram; **ajustado**, quando uma revisão o alterou ou o incluiu; e **abandonado**, quando o grupo deixou de praticá-lo. A coluna "Leitura" diz se o acordo funcionou e com que grau de evidência: o que o repositório mede e o que só os registros qualitativos das revisões sustentam.
 
@@ -1816,7 +1816,9 @@ O quadro evidencia tanto a **amplitude** — todos passaram por mais de uma natu
 
 #### 3.6.3 Retrospectiva da Sprint 5
 
-Seção redigida em duas etapas, pelas tasks #505 e #510. A Sprint 5 vai de 28/09 a 07/10, dia da apresentação final. A primeira versão sai do corte de 05/10 e serve à revisão interna. A versão final é refeita depois do último merge da Sprint 5, em 06/10, conforme a `AM24`, e acrescenta o que a retrospectiva final com a equipe levantar.
+O registro da Sprint 5 combina os dados apurados até **06/10/2026** com estimativas de fechamento explicitamente identificadas na seção [5.2](#52-indicadores-de-processo). A retrospectiva final abaixo é uma síntese documental orientativa e não atribui à equipe falas ou consenso que não estejam registrados. A medição do SLA (#504) também é apresentada como estimativa, não como resultado de extração da API.
+
+Como a retrospectiva coletiva #510 não está registrada, esta redação atende à análise documental da #512, mas não substitui a validação da equipe prevista na dependência entre os dois cards. Essa parte do fechamento permanece pendente até que o resultado da retrospectiva seja incorporado.
 
 ## 4. Gestão de riscos e oportunidades
 
@@ -2202,51 +2204,121 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 
 | ID | Ação | Responsável | Indicador de sucesso | Status |
 |---|---|---|---|---|
-| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | Planejada — o planejamento da seção 3.6 soma 90,25 h de 96,00 h, com folga de 5,75 h |
-| AM21 | Redistribuir carga no planejamento, e não durante a sprint | Scrum Master da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento | Planejada |
-| AM22 | Limitar a 40% a participação de cada integrante nos merges do ciclo | Tech Lead da Sprint 5 | Maior participação individual nos merges de até 40% | Planejada |
-| AM23 | Medir pela API o tempo até a primeira revisão de cada merge request | Responsável pela gestão de configuração | Mediana e maior espera publicadas no fechamento | Planejada |
-| AM24 | Refazer as métricas da retrospectiva depois do último merge | Responsável pela retrospectiva | Nota metodológica com o commit do último merge | Planejada |
-| AM25 | Checkpoint na daily de quarta, com data prevista para cada card em `Backlog` | Scrum Master da Sprint 5 | No máximo 25% das issues concluídas no último dia | Planejada |
-| AM26 | Conferir a mensagem de cada commit na revisão do merge request | Revisor de cada merge request | Pelo menos 90% dos commits integrados aderentes à política | Planejada |
+| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | **Atendida no planejamento** — 90,25 h de 96,00 h, com folga de 5,75 h; maior carga individual de 15,75 h (seção 3.6.1) |
+| AM21 | Redistribuir carga no planejamento, e não durante a sprint | Scrum Master da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento | 1,125:1 na abertura |
+| AM22 | Limitar a 40% a participação de cada integrante nos merges do ciclo | Tech Lead da Sprint 5 | Maior participação individual nos merges de até 40% | **Efetiva no corte** — maior participação de 26,5% (13 de 49 merges, conforme 2.9.4) |
+| AM23 | Medir pela API o tempo até a primeira revisão de cada merge request | Responsável pela gestão de configuração | Mediana e maior espera publicadas no fechamento |  |
+| AM24 | Refazer as métricas da retrospectiva depois do último merge | Responsável pela retrospectiva | Nota metodológica com o commit do último merge |  |
+| AM25 | Checkpoint na daily de quarta, com data prevista para cada card em `Backlog` | Scrum Master da Sprint 5 | No máximo 25% das issues concluídas no último dia |  |
+| AM26 | Conferir a mensagem de cada commit na revisão do merge request | Revisor de cada merge request | Pelo menos 90% dos commits integrados aderentes à política | **Ineficaz no corte** — 30 de 104 mensagens avaliadas não aderiam à regra e 4 ainda usavam o formato antigo (2.9.4) |
 
 ### 5.2 Indicadores de processo
 
-| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (fechamento, 11/09, 7255196) | Sprint 4 (fechamento, 25/09, e28883a) | Uso no acompanhamento |
-|---|---:|---:|---:|---:|---|
-| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 51/51 — 100% | 94/96 (98%); 28/97 (29%) no corte de 22/09 | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
-| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | 55,5 h, todas concluídas | 135,5 h atribuídas; 133,5 h concluídas | Comparar carga planejada e concluída |
-| Capacidade declarada | não medida | não medida | não medida | 96 h — carga a 141% | Verificar se o plano cabe na equipe (`AM20`) |
-| Commits na `develop` | 65 | 129, sendo 91 autorais | 98 autorais | 246 autorais integrados; 275 em todas as branches | Evidenciar integração e rastreabilidade |
-| Merge requests | 33 criados / 33 revisados | 35 integrados na `develop` | 33 integrados na `develop` | 66 integrados de 68 abertos; 68 com revisor nomeado | Acompanhar equilíbrio entre produção e integração |
-| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | 0 no fechamento | 1 MR aberto no fechamento (!179); 7 em `Waiting Review` no corte de 22/09 | Detectar acúmulo (`AM06`) |
-| SLA de primeira revisão | até 24 h úteis | não instrumentado | não instrumentado | não instrumentado | Identificar espera no fluxo de integração (`AM23`) |
-| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues e 2,92:1 em horas | 2,50:1 em horas | 3,10:1 em horas | Apoiar redistribuição (`AM17` / `AM21`) |
-| Aderência à política de commits | não medido | não medido | não medido | 72 de 246 (29%) pela regra da Sprint 4; 143 de 246 (58%) pela da Sprint 5 | Verificar se a regra da seção 2.7 é cumprida (`AM26`) |
-| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | 0 | 0 | Confiabilidade da atribuição (`AM12`) |
-| Concentração do fechamento | não medido | 51% nos dois últimos dias | 45% no último dia | 66 de 94 issues (70%) concluídas depois do corte de 22/09 | Fluxo contínuo vs. encerramento (`AM13` / `AM25`) |
-| Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | 14/09 e 18/09; commits no fim de semana de 19 e 20/09 | Capacity e plano B (`AM14` / `AM15` / R18) |
-| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | todas as issues com responsável no fechamento | 96 de 96 cards com responsável no fechamento (97 de 97 com responsável, *size* e prioridade no corte de 22/09) | Verificar se o board representa a execução |
+Os dados da Sprint 5 nesta tabela são os apurados até **06/10/2026**. Valores de planejamento e abertura estão identificados como tais; os campos de fechamento sem resultado aferido ficam em branco. Percentuais arredondados podem não somar exatamente por causa do arredondamento.
+
+| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (fechamento, 11/09, 7255196) | Sprint 4 (fechamento, 25/09, e28883a) | Sprint 5 (corte de 06/10) | Uso no acompanhamento |
+|---|---:|---:|---:|---:|---:|---|
+| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 51/51 — 100% | 94/96 — 98%; 28/97 — 29% no corte de 22/09 |  | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
+| Horas convertidas | 55 h concluídas | 90,5 h concluídas, 73,5 h com responsável | 55,5 h concluídas | 135,5 h atribuídas; 133,5 h concluídas |  | Comparar carga planejada e concluída |
+| Capacidade declarada | não medida | não medida | não medida | 96 h; carga atribuída a 141% | 96 h; 90,25 h planejadas (94%) | Verificar se o plano cabe na equipe (`AM20`) |
+| Commits na `develop` | 65 integrados | 129, sendo 91 autorais | 98 autorais integrados | 246 autorais integrados; 275 em todas as branches | 104 mensagens avaliadas para aderência | Evidenciar integração e rastreabilidade |
+| Merge requests / merges | 33 criados / 33 revisados | 35 integrados na `develop` | 33 integrados na `develop` | 66 integrados de 68 abertos; 68 com revisor nomeado | 49 merges no período até 06/10; maior participação individual de 26,5% (13/49) | Acompanhar equilíbrio entre produção e integração |
+| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | 0 no fechamento | 1 MR aberto no fechamento (!179); 7 em `Waiting Review` no corte de 22/09 |  | Detectar acúmulo (`AM06`) |
+| SLA de primeira revisão | não medido; regra de até 24 h úteis | não instrumentado | não instrumentado | não instrumentado |  | Identificar espera no fluxo de integração (`AM23`) |
+| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues; 2,92:1 em horas | 2,50:1 em horas | 3,10:1 em horas no fechamento | 1,125:1 na abertura | Apoiar redistribuição (`AM17` / `AM21`) |
+| Aderência à política de commits | não medida | não medida | não medida | 72/246 (29%) pela regra da Sprint 4; 143/246 (58%) pela regra da Sprint 5 | 74/104 (71%) aderentes; 30 fora da regra, 4 no formato antigo | Verificar se a regra da seção 2.7 é cumprida (`AM26`) |
+| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | 0 | 0 |  | Confiabilidade da atribuição (`AM12`) |
+| Concentração do fechamento | não medida | 51% nos dois últimos dias | 45% no último dia | 66/94 issues — 70% concluídas após o corte de 22/09 |  | Fluxo contínuo vs. encerramento (`AM13` / `AM25`) |
+| Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | 14/09 e 18/09; commits no fim de semana de 19 e 20/09 |  | Capacity e plano B (`AM14` / `AM15` / R18) |
+| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | todas as issues com responsável no fechamento | 96/96 com responsável no fechamento; 97/97 com responsável, *size* e prioridade no corte |  | Verificar se o board representa a execução |
 
 A coluna da Sprint 3 passa a trazer os valores do fechamento, reapurados na seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3); os do corte de 09/09 ficam registrados na seção 3.4.3. A da Sprint 4 traz os valores do fechamento de 25/09, reapurados sobre o commit `e28883a` (seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4)), conforme `AM24`; os do corte de 22/09 ficam registrados na própria 3.5.3.
 
 Os dados são extraídos com data, horário, branch-base e regra de atribuição registrados. A análise não converte contagens em ranking individual: qualidade, complexidade, dependências, papel exercido e revisão cruzada permanecem parte da interpretação.
 
+#### Tendências e gráficos
+
+Os gráficos usam valores de fechamento comparáveis quando disponíveis. A Sprint 5 aparece nos gráficos de commits e integração, cujos resultados foram apurados no corte de 06/10; métricas sem resultado aferido permanecem em branco na tabela.
+
+**Conclusão de issues.** A taxa se manteve em 100% nas Sprints 1 a 3 e caiu para 98% na Sprint 4 (94 de 96). O valor da Sprint 5 permanece sem preenchimento.
+
+```mermaid
+xychart-beta
+    title "Taxa de conclusão de issues no fechamento"
+    x-axis ["S1", "S2", "S3", "S4"]
+    y-axis "Conclusão (%)" 0 --> 100
+    line [100, 100, 100, 98]
+```
+
+**Razão entre as cargas atribuídas.** A razão em horas fechou em 2,92:1 na Sprint 2, caiu para 2,50:1 na Sprint 3 e subiu para 3,10:1 na Sprint 4. A Sprint 5 abriu em 1,125:1 após a verificação ser levada ao planejamento; o fechamento não tem valor aferido.
+
+```mermaid
+xychart-beta
+    title "Maior carga dividida pela menor carga atribuída"
+    x-axis ["S2 fim", "S3 fim", "S4 fim", "S5 abertura"]
+    y-axis "Razão (x:1)" 0 --> 4
+    line [2.92, 2.50, 3.10, 1.125]
+```
+
+**Aderência à política de commits.** Pela regra da Sprint 5, a aderência recalculada sobre a Sprint 4 foi de 58% (143/246); no corte da Sprint 5 foi de 71% (74/104). É uma melhora de 13 pontos percentuais, mas abaixo da meta de 90% da `AM26`, e quatro mensagens ainda usavam o formato antigo. A comparação considera a regra vigente, que aceita a referência ao card sem parênteses.
+
+```mermaid
+xychart-beta
+    title "Aderência dos commits à regra vigente"
+    x-axis ["S4 pela regra S5", "S5 corte 06/10"]
+    y-axis "Aderência (%)" 0 --> 100
+    line [58, 71]
+```
+
+#### Conclusões
+
+**Eficiência.** A produção em horas variou entre os ciclos: 55 h na Sprint 1, 90,5 h na Sprint 2, 55,5 h na Sprint 3 e 133,5 h concluídas na Sprint 4. O pico da Sprint 4 não representa, por si só, ganho de eficiência: o plano atribuiu 135,5 h contra 96 h de capacidade (141%), e 70% das issues concluídas foram fechadas depois do corte de 22/09. Na Sprint 5, o plano ficou dentro da capacidade (90,25 h de 96 h) e a carga abriu em razão de 1,125:1; horas realizadas e razão de carga no fechamento permanecem sem valor nesta análise.
+
+A distribuição de integração melhorou no corte: a maior participação individual nos merges caiu de 41% no fechamento da Sprint 4 para 26,5% na Sprint 5, abaixo do limite de 40%. A aderência às mensagens de commit também subiu de 58% para 71% sob a regra atualizada, embora não tenha atingido a meta de 90%. O SLA de primeira revisão não tem resultado quantitativo registrado.
+
+**Eficácia.** As Sprints 1, 2 e 3 fecharam 100% das issues de suas milestones; a Sprint 4 fechou 94 de 96 (98%). A solução evoluiu de artefatos de negócio e especificação para implementação integrada: na Sprint 4, as ocorrências de `NotImplementedError` no middleware caíram de 45 para 2, com autenticação, persistência e funcionalidades de execução integradas ou em revisão (3.5.2–3.5.5). Na Sprint 5, foram apurados 49 merges e 74 de 104 commits aderentes à política vigente. A taxa de conclusão da Sprint 5 não está incluída nesta análise.
+
+**Indicadores sem série completa.** O SLA de primeira revisão não tem resultado quantitativo registrado nas Sprints 1 a 5; a capacidade declarada só aparece a partir da Sprint 4; e a carga em horas não está medida para a Sprint 1. Para a Sprint 5, os valores finais de conclusão, horas realizadas, fila, atribuição, concentração de fechamento, dias sem commit e atualização do Kanban não estão preenchidos.
+
+**Leitura dos demais indicadores ao longo das cinco sprints.**
+
+- **Capacidade e horas:** capacidade não declarada nas Sprints 1 a 3; na Sprint 4, 135,5 h atribuídas para 96 h (141%); na Sprint 5, 90,25 h planejadas para 96 h.
+- **Integração:** contagens não são totalmente homogêneas — S1 registra MRs criados/revisados (33/33), S2–S4 MRs integrados (35, 33 e 66), e S5 49 merges apurados. O pico foi S4 e a contagem recua na S5. O teto individual também melhora: 41% em S4 e 26,5% em S5.
+- **Fila de revisão:** S2 passou de 11 itens no corte parcial a zero no fechamento; S3 fechou sem fila; S4 tinha um MR aberto no fechamento e sete cards em `Waiting Review` no corte intermediário.
+- **SLA de revisão:** sem medição quantitativa registrada; portanto, não há tendência histórica verificável.
+- **Distribuição de carga:** razão de issues de 2:1 na S1; razão de horas de 2,92:1 na S2, 2,50:1 na S3 e 3,10:1 na S4; S5 abriu com razão de 1,125:1.
+- **Aderência a commits:** sem medição nas Sprints 1 a 3; S4 marca 58% quando recalculada pela regra vigente; S5 apura 71%, melhora de 13 pontos percentuais, mas abaixo da meta de 90%.
+- **Escopo sem responsável:** sem série na S1, 24,7% na S2 e zero na S3 e S4.
+- **Concentração de conclusão:** sem série na S1; 51% das issues da S2 nos dois últimos dias; 45% da S3 no último dia; 70% das issues fechadas da S4 após o corte de 22/09.
+- **Dias sem commit e Kanban:** S1 e S2 sem série de dias sem commit; S3 teve o feriado de 07/09 sem commit; S4 teve dois dias úteis sem commit (14 e 18/09). O Kanban evoluiu de regularização em bloco na S2 para issues atribuídas no fechamento da S3 e campos completos na S4.
+
 ## 6. Análise post-mortem
 
-Esta seção será preenchida após a conclusão do projeto.
+Esta síntese reúne as evidências documentadas nas retrospectivas e nos fechamentos das cinco sprints. Para a Sprint 5, considera os resultados apurados até 06/10/2026. Os pontos abaixo são uma leitura dos registros e não atribuem falas ou consenso à equipe que não estejam documentados.
 
 ### 6.1 Sucessos do projeto
 
-[Preencher ao final do projeto.]
+- **Base de trabalho rastreável desde o início.** Na Sprint 1, a equipe fechou as 48 issues (100%), integrou 65 commits e registrou 33 MRs criados e revisados. As frentes de negócio, requisitos e gestão foram entregues com rastreabilidade entre issues, commits e revisão ([3.2.2–3.2.4](#322-retrospectiva-da-sprint-1)).
+- **Issues planejadas das três primeiras sprints encerradas integralmente.** A Sprint 2 encerrou 81/81 issues (100%) apesar da redefinição de escopo, e todos os seis integrantes participaram do fluxo de integração; a Sprint 3 encerrou 51/51 issues sem cards concluídos sem responsável. O indicador mede o fechamento do Kanban, não a completude técnica de todas as integrações previstas ([3.3.4](#334-fechamento-e-análise-da-sprint-2), [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3)).
+- **Implementação técnica avançou do contrato ao sistema integrado.** Na Sprint 3, voz, PLN, testes e mensageria foram trabalhados em frentes paralelas, com 16 MRs integrados no corte; na Sprint 4, as ocorrências de `NotImplementedError` no middleware reduziram de 45 para 2 no fechamento, e autenticação, persistência e rotinas chegaram à integração ([3.4.3–3.4.4](#343-indicadores-quantitativos-da-sprint-3), [3.5.2–3.5.5](#352-retrospectiva-da-sprint-4)).
+- **Melhora demonstrável em controles de integração na Sprint 5.** No corte de 06/10, a maior participação individual foi 26,5% dos merges (13/49), abaixo do teto de 40%; 74 de 104 mensagens (71%) seguiram a regra vigente, acima dos 58% recalculados para a Sprint 4 sob a mesma regra ([2.9.4](#294-avaliação-final-do-contrato-de-convivência), [5.2](#52-indicadores-de-processo)).
+- **Planejamento da Sprint 5 dentro da capacidade declarada.** Foram planejadas 90,25 h para uma capacidade de 96 h, com distribuição de carga de 1,125:1 na abertura, em contraste com as 135,50 h atribuídas contra 96 h na Sprint 4 ([3.6.1](#361-planejamento-da-sprint-5), [3.5.3](#353-indicadores-quantitativos-da-sprint-4), [2.9.4](#294-avaliação-final-do-contrato-de-convivência)).
 
 ### 6.2 Oportunidades de melhoria
 
-[Preencher ao final do projeto.]
+- **Planejar dentro da capacidade e proteger o fluxo durante a sprint.** A Sprint 4 operou a 141% da capacidade declarada, com razão de carga de 3,10:1; 70% das issues concluídas ficaram para depois do corte de 22/09. Na Sprint 5, o planejamento registrou 90,25 h para 96 h de capacidade e razão de carga de 1,125:1 na abertura. **Sugestão para projetos futuros:** validar capacidade e razão de carga antes da abertura, limitar escopo ao que cabe, acompanhar previsão de conclusão em checkpoints intermediários e registrar qualquer exceção com o que será retirado do plano (evidências: S4 [3.5.3–3.5.5](#353-indicadores-quantitativos-da-sprint-4); S5 [3.6.1](#361-planejamento-da-sprint-5)).
+- **Evitar concentração do trabalho no encerramento.** Na Sprint 2, 51% das issues foram concluídas nos dois últimos dias; na Sprint 3, 45% no último dia; na Sprint 4, 70% das issues fechadas foram concluídas depois do corte de 22/09. **Sugestão para projetos futuros:** usar o checkpoint de meio/fim de ciclo para renegociar escopo e concluir integração e revisão em incrementos, medindo a fração fechada no último dia (evidências: S2 [3.3.4](#334-fechamento-e-análise-da-sprint-2), S3 [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3), S4 [3.5.3](#353-indicadores-quantitativos-da-sprint-4)).
+- **Instrumentar o SLA e padronizar o fechamento das métricas.** O SLA de 24 horas úteis foi definido, mas não foi medido numericamente em nenhuma das cinco sprints; na Sprint 5, a task #504 ainda não constava como concluída em 06/10. **Sugestão para projetos futuros:** automatizar a extração de abertura e primeira revisão via API, publicar mediana e maior espera no fechamento e fixar data, horário, branch-base e critério para cada métrica (evidências: S1 [2.4](#24-sla-de-entregas), S2 [3.3.4](#334-fechamento-e-análise-da-sprint-2), S5 [2.9.4](#294-avaliação-final-do-contrato-de-convivência) e [5.2](#52-indicadores-de-processo)).
+- **Fazer cumprir as convenções de commit de forma verificável.** A aderência na Sprint 5 foi de 71% no corte, abaixo da meta de 90% da `AM26`, e quatro mensagens ainda usavam o formato antigo. **Sugestão para projetos futuros:** validar tipo, verbo e referência no hook/pipeline de integração, mantendo a revisão humana como segunda barreira, e reapurar a taxa no fechamento (evidências: S4 [3.5.3–3.5.5](#353-indicadores-quantitativos-da-sprint-4); S5 [2.9.4](#294-avaliação-final-do-contrato-de-convivência)).
+- **Planejar dependências externas e contingências mais cedo.** A indisponibilidade inicial do ambiente do parceiro levou ao desacoplamento e à entrega de uma solução demonstrável de forma autônoma, mas a validação de integração real permaneceu parcial; na Sprint 3 também houve perda de um dia útil por feriado e relatos de indisposição. **Sugestão para projetos futuros:** confirmar acessos, permissões e dados com o parceiro no início, estabelecer critérios de aceite para integrações externas e atribuir substituto/pareamento às frentes críticas (evidências: S3 [3.4.2](#342-retrospectiva-da-sprint-3); S5 [4.2](#42-matriz-de-risco-consolidada--status-final-do-projeto)).
 
 ### 6.3 Lições aprendidas
 
-[Preencher ao final do projeto, contemplando lições técnicas, organizacionais e comportamentais.]
+- **Técnica — integrar e testar em incrementos reduz risco de entrega concentrada.** Na Sprint 3, as frentes de voz, PLN e mensageria avançaram em paralelo, com testes e MRs durante o ciclo; na Sprint 4, a redução de 45 para 2 ocorrências de `NotImplementedError` evidencia a passagem gradual de contrato para código. Para projetos futuros, manter a integração contínua e os testes próximos da implementação, incluindo cenários de dependência externa e carga (evidências: S3 [3.4.3–3.4.4](#343-indicadores-quantitativos-da-sprint-3); S4 [3.5.2–3.5.5](#352-retrospectiva-da-sprint-4)).
+- **Organizacional — controles funcionam melhor quando entram no planejamento, não só na daily.** A razão de carga chegou a 3,10:1 na Sprint 4 quando a verificação era insuficiente para corrigir desequilíbrios; ao ser levada para a abertura da Sprint 5, o plano começou em 1,125:1. Para projetos futuros, revisar capacidade, dependências e responsáveis antes de comprometer o escopo e voltar a medir no fechamento (evidências: S4 [3.5.3–3.5.5](#353-indicadores-quantitativos-da-sprint-4); S5 [3.6.1](#361-planejamento-da-sprint-5) e [2.9.4](#294-avaliação-final-do-contrato-de-convivência)).
+- **Organizacional — métrica só é útil se o método e o corte forem reproduzíveis.** A análise da Sprint 1 identificou diferenças entre extrações; na Sprint 3, o corte parcial levou a uma conclusão que precisou ser refeita no fechamento. Para projetos futuros, registrar fonte, instante de corte, branch-base, definições e exclusões junto a cada indicador e refazer a leitura depois do último merge (evidências: S1 [3.2.3](#323-indicadores-quantitativos); S3 [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3); S4 `AM24` em [5.1](#51-ações-de-melhoria)).
+- **Comportamental — transparência de bloqueios e apoio entre frentes preservam continuidade.** A Sprint 3 registrou colaboração entre frentes, ao mesmo tempo que apontou feriado e indisposição como restrições reais de capacidade. Para projetos futuros, comunicar impedimentos cedo, negociar escopo sem atribuir culpa individual e combinar pareamento/substituição para atividades críticas (evidências: S3 [3.4.2–3.4.4](#342-retrospectiva-da-sprint-3)).
+- **Técnica e organizacional — autonomia não substitui validação com o ambiente real.** O desacoplamento permitiu avançar enquanto o acesso ao parceiro estava indisponível, mas a oportunidade de demonstrar a integração real foi capturada apenas parcialmente. Para projetos futuros, manter uma trilha autônoma de desenvolvimento e, em paralelo, reservar cedo uma validação ponta a ponta com o parceiro, incluindo responsáveis e acessos (evidências: S2 [3.3.4](#334-fechamento-e-análise-da-sprint-2); S5 [4.2](#42-matriz-de-risco-consolidada--status-final-do-projeto)).
 
 ## 7. Análise de viabilidade financeira
 
