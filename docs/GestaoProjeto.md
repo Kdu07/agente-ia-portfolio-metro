@@ -2156,35 +2156,93 @@ As ações originadas nas retrospectivas são consolidadas abaixo para manter o 
 
 | ID | Ação | Responsável | Indicador de sucesso | Status |
 |---|---|---|---|---|
-| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | Planejada — o planejamento da seção 3.6 soma 90,25 h de 96,00 h, com folga de 5,75 h |
-| AM21 | Redistribuir carga no planejamento, e não durante a sprint | Scrum Master da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento | Planejada |
-| AM22 | Limitar a 40% a participação de cada integrante nos merges do ciclo | Tech Lead da Sprint 5 | Maior participação individual nos merges de até 40% | Planejada |
-| AM23 | Medir pela API o tempo até a primeira revisão de cada merge request | Responsável pela gestão de configuração | Mediana e maior espera publicadas no fechamento | Planejada |
-| AM24 | Refazer as métricas da retrospectiva depois do último merge | Responsável pela retrospectiva | Nota metodológica com o commit do último merge | Planejada |
-| AM25 | Checkpoint na daily de quarta, com data prevista para cada card em `Backlog` | Scrum Master da Sprint 5 | No máximo 25% das issues concluídas no último dia | Planejada |
-| AM26 | Conferir a mensagem de cada commit na revisão do merge request | Revisor de cada merge request | Pelo menos 90% dos commits integrados aderentes à política | Planejada |
+| AM20 | Planejar a Sprint 5 dentro de 16 h por integrante, com excedente justificado item a item | Scrum Master da Sprint 5 | Carga atribuída de até 96 h, ou excedente justificado no card de planejamento | **Atendida no planejamento** — 90,25 h de 96,00 h, com folga de 5,75 h; maior carga individual de 15,75 h (seção 3.6.1) |
+| AM21 | Redistribuir carga no planejamento, e não durante a sprint | Scrum Master da Sprint 5 | Razão de até 2:1 nas horas atribuídas na abertura e no fechamento | 1,125:1 na abertura |
+| AM22 | Limitar a 40% a participação de cada integrante nos merges do ciclo | Tech Lead da Sprint 5 | Maior participação individual nos merges de até 40% | **Efetiva no corte** — maior participação de 26,5% (13 de 49 merges, conforme 2.9.4) |
+| AM23 | Medir pela API o tempo até a primeira revisão de cada merge request | Responsável pela gestão de configuração | Mediana e maior espera publicadas no fechamento |  |
+| AM24 | Refazer as métricas da retrospectiva depois do último merge | Responsável pela retrospectiva | Nota metodológica com o commit do último merge |  |
+| AM25 | Checkpoint na daily de quarta, com data prevista para cada card em `Backlog` | Scrum Master da Sprint 5 | No máximo 25% das issues concluídas no último dia |  |
+| AM26 | Conferir a mensagem de cada commit na revisão do merge request | Revisor de cada merge request | Pelo menos 90% dos commits integrados aderentes à política | **Ineficaz no corte** — 30 de 104 mensagens avaliadas não aderiam à regra e 4 ainda usavam o formato antigo (2.9.4) |
 
 ### 5.2 Indicadores de processo
 
-| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (fechamento, 11/09, 7255196) | Sprint 4 (fechamento, 25/09, e28883a) | Uso no acompanhamento |
-|---|---:|---:|---:|---:|---|
-| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 51/51 — 100% | 94/96 (98%); 28/97 (29%) no corte de 22/09 | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
-| Horas convertidas | 55 h | 90,5 h, das quais 73,5 h com responsável | 55,5 h, todas concluídas | 135,5 h atribuídas; 133,5 h concluídas | Comparar carga planejada e concluída |
-| Capacidade declarada | não medida | não medida | não medida | 96 h — carga a 141% | Verificar se o plano cabe na equipe (`AM20`) |
-| Commits na `develop` | 65 | 129, sendo 91 autorais | 98 autorais | 246 autorais integrados; 275 em todas as branches | Evidenciar integração e rastreabilidade |
-| Merge requests | 33 criados / 33 revisados | 35 integrados na `develop` | 33 integrados na `develop` | 66 integrados de 68 abertos; 68 com revisor nomeado | Acompanhar equilíbrio entre produção e integração |
-| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | 0 no fechamento | 1 MR aberto no fechamento (!179); 7 em `Waiting Review` no corte de 22/09 | Detectar acúmulo (`AM06`) |
-| SLA de primeira revisão | até 24 h úteis | não instrumentado | não instrumentado | não instrumentado | Identificar espera no fluxo de integração (`AM23`) |
-| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues e 2,92:1 em horas | 2,50:1 em horas | 3,10:1 em horas | Apoiar redistribuição (`AM17` / `AM21`) |
-| Aderência à política de commits | não medido | não medido | não medido | 72 de 246 (29%) pela regra da Sprint 4; 143 de 246 (58%) pela da Sprint 5 | Verificar se a regra da seção 2.7 é cumprida (`AM26`) |
-| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | 0 | 0 | Confiabilidade da atribuição (`AM12`) |
-| Concentração do fechamento | não medido | 51% nos dois últimos dias | 45% no último dia | 66 de 94 issues (70%) concluídas depois do corte de 22/09 | Fluxo contínuo vs. encerramento (`AM13` / `AM25`) |
-| Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | 14/09 e 18/09; commits no fim de semana de 19 e 20/09 | Capacity e plano B (`AM14` / `AM15` / R18) |
-| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | todas as issues com responsável no fechamento | 96 de 96 cards com responsável no fechamento (97 de 97 com responsável, *size* e prioridade no corte de 22/09) | Verificar se o board representa a execução |
+Os dados da Sprint 5 nesta tabela são os apurados até **06/10/2026**. Valores de planejamento e abertura estão identificados como tais; os campos de fechamento sem resultado aferido ficam em branco. Percentuais arredondados podem não somar exatamente por causa do arredondamento.
+
+| Indicador | Sprint 1 (fechamento) | Sprint 2 (fechamento, 28/08) | Sprint 3 (fechamento, 11/09, 7255196) | Sprint 4 (fechamento, 25/09, e28883a) | Sprint 5 (corte de 06/10) | Uso no acompanhamento |
+|---|---:|---:|---:|---:|---:|---|
+| Issues concluídas | 48/48 — 100% | 81/81 — 100% | 51/51 — 100% | 94/96 — 98%; 28/97 — 29% no corte de 22/09 |  | Verificar previsibilidade; separar issues atribuídas, fechadas e ainda em andamento |
+| Horas convertidas | 55 h concluídas | 90,5 h concluídas, 73,5 h com responsável | 55,5 h concluídas | 135,5 h atribuídas; 133,5 h concluídas |  | Comparar carga planejada e concluída |
+| Capacidade declarada | não medida | não medida | não medida | 96 h; carga atribuída a 141% | 96 h; 90,25 h planejadas (94%) | Verificar se o plano cabe na equipe (`AM20`) |
+| Commits na `develop` | 65 integrados | 129, sendo 91 autorais | 98 autorais integrados | 246 autorais integrados; 275 em todas as branches | 104 mensagens avaliadas para aderência | Evidenciar integração e rastreabilidade |
+| Merge requests / merges | 33 criados / 33 revisados | 35 integrados na `develop` | 33 integrados na `develop` | 66 integrados de 68 abertos; 68 com revisor nomeado | 49 merges no período até 06/10; maior participação individual de 26,5% (13/49) | Acompanhar equilíbrio entre produção e integração |
+| Itens em fila de revisão | não medido | 11 no corte de 26/08; 0 no fechamento | 0 no fechamento | 1 MR aberto no fechamento (!179); 7 em `Waiting Review` no corte de 22/09 |  | Detectar acúmulo (`AM06`) |
+| SLA de primeira revisão | não medido; regra de até 24 h úteis | não instrumentado | não instrumentado | não instrumentado |  | Identificar espera no fluxo de integração (`AM23`) |
+| Distribuição de carga | razão de 2:1 nas issues | 2,83:1 em issues; 2,92:1 em horas | 2,50:1 em horas | 3,10:1 em horas no fechamento | 1,125:1 na abertura | Apoiar redistribuição (`AM17` / `AM21`) |
+| Aderência à política de commits | não medida | não medida | não medida | 72/246 (29%) pela regra da Sprint 4; 143/246 (58%) pela regra da Sprint 5 | 74/104 (71%) aderentes; 30 fora da regra, 4 no formato antigo | Verificar se a regra da seção 2.7 é cumprida (`AM26`) |
+| Escopo fechado sem responsável | não medido | 20 issues — 24,7% | 0 | 0 |  | Confiabilidade da atribuição (`AM12`) |
+| Concentração do fechamento | não medida | 51% nos dois últimos dias | 45% no último dia | 66/94 issues — 70% concluídas após o corte de 22/09 |  | Fluxo contínuo vs. encerramento (`AM13` / `AM25`) |
+| Dias úteis sem commit | não medido | não medido | 07/09 (feriado) | 14/09 e 18/09; commits no fim de semana de 19 e 20/09 |  | Capacity e plano B (`AM14` / `AM15` / R18) |
+| Atualização do Kanban | início e fim de cada dia | mantida, com regularização em bloco em 26/08 | todas as issues com responsável no fechamento | 96/96 com responsável no fechamento; 97/97 com responsável, *size* e prioridade no corte |  | Verificar se o board representa a execução |
 
 A coluna da Sprint 3 passa a trazer os valores do fechamento, reapurados na seção [3.5.4](#354-reconciliação-com-o-fechamento-da-sprint-3); os do corte de 09/09 ficam registrados na seção 3.4.3. A da Sprint 4 traz os valores do fechamento de 25/09, reapurados sobre o commit `e28883a` (seção [3.5.3](#353-indicadores-quantitativos-da-sprint-4)), conforme `AM24`; os do corte de 22/09 ficam registrados na própria 3.5.3.
 
 Os dados são extraídos com data, horário, branch-base e regra de atribuição registrados. A análise não converte contagens em ranking individual: qualidade, complexidade, dependências, papel exercido e revisão cruzada permanecem parte da interpretação.
+
+#### Tendências e gráficos
+
+Os gráficos usam valores de fechamento comparáveis quando disponíveis. A Sprint 5 aparece nos gráficos de commits e integração, cujos resultados foram apurados no corte de 06/10; métricas sem resultado aferido permanecem em branco na tabela.
+
+**Conclusão de issues.** A taxa se manteve em 100% nas Sprints 1 a 3 e caiu para 98% na Sprint 4 (94 de 96). O valor da Sprint 5 permanece sem preenchimento.
+
+```mermaid
+xychart-beta
+    title "Taxa de conclusão de issues no fechamento"
+    x-axis ["S1", "S2", "S3", "S4"]
+    y-axis "Conclusão (%)" 0 --> 100
+    line [100, 100, 100, 98]
+```
+
+**Razão entre as cargas atribuídas.** A razão em horas fechou em 2,92:1 na Sprint 2, caiu para 2,50:1 na Sprint 3 e subiu para 3,10:1 na Sprint 4. A Sprint 5 abriu em 1,125:1 após a verificação ser levada ao planejamento; o fechamento não tem valor aferido.
+
+```mermaid
+xychart-beta
+    title "Maior carga dividida pela menor carga atribuída"
+    x-axis ["S2 fim", "S3 fim", "S4 fim", "S5 abertura"]
+    y-axis "Razão (x:1)" 0 --> 4
+    line [2.92, 2.50, 3.10, 1.125]
+```
+
+**Aderência à política de commits.** Pela regra da Sprint 5, a aderência recalculada sobre a Sprint 4 foi de 58% (143/246); no corte da Sprint 5 foi de 71% (74/104). É uma melhora de 13 pontos percentuais, mas abaixo da meta de 90% da `AM26`, e quatro mensagens ainda usavam o formato antigo. A comparação considera a regra vigente, que aceita a referência ao card sem parênteses.
+
+```mermaid
+xychart-beta
+    title "Aderência dos commits à regra vigente"
+    x-axis ["S4 pela regra S5", "S5 corte 06/10"]
+    y-axis "Aderência (%)" 0 --> 100
+    line [58, 71]
+```
+
+#### Conclusões
+
+**Eficiência.** A produção em horas variou entre os ciclos: 55 h na Sprint 1, 90,5 h na Sprint 2, 55,5 h na Sprint 3 e 133,5 h concluídas na Sprint 4. O pico da Sprint 4 não representa, por si só, ganho de eficiência: o plano atribuiu 135,5 h contra 96 h de capacidade (141%), e 70% das issues concluídas foram fechadas depois do corte de 22/09. Na Sprint 5, o plano ficou dentro da capacidade (90,25 h de 96 h) e a carga abriu em razão de 1,125:1; horas realizadas e razão de carga no fechamento permanecem sem valor nesta análise.
+
+A distribuição de integração melhorou no corte: a maior participação individual nos merges caiu de 41% no fechamento da Sprint 4 para 26,5% na Sprint 5, abaixo do limite de 40%. A aderência às mensagens de commit também subiu de 58% para 71% sob a regra atualizada, embora não tenha atingido a meta de 90%. O SLA de primeira revisão não tem resultado quantitativo registrado.
+
+**Eficácia.** As Sprints 1, 2 e 3 fecharam 100% das issues de suas milestones; a Sprint 4 fechou 94 de 96 (98%). A solução evoluiu de artefatos de negócio e especificação para implementação integrada: na Sprint 4, as ocorrências de `NotImplementedError` no middleware caíram de 45 para 2, com autenticação, persistência e funcionalidades de execução integradas ou em revisão (3.5.2–3.5.5). Na Sprint 5, foram apurados 49 merges e 74 de 104 commits aderentes à política vigente. A taxa de conclusão da Sprint 5 não está incluída nesta análise.
+
+**Indicadores sem série completa.** O SLA de primeira revisão não tem resultado quantitativo registrado nas Sprints 1 a 5; a capacidade declarada só aparece a partir da Sprint 4; e a carga em horas não está medida para a Sprint 1. Para a Sprint 5, os valores finais de conclusão, horas realizadas, fila, atribuição, concentração de fechamento, dias sem commit e atualização do Kanban não estão preenchidos.
+
+**Leitura dos demais indicadores ao longo das cinco sprints.**
+
+- **Capacidade e horas:** capacidade não declarada nas Sprints 1 a 3; na Sprint 4, 135,5 h atribuídas para 96 h (141%); na Sprint 5, 90,25 h planejadas para 96 h.
+- **Integração:** contagens não são totalmente homogêneas — S1 registra MRs criados/revisados (33/33), S2–S4 MRs integrados (35, 33 e 66), e S5 49 merges apurados. O pico foi S4 e a contagem recua na S5. O teto individual também melhora: 41% em S4 e 26,5% em S5.
+- **Fila de revisão:** S2 passou de 11 itens no corte parcial a zero no fechamento; S3 fechou sem fila; S4 tinha um MR aberto no fechamento e sete cards em `Waiting Review` no corte intermediário.
+- **SLA de revisão:** sem medição quantitativa registrada; portanto, não há tendência histórica verificável.
+- **Distribuição de carga:** razão de issues de 2:1 na S1; razão de horas de 2,92:1 na S2, 2,50:1 na S3 e 3,10:1 na S4; S5 abriu com razão de 1,125:1.
+- **Aderência a commits:** sem medição nas Sprints 1 a 3; S4 marca 58% quando recalculada pela regra vigente; S5 apura 71%, melhora de 13 pontos percentuais, mas abaixo da meta de 90%.
+- **Escopo sem responsável:** sem série na S1, 24,7% na S2 e zero na S3 e S4.
+- **Concentração de conclusão:** sem série na S1; 51% das issues da S2 nos dois últimos dias; 45% da S3 no último dia; 70% das issues fechadas da S4 após o corte de 22/09.
+- **Dias sem commit e Kanban:** S1 e S2 sem série de dias sem commit; S3 teve o feriado de 07/09 sem commit; S4 teve dois dias úteis sem commit (14 e 18/09). O Kanban evoluiu de regularização em bloco na S2 para issues atribuídas no fechamento da S3 e campos completos na S4.
 
 ## 6. Análise post-mortem
 
