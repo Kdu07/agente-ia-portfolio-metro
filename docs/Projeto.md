@@ -7916,6 +7916,22 @@ Na Alternativa A, a decisão de prestar atenção ao agente permanece sob contro
 
 Essa diferença altera a natureza da cobrança. No ambiente digital, ela é privada e pode ser adiada ou silenciada. No objeto físico, passa a existir um componente de exposição que pode acelerar a resolução, mas também pode ser sentido como constrangimento e afetar a relação de confiança com o agente. Além disso, a Alternativa A aproveita canais e equipamentos já disponíveis, enquanto a B exige fabricação, distribuição, manutenção e alimentação de um dispositivo físico.
 
+**Estimativa preliminar por unidade.** Como referência de um dispositivo vestível
+que reúne Wi-Fi, microfone, bateria, botões e sinalização sonora/visual, o
+M5StickC PLUS2 aparece por **US$ 39,90** na loja M5Stack consultada em
+06/10/2026. A ficha do fabricante confirma microfone integrado, bateria de
+200 mAh, LED, buzzer e uso vestível. Pela cotação de venda do dólar de
+**R$ 4,9698** publicada pelo Banco Central para 06/10/2026, o equipamento
+representa aproximadamente **R$ 198,30 por unidade**, ou **R$ 1.982,95 para
+10** e **R$ 9.914,75 para 50**, sem desconto por volume. É uma referência de
+preço de varejo para dimensionar a alternativa, não uma especificação aprovada
+do crachá: não inclui frete, tributos ou custos de importação, fixação ao
+crachá, montagem, carregamento, reposição ou operação. O total de distribuição
+dependerá da quantidade e do local de entrega e exige cotação comercial.
+[Preço M5Stack](https://shop.m5stack.com/products/m5stickc-plus2);
+[especificações do fabricante](https://docs.m5stack.com/en/core/StickC-Plus2);
+[Banco Central do Brasil — série 1, câmbio USD/BRL](https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados/ultimos/1?formato=json).
+
 ## 7.3 Formatos de Prototipação
 
 ### 7.3.1 Formato escolhido para A + justificativa

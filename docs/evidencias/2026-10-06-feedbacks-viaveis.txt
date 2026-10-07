@@ -1,0 +1,70 @@
+Evidencias — feedbacks viaveis (#498)
+Data: 2026-10-06
+Commit base observado: 3488afc (merge de 06/10)
+
+S3-03 / S4-11 — validacao local no Windows
+Diretorio: src/middleware
+Comando:
+  python -m pytest -p no:cacheprovider tests/integration/test_api_audio.py tests/integration/test_api_voz_token.py tests/unit/test_openapi_exportado.py tests/funcionais/test_rf04_consulta.py
+Resultado:
+  32 testes coletados; 31 passed, 1 xfailed (esperado), 0 falhas.
+  O xfail e TF-RF04-04, caso preexistente de indistinguibilidade entre
+  projeto alheio e inexistente. O TF-RF04-01 parametrizado em sete dimensoes,
+  TF-RF04-02 e TF-RF04-05 atravessam POST /chat.
+Avisos: depreciacoes de Starlette/HTTPX e aviso de versao do scikit-learn
+dos modelos serializados (1.9.0 carregados com 1.9.1); nenhum teste falhou.
+
+Lint
+Diretorio: src/middleware
+Comando:
+  python -m ruff check app/api/routes/voz.py app/main.py tests/funcionais/test_rf04_consulta.py tests/integration/test_api_audio.py tests/integration/test_api_voz_token.py tests/unit/test_openapi_exportado.py tests/integration/test_fluxo_real_audio_chat.py
+Resultado:
+  All checks passed.
+
+S3-06 / S3-09 — execucao local com servicos reais
+Ambiente:
+  Container Linux infra-middleware; PostgreSQL do Compose saudavel; chave de
+  Azure Speech presente apenas no ambiente local. O host Windows nao conseguiu
+  carregar torch\lib\shm.dll por bloqueio da politica local de Controle de
+  Aplicativo, entao o mesmo teste foi executado no container que ja possui
+  Torch CPU e o modelo do classificador.
+Teste:
+  tests/integration/test_fluxo_real_audio_chat.py
+  Opt-in com RUN_REAL_AUDIO_PROCESSOR=1 e REAL_AUDIO_PATH apontando para WAV
+  sintetico local. Executado em 25,02 s: 1 passed.
+Fluxo observado:
+  POST /chat com “Conte uma piada” foi processado pela aplicacao ASGI real e
+  persistido como recusado fora de escopo. POST /voz/audios recebeu audio WAV;
+  Azure Speech concluiu a transcricao de “Conte uma piada”; o ProcessadorAudio
+  e o classificador reais concluiram o fluxo e persistiram a interacao de voz,
+  com canal=voz e IDs de conversa/interacao. A consulta retornou estado
+  concluida. Duas interacoes (texto e voz) foram confirmadas no PostgreSQL.
+  O usuario, conversa, interacoes e transcricao sinteticos foram removidos
+  pelo finally do teste.
+Limites:
+  O smoke usa ASGITransport (aplicacao real em processo de teste), nao um
+  servidor HTTP implantado nem a interface web. O classificador e o banco
+  sao reais; os guardas de seguranca sao mantidos pela aplicacao; o executor
+  externo e deliberadamente bloqueado, pois ambas as mensagens devem ser
+  recusadas como fora de escopo e a credencial Direct Line nao esta configurada.
+  Nenhum dado de projeto real foi enviado. O teste e opt-in e nao roda na CI
+  por padrao.
+
+S2-02 — fonte da estimativa preliminar na secao 7.2.3 de Projeto.md
+  M5Stack StickC-Plus2, preco de loja consultado: US$ 39,90.
+  BCB, serie 1 USD/BRL, cotacao de venda de 06/10/2026: R$ 4,9698/USD.
+  Conversao: R$ 198,29502 (~R$ 198,30) por unidade; R$ 1.982,95/10;
+  R$ 9.914,75/50 (sem desconto por volume).
+Fontes:
+  https://shop.m5stack.com/products/m5stickc-plus2
+  https://docs.m5stack.com/en/core/StickC-Plus2
+  https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados/ultimos/1?formato=json
+Ressalva:
+  E uma referencia de hardware, nao cotacao de distribuicao. Frete, tributos,
+  importacao, fixacao, montagem, carregamento, reposicao e operacao nao estao
+  incluidos; custo total depende de quantidade e destino.
+
+Nao foi executado pipeline CI, nao houve push/MR e a issue #498 nao foi
+atualizada por API autenticada nesta execucao. O S2-02 permanece parcial ate
+cotacao completa; a cota simultanea de S3-03 continua fora do escopo definido
+na triagem.

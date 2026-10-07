@@ -156,7 +156,10 @@ class TestUploadAudio:
         )
 
         assert response.status_code == 401
-        assert response.json()["detail"] == "Sessão ausente"
+        assert response.json() == {
+            "codigo": "NAO_AUTENTICADO",
+            "mensagem": "Sua sessão expirou. Entre novamente para continuar.",
+        }
         ambiente_audio.assert_not_awaited()
 
 
@@ -205,7 +208,10 @@ class TestConsultarTranscricao:
         """A consulta também exige autenticação, antes de procurar o ID."""
         response = client_sem_auth.get("/voz/audios/id-inexistente/transcricao")
         assert response.status_code == 401
-        assert response.json()["detail"] == "Sessão ausente"
+        assert response.json() == {
+            "codigo": "NAO_AUTENTICADO",
+            "mensagem": "Sua sessão expirou. Entre novamente para continuar.",
+        }
         ambiente_audio.assert_not_awaited()
 
 

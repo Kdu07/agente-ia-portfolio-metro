@@ -16,7 +16,7 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import TimeoutError as SQLAlchemyTimeoutError
 
@@ -130,6 +130,7 @@ async def tratar_pool_esgotado(request: Request, erro: SQLAlchemyTimeoutError) -
 
 
 app.add_exception_handler(voz.ErroAudioApi, voz.tratar_erro_audio)
+app.add_exception_handler(HTTPException, voz.tratar_http_exception)
 app.add_exception_handler(SQLAlchemyTimeoutError, tratar_pool_esgotado)
 
 app.include_router(health.router, tags=["infra"])
